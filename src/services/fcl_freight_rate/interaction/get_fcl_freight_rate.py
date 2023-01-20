@@ -3,5 +3,5 @@ from datetime import datetime
 import json
 
 def get_fcl_freight_rate():
-    data = list(FclFreightRate.select(FclFreightRate.validities).where(FclFreightRate.last_rate_available_date >= datetime.now()).limit(10).dicts())
+    data = list(FclFreightRate.select().where(FclFreightRate.last_rate_available_date >= datetime.now()).limit(10).dicts())
     return data
