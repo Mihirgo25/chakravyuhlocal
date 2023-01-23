@@ -34,15 +34,21 @@ def create_fcl_freight_rate(request):
   if freight.errors:
     return freight.errors
 
-  # freight.set_validities(request.validity_start, request.validity_end, request.line_items, request.schedule_type, false, request.payment_term)
+  freight.set_validities(request.validity_start, request.validity_end, request.line_items, request.schedule_type, false, request.payment_term)
+  freight.set_platform_prices
+  freight.set_is_best_price
+  freight.set_last_rate_available_date
 
-  # try:
-  #   freight.save()
-  # except:
-  #   return freight.errors()
 
+  try:
+    freight.save()
+  except:
+    return freight.errors()
+
+  if request.importer_exporter_id is None:
+    freight.delete_rate_not_available_entry
   
-
+  
   
 
 

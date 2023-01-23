@@ -247,6 +247,17 @@ class FclFreightRate(BaseModel):
       else:
         self.last_rate_available_date = None
     
+    def delete_rate_not_available_entry():
+      FclFreightRate.delete().where(fn.AND(
+            FclFreightRate.origin_port_id == self.origin_port_id,
+            FclFreightRate.destination_port_id == self.destination_port_id,
+            FclFreightRate.container_size == self.container_size,
+            FclFreightRate.container_type == self.container_type,
+            FclFreightRate.commodity == self.commodity,
+            FclFreightRate.service_provider_id == self.service_provider_id,
+            FclFreightRate.rate_not_available_entry == True
+            ))
+    
 class slab(pydantic_base_model):
   lower_limit: float
   upper_limit: float
