@@ -1,0 +1,570 @@
+BAS:
+  name: "Basic Freight"
+  units: ['per_container']
+  condition: true
+  tags: ['mandatory', 'add_commodity_surcharge', 'slab_containers_count']
+ENS:
+  name: "Entry Summary Declaration"
+  units: ['per_bl', 'per_container']
+  condition: "shipment_service['destination_port']['country']['country_code'] in ['FI', 'PL', 'CZ', 'DE', 'LT', 'RS', 'NO', 'LI', 'PT', 'LV', 'DK', 'MD', 'AM', 'BE', 'RU', 'NI', 'HU', 'MC', 'CH', 'BY', 'MK', 'NL', 'FR', 'LU', 'SK', 'AT', 'IS', 'FO', 'EE', 'IE', 'GB', 'SE', 'AD']"
+  tags: ['additional_service']
+AMS:
+  name: "Automated/Aquired Manifest System"
+  units: ['per_bl']
+  condition: true
+  tags: []
+BAF:
+  name: "Bunker Adjustment Factor"
+  units: ['per_container']
+  condition: true
+  tags: []
+CAF:
+  name: "Currency Adjustment Factor"
+  units: ['per_container']
+  condition: true
+  tags: []
+FSC:
+  name: "Fuel Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+PC:
+  name: "Panama Canal Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+HSC:
+  name: "Hazardous Surcharge"
+  units: ['per_container']
+  condition: "shipment_service['commodity'] in HAZ_COMMODITIES"
+  tags: ['mandatory']
+SMDC:
+  name: "Security Manifest Documentation Charge"
+  units: ['per_bl']
+  condition: true
+  tags: []
+DPA:
+  name: "Arbitrary - Destination"
+  units: ['per_container']
+  condition: true
+  tags: []
+ERS:
+  name: "Emergency Risk Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+LSS:
+  name: "Low Sulphur Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+OPA:
+  name: "Arbitrary - Origin Charges"
+  units: ['per_container']
+  condition: true
+  tags: []
+WSC:
+  name: "Winter Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+ERSC:
+  name: "Electronic Risk Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+REB:
+  name: "Rebate"
+  units: ['per_container']
+  condition: true
+  tags: []
+POS:
+  name: "Equipment Positioning Service"
+  units: ['per_container']
+  condition: true
+  tags: []
+CSS:
+  name: "Carrier Security Service"
+  units: ['per_container']
+  condition: true
+  tags: []
+WRS:
+  name: "War Risk Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+CPC:
+  name: "Container Premium Charges"
+  units: ['per_container']
+  condition: "shipment_service['shipping_line']['short_name'] in ['Hapag Lloyd', 'CMA', 'ANL', 'APL', 'PIL', 'Maersk']"
+  tags: []
+PCS:
+  name: "Port Congestion Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+CBF:
+  name: "Collect Basis Fees"
+  units: ['per_container']
+  condition: true
+  tags: []
+LWS:
+  name: "Low Water Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+EPS:
+  name: "Emergency Port Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+SPE:
+  name: "Special Equipment Surcharge"
+  units: ['per_container']
+  condition: "(shipment_service['container_type'] in ['open_top', 'flat_rack', 'iso_tank'] or shipment_service['container_size'] == '45HC')"
+  tags: ['mandatory']
+MISC:
+  name: "Miscellaneous Fee"
+  units: ['per_container']
+  condition: true
+  tags: []
+CDD:
+  name: "Cargo Data Declaration"
+  units: ['per_bl']
+  condition: "(shipment_service['destination_port']['country']['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']) and (shipment_service['shipping_line']['short_name'] == 'MSC')"
+  tags: []
+OCC:
+  name: "Operations Cost Contribution"
+  units: ['per_container']
+  condition: "shipment_service['shipping_line']['short_name'] == 'MSC'"
+  tags: []
+PTA:
+  name: "Turn in Fee"
+  units: ['per_container']
+  condition: true
+  tags: []
+PSEA:
+  name: "Pollution Surcharge Sea"
+  units: ['per_container']
+  condition: true
+  tags: []
+RRI:
+  name: "Rate Restoration Increase"
+  units: ['per_container']
+  condition: true
+  tags: []
+AFS:
+  name: "Advance Filing Surcharge"
+  units: ['per_bl']
+  condition: true
+  tags: []
+OCH:
+  name: "Ocean Carrier Charges"
+  units: ['per_container']
+  condition: true
+  tags: []
+EBS:
+  name: "Emergency Bunker Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+ECA:
+  name: "Emission Control Area Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+MOZ:
+  name: "Moz Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+SCS:
+  name: "Suez Canal Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+OTS:
+  name: "Open Top Surcharge"
+  units: ['per_container']
+  condition: "shipment_service['container_type'] == 'open_top'"
+  tags: []
+EIC:
+  name: "Export Import Certificate Fee"
+  units: ['per_container']
+  condition: true
+  tags: []
+BC:
+  name: "Bunker Contribution"
+  units: ['per_container']
+  condition: true
+  tags: []
+CHF:
+  name: "CHANNEL FEE"
+  units: ['per_container']
+  condition: true
+  tags: []
+PSAF:
+  name: "Peak Season Adjustment Factor"
+  units: ['per_container']
+  condition: true
+  tags: []
+LOT:
+  name: "LINER OUT CHARGES"
+  units: ['per_container']
+  condition: true
+  tags: []
+AIS:
+  name: "Ashdod Imbalance Surccharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+OBS:
+  name: "One Bunker surcharge"
+  units: ['per_container']
+  condition: "shipment_service['shipping_line']['short_name'] == 'COGOLINE'"
+  tags: []
+DGPS:
+  name: "Dangerous Goods Premium Sea"
+  units: ['per_container']
+  condition: "shipment_service['commodity']in HAZ_COMMODITIES"
+  tags: []
+SCMC:
+  name: "Security Compliance Management Charge"
+  units: ['per_bl']
+  condition: "shipment_service['destination_port']['country']['country_code'] == 'CN' and shipment_service['shipping_line']['short_name'] == 'Evergreen'"
+  tags: []
+NBF:
+  name: "New Bunker Factor"
+  units: ['per_container']
+  condition: "shipment_service['shipping_line']['short_name'] in ['Zim', 'GSL', 'Nile Dutch Line', 'Interasia']"
+  tags: []
+LSD:
+  name: "Low Sulphur Surcharge at Destination"
+  units: ['per_container']
+  condition: true
+  tags: []
+NEO:
+  name: "ECA NE FUEL SURCHARGE"
+  units: ['per_container']
+  condition: true
+  tags: []
+GRS:
+  name: "Gulf Emergency Risk Surcharge"
+  units: ['per_container']
+  condition: "shipment_service['destination_port']['country']['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']"
+  tags: []
+EFF:
+  name: "Environmental Fuel Fee"
+  units: ['per_container']
+  condition: true
+  tags: []
+CSD:
+  name: "Container Security Deposit"
+  units: ['per_container']
+  condition: true
+  tags: []
+SCTC:
+  name: "Suez Canal Transit Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+IMO:
+  name: "Dangerous Goods Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+CSF:
+  name: "Carrier Security Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+EMS:
+  name: "Emergency Surcharge - Piracy Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+HWS:
+  name: "Heavy Weight Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+SES:
+  name: "Special Equipment Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+MFR:
+  name: "Marine Fuel Recovery"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+IFP:
+  name: "Interim Fuel Participation Factor"
+  units: ['per_container']
+  condition: true
+  tags: []
+ACT:
+  name: "Alameda Corridor Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+EIS:
+  name: "Equipment Imbalance Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+CPM:
+  name: "Container Premium Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+EMF:
+  name: "Equipment Maintenance Fee"
+  units: ['per_container']
+  condition: true
+  tags: []
+PSC:
+  name: "Port Service Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+CSC:
+  name: "Container Service Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+EHC:
+  name: "Equipment Handover Charges"
+  units: ['per_container']
+  condition: true
+  tags: []
+EMC:
+  name: "Emergency Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+ERC:
+  name: "Emergency Revenue Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+BOS:
+  name: "Bosporus Additional"
+  units: ['per_container']
+  condition: true
+  tags: []
+PSSNDF:
+  name: "PSS Nuts/Dry Fruits"
+  units: ['per_container']
+  condition: true
+  tags: []
+AOA:
+  name: "Angola Operational Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+APS:
+  name: "Add Port Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+TCFB:
+  name: "Tanzania Freight Bureau Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+EDS:
+  name: "Emergency Deviation Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+IIS:
+  name: "Iran Insurance Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+PIO:
+  name: "Piracy Indian Ocean"
+  units: ['per_container']
+  condition: true
+  tags: []
+FPS:
+  name: "Fuel Participation Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+ECTS:
+  name: "Emergency Terminal Congestion Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+ESS:
+  name: "Emergency Scanning Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+DSS:
+  name: "Dry Season Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+SBF:
+  name: "Standard BAF"
+  units: ['per_container']
+  condition: true
+  tags: []
+VOB:
+  name: "Variation of BAF"
+  units: ['per_container']
+  condition: true
+  tags: []
+STC:
+  name: "Strike Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+FSS:
+  name: "Fog Season Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+LIS:
+  name: "Logistic Imbalance Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+RTS:
+  name: "River Toll Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+CRC:
+  name: "Contigency Recovery Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+VTS:
+  name: "Vessel Traffic Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+KCS:
+  name: "Kiel Canal Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+CTN:
+  name: "Cargo Tracking Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+VUS:
+  name: "Vessel Utilization Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+IFS:
+  name: "Inland Fuel Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+LSEC:
+  name: "Loading Sealing Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+DSEC:
+  name: "Discharge Sealing Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+LPAC:
+  name: "Loading Port Additional Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+DPAC:
+  name: "Discharge Port Additional Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+MAF:
+  name: "Market Adjustment Factor"
+  units: ['per_container']
+  condition: true
+  tags: []
+EFS:
+  name: "Emergency Fuel Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+IMO2020:
+  name: "IMO 2020 Low Sulphur"
+  units: ['per_container']
+  condition: true
+  tags: []
+WCS:
+  name: "Weight Charge Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+ECRS:
+  name: "Emergency Cost Recovery Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: []
+THC:
+  name: "Terminal Handling Charge"
+  units: ['per_container']
+  condition: true
+  tags: []
+AHF:
+  name: "Agent Handling Fees"
+  units: ['per_container', 'per_bl']
+  condition: true
+  tags: []
+SEAL:
+  name: "Line Seal"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+MUC:
+  name: "Mandatory User Charges"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+VTC:
+  name: "Vessel Traffic Services"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+GRI:
+  name: "General Rate Increase"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+ISPS:
+  name: "International Ship And Port Facility Security Code"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+PSS:
+  name: "Peak Season Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+HAUL:
+  name: "Haulage at destination Prepaid"
+  units: ['per_container']
+  condition: true
+  tags: []
+OWS:
+  name: "Overweight Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+AHFR:
+  name: "Agent Handling Fees - Rebate"
+  units: ['per_shipment']
+  condition: true
+  tags: ['additional_service']
