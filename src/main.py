@@ -42,10 +42,11 @@ def get_fcl_freight_rate_data():
 
 @app.post("/create_fcl_freight_rate_data")
 def create_fcl_freight_rate_data(request: postFclFreightRate, response: Response):
-    print(request)
-    try:
-        data = create_fcl_freight_rate(request)
-        return JSONResponse(status_code=200, content={"success": True})
-    except Exception as e:
+    # print(vars(request.weight_limit))
+    # try:
+        return create_fcl_freight_rate(request)
+        # return JSONResponse(status_code=200, content=data)
+        # return JSONResponse(status_code=200, content={"success": True})
+    # except Exception as e:
         # logger.error(e,exc_info=True)
-        return JSONResponse(status_code=500, content={"success": False})
+    #     return JSONResponse(status_code=500, content={"success": False})

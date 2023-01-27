@@ -6,7 +6,7 @@ BAS:
 ENS:
   name: "Entry Summary Declaration"
   units: ['per_bl', 'per_container']
-  condition: "shipment_service['destination_port']['country']['country_code'] in ['FI', 'PL', 'CZ', 'DE', 'LT', 'RS', 'NO', 'LI', 'PT', 'LV', 'DK', 'MD', 'AM', 'BE', 'RU', 'NI', 'HU', 'MC', 'CH', 'BY', 'MK', 'NL', 'FR', 'LU', 'SK', 'AT', 'IS', 'FO', 'EE', 'IE', 'GB', 'SE', 'AD']"
+  condition: "destination_port['country_code'] in ['FI', 'PL', 'CZ', 'DE', 'LT', 'RS', 'NO', 'LI', 'PT', 'LV', 'DK', 'MD', 'AM', 'BE', 'RU', 'NI', 'HU', 'MC', 'CH', 'BY', 'MK', 'NL', 'FR', 'LU', 'SK', 'AT', 'IS', 'FO', 'EE', 'IE', 'GB', 'SE', 'AD']"
   tags: ['additional_service']
 AMS:
   name: "Automated/Aquired Manifest System"
@@ -36,7 +36,7 @@ PC:
 HSC:
   name: "Hazardous Surcharge"
   units: ['per_container']
-  condition: "shipment_service['commodity'] in HAZ_COMMODITIES"
+  condition: "commodity in HAZ_COMMODITIES" #check this
   tags: ['mandatory']
 SMDC:
   name: "Security Manifest Documentation Charge"
@@ -96,7 +96,7 @@ WRS:
 CPC:
   name: "Container Premium Charges"
   units: ['per_container']
-  condition: "shipment_service['shipping_line']['short_name'] in ['Hapag Lloyd', 'CMA', 'ANL', 'APL', 'PIL', 'Maersk']"
+  condition: "shipping_line['short_name'] in ['Hapag Lloyd', 'CMA', 'ANL', 'APL', 'PIL', 'Maersk']"
   tags: []
 PCS:
   name: "Port Congestion Surcharge"
@@ -121,7 +121,7 @@ EPS:
 SPE:
   name: "Special Equipment Surcharge"
   units: ['per_container']
-  condition: "(shipment_service['container_type'] in ['open_top', 'flat_rack', 'iso_tank'] or shipment_service['container_size'] == '45HC')"
+  condition: "(container_type in ['open_top', 'flat_rack', 'iso_tank'] or container_size == '45HC')"
   tags: ['mandatory']
 MISC:
   name: "Miscellaneous Fee"
@@ -131,12 +131,12 @@ MISC:
 CDD:
   name: "Cargo Data Declaration"
   units: ['per_bl']
-  condition: "(shipment_service['destination_port']['country']['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']) and (shipment_service['shipping_line']['short_name'] == 'MSC')"
+  condition: "(destination_port['country_code'] in ["RU", "DK", "CZ", "NL", "EE", "AT", "LI", "NI", "PL", "MC", "BY", "SE", "CH", "DE", "LU", "SK", "LT", "FR", "LV", "HU", "FI", "RS", "FO", "IE", "AM", "MD", "AD", "PT", "NO", "GB", "IS", "MK", "BE"]) and (shipping_line['short_name'] == 'MSC')"
   tags: []
 OCC:
   name: "Operations Cost Contribution"
   units: ['per_container']
-  condition: "shipment_service['shipping_line']['short_name'] == 'MSC'"
+  condition: "shipping_line['short_name'] == 'MSC'"
   tags: []
 PTA:
   name: "Turn in Fee"
@@ -186,7 +186,7 @@ SCS:
 OTS:
   name: "Open Top Surcharge"
   units: ['per_container']
-  condition: "shipment_service['container_type'] == 'open_top'"
+  condition: "container_type == 'open_top'"
   tags: []
 EIC:
   name: "Export Import Certificate Fee"
@@ -221,22 +221,22 @@ AIS:
 OBS:
   name: "One Bunker surcharge"
   units: ['per_container']
-  condition: "shipment_service['shipping_line']['short_name'] == 'COGOLINE'"
+  condition: "shipping_line['short_name'] == 'COGOLINE'"
   tags: []
 DGPS:
   name: "Dangerous Goods Premium Sea"
   units: ['per_container']
-  condition: "shipment_service['commodity']in HAZ_COMMODITIES"
+  condition: "commodity in HAZ_COMMODITIES"
   tags: []
 SCMC:
   name: "Security Compliance Management Charge"
   units: ['per_bl']
-  condition: "shipment_service['destination_port']['country']['country_code'] == 'CN' and shipment_service['shipping_line']['short_name'] == 'Evergreen'"
+  condition: "destination_port['country_code'] == 'CN' and shipping_line['short_name'] == 'Evergreen'"
   tags: []
 NBF:
   name: "New Bunker Factor"
   units: ['per_container']
-  condition: "shipment_service['shipping_line']['short_name'] in ['Zim', 'GSL', 'Nile Dutch Line', 'Interasia']"
+  condition: "shipping_line['short_name'] in ['Zim', 'GSL', 'Nile Dutch Line', 'Interasia']"
   tags: []
 LSD:
   name: "Low Sulphur Surcharge at Destination"
@@ -251,7 +251,7 @@ NEO:
 GRS:
   name: "Gulf Emergency Risk Surcharge"
   units: ['per_container']
-  condition: "shipment_service['destination_port']['country']['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']"
+  condition: "destination_port['country_code'] in ["RU", "DK", "CZ", "NL", "EE", "AT", "LI", "NI", "PL", "MC", "BY", "SE", "CH", "DE", "LU", "SK", "LT", "FR", "LV", "HU", "FI", "RS", "FO", "IE", "AM", "MD", "AD", "PT", "NO", "GB", "IS", "MK", "BE"]"
   tags: []
 EFF:
   name: "Environmental Fuel Fee"
