@@ -15,21 +15,29 @@ def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
 def create_audit(request):
-    audit_data = {k: request for k in ('validity_start', 'validity_end', 'line_items', 'weight_limit', 'origin_local', 'destination_local')}
 
-    print(dict(audit_data))
+    request.validity_start = request.validity_start.isoformat()
+    request.validity_end = request.validity_end.isoformat()
 
-    audit_data.update({
-        'bulk_operation_id': request.bulk_operation_id,
-        'rate_sheet_id': request.rate_sheet_id,
-        'action_name': 'create',
-        'performed_by_id': request.performed_by_id,
-        'procured_by_id': request.procured_by_id,
-        'sourced_by_id': request.sourced_by_id,
-        'data': audit_data
-    })
+    request = to_dict(request)
 
-    FclFreightRateAudit.create(audit_data)
+    audit_data = {}
+    audit_data['validity_start'] = request['validity_start']
+    audit_data['validity_end'] = request['validity_end']
+    audit_data['line_items'] = request['line_items']
+    audit_data['weight_limit'] = request['weight_limit']
+    audit_data['origin_local'] = request['origin_local']
+    audit_data['destination_local'] = request['destination_local']
+
+    FclFreightRateAudit.create(
+        bulk_operation_id = request['bulk_operation_id'],
+        rate_sheet_id = request['rate_sheet_id'],
+        action_name = 'create',
+        performed_by_id = request['performed_by_id'],
+        procured_by_id = request['procured_by_id'],
+        sourced_by_id = request['sourced_by_id'],
+        data = audit_data
+    )
     
 
 def create_fcl_freight_rate(request):
@@ -49,48 +57,43 @@ def create_fcl_freight_rate(request):
 
   freight = find_or_initialize(**row)
 
-  # print(request.weight_limit)
-  # print(dict(request.weight_limit))
+  freight.set_locations()
+  freight.set_shipping_line()
 
-  # freight.weight_limit = to_dict(request.weight_limit)
+  freight.weight_limit = to_dict(request.weight_limit)
 
-  # if freight.origin_local:
-  #   freight.origin_local.update(to_dict(request.origin_local))
-  # else:
-  #   freight.origin_local = to_dict(request.origin_local)
+  if freight.origin_local:
+    freight.origin_local.update(to_dict(request.origin_local))
+  else:
+    freight.origin_local = to_dict(request.origin_local)
 
-  # if freight.destination_local:
-  #   freight.destination_local.update(to_dict(request.destination_local))
-  # else:
-  #   freight.destination_local = to_dict(request.destination_local)
+  if freight.destination_local:
+    freight.destination_local.update(to_dict(request.destination_local))
+  else:
+    freight.destination_local = to_dict(request.destination_local)
   
   freight.validate_validity_object(request.validity_start, request.validity_end)
 
-  # origin_port = requests.get("https://api-nirvana1.dev.cogoport.io/location/list_locations?filters%5Bid%5D=" + str(request.origin_port_id)).json()['list'][0]
-  # destination_port = requests.get("https://api-nirvana1.dev.cogoport.io/location/list_locations?filters%5Bid%5D=" + str(request.destination_port_id)).json()['list'][0]
-  # origin_main_port = requests.get("https://api-nirvana1.dev.cogoport.io/location/list_locations?filters%5Bid%5D=" + str(request.origin_main_port_id)).json()['list'][0]
-  # destination_main_port = requests.get("https://api-nirvana1.dev.cogoport.io/location/list_locations?filters%5Bid%5D=" + str(request.destination_main_port_id)).json()['list'][0]
-
   # freight.validate_line_items(to_dict(request.line_items))
 
-  # freight.set_validities(request.validity_start, request.validity_end, to_dict(request.line_items), request.schedule_type, False, request.payment_term)
-  # freight.set_platform_prices()
-  # freight.set_is_best_price()
-  # freight.set_last_rate_available_date()
+  freight.set_validities(request.validity_start, request.validity_end, to_dict(request.line_items), request.schedule_type, False, request.payment_term)
+  freight.set_platform_prices()
+  freight.set_is_best_price()
+  freight.set_last_rate_available_date()
 
-  # try:
-  #   freight.save()
-  # except:
-  #   raise HTTPException(status_code=499, detail='rate did not save')
+  try:
+    freight.save()
+  except:
+    raise HTTPException(status_code=499, detail='rate did not save')
 
-  # if not request.importer_exporter_id:
-  #   freight.delete_rate_not_available_entry()
+  if not request.importer_exporter_id:
+    freight.delete_rate_not_available_entry()
   
-  # freight.audits.create!(create_audit) 
-  # create_audit(request) # convert obj to dict
+  create_audit(request)
 
-  # freight.update_special_attributes()
+  freight.update_special_attributes() #check this properly
   
+  freight.update_local_references #check this properly
 
 
   return {"id": freight.id}

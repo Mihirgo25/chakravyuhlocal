@@ -11,7 +11,9 @@ from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_slab import slab
 from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_validity import FclFreightRateValidity
-
+from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
+import requests
+from configs.fcl_freight_rate_constants import HAZ_COMMODITIES
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
@@ -80,6 +82,11 @@ class FclFreightRate(BaseModel):
     validities = BinaryJSONField(default = [], null=True)
     weight_limit = BinaryJSONField(null=True)
     weight_limit_id = UUIDField(index=True, null=True)
+    origin_port: dict = None
+    destination_port: dict = None
+    origin_main_port: dict = None
+    destination_main_port: dict = None
+    shipping_line: dict = None
 
     class Meta:
         table_name = 'fcl_freight_rates'
@@ -109,6 +116,34 @@ class FclFreightRate(BaseModel):
             (('updated_at', 'id', 'service_provider_id'), False),
             (('updated_at', 'service_provider_id'), False),
         )
+
+    # def save(self):
+    #   #logic for validation goes here
+    #   print('abcsdasd')
+
+    def set_locations(self):
+
+      obj = {"filters" : {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}}
+
+      locations = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/location/list_locations', json = obj).json()['list']
+
+      for location in locations:
+        if str(self.origin_port_id) == location['id']:
+          self.origin_port = location
+        if str(self.destination_port_id) == location['id']:
+          self.destination_port = location
+        if str(self.origin_main_port_id) == location['id']:
+          self.origin_main_port = location
+        if str(self.destination_main_port_id) == location['id']:
+          self.destination_main_port = location
+
+    def set_shipping_line(self):
+
+      obj = {"filters" : {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}}
+
+      # operators = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/operator/list_operators', json = obj).json()['list']
+
+      self.shipping_line = requests.get("https://api-nirvana1.dev.cogoport.io/operator/list_operators?filters%5Bid%5D[]=" + str(self.shipping_line_id)).json()['list'][0]
 
     def validate_validity_object(self, validity_start, validity_end):
       if not validity_start:
@@ -180,7 +215,6 @@ class FclFreightRate(BaseModel):
             }
             new_validities = [FclFreightRateValidity(**new_validity_object)]
 
-        # print(self.validities)
         for validity_object in self.validities:
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
@@ -267,34 +301,108 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = self.validities[-1]['validity_end']
       else:
         self.last_rate_available_date = None
-
-    #   print(self.last_rate_available_date)
     
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
-            (FclFreightRate.origin_port_id == self.origin_port_id) &
-            (FclFreightRate.destination_port_id == self.destination_port_id) &
-            (FclFreightRate.container_size == self.container_size) &
-            (FclFreightRate.container_type == self.container_type) &
-            (FclFreightRate.commodity == self.commodity) &
-            (FclFreightRate.service_provider_id == self.service_provider_id) &
-            (FclFreightRate.rate_not_available_entry == True)
+            FclFreightRate.origin_port_id == self.origin_port_id,
+            FclFreightRate.destination_port_id == self.destination_port_id,
+            FclFreightRate.container_size == self.container_size,
+            FclFreightRate.container_type == self.container_type,
+            FclFreightRate.commodity == self.commodity,
+            FclFreightRate.service_provider_id == self.service_provider_id,
+            FclFreightRate.rate_not_available_entry == False
       )
 
-# class slab(pydantic_base_model):
-#   lower_limit: float
-#   upper_limit: float
-#   price: float
-#   currency: str
+    def possible_origin_local_charge_codes():
+      # self.port = self.origin_port
+      with open('/Users/uditpal/ocean-rms/src/charges/fcl_freight_charges.yml', 'r') as file:
+        fcl_freight_charges_dict = yaml.safe_load(file)
+      
+      charge_codes = {k: v for k, v in (eval(charge[1]['condition']) if eval(charge[1]['condition']) else None for charge in fcl_freight_charges_dict) if v}
+      return {k: v for k, v in charge_codes.items() if 'export' in v['trade_types']}
 
-# class lineItem(pydantic_base_model):
-#   location_id: str = None  # different line_items
-#   code: str
-#   unit: str
-#   price: float
-#   currency: str
-#   remarks: list[str] = None
-#   slabs: list[slab] = None
+    def local_data_get_line_item_messages(self):
+
+      location_ids = list(set([item.location_id for item in self.origin_local.line_items if item.location_id is not None]))
+
+      locations = {}
+
+      if location_ids:
+        obj = {"filters" : {"id": location_ids}}
+        locations = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/location/list_locations', json = obj).json()['list']
+
+      return locations
+
+    def update_origin_local_line_item_messages(self):
+      response = {}
+
+      if self.origin_local:
+        response = self.local_data_get_line_item_messages()
+
+      self.update(
+        origin_local_line_items_error_messages = response['line_items_error_messages'],
+        is_origin_local_line_items_error_messages_present = response['is_line_items_error_messages_present'],
+        origin_local_line_items_info_messages = response['line_items_info_messages'],
+        is_origin_local_line_items_info_messages_present = response['is_line_items_info_messages_present']
+      )
+
+    def update_destination_local_line_item_messages(self):
+      response = {}
+
+      if self.destination_local:
+        response = self.local_data_get_line_item_messages()
+
+      self.update(
+        destination_local_line_items_error_messages = response['line_items_error_messages'],
+        is_destination_local_line_items_error_messages_present = response['is_line_items_error_messages_present'],
+        destination_local_line_items_info_messages = response['line_items_info_messages'],
+        is_destination_local_line_items_info_messages_present = response['is_line_items_info_messages_present']
+      )
+    
+    def update_origin_free_days_special_attributes(self):
+      self.update(
+        is_origin_detention_slabs_missing = (len(self.origin_local['detention']['slabs']) == 0),
+        is_origin_demurrage_slabs_missing = (len(self.origin_local['demurrage']['slabs']) == 0),
+        is_origin_plugin_slabs_missing = (len(self.origin_local['plugin']['slabs']) == 0)
+      )
+
+    def update_destination_free_days_special_attributes(self):
+      self.update_columns(
+        is_destination_detention_slabs_missing = (len(self.destination_local['detention']['slabs']) == 0),
+        is_destination_demurrage_slabs_missing = (len(self.destination_local['demurrage']['slabs']) == 0),
+        is_destination_plugin_slabs_missing = (len(self.destination_local['plugin']['slabs']) == 0)
+      )
+
+    def update_weight_limit_special_attributes(self):
+      self.update(is_weight_limit_slabs_missing = (len(self.weight_limit['slabs']) == 0))
+
+    def update_special_attributes(self):
+      self.update_origin_local_line_item_messages
+      self.update_destination_local_line_item_messages
+      self.update_origin_free_days_special_attributes
+      self.update_destination_free_days_special_attributes
+      self.update_weight_limit_special_attributes
+
+    def update_local_references(self):
+      local_objects = FclFreightRateLocal.where(
+        (FclFreightRateLocal.port_id == [self.origin_port_id, self.destination_port_id]),
+        (FclFreightRateLocal.main_port_id == [self.origin_main_port_id, self.destination_main_port_id]),
+        (FclFreightRateLocal.container_size == self.container_size),
+        (FclFreightRateLocal.container_type == self.container_type),
+        (FclFreightRateLocal.commodity == (self.commodity if self.commodity in HAZ_COMMODITIES else None)),
+        (FclFreightRateLocal.service_provider_id == self.service_provider_id),
+        (FclFreightRateLocal.shipping_line_id == self.shipping_line_id)
+      )
+
+      filtered_objects = [t for t in local_objects if t.port_id == self.origin_port_id and t.main_port_id == self.origin_main_port_id and t.trade_type == 'export']
+
+      origin_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
+
+      filtered_objects = [t for t in local_objects if t.port_id == self.destination_port_id and t.main_port_id == self.destination_main_port_id and t.trade_type == 'import']
+
+      destination_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
+
+      self.update(origin_local_id = origin_local_object_id, destination_local_id = destination_local_object_id)
 
 class freeDay(pydantic_base_model):
   free_limit: float
@@ -341,3 +449,8 @@ class postFclFreightRate(pydantic_base_model):
   weight_limit: freeDay = None
   origin_local: originLocal = None
   destination_local: destinationLocal = None
+  bulk_operation_id: str = None
+  rate_sheet_id: str = None
+  performed_by_id: str = None
+  procured_by_id: str = None
+  sourced_by_id: str = None

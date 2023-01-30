@@ -21,7 +21,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    db.connect()
+    # db.connect()
     # create_table()
     print("connected")
     
