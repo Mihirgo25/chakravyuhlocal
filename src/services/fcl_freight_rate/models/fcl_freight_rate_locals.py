@@ -17,7 +17,7 @@ class FclFreightRateLocal(BaseModel):
     containers_count = IntegerField(null=True)
     continent_id = UUIDField(index=True, null=True)
     country_id = UUIDField(index=True, null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     data = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     demurrage_id = UUIDField(index=True, null=True)
     detention_id = UUIDField(index=True, null=True)
@@ -43,7 +43,7 @@ class FclFreightRateLocal(BaseModel):
     shipping_line_id = UUIDField(index=True, null=True)
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         table_name = 'fcl_freight_rate_locals'

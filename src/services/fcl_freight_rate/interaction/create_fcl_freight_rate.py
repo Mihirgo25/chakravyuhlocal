@@ -14,7 +14,7 @@ def find_or_initialize(**kwargs):
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
-def create_audit(request):
+def create_audit(request, freight_id):
 
     request.validity_start = request.validity_start.isoformat()
     request.validity_end = request.validity_end.isoformat()
@@ -36,7 +36,9 @@ def create_audit(request):
         performed_by_id = request['performed_by_id'],
         procured_by_id = request['procured_by_id'],
         sourced_by_id = request['sourced_by_id'],
-        data = audit_data
+        data = audit_data,
+        object_id = freight_id,
+        object_type = 'FclFreightRate'
     )
     
 
@@ -81,20 +83,46 @@ def create_fcl_freight_rate(request):
   freight.set_is_best_price()
   freight.set_last_rate_available_date()
 
+  freight.validate_before_save()
+
   try:
     freight.save()
   except:
     raise HTTPException(status_code=499, detail='rate did not save')
 
-  if not request.importer_exporter_id:
-    freight.delete_rate_not_available_entry()
+  # if not request.importer_exporter_id:
+  #   freight.delete_rate_not_available_entry()
   
-  create_audit(request)
+  # create_audit(request, freight.id)
 
-  freight.update_special_attributes() #check this properly
+  # freight.update_special_attributes() #check this properly
   
-  freight.update_local_references #check this properly
+  # freight.update_local_references() #check this properly
 
+  # freight.update_platform_prices_for_other_service_providers()
+
+  # freight.create_trade_requirement_rate_mapping(request.procured_by_id, request.performed_by_id)
+
+  # create_sailing_schedule_port_pair(request)
+
+  # create_freight_trend_port_pair(request)
+
+  # UpdateOrganization.delay(queue: 'critical').run!(id: self.service_provider_id, freight_rates_added: true) unless FclFreightRate.where(service_provider_id: self.service_provider_id, rate_not_available_entry: false).exists?
 
   return {"id": freight.id}
   # return {"id": 1}
+
+def create_sailing_schedule_port_pair(request):
+  port_pair_coverage_data = {
+  'origin_port_id': request.origin_main_port_id if request.origin_main_port_id else request.origin_port_id,
+  'destination_port_id': request.destination_main_port_id if request.destination_main_port_id else request.destination_port_id,
+  'shipping_line_id': request.shipping_line_id
+  }
+  # CreateSailingSchedulePortPairCoverage.delay(queue: 'low').run!(port_pair_coverage_data) #call this private api
+
+def create_freight_trend_port_pair(request):
+  port_pair_data = {
+      'origin_port_id': request.origin_port_id,
+      'destination_port_id': request.destination_port_id
+  }
+  # CreateFreightTrendPortPair.delay(queue: 'low').run!(port_pair_data) #expose and call this api

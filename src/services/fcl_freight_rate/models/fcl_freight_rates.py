@@ -14,6 +14,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_validity import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 import requests
 from configs.fcl_freight_rate_constants import HAZ_COMMODITIES
+from schema import Schema, Optional
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
@@ -137,6 +138,14 @@ class FclFreightRate(BaseModel):
         if str(self.destination_main_port_id) == location['id']:
           self.destination_main_port = location
 
+      self.origin_country_id = self.origin_port['country_id']
+      self.origin_continent_id = self.origin_port['continent_id']
+      self.origin_trade_id = self.origin_port['trade_id']
+
+      self.destination_country_id = self.destination_port['country_id']
+      self.destination_continent_id = self.destination_port['continent_id']
+      self.destination_trade_id = self.destination_port['trade_id']
+
     def set_shipping_line(self):
 
       obj = {"filters" : {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}}
@@ -196,6 +205,7 @@ class FclFreightRate(BaseModel):
 
     def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term):
         new_validities = []
+        # print(line_items)
 
         if not deleted:
             currency = [item for item in line_items if item["code"] == "BAS"][0]["currency"]
@@ -301,7 +311,34 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = self.validities[-1]['validity_end']
       else:
         self.last_rate_available_date = None
-    
+
+    def validate_before_save(self):
+      schema_weight_limit = Schema({'free_limit': int, Optional('slabs', default = []): list[slab], Optional('remarks', default = []): list[str]})
+
+      schema_weight_limit.validate(self.weight_limit)
+
+      self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
+
+      if self.weight_limit['slabs'] and self.weight_limit['free_limit']!=0 and (self.weight_limit['free_limit'] >= self.weight_limit['slabs'][0]['lower_limit']):
+        raise HTTPException(status_code=499, detail="slabs lower limit should be greater than free limit")
+
+      for index, weight_limit_slab in enumerate(self.weight_limit['slabs']):
+        if (weight_limit_slab['upper_limit'] <= weight_limit_slab['lower_limit']) or (index != 0 and weight_limit_slab['lower_limit'] <= self.weight_limit['slabs'][index - 1]['upper_limit']):
+          raise HTTPException(status_code=499, detail="slabs are not valid")
+
+      schema_validity = Schema({'validity_start': str, 'validity_end': str, 'price': float, 'currency': str, 'platform_price': float, Optional('remarks', default = []): list, Optional('line_items', default = []): list[standardLineItem], Optional('schedule_type', lambda s: s in ('direct', 'transhipment')): str, Optional('payment_term', lambda s: s in ('prepaid', 'collect')): str, Optional('id'): str, Optional('likes_count'): int, Optional('dislikes_count'): int})
+
+      for validity in self.validities:
+        schema_validity.validate(validity)
+
+      schema_local_data = Schema({Optional('line_items', default = []): list[lineItem], Optional('detention'): dict, Optional('demurrage'): dict, Optional('plugin'): dict}) #check for freeDay validation
+
+      schema_local_data.validate(self.origin_local)
+      schema_local_data.validate(self.destination_local)
+
+      
+      
+
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
             FclFreightRate.origin_port_id == self.origin_port_id,
@@ -384,7 +421,7 @@ class FclFreightRate(BaseModel):
       self.update_weight_limit_special_attributes
 
     def update_local_references(self):
-      local_objects = FclFreightRateLocal.where(
+      local_objects = FclFreightRateLocal.select().where(
         (FclFreightRateLocal.port_id == [self.origin_port_id, self.destination_port_id]),
         (FclFreightRateLocal.main_port_id == [self.origin_main_port_id, self.destination_main_port_id]),
         (FclFreightRateLocal.container_size == self.container_size),
@@ -394,32 +431,73 @@ class FclFreightRate(BaseModel):
         (FclFreightRateLocal.shipping_line_id == self.shipping_line_id)
       )
 
-      filtered_objects = [t for t in local_objects if t.port_id == self.origin_port_id and t.main_port_id == self.origin_main_port_id and t.trade_type == 'export']
+      # filtered_objects = [t for t in local_objects if t.port_id == self.origin_port_id and t.main_port_id == self.origin_main_port_id and t.trade_type == 'export']
 
-      origin_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
+      # origin_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
 
-      filtered_objects = [t for t in local_objects if t.port_id == self.destination_port_id and t.main_port_id == self.destination_main_port_id and t.trade_type == 'import']
+      # filtered_objects = [t for t in local_objects if t.port_id == self.destination_port_id and t.main_port_id == self.destination_main_port_id and t.trade_type == 'import']
 
-      destination_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
+      # destination_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
 
-      self.update(origin_local_id = origin_local_object_id, destination_local_id = destination_local_object_id)
+      # self.update(origin_local_id = origin_local_object_id, destination_local_id = destination_local_object_id)
+    
+    def update_fcl_freight_rate_platform_prices(self, origin_port_id, origin_main_port_id, destination_port_id, destination_main_port_id, container_size, container_type, commodity, shipping_line_id, importer_exporter_id):
+      freight_objects = FclFreightRate.select().where(
+        (FclFreightRate.origin_port_id == origin_port_id),
+        (FclFreightRate.origin_main_port_id == origin_main_port_id),
+        (FclFreightRate.destination_port_id == destination_port_id),
+        (FclFreightRate.destination_main_port_id == destination_main_port_id),
+        (FclFreightRate.container_size == container_size),
+        (FclFreightRate.container_type == container_type),
+        (FclFreightRate.commodity == commodity),
+        (FclFreightRate.shipping_line_id == shipping_line_id)
+      ).where(FclFreightRate.importer_exporter_id.in_([None, importer_exporter_id]))
+
+      for freight in freight_objects:
+        freight.set_platform_prices()
+        freight.set_is_best_price()
+        freight.save()
+
+    def update_platform_prices_for_other_service_providers(self):
+      #should be in delay
+      self.update_fcl_freight_rate_platform_prices(self.origin_port_id, self.origin_main_port_id, self.destination_port_id, self.destination_main_port_id, self.container_size, self.container_type, self.commodity, self.shipping_line_id, self.importer_exporter_id)
+
+    def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
+      if self.last_rate_available_date is None:
+        return
+      
+    # api call and also expose
+
+    #   CreateOrganizationTradeRequirementRateMapping(
+    #   rate_id: self.id,
+    #   service: 'fcl_freight',
+    #   performed_by_id: performed_by_id,
+    #   procured_by_id: procured_by_id,
+    #   last_updated_at: self.updated_at.to_datetime,
+    #   last_rate_available_date: self.last_rate_available_date.to_datetime,
+    #   price: get_price_for_trade_requirement,
+    #   price_currency: 'INR',
+    #   is_origin_local_missing: self.is_origin_local_missing,
+    #   is_destination_local_missing: self.is_destination_local_missing,
+    #   rate_params: {
+    #     origin_location_id: self.origin_port_id,
+    #     destination_location_id: self.destination_port_id,
+    #     container_size: self.container_size,
+    #     container_type: self.container_type,
+    #     commodity: self.commodity
+    #   }
+    # )
 
 class freeDay(pydantic_base_model):
-  free_limit: float
+  free_limit: int
   slabs: list[slab] = None
   remarks: list[str] = None
 
-class originLocal(pydantic_base_model):
-  line_items: list[lineItem]
-  detention: freeDay
-  demurrage: freeDay
-  plugin: freeDay
-
-class destinationLocal(pydantic_base_model):
-  line_items: list[lineItem]
-  detention: freeDay
-  demurrage: freeDay
-  plugin: freeDay
+class local_data(pydantic_base_model):
+  line_items: list[lineItem] = None
+  detention: freeDay = None
+  demurrage: freeDay = None
+  plugin: freeDay = None
 
 class standardLineItem(pydantic_base_model):
   code: str
@@ -447,8 +525,8 @@ class postFclFreightRate(pydantic_base_model):
   payment_term: str = 'prepaid'
   line_items: list[standardLineItem]
   weight_limit: freeDay = None
-  origin_local: originLocal = None
-  destination_local: destinationLocal = None
+  origin_local: local_data = None
+  destination_local: local_data = None
   bulk_operation_id: str = None
   rate_sheet_id: str = None
   performed_by_id: str = None
