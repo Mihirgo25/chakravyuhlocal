@@ -2,7 +2,8 @@ from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
 import json
 from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-import requests
+import os
+import time
 
 def find_or_initialize(**kwargs):
   try:
@@ -12,7 +13,7 @@ def find_or_initialize(**kwargs):
   return obj
 
 def to_dict(obj):
-    return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
+    return obj
 
 def create_audit(request, freight_id):
 
@@ -44,41 +45,41 @@ def create_audit(request, freight_id):
 
 def create_fcl_freight_rate(request):
   row = {
-    'origin_port_id' : request.origin_port_id,
-    'origin_main_port_id' : request.origin_main_port_id,
-    'destination_port_id' : request.destination_port_id,
-    'destination_main_port_id' : request.destination_main_port_id,
-    'container_size' : request.container_size,
-    'container_type' : request.container_type,
-    'commodity' : request.commodity,
-    'shipping_line_id' : request.shipping_line_id,
-    'service_provider_id' : request.service_provider_id,
-    'importer_exporter_id' : request.importer_exporter_id,
+    'origin_port_id' : request.get("origin_port_id"),
+    'origin_main_port_id' : request.get("origin_main_port_id"),
+    'destination_port_id' : request["destination_port_id"],
+    'destination_main_port_id' : request.get("destination_main_port_id"),
+    'container_size' : request["container_size"],
+    'container_type' : request["container_type"],
+    'commodity' : request["commodity"],
+    'shipping_line_id' : request["shipping_line_id"],
+    'service_provider_id' : request["service_provider_id"],
+    'importer_exporter_id' : request.get("importer_exporter_id"),
     'rate_not_available_entry' : False
   }
 
   freight = find_or_initialize(**row)
-
   freight.set_locations()
   freight.set_shipping_line()
 
-  freight.weight_limit = to_dict(request.weight_limit)
-
+  freight.weight_limit = to_dict(request["weight_limit"])
   if freight.origin_local:
-    freight.origin_local.update(to_dict(request.origin_local))
+    freight.origin_local.update(to_dict(request.get("origin_local")))
   else:
-    freight.origin_local = to_dict(request.origin_local)
+    freight.origin_local = to_dict(request.get("origin_local"))
+    
+  print(freight.origin_local)
 
   if freight.destination_local:
-    freight.destination_local.update(to_dict(request.destination_local))
+    freight.destination_local.update(to_dict(request["destination_local"]))
   else:
-    freight.destination_local = to_dict(request.destination_local)
+    freight.destination_local = to_dict(request["destination_local"])
   
-  freight.validate_validity_object(request.validity_start, request.validity_end)
+  freight.validate_validity_object(request["validity_start"], request["validity_end"])
 
   # freight.validate_line_items(to_dict(request.line_items))
 
-  freight.set_validities(request.validity_start, request.validity_end, to_dict(request.line_items), request.schedule_type, False, request.payment_term)
+  freight.set_validities(request["validity_start"], request["validity_end"], to_dict(request["line_items"]), request["schedule_type"], False, request["payment_term"])
   freight.set_platform_prices()
   freight.set_is_best_price()
   freight.set_last_rate_available_date()

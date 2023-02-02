@@ -8,7 +8,6 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_f
 # from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
 from services.fcl_freight_rate.models.fcl_freight_rates import postFclFreightRate
-from celery_worker import create_task
 
 app = FastAPI(debug=True)
 
@@ -35,14 +34,6 @@ def shutdown():
 def read_root():
     return "WELCOME TO OCEAN RMS"
 
-@app.post("/ex1")
-def run_task(data={"amount": 150, "x": 6, "y": 9}):
-    amount = int(data["amount"])
-    x = data["x"]
-    y = data["y"]
-    task = create_task.delay(amount, x, y)
-    return JSONResponse(status_code=200, content={"success": True})
-
 @app.get("/get_fcl_freight_rate_data")
 def get_fcl_freight_rate_data():
     data = get_fcl_freight_rate()
@@ -53,9 +44,10 @@ def get_fcl_freight_rate_data():
 def create_fcl_freight_rate_data(request: postFclFreightRate, response: Response):
     # print(vars(request.weight_limit))
     # try:
-        return create_fcl_freight_rate(request)
+        rate = create_fcl_freight_rate.delay(request.dict(exclude_none=True))
+        # return create_fcl_freight_rate(request.dict(exclude_none=True))
         # return JSONResponse(status_code=200, content=data)
-        # return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content={"success": True})
     # except Exception as e:
         # logger.error(e,exc_info=True)
     #     return JSONResponse(status_code=500, content={"success": False})

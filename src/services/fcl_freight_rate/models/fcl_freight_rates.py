@@ -14,7 +14,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_validity import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 import requests
 from configs.fcl_freight_rate_constants import HAZ_COMMODITIES
-from schema import Schema, Optional
+from schema import Schema, Optional, Or
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
@@ -161,10 +161,10 @@ class FclFreightRate(BaseModel):
       if not validity_end:
         raise HTTPException(status_code=499, detail="validity_end is invalid")
 
-      if validity_end > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
+      if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
         raise HTTPException(status_code=499, detail="validity_end can not be greater than 60 days from current date")
 
-      if validity_start < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
+      if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
         raise HTTPException(status_code=499, detail="validity_start can not be less than 15 days from current date")
 
       if validity_end < validity_start:
@@ -313,7 +313,7 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = None
 
     def validate_before_save(self):
-      schema_weight_limit = Schema({'free_limit': int, Optional('slabs', default = []): list[slab], Optional('remarks', default = []): list[str]})
+      schema_weight_limit = Schema({'free_limit': int, Optional('slabs', default = []): Or(list, None), Optional('remarks', default = []): Or(list, None)})
 
       schema_weight_limit.validate(self.weight_limit)
 
@@ -326,15 +326,15 @@ class FclFreightRate(BaseModel):
         if (weight_limit_slab['upper_limit'] <= weight_limit_slab['lower_limit']) or (index != 0 and weight_limit_slab['lower_limit'] <= self.weight_limit['slabs'][index - 1]['upper_limit']):
           raise HTTPException(status_code=499, detail="slabs are not valid")
 
-      schema_validity = Schema({'validity_start': str, 'validity_end': str, 'price': float, 'currency': str, 'platform_price': float, Optional('remarks', default = []): list, Optional('line_items', default = []): list[standardLineItem], Optional('schedule_type', lambda s: s in ('direct', 'transhipment')): str, Optional('payment_term', lambda s: s in ('prepaid', 'collect')): str, Optional('id'): str, Optional('likes_count'): int, Optional('dislikes_count'): int})
+      schema_validity = Schema({'validity_start': str, 'validity_end': str, 'price': float, 'currency': str, 'platform_price': float, Optional('remarks', default = []): Or(list, None), Optional('line_items', default = []): Or(list, None), Optional('schedule_type', lambda s: s in ('direct', 'transhipment')): str, Optional('payment_term', lambda s: s in ('prepaid', 'collect')): str, Optional('id'): str, Optional('likes_count'): int, Optional('dislikes_count'): int})
 
       for validity in self.validities:
         schema_validity.validate(validity)
 
-      schema_local_data = Schema({Optional('line_items', default = []): list[lineItem], Optional('detention'): dict, Optional('demurrage'): dict, Optional('plugin'): dict}) #check for freeDay validation
-
-      schema_local_data.validate(self.origin_local)
-      schema_local_data.validate(self.destination_local)
+      # if self.origin_local:
+      #   schema_local_data.validate(self.origin_local) 
+      # if self.destination_local:
+      #   schema_local_data.validate(self.destination_local)
 
       
       
@@ -518,8 +518,8 @@ class postFclFreightRate(pydantic_base_model):
   shipping_line_id: str
   service_provider_id: str
   importer_exporter_id: str = None
-  validity_start: datetime.date
-  validity_end: datetime.date
+  validity_start: datetime.datetime
+  validity_end: datetime.datetime
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
