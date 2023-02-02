@@ -16,6 +16,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightR
 import requests
 from configs.fcl_freight_rate_constants import HAZ_COMMODITIES
 from schema import Schema, Optional, Or
+from configs.defintions import FCL_FREIGHT_CHARGES
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
@@ -178,7 +179,7 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=499, detail="line_items contains duplicates")
 
       #should we put self in condition in fcl_freight_charges yml
-      with open('/Users/uditpal/ocean-rms/src/charges/fcl_freight_charges.yml', 'r') as file:
+      with open(FCL_FREIGHT_CHARGES, 'r') as file:
         fcl_freight_charges_dict = yaml.safe_load(file)
 
       invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict]
@@ -230,6 +231,8 @@ class FclFreightRate(BaseModel):
         for validity_object in self.validities:
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
+            validity_start = validity_start.date()
+            validity_end = validity_end.date()
             if (validity_object['schedule_type'] not in [None, schedule_type] and not deleted):
                 new_validities.append(validity_object)
                 continue

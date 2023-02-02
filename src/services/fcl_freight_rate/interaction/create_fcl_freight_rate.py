@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 import os
 import time
+from celery_worker import celery
 
 def find_or_initialize(**kwargs):
   try:
@@ -42,7 +43,7 @@ def create_audit(request, freight_id):
         object_type = 'FclFreightRate'
     )
     
-
+@celery.task(name="create_fcl_freight_rate_data")
 def create_fcl_freight_rate_data(request):
   row = {
     'origin_port_id' : request.get("origin_port_id"),
@@ -77,7 +78,7 @@ def create_fcl_freight_rate_data(request):
   
   freight.validate_validity_object(request["validity_start"], request["validity_end"])
 
-  freight.validate_line_items(to_dict(request.line_items))
+  freight.validate_line_items(to_dict(request.get("line_items")))
 
   freight.set_validities(request["validity_start"], request["validity_end"], to_dict(request["line_items"]), request["schedule_type"], False, request["payment_term"])
   freight.set_platform_prices()

@@ -46,7 +46,7 @@ def get_fcl_freight_rate_data():
 @app.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate(request: postFclFreightRate, response: Response):
     # try:
-        rate = create_fcl_freight_rate.delay(request.dict(exclude_none=True))
+        rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         # return create_fcl_freight_rate(request.dict(exclude_none=True))
         # return JSONResponse(status_code=200, content=data)
         return JSONResponse(status_code=200, content={"success": True})
