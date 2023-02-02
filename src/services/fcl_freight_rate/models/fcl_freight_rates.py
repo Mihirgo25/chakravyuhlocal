@@ -10,6 +10,7 @@ import yaml
 from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_slab import slab
 from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
+from services.fcl_freight_rate.models.fcl_freight_rate_free_day import freeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_validity import FclFreightRateValidity
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 import requests
@@ -171,20 +172,21 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=499, detail="validity_end can not be lesser than validity_start")
 
     def validate_line_items(self, line_items):
-      codes = [item["code"] for item in line_items]
+      codes = [item['code'] for item in line_items]
+
       if len(set(codes)) != len(codes):
         raise HTTPException(status_code=499, detail="line_items contains duplicates")
 
+      #should we put self in condition in fcl_freight_charges yml
       with open('/Users/uditpal/ocean-rms/src/charges/fcl_freight_charges.yml', 'r') as file:
         fcl_freight_charges_dict = yaml.safe_load(file)
 
       invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict]
-
       
       if invalid_line_items:
           raise HTTPException(status_code=499, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
 
-      #an api call to ListMoneyCurrencies
+      # #an api call to ListMoneyCurrencies
 
       mandatory_codes = []
 
@@ -313,6 +315,8 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = None
 
     def validate_before_save(self):
+      #put schema validates in try catch and then raise custom error
+
       schema_weight_limit = Schema({'free_limit': int, Optional('slabs', default = []): list[slab], Optional('remarks', default = []): list[str]})
 
       schema_weight_limit.validate(self.weight_limit)
@@ -336,8 +340,13 @@ class FclFreightRate(BaseModel):
       schema_local_data.validate(self.origin_local)
       schema_local_data.validate(self.destination_local)
 
-      
-      
+      # validates :origin_main_port_id, absence: true, if: Proc.new { |t| t.origin_port.present? && t.origin_port[:is_icd] == false }
+      # validates :origin_main_port_id, service_object: { store_in: 'origin_main_port', object: 'location', filters: { type: 'seaport', is_icd: false } }, if: Proc.new { |t| t.origin_port.present? && t.origin_port[:is_icd] == true && !t.rate_not_available_entry }
+
+      # validates :destination_main_port_id, absence: true, if: Proc.new { |t| t.destination_port.present? && t.destination_port[:is_icd] == false }
+      # validates :destination_main_port_id, service_object: { store_in: 'destination_main_port', object: 'location', filters: { type: 'seaport', is_icd: false } }, if: Proc.new { |t| t.destination_port.present? && t.destination_port[:is_icd] == true && !t.rate_not_available_entry }
+
+      # validates :shipping_line_id, service_object: { store_in: 'shipping_line', object: 'operator', filters: { operator_type: 'shipping_line' } }, if: Proc.new { |t|  !t.rate_not_available_entry }      
 
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
@@ -488,10 +497,10 @@ class FclFreightRate(BaseModel):
     #   }
     # )
 
-class freeDay(pydantic_base_model):
-  free_limit: int
-  slabs: list[slab] = None
-  remarks: list[str] = None
+# class freeDay(pydantic_base_model):
+#   free_limit: int
+#   slabs: list[slab] = None
+#   remarks: list[str] = None
 
 class local_data(pydantic_base_model):
   line_items: list[lineItem] = None
@@ -529,6 +538,6 @@ class postFclFreightRate(pydantic_base_model):
   destination_local: local_data = None
   bulk_operation_id: str = None
   rate_sheet_id: str = None
-  performed_by_id: str = None
+  performed_by_id: str = None #remove this and below None
   procured_by_id: str = None
   sourced_by_id: str = None

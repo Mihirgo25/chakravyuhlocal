@@ -131,7 +131,7 @@ MISC:
 CDD:
   name: "Cargo Data Declaration"
   units: ['per_bl']
-  condition: "(destination_port['country_code'] in ["RU", "DK", "CZ", "NL", "EE", "AT", "LI", "NI", "PL", "MC", "BY", "SE", "CH", "DE", "LU", "SK", "LT", "FR", "LV", "HU", "FI", "RS", "FO", "IE", "AM", "MD", "AD", "PT", "NO", "GB", "IS", "MK", "BE"]) and (shipping_line['short_name'] == 'MSC')"
+  condition: "(destination_port['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']) and (shipping_line['short_name'] == 'MSC)"
   tags: []
 OCC:
   name: "Operations Cost Contribution"
@@ -251,7 +251,7 @@ NEO:
 GRS:
   name: "Gulf Emergency Risk Surcharge"
   units: ['per_container']
-  condition: "destination_port['country_code'] in ["RU", "DK", "CZ", "NL", "EE", "AT", "LI", "NI", "PL", "MC", "BY", "SE", "CH", "DE", "LU", "SK", "LT", "FR", "LV", "HU", "FI", "RS", "FO", "IE", "AM", "MD", "AD", "PT", "NO", "GB", "IS", "MK", "BE"]"
+  condition: "destination_port['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']"
   tags: []
 EFF:
   name: "Environmental Fuel Fee"

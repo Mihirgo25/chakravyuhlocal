@@ -42,7 +42,7 @@ def create_audit(request, freight_id):
     )
     
 
-def create_fcl_freight_rate(request):
+def create_fcl_freight_rate_data(request):
   row = {
     'origin_port_id' : request.origin_port_id,
     'origin_main_port_id' : request.origin_main_port_id,
@@ -76,7 +76,7 @@ def create_fcl_freight_rate(request):
   
   freight.validate_validity_object(request.validity_start, request.validity_end)
 
-  # freight.validate_line_items(to_dict(request.line_items))
+  freight.validate_line_items(to_dict(request.line_items))
 
   freight.set_validities(request.validity_start, request.validity_end, to_dict(request.line_items), request.schedule_type, False, request.payment_term)
   freight.set_platform_prices()
@@ -90,22 +90,22 @@ def create_fcl_freight_rate(request):
   except:
     raise HTTPException(status_code=499, detail='rate did not save')
 
-  # if not request.importer_exporter_id:
-  #   freight.delete_rate_not_available_entry()
+  if not request.importer_exporter_id:
+    freight.delete_rate_not_available_entry()
   
-  # create_audit(request, freight.id)
+  create_audit(request, freight.id)
 
-  # freight.update_special_attributes() #check this properly
+  freight.update_special_attributes() #check this properly
   
-  # freight.update_local_references() #check this properly
+  freight.update_local_references() #check this properly
 
-  # freight.update_platform_prices_for_other_service_providers()
+  freight.update_platform_prices_for_other_service_providers()
 
-  # freight.create_trade_requirement_rate_mapping(request.procured_by_id, request.performed_by_id)
+  freight.create_trade_requirement_rate_mapping(request.procured_by_id, request.performed_by_id)
 
-  # create_sailing_schedule_port_pair(request)
+  create_sailing_schedule_port_pair(request)
 
-  # create_freight_trend_port_pair(request)
+  create_freight_trend_port_pair(request)
 
   # UpdateOrganization.delay(queue: 'critical').run!(id: self.service_provider_id, freight_rates_added: true) unless FclFreightRate.where(service_provider_id: self.service_provider_id, rate_not_available_entry: false).exists?
 

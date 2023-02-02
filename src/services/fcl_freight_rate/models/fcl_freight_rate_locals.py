@@ -2,6 +2,9 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
+from pydantic import BaseModel as pydantic_base_model
+from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
+from services.fcl_freight_rate.models.fcl_freight_rate_free_day import freeDay
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -71,3 +74,26 @@ class FclFreightRateLocal(BaseModel):
             (('updated_at', 'service_provider_id'), False),
             (('updated_at', 'service_provider_id'), False),
         )
+    
+class data(pydantic_base_model):
+    line_items: list[lineItem] = None
+    detention: freeDay = None
+    demurrage: freeDay = None
+    plugin: freeDay = None
+
+class postFclFreightRateLocal(pydantic_base_model):
+    rate_sheet_id: str = None
+    performed_by_id: str = None
+    procured_by_id: str = None
+    sourced_by_id: str = None
+    trade_type: str
+    port_id: str
+    main_port_id: str = None
+    container_size: str
+    container_type: str
+    commodity: str = None
+    shipping_line_id: str
+    service_provider_id: str
+    selected_suggested_rate_id: str = None
+    source: str = None
+    data: data
