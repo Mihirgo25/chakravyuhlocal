@@ -14,7 +14,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import freeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_validity import FclFreightRateValidity
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 import requests
-from configs.fcl_freight_rate_constants import HAZ_COMMODITIES
+from configs.fcl_freight_rate_constants import HAZ_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, FREIGHT_CONTAINER_COMMODITY_MAPPINGS
 from schema import Schema, Optional, Or
 from configs.defintions import FCL_FREIGHT_CHARGES
 
@@ -39,7 +39,7 @@ class FclFreightRate(BaseModel):
     destination_demurrage_id = UUIDField(index=True, null=True)
     destination_detention_id = UUIDField(index=True, null=True)
     destination_local = BinaryJSONField(null=True)
-    destination_local_id = UUIDField(index=True, null=True)
+    destination_local_id = ForeignKeyField(FclFreightRateLocal, index=True, null=True)
     destination_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     destination_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
@@ -68,7 +68,7 @@ class FclFreightRate(BaseModel):
     origin_country_id = UUIDField(index=True, null=True)
     origin_detention_id = UUIDField(index=True, null=True)
     origin_local = BinaryJSONField(null=True)
-    origin_local_id = UUIDField(index=True, null=True)
+    origin_local_id = ForeignKeyField(FclFreightRateLocal, index=True, null=True)
     origin_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
@@ -85,6 +85,8 @@ class FclFreightRate(BaseModel):
     validities = BinaryJSONField(default = [], null=True)
     weight_limit = BinaryJSONField(null=True)
     weight_limit_id = UUIDField(index=True, null=True)
+    source = CharField(default = 'manual', null = True)
+    accuracy = FloatField(default = 100, null = True)
     origin_port: dict = None
     destination_port: dict = None
     origin_main_port: dict = None
@@ -124,6 +126,81 @@ class FclFreightRate(BaseModel):
     #   #logic for validation goes here
     #   print('abcsdasd')
 
+    def set_service_provider(self):
+      "set service_provder" #api call
+
+    def set_importer_exporter(self):
+      "set importer_exporter" #api call
+
+    def validate_container_size(self):
+      if self.container_size and self.container_size in CONTAINER_SIZES:
+        return True
+      return False
+
+    def validate_container_type(self):
+      if self.container_type and self.container_type in CONTAINER_TYPES:
+        return True
+      return False
+
+    def validate_commodity(self):
+      if self.container_type and self.commodity in FREIGHT_CONTAINER_COMMODITY_MAPPINGS[f"{self.container_type}"]:
+        return True
+      return False
+
+    def valid_uniqueness(self):
+      freight_cnt = FclFreightRate.select().where(
+        FclFreightRate.origin_port_id == self.origin_port_id,
+        FclFreightRate.origin_main_port_id == self.origin_main_port_id,
+        FclFreightRate.destination_port_id == self.destination_port_id,
+        FclFreightRate.destination_main_port_id == self.destination_main_port_id,
+        FclFreightRate.container_size == self.container_size,
+        FclFreightRate.container_type == self.container_type,
+        FclFreightRate.commodity == self.commodity,
+        FclFreightRate.shipping_line_id == self.shipping_line_id,
+        FclFreightRate.service_provider_id == self.service_provider_id,
+        FclFreightRate.importer_exporter_id == self.importer_exporter_id
+      ).count()
+
+      if self.id and freight_cnt==1:
+        return True
+      if not self.id and freight_cnt==0:
+        return True
+
+      return False
+
+    def set_omp_dmp_sl_sp(self):
+      self.set_omp_dmp_sl_sp = ":".join([str(self.origin_main_port_id), str(self.destination_main_port_id), str(self.shipping_line_id), str(self.service_provider_id)])
+
+    def validate_origin_local(self):
+      if 'origin_local' in self.changes and self.origin_local:
+        self.origin_local.validate_duplicate_charge_codes #call to local store model function
+        self.origin_local.validate_invalid_charge_codes(self.possible_origin_local_charge_codes) #call to local store model function
+
+    def validate_destination_local(self):
+      if 'destination_local' in self.changes and self.destination_local:
+        self.destination_local.validate_duplicate_charge_codes #call to local function
+        self.destination_local.validate_invalid_charge_codes(self.possible_destination_local_charge_codes) #call to local function
+
+    def validate_origin_main_port_id(self):
+      if self.origin_port and self.origin_port['icd'] == False:
+        if not self.origin_main_port_id:
+          return True
+        return False
+
+    # def set_origin_main_port(self):
+    #   if self.origin_port and self.origin_port['icd'] == True and not self.rate_not_available_entry:
+    #     "set origin_main_port"
+
+    def validate_destination_main_port_id(self):
+      if self.destination_port and self.destination_port['icd'] == False:
+        if not self.destination_main_port_id:
+          return True
+        return False
+
+    # def set_destination_main_port(self):
+    #   if self.destination_port and self.destination_port['icd'] == True and not self.rate_not_available_entry:
+    #     "set destination_main_port"
+
     def set_locations(self):
 
       obj = {"filters" : {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}}
@@ -149,11 +226,6 @@ class FclFreightRate(BaseModel):
       self.destination_trade_id = self.destination_port['trade_id']
 
     def set_shipping_line(self):
-
-      obj = {"filters" : {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}}
-
-      # operators = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/operator/list_operators', json = obj).json()['list']
-
       self.shipping_line = requests.get("https://api-nirvana1.dev.cogoport.io/operator/list_operators?filters%5Bid%5D[]=" + str(self.shipping_line_id)).json()['list'][0]
 
     def validate_validity_object(self, validity_start, validity_end):
@@ -208,7 +280,6 @@ class FclFreightRate(BaseModel):
 
     def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term):
         new_validities = []
-        # print(line_items)
 
         if not deleted:
             currency = [item for item in line_items if item["code"] == "BAS"][0]["currency"]
@@ -231,8 +302,8 @@ class FclFreightRate(BaseModel):
         for validity_object in self.validities:
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
-            validity_start = validity_start.date()
-            validity_end = validity_end.date()
+            validity_start = validity_start
+            validity_end = validity_end
             if (validity_object['schedule_type'] not in [None, schedule_type] and not deleted):
                 new_validities.append(validity_object)
                 continue
@@ -318,12 +389,11 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = None
 
     def validate_before_save(self):
-      schema_weight_limit = Schema({'free_limit': int, Optional('slabs', default = []): Or(list, None), Optional('remarks', default = []): Or(list, None)})
       #put schema validates in try catch and then raise custom error
-
-      schema_weight_limit = Schema({'free_limit': int, Optional('slabs', default = []): list[slab], Optional('remarks', default = []): list[str]})
-
-      schema_weight_limit.validate(self.weight_limit)
+      schema_weight_limit = Schema({'free_limit': int, Optional('slabs'): list, Optional('remarks'): list})
+      
+      if self.weight_limit:
+        schema_weight_limit.validate(self.weight_limit)
 
       self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
 
@@ -334,14 +404,35 @@ class FclFreightRate(BaseModel):
         if (weight_limit_slab['upper_limit'] <= weight_limit_slab['lower_limit']) or (index != 0 and weight_limit_slab['lower_limit'] <= self.weight_limit['slabs'][index - 1]['upper_limit']):
           raise HTTPException(status_code=499, detail="slabs are not valid")
 
-      schema_validity = Schema({'validity_start': str, 'validity_end': str, 'price': float, 'currency': str, 'platform_price': float, Optional('remarks', default = []): Or(list, None), Optional('line_items', default = []): Or(list, None), Optional('schedule_type', lambda s: s in ('direct', 'transhipment')): str, Optional('payment_term', lambda s: s in ('prepaid', 'collect')): str, Optional('id'): str, Optional('likes_count'): int, Optional('dislikes_count'): int})
+      schema_validity = Schema({'validity_start': str, 'validity_end': str, 'price': float, 'currency': str, 'platform_price': float, Optional('remarks'): list, Optional('line_items'): list, Optional('schedule_type', lambda s: s in ('direct', 'transhipment')): str, Optional('payment_term', lambda s: s in ('prepaid', 'collect')): str, Optional('id'): str, Optional('likes_count'): int, Optional('dislikes_count'): int})
 
       for validity in self.validities:
         schema_validity.validate(validity)
 
+      schema_local_data = Schema({Optional('line_items'): list, Optional('detention'): dict, Optional('demurrage'): dict, Optional('plugin'): dict})
 
-      
-      
+      if self.origin_local:
+        schema_local_data.validate(self.origin_local)
+      if self.destination_local:
+        schema_local_data.validate(self.destination_local)
+
+
+      if not self.validate_container_size():
+        raise HTTPException(status_code=499, detail="incorrect container size")
+      if not self.validate_container_type():
+        raise HTTPException(status_code=499, detail="incorrect container type")
+      if not self.validate_commodity():
+        raise HTTPException(status_code=499, detail="incorrect commodity")
+      # self.valid_uniqueness()
+      if not self.valid_uniqueness():
+        raise HTTPException(status_code=499, detail="uniqueness not valid")
+      # self.set_omp_dmp_sl_sp()
+      # self.validate_origin_local()
+      # self.validate_destination_local()
+      # if self.validate_origin_main_port_id():
+      #   raise HTTPException(status_code=499, detail="origin main port id is invalid")
+      # if self.validate_destination_main_port_id():
+      #   raise HTTPException(status_code=499, detail="destination main port id is invalid")
 
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
@@ -354,7 +445,7 @@ class FclFreightRate(BaseModel):
             FclFreightRate.rate_not_available_entry == False
       )
 
-    def possible_origin_local_charge_codes():
+    def possible_origin_local_charge_codes(self):
       # self.port = self.origin_port
       with open('/Users/uditpal/ocean-rms/src/charges/fcl_freight_charges.yml', 'r') as file:
         fcl_freight_charges_dict = yaml.safe_load(file)
