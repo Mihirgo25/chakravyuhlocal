@@ -44,8 +44,6 @@ def create_fcl_freight_rate_local_data(request):
   #   else:
   #     fcl_freight_local.data = {key : value for key, value in request['data'].items() if key == 'line_items'}
 
-  # print(fcl_freight_local.data)
-
   if request['data']['detention']:
     detention_obj = {}
     detention_obj['location_id'] = request['port_id']

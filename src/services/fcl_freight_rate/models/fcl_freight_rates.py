@@ -115,12 +115,6 @@ class FclFreightRate(BaseModel):
             (('updated_at', 'service_provider_id'), False),
         )
 
-
-
-    # def save(self):
-    #   #logic for validation goes here
-    #   print('abcsdasd')
-
     def set_service_provider(self):
       "set service_provder" #api call
 
