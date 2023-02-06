@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 from fastapi import FastAPI, Response, Query, Request, Depends
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
-from database.create_tables import create_table
+# from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
 from services.fcl_freight_rate.models.fcl_freight_rates import postFclFreightRate
@@ -25,7 +25,7 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     # db.connect()
-    create_table()
+    # create_table()
     print("connected")
     
 @app.on_event("shutdown")
