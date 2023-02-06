@@ -1,6 +1,7 @@
 from peewee import * 
 from database.db_session import db
 from playhouse.postgres_ext import *
+from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -23,6 +24,15 @@ class FclFreightRateAudit(BaseModel):
     source = CharField(null=True)
     sourced_by_id = UUIDField(null=True)
     updated_at = DateTimeField()
+    object_id = ForeignKeyField(FclFreightRate, related_name='audits', on_delete='CASCADE')
+    created_at = DateTimeField()
+    seqnum = Window(
+        partition_by = object_id,
+        order_by = created_at.desc()
+    )
+
+    class Meta:
+        database = db
 
     class Meta:
         table_name = 'fcl_freight_rate_audits'
