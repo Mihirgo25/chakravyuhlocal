@@ -647,3 +647,25 @@ class postFclFreightRate(pydantic_base_model):
   performed_by_id: str = None #remove this and below None
   procured_by_id: str = None
   sourced_by_id: str = None
+
+class updateLineItem(pydantic_base_model):
+  code: str
+  unit: str
+  price: float
+  currency: str
+  remarks: list[str] = []
+
+class updateFclFreightRate(pydantic_base_model):
+  id: str
+  procured_by_id: str = None #not null
+  sourced_by_id: str = None #not null
+  performed_by_id: str = None #not null
+  bulk_operation_id: str = None
+  validity_start: datetime.datetime = None
+  validity_end: datetime.datetime = None
+  schedule_type: str = 'transhipment'
+  payment_term: str = 'prepaid'
+  line_items: list[updateLineItem] = None
+  weight_limit: freeDay = None
+  origin_local: local_data = None
+  destination_local: local_data = None
