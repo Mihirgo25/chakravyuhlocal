@@ -12,6 +12,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from services.fcl_freight_rate.models.fcl_freight_rates import postFclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rates import updateFclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import postFclFreightRateLocal
+from rails_client.client import initialize_client
 
 
 app = FastAPI(debug=True)
@@ -26,9 +27,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    # db.connect()
+    if db.is_closed():
+        db.connect()
     # create_table()
-    print("connected")
+    initialize_client()
     
 @app.on_event("shutdown")
 def shutdown():
