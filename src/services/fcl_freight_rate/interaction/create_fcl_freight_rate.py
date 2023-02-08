@@ -18,22 +18,22 @@ def to_dict(obj):
 
 def create_audit(request, freight_id):
 
-    request.validity_start = request.validity_start.isoformat()
-    request.validity_end = request.validity_end.isoformat()
+    # request.validity_start = request.validity_start.isoformat()
+    # request.validity_end = request.validity_end.isoformat()
 
-    request = to_dict(request)
+    # request = to_dict(request)
 
     audit_data = {}
-    audit_data['validity_start'] = request['validity_start']
-    audit_data['validity_end'] = request['validity_end']
+    audit_data['validity_start'] = request['validity_start'].isoformat()
+    audit_data['validity_end'] = request['validity_end'].isoformat()
     audit_data['line_items'] = request['line_items']
     audit_data['weight_limit'] = request['weight_limit']
-    audit_data['origin_local'] = request['origin_local']
-    audit_data['destination_local'] = request['destination_local']
+    audit_data['origin_local'] = request.get('origin_local')
+    audit_data['destination_local'] = request.get('destination_local')
 
     FclFreightRateAudit.create(
-        bulk_operation_id = request['bulk_operation_id'],
-        rate_sheet_id = request['rate_sheet_id'],
+        bulk_operation_id = request.get('bulk_operation_id'),
+        rate_sheet_id = request.get('rate_sheet_id'),
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
         procured_by_id = request['procured_by_id'],
@@ -62,6 +62,8 @@ def create_fcl_freight_rate_data(request):
   freight = find_or_initialize(**row)
   freight.set_locations()
   freight.set_shipping_line()
+  freight.set_service_provider()
+  freight.set_importer_exporter()
 
   freight.weight_limit = to_dict(request["weight_limit"])
   if freight.origin_local:
@@ -69,7 +71,7 @@ def create_fcl_freight_rate_data(request):
   else:
     freight.origin_local = to_dict(request.get("origin_local"))
     
-  print(freight.origin_local)
+  # print(freight.origin_local)
 
   if freight.destination_local:
     freight.destination_local.update(to_dict(request["destination_local"]))
@@ -80,7 +82,7 @@ def create_fcl_freight_rate_data(request):
 
   freight.validate_line_items(to_dict(request.get("line_items")))
 
-  freight.set_validities(request["validity_start"], request["validity_end"], to_dict(request["line_items"]), request["schedule_type"], False, request["payment_term"])
+  freight.set_validities(request["validity_start"].date(), request["validity_end"].date(), to_dict(request["line_items"]), request["schedule_type"], False, request["payment_term"])
   freight.set_platform_prices()
   freight.set_is_best_price()
   freight.set_last_rate_available_date()
@@ -92,7 +94,7 @@ def create_fcl_freight_rate_data(request):
   except:
     raise HTTPException(status_code=499, detail='rate did not save')
 
-  if not request.importer_exporter_id:
+  if not request.get('importer_exporter_id'):
     freight.delete_rate_not_available_entry()
   
   create_audit(request, freight.id)
@@ -103,11 +105,11 @@ def create_fcl_freight_rate_data(request):
 
   freight.update_platform_prices_for_other_service_providers()
 
-  freight.create_trade_requirement_rate_mapping(request.procured_by_id, request.performed_by_id)
+  freight.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
 
-  create_sailing_schedule_port_pair(request)
+  # create_sailing_schedule_port_pair(request)
 
-  create_freight_trend_port_pair(request)
+  # create_freight_trend_port_pair(request)
 
   # UpdateOrganization.delay(queue: 'critical').run!(id: self.service_provider_id, freight_rates_added: true) unless FclFreightRate.where(service_provider_id: self.service_provider_id, rate_not_available_entry: false).exists?
 

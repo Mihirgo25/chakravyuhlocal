@@ -54,10 +54,6 @@ class FclFreightRateLocal(BaseModel):
             (('container_size', 'container_type', 'commodity'), False),
             (('container_type', 'commodity'), False),
             (('port_id', 'container_size', 'container_type', 'commodity', 'trade_type', 'is_line_items_error_messages_present', 'service_provider_id'), False),
-            (('port_id', 'trade_type', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id'), True),
-            (('port_id', 'trade_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id'), True),
-            (('port_id', 'trade_type', 'main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id'), True),
-            (('port_id', 'trade_type', 'main_port_id', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id'), True),
             (('priority_score', 'id', 'service_provider_id'), False),
             (('priority_score', 'service_provider_id'), False),
             (('priority_score', 'service_provider_id', 'is_line_items_error_messages_present'), False),
@@ -74,6 +70,20 @@ class FclFreightRateLocal(BaseModel):
             (('updated_at', 'service_provider_id'), False),
             (('updated_at', 'service_provider_id'), False),
         )
+
+idx1 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id == None).where(FclFreightRateLocal.commodity == None)
+
+idx2 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.commodity, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id == None).where(FclFreightRateLocal.commodity != None)
+
+idx3 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.main_port_id, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.commodity, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id != None).where(FclFreightRateLocal.commodity != None)
+
+idx4 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.main_port_id, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id != None).where(FclFreightRateLocal.commodity == None)
+
+FclFreightRateLocal.add_index(idx1)
+FclFreightRateLocal.add_index(idx2)
+FclFreightRateLocal.add_index(idx3)
+FclFreightRateLocal.add_index(idx4)
+
     
 class data(pydantic_base_model):
     line_items: list[lineItem] = None
