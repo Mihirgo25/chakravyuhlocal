@@ -7,8 +7,10 @@ from fastapi import FastAPI, Response, Query, Request, Depends
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
 # from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
 from services.fcl_freight_rate.models.fcl_freight_rates import postFclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rates import updateFclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import postFclFreightRateLocal
 
 
@@ -57,3 +59,8 @@ def create_fcl_freight_rate(request: postFclFreightRate, response: Response):
 @app.post("/create_fcl_freight_rate_local")
 def create_fcl_freight_rate(request: postFclFreightRateLocal, response: Response):
     return create_fcl_freight_rate_local_data(request)
+
+@app.post("/update_fcl_freight_rate")
+def update_fcl_freight_rate(request: updateFclFreightRate, response: Response):
+    rate = update_fcl_freight_rate_data(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})

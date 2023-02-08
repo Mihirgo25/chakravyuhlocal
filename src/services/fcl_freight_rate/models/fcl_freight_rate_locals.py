@@ -5,6 +5,7 @@ import datetime
 from pydantic import BaseModel as pydantic_base_model
 from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import freeDay
+import requests
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -70,6 +71,23 @@ class FclFreightRateLocal(BaseModel):
             (('updated_at', 'service_provider_id'), False),
             (('updated_at', 'service_provider_id'), False),
         )
+
+    def set_location_columns(self):
+
+        obj = {"filters" : {"id": [str(self.port_id)]}}
+
+        port = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/location/list_locations', json = obj).json()['list'][0]
+
+        self.country_id = port['country_id']
+        self.trade_id = port['trade_id'] 
+        self.continent_id = port['continent_id']
+        self.location_ids = [x for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
+
+    def before_save(self):
+        # data #store model validation
+
+        set_location_columns
+
 
 idx1 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id == None).where(FclFreightRateLocal.commodity == None)
 

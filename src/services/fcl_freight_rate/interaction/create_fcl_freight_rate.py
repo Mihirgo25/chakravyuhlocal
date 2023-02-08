@@ -18,11 +18,6 @@ def to_dict(obj):
 
 def create_audit(request, freight_id):
 
-    # request.validity_start = request.validity_start.isoformat()
-    # request.validity_end = request.validity_end.isoformat()
-
-    # request = to_dict(request)
-
     audit_data = {}
     audit_data['validity_start'] = request['validity_start'].isoformat()
     audit_data['validity_end'] = request['validity_end'].isoformat()
