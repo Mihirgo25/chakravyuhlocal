@@ -87,6 +87,7 @@ class FclFreightRate(BaseModel):
     weight_limit_id = UUIDField(index=True, null=True)
     source = CharField(default = 'manual', null = True)
     accuracy = FloatField(default = 100, null = True)
+    cogo_entity_id = UUIDField(null=True)
     origin_port: dict = None
     destination_port: dict = None
     origin_main_port: dict = None
@@ -418,7 +419,6 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=499, detail="incorrect container type")
       if not self.validate_commodity():
         raise HTTPException(status_code=499, detail="incorrect commodity")
-      # self.valid_uniqueness()
       if not self.valid_uniqueness():
         raise HTTPException(status_code=499, detail="uniqueness not valid")
       # self.set_omp_dmp_sl_sp()

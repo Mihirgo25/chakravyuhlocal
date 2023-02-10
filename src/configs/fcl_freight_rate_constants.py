@@ -56,3 +56,14 @@ FREIGHT_CONTAINER_COMMODITY_MAPPINGS = {
     'flat_rack' : FLAT_RACK_COMMODITIES,
     'iso_tank' : ISO_TANK_COMMODITIES + HAZ_CLASSES
   }
+
+TRADE_TYPES = ['import', 'export', 'domestic']
+
+LOCAL_CONTAINER_COMMODITY_MAPPINGS = {
+    'standard': [None] + HAZ_COMMODITIES,
+    'refer': [None],
+    'open_top': [None],
+    'open_side': [None],
+    'flat_rack': [None],
+    'iso_tank': [None] + HAZ_COMMODITIES
+  }

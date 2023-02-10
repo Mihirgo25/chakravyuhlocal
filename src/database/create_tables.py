@@ -1,7 +1,7 @@
 from database.db_session import db
 # from services.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
-# from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 
 
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
@@ -9,7 +9,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightR
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRate])
+        db.create_tables([FclFreightRate, FclFreightRateLocal, FclFreightRateAudit])
         db.close()
         print("created table")
     except:
