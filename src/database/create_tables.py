@@ -9,7 +9,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightR
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRate, FclFreightRateLocal, FclFreightRateAudit])
+        db.create_tables([FclFreightRate])
         db.close()
         print("created table")
     except:
