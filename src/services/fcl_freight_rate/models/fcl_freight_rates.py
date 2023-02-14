@@ -7,11 +7,7 @@ from peewee import fn
 from typing import Set, Union
 from fastapi import FastAPI, HTTPException
 import yaml
-from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
-from services.fcl_freight_rate.models.fcl_freight_rate_slab import slab
-from services.fcl_freight_rate.models.fcl_freight_rate_line_item import lineItem
-from services.fcl_freight_rate.models.fcl_freight_rate_free_day import freeDay
-from services.fcl_freight_rate.models.fcl_freight_rate_validity import FclFreightRateValidity
+from params import LineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 import requests
 from configs.fcl_freight_rate_constants import HAZ_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, FREIGHT_CONTAINER_COMMODITY_MAPPINGS
@@ -603,69 +599,20 @@ FclFreightRate.add_index(idx6)
 FclFreightRate.add_index(idx7)
 FclFreightRate.add_index(idx8)
 
-# class freeDay(pydantic_base_model):
-#   free_limit: int
-#   slabs: list[slab] = None
-#   remarks: list[str] = None
+class FclFreightRateValidity(BaseModel):
+    validity_start: datetime.date
+    validity_end: datetime.date
+    remarks: list[str] = []
+    line_items: list[LineItem] = []
+    price: float
+    platform_price: float = None
+    currency: str
+    schedule_type: str = None
+    payment_term: str = None
+    id: str
+    likes_count: int = None
+    dislikes_count: int = None
 
-class local_data(pydantic_base_model):
-  line_items: list[lineItem] = None
-  detention: freeDay = None
-  demurrage: freeDay = None
-  plugin: freeDay = None
-
-class standardLineItem(pydantic_base_model):
-  code: str
-  unit: str
-  price: float
-  currency: str
-  remarks: list[str] = []
-  slabs: list[slab] = None
-
-class postFclFreightRate(pydantic_base_model):
-  origin_main_port_id: str = None
-  origin_port_id: str
-  destination_port_id: str
-  destination_main_port_id: str = None
-  container_size: str
-  container_type: str
-  commodity: str
-  shipping_line_id: str
-  service_provider_id: str
-  importer_exporter_id: str = None
-  validity_start: datetime.datetime
-  validity_end: datetime.datetime
-  schedule_type: str = 'transhipment'
-  fcl_freight_rate_request_id: str = None
-  payment_term: str = 'prepaid'
-  line_items: list[standardLineItem]
-  weight_limit: freeDay = None
-  origin_local: local_data = None
-  destination_local: local_data = None
-  bulk_operation_id: str = None
-  rate_sheet_id: str = None
-  performed_by_id: str = None #remove this and below None
-  procured_by_id: str = None
-  sourced_by_id: str = None
-
-class updateLineItem(pydantic_base_model):
-  code: str
-  unit: str
-  price: float
-  currency: str
-  remarks: list[str] = []
-
-class updateFclFreightRate(pydantic_base_model):
-  id: str
-  procured_by_id: str = None #not null
-  sourced_by_id: str = None #not null
-  performed_by_id: str = None #not null
-  bulk_operation_id: str = None
-  validity_start: datetime.datetime = None
-  validity_end: datetime.datetime = None
-  schedule_type: str = 'transhipment'
-  payment_term: str = 'prepaid'
-  line_items: list[updateLineItem] = None
-  weight_limit: freeDay = None
-  origin_local: local_data = None
-  destination_local: local_data = None
+    class Config:
+        orm_mode = True
+        exclude = ('validity_start', 'validity_end')

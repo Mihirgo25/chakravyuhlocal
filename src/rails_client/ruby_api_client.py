@@ -8,3 +8,8 @@ class RubyApiClient:
     def list_locations(self,data={}):
         return self.client.request('GET','list_locations',data)
 
+    def list_operators(self,data={}):
+        return self.client.request('GET','list_operators',data)
+
+    def list_organizations(self,data={}):
+        return self.client.request('GET','list_organizations',data)

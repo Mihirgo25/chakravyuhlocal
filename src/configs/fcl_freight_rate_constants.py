@@ -56,3 +56,35 @@ FREIGHT_CONTAINER_COMMODITY_MAPPINGS = {
     'flat_rack' : FLAT_RACK_COMMODITIES,
     'iso_tank' : ISO_TANK_COMMODITIES + HAZ_CLASSES
   }
+
+SPECIFICITY_TYPE = ['cogoport', 'shipping_line']
+
+FREE_DAYS_TYPES = ['detention', 'demurrage', 'plugin']
+
+TRADE_TYPES = ['import', 'export', 'domestic']
+
+LOCATION_HIERARCHY = {
+    'port' : 1,
+    'country' : 2,
+    'trade' : 3,
+    'continent' : 4
+  }
+
+LOCATION_PAIR_HIERARCHY = {
+    'port:port' : 1,
+    'port:country' : 2,
+    'port:trade' : 3,
+    'port:continent' : 4,
+    'country:port' : 5,
+    'country:country' : 6,
+    'country:trade' : 7,
+    'country:continent' : 8,
+    'trade:port' : 9,
+    'trade:country' : 10,
+    'trade:trade' : 11,
+    'trade:continent' : 12,
+    'continent:port' : 13,
+    'continent:country' : 14,
+    'continent:trade' : 15,
+    'continent:continent' : 16,
+  }
