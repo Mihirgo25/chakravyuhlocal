@@ -1,7 +1,7 @@
 from database.db_session import db
 # from services.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
-# from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 
 
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal

@@ -4,6 +4,9 @@ from playhouse.postgres_ext import *
 import datetime
 from pydantic import BaseModel as pydantic_base_model
 import requests
+from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS
+from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from fastapi import HTTPException
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -46,6 +49,8 @@ class FclFreightRateLocal(BaseModel):
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
+    port: dict = None
+    shipping_line: dict = None
 
     class Meta:
         table_name = 'fcl_freight_rate_locals'
@@ -74,17 +79,137 @@ class FclFreightRateLocal(BaseModel):
 
         obj = {"filters" : {"id": [str(self.port_id)]}}
 
-        port = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/location/list_locations', json = obj).json()['list'][0]
+        self.port = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/location/list_locations', json = obj).json()['list'][0]
 
-        self.country_id = port['country_id']
-        self.trade_id = port['trade_id'] 
-        self.continent_id = port['continent_id']
+        self.country_id = self.port['country_id']
+        self.trade_id = self.port['trade_id'] 
+        self.continent_id = self.port['continent_id']
         self.location_ids = [x for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
+
+    def set_shipping_line(self):
+      self.shipping_line = requests.get("https://api-nirvana1.dev.cogoport.io/operator/list_operators?filters%5Bid%5D[]=" + str(self.shipping_line_id)).json()['list'][0]
+
+    def validate_main_port_id(self):
+        if self.port and self.port['is_icd']==False:
+            if self.main_port_id:
+                return False
+        
+        #some validation
+
+        return True
+
+    def validate_shipping_line_id(self):
+        return True
+
+    def validate_service_provider_id(self):
+        return True
+
+    def validate_trade_type(self):
+        if self.trade_type not in TRADE_TYPES:
+            return False
+        
+        return True
+
+    def validate_container_size(self):
+        if self.container_size not in CONTAINER_SIZES:
+            return False
+        
+        return True
+
+    def validate_container_type(self):
+        if self.container_type not in CONTAINER_TYPES:
+            return False
+        
+        return True
+
+
+    def validate_uniqueness(self):
+      freight_local_cnt = FclFreightRateLocal.select().where(
+        FclFreightRate.port_id == self.port_id,
+        FclFreightRate.trade_type == self.trade_type,
+        FclFreightRate.main_port_id == self.main_port_id,
+        FclFreightRate.container_size == self.container_size,
+        FclFreightRate.container_type == self.container_type,
+        FclFreightRate.commodity == self.commodity,
+        FclFreightRate.shipping_line_id == self.shipping_line_id,
+        FclFreightRate.service_provider_id == self.service_provider_id
+      ).count()
+
+      if self.id and freight_local_cnt==1:
+        return True
+      if not self.id and freight_local_cnt==0:
+        return True
+
+      return False
+
+    def validate_commodity(self):
+        if self.container_type and self.commodity not in LOCAL_CONTAINER_COMMODITY_MAPPINGS:
+            return False
+        
+        return True
 
     def before_save(self):
         # data #store model validation
 
-        set_location_columns
+        if not self.validate_main_port_id:
+            HTTPException(status_code=499, detail='main_port_id is not valid')
+
+        if not self.validate_shipping_line_id:
+            HTTPException(status_code=499, detail='shipping_line_id is not valid')
+
+        if not self.validate_service_provider_id:
+            HTTPException(status_code=499, detail='service_provider_id is not valid')
+        
+        if not self.validate_trade_type:
+            HTTPException(status_code=499, detail='trade_type is not valid')
+
+        if not self.validate_container_size:
+            HTTPException(status_code=499, detail='container_size is not valid')
+        
+        if not self.validate_container_type:
+            HTTPException(status_code=499, detail='container_type is not valid')
+
+        if not self.validate_uniqueness:
+            HTTPException(status_code=499, detail='violates uniqueness validation')
+
+    def local_data_get_line_item_messages(self):
+
+      location_ids = list(set([item.location_id for item in self.origin_local.line_items if item.location_id is not None]))
+
+      locations = {}
+
+      if location_ids:
+        obj = {"filters" : {"id": location_ids}}
+        locations = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/location/list_locations', json = obj).json()['list']
+
+      return locations
+
+    def update_line_item_messages(self):
+      response = {}
+
+      if self.origin_local:
+        response = self.local_data_get_line_item_messages()
+
+      self.update(
+        line_items_error_messages = response['line_items_error_messages'],
+        is_line_items_error_messages_present = response['is_line_items_error_messages_present'],
+        line_items_info_messages = response['line_items_info_messages'],
+        is_line_items_info_messages_present = response['is_line_items_info_messages_present']
+      )
+
+    def update_free_days_special_attributes(self):
+      self.update(
+        is_detention_slabs_missing = (len(self.data['detention']['slabs']) == 0),
+        is_demurrage_slabs_missing = (len(self.data['demurrage']['slabs']) == 0),
+        is_plugin_slabs_missing = (len(self.data['plugin']['slabs']) == 0)
+      )
+
+    def update_special_attributes(self):
+        self.update_line_item_messages
+        self.update_free_days_special_attributes
+    
+
+        
 
 
 idx1 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id == None).where(FclFreightRateLocal.commodity == None)

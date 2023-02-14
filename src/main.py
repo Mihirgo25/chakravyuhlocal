@@ -9,6 +9,8 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_f
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
+from services.fcl_freight_rate.models.fcl_freight_rate_locals import updateFclFreightRateLocal
 from rails_client.client import initialize_client
 from params import *
 
@@ -64,3 +66,7 @@ def create_fcl_freight_rate(request: PostFclFreightRateLocal, response: Response
 def update_fcl_freight_rate(request: UpdateFclFreightRate, response: Response):
     rate = update_fcl_freight_rate_data(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content={"success": True})
+
+@app.post("/update_fcl_freight_rate_local")
+def update_fcl_freight_rate_local(request: updateFclFreightRateLocal, response: Response):
+    return update_fcl_freight_rate_local_data(request.dict(exclude_none=True))

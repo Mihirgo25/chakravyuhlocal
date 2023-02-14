@@ -57,6 +57,14 @@ FREIGHT_CONTAINER_COMMODITY_MAPPINGS = {
     'iso_tank' : ISO_TANK_COMMODITIES + HAZ_CLASSES
   }
 
+LOCAL_CONTAINER_COMMODITY_MAPPINGS = {
+    'standard': [None] + HAZ_COMMODITIES,
+    'refer': [None],
+    'open_top': [None],
+    'open_side': [None],
+    'flat_rack': [None],
+    'iso_tank': [None] + HAZ_COMMODITIES
+  }
 SPECIFICITY_TYPE = ['cogoport', 'shipping_line']
 
 FREE_DAYS_TYPES = ['detention', 'demurrage', 'plugin']

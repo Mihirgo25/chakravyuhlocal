@@ -105,3 +105,12 @@ class PostFclFreightRateLocal(BaseModel):
     selected_suggested_rate_id: str = None
     source: str = None
     data: Data
+
+class UpdateFclFreightRateLocal(BaseModel):
+    id: str = None
+    performed_by_id: str = None #should be not null
+    procured_by_id: str = None #should be not null
+    sourced_by_id: str = None #should be not null
+    bulk_operation_id: str = None
+    selected_suggested_rate_id: str = None
+    data: Data
