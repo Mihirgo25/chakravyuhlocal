@@ -5,7 +5,6 @@ import datetime
 from pydantic import BaseModel as pydantic_base_model
 import requests
 from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
 from fastapi import HTTPException
 
 class UnknownField(object):
@@ -125,14 +124,14 @@ class FclFreightRateLocal(BaseModel):
 
     def validate_uniqueness(self):
       freight_local_cnt = FclFreightRateLocal.select().where(
-        FclFreightRate.port_id == self.port_id,
-        FclFreightRate.trade_type == self.trade_type,
-        FclFreightRate.main_port_id == self.main_port_id,
-        FclFreightRate.container_size == self.container_size,
-        FclFreightRate.container_type == self.container_type,
-        FclFreightRate.commodity == self.commodity,
-        FclFreightRate.shipping_line_id == self.shipping_line_id,
-        FclFreightRate.service_provider_id == self.service_provider_id
+        FclFreightRateLocal.port_id == self.port_id,
+        FclFreightRateLocal.trade_type == self.trade_type,
+        FclFreightRateLocal.main_port_id == self.main_port_id,
+        FclFreightRateLocal.container_size == self.container_size,
+        FclFreightRateLocal.container_type == self.container_type,
+        FclFreightRateLocal.commodity == self.commodity,
+        FclFreightRateLocal.shipping_line_id == self.shipping_line_id,
+        FclFreightRateLocal.service_provider_id == self.service_provider_id
       ).count()
 
       if self.id and freight_local_cnt==1:
