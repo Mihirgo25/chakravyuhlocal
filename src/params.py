@@ -15,7 +15,7 @@ class UpdateLineItem(BaseModel):
   remarks: list[str] = []
 
 class FreeDay(BaseModel):
-  free_limit: int
+  free_limit: float
   slabs: list[Slab] = None
   remarks: list[str] = None
 
@@ -25,7 +25,7 @@ class LineItem(BaseModel):
   unit: str
   price: float
   currency: str
-  remarks: list[str] = []
+  remarks: list[str] = None
   slabs: list[Slab] = None
 
 class LocalData(BaseModel):
@@ -39,8 +39,8 @@ class StandardLineItem(BaseModel):
   unit: str
   price: float
   currency: str
-  remarks: list[str] = []
-  slabs: list[Slab] = None
+  remarks: list[str] = None
+  slabs: list[Slab] = []
 
 class PostFclFreightRate(BaseModel):
   origin_main_port_id: str = None
@@ -64,9 +64,9 @@ class PostFclFreightRate(BaseModel):
   destination_local: LocalData = None
   bulk_operation_id: str = None
   rate_sheet_id: str = None
-  performed_by_id: str = None #remove this and below None
-  procured_by_id: str = None
-  sourced_by_id: str = None
+  performed_by_id: str
+  procured_by_id: str
+  sourced_by_id: str
 
 class UpdateFclFreightRate(BaseModel):
   id: str
