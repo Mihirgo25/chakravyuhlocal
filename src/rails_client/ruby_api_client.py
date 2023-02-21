@@ -13,3 +13,6 @@ class RubyApiClient:
 
     def list_organizations(self,data={}):
         return self.client.request('GET','list_organizations',data)
+
+    def get_multiple_service_objects_data_for_fcl(self,data={}):
+        return self.client.request('GET','get_multiple_service_objects_data_for_fcl',data)

@@ -15,7 +15,7 @@ SC:
   name: "Seal Charges"
   units: ['per_container']
   trade_types: ['export', 'import']
-  condition: "(shipping_line[:short_name] not in ['Maersk', 'Safmarine'])"
+  condition: "(shipping_line['short_name'] not in ['Maersk', 'Safmarine'])"
   tags: []
 MUC:
   name: "Mandatory User Charge"
@@ -39,7 +39,7 @@ TOC:
   name: "Toll Charges"
   units: ['per_container']
   trade_types: ['export', 'import']
-  condition: "(port['port_code'] == 'INNSA' or main_port['port_code'] == 'INNSA')"
+  condition: "(port['port_code'] == 'INNSA' or (main_port!=None and main_port['port_code'] == 'INNSA'))"
   tags: []
 CRS:
   name: "Container Restoration Charges"
@@ -539,7 +539,7 @@ RHE:
   name: "Recovery for Handling - Export"
   units: ['per_container']
   trade_types: ['export']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'])""
+  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'])"
   tags: ['additional_service']
 ASO:
   name: "Algerian Stamp"

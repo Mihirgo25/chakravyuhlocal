@@ -1,13 +1,13 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from operator import attrgetter
+import datetime
 
 
 def find_or_initialize(**kwargs):
   try:
-    print('do')
     obj = FclFreightRateWeightLimit.get(**kwargs)
+    obj.updated_at = datetime.datetime.now()
   except FclFreightRateWeightLimit.DoesNotExist:
-    print('doesnt')
     obj = FclFreightRateWeightLimit(**kwargs)
   return obj
 
@@ -26,16 +26,13 @@ def get_weight_limit_object(request):
     extra_fields = ['free_limit','remarks','slabs']
     for field in extra_fields:
        if field in request:
-          var = attrgetter(field)(weight_limit) #remove var
-          if var:
-             if var != request[field]:
-              print('var1', var)
-              setattr(weight_limit, field, request[field])
-              print('var2', var)
-          else:
-             print('var3', var)
-             setattr(weight_limit, field, request[field])
-             print('var4', var)
+          setattr(weight_limit, field, request[field])
+        #   var = attrgetter(field)(weight_limit) #remove var
+        #   if var:
+        #      if var != request[field]:
+        #       setattr(weight_limit, field, request[field])
+        #   else:
+        #      setattr(weight_limit, field, request[field])
 
     return weight_limit
 
