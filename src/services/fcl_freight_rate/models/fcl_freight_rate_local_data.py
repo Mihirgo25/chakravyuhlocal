@@ -33,7 +33,7 @@ class FclFreightRateLocalData(BaseModel):
         locations = {}
 
         if location_ids:
-            locations = client.ruby.get_multiple_service_objects_data({'objects': [{'name': 'location','filters': { 'id': location_ids },'fields': ['id', 'type', 'country_code']}]})['list']['location'] #check this
+            locations = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [{'name': 'location','filters': { 'id': location_ids },'fields': ['id', 'type', 'country_code']}]})['list']['location'] #check this
 
         line_items_error_messages = {}
         line_items_info_messages = {}
@@ -101,7 +101,18 @@ class FclFreightRateLocalData(BaseModel):
                 if code not in grouped_charge_codes:
                     line_items_error_messages[code] = ['is not present']
                     is_line_items_error_messages_present = True
-        # try:
+
+        # for code, config in possible_charge_codes.items():
+        #     if config.get('locations'):
+        #         location_codes = config['locations'] or []
+        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data_for_fcl(
+        #             objects=[{
+        #                 'name': 'location',
+        #                 'filters': {'type': 'country', 'country_code': location_codes},
+        #                 'fields': ['name']
+        #             }]
+        #         )['list']
+        # # try:
         #     for code, config in filter(lambda x: x[1]['locations'], possible_charge_codes.items()):
         #         # code = str(code)
         #         location_codes = config['locations'] or []
