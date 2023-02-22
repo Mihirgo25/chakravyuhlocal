@@ -1,6 +1,6 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocals
-from services.fcl_freight_rate.models.fcl_freight_rates import possible_charge_codes
-from services.fcl_freight_rate.models.fcl_freight_rates import detail
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocals
+from services.fcl_freight_rate.models.fcl_freight_rate import possible_charge_codes
+from services.fcl_freight_rate.models.fcl_freight_rate import detail
 
 def get_fcl_freight_rate_local(request):
     detail = {}
