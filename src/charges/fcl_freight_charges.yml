@@ -6,7 +6,7 @@ BAS:
 ENS:
   name: "Entry Summary Declaration"
   units: ['per_bl', 'per_container']
-  condition: "destination_port['country_code'] in ['FI', 'PL', 'CZ', 'DE', 'LT', 'RS', 'NO', 'LI', 'PT', 'LV', 'DK', 'MD', 'AM', 'BE', 'RU', 'NI', 'HU', 'MC', 'CH', 'BY', 'MK', 'NL', 'FR', 'LU', 'SK', 'AT', 'IS', 'FO', 'EE', 'IE', 'GB', 'SE', 'AD']"
+  condition: destination_port['country_code'] in ['FI', 'PL', 'CZ', 'DE', 'LT', 'RS', 'NO', 'LI', 'PT', 'LV', 'DK', 'MD', 'AM', 'BE', 'RU', 'NI', 'HU', 'MC', 'CH', 'BY', 'MK', 'NL', 'FR', 'LU', 'SK', 'AT', 'IS', 'FO', 'EE', 'IE', 'GB', 'SE', 'AD']
   tags: ['additional_service']
 AMS:
   name: "Automated/Aquired Manifest System"
@@ -36,7 +36,7 @@ PC:
 HSC:
   name: "Hazardous Surcharge"
   units: ['per_container']
-  condition: "commodity in HAZ_COMMODITIES" #check this
+  condition: commodity in ["gases-2.1","gases-2.2","gases-2.3","flammable_liquids-3","flammable_solids-4.1","flammable_solids_self_heat-4.2","emit_flammable_gases_with_water-4.3","imo_classes-5.1","toxic_substances-6.1","infectious_substances-6.2","radioactive_material-7","corrosives-8","miscellaneous_dangerous_goods-9"]
   tags: ['mandatory']
 SMDC:
   name: "Security Manifest Documentation Charge"
@@ -96,7 +96,7 @@ WRS:
 CPC:
   name: "Container Premium Charges"
   units: ['per_container']
-  condition: "shipping_line['short_name'] in ['Hapag Lloyd', 'CMA', 'ANL', 'APL', 'PIL', 'Maersk']"
+  condition: shipping_line['short_name'] in ['Hapag Lloyd', 'CMA', 'ANL', 'APL', 'PIL', 'Maersk']
   tags: []
 PCS:
   name: "Port Congestion Surcharge"
@@ -121,7 +121,7 @@ EPS:
 SPE:
   name: "Special Equipment Surcharge"
   units: ['per_container']
-  condition: "(container_type in ['open_top', 'flat_rack', 'iso_tank'] or container_size == '45HC')"
+  condition: container_type in ['open_top', 'flat_rack', 'iso_tank'] or container_size == '45HC'
   tags: ['mandatory']
 MISC:
   name: "Miscellaneous Fee"
@@ -131,12 +131,12 @@ MISC:
 CDD:
   name: "Cargo Data Declaration"
   units: ['per_bl']
-  condition: "(destination_port['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']) and (shipping_line['short_name'] == 'MSC)"
+  condition: (destination_port['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']) and shipping_line['short_name'] == 'MSC'
   tags: []
 OCC:
   name: "Operations Cost Contribution"
   units: ['per_container']
-  condition: "shipping_line['short_name'] == 'MSC'"
+  condition: shipping_line['short_name'] == 'MSC'
   tags: []
 PTA:
   name: "Turn in Fee"
@@ -186,7 +186,7 @@ SCS:
 OTS:
   name: "Open Top Surcharge"
   units: ['per_container']
-  condition: "container_type == 'open_top'"
+  condition: container_type == 'open_top'
   tags: []
 EIC:
   name: "Export Import Certificate Fee"
@@ -221,7 +221,7 @@ AIS:
 OBS:
   name: "One Bunker surcharge"
   units: ['per_container']
-  condition: "shipping_line['short_name'] == 'COGOLINE'"
+  condition: shipping_line['short_name'] == 'COGOLINE'
   tags: []
 DGPS:
   name: "Dangerous Goods Premium Sea"
