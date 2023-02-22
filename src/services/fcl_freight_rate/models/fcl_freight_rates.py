@@ -16,6 +16,9 @@ from configs.defintions import FCL_FREIGHT_CHARGES
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
+from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocals
+from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
+
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
