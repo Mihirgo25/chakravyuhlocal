@@ -16,11 +16,10 @@ from configs.defintions import FCL_FREIGHT_CHARGES
 from rails_client import client
 from params import FreeDay
 from celery import current_app, shared_task
-
+from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
-from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocals
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
 
 
@@ -265,14 +264,14 @@ class FclFreightRate(BaseModel):
       self.update(is_weight_limit_slabs_missing = (len(self.weight_limit.get('slabs',{})) == 0))
 
     def validate_origin_local(self):
-      if 'origin_local' in self.changes and self.origin_local:
-        self.origin_local.validate_duplicate_charge_codes() #call to local store model function
-        self.origin_local.validate_invalid_charge_codes(self.possible_origin_local_charge_codes) #call to local store model function
+      if 'origin_local' in self.dirty_fields and self.origin_local:
+        self.origin_local_instance.validate_duplicate_charge_codes() 
+        self.origin_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes)
 
     def validate_destination_local(self):
-      if 'destination_local' in self.changes and self.destination_local:
-        self.destination_local.validate_duplicate_charge_codes #call to local function
-        self.destination_local.validate_invalid_charge_codes(self.possible_destination_local_charge_codes) #call to local function
+      if 'destination_local' in self.dirty_fields and self.destination_local:
+        self.destination_local_instance.validate_duplicate_charge_codes 
+        self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes)
 
     # def set_origin_main_port(self):
     #   if self.origin_port and self.origin_port['icd'] == True and not self.rate_not_available_entry:
@@ -497,12 +496,15 @@ class FclFreightRate(BaseModel):
 
         schema_validity.validate(validity)
 
-      schema_local_data = Schema({Optional('line_items'): list, Optional('detention'): dict, Optional('demurrage'): dict, Optional('plugin'): dict})
+      # schema_local_data = Schema({Optional('line_items'): list, Optional('detention'): dict, Optional('demurrage'): dict, Optional('plugin'): dict})
 
-      if self.origin_local:
-        schema_local_data.validate(self.origin_local)
-      if self.destination_local:
-        schema_local_data.validate(self.destination_local)
+      # if self.origin_local:
+      #   schema_local_data.validate(self.origin_local)
+      # if self.destination_local:
+      #   schema_local_data.validate(self.destination_local)
+      
+      self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
+      self.destination_local_instance = FclFreightRateLocalData(self.destination_local)
 
       if not self.validate_container_size():
         raise HTTPException(status_code=499, detail="incorrect container size")
