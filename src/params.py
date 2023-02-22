@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 import datetime
+from typing import List
 
 class Slab(BaseModel):
   lower_limit: float
@@ -114,3 +115,89 @@ class UpdateFclFreightRateLocal(BaseModel):
     bulk_operation_id: str = None
     selected_suggested_rate_id: str = None
     data: Data
+
+
+class GetFclFreightRate(BaseModel):
+    origin_port_id: str = None
+    origin_main_port_id: str = None
+    destination_port_id: str = None
+    destination_main_port_id: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = True
+    shipping_line_id: str = None
+    service_provider_id: str = None
+    importer_exporter_id: str = None
+
+class GetFclFreightRateLocal(BaseModel):
+    port_id: str = None
+    main_port_id: str = None
+    trade_type: str = None
+    container_size: str = None
+    container_type: str = None
+    commodity: str = None
+    shipping_line_id: str = None
+    service_provider_id: str = None
+
+class GetFclFreightRateCard(BaseModel):
+    origin_port_id: str
+    origin_country_id: str
+    destination_port_id: str
+    destination_country_id: str
+    container_size: str
+    container_type: str
+    commodity: str
+    importer_exporter_id: str
+    containers_count: int
+    bls_count: int
+    include_origin_local: bool
+    include_destination_local: bool
+    trade_type: str
+    include_destination_dpd: bool
+    cargo_weight_per_container: int = 0
+    additional_services: List[str] = []
+    validity_start: str
+    validity_end: str
+    ignore_omp_dmp_sl_sps: List[str] = []
+    include_confirmed_inventory_rates: bool = False
+    cogo_entity_id: str = None
+
+class GetFclFreightLocalRateCards(BaseModel):
+    trade_type: str
+    port_id: str
+    country_id: str
+    shipping_line_id: str = None
+    container_size: str
+    container_type: str
+    commodity: str = None
+    containers_count: int 
+    bls_count: int
+    cargo_weight_per_container: int = None
+    include_destination_dpd: bool = False
+    additional_services: List[str] = []
+    include_confirmed_inventory_rates: bool = False
+    rates: List[str] = []
+    service_provider_id: str = None
+
+class DeleteFclFreightRate(BaseModel):
+    id: str
+    performed_by_id: str
+    bulk_operation_id: str = None
+    sourced_by_id: str 
+    procured_by_id: str
+
+class DeleteFclFreightRateFeedback(BaseModel):
+    fcl_freight_rate_feedback_ids: List[str]
+    closing_remarks: List[str] = []
+    performed_by_id: str
+
+class CreateFclFreightRateNotAvailable(BaseModel):
+    origin_port_id: str
+    origin_country_id: str = None
+    origin_trade_id: str = None
+    destination_port_id: str
+    destination_country_id: str = None
+    destination_trade_id: str = None
+    container_size: str
+    container_type: str
+    commodity: str
