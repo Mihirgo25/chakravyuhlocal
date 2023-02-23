@@ -1,13 +1,15 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
+from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
 from operator import attrgetter
 from math import ceil
 from rails_client import client
 import concurrent.futures
 
-POSSIBLE_DIRECT_FILTERS = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'is_slabs_missing', 'location_id', 'specificity_type', 'previous_days_applicable', 'rate_not_available_entry']
-POSSIBLE_INDIRECT_FILTERS = ['importer_exporter_present']
+possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'is_slabs_missing', 'location_id', 'specificity_type', 'previous_days_applicable', 'rate_not_available_entry']
+possible_indirect_filters = ['importer_exporter_present']
 
 def list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query):
+    filters = remove_unexpected_filters(filters)
     query = get_query(page, page_limit)
     query = apply_direct_filters(query, filters)
     query = apply_indirect_filters(query, filters)
@@ -97,13 +99,13 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
 
 def apply_direct_filters(query, filters):
     for key in filters:
-        if key in POSSIBLE_DIRECT_FILTERS:
+        if key in possible_direct_filters:
             query = query.select().where(attrgetter(key)(FclFreightRateFreeDay) == filters[key])
     return query
 
 def apply_indirect_filters(query, filters):
     for key in filters:
-        if key in POSSIBLE_INDIRECT_FILTERS:
+        if key in possible_indirect_filters:
             apply_filter_function = f'apply_{key}_filter'
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
