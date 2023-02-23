@@ -7,7 +7,7 @@ from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES,
 from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
 
 
-LOCATION_TYPES = ['seaport', 'country', 'trade', 'continent']
+LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
 
 class BaseModel(Model):
     class Meta:
@@ -50,7 +50,7 @@ class FclFreightRateWeightLimit(BaseModel):
         )
 
     def validate_origin_location(self):
-        origin_location_data = client.ruby.list_organizations({'filters':{'id': self.origin_location_id}})['list'][0]
+        origin_location_data = client.ruby.list_locations({'filters':{'id': self.origin_location_id}})['list'][0]
         if origin_location_data.get('type') in LOCATION_TYPES:
             self.origin_port_id = origin_location_data.get('seaport_id', None)
             self.origin_country_id = origin_location_data.get('country_id', None)
@@ -61,7 +61,7 @@ class FclFreightRateWeightLimit(BaseModel):
         return False
 
     def validate_destination_location(self):
-        destination_location_data = client.ruby.list_organizations({'filters':{'id': self.destination_location_id}})['list'][0]
+        destination_location_data = client.ruby.list_locations({'filters':{'id': self.destination_location_id}})['list'][0]
         if destination_location_data.get('type') in LOCATION_TYPES:
             self.destination_port_id = destination_location_data.get('seaport_id', None)
             self.destination_country_id = destination_location_data.get('country_id', None)

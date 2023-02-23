@@ -8,12 +8,18 @@ class RubyApiClient:
     def list_locations(self,data={}):
         return self.client.request('GET','list_locations',data)
 
+    def get_eligible_service_organizations(self, data = {}):
+        return self.client.request('GET','get_eligible_service_organizations',data)
+
     def list_operators(self,data={}):
         return self.client.request('GET','list_operators',data)
 
     def list_organizations(self,data={}):
         return self.client.request('GET','list_organizations',data)
 
+    def get_eligible_fcl_freight_rate_free_day(self, data = {}):
+        return self.client.request('GET','get_eligible_fcl_freight_rate_free_day',data)
+        
     def list_fcl_freight_commodity_cluster(self, data={}):
         return self.client.request('GET','list_fcl_freight_commodity_cluster',data)
 
