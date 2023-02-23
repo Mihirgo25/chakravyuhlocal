@@ -124,7 +124,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   created_at: datetime.datetime = None
   extension_name: str = None
   gri_currency: str = None
-  gri_rate: float
+  gri_rate: float = None
   line_item_charge_code: str = None
   service_provider_id: str = None
   shipping_line_id: str = None

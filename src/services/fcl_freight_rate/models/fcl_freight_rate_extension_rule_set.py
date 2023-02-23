@@ -31,22 +31,28 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     def gri_fields(self):
         with open(FCL_FREIGHT_CHARGES, 'r') as file:
             fcl_freight_charges_dict = yaml.safe_load(file)
-        if self.line_item_charge_code and self.gri_currency and self.gri_rate:
-            if not self.line_item_charge_code in fcl_freight_charges_dict.items():
-                self.errors.add('charge code not in list')
-        elif not self.line_item_charge_code and not self.gri_currency and not self.gri_rate:
-            return
+        if self.line_item_charge_code and self.gri_currency and (self.gri_rate or self.gri_rate == 0):
+            if not self.line_item_charge_code in fcl_freight_charges_dict.keys():
+                raise Exception('charge code not in list')
+            else:
+                return True
+        elif not self.line_item_charge_code and not self.gri_currency and not (self.gri_rate or self.gri_rate == 0):
+            return True
         else:
-            self.errors.add('all fields charge_code, gri_rate, gri_currency are necessary')
+            raise Exception('all fields charge_code, gri_rate, gri_currency are necessary')
 
     def validate_service_provider(self):
-        service_provider_data = client.ruby.list_organizations({'filters':{'id': self.service_provider_id}})['list'][0]
+        if not self.service_provider_id:
+            return True
+        service_provider_data = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})
         if service_provider_data.get('account_type') == 'service_provider':
             return True
         return False
 
     def validate_shipping_line(self):
-        shipping_line_data = client.ruby.list_operators({'filters':{'id': self.shipping_line_id}})['list'][0]
+        if not self.service_provider_id:
+            return True
+        shipping_line_data = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})
         if shipping_line_data.get('operator_type') == 'shipping_line' and self.service_provider_id:
             return True
         return False
@@ -61,7 +67,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
             FclFreightRateExtensionRuleSets.gri_rate == self.gri_rate,
             FclFreightRateExtensionRuleSets.gri_currency == self.gri_currency
         ).count()
-        if freight_extension_count == 0:
+        if freight_extension_count == 1:
             return True
         return False
 
@@ -76,9 +82,9 @@ class FclFreightRateExtensionRuleSets(BaseModel):
         return False
 
     def validate_cluster_id(self):
-        if self.cluster_type == 'commodity' and client.ruby.list_fcl_freight_commodity_cluster({'filters':{'id': self.cluster_id}})['list'][0]:
+        if self.cluster_type == 'commodity' and client.ruby.list_fcl_freight_commodity_cluster({'filters':{'id': self.cluster_id}}):
             return True
-        elif self.cluster_type == 'location' and client.ruby.list_location_cluster({'filters':{'id': self.cluster_id}})['list'][0]:
+        elif self.cluster_type == 'location' and client.ruby.list_location_cluster({'filters':{'id': self.cluster_id}}):
             return True
         elif self.cluster_type == 'container' and self.cluster_id in CONTAINER_CLUSTERS.keys:
             return True
@@ -89,11 +95,11 @@ class FclFreightRateExtensionRuleSets(BaseModel):
             FclFreightRateExtensionRuleSets.extension_name == self.extension_name,
             FclFreightRateExtensionRuleSets.status == 'active'
         ).count()
-        if extension_count == 0:
+        if extension_count == 1:
             return True
         return False
 
     def validate_all(self):
-        if self.gri_fields(self) and self.validate_service_provider(self) and self.validate_shipping_line(self) and self.valid_uniqueness(self) and self.validate_trade_type(self) and self.validate_cluster_type(self) and self.validate_cluster_id(self) and self.validate_extension_name(self):
+        if self.gri_fields() and self.validate_service_provider() and self.validate_shipping_line() and self.valid_uniqueness() and self.validate_trade_type() and self.validate_cluster_type() and self.validate_cluster_id() and self.validate_extension_name():
             return True
         return False

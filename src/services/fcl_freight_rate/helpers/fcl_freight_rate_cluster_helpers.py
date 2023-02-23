@@ -10,13 +10,11 @@ def get_cluster_objects(rate_object):
     clusters = {}
 
     port_codes = client.ruby.list_locations({'filters':{ 'id': [rate_object['origin_port_id'], rate_object['destination_port_id']] }})['list']
-    # print("port_codes",port_codes)
     param = {}
     for data in port_codes:
         param[data['id']] = data['port_code']
     
     port_codes = param
-    #print("port_codes",port_codes)
 
 
     cluster_data_q = FclFreightRateExtensionRuleSets.select().where(
@@ -31,21 +29,24 @@ def get_cluster_objects(rate_object):
         (FclFreightRateExtensionRuleSets.status == 'active') &
         (FclFreightRateExtensionRuleSets.trade_type << [None, 'import', 'export'])
     ).order_by(FclFreightRateExtensionRuleSets.service_provider_id.desc(),FclFreightRateExtensionRuleSets.shipping_line_id.desc(),FclFreightRateExtensionRuleSets.trade_type.desc()).execute()
+    
     cluster_data = [model_to_dict(item) for item in cluster_data_q]
+    
     for data in cluster_data:
         if data['cluster_reference_name'] == port_codes[rate_object['origin_port_id']] and (data['trade_type'] == 'export' or not data['trade_type']):
-            if not clusters['origin_location_cluster']:
+            if not 'origin_location_cluster' in clusters.keys():
                 clusters['origin_location_cluster'] = data
         elif data['cluster_reference_name'] == port_codes[rate_object['destination_port_id']] and (data['trade_type'] == 'import' or not data['trade_type']):
-            if not clusters['destination_location_cluster']:
+            if not 'destination_location_cluster' in clusters.keys():
                 clusters['destination_location_cluster'] = data
         elif data['cluster_reference_name'] == rate_object['commodity']:
-            if not clusters['commodity_cluster']:
+            if not 'commodity_cluster' in clusters.keys():
                 clusters['commodity_cluster'] = data
         elif data['cluster_reference_name'] == rate_object['container_size']:
-            if not clusters['container_cluster']:
+            if not 'container_cluster' in clusters.keys():
                 clusters['container_cluster'] = data
 
+    
     if 'origin_location_cluster' in clusters and clusters['origin_location_cluster']:
         clusters['origin_location_cluster']['cluster_items'] = client.ruby.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations'] 
 
@@ -65,13 +66,15 @@ def get_required_mandatory_codes(cluster_objects):
     commodity_cluster_items = []
     container_size_cluster_items = []
     cluster_container_type = []
-    commodity_cluster_object = cluster_objects.where(cluster_objects['cluster_type'] == 'commodity_cluster')
+    commodity_cluster_object = [i for i in cluster_objects if i['cluster_type']== 'commodity_cluster']
     if commodity_cluster_object:
-        commodity_cluster_items = commodity_cluster_object.first['cluster_items'].values.flatten()
-        cluster_container_type = commodity_cluster_object.first['cluster_items'].keys.flatten()
-        container_size_cluster_items = container_cluster_object.first['cluster_items']
+        commodity_cluster_items = commodity_cluster_object[0]['cluster_items'].values()
+        cluster_container_type = commodity_cluster_object[0]['cluster_items'].keys()
 
-    container_cluster_object = cluster_objects.where(cluster_objects['cluster_type'] == 'container_cluster')
+    container_cluster_object = [i for i in cluster_objects if i['cluster_type']== 'container_cluster']
+
+    if commodity_cluster_object:
+        container_size_cluster_items = container_cluster_object[0]['cluster_items']
 
     all_cluster_items = commodity_cluster_items + container_size_cluster_items + cluster_container_type
 
@@ -101,3 +104,4 @@ def get_required_mandatory_codes(cluster_objects):
         
         if mandatory_code:
             required_mandatory_codes.push(mandatory_code)
+        return required_mandatory_codes

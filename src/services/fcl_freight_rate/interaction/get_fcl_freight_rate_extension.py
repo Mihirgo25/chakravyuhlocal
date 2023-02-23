@@ -13,10 +13,11 @@ def get_fcl_freight_rate_extension_data(request):
         'container_type' : request['container_type']
     }
     cluster_objects = get_cluster_objects(row)
-
+    objects = []
+    cluster_objects = [(value | {'cluster_type':key}) for key,value in cluster_objects.items()]
     if not cluster_objects:
         return
 
     required_mandatory_codes = get_required_mandatory_codes(cluster_objects)
-    cluster_objects.last[required_mandatory_codes] = required_mandatory_codes
+    cluster_objects[-1][required_mandatory_codes] = required_mandatory_codes
     return cluster_objects
