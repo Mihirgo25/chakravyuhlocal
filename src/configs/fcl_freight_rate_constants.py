@@ -96,3 +96,5 @@ LOCATION_PAIR_HIERARCHY = {
     'continent:trade' : 15,
     'continent:continent' : 16,
   }
+
+CONTAINER_CLUSTERS = { '40_40HC' : ['40', '40HC'] }

@@ -5,8 +5,13 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 from fastapi import FastAPI, Response, Query, Request, Depends
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
-# from database.create_tables import create_table
+#from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_extension_rule_set import update_fcl_freight_rate_extension_rule_set_data
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_extension_rule_sets import list_fcl_freight_rate_extension_rule_set_data
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_extension_rule_set import create_fcl_freight_rate_extension_rule_set_data
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_extension import get_fcl_freight_rate_extension_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
@@ -28,7 +33,7 @@ app.add_middleware(
 def startup():
     if db.is_closed():
         db.connect()
-    # create_table()
+    #create_table()
     initialize_client()
     
 @app.on_event("shutdown")
@@ -69,3 +74,23 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, response: Response):
 @app.post("/update_fcl_freight_rate_local")
 def update_fcl_freight_rate_local(request: UpdateFclFreightRateLocal, response: Response):
     return update_fcl_freight_rate_local_data(request.dict(exclude_none=True))
+
+@app.post("/create_fcl_freight_rate_exclusive_rule_set")
+def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet):
+    return create_fcl_freight_rate_extension_rule_set_data(request)
+
+@app.post("/extend_create_fcl_freight_rate")
+def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
+    return extend_create_fcl_freight_rate_data(request)
+
+@app.post("/update_fcl_freight_rate_extension_rule_set")
+def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet):
+    return update_fcl_freight_rate_extension_rule_set_data(request)
+
+@app.post("/list_fcl_freight_rate_extension_rule_set")
+def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensionRuleSets):
+    return list_fcl_freight_rate_extension_rule_set_data(request)
+
+@app.post("/get_fcl_freight_rate_extension")
+def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
+    return get_fcl_freight_rate_extension_data(request)
