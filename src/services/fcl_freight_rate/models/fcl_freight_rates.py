@@ -12,7 +12,7 @@ from params import LineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional, Or, SchemaError
-from configs.defintions import FCL_FREIGHT_CHARGES
+from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
 from rails_client import client
 from params import FreeDay
 from celery import current_app, shared_task
@@ -229,6 +229,7 @@ class FclFreightRate(BaseModel):
 
       if self.origin_local:
         response = dict(self.local_data_get_line_item_messages())
+
       self.update(
       origin_local_line_items_error_messages = response.get('line_items_error_messages'),
       is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
@@ -248,16 +249,16 @@ class FclFreightRate(BaseModel):
 
     def update_origin_free_days_special_attributes(self):
       self.update(
-        is_origin_detention_slabs_missing = (len(self.origin_local.get('detention',{}).get('slabs',{})) == 0),
-        is_origin_demurrage_slabs_missing = (len(self.origin_local.get('demurrage',{}).get('slabs',{})) == 0),
-        is_origin_plugin_slabs_missing = (len(self.origin_local.get('plugin',{}).get('slabs',{})) == 0)
+        is_origin_detention_slabs_missing = (len(self.origin_local.get('detention',{}).get('slabs',{})) == 0) if self.origin_local.get("detention") is not None else True,
+        is_origin_demurrage_slabs_missing = (len(self.origin_local.get('demurrage',{}).get('slabs',{})) == 0) if self.origin_local.get("demurrage") is not None else True,
+        is_origin_plugin_slabs_missing = (len(self.origin_local.get('plugin',{}).get('slabs',{})) == 0) if self.origin_local.get("plugin") is not None else True
       )
 
     def update_destination_free_days_special_attributes(self):
       self.update(
-        is_destination_detention_slabs_missing = (len(self.destination_local.get('detention',{}).get('slabs',{})) == 0),
-        is_destination_demurrage_slabs_missing = (len(self.destination_local.get('demurrage',{}).get('slabs',{})) == 0),
-        is_destination_plugin_slabs_missing = (len(self.destination_local.get('plugin',{}).get('slabs',{})) == 0)
+        is_destination_detention_slabs_missing = (len(self.destination_local.get('detention',{}).get('slabs',{})) == 0) if self.destination_local.get("detention") is not None else True,
+        is_destination_demurrage_slabs_missing = (len(self.destination_local.get('demurrage',{}).get('slabs',{})) == 0) if self.destination_local.get("demurrage") is not None else True,
+        is_destination_plugin_slabs_missing = (len(self.destination_local.get('plugin',{}).get('slabs',{})) == 0) if self.destination_local.get("plugin") is not None else True
       )
 
     def update_weight_limit_special_attributes(self):
@@ -265,22 +266,13 @@ class FclFreightRate(BaseModel):
 
     def validate_origin_local(self):
       if 'origin_local' in self.dirty_fields and self.origin_local:
-        self.origin_local_instance.validate_duplicate_charge_codes() 
-        self.origin_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes)
+        self.origin_local_instance.validate_duplicate_charge_codes()
+        self.origin_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes())
 
     def validate_destination_local(self):
       if 'destination_local' in self.dirty_fields and self.destination_local:
-        self.destination_local_instance.validate_duplicate_charge_codes 
-        self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes)
-
-    # def set_origin_main_port(self):
-    #   if self.origin_port and self.origin_port['icd'] == True and not self.rate_not_available_entry:
-    #     "set origin_main_port"
-
-    # def set_destination_main_port(self):
-    #   if self.destination_port and self.destination_port['icd'] == True and not self.rate_not_available_entry:
-    #     "set destination_main_port"
-
+        self.destination_local_instance.validate_duplicate_charge_codes()
+        self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes())
 
     def validate_validity_object(self, validity_start, validity_end):
       if not validity_start:
@@ -304,7 +296,6 @@ class FclFreightRate(BaseModel):
       if len(set(codes)) != len(codes):
         raise HTTPException(status_code=499, detail="line_items contains duplicates")
 
-      #should we put self in condition in fcl_freight_charges yml
       with open(FCL_FREIGHT_CHARGES, 'r') as file:
         fcl_freight_charges_dict = yaml.safe_load(file)
 
@@ -312,8 +303,15 @@ class FclFreightRate(BaseModel):
       
       if invalid_line_items:
           raise HTTPException(status_code=499, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
+      
+      with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
+        fcl_freight_currencies = yaml.safe_load(file)
 
-      # #an api call to ListMoneyCurrencies
+      currencies = [currency for currency in fcl_freight_currencies]
+      line_item_currencies = [item['currency'] for item in line_items]
+
+      if any(currency not in currencies for currency in line_item_currencies):
+        raise HTTPException(status_code=499, detail='line_item_currency is invalid')
 
       mandatory_codes = []
 
@@ -362,7 +360,7 @@ class FclFreightRate(BaseModel):
 
           for t in validities:
             price = []
-            new_price =  client.ruby.get_money_exchange_for_fcl({'price': t.price, 'from_currency': t.currency, 'to_currency':currency})['list']['price']
+            new_price =  client.ruby.get_money_exchange_for_fcl({'price': t.price, 'from_currency': t.currency, 'to_currency':currency})['price']
             price.append(new_price)
             freight_rate_min_price = min(price)
 
@@ -397,8 +395,7 @@ class FclFreightRate(BaseModel):
 
         if not deleted:
             currency = [item for item in line_items if item["code"] == "BAS"][0]["currency"]
-            price = float(100)
-            # price = sum([GetMoneyExchange.run(price=item["price"], from_currency=item["currency"], to_currency=currency)["price"] for item in line_items])
+            price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 0) for item in line_items))
             new_validity_object = {
                 "validity_start": validity_start,
                 "validity_end": validity_end,
@@ -414,45 +411,46 @@ class FclFreightRate(BaseModel):
             new_validities = [FclFreightRateValidity(**new_validity_object)]
 
         for validity_object in self.validities:
+            
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
             validity_start = validity_start
             validity_end = validity_end
             if (validity_object['schedule_type'] not in [None, schedule_type] and not deleted):
-                new_validities.append(validity_object)
+                new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if (validity_object['payment_term'] not in [None, payment_term] and not deleted):
-                new_validities.append(validity_object)
+                new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start > validity_end:
-                new_validities.append(validity_object)
+                new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_end < validity_start:
-                new_validities.append(validity_object)
+                new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end:
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                 validity_object_validity_end = validity_start - datetime.timedelta(days=1)
-                new_validities.append(validity_object)
+                new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
                 validity_object_validity_start = validity_end + datetime.timedelta(days=1)
-                new_validities.append(validity_object)
+                new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
-                new_validities.append(FclFreightRateValidity(validity_object['json']().update({"validity_end": validity_start - datetime.timedelta(days=1)})))
-                new_validities.append(FclFreightRateValidity(validity_object['json']().update({"validity_start": validity_end + datetime.timedelta(days=1)})))
+                new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
+                new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
                 continue
 
-        new_validities = [validity for validity in new_validities if validity.validity_end >= datetime.datetime.now().date()]
-        new_validities = sorted(new_validities, key=lambda validity: validity.validity_start)
+        new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end), '%Y-%m-%d').date() >= datetime.datetime.now().date()]
+        new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start), '%Y-%m-%d').date())
 
         for new_validity in new_validities:
           new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
-          new_validity.validity_start = new_validity.validity_start.isoformat()
-          new_validity.validity_end = new_validity.validity_end.isoformat()
-        
+          new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start), '%Y-%m-%d').date().isoformat()
+          new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end), '%Y-%m-%d').date().isoformat()
+
         self.validities = [vars(new_validity) for new_validity in new_validities]
 
     def delete_rate_not_available_entry(self):
@@ -466,15 +464,11 @@ class FclFreightRate(BaseModel):
             FclFreightRate.rate_not_available_entry == True
       ).execute()
 
-    def validate_before_save(self):   # check correctly
-      #put schema validates in try catch and then raise custom error
+    def validate_before_save(self):
+
       schema_weight_limit = Schema({'free_limit': float, Optional('slabs'): list, Optional('remarks'): list})
      
       if self.weight_limit:
-        # if 'slabs' in self.weight_limit:
-        #   for slab in self.weight_limit['slabs']:
-        #     if 'price' in slab:
-        #         slab['price'] = float(slab['price'])
         schema_weight_limit.validate(self.weight_limit)
 
       self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
@@ -504,6 +498,7 @@ class FclFreightRate(BaseModel):
       #   schema_local_data.validate(self.destination_local)
       
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
+
       self.destination_local_instance = FclFreightRateLocalData(self.destination_local)
 
       if not self.validate_container_size():
@@ -517,7 +512,7 @@ class FclFreightRate(BaseModel):
 
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()
-      # self.validate_destination_local()
+      self.validate_destination_local()
       if self.validate_origin_main_port_id():
         raise HTTPException(status_code=499, detail="origin main port id is invalid")
       if self.validate_destination_main_port_id():
@@ -525,10 +520,17 @@ class FclFreightRate(BaseModel):
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
-      with open('src/charges/fcl_freight_local_charges.yml', 'r') as file:
+      with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
         fcl_freight_local_charges_dict = yaml.safe_load(file)
 
       charge_codes = {}
+      port = self.origin_port
+      main_port = self.origin_main_port
+      shipping_line = self.shipping_line
+      container_size = self.container_size
+      container_type = self.container_type
+      commodity = self.commodity
+
       for k,v in fcl_freight_local_charges_dict.items():
           if eval(str(v['condition'])) and 'export' in v['trade_types']:
               charge_codes[k] = v
@@ -536,9 +538,15 @@ class FclFreightRate(BaseModel):
 
     def possible_destination_local_charge_codes(self):
       self.port = self.destination_port
-      with open('src/charges/fcl_freight_local_charges.yml', 'r') as file:
+      with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
         fcl_freight_local_charges_dict = yaml.safe_load(file)
 
+      port = self.destination_port
+      main_port = self.destination_main_port
+      shipping_line = self.shipping_line
+      container_size = self.container_size
+      container_type = self.container_type
+      commodity = self.commodity
       charge_codes = {}
       for k,v in fcl_freight_local_charges_dict.items():
           if eval(str(v['condition'])) and 'import' in v['trade_types']:
@@ -546,12 +554,19 @@ class FclFreightRate(BaseModel):
       return charge_codes
 
     def possible_charge_codes(self):  # check what to return
-      with open('src/charges/fcl_freight_charges.yml', 'r') as file:
+      with open(FCL_FREIGHT_CHARGES, 'r') as file:
         fcl_freight_charges = yaml.safe_load(file)
+      
+      charge_codes = {}
+      shipping_line = self.shipping_line
+      container_size = self.container_size
+      container_type = self.container_type
+      commodity = self.commodity
 
       for k,v in fcl_freight_charges.items():
           if eval(str(v['condition'])):
-              self.charge_codes[k] = v
+              charge_codes[k] = v
+      return charge_codes
 
     def is_rate_expired(self):
       if self.last_rate_available_date is None:
@@ -728,8 +743,8 @@ class FclFreightRate(BaseModel):
         freight.set_is_best_price()
         freight.save()
 
-    # def update_priority_score(self): # check apis UpdateFclFreightRatePriorityScores
-    #   UpdateFclFreightRatePriorityScores.run(filters={"id": self.id})
+    # def update_priority_score(self):
+    #   client.ruby.update_fcl_freight_rate_priority_scores({'filters':{'id': self.id}})
 
     def update_platform_prices_for_other_service_providers(self):  # check for delay
       #should be in delay
@@ -785,11 +800,11 @@ class FclFreightRate(BaseModel):
 
     def get_price_for_trade_requirement(self):  # check money exchange
       validity = self.validities.last()
-
+      currency = validity['currency']
       if validity is None:
         return 0
-    
-      result = GetMoneyExchange.run(price=validity.price, from_currency=validity.currency, to_currency="INR")
+
+      result = client.ruby.get_money_exchange_for_fcl({"price":validity['price'], "from_currency":validity['currency'], "to_currency":currency})
       return result["price"]
 
 

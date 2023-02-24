@@ -6,12 +6,16 @@ from pydantic import BaseModel
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
 
 class FclFreightRateLocalData(BaseModel):
-    line_items: list[LineItem] = None
+    line_items: list[LineItem] = []
     detention: FreeDay = None
     demurrage: FreeDay = None
     plugin: FreeDay = None
     def __init__(self,data):
-        super().__init__(line_items = data['line_items'],detension =data.get('detention'),demurrage = data.get('demurrage'),plugin = data.get("plugin") )
+        if data:
+            super().__init__(line_items = data.get('line_items'),detention =data.get('detention'),demurrage = data.get('demurrage'),plugin = data.get("plugin") )
+        else:
+            super().__init__()
+
 
 
     def validate_duplicate_charge_codes(self):

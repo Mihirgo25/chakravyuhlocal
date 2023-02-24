@@ -31,7 +31,7 @@ class LineItem(BaseModel):
   slabs: list[Slab] = None
 
 class LocalData(BaseModel):
-  line_items: list[LineItem] = None
+  line_items: list[LineItem] = []
   detention: FreeDay = None
   demurrage: FreeDay = None
   plugin: FreeDay = None
@@ -281,3 +281,6 @@ class CreateFclFreightRateNotAvailable(BaseModel):
     container_size: str
     container_type: str
     commodity: str
+
+
+

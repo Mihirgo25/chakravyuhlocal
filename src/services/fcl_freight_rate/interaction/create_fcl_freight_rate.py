@@ -5,6 +5,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightR
 import os
 import time
 from celery_worker import celery
+from params import LocalData
+from rails_client import client
 
 def find_or_initialize(**kwargs):
   try:
@@ -64,15 +66,29 @@ def create_fcl_freight_rate_data(request):
 
   freight.weight_limit = to_dict(request.get("weight_limit"))
 
-  if freight.origin_local:
+  if freight.origin_local and request.get("origin_local"):
     freight.origin_local.update(to_dict(request.get("origin_local")))
-  else:
+  elif request.get("origin_local"):
     freight.origin_local = to_dict(request.get("origin_local"))
-
-  if freight.destination_local:
-    freight.destination_local.update(to_dict(request["destination_local"]))
   else:
+     freight.origin_local= {
+      "line_items":[],
+      "detention":  None,
+      "demurrage": None,
+      "plugin":  None
+    }
+
+  if freight.destination_local and request.get("destination_local"):
+    freight.destination_local.update(to_dict(request.get("destination_local")))
+  elif request.get("destination_local"):
     freight.destination_local = to_dict(request.get("destination_local"))
+  else:
+    freight.destination_local= {
+      "line_items":[],
+      "detention":  None,
+      "demurrage": None,
+      "plugin":  None
+    }
 
   freight.validate_validity_object(request["validity_start"], request["validity_end"])
 
@@ -89,7 +105,7 @@ def create_fcl_freight_rate_data(request):
     freight.save()
   except Exception as e:
     print("Exception in saving freight rate", e)
-    # raise HTTPException(status_code=499, detail='rate did not save')
+    raise HTTPException(status_code=499, detail='rate did not save')
 
   if not request.get('importer_exporter_id'):
     freight.delete_rate_not_available_entry()
@@ -100,15 +116,16 @@ def create_fcl_freight_rate_data(request):
   
   freight.update_local_references()
 
-  freight.update_platform_prices_for_other_service_providers() 
+  freight.update_platform_prices_for_other_service_providers()
 
-  # freight.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id']) 
+  # freight.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
 
-  # create_sailing_schedule_port_pair(request)
+  # create_sailing_schedule_port_pair(request) # call this ruby api
 
   # create_freight_trend_port_pair(request)
 
-  # UpdateOrganization.delay(queue: 'critical').run!(id: self.service_provider_id, freight_rates_added: true) unless FclFreightRate.where(service_provider_id: self.service_provider_id, rate_not_available_entry: false).exists?
+  # if not FclFreightRate.where(service_provider_id=request["service_provider_id"], rate_not_available_entry=False).exists():
+  #   client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
   # if request.get(fcl_freight_rate_request_id):
   #   DeleteFclFreightRateRequest.run!(fcl_freight_rate_request_ids=[request.fcl_freight_rate_request_id])
@@ -122,11 +139,13 @@ def create_sailing_schedule_port_pair(request):
   'destination_port_id': request.destination_main_port_id if request.destination_main_port_id else request.destination_port_id,
   'shipping_line_id': request.shipping_line_id
   }
-  # CreateSailingSchedulePortPairCoverage.delay(queue: 'low').run!(port_pair_coverage_data) #call this private api
+  # in delay private api call
+  client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
 
 def create_freight_trend_port_pair(request):
   port_pair_data = {
       'origin_port_id': request.origin_port_id,
       'destination_port_id': request.destination_port_id
   }
-  # CreateFreightTrendPortPair.delay(queue: 'low').run!(port_pair_data) #expose and call this api
+  # in delay(queue:low) private api call and expose
+  client.ruby.create_freight_trend_port_pair(port_pair_data)

@@ -18,10 +18,9 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import 
 from rails_client.client import initialize_client
 from params import *
 
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
-from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
-from params import ListFclFreightRate, GetFclFreightRateLocal
-from services.fcl_freight_rate.interaction.test_fcl_freight_rate import test_fcl
+# from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
+# from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
+
 
 app = FastAPI(debug=True)
 
@@ -55,15 +54,15 @@ def read_root():
 #     data = jsonable_encoder(data)
 #     return JSONResponse(status_code=200, content=data)
 
-@app.post("/list_fcl_freight_rates")
-def list_fcl_freight_data(request: ListFclFreightRate):
-    data = list_fcl_freight_rates(request)
-    return None
+# @app.post("/list_fcl_freight_rates")
+# def list_fcl_freight_data(request: ListFclFreightRate):
+#     data = list_fcl_freight_rates(request)
+#     return None
 
-@app.post("/get_fcl_freight_rate_local")
-def get_fcl_freight_card(request: GetFclFreightRateLocal):
-    data = get_fcl_freight_rate_local(request)
-    return None
+# @app.post("/get_fcl_freight_rate_local")
+# def get_fcl_freight_card(request: GetFclFreightRateLocal):
+#     data = get_fcl_freight_rate_local(request)
+#     return None
 
 @app.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate(request: PostFclFreightRate, response: Response):
@@ -89,22 +88,3 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, response: Response):
 def update_fcl_freight_rate_local(request: UpdateFclFreightRateLocal, response: Response):
     return update_fcl_freight_rate_local_data(request.dict(exclude_none=True))
 
-@app.post("/create_fcl_freight_rate_exclusive_rule_set")
-def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet):
-    return create_fcl_freight_rate_extension_rule_set_data(request)
-
-@app.post("/extend_create_fcl_freight_rate")
-def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
-    return extend_create_fcl_freight_rate_data(request)
-
-@app.post("/update_fcl_freight_rate_extension_rule_set")
-def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet):
-    return update_fcl_freight_rate_extension_rule_set_data(request)
-
-@app.post("/list_fcl_freight_rate_extension_rule_set")
-def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensionRuleSets):
-    return list_fcl_freight_rate_extension_rule_set_data(request)
-
-@app.post("/get_fcl_freight_rate_extension")
-def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
-    return get_fcl_freight_rate_extension_data(request)
