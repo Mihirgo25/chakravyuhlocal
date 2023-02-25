@@ -4,7 +4,6 @@ from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 import os
 import time
-from celery_worker import celery
 from params import LocalData
 from rails_client import client
 
@@ -40,7 +39,6 @@ def create_audit(request, freight_id):
         object_type = 'FclFreightRate'
     )
 
-@celery.task(name="create_fcl_freight_rate_data")
 def create_fcl_freight_rate_data(request):
   row = {
     'origin_port_id' : request.get("origin_port_id"),

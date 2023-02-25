@@ -68,9 +68,7 @@ def read_root():
 def create_fcl_freight_rate(request: PostFclFreightRate, response: Response):
     # try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        # return create_fcl_freight_rate(request.dict(exclude_none=True))
-        # return JSONResponse(status_code=200, content=data)
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
     # except Exception as e:
         # logger.error(e,exc_info=True)
     #     return JSONResponse(status_code=500, content={"success": False})
