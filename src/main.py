@@ -7,6 +7,7 @@ from fastapi import FastAPI, Response, Query, Request, Depends
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
 #from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_extension_rule_set import update_fcl_freight_rate_extension_rule_set_data
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_extension_rule_sets import list_fcl_freight_rate_extension_rule_set_data
@@ -86,3 +87,7 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, response: Response):
 def update_fcl_freight_rate_local(request: UpdateFclFreightRateLocal, response: Response):
     return update_fcl_freight_rate_local_data(request.dict(exclude_none=True))
 
+@app.delete("/delete_fcl_freight_rate")
+def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
+    delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
