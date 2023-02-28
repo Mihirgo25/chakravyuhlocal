@@ -17,11 +17,11 @@ from rails_client import client
 from params import FreeDay
 from celery import current_app, shared_task
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
+from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
+
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
-from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
-
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -557,7 +557,7 @@ class FclFreightRate(BaseModel):
     def possible_charge_codes(self):  # check what to return
       with open(FCL_FREIGHT_CHARGES, 'r') as file:
         fcl_freight_charges = yaml.safe_load(file)
-      
+
       charge_codes = {}
       shipping_line = self.shipping_line
       container_size = self.container_size
