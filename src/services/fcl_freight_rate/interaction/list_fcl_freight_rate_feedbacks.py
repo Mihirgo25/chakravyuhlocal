@@ -134,82 +134,82 @@ def get_data(query):
     data = [model_to_dict(row, recurse=False) for row in query]
     add_service_objects(data)
 
-# def add_service_objects(data)
-#     fcl_freight_rates = FclFreightRate.where(id: data.pluck(:fcl_freight_rate_id)).as_json.map(&:deep_symbolize_keys)
-#     fcl_freight_rate_mappings = fcl_freight_rates.each_with_object({}) { |k, h| h[k[:id]] = k }
-#     shipping_line_ids = data.pluck(:preferred_shipping_line_ids).flatten + fcl_freight_rates.pluck(:shipping_line_id)
-#     service_provider_id_hash = {}
-#     organisation_ids = []
-#     data.each do |object|
-#         if object[:booking_params][:rate_card].present? && object[:booking_params][:rate_card][:service_rates].present?
-#         object[:booking_params][:rate_card][:service_rates].each do |key, value|
-#             service_provider_id_hash[key.to_sym] = value[:service_provider_id]
-#             organisation_ids << value[:service_provider_id]
-#         end
-#         end
-#     end
-#     organisation_ids += data.pluck(:performed_by_org_id).uniq
+def add_service_objects(data, spot_search_details_required):
+    fcl_freight_rate_ids = [row['fcl_freight_rate_id'] for row in data]
+    fcl_freight_rates = (FclFreightRate.select().where(FclFreightRate.id.in_(fcl_freight_rate_ids)))
+    fcl_freight_rates = [model_to_dict(rate) for rate in fcl_freight_rates]
+    fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}
+    shipping_line_ids = [i for obj in data for i in obj.get('preferred_shipping_line_ids', [])] + [rate.get('shipping_line_id') for rate in fcl_freight_rates]
+    service_provider_id_hash = {}
+    organisation_ids = []
+    for obj in data:
+        if obj.get('booking_params') and obj['booking_params'].get('rate_card') and obj['booking_params']['rate_card'].get('service_rates'):
+            for key, value in obj['booking_params']['rate_card']['service_rates'].items():
+                service_provider_id_hash[key] = value['service_provider_id']
+                organisation_ids.append(value['service_provider_id'])
 
-#     objects = [
-#         {
-#         name: 'user',
-#         filters: { id: data.pluck(:performed_by_id).concat(data.pluck(:closed_by_id)).uniq },
-#         fields: [:id, :name, :email, :mobile_country_code, :mobile_number]
-#         },
-#         {
-#         name: 'location',
-#         filters: { id: fcl_freight_rates.pluck(:origin_port_id, :destination_port_id).flatten.uniq },
-#         fields: [:id, :name, :display_name, :port_code, :type]
-#         },
-#         {
-#         name: 'operator',
-#         filters: { id: shipping_line_ids },
-#         fields: [:id, :business_name, :short_name, :logo_url]
-#         },
-#         {
-#         name: 'organization',
-#         filters: { id: organisation_ids.uniq },
-#         fields: [:id, :business_name, :short_name],
-#         extra_params: { add_service_objects_required: false }
-#         }
-#     ]
-#     if spot_search_details_required
-#         objects << {
-#         name: 'spot_search',
-#         filters: { id: data.pluck(:source_id).uniq },
-#         fields: [:id, :importer_exporter_id, :importer_exporter, :service_details]
-#         }
-#     end
-#     service_objects = GetMultipleServiceObjectsData.run!(objects: objects)
+    organisation_ids = list(set([obj['performed_by_org_id'] for obj in data]))
 
-#     data.each do |object|
-#         rate = fcl_freight_rate_mappings[object[:fcl_freight_rate_id]].to_h rescue nil
-#         object[:performed_by] = service_objects[:user][object[:performed_by_id].to_sym] rescue nil
-#         object[:closed_by] = service_objects[:user][object[:closed_by_id].to_sym] rescue nil
-#         object[:origin_port] = service_objects[:location][rate[:origin_port_id].to_sym] rescue nil
-#         object[:destination_port] = service_objects[:location][rate[:destination_port_id].to_sym] rescue nil
-#         object[:preferred_detention_free_days] = object[:preferred_detention_free_days] rescue nil
-#         object[:closing_remarks] = object[:closing_remarks] rescue nil
-#         object[:container_size] = rate[:container_size] rescue nil
-#         object[:container_type] = rate[:container_type] rescue nil
-#         object[:commodity] = rate[:commodity] rescue nil
-#         object[:shipping_line] = service_objects[:operator][rate[:shipping_line_id].to_sym] rescue nil
-#         object[:organization] = service_objects[:organization][object[:performed_by_org_id].to_sym] rescue nil
-#         object[:containers_count] = object[:booking_params][:containers_count] rescue nil
-#         object[:bls_count] = object[:booking_params][:bls_count] rescue nil
-#         object[:inco_term] = object[:booking_params][:inco_term] rescue nil
-#         object[:price] = rate[:validities].select { |t| t[:id] == object[:validity_id] }.first.to_h[:price] rescue nil
-#         object[:currency] = rate[:validities].select { |t| t[:id] == object[:validity_id] }.first.to_h[:currency] rescue nil
-#         object[:preferred_shipping_line_ids].each { |id| object[:preferred_shipping_lines] = object[:preferred_shipping_lines].to_a + [service_objects[:operator][id.to_sym]] } rescue nil
-#         object[:spot_search] = service_objects[:spot_search][object[:source_id].to_sym] rescue nil
-#         if object[:booking_params][:rate_card].present? && object[:booking_params][:rate_card][:service_rates].present?
-#         object[:booking_params][:rate_card][:service_rates].each do |_key, value|
-#             value[:service_provider] = service_objects[:organization][value[:service_provider_id].to_sym] rescue nil
-#         end
-#         end
-#     end
-#     end
+    objects = [    
+        { 
+            'name': 'user',
+            'filters': {'id': list(set(data[i]['performed_by_id'] for i in range(len(data))) | set(data[i]['closed_by_id'] for i in range(len(data))))},
+            'fields': ['id', 'name', 'email', 'mobile_country_code', 'mobile_number']
+        },
+        {
+            'name': 'location',
+            'filters': {'id': list(set([fcl_freight_rates[i]['origin_port_id'] for i in range(len(fcl_freight_rates))]) | set([fcl_freight_rates[i]['destination_port_id'] for i in range(len(fcl_freight_rates))]))},
+            'fields': ['id', 'name', 'display_name', 'port_code', 'type']
+        },
+        {
+            'name': 'operator',
+            'filters': {'id': shipping_line_ids},
+            'fields': ['id', 'business_name', 'short_name', 'logo_url']
+        },
+        {
+            'name': 'organization',
+            'filters': {'id': list(set(organisation_ids))},
+            'fields': ['id', 'business_name', 'short_name'],
+            'extra_params': {'add_service_objects_required': False}
+        }
+    ]
+    if spot_search_details_required:
+        objects.append({
+            'name': 'spot_search',
+            'filters': {'id': list(set([d.get('source_id') for d in data]))},
+            'fields': ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']
+        })
 
+    service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({"objects": objects})
+    for object in data:
+        rate = fcl_freight_rate_mappings[object.get('fcl_freight_rate_id', None)] or {}
+        object['performed_by'] = service_objects['user'].get(object.get('performed_by_id'), None)
+        object['closed_by'] = service_objects['user'].get(object.get('closed_by_id'), None)
+        object['origin_port'] = service_objects['location'].get(rate.get('origin_port_id'), None)
+        object['destination_port'] = service_objects['location'].get(rate.get('destination_port_id'), None)
+        object['preferred_detention_free_days'] = object.get('preferred_detention_free_days')
+        object['closing_remarks'] = object.get('closing_remarks')
+        object['container_size'] = rate.get('container_size')
+        object['container_type'] = rate.get('container_type')
+        object['commodity'] = rate.get('commodity')
+        object['shipping_line'] = service_objects['operator'].get(rate.get('shipping_line_id'), None)
+        object['organization'] = service_objects['organization'].get(object.get('performed_by_org_id'), None)
+        object['containers_count'] = object['booking_params'].get('containers_count', None)
+        object['bls_count'] = object['booking_params'].get('bls_count', None)
+        object['inco_term'] = object['booking_params'].get('inco_term', None)
+        object['price'] = next((t['price'] for t in rate['validities'] if t['id'] == object.get('validity_id')), None)
+        object['currency'] = next((t['currency'] for t in rate['validities'] if t['id'] == object.get('validity_id')), None)
+        object['preferred_shipping_lines'] = []
+        for id in object.get('preferred_shipping_line_ids', []):
+            shipping_line = service_objects['operator'].get(id, None)
+        if shipping_line:
+            object['preferred_shipping_lines'].append(shipping_line)
+            object['spot_search'] = service_objects['spot_search'].get(object.get('source_id'), None)
+        if object['booking_params'].get('rate_card', {}).get('service_rates', {}):
+            for key, value in object['booking_params']['rate_card']['service_rates'].items():
+                service_provider = service_objects['organization'].get(value.get('service_provider_id'), None)
+        if service_provider:
+            object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
 
 def get_pagination_data(query, page, page_limit):
     params = {
