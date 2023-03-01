@@ -63,7 +63,7 @@ def execute_transaction_code(request):
     fcl_freight_local.rate_sheet_id = request.get('rate_sheet_id')
     fcl_freight_local.source = request.get('source')
     fcl_freight_local.data = request.get('data')
-    print('initial local model', model_to_dict(fcl_freight_local))
+    
     if request['data'].get('line_items'):
       # if fcl_freight_local.data:
       #   fcl_freight_local.data.update({key : value for key, value in request['data'].items() if key == 'line_items'})
@@ -83,7 +83,6 @@ def execute_transaction_code(request):
 
         detention = create_fcl_freight_rate_free_day(detention_obj)
 
-        print('detention', detention)
         fcl_freight_local.detention_id = detention['id'] #check
 
     if request['data'].get('demurrage'):
@@ -97,7 +96,7 @@ def execute_transaction_code(request):
         demurrage_obj.update({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         demurrage = create_fcl_freight_rate_free_day(demurrage_obj)
-        print('demurrage', demurrage)
+
         fcl_freight_local.demurrage_id = demurrage['id']
 
     if request['data'].get('plugin'):
@@ -111,9 +110,9 @@ def execute_transaction_code(request):
         plugin_obj.update({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         plugin = create_fcl_freight_rate_free_day(plugin_obj)
-        print('plugin', plugin)
+
         fcl_freight_local.plugin_id = plugin['id']
-    print(model_to_dict(fcl_freight_local), type(fcl_freight_local))
+   
     fcl_freight_local.before_save()
 
     try:
@@ -121,17 +120,13 @@ def execute_transaction_code(request):
     except Exception as e:
       raise HTTPException(status_code=499, detail='fcl freight rate local did not save')
     
-    print('after_save', fcl_freight_local)
     fcl_freight_local.update_special_attributes()
-    print("I'm kjslkdbh")
     fcl_freight_local.update_freight_objects()
-    print('before_audit', fcl_freight_local)
     fcl_freight_local.save()
 
     create_audit(request, fcl_freight_local.id)
 
     # create_organization_serviceable_port
-    print('fcl_local', fcl_freight_local.id)
     return {"id": fcl_freight_local.id}
 
 

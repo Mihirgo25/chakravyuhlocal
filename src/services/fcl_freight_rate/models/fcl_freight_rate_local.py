@@ -245,9 +245,7 @@ class FclFreightRateLocal(BaseModel):
 
     def possible_charge_codes(self):
         self.set_port()
-        print(self.port)
         self.set_shipping_line()
-        print("igf")
         
         # setting variables for conditions in charges.yml
         port = self.port
@@ -277,8 +275,6 @@ class FclFreightRateLocal(BaseModel):
         try:
             from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
             location_key = 'origin' if self.trade_type == 'export' else 'destination'
-            print("bedada")
-    
 
             t=FclFreightRate.update(origin_local_id = '4bf52843-44c4-4af4-97b6-72da4d0a36bf').where(
                 FclFreightRate.container_size == self.container_size,
