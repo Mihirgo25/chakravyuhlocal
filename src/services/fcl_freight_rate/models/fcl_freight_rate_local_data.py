@@ -11,8 +11,10 @@ class FclFreightRateLocalData(BaseModel):
     demurrage: FreeDay = None
     plugin: FreeDay = None
     def __init__(self,data):
-        super().__init__(line_items = data['line_items'],detension =data.get('detention'),demurrage = data.get('demurrage'),plugin = data.get("plugin") )
-
+        if data:
+            super().__init__(line_items = data.get('line_items'),detention =data.get('detention'),demurrage = data.get('demurrage'),plugin = data.get("plugin") )
+        else:
+            super().__init__()
 
     def validate_duplicate_charge_codes(self):
         if len(set([(t.code, t.location_id) for t in self.line_items])) == len(self.line_items):
@@ -116,7 +118,7 @@ class FclFreightRateLocalData(BaseModel):
         #     for code, config in filter(lambda x: x[1]['locations'], possible_charge_codes.items()):
         #         # code = str(code)
         #         location_codes = config['locations'] or []
-        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data(
+        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data_for_fcl(
         #             objects=[{
         #                 'name': 'location',
         #                 'filters': {'type': 'country', 'country_code': location_codes},

@@ -4,7 +4,7 @@ import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_PAIR_HIERARCHY
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from fastapi import HTTPException
 
 
 LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
@@ -49,32 +49,42 @@ class FclFreightRateWeightLimit(BaseModel):
             (('updated_at', 'service_provider_id', 'shipping_line_id', 'is_slabs_missing'), False),
         )
 
-    def validate_origin_location(self):
-        origin_location_data = client.ruby.list_locations({'filters':{'id': self.origin_location_id}})['list'][0]
-        if origin_location_data.get('type') in LOCATION_TYPES:
-            self.origin_port_id = origin_location_data.get('seaport_id', None)
-            self.origin_country_id = origin_location_data.get('country_id', None)
-            self.origin_trade_id = origin_location_data.get('trade_id', None)
-            self.origin_continent_id = origin_location_data.get('continent_id', None)
-            self.origin_location_type = 'port' if origin_location_data.get('type') == 'seaport' else origin_location_data.get('type')
-            return True
-        return False
+    def validate_location_ids(self):
+        params = {"filters" : {"id": [str(self.origin_location_id), str(self.destination_location_id)]}}
+        location_data = client.ruby.list_locations(params)['list']
 
-    def validate_destination_location(self):
-        destination_location_data = client.ruby.list_locations({'filters':{'id': self.destination_location_id}})['list'][0]
-        if destination_location_data.get('type') in LOCATION_TYPES:
-            self.destination_port_id = destination_location_data.get('seaport_id', None)
-            self.destination_country_id = destination_location_data.get('country_id', None)
-            self.destination_trade_id = destination_location_data.get('trade_id', None)
-            self.destination_continent_id = destination_location_data.get('continent_id', None)
-            self.destination_location_type = 'port' if destination_location_data.get('type') == 'seaport' else destination_location_data.get('type')
-            self.origin_destination_location_type = str(self.origin_location_type) + ':' + str(self.destination_location_type)
-            return True
+        if len(location_data) != 0:
+            count = 0
+            for location in location_data:
+                if location['id'] == self.origin_location_id and location['type'] in LOCATION_TYPES:
+                    self.origin_location = location
+
+                    self.origin_port_id = location.get('seaport_id', None)
+                    self.origin_country_id = location.get('country_id', None)
+                    self.origin_trade_id = location.get('trade_id', None)
+                    self.origin_continent_id = location.get('continent_id', None)
+
+                    self.origin_location_type = 'port' if location.get('type') == 'seaport' else location.get('type')
+                    count += 1
+
+                elif location['id'] == self.destination_location_id and location['type'] in LOCATION_TYPES:
+                    self.destination_location = location
+
+                    self.destination_port_id = location.get('seaport_id', None)
+                    self.destination_country_id = location.get('country_id', None)
+                    self.destination_trade_id = location.get('trade_id', None)
+                    self.destination_continent_id = location.get('continent_id', None)
+
+                    self.destination_location_type = 'port' if location.get('type') == 'seaport' else location.get('type')
+                    self.origin_destination_location_type = str(self.origin_location_type) + ':' + str(self.destination_location_type)
+                    count += 1
+            if count == 2:
+                return True
         return False
 
     def validate_shipping_line(self):
       shipping_line_data = client.ruby.list_operators({'filters':{'id': self.shipping_line_id}})['list'][0]
-      if shipping_line_data.get('operator_type') == 'shipping_line':#Can we check like this as we are getting through id so we will get only single row or should we send it as a param filter
+      if shipping_line_data.get('operator_type') == 'shipping_line':
         return True
       return False
 
@@ -110,24 +120,76 @@ class FclFreightRateWeightLimit(BaseModel):
             return True
         return False
 
-    # def validate_free_limit(self):
-    #   if 'free_limit' in self:
-    #     return True
-    #   return False
+    def validate_free_limit(self):
+      if self.free_limit:
+        return True
+      return False
 
-    def update_freight_objects(self):
-        origin_destination_location_types = [key for key in LOCATION_PAIR_HIERARCHY.keys() if LOCATION_PAIR_HIERARCHY[key] >= LOCATION_PAIR_HIERARCHY[self.origin_destination_location_type]]
+    def validate_slabs(self):
+        slabs = sorted(self.slabs, key=lambda slab:slab['lower_limit'])
 
-        freight_query = FclFreightRate.where(
-        FclFreightRate.container_size == self.container_size,
-        FclFreightRate.container_type == self.container_type,
-        FclFreightRate.shipping_line_id == self.shipping_line_id,
-        FclFreightRate.service_provider_id == self.service_provider_id
-        ).where(
-            eval("FclFreightRate.origin_{self.origin_location_type}_id == self.origin_location_id"),
-            eval("FclFreightRate.destination_#{self.destination_location_type}_id == self.destination_location_id")
-        )
+        if len(slabs) != 0 and float(self.free_limit) != 0 and (float(self.free_limit) > float(slabs[0]['lower_limit'])):
+           raise (slabs, 'lower limit should be greater than free limit')
+        
+        for index, slab in enumerate(slabs):
+           if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index != 0 and float(slab['lower_limit']) <= float(slabs[index - 1]['upper_limit'])):
+                raise (slabs, 'invalid')
 
-        freight_query.join(FclFreightRateWeightLimit, on=(FclFreightRate.weight_limit_id == FclFreightRateWeightLimit.id)).where(FclFreightRateWeightLimit.origin_destination_location_type == origin_destination_location_types)
+    def validate_before_save(self):
+        
+        if not self.validate_location_ids():
+            raise HTTPException(status_code=499, detail="Invalid location")
 
-        print(freight_query)
+        if not self.validate_shipping_line():
+            raise HTTPException(status_code=499, detail="Invalid shipping line")
+
+        if not self.validate_service_provider():
+            raise HTTPException(status_code=499, detail="Invalid service provider")
+
+        if not self.validate_container_size():
+            raise HTTPException(status_code=499, detail="Incorrect container size")
+
+        if not self.validate_container_type():
+            raise HTTPException(status_code=499, detail="Invalid container type")
+
+        if not self.validate_free_limit():
+            raise HTTPException(status_code=499, detail="Empty free limit")
+
+        if not self.valid_uniqueness():
+            raise HTTPException(status_code=499, detail="Violates uniqueness validation")
+
+        if not self.validate_slabs():
+            raise HTTPException(status_code=499, detail="Incorrect slabs")
+
+
+    def update_special_attributes(self):
+        self.update(is_slabs_missing = False) if self.slabs and len(self.slabs) != 0 else self.update(is_slabs_missing = True)
+
+    # def update_freight_objects(self):
+    #     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+    #     origin_destination_location_types = [key for key in LOCATION_PAIR_HIERARCHY.keys() if LOCATION_PAIR_HIERARCHY[key] >= LOCATION_PAIR_HIERARCHY[self.origin_destination_location_type]]
+
+    #     freight_query = FclFreightRate.where(
+    #     FclFreightRate.container_size == self.container_size,
+    #     FclFreightRate.container_type == self.container_type,
+    #     FclFreightRate.shipping_line_id == self.shipping_line_id,
+    #     FclFreightRate.service_provider_id == self.service_provider_id
+    #     ).where(
+    #         eval("FclFreightRate.origin_{self.origin_location_type}_id == self.origin_location_id"),
+    #         eval("FclFreightRate.destination_#{self.destination_location_type}_id == self.destination_location_id")
+    #     )
+
+    #     freight_query.join(FclFreightRateWeightLimit, on=(FclFreightRate.weight_limit_id == FclFreightRateWeightLimit.id)).where(FclFreightRateWeightLimit.origin_destination_location_type == origin_destination_location_types)
+
+    #     print(freight_query)
+
+    def detail(self):
+      return {
+        "weight_limit": {
+            "id": self.id,
+            "free_limit": self.free_limit,
+            "remarks": self.remarks,
+            "slabs": self.slabs,
+            "is_slabs_missing": self.is_slabs_missing,
+        }
+    }
