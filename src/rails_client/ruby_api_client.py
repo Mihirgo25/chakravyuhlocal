@@ -52,3 +52,6 @@ class RubyApiClient:
 
     def create_communication(self, data = {}):
         return self.client.request('POST','create_communication',data)
+    
+    def get_shipment(self, data = {}):
+        return self.client.request('GET','get_shipment',data)
