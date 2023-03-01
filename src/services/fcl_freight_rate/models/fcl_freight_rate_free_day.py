@@ -60,7 +60,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = client.ruby.list_locations({'filters':{'id': str(self.location_id)}})['list'][0]
+        location_data = client.ruby.list_locations({'filters':{'id': str(self.location_id)}})['list']
 
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]
