@@ -24,9 +24,8 @@ class FclFreightRateAudit(BaseModel):
     rate_sheet_id = UUIDField(index=True, null=True)
     source = CharField(null=True)
     sourced_by_id = UUIDField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
     object_id = ForeignKeyField(FclFreightRate, related_name='audits', on_delete='CASCADE')
-    created_at = DateTimeField()
     seqnum = Window(
         partition_by = object_id,
         order_by = created_at.desc()

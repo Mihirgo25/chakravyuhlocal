@@ -35,4 +35,6 @@ INTERNAL_BOOKING = {
     'service_provider_id': "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
 }
 
+MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT = 100000
+
 DEFAULT_SPECIFICITY_TYPE = 'shipping_line'
