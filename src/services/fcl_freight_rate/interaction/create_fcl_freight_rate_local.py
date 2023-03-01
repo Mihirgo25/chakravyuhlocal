@@ -113,7 +113,7 @@ def execute_transaction_code(request):
 
         fcl_freight_local.plugin_id = plugin['id']
    
-    fcl_freight_local.before_save()
+    fcl_freight_local.validate_before_save()
 
     try:
       fcl_freight_local.save()

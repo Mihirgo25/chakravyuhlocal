@@ -167,7 +167,7 @@ class FclFreightRateLocal(BaseModel):
         self.local_data_instance.validate_duplicate_charge_codes()# for each part different error should occur
         self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
-    def before_save(self):
+    def validate_before_save(self):
         try:
             self.local_data_instance = FclFreightRateLocalData(self.data)
         except Exception as e:
