@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from datetime import date
 from peewee import fn
 
