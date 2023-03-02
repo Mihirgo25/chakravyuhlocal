@@ -1,9 +1,9 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
+from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from playhouse.shortcuts import model_to_dict
 from fastapi import HTTPException
 
 
-def get_fcl_freight_rate_free_day(request):
+def get_fcl_freight_rate_weight_limit(request):
     if not all_fields_present(request):
         return {}
     
@@ -16,9 +16,8 @@ def get_fcl_freight_rate_free_day(request):
 
 def all_fields_present(request):
     for field in (
-        'location_id',
-        'trade_type',
-        'free_days_type',
+        'origin_location_id',
+        'destination_location_id',
         'container_size',
         'container_type',
         'shipping_line_id',
@@ -30,18 +29,16 @@ def all_fields_present(request):
 
 def find_object(request):
     row = {
-        'location_id' : request['location_id'],
-        'trade_type' : request['trade_type'],
-        'free_days_type' : request['free_days_type'],
+        'origin_location_id' : request['origin_location_id'],
+        'destination_location_id' : request['destination_location_id'],
         'container_type' : request['container_type'],
         'container_size' : request['container_size'],
         'shipping_line_id' : request['shipping_line_id'],
-        'service_provider_id' : request['service_provider_id'],
-        'importer_exporter_id' : request.get('importer_exporter_id')
+        'service_provider_id' : request['service_provider_id']
     }
-    
+
     try:
-        object = FclFreightRateFreeDay.get(**row)
+        object = FclFreightRateWeightLimit.get(**row)
     except:
-        raise HTTPException(status_code=499, detail="no free day entry with the given id exists")
+        raise HTTPException(status_code=499, detail="no weight limit entry with the given id exists")
     return object

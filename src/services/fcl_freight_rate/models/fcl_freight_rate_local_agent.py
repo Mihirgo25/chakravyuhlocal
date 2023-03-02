@@ -61,7 +61,7 @@ class FclFreightRateLocalAgents(BaseModel):
             FclFreightRateLocalAgents.location_id == self.location_id,
             FclFreightRateLocalAgents.trade_type == self.trade_type,
         ).count()
-
+        ####################### check this
         if self.id and freight_weight_limit_cnt==1:
             return True
         if not self.id and freight_weight_limit_cnt==0:

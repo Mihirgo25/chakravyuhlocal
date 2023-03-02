@@ -1,7 +1,6 @@
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 from configs.global_constants import HAZ_CLASSES
-from services.fcl_freight_rate.models.fcl_freight_rate import possible_charge_codes
 import json 
 
 # def to_dict(obj):
@@ -58,9 +57,9 @@ def get_fcl_freight_rate(request):
 
 
   return detail.update({
-    'freight_charge_codes': possible_charge_codes(FclFreightRate.get(object_params)),
-    'origin_local_charge_codes': possible_charge_codes(FclFreightRateLocal.get(origin_local_object_params)),
-    'destination_local_charge_codes': possible_charge_codes(FclFreightRateLocal.get(destination_local_object_params))
+    'freight_charge_codes': FclFreightRate.possible_charge_codes(FclFreightRate.get(object_params)),
+    'origin_local_charge_codes': FclFreightRate.possible_charge_codes(FclFreightRateLocal.get(origin_local_object_params)),
+    'destination_local_charge_codes': FclFreightRate.possible_charge_codes(FclFreightRateLocal.get(destination_local_object_params))
   })
 
 

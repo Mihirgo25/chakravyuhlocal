@@ -5,18 +5,23 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 from fastapi import FastAPI, Response, Query, Request, Depends
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
-# from database.create_tables import create_table
+#from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
+from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_extension_rule_set import update_fcl_freight_rate_extension_rule_set_data
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_extension_rule_sets import list_fcl_freight_rate_extension_rule_set_data
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_extension_rule_set import create_fcl_freight_rate_extension_rule_set_data
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_extension import get_fcl_freight_rate_extension_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
 from rails_client.client import initialize_client
 from params import *
 
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
-from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
-from params import ListFclFreightRate, GetFclFreightRateLocal
-from services.fcl_freight_rate.interaction.test_fcl_freight_rate import test_fcl
+# from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
+# from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
+
 
 app = FastAPI(debug=True)
 
@@ -32,7 +37,7 @@ app.add_middleware(
 def startup():
     if db.is_closed():
         db.connect()
-    # create_table()
+    #create_table()
     initialize_client()
     
 @app.on_event("shutdown")
@@ -50,23 +55,21 @@ def read_root():
 #     data = jsonable_encoder(data)
 #     return JSONResponse(status_code=200, content=data)
 
-@app.post("/list_fcl_freight_rates")
-def list_fcl_freight_data(request: ListFclFreightRate):
-    data = list_fcl_freight_rates(request)
-    return None
+# @app.post("/list_fcl_freight_rates")
+# def list_fcl_freight_data(request: ListFclFreightRate):
+#     data = list_fcl_freight_rates(request)
+#     return None
 
-@app.post("/get_fcl_freight_rate_local")
-def get_fcl_freight_card(request: GetFclFreightRateLocal):
-    data = get_fcl_freight_rate_local(request)
-    return None
+# @app.post("/get_fcl_freight_rate_local")
+# def get_fcl_freight_card(request: GetFclFreightRateLocal):
+#     data = get_fcl_freight_rate_local(request)
+#     return None
 
 @app.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate(request: PostFclFreightRate, response: Response):
     # try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        # return create_fcl_freight_rate(request.dict(exclude_none=True))
-        # return JSONResponse(status_code=200, content=data)
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
     # except Exception as e:
         # logger.error(e,exc_info=True)
     #     return JSONResponse(status_code=500, content={"success": False})
@@ -83,3 +86,8 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, response: Response):
 @app.post("/update_fcl_freight_rate_local")
 def update_fcl_freight_rate_local(request: UpdateFclFreightRateLocal, response: Response):
     return update_fcl_freight_rate_local_data(request.dict(exclude_none=True))
+
+@app.delete("/delete_fcl_freight_rate")
+def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
+    delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
