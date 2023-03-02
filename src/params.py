@@ -250,7 +250,7 @@ class GetFclFreightLocalRateCards(BaseModel):
     container_size: str
     container_type: str
     commodity: str = None
-    containers_count: int 
+    containers_count: int
     bls_count: int
     cargo_weight_per_container: int = None
     include_destination_dpd: bool = False
@@ -265,7 +265,7 @@ class DeleteFclFreightRate(BaseModel):
     validity_start: datetime.datetime
     validity_end: datetime.datetime
     bulk_operation_id: str = None
-    sourced_by_id: str 
+    sourced_by_id: str
     procured_by_id: str
     payment_term: str = 'prepaid'
 
@@ -285,5 +285,20 @@ class CreateFclFreightRateNotAvailable(BaseModel):
     container_type: str
     commodity: str
 
+
+class CreateRateSheet(BaseModel):
+    id: str
+    service_provider_id: str = None
+    service_name: str = None
+    file_url: str = None
+    comment: str = None
+    status: str = None
+    converted_files: dict = None
+    partner_id: str = None
+    agent_id: str = None
+    created_at: dict = None
+    updated_at: str = None
+    serial_id: str = None
+    cogo_entity_id: dict = None
 
 

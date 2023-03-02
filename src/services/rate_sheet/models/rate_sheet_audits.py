@@ -10,24 +10,22 @@ class BaseModel(Model):
     class Meta:
         database = db
 
-class RateSheet(BaseModel):
+class RateSheetAudits(BaseModel):
     id = UUIDField(
         primary_key=True,
         constraints=[SQL("DEFAULT uuid_generate_v4()")],
         default=uuid.uuid4,
+        index=True
     )
-    service_provider_id = UUIDField(index=True, null=True)
-    service_name = CharField(null=True)
-    file_url = CharField(null=True)
-    comment = CharField(null=True)
-    status = CharField(null=True)
-    converted_files = JSONField(null=True)
-    partner_id = UUIDField(index=True, null=True)
-    agent_id = UUIDField(index=True, null=True)
+    object_type = CharField(index=True, null=True)
+    object_id = UUIDField(null=True)
+    action_name = CharField(null=True)
+    performed_by_id = UUIDField(index=True, null=True)
+    data = JSONField(null=True)
+    procured_by_id = UUIDField(index=True, null=True)
+    sourced_by_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    serial_id = IntegerField()
-    cogo_entity_id = UUIDField(index=True, null=True)
 
     class Meta:
-        table_name = 'rate_sheet'
+        table_name = 'rate_sheet_audits'

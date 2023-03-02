@@ -1,6 +1,7 @@
 
 from src.services.rate_sheet.models.rate_sheet import RateSheet
-from src.services.rate_sheet.models.request_classes import CreateRateSheet
+from src.params import CreateRateSheet
+from src.services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
 
 from playhouse.postgres_ext import *
 from peewee import *
@@ -20,6 +21,22 @@ def get_audit_params(parameters, location_mapping):
         "performed_by_type": parameters.performed_by_type,
         "data": audit_data,
     }
+
+def create_audit(request):
+
+    audit_data = {}
+    audit_data['price'] = request['price']
+    audit_data['currency'] = request['currency']
+    audit_data['remarks'] = request.get('remarks')
+
+    RateSheetAudits.create(
+        action_name = 'create',
+        rate_sheet_id = request.get('rate_sheet_id'),
+        performed_by_id = request['performed_by_id'],
+        procured_by_id = request['procured_by_id'],
+        sourced_by_id = request['sourced_by_id'],
+        data = audit_data
+    )
 
 def get_create_params(params):
     relevant_params = {}
@@ -79,9 +96,9 @@ def send_rate_sheet_notifications(params):
         client.ruby.create_communication(data)
 
 
-def create_locations_mapping(params: CreateRateSheet):
+def create_rate_sheet(params: CreateRateSheet):
     location_cluster = RateSheet.create(**get_create_params(params))
     location_cluster.save()
-    create_audit_records(get_audit_params(params, location_cluster))
+    create_audit(get_audit_params(params, location_cluster))
     send_rate_sheet_notifications(params)
 

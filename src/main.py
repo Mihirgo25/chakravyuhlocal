@@ -16,6 +16,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_extension import
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
+from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from rails_client.client import initialize_client
 from params import *
 
@@ -39,7 +40,7 @@ def startup():
         db.connect()
     #create_table()
     initialize_client()
-    
+
 @app.on_event("shutdown")
 def shutdown():
     if not db.is_closed():
@@ -90,4 +91,10 @@ def update_fcl_freight_rate_local(request: UpdateFclFreightRateLocal, response: 
 @app.delete("/delete_fcl_freight_rate")
 def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
     delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
+
+
+@app.post("/create_rate_sheet")
+def create_rate_sheets(request: CreateRateSheet, response: Response):
+    rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content={"success": True})
