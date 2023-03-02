@@ -19,7 +19,7 @@ class RubyApiClient:
 
     def get_eligible_fcl_freight_rate_free_day(self, data = {}):
         return self.client.request('GET','get_eligible_fcl_freight_rate_free_day',data)
-        
+
     def list_fcl_freight_commodity_cluster(self, data={}):
         return self.client.request('GET','list_fcl_freight_commodity_cluster',data)
 
@@ -34,13 +34,13 @@ class RubyApiClient:
 
     def get_location_cluster(self, data = {}):
         return self.client.request('GET','get_location_cluster',data)
-    
+
     def get_money_exchange_for_fcl(self, data = {}):
         return self.client.request('GET','get_money_exchange_for_fcl',data)
 
     def get_fcl_freight_commodity_cluster(self, data = {}):
         return self.client.request('GET','get_fcl_freight_commodity_cluster',data)
-    
+
     def get_multiple_service_objects_data_for_fcl(self, data = {}):
         return self.client.request('GET','get_multiple_service_objects_data_for_fcl', data)
 
@@ -52,6 +52,9 @@ class RubyApiClient:
 
     def create_communication(self, data = {}):
         return self.client.request('POST','create_communication',data)
-    
+
     def get_shipment(self, data = {}):
         return self.client.request('GET','get_shipment',data)
+
+    def list_partner_users(self, data = {}):
+        return self.client.request('GET','list_partner_users',data)
