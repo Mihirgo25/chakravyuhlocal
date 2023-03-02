@@ -23,6 +23,12 @@ class RubyApiClient:
     def list_fcl_freight_commodity_cluster(self, data={}):
         return self.client.request('GET','list_fcl_freight_commodity_cluster',data)
 
+    def list_spot_searches(self, data = {}):
+        return self.client.request('GET', 'list_spot_searches', data)
+
+    def list_checkouts(self, data = {}):
+        return self.client.request('GET', 'list_checkouts', data)
+
     def list_location_cluster(self,data={}):
         return self.client.request('GET','list_location_cluster',data)
 
@@ -43,22 +49,9 @@ class RubyApiClient:
 
     def create_sailing_schedule_port_pair_coverage(self, data = {}):
         return self.client.request('POST','create_sailing_schedule_port_pair_coverage',data)
-    
-    def list_spot_searches(self,data={}):
-        return self.client.request('GET','list_spot_searches',data)
 
-    def list_checkouts(self,data={}):
-        return self.client.request('GET','list_checkouts',data)
-    
-    def list_users(self,data={}):
-        return self.client.request('GET','list_users',data)
-    
-    def list_patner_user_expertises(self,data={}):
-        return self.client.request('GET','list_patner_user_expertises',data)
-    
-    def list_partner_users(self,data={}):
-        return self.client.request('GET','list_partner_users',data)
-
-    
-    def create_communication(self,data={}):
+    def create_communication(self, data = {}):
         return self.client.request('POST','create_communication',data)
+    
+    def get_shipment(self, data = {}):
+        return self.client.request('GET','get_shipment',data)

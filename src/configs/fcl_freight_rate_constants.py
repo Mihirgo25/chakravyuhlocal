@@ -1,3 +1,5 @@
+REQUEST_SOURCES = ['spot_search']
+
 HAZ_COMMODITIES = [
     "gases-2.1",
     "gases-2.2",
@@ -108,6 +110,26 @@ DEFAULT_IMPORT_DESTINATION_DETENTION = 4
 DEFAULT_EXPORT_DESTINATION_DEMURRAGE = 0
 
 DEFAULT_IMPORT_DESTINATION_DEMURRAGE = 0
+
+FEEDBACK_SOURCES = ['spot_search', 'checkout']
+
+FEEDBACK_TYPES = ['liked', 'disliked']
+
+POSSIBLE_FEEDBACKS = ['unsatisfactory_rate', 'unsatisfactory_destination_detention', 'unpreferred_shipping_lines']
+
+RATE_CONSTANT_MAPPING = [
+    { 'cogo_entity_id': '6fd98605-9d5d-479d-9fac-cf905d292b88', 'allowed_entity_ids': ['6fd98605-9d5d-479d-9fac-cf905d292b88', None] },
+    { 'cogo_entity_id': 'b67d40b1-616c-4471-b77b-de52b4c9f2ff', 'allowed_entity_ids': ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', None] }
+  ]
+
+COMMODITY_SURCHARGE_CONTAINER_COMMODITY_MAPPINGS = {
+    'standard' : STANDARD_COMMODITIES + HAZ_CLASSES,
+    'refer' : REFER_COMMODITIES,
+    'open_top' : OPEN_TOP_COMMODITIES,
+    'open_side' : OPEN_SIDE_COMMODITIES,
+    'flat_rack' : FLAT_RACK_COMMODITIES,
+    'iso_tank' : ISO_TANK_COMMODITIES + HAZ_CLASSES
+  }
 
 CONTAINER_CLUSTERS = { '40_40HC' : ['40', '40HC'] }
 

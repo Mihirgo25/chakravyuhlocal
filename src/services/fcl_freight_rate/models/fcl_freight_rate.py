@@ -9,7 +9,7 @@ from typing import Set, Union
 from fastapi import FastAPI, HTTPException
 import yaml
 from params import LineItem
-from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional, Or, SchemaError
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES

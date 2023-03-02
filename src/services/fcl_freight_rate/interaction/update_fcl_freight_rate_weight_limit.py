@@ -1,11 +1,11 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
+from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from fastapi import HTTPException
 import datetime
 from database.db_session import db
 
 
-def update_fcl_freight_rate_free_day(request):
+def update_fcl_freight_rate_weight_limit(request):
   with db.atomic() as transaction:
         try:
           return execute_transaction_code(request)
@@ -15,32 +15,32 @@ def update_fcl_freight_rate_free_day(request):
 
 def execute_transaction_code(request):
     #### write a ciondition where if atleast one of free_limit,remarks or slabs is present then only execute update
-    free_day = FclFreightRateFreeDay.get_by_id(request['id'])
+    weight_limit = FclFreightRateWeightLimit.get_by_id(request['id'])
 
     if request.get('free_limit'):
-        free_day.free_limit = request.get('free_limit')
+        weight_limit.free_limit = request.get('free_limit')
     if request.get('remarks'):
-        free_day.remarks = request.get('remarks')
+        weight_limit.remarks = request.get('remarks')
     if request.get('slabs'):
-        free_day.slabs = request.get('slabs')
+        weight_limit.slabs = request.get('slabs')
 
-    free_day.updated_at = datetime.datetime.now()
+    weight_limit.updated_at = datetime.datetime.now()
 
     try:
-        free_day.save()
+        weight_limit.save()
     except:
         raise HTTPException(status_code=499, detail='fcl freight rate local did not save')
 
-    free_day.update_special_attributes()
-    free_day.save()
+    weight_limit.update_special_attributes()
+    weight_limit.save()
 
-    create_audit(request, free_day.id)
+    create_audit(request, weight_limit.id)
 
     return {
-      'id': free_day.id
+      'id': weight_limit.id
     }
 
-def create_audit(request, free_day_id):
+def create_audit(request, weight_limit_id):
 
     audit_data = {'free_limit': request.get('free_limit'),'remarks': request.get('remarks'),'slabs': request.get('slabs')}
 
@@ -48,12 +48,11 @@ def create_audit(request, free_day_id):
       FclFreightRateAudit.create(
         action_name = 'update',
         performed_by_id = request.get('performed_by_id'),
-        bulk_operation_id = request.get('bulk_operation_id'),
         procured_by_id = request.get('procured_by_id'),
         sourced_by_id = request.get('sourced_by_id'),
         data = audit_data,
-        object_id = free_day_id,
-        object_type = 'FclFreightRateFreeDay'
+        object_id = weight_limit_id,
+        object_type = 'FclFreightRateWeightLimit'
       )
     except:
-      raise HTTPException(status_code=499, detail='fcl freight audit for free day did not save')
+      raise HTTPException(status_code=499, detail='fcl freight audit for weight limit did not save')

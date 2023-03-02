@@ -10,7 +10,7 @@ from fastapi import HTTPException
 import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
-
+from playhouse.shortcuts import model_to_dict
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -86,11 +86,11 @@ class FclFreightRateLocal(BaseModel):
         if port_data.get('type') == 'seaport':
             self.port = port_data
 
-            self.country_id = self.port['country_id']
-            self.trade_id = self.port['trade_id'] 
-            self.continent_id = self.port['continent_id']
+            self.country_id = port_data.get('country_id', None)
+            self.trade_id = port_data.get('trade_id', None) 
+            self.continent_id = port_data.get('continent_id', None)
             self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
-            print()
+
             return True
         return False
 
@@ -112,7 +112,7 @@ class FclFreightRateLocal(BaseModel):
 
     def validate_shipping_line_id(self):
         shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(self.shipping_line_id)]}})['list'][0]
-        if shipping_line_data.get('operator_type') == 'shipping_line':#Can we check like this as we are getting through id so we will get only single row or should we send it as a param filter
+        if shipping_line_data.get('operator_type') == 'shipping_line':
             self.shipping_line = shipping_line_data
             return True
         return False
@@ -158,65 +158,47 @@ class FclFreightRateLocal(BaseModel):
 
       if self.id and freight_local_cnt==1:
         return True
-    #   if not self.id and freight_local_cnt==0:
-    #     return True
+      if not self.id and freight_local_cnt==0:
+        return True
 
       return False
     
     def validate_data(self):
         self.local_data_instance.validate_duplicate_charge_codes()# for each part different error should occur
-        print("ababab")
-        print('ahgsdjhagshjsgdadajsdgjhagdqgeiygdiquwgdiuqwgdiuqwgdiquwgdiuqgwdiuqwgdiyfgqwiuydfgq',self.local_data_instance,'hiuasdghuiasgh', type(self.local_data_instance))
         self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
-    def before_save(self):
-        # data #store model validation
+    def validate_before_save(self):
         try:
             self.local_data_instance = FclFreightRateLocalData(self.data)
-            t = FclFreightRateLocalData(self.data)
-            print("bedada",t)
-            print("line_items",self.local_data_instance.line_items)
         except Exception as e:
-            print("=========",e)
+            print(e)
 
         if not self.validate_port():
-            HTTPException(status_code=499, detail='port_id is not valid')
+            raise HTTPException(status_code=499, detail='port_id is not valid')
 
         if not self.validate_main_port_id():
-            HTTPException(status_code=499, detail='main_port_id is not valid')
+            raise HTTPException(status_code=499, detail='main_port_id is not valid')
 
         if not self.validate_shipping_line_id():
-            HTTPException(status_code=499, detail='shipping_line_id is not valid')
+            raise HTTPException(status_code=499, detail='shipping_line_id is not valid')
 
         if not self.validate_service_provider_id():
-            HTTPException(status_code=499, detail='service_provider_id is not valid')
+            raise HTTPException(status_code=499, detail='service_provider_id is not valid')
         
         if not self.validate_trade_type():
-            HTTPException(status_code=499, detail='trade_type is not valid')
+            raise HTTPException(status_code=499, detail='trade_type is not valid')
 
         if not self.validate_container_size():
-            HTTPException(status_code=499, detail='container_size is not valid')
+            raise HTTPException(status_code=499, detail='container_size is not valid')
         
         if not self.validate_container_type():
-            HTTPException(status_code=499, detail='container_type is not valid')
+            raise HTTPException(status_code=499, detail='container_type is not valid')
 
         if not self.validate_uniqueness():
-            HTTPException(status_code=499, detail='violates uniqueness validation')
+            raise HTTPException(status_code=499, detail='violates uniqueness validation')
 
         if not self.validate_data():
-            HTTPException(status_code=499, detail='data is not valid')
-
-    # def local_data_get_line_item_messages(self):
-
-    #   location_ids = list(set([item.location_id for item in self.origin_local.line_items if item.location_id is not None]))
-
-    #   locations = {}
-
-    #   if location_ids:
-    #     obj = {"filters" : {"id": location_ids}}
-    #     locations = requests.request("GET", 'https://api-nirvana1.dev.cogoport.io/location/list_locations', json = obj).json()['list']
-
-    #   return locations
+            raise HTTPException(status_code=499, detail='data is not valid')
 
     def update_special_attributes(self):
         self.update_line_item_messages()
@@ -227,28 +209,17 @@ class FclFreightRateLocal(BaseModel):
         self.set_shipping_line()
         response = {}
 
-        try:
-            response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
-        except Exception as e:
-            print(e)
-        print('hua', response)
-        
-        self.update(
-            line_items_error_messages = response['line_items_error_messages'],
-            is_line_items_error_messages_present = response['is_line_items_error_messages_present'],
-            line_items_info_messages = response['line_items_info_messages'],
-            is_line_items_info_messages_present = response['is_line_items_info_messages_present']
-        )
+        response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
+
+        self.line_items_error_messages = response['line_items_error_messages'],
+        self.is_line_items_error_messages_present = response['is_line_items_error_messages_present'],
+        self.line_items_info_messages = response['line_items_info_messages'],
+        self.is_line_items_info_messages_present = response['is_line_items_info_messages_present']
 
     def update_free_days_special_attributes(self):
-        try:
-            self.update(
-                is_detention_slabs_missing = (len(self.data['detention']['slabs']) == 0),
-                is_demurrage_slabs_missing = (len(self.data['demurrage']['slabs']) == 0),
-                is_plugin_slabs_missing = (len(self.data['plugin']['slabs']) == 0)
-            )
-        except Exception as e:
-            print(e)
+        self.is_detention_slabs_missing = len(self.data['detention']['slabs']) == 0 if self.data and self.data.get('detention') else True
+        self.is_demurrage_slabs_missing = len(self.data['demurrage']['slabs']) == 0 if self.data and self.data.get('demurrage') else True
+        self.is_plugin_slabs_missing = len(self.data['plugin']['slabs']) == 0 if self.data and self.data.get('plugin') else True
 
     def set_port(self):
         if self.port:
@@ -274,9 +245,7 @@ class FclFreightRateLocal(BaseModel):
 
     def possible_charge_codes(self):
         self.set_port()
-        print(self.port)
         self.set_shipping_line()
-        print("igf")
         
         # setting variables for conditions in charges.yml
         port = self.port
@@ -298,45 +267,70 @@ class FclFreightRateLocal(BaseModel):
                 if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
                     charge_codes[code] = config
 
-            # charge_codes = {
-            #     code: config for code, config in fcl_freight_local_charges_dict.items()
-            #     if config.get('condition') is not None and
-            #     eval(str(config['condition'])) and self.trade_type in config['trade_types']
-            # }
         except Exception as e:
             print(e)
         return charge_codes
 
     def update_freight_objects(self):
         try:
-            from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+            from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
             location_key = 'origin' if self.trade_type == 'export' else 'destination'
-            print("bedada")
-            t = FclFreightRate.get_or_none(
-            FclFreightRate.container_size == self.container_size,
-            FclFreightRate.container_type == self.container_type,
-            FclFreightRate.shipping_line_id == self.shipping_line_id,
-            FclFreightRate.service_provider_id == self.service_provider_id,
-            eval(f"FclFreightRate.{location_key}_port_id") == self.port_id,
-            eval(f"FclFreightRate.{location_key}_main_port_id") == self.main_port_id
-            )
 
-            if t:
-                print('kay')
-                if self.commodity:
-                    t = t.where(FclFreightRate.commodity == self.commodity)
-
-                t=t.where(f"FclFreightRate.{location_key}_local_id" == None)
-                print('aiosjdhas',t)
-                setattr(t, f"{location_key}_local_id", self.id)
-                # t.update({f"FclFreightRate.{location_key}_local_id": self.id}).execute()
+            t=FclFreightRate.update(origin_local_id = '4bf52843-44c4-4af4-97b6-72da4d0a36bf').where(
+                FclFreightRate.container_size == self.container_size,
+                FclFreightRate.container_type == self.container_type,
+                FclFreightRate.shipping_line_id == self.shipping_line_id,
+                FclFreightRate.service_provider_id == self.service_provider_id,
+                (f"FclFreightRate.{location_key}_port_id" == self.port_id),
+                (f"FclFreightRate.{location_key}_main_port_id" == self.main_port_id)
+                (FclFreightRate.commodity == self.commodity) if self.commodity else (FclFreightRate.id.is_null(False)),
+                (f"FclFreightRate.{location_key}_local_id" == None)
+                )
+            t.execute()
                 
-
-            print(t)
+            print("update done")
         except Exception as e:
             print(e)
-        #not working
 
+    def detail(self):
+        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
+            fcl_freight_local_charges_dict = yaml.safe_load(file)
+
+        from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
+
+        if self.detention_id or self.demurrage_id:
+            free_days = list_fcl_freight_rate_free_days({'filters': {'id': [self.detention_id, self.demurrage_id]}})['list']
+
+        if self.detention_id:
+            t = next((t for t in free_days if t.id == self.detention_id), None)
+            if t:
+                self.data['detention'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
+
+        if self.demurrage_id:
+            t = next((t for t in free_days if t.id == self.demurrage_id), None)
+            if t:
+                self.data['demurrage'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
+            # for t in free_days:
+            #     if t.id == self.demurrage_id:
+            #         self.data['demurrage'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
+            #         break
+
+        detail = self.data | {
+            'id': self.id,
+            'line_items_error_messages': self.line_items_error_messages,
+            'is_line_items_error_messages_present': self.is_line_items_error_messages_present,
+            'line_items_info_messages': self.line_items_info_messages,
+            'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
+            'is_detention_slabs_missing': self.is_detention_slabs_missing,
+            'is_demurrage_slabs_missing': self.is_demurrage_slabs_missing,
+            'is_plugin_slabs_missing': self.is_plugin_slabs_missing
+        }
+
+        for item in detail['line_items']:
+            line_item_name = fcl_freight_local_charges_dict[item['code']]['name'] if item['code'] in fcl_freight_local_charges_dict else item['code']
+            item.update({'name': line_item_name})
+
+        return detail
 
 
 idx1 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id == None).where(FclFreightRateLocal.commodity == None)

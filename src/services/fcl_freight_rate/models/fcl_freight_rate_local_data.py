@@ -16,8 +16,6 @@ class FclFreightRateLocalData(BaseModel):
         else:
             super().__init__()
 
-
-
     def validate_duplicate_charge_codes(self):
         if len(set([(t.code, t.location_id) for t in self.line_items])) == len(self.line_items):
             return True
@@ -47,12 +45,9 @@ class FclFreightRateLocalData(BaseModel):
         grouped_charge_codes = {}
         for line_item in self.line_items:
             grouped_charge_codes[line_item.code] = line_item.__dict__
-            print('ajkfhajs',grouped_charge_codes)
 
         for code, line_items in grouped_charge_codes.items():
-            print(code, line_items)
             code_config = fcl_freight_local_charges_dict[code]
-            print('confi', code_config)
 
             if not code_config:
                 line_items_error_messages[code] = ['is invalid']
@@ -120,7 +115,7 @@ class FclFreightRateLocalData(BaseModel):
         #     for code, config in filter(lambda x: x[1]['locations'], possible_charge_codes.items()):
         #         # code = str(code)
         #         location_codes = config['locations'] or []
-        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data(
+        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data_for_fcl(
         #             objects=[{
         #                 'name': 'location',
         #                 'filters': {'type': 'country', 'country_code': location_codes},
@@ -149,28 +144,22 @@ class FclFreightRateLocalData(BaseModel):
         # print('ok')
         for code, config in possible_charge_codes.items():
             if 'carrier_haulage' in config.get('tags', []):
-                # code = str(code)
                 if grouped_charge_codes.get(code) is None and not line_items_error_messages.get(code):
                     line_items_info_messages[code] = ['can be added as carrier haulage for more conversion']
                     is_line_items_info_messages_present = True
 
         for code, config in possible_charge_codes.items():
             if 'dpd' in config.get('tags', []):
-                # code = str(code)
                 if grouped_charge_codes.get(code) is None and not line_items_error_messages.get(code):
                     line_items_info_messages[code] = ['can be added as dpd for more conversion']
                     is_line_items_info_messages_present = True
 
         for code, config in possible_charge_codes.items():
             if 'additional_service' in config.get('tags', []):
-                # code = str(code)
                 if grouped_charge_codes.get(code) is None and not line_items_error_messages.get(code):
                     line_items_info_messages[code] = ['can be added for more conversion']
                     is_line_items_info_messages_present = True
-        print('error1', line_items_error_messages)
-        print('info1', line_items_info_messages)
-        print(is_line_items_error_messages_present)
-        print(is_line_items_info_messages_present)
+
         return {
         'line_items_error_messages': line_items_error_messages,
         'is_line_items_error_messages_present': is_line_items_error_messages_present,

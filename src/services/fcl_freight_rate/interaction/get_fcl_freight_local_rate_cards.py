@@ -1,5 +1,5 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgents
+from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
 from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_ID
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import to_dict
@@ -164,11 +164,11 @@ def add_free_days_objects(query_result, response_object, request):
 
 
 def get_local_agent_ids(request):
-    results = FclFreightRateLocalAgents.select(
-        FclFreightRateLocalAgents.service_provider_id, FclFreightRateLocalAgents.location_type).where(
-        FclFreightRateLocalAgents.location_id.in_([request['port_id'],request['country_id']]),
-        FclFreightRateLocalAgents.trade_type == request['trade_type'],
-        FclFreightRateLocalAgents.status == 'active'
+    results = FclFreightRateLocalAgent.select(
+        FclFreightRateLocalAgent.service_provider_id, FclFreightRateLocalAgent.location_type).where(
+        FclFreightRateLocalAgent.location_id.in_([request['port_id'],request['country_id']]),
+        FclFreightRateLocalAgent.trade_type == request['trade_type'],
+        FclFreightRateLocalAgent.status == 'active'
     )
 
     result = [[str(model_to_dict(item)['service_provider_id']),model_to_dict(item)['location_type']] for item in results]

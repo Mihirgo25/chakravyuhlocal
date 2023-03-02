@@ -183,3 +183,16 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=499, detail="Duplicate entry")
         super().save(*args, **kwargs)
         self.update_freight_objects()
+
+    class Meta:
+        table_name = 'fcl_freight_rate_seasonal_surcharges'
+        indexes = (
+            (('container_size', 'container_type'), False),
+            (('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'code'), True),
+            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'code'), False),
+            (('updated_at', 'id', 'service_provider_id'), False),
+            (('updated_at', 'service_provider_id'), False),
+            (('updated_at', 'service_provider_id', 'code'), False),
+            (('updated_at', 'service_provider_id', 'shipping_line_id', 'code'), False),
+            (('validity_start', 'validity_end'), False),
+        )
