@@ -110,3 +110,17 @@ DEFAULT_EXPORT_DESTINATION_DEMURRAGE = 0
 DEFAULT_IMPORT_DESTINATION_DEMURRAGE = 0
 
 CONTAINER_CLUSTERS = { '40_40HC' : ['40', '40HC'] }
+
+SCHEDULE_TYPES = ['direct', 'transhipment']
+
+PAYMENT_TERM = ['prepaid', 'collect']
+
+SPECIFICITY_TYPE = ['cogoport', 'shipping_line']
+
+FEEDBACK_SOURCES = ['spot_search', 'checkout']
+
+POSSIBLE_FEEDBACKS = ['unsatisfactory_rate', 'unsatisfactory_destination_detention', 'unpreferred_shipping_lines']
+
+FEEDBACK_TYPES = ['liked', 'disliked']
+
+
