@@ -1,8 +1,8 @@
 
-from src.services.rate_sheet.models.rate_sheet import RateSheet
-from src.params import CreateRateSheet
-from src.services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
-
+from services.rate_sheet.models.rate_sheet import RateSheet
+from params import CreateRateSheet
+from services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
+from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import fcl_rate_sheet_converted_file
 from playhouse.postgres_ext import *
 from peewee import *
 from rails_client import client
@@ -97,6 +97,7 @@ def send_rate_sheet_notifications(params):
 
 
 def create_rate_sheet(params: CreateRateSheet):
+    fcl_rate_sheet_converted_file(params)
     location_cluster = RateSheet.create(**get_create_params(params))
     location_cluster.save()
     create_audit(get_audit_params(params, location_cluster))
