@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 from fastapi import FastAPI, Response, Query, Request, Depends
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
-#from database.create_tables import create_table
+from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
@@ -17,6 +17,7 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
+from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from rails_client.client import initialize_client
 from params import *
 
@@ -38,7 +39,7 @@ app.add_middleware(
 def startup():
     if db.is_closed():
         db.connect()
-    #create_table()
+    create_table()
     initialize_client()
 
 @app.on_event("shutdown")
@@ -97,4 +98,11 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
 @app.post("/create_rate_sheet")
 def create_rate_sheets(request: CreateRateSheet, response: Response):
     rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
+
+
+
+@app.post("/update_rate_sheet")
+def update_rate_sheets(request: UpdateRateSheet, response: Response):
+    rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content={"success": True})

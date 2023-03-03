@@ -8,7 +8,11 @@ from rails_client import client
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from database.db_session import rd
+import wget
+import ssl
 
+
+ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Set up CSV options
 csv_options = {
@@ -24,36 +28,37 @@ total_line_hash = 'total_line'
 
 
 def last_line_key(params):
-    return f"rate_sheet_converted_file_last_line_{params.id}"
+    return f"rate_sheet_converted_file_last_line_{params['id']}"
 
-def set_last_line(last_line):
+def set_last_line(last_line, params):
     if rd:
-        rd.hset(last_line_hash, last_line_key, last_line)
+        rd.hset(last_line_hash, last_line_key(params), last_line)
 
-def get_last_line():
+def get_last_line(params):
     if rd:
-        cached_response = rd.hget(last_line_hash, last_line_key)
-        return cached_response
+        cached_response = rd.hget(last_line_hash, last_line_key(params))
+        return int(cached_response)
 
 def delete_last_line(last_line_hash):
     if rd:
         rd.delete(last_line_hash, last_line_key)
 
 def total_line_keys(params):
-    return f"rate_sheet_converted_file_total_lines_{params.id}"
+    return f"rate_sheet_converted_file_total_lines_{params['id']}"
 
-def set_total_line(total_line):
+def set_total_line(params, total_line):
+    # print(total_line_hash, total_line_keys, total_line)
     if rd:
-        rd.hset(total_line_hash, total_line_keys, total_line)
+        rd.hset(total_line_hash, total_line_keys(params), total_line)
 
-def get_total_line():
+def get_total_line(params):
     if rd:
-        cached_response = rd.hget(total_line_hash, total_line_keys)
+        cached_response = rd.hget(total_line_hash, total_line_keys(params))
         return cached_response
 
-def delete_total_line(total_line_hash):
+def delete_total_line(total_line_hash, params):
     if rd:
-        rd.delete(total_line_hash, total_line_keys)
+        rd.delete(total_line_hash, total_line_keys(params))
 
 def get_port_id(port_code):
     port_id = client.ruby.list_locations({'filters': { 'type': 'seaport', 'port_code': port_code, 'status': 'active'}, 'fields': ['id'] })['list'][0]['id']
@@ -76,30 +81,38 @@ def convert_date_format(date):
 
 def process_fcl_freight_freight(params):
     total_lines = 0
-    print('test')
-    print(get_original_file_path)
-    for _ in pd.read_csv(get_original_file_path, header=0, **csv_options):
+    abc = get_original_file_path(params)
+    df = pd.read_csv(abc, header=0)
+    df.head()
+    # try:
+    for _ in pd.read_csv(abc, header=0):
         total_lines += 1
-    set_total_line(total_lines)
-    last_line = get_last_line
+    # except:
+    #     print(total_lines)
+    set_total_line(params, total_lines)
+
+    last_line = get_last_line(params)
     rows = []
-    rate_sheet = RateSheet.find(params.rate_sheet_id)
+    params['rate_sheet_id'] = params['id']
+
+    rate_sheet = RateSheet.get(RateSheet.id == params['rate_sheet_id'])
     created_by_id = rate_sheet.created_by_id
     procured_by_id = rate_sheet.procured_by_id
     sourced_by_id = rate_sheet.sourced_by_id
     index = -1
-    df = pd.read_csv(get_original_file_path, header=0, **csv_options)
+    df = pd.read_csv(get_file_path(params), header=0)
+
     for idx, row in df.iterrows():
-        index+=1
+        idx+=1
         row = row
-        if index < last_line:
+        if idx < last_line(params):
             continue
         present_field = []
         blank_field = []
         if valid_hash(row, present_field, blank_field):
             if rows:
                 create_fcl_freight_freight_rate(rows, created_by_id, procured_by_id, sourced_by_id)
-                set_last_line(index)
+                set_last_line(idx)
                 rate_sheet.set_processed_percent = (((params.file_index * 1.0) / rate_sheet.converted_files.count) * ((get_last_line * 1.0) / get_total_line)) * 100
             rows = [row]
         elif valid_hash('row', ['code', 'unit', 'price', 'currency'], ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'weight_free_limit', 'weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']) or  valid_hash('row', ['weight_free_limit'], ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'code', 'unit', 'price', 'currency', 'validity_start', 'validity_end', 'weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']) or valid_hash('row', ['weight_free_limit', 'weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency'], ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'code', 'unit', 'price', 'currency', 'validity_start', 'validity_end', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']) or valid_hash('row', ['weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency'], ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'code', 'unit', 'price', 'currency', 'validity_start', 'validity_end', 'weight_free_limit', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']) or valid_hash('row', ['destination_detention_free_limit'], ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'code', 'unit', 'price', 'currency', 'validity_start', 'validity_end', 'weight_free_limit', 'weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']) or valid_hash('row', ['destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency'], ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'code', 'unit', 'price', 'currency', 'validity_start', 'validity_end', 'weight_free_limit', 'weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency']) or valid_hash('row', ['destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency'], ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'code', 'unit', 'price', 'currency', 'validity_start', 'validity_end', 'weight_free_limit', 'weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit']):
@@ -292,14 +305,23 @@ def mark_processing(params):
     return params
 
 def reset_counters(params):
-    return
+    # get_total_line
+    # if get_total_line == 0:
+    #     delete_temp_data
+    set_original_file_path(params)
+
 
 def delete_temp_data(params):
-    return
+    delete_original_file_path
+    delete_file_path
+    # delete_errors_present
+    delete_last_line
+    delete_total_line
 
 def get_original_file_path(params):
     os.makedirs('tmp/rate_sheets', exist_ok=True)
-    os.path.join('tmp', 'rate_sheets', f"{params.id}_original.csv")
+    path = os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv")
+    return path
 
 def delete_original_file_path(params):
     try:
@@ -309,8 +331,21 @@ def delete_original_file_path(params):
 
 def set_original_file_path(params):
     os.makedirs('tmp/rate_sheets', exist_ok=True)
-    urllib.request.urlretrieve(params.file_url, os.path.join('tmp', 'rate_sheets', f"{params.id}_original.csv"))
-    return
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+
+    with urllib.request.urlopen(params['file_url'], context=ssl_context) as response:
+        with open(os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv"), 'wb') as file:
+            file.write(response.read())
+
+
+    # urllib.request.urlretrieve(params['file_url'], os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv"), context=ssl_context)
+
+    # urllib.request.urlretrieve(params['file_url'], os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv"))
+    # print(params['file_url'])
+    # filename = wget.download(params['file_url'], out=os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv"))
+    # print("done", filename)
 
 def get_file_path(params):
     os.makedirs('tmp/rate_sheets', exist_ok=True)
@@ -380,10 +415,47 @@ def get_importer_exporter_id(importer_exporter_name):
     return importer_exporter_id
 
 def validate_fcl_freight_freight(params):
+    headers = ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency', 'extend_rates', 'weight_free_limit', 'weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency', 'schedule_type', 'remark1', 'remark2', 'remark3', 'payment_term']
+    total_lines = 0
+    path = get_original_file_path(params)
+    first_row = None
+    # for row in pd.read_csv(path, header=0):
+    #     print(row)
+    #     total_lines += 1
+    #     if total_lines == 1:
+    #         first_row = row
+    with open(path, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            total_lines += 1
+            if total_lines == 1:
+                first_row = row
+
+    set_total_line(params, total_lines)
+    # if first_row
+    print("first_row", first_row)
+    if len([i for i in first_row if i in headers]) != len(headers):
+        params['status'] = 'invalidated'
+
+    last_line = get_last_line(params)
+    rows = []
+    with open(path, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if last_line == 0:
+                row.append(headers)
+            index = -1
+            
+
+
+
+
+
 
     return
 
 def write_fcl_freight_freight_object(params):
+
     return
 
 def validate_fcl_freight_local(params):
@@ -394,14 +466,17 @@ def validate_fcl_freight_local(params):
 def fcl_rate_sheet_converted_file(params):
 
     # fcl Freight  Module
+    reset_counters(params)
 
     validate_fcl_freight_freight(params)
+
+    process_fcl_freight_freight(params)
+
 
     # write_fcl_freight_local_object(params)
 
     # create_fcl_freight_freight_rate(params)
 
-    process_fcl_freight_freight(params)
 
     # Fcl Freight Local Module
 

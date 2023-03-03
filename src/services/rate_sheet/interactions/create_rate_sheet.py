@@ -6,6 +6,7 @@ from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import fcl_r
 from playhouse.postgres_ext import *
 from peewee import *
 from rails_client import client
+from fastapi.encoders import jsonable_encoder
 
 PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
 
@@ -97,9 +98,10 @@ def send_rate_sheet_notifications(params):
 
 
 def create_rate_sheet(params: CreateRateSheet):
-    fcl_rate_sheet_converted_file(params)
-    location_cluster = RateSheet.create(**get_create_params(params))
-    location_cluster.save()
-    create_audit(get_audit_params(params, location_cluster))
+    location = RateSheet.create(**get_create_params(params))
+    location.save()
+    params['rate_sheet_id'] = jsonable_encoder(location.id)
+    # fcl_rate_sheet_converted_file(params)
+    create_audit(get_audit_params(params, location))
     send_rate_sheet_notifications(params)
 

@@ -297,3 +297,11 @@ class CreateRateSheet(BaseModel):
     comment: str = None
     file_url: str
 
+class UpdateRateSheet(BaseModel):
+    performed_by_id: str
+    procured_by_id: str
+    sourced_by_id: str = None
+    cogo_entity_id: str = None
+    id: str
+    converted_files: list = None
+
