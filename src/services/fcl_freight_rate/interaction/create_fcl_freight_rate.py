@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import json
 from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
@@ -6,13 +6,8 @@ import os
 import time
 from params import LocalData
 from rails_client import client
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 
-def find_or_initialize(**kwargs):
-  try:
-    obj = FclFreightRate.get(**kwargs)
-  except FclFreightRate.DoesNotExist:
-    obj = FclFreightRate(**kwargs)
-  return obj
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
@@ -54,7 +49,7 @@ def create_fcl_freight_rate_data(request):
     'rate_not_available_entry' : False
   }
 
-  freight = find_or_initialize(**row)
+  freight = find_or_initialize(FclFreightRate,**row)
   freight.set_locations()
   freight.set_shipping_line()
   freight.set_origin_location_ids()

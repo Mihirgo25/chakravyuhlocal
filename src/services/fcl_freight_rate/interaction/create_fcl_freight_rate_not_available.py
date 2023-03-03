@@ -1,5 +1,5 @@
 from rails_client import client
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
 
 def create_fcl_freight_rate_not_available(request):
     present_service_provider_ids = FclFreightRate.select(FclFreightRate.service_provider_id).distinct().where(
