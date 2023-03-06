@@ -1,5 +1,5 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
-from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.global_constants import HAZ_CLASSES
 import json 
 
