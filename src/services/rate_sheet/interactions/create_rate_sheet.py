@@ -2,7 +2,6 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from params import CreateRateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import fcl_rate_sheet_converted_file
 from playhouse.postgres_ext import *
 from peewee import *
 from rails_client import client
@@ -12,14 +11,11 @@ PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb'
 
 def get_audit_params(parameters, location_mapping):
     audit_data = parameters
-    # audit_data = @_interaction_inputs.slice(:service_name, :comment, :file_url)
-
     return {
-        "object_type": "Location",
-        "object_id": str(location_mapping.id),
         "action_name": "create",
-        "performed_by_id": parameters.performed_by_id,
-        "performed_by_type": parameters.performed_by_type,
+        "performed_by_id": parameters['performed_by_id'],
+        "procured_by_id": parameters['procured_by_id'],
+        "sourced_by_id": parameters['sourced_by_id'],
         "data": audit_data,
     }
 
@@ -99,9 +95,11 @@ def send_rate_sheet_notifications(params):
 
 def create_rate_sheet(params: CreateRateSheet):
     location = RateSheet.create(**get_create_params(params))
-    location.save()
+    try:
+        location.save()
+    except:
+        return 
     params['rate_sheet_id'] = jsonable_encoder(location.id)
-    # fcl_rate_sheet_converted_file(params)
     create_audit(get_audit_params(params, location))
     send_rate_sheet_notifications(params)
 
