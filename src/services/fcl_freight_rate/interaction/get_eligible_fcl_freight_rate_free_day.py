@@ -1,5 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from playhouse.shortcuts import model_to_dict
+from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY
 
 
 POSSIBLE_DIRECT_FILTERS = ['location_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'specificity_type']
@@ -8,7 +9,7 @@ def get_eligible_fcl_freight_rate_free_day(request):
     if not all_fields_present(request):
         return {}
 
-    query = query.select().where(FclFreightRateFreeDay.rate_not_available_entry == False,
+    query = FclFreightRateFreeDay.select().where(FclFreightRateFreeDay.rate_not_available_entry == False,
                         FclFreightRateFreeDay.location_id == request['filters']['location_id'],
                         FclFreightRateFreeDay.trade_type == request['filters']['trade_type'],
                         FclFreightRateFreeDay.free_days_type == request['filters']['free_days_type'],
@@ -22,9 +23,11 @@ def get_eligible_fcl_freight_rate_free_day(request):
     if 'importer_exporter_id' in request['filters']:
       query = query.where(FclFreightRateFreeDay.importer_exporter_id == request['filters']['importer_exporter_id']) 
 
-      # data = data.sort_by { |t| FclFreightRateConstants::LOCATION_HIERARCHY[t[:location_type]] }
+    data = [model_to_dict(item) for item in query.execute()]
+    data = sorted(data, key=lambda t:LOCATION_HIERARCHY[t['location_type']])
+    data = data[0] if data else {}
 
-      # data.first rescue nil
+    return data
 
 def all_fields_present(request):
     for field in (
@@ -37,6 +40,6 @@ def all_fields_present(request):
         'service_provider_id',
         'specificity_type'
     ):
-        if field not in request:
+        if field not in request['filters']:
             return False
     return True

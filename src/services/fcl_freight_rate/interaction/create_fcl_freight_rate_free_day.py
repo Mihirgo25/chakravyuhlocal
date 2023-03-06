@@ -58,12 +58,7 @@ def get_free_day_object(request):
     for field in extra_fields:
         if field in request:
             setattr(free_day, field, request[field])
-            # var = attrgetter(field)(free_day) #remove var
-            # if var:
-            #    if var != request[field]:
-            #     setattr(free_day, field, request[field])
-            # else:
-            #    setattr(free_day, field, request[field])
+
     free_day.rate_not_available_entry = False
 
     return free_day
