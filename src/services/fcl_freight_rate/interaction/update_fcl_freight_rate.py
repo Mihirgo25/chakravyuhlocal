@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from celery_worker import celery
@@ -23,7 +23,6 @@ def create_audit(request, freight_id):
         object_type = 'FclFreightRate'
     )
 
-
 def validate_freight_params(request):
   if request.get('validity_start') or request.get('validity_end') or request.get('line_items'):
     keys = ['validity_start', 'validity_end', 'line_items']
@@ -35,6 +34,12 @@ def update_fcl_freight_rate_data(request):
   validate_freight_params(request)
 
   freight_object = FclFreightRate.get_by_id(request['id'])
+  update_weight_limit = {key: value for key, value in request.items() if key in ['weight_limit']}
+  freight_object.update(**update_weight_limit)
+
+  freight_object.origin_local = {**freight_object.origin_local.as_dict(), **request.get('origin_local', {})}
+
+  freight_object.destination_local = {**freight_object.destination_local.as_dict(), **request.get('destination_local', {})}
 
   if request.get('validity_start'):
     update_freight_validities(freight_object)
@@ -52,7 +57,9 @@ def update_fcl_freight_rate_data(request):
 
   create_audit(request, freight_object.id)
 
-  return {id: 1}
+  return {
+    'id': freight_object.id,
+  }
 
 def update_freight_validities(freight, request):
   freight.validate_validity_object(request['validity_start'], request['validity_end'])

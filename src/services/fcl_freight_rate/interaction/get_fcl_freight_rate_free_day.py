@@ -1,17 +1,18 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from playhouse.shortcuts import model_to_dict
+from fastapi import HTTPException
 
 
 def get_fcl_freight_rate_free_day(request):
     if not all_fields_present(request):
         return {}
     
-    object = find_object(request).__dict__
+    object = find_object(request)
+    object = model_to_dict(object)
 
     if object is None:
         return {}
-    print('object',object['__data__'])
-    return object['__data__']
+    return object
 
 def all_fields_present(request):
     for field in (
@@ -38,6 +39,9 @@ def find_object(request):
         'service_provider_id' : request['service_provider_id'],
         'importer_exporter_id' : request.get('importer_exporter_id')
     }
-    # should we use try and except
-    object = FclFreightRateFreeDay.get(**row)
+    
+    try:
+        object = FclFreightRateFreeDay.get(**row)
+    except:
+        raise HTTPException(status_code=499, detail="no free day entry with the given id exists")
     return object

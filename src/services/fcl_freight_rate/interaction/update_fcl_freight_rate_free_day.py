@@ -2,10 +2,19 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from fastapi import HTTPException
 import datetime
+from database.db_session import db
 
 
 def update_fcl_freight_rate_free_day(request):
-    #### write a ciondition where if atleast one of free_limit,remarks or slabs is present then only execute update otherwise it's of no use
+  with db.atomic() as transaction:
+        try:
+          return execute_transaction_code(request)
+        except:
+            transaction.rollback()
+            return "Creation Failed"
+
+def execute_transaction_code(request):
+    #### write a ciondition where if atleast one of free_limit,remarks or slabs is present then only execute update
     free_day = FclFreightRateFreeDay.get_by_id(request['id'])
 
     if request.get('free_limit'):
@@ -15,13 +24,16 @@ def update_fcl_freight_rate_free_day(request):
     if request.get('slabs'):
         free_day.slabs = request.get('slabs')
 
-    free_day.update_special_attributes()
     free_day.updated_at = datetime.datetime.now()
 
     try:
         free_day.save()
     except:
         raise HTTPException(status_code=499, detail='fcl freight rate local did not save')
+
+    free_day.update_special_attributes()
+    free_day.save()
+
     create_audit(request, free_day.id)
 
     return {
@@ -44,12 +56,4 @@ def create_audit(request, free_day_id):
         object_type = 'FclFreightRateFreeDay'
       )
     except:
-      raise HTTPException(status_code=499, detail='fcl freight audit did not save')
-    # print('audit', audit.__dict__)
-
-def get_audit_params(request):
-    
-
-    return {
-      
-    }
+      raise HTTPException(status_code=499, detail='fcl freight audit for free day did not save')

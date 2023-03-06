@@ -1,6 +1,6 @@
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from datetime import datetime, timedelta
 from math import ceil
@@ -9,11 +9,10 @@ from operator import attrgetter, itemgetter
 from peewee import JOIN 
 from rails_client import client
 
-
 possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id']
 possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than', 'validity_start_greater_than', 'validity_end_less_than', 'procured_by_id', 'partner_id']
 
-def remove_unexpected_filters(filters):
+def remove_unexpected_filters(filters, possible_direct_filters, possible_indirect_filters):
   filters = json.loads(filters)
   expected_filters = set(possible_direct_filters + possible_indirect_filters).intersection(set(filters.keys()))
   expected_filters = {key:filters[key] for key in list(expected_filters) if key in expected_filters}
@@ -23,7 +22,7 @@ def remove_unexpected_filters(filters):
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
-def list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required, return_query, expired_rates_required):
+def list_fcl_freight_rates(filters = None, page_limit = 10, page = 1, sort_by = 'priority_score', sort_type = 'desc', pagination_data_required = True, return_query = False, expired_rates_required = False):
   filters  = remove_unexpected_filters(filters)
 
   query = get_query(sort_by, sort_type, page, page_limit)
@@ -238,7 +237,6 @@ def apply_direct_filters(query,filters):
       query = query.select().where(attrgetter(key)(FclFreightRate) == filters[key])
   return query
 
-
 def apply_indirect_filters(query, filters):
   for key in filters:
     if key in possible_indirect_filters:
@@ -363,11 +361,3 @@ def apply_procured_by_id_filter(query,filters):
 #   }
 
 #   return object
-
-
-
-
-
-
-
-

@@ -1,4 +1,3 @@
-import json
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
@@ -12,9 +11,8 @@ from math import ceil
 possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id']
 possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than']
 
-
 def list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, pagination_data_required, return_query):
-    filters = remove_unexpected_filters(filters)
+    filters = remove_unexpected_filters(filters, possible_direct_filters, possible_direct_filters)
     query = get_query(sort_by, sort_type, page, page_limit)
     query = apply_direct_filters(query, filters)
     query = apply_indirect_filters(query, filters)
@@ -132,7 +130,6 @@ def add_service_objects(data):
     ]}
 
     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl(params)
-    
     local_agent_mappings = {} 
 
     if service_objects['fcl_freight_rate_local_agent']:
@@ -208,12 +205,3 @@ def apply_updated_at_less_than_filter(query, filters):
 def apply_procured_by_id_filter(query, filters):
     query = query.select().join(FclFreightRateAudit, on = ((FclFreightRate.id == FclFreightRateAudit.object_id) and (FclFreightRateAudit.seqnum == 1))).where(FclFreightRateAudit.object_type == 'FclFreightRate', FclFreightRateAudit.procured_by_id == filters['procured_by_id'])
     return query
-
-
-
-
-
-
-
-
-    
