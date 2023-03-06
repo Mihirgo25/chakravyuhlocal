@@ -3,7 +3,7 @@ from peewee import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 import copy
 from rails_client import client
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 import time
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
