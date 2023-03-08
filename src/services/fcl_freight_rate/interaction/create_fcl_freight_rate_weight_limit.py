@@ -34,8 +34,6 @@ def execute_transaction_code(request):
     weight_limit.update_special_attributes()
     weight_limit.save()
 
-    # weight_limit.update_freight_objects()
-
     create_audit(request, weight_limit.id)
 
     return {"id": weight_limit.id}
@@ -55,12 +53,6 @@ def get_weight_limit_object(request):
     for field in extra_fields:
        if field in request:
           setattr(weight_limit, field, request[field])
-        #   var = attrgetter(field)(weight_limit) #remove var
-        #   if var:
-        #      if var != request[field]:
-        #       setattr(weight_limit, field, request[field])
-        #   else:
-        #      setattr(weight_limit, field, request[field])
 
     return weight_limit
 
@@ -69,7 +61,7 @@ def create_audit(request, weight_limit_id):
     audit_data = {'free_limit' : request.get('free_limit'), 'remarks' : request.get('remarks'), 'slabs' : request.get('slabs')}
 
     try:
-      audit = FclFreightRateAudit.create(
+        FclFreightRateAudit.create(
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
         rate_sheet_id = request.get('rate_sheet_id'),
