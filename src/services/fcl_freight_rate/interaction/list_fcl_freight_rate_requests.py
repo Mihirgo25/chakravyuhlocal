@@ -1,25 +1,30 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from playhouse.shortcuts import model_to_dict
 from rails_client import client
 from math import ceil
-from operator import attrgetter
+from peewee import fn, SQL
 from datetime import datetime
-import concurrent.futures
+import concurrent.futures, json
+import time
 
 possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
-def list_fcl_freight_rate_requests(filters, page, page_limit, is_stats_required, performed_by_id, spot_search_details_required):
-    filters = remove_unexpected_filters(filters, possible_direct_filters, possible_indirect_filters)
+def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True, spot_search_details_required = False):
+    if type(filters) != dict:
+        filters = json.loads(filters)
+        
     query = FclFreightRateRequest.select()
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
     query = apply_indirect_filters(query, filters)
-    stats = get_stats(query) or {}
+
+    stats = get_stats(query, filters, is_stats_required, performed_by_id) or {}
     query = get_page(query, page, page_limit)
     data = get_data(query, spot_search_details_required)
+
     pagination_data = get_pagination_data(query, page, page_limit)
 
     return {'list': data } | (pagination_data) | (stats)
@@ -27,12 +32,6 @@ def list_fcl_freight_rate_requests(filters, page, page_limit, is_stats_required,
 
 def get_page(query, page, page_limit):
     return query.select().order_by(FclFreightRateRequest.created_at.desc()).paginate(page, page_limit)
-  
-def apply_direct_filters(query,filters):
-  for key in filters:
-    if key in possible_direct_filters:
-      query = query.select().where(attrgetter(key)(FclFreightRateRequest) == filters[key])
-  return query
 
 def apply_indirect_filters(query, filters):
   for key in filters:
@@ -61,9 +60,9 @@ def apply_similar_id_filter(query,filters):
     query = query.where(not(FclFreightRateRequest.id == filters['similar_id']))
     return query.where(query.c.origin_port_id == rate_request_obj['origin_port_id'], query.c.destination_port_id == rate_request_obj['destination_port_id'], query.c.container_size == rate_request_obj['container_size'], query.c.container_type == rate_request_obj['container_type'], query.c.commodity == rate_request_obj['commodity'], query.c.inco_term == rate_request_obj['inco_term'])
 
-def get_data(query):
+def get_data(query, spot_search_details_required):
     data = [model_to_dict(item) for item in query.execute()]
-    data = add_service_objects(data)
+    data = add_service_objects(data, spot_search_details_required)
     return data
 
 def add_service_objects(data, spot_search_details_required):
@@ -121,52 +120,60 @@ def get_pagination_data(query, page, page_limit):
   
   return pagination_data
 
-def get_stats(query, is_stats_required, page, page_limit):
+def get_stats(query, filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
 
-    query = query.unwhere('status')
+    if 'status' in filters:
+        del filters['status']
+
+    query = FclFreightRateRequest.select()
+
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
+    query = apply_indirect_filters(query, filters)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
+        futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
         results = {}
         for future in futures:
             result = future.result()
             results.update(result)
-        
-    method_responses = results
     
     stats = {
-        'total': method_responses['get_total'],
-        'total_closed_by_user': method_responses['get_total_closed_by_user'],
-        'total_opened_by_user': method_responses['get_total_opened_by_user'],
-        'total_open': method_responses['get_status_count']['active'],
-        'total_closed': method_responses['get_status_count']['inactive']
+        'total': results['get_total'],
+        'total_closed_by_user': results['get_total_closed_by_user'],
+        'total_opened_by_user': results['get_total_opened_by_user'],
+        'total_open':results['get_status_count'].get('active'),
+        'total_closed': results['get_status_count'].get('inactive')
     }
     return { 'stats': stats }
 
 
-def get_total(query):
+def get_total(query, performed_by_id):
     try:
-        return query.count
+        return {'get_total':query.count()}
     except:
-        return None
+        return {'get_total' : None}
 
 def get_total_closed_by_user(query, performed_by_id):
     try:
-        return query.where(query.c.status == 'inactive', query.c.closed_by_id == performed_by_id).count() 
+        return {'get_total_closed_by_user':query.where(FclFreightRateRequest.status == 'inactive', FclFreightRateRequest.closed_by_id == performed_by_id).count() }
     except:
-        return None
+        return {'get_total_closed_by_user':None}
 
 
 def get_total_opened_by_user(query, performed_by_id):
     try:
-        return query.where(query.c.status == 'active', query.c.closed_by_id == performed_by_id).count() 
+        return {'get_total_opened_by_user' : query.where(FclFreightRateRequest.status == 'active', FclFreightRateRequest.closed_by_id == performed_by_id).count() }
     except:
-        return None
+        return {'get_total_opened_by_user' : None}
 
-def get_status_count(query):
+def get_status_count(query, performed_by_id):
     try:
-        return query.group_by(query.c.status).count()
+        query = query.select(FclFreightRateRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclFreightRateRequest.status)
+        result = {}
+        for row in query.execute():
+            result[row.status] = row.count_all
+        return {'get_status_count' : result}
     except:
-        return None
+        return {'get_status_count' : None}

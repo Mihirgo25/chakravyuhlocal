@@ -14,19 +14,26 @@ def create_fcl_freight_rate_request(request):
             return 'Creation Failed'
 
 def execute_transaction_code(request):
+    if type(request) != dict:
+        request = request.__dict__
+    
     unique_object_params = get_unique_object_params(request)
-    request = find_or_initialize(**unique_object_params)
-    for key, value in request.items(): 
-        setattr(request, key, value) 
-    request.save()
+    request_object = find_or_initialize(**unique_object_params)
+    create_params = get_create_params(request)
 
-    create_audit(request)
+    for key, value in create_params.items(): 
+        setattr(request_object, key, value) 
+    
+    if request_object.validate():
+        request_object.save()
 
-    send_notifications_to_supply_agents()
+        create_audit(request, request_object.id)
 
-    return {
-    'id': request.id
-    }
+        # request_object.send_notifications_to_supply_agents()
+
+        return {
+        'id': request_object.id
+        }
 
 def get_unique_object_params(request):
     return {
@@ -72,7 +79,6 @@ def send_notifications_to_supply_agents(request):
         data['user_id'] = user_id
         # CreateCommunication.delay(queue: 'communication', retry: 0).run!(data)
 
- 
 
 def find_or_initialize(**kwargs):
   try:
@@ -82,9 +88,15 @@ def find_or_initialize(**kwargs):
     obj = FclFreightRateRequest(**kwargs)
   return obj
 
-def create_audit(request):     
+def create_audit(request, request_object_id):     
+    performed_by_id = request['performed_by_id']
+    del request['performed_by_id']
+    request['cargo_readiness_date'] = request['cargo_readiness_date'].isoformat()
+
     FclFreightRateAudit.create(
         action_name = 'create',
-        performed_by_id = request['performed_by_id'],
-        data = {key:value for key,value in request.items() if key!=['performed_by_id']}
+        performed_by_id = performed_by_id,
+        data = request,
+        object_type = 'FclFreightRateRequest',
+        object_id = request_object_id
     )
