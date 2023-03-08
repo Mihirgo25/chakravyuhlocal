@@ -38,3 +38,27 @@ INTERNAL_BOOKING = {
 MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT = 100000
 
 DEFAULT_SPECIFICITY_TYPE = 'shipping_line'
+
+CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
+
+CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
+
+
+
+FAK_COMMODITY = ["general"]
+
+STANDARD_COMMODITIES = ['white_goods', 'pta', 'agro', 'cotton_and_yarn', 'fabric_and_textiles', 'raw_cotton', 'rice_bran', 'sugar_rice']
+
+REFER_COMMODITIES = ['chilled', 'frozen', 'pharma', 'meat', 'sea_food', 'fruits_and_veg']
+
+OPEN_TOP_COMMODITIES = ['in_gauge_cargo']
+
+OPEN_SIDE_COMMODITIES = []
+
+FLAT_RACK_COMMODITIES = ['in_gauge_cargo']
+
+ISO_TANK_COMMODITIES = ['non_haz_solids', 'non_haz_liquids', 'non_haz_gases']
+
+
+
+
