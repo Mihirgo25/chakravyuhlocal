@@ -151,7 +151,12 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_before_save(self):
         if self.slabs:
-            Slab.validate(**self.slabs)
+            for slab in self.slabs:
+                slab = Slab(**slab)
+                try:
+                    Slab.validate(slab)
+                except:
+                    raise HTTPException(status_code=499, detail=f"Incorrect Slab: {slab}")
 
         if not self.validate_location_ids():
             raise HTTPException(status_code=499, detail="Invalid location")

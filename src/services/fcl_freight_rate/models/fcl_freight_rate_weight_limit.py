@@ -56,7 +56,7 @@ class FclFreightRateWeightLimit(BaseModel):
         if len(location_data) != 0:
             count = 0
             for location in location_data:
-                if location['id'] == self.origin_location_id and location['type'] in LOCATION_TYPES:
+                if location['id'] == str(self.origin_location_id) and location['type'] in LOCATION_TYPES:
                     self.origin_location = location
 
                     self.origin_port_id = location.get('seaport_id', None)
@@ -67,7 +67,7 @@ class FclFreightRateWeightLimit(BaseModel):
                     self.origin_location_type = 'port' if location.get('type') == 'seaport' else location.get('type')
                     count += 1
 
-                elif location['id'] == self.destination_location_id and location['type'] in LOCATION_TYPES:
+                elif location['id'] == str(self.destination_location_id) and location['type'] in LOCATION_TYPES:
                     self.destination_location = location
 
                     self.destination_port_id = location.get('seaport_id', None)
@@ -83,16 +83,16 @@ class FclFreightRateWeightLimit(BaseModel):
         return False
 
     def validate_shipping_line(self):
-      shipping_line_data = client.ruby.list_operators({'filters':{'id': self.shipping_line_id}})['list'][0]
-      if shipping_line_data.get('operator_type') == 'shipping_line':
-        return True
-      return False
+        shipping_line_data = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
+        if len(shipping_line_data)!= 0 and shipping_line_data[0].get('operator_type') == 'shipping_line':
+            return True
+        return False
 
     def validate_service_provider(self):
-      service_provider_data = client.ruby.list_organizations({'filters':{'id': self.service_provider_id}})['list'][0]
-      if service_provider_data.get('account_type') == 'service_provider':
-        return True
-      return False
+        service_provider_data = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
+        if len(service_provider_data) != 0 and service_provider_data[0].get('account_type') == 'service_provider':
+            return True
+        return False
 
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -127,7 +127,13 @@ class FclFreightRateWeightLimit(BaseModel):
 
     def validate_slabs(self):
         if self.slabs:
-            Slab.validate(**self.slabs)
+            for slab in self.slabs:
+                slab = Slab(**slab)
+                try:
+                    Slab.validate(slab)
+                except:
+                    raise HTTPException(status_code=499, detail=f"Incorrect Slab: {slab}")
+
             slabs = sorted(self.slabs, key=lambda slab:slab['lower_limit'])
 
             if len(slabs) != 0 and float(self.free_limit) != 0 and (float(self.free_limit) > float(slabs[0]['lower_limit'])):
@@ -143,28 +149,28 @@ class FclFreightRateWeightLimit(BaseModel):
         
         if not self.validate_location_ids():
             raise HTTPException(status_code=499, detail="Invalid location")
-
+        print('1')
         if not self.validate_shipping_line():
             raise HTTPException(status_code=499, detail="Invalid shipping line")
-
+        print('2')
         if not self.validate_service_provider():
             raise HTTPException(status_code=499, detail="Invalid service provider")
-
+        print('3')
         if not self.validate_container_size():
             raise HTTPException(status_code=499, detail="Incorrect container size")
-
+        print('4')
         if not self.validate_container_type():
             raise HTTPException(status_code=499, detail="Invalid container type")
-
+        print('5')
         if not self.validate_free_limit():
             raise HTTPException(status_code=499, detail="Empty free limit")
-
+        print('6')
         if not self.valid_uniqueness():
             raise HTTPException(status_code=499, detail="Violates uniqueness validation")
-
+        print('7')
         if not self.validate_slabs():
             raise HTTPException(status_code=499, detail="Incorrect slabs")
-
+        print('8')
 
     def update_special_attributes(self):
         self.update(is_slabs_missing = False) if self.slabs and len(self.slabs) != 0 else self.update(is_slabs_missing = True)
