@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import
 from paginator import Paginator
 import json
 from operator import attrgetter
-from services.fcl_freight_rate.models.fcl_freight_rates import *
+from services.fcl_freight_rate.models.fcl_freight_rate import *
 from rails_client import client
 import peewee
 from math import ceil

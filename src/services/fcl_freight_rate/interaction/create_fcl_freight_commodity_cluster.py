@@ -1,29 +1,22 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_commodity_cluster import FclFreightCommodityCluster
 from fastapi import FastAPI, HTTPException
+import datetime
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
- 
-def find_or_initialize(**kwargs):
-    fcl_freight_commodity_cluster = FclFreightCommodityCluster.find_by(**kwargs)
-    if fcl_freight_commodity_cluster:
-        return fcl_freight_commodity_cluster
-    else:
-        return FclFreightCommodityCluster.create(**kwargs)
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 
 def create_fcl_freight_commodity_cluster(request):
     row = {
         'name' : request['name']
     }
-    fcl_freight_commodity_cluster = FclFreightCommodityCluster.find_or_initialize(**row)
-    fcl_freight_commodity_cluster.update(**get_create_params())
+    fcl_freight_commodity_cluster = find_or_initialize(FclFreightCommodityCluster,**row)
 
-    if not fcl_freight_commodity_cluster.save():
+    fcl_freight_commodity_cluster.commodities = request['commodities']
+    fcl_freight_commodity_cluster.status = 'active'
+
+    fcl_freight_commodity_cluster.validate()
+
+    if not fcl_freight_commodity_cluster.save(request):
         raise HTTPException(status_code=422, detail="Commodity Cluster not saved")
 
     return {'id' : fcl_freight_commodity_cluster.id}
-
-def get_create_params(self):
-    return {
-        'commodities': self.commodities,
-        'status': 'active'
-    }

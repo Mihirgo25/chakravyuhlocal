@@ -5,9 +5,11 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBACKS, FEEDBACK_TYPES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+from configs.defintions import FCL_FREIGHT_CURRENCIES
 from rails_client import client
 from playhouse.shortcuts import model_to_dict
 from fastapi import HTTPException
+import yaml
 
 
 class UnknownField(object):
@@ -64,11 +66,12 @@ class FclFreightRateFeedback(BaseModel):
         return False
 
     def validate_fcl_freight_rate_id(self):
-        fcl_freight_rate_data = list_fcl_freight_rates()
-        if len(fcl_freight_rate_data) != 0:
+        fcl_freight_rate_data = FclFreightRate.select().where(id = self.fcl_freight_rate_id)
+        if fcl_freight_rate_data:
             return True
         return False
-
+    
+    # def validate_performed_by_id
     def validate_performed_by_org_id(self):
         performed_by_org_data = client.ruby.list_organizations({'filters':{'id': [str(self.performed_by_org_id)]}})['list']
         if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
@@ -81,11 +84,19 @@ class FclFreightRateFeedback(BaseModel):
                 return True
             return False
 
-    # def validate_currency(self):
-    #     None
+    def validate_preferred_freight_rate_currency(self):
+        if not self.preferred_freight_rate_currency:
+            return True
+
+        with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
+            fcl_freight_currencies = yaml.safe_load(file)
+
+        if self.preferred_freight_rate_currency in fcl_freight_currencies:
+            return True
+        return False
 
     def validate_preferred_detention_free_days(self):
-        if int(self.preferred_detention_free_days) >= 0:
+        if self.preferred_detention_free_days and int(self.preferred_detention_free_days) >= 0:
             return True
         return False
 
@@ -171,7 +182,7 @@ class FclFreightRateFeedback(BaseModel):
         })['list']
         supply_agents_list = list(set(t['partner_user_id'] for t in supply_agents_list))
 
-        supply_agents_user_ids = client.ruby.list_partner_users({
+        supply_agents_user_ids = client.ruby.list_partner_users({   ##############
             'filters': {'id': supply_agents_list},
             'pagination_data_required': False,
             'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
@@ -246,6 +257,6 @@ class FclFreightRateFeedback(BaseModel):
                 'request_serial_id': self.serial_id,
                 'spot_search_id': self.source_id,
                 'importer_exporter_id': importer_exporter_id
-            }.compact   ############
+            }
         }
         client.ruby.create_communication(data)

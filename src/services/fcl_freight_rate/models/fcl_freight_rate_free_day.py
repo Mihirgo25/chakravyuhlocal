@@ -6,6 +6,7 @@ from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
 from playhouse.shortcuts import model_to_dict
 from fastapi import HTTPException
+from params import Slab
 
 
 class BaseModel(Model):
@@ -95,11 +96,13 @@ class FclFreightRateFreeDay(BaseModel):
         return False
 
     def validate_importer_exporter(self):
-        importer_exporter_data = client.ruby.list_organizations({'filters': {'id': str(self.importer_exporter_id)}})['list']
-        if (len(importer_exporter_data) != 0) and importer_exporter_data[0].get('account_type') == 'importer_exporter':
-            self.importer_exporter = importer_exporter_data[0]
-            return True
-        return False
+        if self.importer_exporter_id:
+            importer_exporter_data = client.ruby.list_organizations({'filters': {'id': str(self.importer_exporter_id)}})['list']
+            if (len(importer_exporter_data) != 0) and importer_exporter_data[0].get('account_type') == 'importer_exporter':
+                self.importer_exporter = importer_exporter_data[0]
+                return True
+            return False
+        return True
 
     def validate_free_days_type(self):
         if self.free_days_type and self.free_days_type in FREE_DAYS_TYPES:
@@ -147,6 +150,9 @@ class FclFreightRateFreeDay(BaseModel):
         return False
 
     def validate_before_save(self):
+        if self.slabs:
+            Slab.validate(**self.slabs)
+
         if not self.validate_location_ids():
             raise HTTPException(status_code=499, detail="Invalid location")
 
@@ -159,9 +165,8 @@ class FclFreightRateFreeDay(BaseModel):
         if not self.validate_service_provider():
             raise HTTPException(status_code=499, detail="Invalid service provider")
 
-        if self.importer_exporter_id:
-            if not self.validate_importer_exporter():
-                raise HTTPException(status_code=499, detail="Invalid importer-exporter")
+        if not self.validate_importer_exporter():
+            raise HTTPException(status_code=499, detail="Invalid importer-exporter")
 
         if not self.validate_free_days_type():
             raise HTTPException(status_code=499, detail="Invalid free day type")
@@ -183,47 +188,6 @@ class FclFreightRateFreeDay(BaseModel):
 
     def update_special_attributes(self):
         self.is_slabs_missing = False if self.slabs and len(self.slabs) != 0 else True
-
-  #   local_query.joins("inner join fcl_freight_rate_free_days local_#{self.free_days_type}s on local_#{self.free_days_type}s.id = fcl_freight_rate_locals.#{self.free_days_type}_id").where(
-  #     "local_#{self.free_days_type}s" => {
-  #       location_type: location_types
-  #     }
-  #   ).update_all("#{self.free_days_type}_id" => self.id)
-
-  #   local_query.where("#{self.free_days_type}_id" => nil).update_all("#{self.free_days_type}_id" => self.id)
-  # end
-
-    # def update_local_objects(self):
-    #   if self.importer_exporter_id:
-    #     return
-
-    #   location_types = [key for key in LOCATION_HIERARCHY.keys() if LOCATION_HIERARCHY[key] >= LOCATION_HIERARCHY[self.location_type]]
-
-    #   local_query = FclFreightRateLocal.where(
-    #   FclFreightRateLocal.trade_type == self.trade_type,
-    #   FclFreightRateLocal.container_size == self.container_size,
-    #   FclFreightRateLocal.container_type == self.container_type,
-    #   FclFreightRateLocal.shipping_line_id == self.shipping_line_id,
-    #   FclFreightRateLocal.service_provider_id == self.service_provider_id
-    #   # eval("FclFreightRateLocal.{self.location_type}_id == self.location_id")
-            # ).where(eval("FclFreightRateLocal.{self.location_type}_id == self.location_id"))
-
-    #   local_query.join(FclFreightRateFreeDay, on=(FclFreightRateLocal.weight_limit_id == FclFreightRateFreeDay.id)).where(FclFreightRateFreeDay.origin_destination_location_type == origin_destination_location_types)
-
-    # def update_freight_objects(self):
-    #   if self.trade_type == 'export' and self.free_days_type == 'demurrage':    #######################
-    #     return
-
-    #   location_types = [key for key in LOCATION_HIERARCHY.keys() if LOCATION_HIERARCHY[key] >= LOCATION_HIERARCHY[self.location_type]]
-
-    #   location_key = 'origin' if self.trade_type == 'export' else 'destination'
-
-    #   freight_query = FclFreightRate.where(
-    #   FclFreightRate.container_size == self.container_size,
-    #   FclFreightRate.container_type == self.container_type,
-    #   FclFreightRate.shipping_line_id == self.shipping_line_id,
-    #   FclFreightRate.service_provider_id == self.service_provider_id
-    #   ).where(eval("FclFreightRate.{}_{}_id == self.location_id".format(location_key,self.location_type)))
 
     def detail(self):
         return {

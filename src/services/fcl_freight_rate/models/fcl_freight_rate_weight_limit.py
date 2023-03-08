@@ -5,9 +5,8 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_PAIR_HIERARCHY
 from fastapi import HTTPException
+from params import Slab
 
-
-LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
 
 class BaseModel(Model):
     class Meta:
@@ -50,6 +49,7 @@ class FclFreightRateWeightLimit(BaseModel):
         )
 
     def validate_location_ids(self):
+        LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
         params = {"filters" : {"id": [str(self.origin_location_id), str(self.destination_location_id)]}}
         location_data = client.ruby.list_locations(params)['list']
 
@@ -126,14 +126,18 @@ class FclFreightRateWeightLimit(BaseModel):
       return False
 
     def validate_slabs(self):
-        slabs = sorted(self.slabs, key=lambda slab:slab['lower_limit'])
+        if self.slabs:
+            Slab.validate(**self.slabs)
+            slabs = sorted(self.slabs, key=lambda slab:slab['lower_limit'])
 
-        if len(slabs) != 0 and float(self.free_limit) != 0 and (float(self.free_limit) > float(slabs[0]['lower_limit'])):
-           raise (slabs, 'lower limit should be greater than free limit')
-        
-        for index, slab in enumerate(slabs):
-           if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index != 0 and float(slab['lower_limit']) <= float(slabs[index - 1]['upper_limit'])):
-                raise (slabs, 'invalid')
+            if len(slabs) != 0 and float(self.free_limit) != 0 and (float(self.free_limit) > float(slabs[0]['lower_limit'])):
+                raise (slabs, 'lower limit should be greater than free limit')
+            
+            for index, slab in enumerate(slabs):
+                if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index != 0 and float(slab['lower_limit']) <= float(slabs[index - 1]['upper_limit'])):
+                        raise (slabs, 'invalid')
+            return True
+        return True
 
     def validate_before_save(self):
         
@@ -164,24 +168,6 @@ class FclFreightRateWeightLimit(BaseModel):
 
     def update_special_attributes(self):
         self.update(is_slabs_missing = False) if self.slabs and len(self.slabs) != 0 else self.update(is_slabs_missing = True)
-
-    # def update_freight_objects(self):
-    #     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-    #     origin_destination_location_types = [key for key in LOCATION_PAIR_HIERARCHY.keys() if LOCATION_PAIR_HIERARCHY[key] >= LOCATION_PAIR_HIERARCHY[self.origin_destination_location_type]]
-
-    #     freight_query = FclFreightRate.where(
-    #     FclFreightRate.container_size == self.container_size,
-    #     FclFreightRate.container_type == self.container_type,
-    #     FclFreightRate.shipping_line_id == self.shipping_line_id,
-    #     FclFreightRate.service_provider_id == self.service_provider_id
-    #     ).where(
-    #         eval("FclFreightRate.origin_{self.origin_location_type}_id == self.origin_location_id"),
-    #         eval("FclFreightRate.destination_#{self.destination_location_type}_id == self.destination_location_id")
-    #     )
-
-    #     freight_query.join(FclFreightRateWeightLimit, on=(FclFreightRate.weight_limit_id == FclFreightRateWeightLimit.id)).where(FclFreightRateWeightLimit.origin_destination_location_type == origin_destination_location_types)
-
-    #     print(freight_query)
 
     def detail(self):
       return {
