@@ -55,7 +55,6 @@ def get_cluster_objects(rate_object):
         clusters['destination_location_cluster']['cluster_items'] = client.ruby.get_location_cluster({'id': clusters['destination_location_cluster']['cluster_id']})['locations']
 
     if 'commodity_cluster' in clusters and clusters['commodity_cluster']:
-        print(clusters['commodity_cluster']['cluster_id'])
         clusters['commodity_cluster']['cluster_items'] = get_fcl_freight_commodity_cluster({'id': clusters['commodity_cluster']['cluster_id']})['commodities']
 
     if 'container_cluster' in clusters and clusters['container_cluster']:
