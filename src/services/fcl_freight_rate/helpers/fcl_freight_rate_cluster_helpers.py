@@ -106,4 +106,4 @@ def get_required_mandatory_codes(cluster_objects):
         
         if mandatory_code:
             required_mandatory_codes.append(mandatory_code)
-        return required_mandatory_codes
+    return required_mandatory_codes
