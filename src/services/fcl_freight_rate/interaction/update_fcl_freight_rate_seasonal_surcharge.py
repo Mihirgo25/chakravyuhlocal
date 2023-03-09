@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from fastapi import FastAPI, HTTPException
@@ -21,18 +21,16 @@ def create_audit(request, fcl_freight_rate_seasonal_surcharge_id):
     )
 
 def update_fcl_freight_rate_seasonal_surcharge(request):
-    fcl_freight_rate_seasonal_surcharge = FclFreightRateSeasonalSurcharge.get_by_id(request['id'])
+    fcl_freight_rate_seasonal_surcharge = FclFreightRateSeasonalSurcharge.get(id=request['id'])
 
     if not fcl_freight_rate_seasonal_surcharge:
         raise HTTPException(status_code=404, detail="Seasonal Surcharge not found")
-   
-    update_params = {key: value for key, value in request.items() if key in ['price', 'currency', 'validity_start', 'validity_end', 'remarks']}
+    
+    for k, v in request.items():
+        if k in ['price', 'currency', 'validity_start', 'validity_end', 'remarks']:
+            setattr(fcl_freight_rate_seasonal_surcharge, k, v)
 
-    # fcl_freight_rate_seasonal_surcharge.__dict__.update(update_params)
-    # if not fcl_freight_rate_seasonal_surcharge.save():
-    #     raise HTTPException(status_code=422, detail="Seasonal Surcharge not saved")
-
-    if not fcl_freight_rate_seasonal_surcharge.update(**update_params):
+    if not fcl_freight_rate_seasonal_surcharge.save():
         raise HTTPException(status_code=422, detail="Seasonal Surcharge not updated")
 
     create_audit(request, fcl_freight_rate_seasonal_surcharge.id)
