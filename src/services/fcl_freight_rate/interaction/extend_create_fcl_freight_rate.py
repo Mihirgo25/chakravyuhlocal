@@ -8,14 +8,13 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
 def extend_create_fcl_freight_rate_data(request):
-    initial_rate_object = {key:value for key,value in request if key not in ['extend_rates','extend_rates_for_lens','mandatory_charges']}
     
     if request.extend_rates_for_lens:
-        temp = create_fcl_freight_rate_data(initial_rate_object)
+        temp = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         return temp
 
     if request.extend_rates:
-        rate_objects = get_fcl_freight_cluster_objects(initial_rate_object,request)
+        rate_objects = get_fcl_freight_cluster_objects(request.dict(exclude_none=True),request)
         if rate_objects:
             temp1 = create_extended_rate_objects(rate_objects)
             return temp1
@@ -52,7 +51,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     except:
         destination_locations = [rate_object['destination_port_id']]
 
-    if data['commodity_cluster']:
+    if data.get('commodity_cluster'):
         commodities = data['commodity_cluster']['cluster_items']
         if commodities[rate_object['container_type']]:
             commodities[rate_object['container_type']] = commodities[rate_object['container_type']] or [rate_object['commodity']]
@@ -80,17 +79,17 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                 for commodity in commodities[container_type]:
                     for container in containers:
                         param = copy.deepcopy(rate_object)
-
-                        if icd_data[origin_location] and not param['origin_main_port_id']:
+                        
+                        if icd_data[origin_location] and not param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = param['origin_port_id']
-                        elif not icd_data[origin_location] and param['origin_main_port_id']:
+                        elif not icd_data[origin_location] and param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = None
 
                         param['origin_port_id'] = origin_location
 
-                        if icd_data[destination_location] and  not param['destination_main_port_id']:
+                        if icd_data[destination_location] and  not param.get('destination_main_port_id'):
                             param['destination_main_port_id'] = param['destination_port_id']
-                        elif not icd_data[destination_location] and param['destination_main_port_id']:
+                        elif not icd_data[destination_location] and param.get('destination_main_port_id'):
                             param['destination_main_port_id'] = None
 
                         param['destination_port_id'] = destination_location
@@ -130,14 +129,14 @@ def add_mandatory_line_items(param,request):
     commodity_type_mandatory_charges = [t for t in request.mandatory_charges.required_mandatory_codes if t['cluster_type'] == param['container_type']]
 
     mandatory_charges = commodity_mandatory_charges + container_size_mandatory_charges + commodity_type_mandatory_charges
-    existing_line_items = [t.code for t in param['line_items']]
+    existing_line_items = [t['code'] for t in param.get('line_items')]
     missing_line_items = []
     if mandatory_charges:
         missing_line_items = mandatory_charges['mandatory_codes'].flatten() - existing_line_items
     
     if missing_line_items:
         for missing_line_item in missing_line_items:
-            param['line_items'].append([t for t in request.mandatory_charges.line_items if t['code'] == missing_line_item][0])
+            param.get('line_items').append([t for t in request.mandatory_charges.line_items if t['code'] == missing_line_item][0])
 
     return param
 
