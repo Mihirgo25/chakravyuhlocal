@@ -11,6 +11,9 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_extension_rule_set import update_fcl_freight_rate_extension_rule_set_data
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_extension_rule_sets import list_fcl_freight_rate_extension_rule_set_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local_priority_scores import update_fcl_freight_rate_local_priority_scores_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_priority_scores import update_fcl_freight_rate_priority_scores_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_task import update_fcl_freight_rate_task_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_extension_rule_set import create_fcl_freight_rate_extension_rule_set_data
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_extension import get_fcl_freight_rate_extension_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
@@ -91,3 +94,23 @@ def update_fcl_freight_rate_local(request: UpdateFclFreightRateLocal, response: 
 def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
     delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content={"success": True})
+
+@app.post("/create_fcl_freight_rate_exclusive_rule_set")
+def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet):
+    return create_fcl_freight_rate_extension_rule_set_data(request)
+
+@app.post("/extend_create_fcl_freight_rate")
+def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
+    return extend_create_fcl_freight_rate_data(request)
+
+@app.post("/update_fcl_freight_rate_extension_rule_set")
+def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet):
+    return update_fcl_freight_rate_extension_rule_set_data(request)
+
+@app.post("/list_fcl_freight_rate_extension_rule_set")
+def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensionRuleSets):
+    return list_fcl_freight_rate_extension_rule_set_data(request)
+
+@app.post("/get_fcl_freight_rate_extension")
+def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
+    return get_fcl_freight_rate_extension_data(request)

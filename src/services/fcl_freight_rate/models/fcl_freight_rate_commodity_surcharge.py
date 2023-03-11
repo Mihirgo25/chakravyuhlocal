@@ -3,10 +3,9 @@ from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
 from rails_client import client
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import *
 import yaml
-from rails_client import client
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_CURRENCIES ,FCL_FREIGHT_SEASONAL_CHARGES
@@ -19,6 +18,7 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        constraints = [SQL('UNIQUE (origin_location_id, destination_location_id, container_size, container_type, commodity, shipping_line_id, service_provider_id)')]
 
 class Mapping(Model):
     fcl_freight_id = ForeignKeyField(FclFreightRate, backref='mappings')
@@ -30,7 +30,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     commodity = CharField(null=True)
     container_size = CharField(null=True)
     container_type = CharField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     currency = CharField(null=True)
     destination_continent_id = UUIDField(index=True, null=True)
     destination_country_id = UUIDField(index=True, null=True)
@@ -50,7 +50,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         table_name = 'fcl_freight_rate_commodity_surcharges'
@@ -66,7 +66,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         )
 
     def validate_origin_location_type(self):
-        origin_location = client.ruby.list_locations({'filters':{'id': self.origin_location_id}})['list'][0]
+        origin_location = client.ruby.list_locations({'filters':{'id': str(self.origin_location_id)}})['list'][0]
         if origin_location.get('type') in LOCATION_TYPES:
             self.origin_port_id = origin_location.get('id', None)
             self.origin_country_id = origin_location.get('country_id', None)
@@ -77,7 +77,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         return False
     
     def validate_destination_location_type(self):
-        destination_location = client.ruby.list_locations({'filters':{'id': self.destination_location_id}})['list'][0]
+        destination_location = client.ruby.list_locations({'filters':{'id': str(self.destination_location_id)}})['list'][0]
         if destination_location.get('type') in LOCATION_TYPES:
             self.destination_port_id = destination_location.get('id', None)
             self.destination_country_id = destination_location.get('country_id', None)
@@ -88,13 +88,13 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         return False
     
     def validate_shipping_line(self):
-        shipping_line = client.ruby.list_shipping_lines({'filters':{'id': self.shipping_line_id}})['list'][0]
+        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list'][0]
         if shipping_line.get('operator_type') == 'shipping_line':
             return True
         return False
-    
+   
     def validate_service_provider(self):
-        service_provider = client.ruby.list_service_providers({'filters':{'id': self.service_provider_id}})['list'][0]
+        service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list'][0]
         if service_provider.get('operator_type') == 'service_provider':
             return True
         return False
@@ -118,33 +118,34 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
             fcl_freight_currencies = yaml.safe_load(file)
 
+
         currencies = [currency for currency in fcl_freight_currencies]
         if self.currency and self.currency in currencies:
             return True
         return False
     
-    def valid_uniqueness(self):
-        freight_commodity_surcharge_cnt = FclFreightRateCommoditySurcharge.select().where(
-            FclFreightRateCommoditySurcharge.origin_location_id == self.origin_location_id,
-            FclFreightRateCommoditySurcharge.destination_location_id == self.destination_location_id,
-            FclFreightRateCommoditySurcharge.container_size == self.container_size,
-            FclFreightRateCommoditySurcharge.container_type == self.container_type,
-            FclFreightRateCommoditySurcharge.commodity == self.commodity,
-            FclFreightRateCommoditySurcharge.shipping_line_id == self.shipping_line_id,
-            FclFreightRateCommoditySurcharge.service_provider_id == self.service_provider_id
-        ).count()
+    # def valid_uniqueness(self):
+    #     freight_commodity_surcharge_cnt = FclFreightRateCommoditySurcharge.select().where(
+    #         FclFreightRateCommoditySurcharge.origin_location_id == self.origin_location_id,
+    #         FclFreightRateCommoditySurcharge.destination_location_id == self.destination_location_id,
+    #         FclFreightRateCommoditySurcharge.container_size == self.container_size,
+    #         FclFreightRateCommoditySurcharge.container_type == self.container_type,
+    #         FclFreightRateCommoditySurcharge.commodity == self.commodity,
+    #         FclFreightRateCommoditySurcharge.shipping_line_id == self.shipping_line_id,
+    #         FclFreightRateCommoditySurcharge.service_provider_id == self.service_provider_id
+    #     ).count()
        
-        if self.id and freight_commodity_surcharge_cnt==1:
-            return True
-        if not self.id and freight_commodity_surcharge_cnt==0:
-            return True
-        return False
+    #     if self.id and freight_commodity_surcharge_cnt==1:
+    #         return True
+    #     if not self.id and freight_commodity_surcharge_cnt==0:
+    #         return True
+    #     return False
 
     def update_freight_objects(self):
         freight_query = FclFreightRate.select().where(
             (FclFreightRate.container_size == self.container_size) &
             (FclFreightRate.container_type == 'standard') &
-            (FclFreightRate.commodity == 'general')
+            (FclFreightRate.commodity == 'general') &
             (FclFreightRate.shipping_line_id == self.shipping_line_id) &
             (FclFreightRate.service_provider_id == self.service_provider_id) &
             (FclFreightRate.importer_exporter_id == None) &
@@ -152,6 +153,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             (getattr(FclFreightRate, f"destination_{self.destination_location_type}_id") == self.destination_location_id)
         )
         for freight_id in freight_query.select(FclFreightRate.id):
+            print(freight_id)
             mapping = Mapping(fcl_freight_id=freight_id.id)
             mapping.save()
 
@@ -164,11 +166,14 @@ class FclFreightRateCommoditySurcharge(BaseModel):
                 'remarks'
             ])
         }
-
-    def save(self, *args, **kwargs):
-        if self.validate_origin_location_type() and self.validate_destination_location_type() and self.validate_shipping_line() and self.validate_service_provider() and self.validate_container_size() and self.validate_container_type() and self.validate_commodity() and self.validate_currency() and self.valid_uniqueness():
-            self.updated_at = datetime.now()
-            super(FclFreightRateCommoditySurcharge, self).save(*args, **kwargs)
-            self.update_freight_objects()
-        else:
-            raise Exception('Invalid data')
+    
+    def validate(self):
+        self.validate_origin_location_type()
+        self.validate_destination_location_type()
+        self.validate_shipping_line()
+        # self.validate_service_provider()
+        self.validate_container_size()
+        self.validate_container_type()
+        self.validate_commodity()
+        self.validate_currency()
+        return True

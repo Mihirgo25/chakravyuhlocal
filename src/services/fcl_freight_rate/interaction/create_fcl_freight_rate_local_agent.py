@@ -3,13 +3,15 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightR
 from database.db_session import db
 from datetime import datetime
 from libs.logger import logger
+from fastapi import HTTPException
 
 def create_fcl_freight_rate_local_agent(request):
     with db.atomic() as transaction:
         try:
-            id = execute_transaction_code(request)
-            return id
-        except:
+          id = execute_transaction_code(request)
+          return id
+        except Exception as e:
+            logger.error(e, exc_info=True)
             transaction.rollback()
             return "Creation Failed"
 
@@ -18,11 +20,13 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
     local_agent_object = find_or_initialize(**create_params)
     
-    
-    if validations(local_agent_object) and local_agent_object.set_location_ids_and_type():
-        local_agent_object.save()
-    else:
-        return None
+    local_agent_object.set_location_ids_and_type()
+
+    try:
+      if local_agent_object.validate():
+          local_agent_object.save()
+    except:
+        raise HTTPException(status_code = 500, detail = "Local Agent not saved")
 
     create_audit(request, local_agent_object.id)
     
@@ -49,8 +53,3 @@ def create_audit(request, local_agent_id):
         object_id = local_agent_id,
         object_type = 'FclFreightRateLocalAgent'
     )
-
-def validations(local_agent_object):
-    if local_agent_object.validate_service_provider() and local_agent_object.validate_trade_type() and local_agent_object.validate_status() and local_agent_object.valid_uniqueness():
-        return True
-    return False

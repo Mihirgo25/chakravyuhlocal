@@ -3,15 +3,18 @@ import concurrent.futures
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from playhouse.shortcuts import model_to_dict
 from operator import attrgetter
+import uuid
 from math import ceil
 from peewee import fn
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
+import json
 
 possible_direct_filters = ['service_provider_id', 'trade_type', 'status']
 possible_indirect_filters = ['location_ids']
 
-def list_fcl_freight_rate_local_agents(filters, sort_by, sort_type, page, page_limit, pagination_data_required, add_service_objects_required):
-    filters = remove_unexpected_filters(filters, possible_direct_filters, possible_indirect_filters)
+def list_fcl_freight_rate_local_agents(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True, add_service_objects_required = True):
+    if type(filters) != dict:
+        filters = json.loads(filters)
+
     query = get_query(sort_by, sort_type, page, page_limit)
     query = apply_direct_filters(query, filters)
     query = apply_indirect_filters(query, filters)
@@ -22,10 +25,9 @@ def list_fcl_freight_rate_local_agents(filters, sort_by, sort_type, page, page_l
         for future in futures:
             result = future.result()
             results.update(result)
-        
-    method_responses = results
-    data = method_responses['get_data']
-    pagination_data = method_responses['get_pagination_data']
+
+    data = results['get_data']
+    pagination_data = results['get_pagination_data']
 
     return {'list': data } | (pagination_data)
 
@@ -36,7 +38,7 @@ def get_query(sort_by, sort_type, page, page_limit):
 def get_data(query, page, page_limit, pagination_data_required, add_service_objects_required):
     data = [model_to_dict(item) for item in query.execute()]
     if not add_service_objects_required:
-        return data 
+        return {'get_data':data} 
 
     data = add_service_objects(data)
     return {'get_data':data}
@@ -91,5 +93,5 @@ def apply_indirect_filters(query, filters):
     return query
  
 def apply_location_ids_filter(query, filters):
-    query = query.where(fn.array_contains(filters['location_ids'], FclFreightRateLocalAgent.id))
-    return query
+    location_ids = [uuid.UUID(id.strip()) for id in filters['location_ids'][1:-1].split(',')]
+    return query.where(FclFreightRateLocalAgent.location_ids.contains(location_ids))

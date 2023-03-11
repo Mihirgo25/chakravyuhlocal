@@ -60,7 +60,7 @@ class PostFclFreightRate(BaseModel):
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
-  line_items: list[StandardLineItem]
+  line_items: List[StandardLineItem]=None
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
@@ -118,21 +118,23 @@ class UpdateFclFreightRateLocal(BaseModel):
     data: Data
 
 class PostFclFreightRateExtensionRuleSet(BaseModel):
-  cluster_id: str = None
-  cluster_reference_name: str = None
-  cluster_type: str = None
-  created_at: datetime.datetime = None
-  extension_name: str = None
+  cluster_id: str 
+  cluster_reference_name: str
+  cluster_type: str
+  created_at: datetime.datetime
+  extension_name: str
   gri_currency: str = None
   gri_rate: float = None
   line_item_charge_code: str = None
   service_provider_id: str = None
   shipping_line_id: str = None
-  status: str = None
+  status: str 
   trade_type: str = None
-  updated_at: datetime.datetime = None
+  updated_at: datetime.datetime 
 
-#class DestinationLocal(BaseModel):
+class MandatoryCharges(BaseModel):
+  line_items: list[StandardLineItem] = []
+  required_mandatory_codes: list[str] = []
 
 class ExtendCreateFclFreightRate(BaseModel):
   performed_by_id: str
@@ -156,11 +158,11 @@ class ExtendCreateFclFreightRate(BaseModel):
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
-  line_items: list[StandardLineItem]
+  line_items: List[StandardLineItem]
   weight_limit: FreeDay = None
-  origin_local: LocalData = None
-  destination_local: LocalData = None
-  mandatory_charges: LocalData = None
+  origin_local: Data = None
+  destination_local: Data = None
+  mandatory_charges: MandatoryCharges = None
   extend_rates: bool = False
   extend_rates_for_lens: bool = False
   extend_rates_for_existing_system_rates: bool = False
@@ -284,6 +286,28 @@ class CreateFclFreightRateNotAvailable(BaseModel):
     container_size: str
     container_type: str
     commodity: str
+
+class UpdateFclFreightRateLocalPriorityScores(BaseModel):
+   filters: dict = {}
+
+class UpdateFclFreightRatePriorityScores(BaseModel):
+   filters: dict = {}
+
+class rate(BaseModel):
+  line_items: list[LineItem] = None
+  detention: FreeDay = None
+  demurrage: FreeDay = None
+  plugin: FreeDay = None
+
+
+class UpdateFclFreightRateTask(BaseModel):
+   id: str
+   performed_by_id: str
+   performed_by_type: str
+   rate: list[rate]
+   status: str = None
+   closing_remarks:str = None
+
 
 
 

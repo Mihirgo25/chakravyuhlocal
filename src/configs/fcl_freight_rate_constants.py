@@ -132,3 +132,5 @@ COMMODITY_SURCHARGE_CONTAINER_COMMODITY_MAPPINGS = {
   }
 
 CONTAINER_CLUSTERS = { '40_40HC' : ['40', '40HC'] }
+
+TECHOPS_TASK_ABORT_REASONS = ['Sid Cancelled/Changed', 'Port Currently not served']

@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_commodity_surcharge import FclFreightRateCommoditySurcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from fastapi import FastAPI, HTTPException
@@ -23,15 +23,12 @@ def update_fcl_freight_rate_commodity_surcharge(request):
 
     if not fcl_freight_rate_commodity_surcharge:
         raise HTTPException(status_code=404, detail="Commodity Surcharge not found")
-   
-    update_params = {key: value for key, value in request.items() if key in ['price', 'currency', 'remarks']}
 
-    # fcl_freight_rate_commodity_surcharge.__dict__.update(update_params)
-    # if not fcl_freight_rate_commodity_surcharge.save():
-    #     raise HTTPException(status_code=422, detail="Commodity Surcharge not saved")
+    for k, v in request.items():
+        if k in ['price', 'currency', 'remarks']:
+            setattr(fcl_freight_rate_commodity_surcharge, k, v)
 
-    if not fcl_freight_rate_commodity_surcharge.update(**update_params):
+    if not fcl_freight_rate_commodity_surcharge.save():
         raise HTTPException(status_code=422, detail="Commodity Surcharge not updated")
 
     create_audit(request, fcl_freight_rate_commodity_surcharge.id)
-    

@@ -1,7 +1,7 @@
 from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
 import yaml
 from rails_client import client
@@ -17,6 +17,7 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        constraints = [SQL('UNIQUE (origin_location_id, destination_location_id, container_size, container_type, shipping_line_id, service_provider_id, code)')]
 
 class Mapping(Model):
     fcl_freight_id = ForeignKeyField(FclFreightRate, backref='mappings')
@@ -28,7 +29,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     code = CharField(null=True)
     container_size = CharField(null=True)
     container_type = CharField(index=True, null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     currency = CharField(null=True)
     destination_continent_id = UUIDField(index=True, null=True)
     destination_country_id = UUIDField(index=True, null=True)
@@ -48,7 +49,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
     validity_end = DateField(index=True, null=True)
     validity_start = DateField(null=True)
 
@@ -66,7 +67,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         )
 
     def validate_origin_location(self):
-        origin_location = client.ruby.list_locations({'filters':{'id': self.origin_location_id}})['list'][0]
+        origin_location = client.ruby.list_locations({'filters':{'id': str(self.origin_location_id)}})['list'][0]
         if origin_location.get('type') in LOCATION_TYPES:
             self.origin_port_id = origin_location.get('id', None)
             self.origin_country_id = origin_location.get('country_id', None)
@@ -77,7 +78,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         return False
 
     def validate_destination_location(self):
-        destination_location = client.ruby.list_locations({'filters':{'id': self.destination_location_id}})['list'][0]
+        destination_location = client.ruby.list_locations({'filters':{'id': str(self.destination_location_id)}})['list'][0]
         if destination_location.get('type') in LOCATION_TYPES:
             self.destination_port_id = destination_location.get('id', None)
             self.destination_country_id = destination_location.get('country_id', None)
@@ -89,13 +90,13 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         return False
 
     def validate_shipping_line(self):
-        shipping_line = client.ruby.list_operators({'filters':{'id': self.shipping_line_id}})['list'][0]
+        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list'][0]
         if shipping_line.get('operator_type') == 'shipping_line':
             return True
         return False
 
     def validate_service_provider(self):
-        service_provider = client.ruby.list_organizations({'filters':{'id': self.service_provider_id}})['list'][0]
+        service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list'][0]
         if service_provider.get('operator_type') == 'service_provider':
             return True
         return False
@@ -123,21 +124,21 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             if self.validity_start > self.validity_end:
                 raise HTTPException(status_code=499, detail="Validity start date should be less than validity end date")
 
-    def valid_uniqueness(self):
-        freight_seasonal_surcharge_cnt = FclFreightRateSeasonalSurcharge.select().where(
-            FclFreightRateSeasonalSurcharge.origin_location_id == self.origin_location_id,
-            FclFreightRateSeasonalSurcharge.destination_location_id == self.destination_location_id,
-            FclFreightRateSeasonalSurcharge.container_size == self.container_size,
-            FclFreightRateSeasonalSurcharge.container_type == self.container_type,
-            FclFreightRateSeasonalSurcharge.shipping_line_id == self.shipping_line_id,
-            FclFreightRateSeasonalSurcharge.service_provider_id == self.service_provider_id
-        ).count()
+    # def valid_uniqueness(self):
+    #     freight_seasonal_surcharge_cnt = FclFreightRateSeasonalSurcharge.select().where(
+    #         FclFreightRateSeasonalSurcharge.origin_location_id == self.origin_location_id,
+    #         FclFreightRateSeasonalSurcharge.destination_location_id == self.destination_location_id,
+    #         FclFreightRateSeasonalSurcharge.container_size == self.container_size,
+    #         FclFreightRateSeasonalSurcharge.container_type == self.container_type,
+    #         FclFreightRateSeasonalSurcharge.shipping_line_id == self.shipping_line_id,
+    #         FclFreightRateSeasonalSurcharge.service_provider_id == self.service_provider_id
+    #     ).count()
 
-        if self.id and freight_seasonal_surcharge_cnt==1:
-            return True
-        if not self.id and freight_seasonal_surcharge_cnt==0:
-            return True
-        return False
+    #     if self.id and freight_seasonal_surcharge_cnt==1:
+    #         return True
+    #     if not self.id and freight_seasonal_surcharge_cnt==0:
+    #         return True
+    #     return False
     
     def is_active(self):
         if self.validity_start and self.validity_end:
@@ -169,8 +170,8 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
                 'remarks'
             ])
         }
-
-    def save(self, *args, **kwargs):
+    
+    def validate(self):
         self.validate_origin_location()
         self.validate_destination_location()
         self.validate_shipping_line()
@@ -179,20 +180,6 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         self.validate_container_type()
         self.validate_code()
         self.validate_validity()
-        if not self.valid_uniqueness():
-            raise HTTPException(status_code=499, detail="Duplicate entry")
-        super().save(*args, **kwargs)
-        self.update_freight_objects()
-
-    class Meta:
-        table_name = 'fcl_freight_rate_seasonal_surcharges'
-        indexes = (
-            (('container_size', 'container_type'), False),
-            (('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'code'), True),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'code'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id', 'code'), False),
-            (('updated_at', 'service_provider_id', 'shipping_line_id', 'code'), False),
-            (('validity_start', 'validity_end'), False),
-        )
+        # if not self.valid_uniqueness():
+        #     raise HTTPException(status_code=499, detail="Duplicate entry")
+        return True
