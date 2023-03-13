@@ -17,7 +17,6 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
-        constraints = [SQL('UNIQUE (origin_location_id, destination_location_id, container_size, container_type, shipping_line_id, service_provider_id, code)')]
 
 class Mapping(Model):
     fcl_freight_id = ForeignKeyField(FclFreightRate, backref='mappings')
@@ -55,6 +54,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_seasonal_surcharges'
+        # constraints = [SQL('UNIQUE (origin_location_id, destination_location_id, container_size, container_type, shipping_line_id, service_provider_id, code)')]
         indexes = (
             (('container_size', 'container_type'), False),
             (('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'code'), True),
@@ -67,39 +67,53 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         )
 
     def validate_origin_location(self):
-        origin_location = client.ruby.list_locations({'filters':{'id': str(self.origin_location_id)}})['list'][0]
-        if origin_location.get('type') in LOCATION_TYPES:
-            self.origin_port_id = origin_location.get('id', None)
-            self.origin_country_id = origin_location.get('country_id', None)
-            self.origin_trade_id = origin_location.get('trade_id', None)
-            self.origin_continent_id = origin_location.get('continent_id', None)
-            self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
-            return True
-        return False
+        origin_location = client.ruby.list_locations({'filters':{'id': str(self.origin_location_id)}})['list']
+        if origin_location:
+            origin_location = origin_location[0]
+            if origin_location.get('type') in LOCATION_TYPES:
+                self.origin_port_id = origin_location.get('id', None)
+                self.origin_country_id = origin_location.get('country_id', None)
+                self.origin_trade_id = origin_location.get('trade_id', None)
+                self.origin_continent_id = origin_location.get('continent_id', None)
+                self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
+            else:
+                raise HTTPException(status_code=400, detail="Origin location type is not valid")
+        else:
+            raise HTTPException(status_code=400, detail="Origin location is not valid")
 
     def validate_destination_location(self):
-        destination_location = client.ruby.list_locations({'filters':{'id': str(self.destination_location_id)}})['list'][0]
-        if destination_location.get('type') in LOCATION_TYPES:
-            self.destination_port_id = destination_location.get('id', None)
-            self.destination_country_id = destination_location.get('country_id', None)
-            self.destination_trade_id = destination_location.get('trade_id', None)
-            self.destination_continent_id = destination_location.get('continent_id', None)
-            self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
-            self.origin_destination_location_type = str(self.origin_location_type) + ':' + str(self.destination_location_type)
-            return True
-        return False
+        destination_location = client.ruby.list_locations({'filters':{'id': str(self.destination_location_id)}})['list']
+        if destination_location:
+            destination_location = destination_location[0]
+            if destination_location.get('type') in LOCATION_TYPES:
+                self.destination_port_id = destination_location.get('id', None)
+                self.destination_country_id = destination_location.get('country_id', None)
+                self.destination_trade_id = destination_location.get('trade_id', None)
+                self.destination_continent_id = destination_location.get('continent_id', None)
+                self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
+            else:
+                raise HTTPException(status_code=400, detail="Destination location type is not valid")
+        else:
+            raise HTTPException(status_code=400, detail="Destination location is not valid")
 
     def validate_shipping_line(self):
-        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list'][0]
-        if shipping_line.get('operator_type') == 'shipping_line':
-            return True
-        return False
+        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
+        if shipping_line:
+            shipping_line = shipping_line[0]
+            if shipping_line.get('operator_type') != 'shipping_line':
+                raise HTTPException(status_code=400, detail="Invalid operator type")
+        else:
+            raise HTTPException(status_code=400, detail="Shipping line is not valid")
 
     def validate_service_provider(self):
-        service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list'][0]
-        if service_provider.get('operator_type') == 'service_provider':
-            return True
-        return False
+        service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
+        print("ddd", service_provider)
+        if service_provider:
+            service_provider = service_provider[0]
+            if service_provider.get('account_type') != 'service_provider':
+                raise HTTPException(status_code=400, detail="Invalid operator type")
+        else:
+            raise HTTPException(status_code=400, detail="Service provider is not valid")
 
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -124,21 +138,17 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             if self.validity_start > self.validity_end:
                 raise HTTPException(status_code=499, detail="Validity start date should be less than validity end date")
 
-    # def valid_uniqueness(self):
-    #     freight_seasonal_surcharge_cnt = FclFreightRateSeasonalSurcharge.select().where(
-    #         FclFreightRateSeasonalSurcharge.origin_location_id == self.origin_location_id,
-    #         FclFreightRateSeasonalSurcharge.destination_location_id == self.destination_location_id,
-    #         FclFreightRateSeasonalSurcharge.container_size == self.container_size,
-    #         FclFreightRateSeasonalSurcharge.container_type == self.container_type,
-    #         FclFreightRateSeasonalSurcharge.shipping_line_id == self.shipping_line_id,
-    #         FclFreightRateSeasonalSurcharge.service_provider_id == self.service_provider_id
-    #     ).count()
-
-    #     if self.id and freight_seasonal_surcharge_cnt==1:
-    #         return True
-    #     if not self.id and freight_seasonal_surcharge_cnt==0:
-    #         return True
-    #     return False
+    def valid_uniqueness(self):
+        freight_seasonal_surcharge_cnt = FclFreightRateSeasonalSurcharge.select().where(
+            FclFreightRateSeasonalSurcharge.origin_location_id == self.origin_location_id,
+            FclFreightRateSeasonalSurcharge.destination_location_id == self.destination_location_id,
+            FclFreightRateSeasonalSurcharge.container_size == self.container_size,
+            FclFreightRateSeasonalSurcharge.container_type == self.container_type,
+            FclFreightRateSeasonalSurcharge.shipping_line_id == self.shipping_line_id,
+            FclFreightRateSeasonalSurcharge.service_provider_id == self.service_provider_id
+        ).count()
+        if freight_seasonal_surcharge_cnt != 0:
+            raise HTTPException(status_code=499, detail="Seasonal surcharge already exists for this origin and destination")
     
     def is_active(self):
         if self.validity_start and self.validity_end:
@@ -176,10 +186,12 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         self.validate_destination_location()
         self.validate_shipping_line()
         self.validate_service_provider()
-        self.validate_container_size()
-        self.validate_container_type()
-        self.validate_code()
+        if not self.validate_container_size():
+            raise HTTPException(status_code=499, detail="Invalid container size")
+        if not self.validate_container_type():
+            raise HTTPException(status_code=499, detail="Invalid container type")
+        if not self.validate_code():
+            raise HTTPException(status_code=499, detail="Invalid code")
         self.validate_validity()
-        # if not self.valid_uniqueness():
-        #     raise HTTPException(status_code=499, detail="Duplicate entry")
+        self.valid_uniqueness()
         return True
