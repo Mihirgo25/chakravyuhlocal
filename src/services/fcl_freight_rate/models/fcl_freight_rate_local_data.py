@@ -4,7 +4,7 @@ import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from pydantic import BaseModel
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
-
+from libs.locations import list_locations
 class FclFreightRateLocalData(BaseModel):
     line_items: list[LineItem] = []
     detention: FreeDay = None
