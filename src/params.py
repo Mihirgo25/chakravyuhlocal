@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-import datetime
+from datetime import datetime
 from peewee import *
 from typing import List
 
@@ -55,8 +55,8 @@ class PostFclFreightRate(BaseModel):
   shipping_line_id: str
   service_provider_id: str
   importer_exporter_id: str = None
-  validity_start: datetime.datetime
-  validity_end: datetime.datetime
+  validity_start: datetime
+  validity_end: datetime
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
@@ -76,8 +76,8 @@ class UpdateFclFreightRate(BaseModel):
   sourced_by_id: str = None #not null
   performed_by_id: str = None #not null
   bulk_operation_id: str = None
-  validity_start: datetime.datetime = None
-  validity_end: datetime.datetime = None
+  validity_start: datetime = None
+  validity_end: datetime = None
   schedule_type: str = 'transhipment'
   payment_term: str = 'prepaid'
   line_items: list[UpdateLineItem] = None
@@ -110,9 +110,9 @@ class PostFclFreightRateLocal(BaseModel):
 
 class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
-    performed_by_id: str = None #should be not null
-    procured_by_id: str = None #should be not null
-    sourced_by_id: str = None #should be not null
+    performed_by_id: str
+    procured_by_id: str
+    sourced_by_id: str
     bulk_operation_id: str = None
     selected_suggested_rate_id: str = None
     data: Data
@@ -121,7 +121,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   cluster_id: str 
   cluster_reference_name: str
   cluster_type: str
-  created_at: datetime.datetime
+  created_at: datetime
   extension_name: str
   gri_currency: str = None
   gri_rate: float = None
@@ -130,7 +130,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   shipping_line_id: str = None
   status: str 
   trade_type: str = None
-  updated_at: datetime.datetime 
+  updated_at: datetime 
 
 class MandatoryCharges(BaseModel):
   line_items: list[StandardLineItem] = []
@@ -153,8 +153,8 @@ class ExtendCreateFclFreightRate(BaseModel):
   shipping_line_id: str
   service_provider_id: str
   importer_exporter_id: str = None
-  validity_start: datetime.datetime
-  validity_end: datetime.datetime
+  validity_start: datetime
+  validity_end: datetime
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
@@ -264,8 +264,8 @@ class GetFclFreightLocalRateCards(BaseModel):
 class DeleteFclFreightRate(BaseModel):
     id: str
     performed_by_id: str
-    validity_start: datetime.datetime
-    validity_end: datetime.datetime
+    validity_start: datetime
+    validity_end: datetime
     bulk_operation_id: str = None
     sourced_by_id: str 
     procured_by_id: str
@@ -308,6 +308,57 @@ class UpdateFclFreightRateTask(BaseModel):
    status: str = None
    closing_remarks:str = None
 
+class CreateFclFreightRateWeightLimit(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  free_limit: float
+  remarks: list[str] = None
+  slabs: list[Slab] = None
 
+class UpdateFclFreightRateWeightLimit(BaseModel):
+  performed_by_id: str 
+  procured_by_id: str 
+  sourced_by_id: str 
+  id: str 
+  free_limit: int = None 
+  remarks: list[str] = None 
+  slabs: list[Slab] = None
 
+class CreateFclFreightRateFreeDay(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  trade_type: str
+  location_id: str
+  free_days_type: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  importer_exporter_id: str = None
+  specificity_type: str
+  previous_days_applicable: bool = False
+  free_limit: int
+  remarks: list[str] = None
+  slabs: list[Slab] = None
 
+class UpdateFclFreightRateFreeDay(BaseModel):
+  performed_by_id: str
+  bulk_operation_id: str = None
+  procured_by_id: str
+  sourced_by_id: str
+  id: str
+  free_limit: int = None
+  # validity_start: datetime = datetime.now()
+  # validity_end: datetime = datetime.now() + timedelta(months=3)
+  remarks: list[str] = None
+  slabs: list[Slab] = None
