@@ -86,7 +86,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
             return True
         elif self.cluster_type == 'location' and client.ruby.list_location_cluster({'filters':{'id': self.cluster_id}}):
             return True
-        elif self.cluster_type == 'container' and self.cluster_id in CONTAINER_CLUSTERS.keys:
+        elif self.cluster_type == 'container' and self.cluster_id in CONTAINER_CLUSTERS.keys():
             return True
         return False
 
