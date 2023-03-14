@@ -4,7 +4,7 @@ import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from pydantic import BaseModel
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
-
+from libs.locations import list_locations
 class FclFreightRateLocalData(BaseModel):
     line_items: list[LineItem] = []
     detention: FreeDay = None
@@ -22,9 +22,11 @@ class FclFreightRateLocalData(BaseModel):
         # raise HTTPException(status_code=499, detail="line item contains duplicate")
         return False
     def validate_invalid_charge_codes(self, possible_charge_codes):
-        invalid_line_items = [str(t.code) for t in self.line_items if str(t.code) not in [str(t[0]) for t in possible_charge_codes]]
+        invalid_line_items = [str(t.code) for t in self.line_items if str(t.code) not in possible_charge_codes]
+        print(invalid_line_items)
         if invalid_line_items:
             return False
+        return True
             # self.parent.errors.add('line_items', f"{', '.join(invalid_line_items)} are invalid")
 
     def get_line_item_messages(self, port, main_port, shipping_line, container_size, container_type, commodity, trade_type, possible_charge_codes):

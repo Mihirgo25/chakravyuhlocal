@@ -32,7 +32,6 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
-        constraints = [SQL('UNIQUE (origin_port_id, origin_main_port_id, destination_port_id, destination_main_port_id, container_size, container_type, commodity, shipping_line_id, service_provider_id, importer_exporter_id, cogo_entity_id)')]
        
 class FclFreightRate(BaseModel):
     commodity = CharField(null=True)
@@ -135,6 +134,7 @@ class FclFreightRate(BaseModel):
 
       obj = {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}
       locations = list_locations(obj)['list']
+      
 
       for location in locations:
         if str(self.origin_port_id) == str(location['id']):
@@ -163,12 +163,15 @@ class FclFreightRate(BaseModel):
         if not self.origin_main_port_id:
           return True
         return False
+      return True
+      
 
     def validate_destination_main_port_id(self):
       if self.destination_port and self.destination_port['is_icd'] == False:
         if not self.destination_main_port_id:
           return True
         return False
+      return True
 
     def set_shipping_line(self):
       if not self.rate_not_available_entry:
@@ -208,26 +211,24 @@ class FclFreightRate(BaseModel):
         return True
       return False
 
-    # def valid_uniqueness(self):
-    #   freight_cnt = FclFreightRate.select().where(
-    #     FclFreightRate.origin_port_id == self.origin_port_id,
-    #     FclFreightRate.origin_main_port_id == self.origin_main_port_id,
-    #     FclFreightRate.destination_port_id == self.destination_port_id,
-    #     FclFreightRate.destination_main_port_id == self.destination_main_port_id,
-    #     FclFreightRate.container_size == self.container_size,
-    #     FclFreightRate.container_type == self.container_type,
-    #     FclFreightRate.commodity == self.commodity,
-    #     FclFreightRate.shipping_line_id == self.shipping_line_id,
-    #     FclFreightRate.service_provider_id == self.service_provider_id,
-    #     FclFreightRate.importer_exporter_id == self.importer_exporter_id
-    #   ).count()
+    def valid_uniqueness(self):
+      freight_cnt = FclFreightRate.select().where(
+        FclFreightRate.origin_port_id == self.origin_port_id,
+        FclFreightRate.origin_main_port_id == self.origin_main_port_id,
+        FclFreightRate.destination_port_id == self.destination_port_id,
+        FclFreightRate.destination_main_port_id == self.destination_main_port_id,
+        FclFreightRate.container_size == self.container_size,
+        FclFreightRate.container_type == self.container_type,
+        FclFreightRate.commodity == self.commodity,
+        FclFreightRate.shipping_line_id == self.shipping_line_id,
+        FclFreightRate.service_provider_id == self.service_provider_id,
+        FclFreightRate.importer_exporter_id == self.importer_exporter_id
+      ).count()
 
-    #   if self.id and freight_cnt==1:
-    #     return True
-    #   if not self.id and freight_cnt==0:
-    #     return True
+      if freight_cnt!=0:
+        raise HTTPException(status_code=404,detail='Record Already Exists')
 
-    #   return False
+
 
     def set_omp_dmp_sl_sp(self):
       self.omp_dmp_sl_sp = ":".join([str(self.origin_main_port_id), str(self.destination_main_port_id), str(self.shipping_line_id), str(self.service_provider_id)])
@@ -240,16 +241,16 @@ class FclFreightRate(BaseModel):
       self.update_weight_limit_special_attributes()
 
     def update_origin_local_line_item_messages(self):
-      response = {}
 
       if self.origin_local:
-        response = dict(self.local_data_get_line_item_messages())
+        self.origin_local_data_instance = FclFreightRateLocalData(self.origin_local)
+        response = self.origin_local_data_instance.get_line_item_messages(self.port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
 
-      self.update(
-      origin_local_line_items_error_messages = response.get('line_items_error_messages'),
-      is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
-      origin_local_line_items_info_messages = response.get('line_items_info_messages'),
-      is_origin_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present'))
+        self.update(
+        origin_local_line_items_error_messages = response.get('line_items_error_messages'),
+        is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
+        origin_local_line_items_info_messages = response.get('line_items_info_messages'),
+        is_origin_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present'))
 
     def update_destination_local_line_item_messages(self):
       response = {}
@@ -281,13 +282,19 @@ class FclFreightRate(BaseModel):
 
     def validate_origin_local(self):
       if 'origin_local' in self.dirty_fields and self.origin_local:
-        self.origin_local_instance.validate_duplicate_charge_codes()
-        self.origin_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes())
+        duplicate = self.origin_local_instance.validate_duplicate_charge_codes()
+        invalid = self.origin_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes())
+        if not  (duplicate and invalid):
+          raise HTTPException(status_code=404,detail="Origin Local Invalid")
+
 
     def validate_destination_local(self):
       if 'destination_local' in self.dirty_fields and self.destination_local:
-        self.destination_local_instance.validate_duplicate_charge_codes()
-        self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes())
+        duplicate = self.destination_local_instance.validate_duplicate_charge_codes()
+        invalid = self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes())
+
+      if not  (duplicate and invalid):
+          raise HTTPException(status_code=404,detail="Destination Local Invalid")
 
     def validate_validity_object(self, validity_start, validity_end):
       if not validity_start:
@@ -505,12 +512,6 @@ class FclFreightRate(BaseModel):
 
         schema_validity.validate(validity)
 
-      # schema_local_data = Schema({Optional('line_items'): list, Optional('detention'): dict, Optional('demurrage'): dict, Optional('plugin'): dict})
-
-      # if self.origin_local:
-      #   schema_local_data.validate(self.origin_local)
-      # if self.destination_local:
-      #   schema_local_data.validate(self.destination_local)
       
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
 
@@ -522,11 +523,11 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=499, detail="incorrect container type")
       if not self.validate_commodity():
         raise HTTPException(status_code=499, detail="incorrect commodity")
-      # if not self.valid_uniqueness():
-      #   raise HTTPException(status_code=499, detail="uniqueness not valid")
+      self.valid_uniqueness()
 
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()
+
       self.validate_destination_local()
       if not self.validate_origin_main_port_id():
         raise HTTPException(status_code=499, detail="origin main port id is invalid")
@@ -547,8 +548,8 @@ class FclFreightRate(BaseModel):
       commodity = self.commodity
 
       for k,v in fcl_freight_local_charges_dict.items():
-          if eval(str(v['condition'])) and 'export' in v['trade_types']:
-              charge_codes[k] = v
+        if eval(str(v['condition'])) and 'export' in v['trade_types']:
+            charge_codes[k] = v
       return charge_codes
 
     def possible_destination_local_charge_codes(self):
@@ -602,12 +603,14 @@ class FclFreightRate(BaseModel):
     def local_data_get_line_item_messages(self):
 
       location_ids = list(set([item["location_id"] for item in self.origin_local["line_items"] if item["location_id"] is not None]))
-      
+      print("bedada",location_ids)
       locations = {}
 
       if location_ids:
+        print("bed")
         obj = {"id": location_ids}
         locations = list_locations(obj)['list']
+        
       return locations
 
     def update_local_references(self):
@@ -616,7 +619,7 @@ class FclFreightRate(BaseModel):
         (FclFreightRateLocal.main_port_id in [self.origin_main_port_id, self.destination_main_port_id]),
         (FclFreightRateLocal.container_size == self.container_size),
         (FclFreightRateLocal.container_type == self.container_type),
-        (FclFreightRateLocal.commodity == (self.commodity if self.commodity in HAZ_COMMODITIES else None)),
+        (FclFreightRateLocal.commodity == (self.commodity if self.commodity in HAZ_CLASSES else None)),
         (FclFreightRateLocal.service_provider_id == self.service_provider_id),
         (FclFreightRateLocal.shipping_line_id == self.shipping_line_id)
       )

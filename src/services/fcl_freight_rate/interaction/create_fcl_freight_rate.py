@@ -60,8 +60,8 @@ def create_fcl_freight_rate_data(request):
     
   freight.set_locations()
   freight.set_shipping_line()
-  freight.set_origin_location_ids()
-  freight.set_destination_location_ids()
+  # freight.set_origin_location_ids()
+  # freight.set_destination_location_ids()
   # freight.validate_service_provider()
   # freight.validate_importer_exporter()
 

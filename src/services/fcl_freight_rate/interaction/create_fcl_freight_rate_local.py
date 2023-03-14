@@ -7,7 +7,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day impo
 from database.db_session import db
 from playhouse.shortcuts import model_to_dict
 # import requests
-
+import time
 
 def find_or_initialize(**kwargs):
   try:
@@ -33,13 +33,19 @@ def create_audit(request, fcl_freight_local_id):
         object_type = 'FclFreightRateLocal'
     )
 
+
 def create_fcl_freight_rate_local_data(request):
     with db.atomic() as transaction:
         try:
-            return execute_transaction_code(request)
-        except:
+            start = time.time()
+
+            data= execute_transaction_code(request)
+            print(time.time()-start)
+            return data
+
+        except Exception as e:
             transaction.rollback()
-            return "Creation Failed"
+            return e
 
 def execute_transaction_code(request):
     if not request.get('source'):
@@ -113,6 +119,7 @@ def execute_transaction_code(request):
 
         fcl_freight_local.plugin_id = plugin['id']
    
+    print("bedada")
     fcl_freight_local.validate_before_save()
 
     try:

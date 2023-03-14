@@ -1,20 +1,8 @@
+from configs.global_constants import *
+
 REQUEST_SOURCES = ['spot_search']
 
-HAZ_COMMODITIES = [
-    "gases-2.1",
-    "gases-2.2",
-    "gases-2.3",
-    "flammable_liquids-3",
-    "flammable_solids-4.1",
-    "flammable_solids_self_heat-4.2",
-    "emit_flammable_gases_with_water-4.3",
-    "imo_classes-5.1",
-    "toxic_substances-6.1",
-    "infectious_substances-6.2",
-    "radioactive_material-7",
-    "corrosives-8",
-    "miscellaneous_dangerous_goods-9"
-  ]
+
 
 CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
 
@@ -24,21 +12,6 @@ FAK_COMMODITY = ["general"]
 
 STANDARD_COMMODITIES = ['white_goods', 'pta', 'agro', 'cotton_and_yarn', 'fabric_and_textiles', 'raw_cotton', 'rice_bran', 'sugar_rice']
 
-HAZ_CLASSES = [
-    "gases-2.1",
-    "gases-2.2",
-    "gases-2.3",
-    "flammable_liquids-3",
-    "flammable_solids-4.1",
-    "flammable_solids_self_heat-4.2",
-    "emit_flammable_gases_with_water-4.3",
-    "imo_classes-5.1",
-    "toxic_substances-6.1",
-    "infectious_substances-6.2",
-    "radioactive_material-7",
-    "corrosives-8",
-    "miscellaneous_dangerous_goods-9"
-  ]
 
 REFER_COMMODITIES = ['chilled', 'frozen', 'pharma', 'meat', 'sea_food', 'fruits_and_veg']
 
@@ -60,12 +33,12 @@ FREIGHT_CONTAINER_COMMODITY_MAPPINGS = {
   }
 
 LOCAL_CONTAINER_COMMODITY_MAPPINGS = {
-    'standard': [None] + HAZ_COMMODITIES,
+    'standard': [None] + HAZ_CLASSES,
     'refer': [None],
     'open_top': [None],
     'open_side': [None],
     'flat_rack': [None],
-    'iso_tank': [None] + HAZ_COMMODITIES
+    'iso_tank': [None] + HAZ_CLASSES
   }
 SPECIFICITY_TYPE = ['cogoport', 'shipping_line']
 
@@ -134,3 +107,18 @@ COMMODITY_SURCHARGE_CONTAINER_COMMODITY_MAPPINGS = {
 CONTAINER_CLUSTERS = { '40_40HC' : ['40', '40HC'] }
 
 TECHOPS_TASK_ABORT_REASONS = ['Sid Cancelled/Changed', 'Port Currently not served']
+SCHEDULE_TYPES = ['direct', 'transhipment']
+
+PAYMENT_TERM = ['prepaid', 'collect']
+
+SPECIFICITY_TYPE = ['cogoport', 'shipping_line']
+
+FEEDBACK_SOURCES = ['spot_search', 'checkout']
+
+POSSIBLE_FEEDBACKS = ['unsatisfactory_rate', 'unsatisfactory_destination_detention', 'unpreferred_shipping_lines']
+
+FEEDBACK_TYPES = ['liked', 'disliked']
+
+EXPECTED_TAT=6
+
+

@@ -61,6 +61,7 @@ class FclFreightRateLocal(BaseModel):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateLocal, self).save(*args, **kwargs)
 
+
     class Meta:
         table_name = 'fcl_freight_rate_locals'
         indexes = (
@@ -168,8 +169,12 @@ class FclFreightRateLocal(BaseModel):
       return False
     
     def validate_data(self):
-        self.local_data_instance.validate_duplicate_charge_codes()# for each part different error should occur
-        self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
+        duplicate=self.local_data_instance.validate_duplicate_charge_codes()# for each part different error should occur
+        invalid=self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
+        print(duplicate,invalid)
+        if duplicate and invalid:
+            return True
+        return False
 
     def validate_before_save(self):
         try:
@@ -279,8 +284,16 @@ class FclFreightRateLocal(BaseModel):
         try:
             from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
             location_key = 'origin' if self.trade_type == 'export' else 'destination'
+            if location_key == 'origin':
+                kwargs = {
+                    'origin_local_id':self.id
+                }
+            else:
+                kwargs = {
+                    'destination_local_id':self.id
+                }
 
-            t=FclFreightRate.update(origin_local_id = '4bf52843-44c4-4af4-97b6-72da4d0a36bf').where(
+            t=FclFreightRate.update(**kwargs).where(
                 FclFreightRate.container_size == self.container_size,
                 FclFreightRate.container_type == self.container_type,
                 FclFreightRate.shipping_line_id == self.shipping_line_id,
@@ -291,6 +304,7 @@ class FclFreightRateLocal(BaseModel):
                 (f"FclFreightRate.{location_key}_local_id" == None)
                 )
             t.execute()
+            print(t)
                 
             print("update done")
         except Exception as e:
