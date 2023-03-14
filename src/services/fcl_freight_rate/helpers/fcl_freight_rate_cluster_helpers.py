@@ -6,6 +6,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import
 from peewee import *
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
+import requests
 
 def get_cluster_objects(rate_object):
     clusters = {}
@@ -49,8 +50,11 @@ def get_cluster_objects(rate_object):
 
     
     if 'origin_location_cluster' in clusters and clusters['origin_location_cluster']:
-        clusters['origin_location_cluster']['cluster_items'] = client.ruby.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations'] 
-
+        # print(clusters['origin_location_cluster']['cluster_id'])
+        # requests.get("url")
+        # clusters['origin_location_cluster']['cluster_items'] = client.ruby.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations'] 
+        clusters['origin_location_cluster']['cluster_items'] = requests.get("https://api.cogoport.com/location/get_location_cluster",params={'id': clusters['origin_location_cluster']['cluster_id']}).json()['locations'] 
+        
     if 'destination_location_cluster' in clusters and clusters['destination_location_cluster']:
         clusters['destination_location_cluster']['cluster_items'] = client.ruby.get_location_cluster({'id': clusters['destination_location_cluster']['cluster_id']})['locations']
 
@@ -59,7 +63,7 @@ def get_cluster_objects(rate_object):
 
     if 'container_cluster' in clusters and clusters['container_cluster']:
         clusters['container_cluster']['cluster_items'] = CONTAINER_CLUSTERS[clusters['container_cluster']['cluster_id']]
-
+    print(clusters)
     return clusters
 
 def get_required_mandatory_codes(cluster_objects):
@@ -80,22 +84,22 @@ def get_required_mandatory_codes(cluster_objects):
     all_cluster_items = commodity_cluster_items + container_size_cluster_items + cluster_container_type
 
     for cluster_item in all_cluster_items:
-        if cluster_item in commodity_cluster_items:
-            commodity = cluster_item
-        if cluster_item in container_size_cluster_items:
-            container_size = cluster_item
-        if cluster_item in cluster_container_type:
-            container_type = cluster_item
+        # if cluster_item in commodity_cluster_items:
+        #     commodity = cluster_item
+        # if cluster_item in container_size_cluster_items:
+        #     container_size = cluster_item
+        # if cluster_item in cluster_container_type:
+        #     container_type = cluster_item
         mandatory_codes = []
         with open(FCL_FREIGHT_CHARGES, 'r') as file:
             fcl_freight_charges_dict = yaml.safe_load(file)
 
         for code in fcl_freight_charges_dict.keys():
             config = fcl_freight_charges_dict[code]
-            try:
-                condition_value = config['condition']
-            except:
-                condition_value = False
+            # try:
+            #     condition_value = config['condition']
+            # except:
+            #     condition_value = False
 
             if 'mandatory' in config['tags']:
                 mandatory_codes.append(code)

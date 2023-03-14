@@ -26,7 +26,7 @@ def delete_fcl_freight_rate_request(request):
         create_audit(request, obj.id)
         # obj.delay(queue: 'low').send_closed_notifications_to_sales_agent
 
-    return {'fcl_freight_rate_local_request_ids' : request['fcl_freight_rate_local_request_ids']}
+    return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
 
 def find_objects(request):

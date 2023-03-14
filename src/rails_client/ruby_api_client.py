@@ -1,12 +1,27 @@
 from configs.env import RUBY_ADDRESS_URL
 from rails_client.ruby_client import RubyClient
+import json
+import requests
 
 class RubyApiClient:
     def __init__(self):
         self.client=RubyClient(str(RUBY_ADDRESS_URL))
 
+    # def list_locations(self,data={}):
+    #     return self.client.request('GET','list_locations',data)
+    
     def list_locations(self,data={}):
-        return self.client.request('GET','list_locations',data)
+        # print(data)
+        url= 'https://api.cogoport.com/location/list_locations'
+        response=requests.get(url,params={'filters':json.dumps(data['filters'])})
+        data = response.content
+        if not data:
+            return {"message": "no response"}
+        try:
+            result=json.loads(response.text)
+        except:
+            return {"message": "no response"}
+        return result
 
     def get_eligible_service_organizations(self, data = {}):
         return self.client.request('GET','get_eligible_service_organizations',data)
@@ -62,3 +77,6 @@ class RubyApiClient:
     
     def list_users(self, data = {}):
         return self.client.request('GET', 'list_users', data)
+    
+    def get_platform_config_constant(self, data = {}):
+        return self.client.request('GET','get_platform_config_constant',data)
