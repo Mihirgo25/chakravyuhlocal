@@ -21,6 +21,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
 from rails_client.client import initialize_client
 from params import *
+from database.create_tables import create_table
 
 # from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
@@ -40,7 +41,7 @@ app.add_middleware(
 def startup():
     if db.is_closed():
         db.connect()
-    #create_table()
+    # create_table()
     initialize_client()
     
 @app.on_event("shutdown")

@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_commodity_surcharge import FclFreightRateCommoditySurcharge
 from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit

@@ -20,6 +20,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFrei
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
+from libs.locations import list_locations
 
 
 def to_dict(obj):
@@ -35,8 +36,8 @@ class BaseModel(Model):
        
 class FclFreightRate(BaseModel):
     commodity = CharField(null=True)
-    container_size = CharField(null=True)
-    container_type = CharField(null=True)
+    container_size = CharField(null=True, index=True)
+    container_type = CharField(null=True, index=True)
     containers_count = IntegerField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     destination_continent_id = UUIDField(index=True, null=True)
@@ -48,12 +49,15 @@ class FclFreightRate(BaseModel):
     destination_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     destination_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    destination_main_port_id = UUIDField(null=True)
+    destination_main_port_id = UUIDField(null=True, index=True)
+    destination_main_port = BinaryJSONField(null=True)
     destination_plugin_id = UUIDField(index=True, null=True)
     destination_port_id = UUIDField(index=True, null=True)
+    destination_port = BinaryJSONField(null=True)
     destination_trade_id = UUIDField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporter_id = UUIDField(null=True)
+    importer_exporter = BinaryJSONField(null=True)
     importer_exporters_count = IntegerField(null=True)
     is_best_price = BooleanField(null=True)
     is_destination_demurrage_slabs_missing = BooleanField(index=True, null=True)
@@ -67,7 +71,7 @@ class FclFreightRate(BaseModel):
     is_origin_local_line_items_info_messages_present = BooleanField(index=True, null=True)
     is_origin_plugin_slabs_missing = BooleanField(index=True, null=True)
     is_weight_limit_slabs_missing = BooleanField(null=True)
-    last_rate_available_date = DateField(null=True)
+    last_rate_available_date = DateField(null=True, index=True)
     omp_dmp_sl_sp = CharField(null=True)
     origin_continent_id = UUIDField(index=True, null=True)
     origin_country_id = UUIDField(index=True, null=True)
@@ -78,63 +82,64 @@ class FclFreightRate(BaseModel):
     origin_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    origin_main_port_id = UUIDField(null=True)
+    origin_main_port_id = UUIDField(null=True, index=True)
+    origin_main_port = BinaryJSONField(null=True)
     origin_plugin_id = UUIDField(index=True, null=True)
     origin_port_id = UUIDField(null=True)
+    origin_port = BinaryJSONField(null=True)
     origin_trade_id = UUIDField(index=True, null=True)
     priority_score = IntegerField(null=True)
     priority_score_updated_at = DateTimeField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
     service_provider_id = UUIDField(index=True, null=True)
+    service_provider = BinaryJSONField(null=True)
+    shipping_line = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     validities = BinaryJSONField(default = [], null=True)
     weight_limit = BinaryJSONField(null=True)
     weight_limit_id = UUIDField(index=True, null=True)
-    source = CharField(default = 'manual', null = True)
+    mode = CharField(default = 'manual', null = True)
     accuracy = FloatField(default = 100, null = True)
     cogo_entity_id = UUIDField(index=True, null=True)
-    origin_port: dict = None
-    destination_port: dict = None
-    origin_main_port: dict = None
-    destination_main_port: dict = None
-    shipping_line: dict = None
+    sourced_by_id = UUIDField(null=True, index=True)
+    procured_by_id = UUIDField(null=True, index=True)
+    init_key = TextField(index=True)
 
     class Meta:
         table_name = 'fcl_freight_rates'
-        indexes = (
-            (('container_size', 'container_type', 'commodity'), False),
-            (('container_type', 'commodity'), False),
-            (('importer_exporter_id', 'service_provider_id'), False),
-            (('origin_port_id', 'destination_port_id', 'container_size', 'container_type', 'commodity', 'importer_exporter_id', 'rate_not_available_entry', 'last_rate_available_date', 'omp_dmp_sl_sp'), False),
-            (('priority_score', 'id', 'service_provider_id'), False),
-            (('priority_score', 'service_provider_id'), False),
-            (('priority_score', 'service_provider_id', 'importer_exporter_id'), False),
-            (('priority_score', 'service_provider_id', 'is_best_price'), False),
-            (('priority_score', 'service_provider_id', 'last_rate_available_date'), False),
-            (('priority_score', 'service_provider_id', 'rate_not_available_entry'), False),
-            (('priority_score', 'service_provider_id', 'shipping_line_id', 'is_best_price'), False),
-            (('priority_score', 'service_provider_id', 'shipping_line_id', 'rate_not_available_entry'), False),
-            (('service_provider_id', 'id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'commodity'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-        )
+        # indexes = (
+        #     (('container_size', 'container_type', 'commodity'), False),
+        #     (('container_type', 'commodity'), False),
+        #     (('importer_exporter_id', 'service_provider_id'), False),
+        #     (('origin_port_id', 'destination_port_id', 'container_size', 'container_type', 'commodity', 'importer_exporter_id', 'rate_not_available_entry', 'last_rate_available_date', 'omp_dmp_sl_sp'), False),
+        #     (('priority_score', 'id', 'service_provider_id'), False),
+        #     (('priority_score', 'service_provider_id'), False),
+        #     (('priority_score', 'service_provider_id', 'importer_exporter_id'), False),
+        #     (('priority_score', 'service_provider_id', 'is_best_price'), False),
+        #     (('priority_score', 'service_provider_id', 'last_rate_available_date'), False),
+        #     (('priority_score', 'service_provider_id', 'rate_not_available_entry'), False),
+        #     (('priority_score', 'service_provider_id', 'shipping_line_id', 'is_best_price'), False),
+        #     (('priority_score', 'service_provider_id', 'shipping_line_id', 'rate_not_available_entry'), False),
+        #     (('service_provider_id', 'id'), False),
+        #     (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'commodity'), False),
+        #     (('updated_at', 'id', 'service_provider_id'), False),
+        #     (('updated_at', 'service_provider_id'), False),
+        # )
 
     def set_locations(self):
 
-      obj = {"filters" : {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}}
-
-      locations = client.ruby.list_locations(obj)['list']
+      obj = {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}
+      locations = list_locations(obj)['list']
 
       for location in locations:
-        if str(self.origin_port_id) == location['id']:
+        if str(self.origin_port_id) == str(location['id']):
           self.origin_port = location
-        if str(self.destination_port_id) == location['id']:
+        if str(self.destination_port_id) == str(location['id']):
           self.destination_port = location
-        if str(self.origin_main_port_id) == location['id']:
+        if str(self.origin_main_port_id) == str(location['id']):
           self.origin_main_port = location
-        if str(self.destination_main_port_id) == location['id']:
+        if str(self.destination_main_port_id) == str(location['id']):
           self.destination_main_port = location
 
     def set_origin_location_ids(self):
@@ -519,9 +524,9 @@ class FclFreightRate(BaseModel):
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()
       self.validate_destination_local()
-      if self.validate_origin_main_port_id():
+      if not self.validate_origin_main_port_id():
         raise HTTPException(status_code=499, detail="origin main port id is invalid")
-      if self.validate_destination_main_port_id():
+      if not self.validate_destination_main_port_id():
         raise HTTPException(status_code=499, detail="destination main port id is invalid")
 
     def possible_origin_local_charge_codes(self):
@@ -597,8 +602,8 @@ class FclFreightRate(BaseModel):
       locations = {}
 
       if location_ids:
-        obj = {"filters" : {"id": location_ids}}
-        locations = client.ruby.list_locations(obj)['list']
+        obj = {"id": location_ids}
+        locations = list_locations(obj)['list']
       return locations
 
     def update_local_references(self):
@@ -865,51 +870,51 @@ class FclFreightRate(BaseModel):
       self.save()
 
 
-idx1 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id == None)
+# idx1 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id == None)
 
-idx2 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id != None)
+# idx2 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id != None)
 
-idx3 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
+# idx3 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
 
-idx4 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
+# idx4 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
 
-idx5 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id,  FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
+# idx5 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id,  FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
 
-idx6 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
+# idx6 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
 
-idx7 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
+# idx7 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
 
-idx8 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
+# idx8 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id != None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
 
-idx9 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id != None)
+# idx9 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id != None)
 
-idx10 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
+# idx10 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
 
-idx11 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
+# idx11 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id != None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
 
-idx12 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id != None)
+# idx12 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id != None)
 
-idx13 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id == None)
+# idx13 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.importer_exporter_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id != None).where(FclFreightRate.cogo_entity_id == None)
 
-idx14 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
+# idx14 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, FclFreightRate.cogo_entity_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id != None)
 
-idx15 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
+# idx15 = FclFreightRate.index(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity, FclFreightRate.shipping_line_id, FclFreightRate.service_provider_id, unique=True).where(FclFreightRate.origin_main_port_id == None).where(FclFreightRate.destination_main_port_id == None).where(FclFreightRate.importer_exporter_id == None).where(FclFreightRate.cogo_entity_id == None)
 
-FclFreightRate.add_index(idx1)
-FclFreightRate.add_index(idx2)
-FclFreightRate.add_index(idx3)
-FclFreightRate.add_index(idx4)
-FclFreightRate.add_index(idx5)
-FclFreightRate.add_index(idx6)
-FclFreightRate.add_index(idx7)
-FclFreightRate.add_index(idx8)
-FclFreightRate.add_index(idx9)
-FclFreightRate.add_index(idx10)
-FclFreightRate.add_index(idx11)
-FclFreightRate.add_index(idx12)
-FclFreightRate.add_index(idx13)
-FclFreightRate.add_index(idx14)
-FclFreightRate.add_index(idx15)
+# FclFreightRate.add_index(idx1)
+# FclFreightRate.add_index(idx2)
+# FclFreightRate.add_index(idx3)
+# FclFreightRate.add_index(idx4)
+# FclFreightRate.add_index(idx5)
+# FclFreightRate.add_index(idx6)
+# FclFreightRate.add_index(idx7)
+# FclFreightRate.add_index(idx8)
+# FclFreightRate.add_index(idx9)
+# FclFreightRate.add_index(idx10)
+# FclFreightRate.add_index(idx11)
+# FclFreightRate.add_index(idx12)
+# FclFreightRate.add_index(idx13)
+# FclFreightRate.add_index(idx14)
+# FclFreightRate.add_index(idx15)
 
 #  FclFreightRate.cogo_entity_id
 
