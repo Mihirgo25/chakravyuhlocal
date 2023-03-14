@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
 from rails_client import client

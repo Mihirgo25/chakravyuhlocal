@@ -19,7 +19,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_extension import
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
+# from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_feedback import delete_fcl_freight_rate_feedback
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_request import delete_fcl_freight_rate_local_request
@@ -126,9 +126,9 @@ def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
 def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
     return update_fcl_freight_rate_task_data(request)
 
-@app.post("/create_fcl_freight_rate_task")
-def create_fcl_freight_rate_task(request: CreateFclFreightRateTask):
-    return create_fcl_freight_rate_task_data(request)
+# @app.post("/create_fcl_freight_rate_task")
+# def create_fcl_freight_rate_task(request: CreateFclFreightRateTask):
+#     return create_fcl_freight_rate_task_data(request)
 
 @app.delete("/delete_fcl_freight_rate_request")
 def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, response: Response):
