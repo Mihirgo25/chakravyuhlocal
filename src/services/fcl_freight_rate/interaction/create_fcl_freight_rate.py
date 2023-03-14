@@ -7,6 +7,7 @@ import time
 from params import LocalData
 from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
+from datetime import datetime
 
 
 def to_dict(obj):
@@ -48,8 +49,7 @@ def create_fcl_freight_rate_data(request):
     'importer_exporter_id' : request.get("importer_exporter_id"),
     'cogo_entity_id': request.get("cogo_entity_id"),
     'sourced_by_id': request.get("sourced_by_id"),
-    'procured_by_id': request.get("procured_by_id"),
-    'updated_at': request.get("updated_at")
+    'procured_by_id': request.get("procured_by_id")
   }
   
   init_key = f'{str(row["origin_port_id"])}:{str(row["origin_main_port_id"] or " ")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or " ")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or " ")}:{str(row["cogo_entity_id"] or " ")}'

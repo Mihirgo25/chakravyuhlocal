@@ -105,6 +105,10 @@ class FclFreightRate(BaseModel):
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
     init_key = TextField(index=True)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRate, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rates'

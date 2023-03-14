@@ -37,6 +37,10 @@ class FclFreightRateFreeDay(BaseModel):
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateFreeDay, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_free_days'

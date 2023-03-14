@@ -47,6 +47,10 @@ class FclFreightRateRequest(BaseModel):
     source_id = UUIDField(null=True)
     status = CharField(null=True)
     updated_at = DateTimeField(default = datetime.datetime.now)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateRequest, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_requests'

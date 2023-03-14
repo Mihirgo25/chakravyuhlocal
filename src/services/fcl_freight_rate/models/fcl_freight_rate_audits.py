@@ -30,6 +30,10 @@ class FclFreightRateAudit(BaseModel):
         partition_by = object_id,
         order_by = created_at.desc()
     )
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateAudit, self).save(*args, **kwargs)
 
     class Meta:
         database = db

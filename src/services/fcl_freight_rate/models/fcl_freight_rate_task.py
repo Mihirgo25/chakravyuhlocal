@@ -5,6 +5,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import FREIGHT_CONTAINER_COMMODITY_MAPPINGS
 from rails_client import client
+import datetime
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -21,7 +22,7 @@ class FclFreightRateTask(BaseModel):
     container_size = CharField(null=True)
     container_type = CharField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     job_data = JSONField(null=True)
     location_ids = ArrayField(field_class=UUIDField, null=True)
@@ -36,7 +37,11 @@ class FclFreightRateTask(BaseModel):
     task_type = CharField(null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateTask, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_tasks' 
