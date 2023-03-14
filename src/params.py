@@ -86,7 +86,7 @@ class UpdateFclFreightRate(BaseModel):
   destination_local: LocalData = None
 
 class Data(BaseModel):
-    line_items: list[LineItem] = None
+    line_items: list[LineItem] = []
     detention: FreeDay = None
     demurrage: FreeDay = None
     plugin: FreeDay = None
@@ -134,7 +134,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
 
 class MandatoryCharges(BaseModel):
   line_items: list[StandardLineItem] = []
-  required_mandatory_codes: list[str] = []
+  required_mandatory_codes: list[dict] = []
 
 class ExtendCreateFclFreightRate(BaseModel):
   performed_by_id: str
@@ -308,6 +308,39 @@ class UpdateFclFreightRateTask(BaseModel):
    status: str = None
    closing_remarks:str = None
 
+class CreateFclFreightRateTask(BaseModel):
+  service: str
+  port_id: str
+  main_port_id: str = None
+  container_size: str
+  container_type: str
+  commodity: str
+  trade_type: str
+  shipping_line_id: str
+  source: str
+  task_type: str
+  shipment_id: str = None
+  performed_by_id: str
+  rate: LocalData = {}
 
+class DeleteFclFreightRateRequest(BaseModel):
+  fcl_freight_rate_request_ids: List[str]
+  closing_remarks: List[str] = []
+  performed_by_id: str
 
+class DeleteFclFreightRateLocalRequest(BaseModel):
+  fcl_freight_rate_local_request_ids: List[str]
+  closing_remarks: List[str] = []
+  performed_by_id: str
 
+class DeleteFclFreightRateLocal(BaseModel):
+  id: str
+  performed_by_id: str
+  bulk_operation_id: str = None
+  sourced_by_id: str
+  procured_by_id: str
+
+class DeleteFclFreightRateFreeDayRequest(BaseModel):
+  fcl_freight_rate_free_day_request_id: str
+  closing_remarks: List[str] = []
+  performed_by_id: str
