@@ -70,6 +70,9 @@ class PostFclFreightRate(BaseModel):
   procured_by_id: str
   sourced_by_id: str
   cogo_entity_id: str = None
+  mode: str = None
+  source: str = 'rms_upload'
+  is_extended: bool = None
 
 class UpdateFclFreightRate(BaseModel):
   id: str
@@ -85,6 +88,8 @@ class UpdateFclFreightRate(BaseModel):
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
+  source: str = 'rms_upload'
+  is_extended: bool = None
 
 class Data(BaseModel):
     line_items: list[LineItem] = []
