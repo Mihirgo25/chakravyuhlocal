@@ -26,8 +26,15 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_weight_limit 
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_free_day import get_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 
+# from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_feedback import delete_fcl_freight_rate_feedback
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local_request import delete_fcl_freight_rate_local_request
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_free_day_request import delete_fcl_freight_rate_free_day_request
 from rails_client.client import initialize_client
 from params import *
+from database.create_tables import create_table
 
 # from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
@@ -47,7 +54,7 @@ app.add_middleware(
 def startup():
     if db.is_closed():
         db.connect()
-    #create_table()
+    # create_table()
     initialize_client()
     
 @app.on_event("shutdown")
@@ -123,6 +130,40 @@ def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensio
 @app.post("/get_fcl_freight_rate_extension")
 def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
     return get_fcl_freight_rate_extension_data(request)
+
+@app.post("/update_fcl_freight_rate_task")
+def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
+    return update_fcl_freight_rate_task_data(request)
+
+# @app.post("/create_fcl_freight_rate_task")
+# def create_fcl_freight_rate_task(request: CreateFclFreightRateTask):
+#     return create_fcl_freight_rate_task_data(request)
+
+@app.delete("/delete_fcl_freight_rate_request")
+def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, response: Response):
+    delete_rate = delete_fcl_freight_rate_request(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
+
+@app.delete("/delete_fcl_freight_rate_feedback")
+def delete_fcl_freight_rates_feedback(request: DeleteFclFreightRateFeedback, response: Response):
+    delete_rate = delete_fcl_freight_rate_feedback(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
+
+@app.delete("/delete_fcl_freight_rate_local_request")
+def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalRequest, response: Response):
+    delete_rate = delete_fcl_freight_rate_local_request(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
+
+@app.delete("/delete_fcl_freight_rate_local")
+def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, response: Response):
+    delete_rate = delete_fcl_freight_rate_local(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
+
+@app.delete("/delete_fcl_freight_rate_free_day_request")
+def delete_fcl_freight_rates_free_day_request(request: DeleteFclFreightRateFreeDayRequest, response: Response):
+    delete_rate = delete_fcl_freight_rate_free_day_request(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content={"success": True})
+
 
 @app.post("/create_fcl_freight_rate_weight_limit")
 def create_fcl_freight_rate_weight_limit_data(request: CreateFclFreightRateWeightLimit):

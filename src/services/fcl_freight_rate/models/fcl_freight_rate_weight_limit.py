@@ -37,6 +37,10 @@ class FclFreightRateWeightLimit(BaseModel):
     shipping_line_id = UUIDField(index=True, null=True)
     slabs = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateWeightLimit, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_weight_limits'

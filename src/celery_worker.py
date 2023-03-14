@@ -1,7 +1,6 @@
 import os
 import time
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
-
 from celery import Celery
 from configs.env import *
 CELERY_CONFIG = {
@@ -21,3 +20,5 @@ def create_task(param):
     from rails_client.client import initialize_client
     initialize_client()
     rate = create_fcl_freight_rate_data(param)
+    
+

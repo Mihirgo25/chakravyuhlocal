@@ -99,6 +99,7 @@ def execute_transaction_code(request):
 
         fcl_freight_local.plugin_id = plugin['id']
    
+    print("bedada")
     fcl_freight_local.validate_before_save()
 
     try:

@@ -41,6 +41,10 @@ class FclFreightRateFreeDay(BaseModel):
     # validity_start = DateTimeField(index=True, null=True)
     # validity_end = DateTimeField(index=True, null=True)
 
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateFreeDay, self).save(*args, **kwargs)
+
     class Meta:
         table_name = 'fcl_freight_rate_free_days'
         indexes = (

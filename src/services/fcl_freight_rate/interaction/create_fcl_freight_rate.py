@@ -7,6 +7,7 @@ import time
 from params import LocalData
 from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
+from datetime import datetime
 
 
 def to_dict(obj):
@@ -21,6 +22,7 @@ def create_audit(request, freight_id):
     audit_data['weight_limit'] = request['weight_limit']
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
+    audit_data['is_extended'] = request.get("is_extended")
 
     FclFreightRateAudit.create(
         bulk_operation_id = request.get('bulk_operation_id'),
@@ -31,7 +33,8 @@ def create_audit(request, freight_id):
         sourced_by_id = request['sourced_by_id'],
         data = audit_data,
         object_id = freight_id,
-        object_type = 'FclFreightRate'
+        object_type = 'FclFreightRate',
+        source = request.get("source")
     )
 
 def create_fcl_freight_rate_data(request):
@@ -46,16 +49,23 @@ def create_fcl_freight_rate_data(request):
     'shipping_line_id' : request.get("shipping_line_id"),
     'service_provider_id' : request.get("service_provider_id"),
     'importer_exporter_id' : request.get("importer_exporter_id"),
-    'rate_not_available_entry' : False
+    'cogo_entity_id': request.get("cogo_entity_id"),
+    'sourced_by_id': request.get("sourced_by_id"),
+    'procured_by_id': request.get("procured_by_id")
   }
-
-  freight = find_or_initialize(FclFreightRate,**row)
+  
+  init_key = f'{str(row["origin_port_id"])}:{str(row["origin_main_port_id"] or " ")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or " ")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or " ")}:{str(row["cogo_entity_id"] or " ")}'
+  
+  freight = find_or_initialize(FclFreightRate, **{"init_key": init_key})
+  for key in list(row.keys()):
+    setattr(freight, key, row[key])
+    
   freight.set_locations()
   freight.set_shipping_line()
-  freight.set_origin_location_ids()
-  freight.set_destination_location_ids()
-  freight.validate_service_provider()
-  freight.validate_importer_exporter()
+  # freight.set_origin_location_ids()
+  # freight.set_destination_location_ids()
+  # freight.validate_service_provider()
+  # freight.validate_importer_exporter()
 
   freight.weight_limit = to_dict(request.get("weight_limit"))
 
@@ -97,7 +107,7 @@ def create_fcl_freight_rate_data(request):
   freight.set_is_best_price()
   freight.set_last_rate_available_date()
   freight.validate_before_save()
-
+  
   try:
     freight.save()
   except Exception as e:

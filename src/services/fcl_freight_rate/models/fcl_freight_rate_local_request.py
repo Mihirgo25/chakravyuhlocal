@@ -4,6 +4,7 @@ from playhouse.postgres_ext import *
 from rails_client import client
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import REQUEST_SOURCES
+import datetime
 
 
 class BaseModel(Model):
@@ -18,7 +19,7 @@ class FclFreightRateLocalRequest(BaseModel):
     commodity = CharField(null=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     main_port_id = UUIDField(null=True)
     performed_by_id = UUIDField(null=True)
@@ -37,7 +38,11 @@ class FclFreightRateLocalRequest(BaseModel):
     status = CharField(null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateLocalRequest, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_local_requests'

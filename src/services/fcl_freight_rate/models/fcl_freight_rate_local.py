@@ -56,6 +56,11 @@ class FclFreightRateLocal(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     port: dict = None
     shipping_line: dict = None
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateLocal, self).save(*args, **kwargs)
+
 
     class Meta:
         table_name = 'fcl_freight_rate_locals'
@@ -293,7 +298,6 @@ class FclFreightRateLocal(BaseModel):
             (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
             )
         t.execute()
-
 
     def detail(self):
         with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:

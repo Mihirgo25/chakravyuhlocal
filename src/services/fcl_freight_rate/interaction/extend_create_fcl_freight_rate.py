@@ -28,6 +28,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     fcl_freight_cluster_objects = []
 
     data = get_cluster_objects(rate_object)
+
     if not data:
         return
     if request.rate_sheet_id:
@@ -42,12 +43,12 @@ def get_fcl_freight_cluster_objects(rate_object,request):
             return
 
     try:
-        origin_locations = [rate_object['origin_port_id']] or data['origin_location_cluster']['cluster_items']['id'] 
+        origin_locations = [t['id'] for t in data['origin_location_cluster']['cluster_items']]
     except:
         origin_locations = [rate_object['origin_port_id']]
 
     try:
-        destination_locations = [rate_object['destination_port_id']] or data['destination_location_cluster']['cluster_items']['id'] 
+        destination_locations = [t['id'] for t in data['destination_location_cluster']['cluster_items']]
     except:
         destination_locations = [rate_object['destination_port_id']]
 
@@ -79,17 +80,17 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                 for commodity in commodities[container_type]:
                     for container in containers:
                         param = copy.deepcopy(rate_object)
-                        
-                        if icd_data[origin_location] and not param.get('origin_main_port_id'):
+
+                        if icd_data.get(origin_location) and not param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = param['origin_port_id']
-                        elif not icd_data[origin_location] and param.get('origin_main_port_id'):
+                        elif not icd_data.get(origin_location) and param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = None
 
                         param['origin_port_id'] = origin_location
 
-                        if icd_data[destination_location] and  not param.get('destination_main_port_id'):
+                        if icd_data.get(destination_location) and  not param.get('destination_main_port_id'):
                             param['destination_main_port_id'] = param['destination_port_id']
-                        elif not icd_data[destination_location] and param.get('destination_main_port_id'):
+                        elif not icd_data.get(destination_location) and param.get('destination_main_port_id'):
                             param['destination_main_port_id'] = None
 
                         param['destination_port_id'] = destination_location
@@ -113,7 +114,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                                 updated_param['line_items'].append(line_item)
 
                         if request.extend_rates_for_existing_system_rates or not check_rate_existence(updated_param):
-                            if updated_param['origin_port_id'] and updated_param['destination_port_id'] and updated_param['origin_port_id'] != updated_param['destination_port_id']:
+                            if updated_param.get('origin_port_id') and updated_param.get('destination_port_id') and updated_param['origin_port_id'] != updated_param['destination_port_id']:
                                 fcl_freight_cluster_objects.append(updated_param)
     for i in fcl_freight_cluster_objects:
         if (i['origin_port_id'] == rate_object['origin_port_id'] and i['destination_port_id'] == rate_object['destination_port_id'] and i['commodity'] == rate_object['commodity'] and i['container_type'] == rate_object['container_type'] and i['container_size'] == rate_object['container_size']):
@@ -142,7 +143,7 @@ def add_mandatory_line_items(param,request):
 
 
 def check_rate_existence(updated_param):
-    system_rate = FclFreightRate.select().where('origin_port_id' == updated_param['origin_port_id'] and 'destination_port_id' == updated_param['destination_port_id'] and 'container_size' == updated_param['container_size'] and 'commodity' == updated_param['commodity'] and 'container_type' == updated_param['container_type'] and 'service_provider_id' == updated_param['service_provider_id'] and 'shipping_line_id' == updated_param['shipping_line_id'] and 'last_rate_available_date' > updated_param['validity_end'])
+    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'] and FclFreightRate.destination_port_id == updated_param['destination_port_id'] and FclFreightRate.container_size == updated_param['container_size'] and FclFreightRate.commodity == updated_param['commodity'] and FclFreightRate.container_type == updated_param['container_type'] and FclFreightRate.service_provider_id == updated_param['service_provider_id'] and FclFreightRate.shipping_line_id == updated_param['shipping_line_id'] and FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
     if system_rate:
         return True
     else:
