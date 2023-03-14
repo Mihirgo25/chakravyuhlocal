@@ -69,6 +69,7 @@ class PostFclFreightRate(BaseModel):
   performed_by_id: str
   procured_by_id: str
   sourced_by_id: str
+  cogo_entity_id: str = None
 
 class UpdateFclFreightRate(BaseModel):
   id: str
