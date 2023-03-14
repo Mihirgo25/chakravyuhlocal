@@ -1,11 +1,11 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
 from rails_client import client
 from playhouse.shortcuts import model_to_dict
 from math import ceil
-from peewee import fn, JOIN
+from peewee import fn, JOIN, SQL
 from operator import attrgetter
 from datetime import datetime
 
@@ -13,8 +13,7 @@ possible_direct_filters = ['feedback_type', 'continent', 'status']
 
 possible_indirect_filters = ['relevant_supply_agent', 'trade_lane', 'shipping_line', 'validity_start_greater_than', 'validity_end_less_than', 'service_provider_id']
 
-def list_fcl_freight_rate_dislikes(filters, page, page_limit):
-    filters = remove_unexpected_filters(filters)
+def list_fcl_freight_rate_dislikes(filters={}, page=1, page_limit=10):
     query = get_query(page, page_limit)
     query = apply_direct_filters(query, filters)
     query = apply_indirect_filters(query, filters)
@@ -33,8 +32,9 @@ def get_data(query):
 def add_service_objects(data):
     if data.count == 0:
         return [] 
+    print(data)
 
-    service_objects = client.ruby.get_multiple_service_object_data_for_fcl({'objects': [
+    service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
     {
         'name': 'operator',
         'filters': { 'id': list(set([t['shipping_line_id'] for t in data]))},
@@ -70,11 +70,11 @@ def apply_direct_filters(query,filters):
   return query
 
 def apply_indirect_filters(query, filters):
-  for key in filters:
-    if key in possible_indirect_filters:
-      apply_filter_function = f'apply_{key}_filter'
-      query = eval(f'{apply_filter_function}(query, filters)')
-  return query
+    for key in filters:
+        if key in possible_indirect_filters:
+            apply_filter_function = f'apply_{key}_filter'
+            query = eval(f'{apply_filter_function}(query, filters)')
+    return query
 
 def apply_trade_lane_filter(query, filters):
     return query.select(fn.array_agg(fn.filter_(fn.cast('feedbacks', 'text'), (fn.cast('feedbacks', 'text').not_in('{}')))).alias('feedbacks'), fn.COUNT(fn.concat_ws(' || ', query.c.origin_port_id, query.c.destination_port_id)).alias('port_pair_count').distinct(),query.c.origin_trade_id, query.c.destination_trade_id).group_by(query.c.origin_trade_id, query.c.destination_trade_id)

@@ -147,13 +147,13 @@ def create_sailing_schedule_port_pair(request):
   client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
 
 
-from celery_worker import create_freight_trend_port_pair_celery 
-def create_freight_trend_port_pairs(request):
-  port_pair_data = {
-      'origin_port_id': request.origin_port_id,
-      'destination_port_id': request.destination_port_id
-  }
-  create_freight_trend_port_pair_celery.delay(request.origin_port_id,request.destination_port_id)
+# from celery_worker import create_freight_trend_port_pair_celery 
+# def create_freight_trend_port_pairs(request):
+#   port_pair_data = {
+#       'origin_port_id': request.origin_port_id,
+#       'destination_port_id': request.destination_port_id
+#   }
+#   create_freight_trend_port_pair_celery.delay(request.origin_port_id,request.destination_port_id)
   # in delay(queue:low) private api call and expose
 
   # client.ruby.create_freight_trend_port_pair(port_pair_data)

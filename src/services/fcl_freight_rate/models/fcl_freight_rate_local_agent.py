@@ -36,16 +36,22 @@ class FclFreightRateLocalAgent(BaseModel):
             service_provider_data = service_provider_data['list'][0]
             if service_provider_data.get('account_type') != 'service_provider':
                 raise HTTPException(status_code=400, detail="Invalid Account Type - Not Service Provider")
+        else:
+            raise HTTPException(status_code=400, detail="Service Provider Id Invalid")
+        return True
     
     def set_location_ids_and_type(self):
         location_data = client.ruby.list_locations({'filters':{'id': str(self.location_id)}})
-        if 'list' in location_data and len(location_data['list'][0]) > 0:
+        if 'list' in location_data and len(location_data['list']) > 0:
+            location_data = location_data['list'][0]
             if location_data.get('type') in ['seaport', 'country', 'trade']:
                 country_id = location_data.get('country_id')
                 trade_id = location_data.get('trade_id')
                 continent_id = location_data.get('continent_id')
                 self.location_ids = list(filter(None, [uuid.UUID(self.location_id), uuid.UUID(country_id), uuid.UUID(trade_id), uuid.UUID(continent_id)]))
                 self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
+        else:
+            raise HTTPException(status_code=400, detail="Service Provider Id Invalid")
 
     
     def validate_trade_type(self):
@@ -54,8 +60,11 @@ class FclFreightRateLocalAgent(BaseModel):
 
     
     def validate_status(self):
-       if self.status not in STATUSES:
-        raise HTTPException(status_code=400, detail="Invalid status")
+
+        if self.status not in STATUSES:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        return True
+
 
     
     def validate_uniqueness(self):

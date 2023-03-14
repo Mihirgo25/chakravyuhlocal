@@ -62,12 +62,13 @@ class FclFreightRateRequest(BaseModel):
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
         ###### missing source
 
-    # def validate_performed_by_id(self):
-    #     data = client.ruby.list_users({'filters':{'id': self.performed_by_id}})
-    #     if ('list' in data) and (len(data['list']) > 0):
-    #         pass
-    #     else:
-    #         raise HTTPException(status_code=400, detail='Invalid Service Provider ID')
+    def validate_performed_by_id(self):
+        data = client.ruby.get_user({'id': str(self.performed_by_id)})
+
+        if data!={}:
+            pass
+        else:
+            raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = client.ruby.list_organizations({'filters':{'id': [str(self.performed_by_org_id)]}})['list']
@@ -87,7 +88,8 @@ class FclFreightRateRequest(BaseModel):
     def validate(self):
         self.validate_source()
         self.validate_source_id()
-        # self.validate_performed_by_id()
+        print("bedada")
+        self.validate_performed_by_id()
         self.validate_performed_by_org_id()
         self.validate_preferred_shipping_line_ids()
         return True
@@ -116,4 +118,4 @@ class FclFreightRateRequest(BaseModel):
                     'importer_exporter_id': importer_exporter_id }
 
         }
-        client.ruby.create_communication(data)
+        # client.ruby.create_communication(data)

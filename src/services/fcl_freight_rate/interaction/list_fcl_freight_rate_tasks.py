@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
 from rails_client import client
 from playhouse.shortcuts import model_to_dict
@@ -8,30 +8,27 @@ from operator import attrgetter
 from configs.fcl_freight_rate_constants import EXPECTED_TAT
 from math import ceil
 from peewee import fn
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
 from datetime import datetime
 import copy, yaml, concurrent.futures
-
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
 
-def list_fcl_freight_rate_tasks(filters, page, page_limit, sort_by, sort_type, stats_required, pagination_data_required):
-    filters = remove_unexpected_filters(filters)
+def list_fcl_freight_rate_tasks(filters, page=1, page_limit=10, sort_by='updated_at', sort_type='desc', stats_required=True, pagination_data_required=True):
     query = get_query(page, page_limit, sort_by, sort_type)
 
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters,possible_direct_filters,FclFreightRateTask)
     query = apply_indirect_filters(query, filters)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
+        futures = [executor.submit(eval(method_name), query, filters, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
         results = {}
         for future in futures:
             result = future.result()
             results.update(result)
         
-    method_responses = results
-    data = method_responses['get_data']
-    pagination_data = method_responses['get_pagination_data']
+    data = results['get_data']
+    pagination_data = results['get_pagination_data']
 
     stats = get_stats(filters, stats_required)
 
@@ -39,7 +36,7 @@ def list_fcl_freight_rate_tasks(filters, page, page_limit, sort_by, sort_type, s
   
 
 def get_query(page, page_limit, sort_by, sort_type):
-    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}'.format(sort_by, sort_type))).paginate(page, page_limit)
+    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type))).paginate(page, page_limit)
     return query
   
 
@@ -55,7 +52,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
     }
     return params
 
-def get_data(query, filters):
+def get_data(query,filters, page, page_limit, pagination_data_required):
     data = query.execute()
     new_data = []
     for object in data:
@@ -173,11 +170,6 @@ def add_service_objects(data):
     return data
     
 
-def apply_direct_filters(query, filters):  
-    for key in filters:
-        if key in possible_direct_filters:
-            query = query.select().where(attrgetter(key)(FclFreightRateTask) == filters[key])
-    return query
 
 def apply_indirect_filters(query, filters):
     for key in filters:
@@ -198,12 +190,8 @@ def get_stats(query, filters, stats_required):
     if not stats_required:
         return {}
 
-    filters_copy = copy.deepcopy(filters)
-
-    del filters_copy['trade_type']
-    del filters_copy['status']
-
-    filters = filters_copy
+    del filters['trade_type']
+    del filters['status']
 
     query = get_query(query, filters)
 

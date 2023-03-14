@@ -7,11 +7,12 @@ import uuid
 from math import ceil
 from peewee import fn
 import json
-
+import time
 possible_direct_filters = ['service_provider_id', 'trade_type', 'status']
 possible_indirect_filters = ['location_ids']
 
 def list_fcl_freight_rate_local_agents(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True, add_service_objects_required = True):
+    start = time.time()
     if type(filters) != dict:
         filters = json.loads(filters)
 
@@ -28,6 +29,7 @@ def list_fcl_freight_rate_local_agents(filters = {}, page_limit = 10, page = 1, 
 
     data = results['get_data']
     pagination_data = results['get_pagination_data']
+    print(time.time()-start)
 
     return {'list': data } | (pagination_data)
 
@@ -81,8 +83,10 @@ def get_pagination_data(query, page, page_limit, pagination_data_required, add_s
 
 def apply_direct_filters(query, filters):
     for key in filters:
+        print(key)
         if key in possible_direct_filters:
             query = query.select().where(attrgetter(key)(FclFreightRateLocalAgent) == filters[key])
+            print(query)
     return query
 
 def apply_indirect_filters(query, filters):
