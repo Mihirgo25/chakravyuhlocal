@@ -22,7 +22,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreigh
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
 from libs.locations import list_locations
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
-
+from configs.global_constants import HAZ_CLASSES
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
@@ -525,6 +525,7 @@ class FclFreightRate(BaseModel):
       return charge_codes
 
     def possible_charge_codes(self):
+      self.set_locations()
       with open(FCL_FREIGHT_CHARGES, 'r') as file:
         fcl_freight_charges = yaml.safe_load(file)
 
@@ -533,6 +534,7 @@ class FclFreightRate(BaseModel):
       container_size = self.container_size
       container_type = self.container_type
       commodity = self.commodity
+      destination_port = self.destination_port
 
       for k,v in fcl_freight_charges.items():
           if eval(str(v['condition'])):
