@@ -143,20 +143,20 @@ def create_fcl_freight_rate_data(request):
         else:
             raise HTTPException(status_code=499, detail="rate did not save")
 
-    # freight.create_fcl_freight_free_days(freight.origin_local, freight.destination_local, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
+    freight.create_fcl_freight_free_days(freight.origin_local, freight.destination_local, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
-    # if not request.get('importer_exporter_id'):
-    #   freight.delete_rate_not_available_entry()
+    if not request.get('importer_exporter_id'):
+      freight.delete_rate_not_available_entry()
 
-    # create_audit(request, freight.id)
+    create_audit(request, freight.id)
 
-    # freight.update_special_attributes()
+    freight.update_special_attributes()
 
-    # freight.update_local_references()
+    freight.update_local_references()
 
-    # freight.update_platform_prices_for_other_service_providers()
+    freight.update_platform_prices_for_other_service_providers()
 
-  delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+    delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
-  return {"id": freight.id}
+    return {"id": freight.id}
 
