@@ -26,17 +26,17 @@ def create_task(param):
 
 @celery.task()
 def delay_fcl_functions(fcl_object,request):
-    # from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
-    # client.initialize_client()
-    # create_freight_trend_port_pair(request)
-    # create_sailing_schedule_port_pair(request)
-    # if not FclFreightRate.where(service_provider_id=request["service_provider_id"], rate_not_available_entry=False).exists():
-    #     client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+    from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
+    client.initialize_client()
+    create_freight_trend_port_pair(request)
+    create_sailing_schedule_port_pair(request)
+    if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
+        client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
-    # if request.get("fcl_freight_rate_request_id"):
-    #     delete_fcl_freight_rate_request(request)
+    if request.get("fcl_freight_rate_request_id"):
+        delete_fcl_freight_rate_request(request)
     
-    # fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
+    fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
     services ={'objects':[
     {
       'name': 'operator',
@@ -74,13 +74,16 @@ def create_sailing_schedule_port_pair(request):
   'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
   'shipping_line_id': request["shipping_line_id"]
   }
-  client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
+  data = client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
+  print(data)
 
 def create_freight_trend_port_pair(request):
   port_pair_data = {
       'origin_port_id': request["origin_port_id"],
       'destination_port_id': request["destination_port_id"]
   }
-  client.ruby.create_freight_trend_port_pair(port_pair_data)
+
+  
+  # client.ruby.create_freight_trend_port_pair(port_pair_data) expose
     
 
