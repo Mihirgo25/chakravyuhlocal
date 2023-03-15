@@ -746,7 +746,6 @@ class FclFreightRate(BaseModel):
       if self.last_rate_available_date is None:
 
         return
-      print(self.last_rate_available_date,self.updated_at)
       data={
               "rate_id": self.id,
               "service": "fcl_freight",
