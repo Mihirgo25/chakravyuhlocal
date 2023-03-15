@@ -142,14 +142,27 @@ class FclFreightRate(BaseModel):
 
       for location in locations:
         if str(self.origin_port_id) == str(location['id']):
-          self.origin_port = location
+          self.origin_port = self.get_required_location_data(location)
         if str(self.destination_port_id) == str(location['id']):
-          self.destination_port = location
+          self.destination_port = self.get_required_location_data(location)
         if str(self.origin_main_port_id) == str(location['id']):
-          self.origin_main_port = location
+          self.origin_main_port = self.get_required_location_data(location)
         if str(self.destination_main_port_id) == str(location['id']):
-          self.destination_main_port = location
+          self.destination_main_port = self.get_required_location_data(location)
 
+    def get_required_location_data(self, location):
+        loc_data = {
+          "id": location["id"],
+          "name": location["name"],
+          "is_icd": location["is_icd"],
+          "port_code": location["port_code"],
+          "country_id": location["country_id"],
+          "continent_id": location["continent_id"],
+          "trade_id": location["trade_id"],
+          "country_code": location["country_code"]
+        }
+        return loc_data
+      
     def set_origin_location_ids(self):
       self.origin_country_id = self.origin_port.get('country_id')
       self.origin_continent_id = self.origin_port.get('continent_id')
@@ -397,7 +410,7 @@ class FclFreightRate(BaseModel):
 
         if not deleted:
             currency = [item for item in line_items if item["code"] == "BAS"][0]["currency"]
-            price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price') for item in line_items))
+            price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             new_validity_object = {
                 "validity_start": validity_start,
                 "validity_end": validity_end,
@@ -746,7 +759,6 @@ class FclFreightRate(BaseModel):
       if self.last_rate_available_date is None:
 
         return
-      print(self.last_rate_available_date,self.updated_at)
       data={
               "rate_id": self.id,
               "service": "fcl_freight",
