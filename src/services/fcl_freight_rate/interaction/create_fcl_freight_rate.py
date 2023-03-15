@@ -107,9 +107,6 @@ def create_fcl_freight_rate_data(request):
     print("Exception in saving freight rate", e)
     raise HTTPException(status_code=499, detail='rate did not save')
   
-  freight = find_or_initialize(FclFreightRate, **{"init_key": init_key})
-
-  
   freight.create_fcl_freight_free_days(freight.origin_local, freight.destination_local, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
   if not request.get('importer_exporter_id'):
