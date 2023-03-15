@@ -34,13 +34,13 @@ class BaseModel(Model):
         database = db
        
 class FclFreightRate(BaseModel):
-    commodity = CharField(null=True)
+    commodity = CharField(null=True, index=True)
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
     containers_count = IntegerField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
-    destination_continent_id = UUIDField(index=True, null=True)
-    destination_country_id = UUIDField(index=True, null=True)
+    destination_continent_id = UUIDField(null=True)
+    destination_country_id = UUIDField(null=True)
     destination_local = BinaryJSONField(null=True)
     destination_local_id = ForeignKeyField(FclFreightRateLocal, index=True, null=True)
     destination_detention_id = ForeignKeyField(FclFreightRateFreeDay, index=True, null=True)
@@ -53,27 +53,27 @@ class FclFreightRate(BaseModel):
     destination_plugin_id = UUIDField(index=True, null=True)
     destination_port_id = UUIDField(index=True, null=True)
     destination_port = BinaryJSONField(null=True)
-    destination_trade_id = UUIDField(index=True, null=True)
+    destination_trade_id = UUIDField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporter_id = UUIDField(null=True)
     importer_exporter = BinaryJSONField(null=True)
     importer_exporters_count = IntegerField(null=True)
     is_best_price = BooleanField(null=True)
-    is_destination_demurrage_slabs_missing = BooleanField(index=True, null=True)
-    is_destination_detention_slabs_missing = BooleanField(index=True, null=True)
-    is_destination_local_line_items_error_messages_present = BooleanField(index=True, null=True)
-    is_destination_local_line_items_info_messages_present = BooleanField(index=True, null=True)
-    is_destination_plugin_slabs_missing = BooleanField(index=True, null=True)
-    is_origin_demurrage_slabs_missing = BooleanField(index=True, null=True)
-    is_origin_detention_slabs_missing = BooleanField(index=True, null=True)
-    is_origin_local_line_items_error_messages_present = BooleanField(index=True, null=True)
-    is_origin_local_line_items_info_messages_present = BooleanField(index=True, null=True)
-    is_origin_plugin_slabs_missing = BooleanField(index=True, null=True)
+    is_destination_demurrage_slabs_missing = BooleanField(null=True)
+    is_destination_detention_slabs_missing = BooleanField(null=True)
+    is_destination_local_line_items_error_messages_present = BooleanField(null=True)
+    is_destination_local_line_items_info_messages_present = BooleanField(null=True)
+    is_destination_plugin_slabs_missing = BooleanField(null=True)
+    is_origin_demurrage_slabs_missing = BooleanField(null=True)
+    is_origin_detention_slabs_missing = BooleanField(null=True)
+    is_origin_local_line_items_error_messages_present = BooleanField(null=True)
+    is_origin_local_line_items_info_messages_present = BooleanField(null=True)
+    is_origin_plugin_slabs_missing = BooleanField(null=True)
     is_weight_limit_slabs_missing = BooleanField(null=True)
     last_rate_available_date = DateField(null=True, index=True)
     omp_dmp_sl_sp = CharField(null=True)
-    origin_continent_id = UUIDField(index=True, null=True)
-    origin_country_id = UUIDField(index=True, null=True)
+    origin_continent_id = UUIDField(null=True)
+    origin_country_id = UUIDField(null=True)
     origin_local = BinaryJSONField(null=True)
     origin_local_id = ForeignKeyField(FclFreightRateLocal, index=True, null=True)
     origin_detention_id = ForeignKeyField(FclFreightRateFreeDay, index=True, null=True)
@@ -84,9 +84,9 @@ class FclFreightRate(BaseModel):
     origin_main_port_id = UUIDField(null=True, index=True)
     origin_main_port = BinaryJSONField(null=True)
     origin_plugin_id = UUIDField(index=True, null=True)
-    origin_port_id = UUIDField(null=True)
+    origin_port_id = UUIDField(null=True, index=True)
     origin_port = BinaryJSONField(null=True)
-    origin_trade_id = UUIDField(index=True, null=True)
+    origin_trade_id = UUIDField(null=True)
     priority_score = IntegerField(null=True)
     priority_score_updated_at = DateTimeField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
@@ -103,6 +103,8 @@ class FclFreightRate(BaseModel):
     cogo_entity_id = UUIDField(index=True, null=True)
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
@@ -174,29 +176,6 @@ class FclFreightRate(BaseModel):
         return False
       return True
 
-    def set_shipping_line(self):
-      if not self.rate_not_available_entry:
-        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list'][0]
-        if shipping_line:
-          self.shipping_line = shipping_line
-          return True
-        return False
-
-    def validate_service_provider(self):
-      service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})
-      if service_provider.get('account_type') == 'service_provider':
-        self.service_provider = service_provider
-        return True
-      return False
-
-    def validate_importer_exporter(self):
-      importer_exporter = client.ruby.list_organizations({'filters':{'id': str(self.importer_exporter_id)}})['list'][0]
-      if importer_exporter:
-        if importer_exporter.get('account_type') == 'importer_exporter':
-          self.importer_exporter = importer_exporter
-          return True
-        return False
-
     def validate_container_size(self):
       if self.container_size and self.container_size in CONTAINER_SIZES:
         return True
@@ -232,7 +211,7 @@ class FclFreightRate(BaseModel):
 
 
     def set_omp_dmp_sl_sp(self):
-      self.omp_dmp_sl_sp = ":".join([str(self.origin_main_port_id or ''), str(self.destination_main_port_id or ''), str(self.shipping_line_id), str(self.service_provider_id)])
+      self.omp_dmp_sl_sp = ":".join([str(self.origin_main_port_id or ""), str(self.destination_main_port_id or ""), str(self.shipping_line_id), str(self.service_provider_id)])
 
     def update_special_attributes(self):
       self.update_origin_local_line_item_messages()
@@ -527,9 +506,9 @@ class FclFreightRate(BaseModel):
       # self.valid_uniqueness()
 
       self.set_omp_dmp_sl_sp()
-      self.validate_origin_local()
+      # self.validate_origin_local()
 
-      self.validate_destination_local()
+      # self.validate_destination_local()
       if not self.validate_origin_main_port_id():
         raise HTTPException(status_code=499, detail="origin main port id is invalid")
       if not self.validate_destination_main_port_id():

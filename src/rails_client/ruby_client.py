@@ -35,7 +35,6 @@ class RubyClient:
         try:
             result=json.loads(response.text)
         except:
-            print(data)
             return {"message": "no response"}
 
         return result

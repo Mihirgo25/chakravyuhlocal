@@ -19,11 +19,6 @@ celery.conf.broker_url = os.getenv("CELERY_BROKER_URL")
 celery.conf.result_backend = os.getenv("CELERY_RESULT_BACKEND")
 celery.conf.update(**CELERY_CONFIG)
 
-@celery.task(name="create_task")
-def create_task(param):
-    rate = create_fcl_freight_rate_data(param)
-
-
 @celery.task()
 def delay_fcl_functions(fcl_object,request):
     from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
