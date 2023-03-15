@@ -2,21 +2,26 @@ from database.db_session import db
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import to_dict
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
 from libs.logger import logger 
+from datetime import datetime
 
 def update_fcl_weight_slabs_configuration(request):
     with db.atomic() as transaction:
         try:
             data = execute_transaction_code(request)
             return data
-        except:
+        except Exception as e:
             transaction.rollback()
-            return 'Updation Failed'
+            return e
 
 def execute_transaction_code(request):
-    updated_configuration = FclWeightSlabsConfiguration.get_by_id(request['id'])
+    request_id = request['id']
+    del request['id']
     
-    updation_params = {key:value for key,value in request if key != 'id'}
-    for attr,value in updation_params.items():
+    updated_configuration = FclWeightSlabsConfiguration.get(**{'id' : request_id})
+        
+    request['updated_at'] = datetime.now()
+    
+    for attr,value in request.items():
         setattr(updated_configuration, attr, value)
     
     if not updated_configuration.save():
@@ -24,5 +29,5 @@ def execute_transaction_code(request):
         return
  
     return {
-    'id': request['id']
+    'id': request_id
     }

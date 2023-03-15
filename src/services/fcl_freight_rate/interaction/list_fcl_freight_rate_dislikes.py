@@ -1,47 +1,58 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from rails_client import client
 from playhouse.shortcuts import model_to_dict
 from math import ceil
 from peewee import fn, JOIN, SQL
 from operator import attrgetter
 from datetime import datetime
+import json
 
 possible_direct_filters = ['feedback_type', 'continent', 'status']
 
 possible_indirect_filters = ['relevant_supply_agent', 'trade_lane', 'shipping_line', 'validity_start_greater_than', 'validity_end_less_than', 'service_provider_id']
 
-def list_fcl_freight_rate_dislikes(filters={}, page=1, page_limit=10):
+def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
+    if type(filters) != dict:
+        filters = json.loads(filters)
+
     query = get_query(page, page_limit)
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
     query = apply_indirect_filters(query, filters)
 
     data = get_data(query)
 
-    pagination_data = get_pagination_data(query)
+    pagination_data = get_pagination_data(query, page, page_limit)
 
     return { 'list': data } | (pagination_data)
     
 def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
-    data = add_service_objects(data)
+    # data = add_service_objects(data)
     return data 
 
 def add_service_objects(data):
-    if data.count == 0:
+    if len(data['list']) == 0:
         return [] 
+    
+    operator_ids = []
+    location_ids = []
+
+    for item in data:
+        operator_ids.append(item['shipping_line_id'])
+        location_ids.extend([item['origin_trade_id'],item['destination_trade_id']])
 
     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
     {
         'name': 'operator',
-        'filters': { 'id': list(set([t['shipping_line_id'] for t in data]))},
+        'filters': { 'id': list(set(operator_ids))},
         'fields': ['id', 'business_name', 'short_name', 'logo_url']
     },
     {
         'name': 'location',
-        'filters': {"id": list(set(item for sublist in [[item["origin_trade_id"], item["destination_trade_id"]] for item in data] for item in sublist))},
+        'filters': {"id": list(set(location_ids))},
         'fields': ['id', 'name', 'display_name']
     }
     ]})
@@ -61,12 +72,6 @@ def add_service_objects(data):
 def get_query(page, page_limit):
     query = FclFreightRateFeedback.select().join(FclFreightRate, JOIN.INNER, on = (FclFreightRate.id == FclFreightRateFeedback.fcl_freight_rate_id)).where(FclFreightRateFeedback.feedback_type == 'disliked').paginate(page,page_limit)
     return query
-    
-def apply_direct_filters(query,filters):
-  for key in filters:
-    if key in possible_direct_filters:
-      query = query.select().where(attrgetter(key)(FclFreightRateFeedback) == filters[key])
-  return query
 
 def apply_indirect_filters(query, filters):
     for key in filters:

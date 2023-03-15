@@ -1,42 +1,54 @@
 from database.db_session import db
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
+from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from datetime import datetime
+from libs.logger import logger
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 
 def create_fcl_freight_rate_feedback(request):
     with db.atomic() as transaction:
         try:
-            rate = FclFreightRate.find(request['rate_id'])
+            if type(request) != dict:
+                request = request.__dict__
+            rate = FclFreightRate.get(**{'id' :request['rate_id']})
 
-            # if rate:
-            #     request['errors.add(:rate_id, 'is invalid') 
-            #     return
+            if not rate:
+                raise Exception('{} is invalid'.format(request['rate_id']))
+            
+            feedback = find_or_initialize(FclFreightRateFeedback, **get_object_unique_params(request))
+            create_params = get_create_params(request)
 
-            feedback, created = FclFreightRateFeedback.get_or_create(**get_object_unique_params(request))
-            feedback.set_attrs(**get_create_params(request))
-            feedback.save()
+            for attr, value in create_params.items():
+                setattr(feedback[0], attr, value)
 
-            if not feedback.save():
-                errors.merge!(feedback.errors)
-                return 
+            try:
+                if feedback[0].validate_before_save():
+                    feedback[0].save()
 
-            feedback.audits.create!(get_audit_params)
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                return e
+
+            create_audit(request, feedback)
 
             update_likes_dislikes_count(rate, request)
-            if request['feedback_type'] == 'disliked'
-                feedback.delay(queue: 'low').send_create_notifications_to_supply_agents
+            # if request['feedback_type'] == 'disliked':
+                # return None
+                # feedback.delay(queue: 'low').send_create_notifications_to_supply_agents
 
             return {'id': request['rate_id']}
 
-        except:
+        except Exception as e:
             transaction.rollback()
-            return "Creation Failed"
-
+            return e
 
 def update_likes_dislikes_count(rate, request):
     validities = rate.validities
-
-    validity = validities.select { |validity| validity[:id] == request['validity_id'] }.first
-    if not validity:
+    validity = [validity_object for validity_object in validities if validity_object['id'] == request['validity_id']]
+    if validity:
+        validity = validity[0]
+    else:
         return None
 
     validity['likes_count'] = int(validity['likes_count']) + request['likes_count']
@@ -44,8 +56,7 @@ def update_likes_dislikes_count(rate, request):
 
     rate.validities = validities
 
-    rate.save!(validate: false)
-
+    rate.save()
 
 def get_object_unique_params(request):
     params =  {
@@ -73,9 +84,14 @@ def get_create_params(request):
     }
     return params
 
-def get_audit_params(request):
-    return {
-      'action_name': 'create',
-      'performed_by_id': request['performed_by_id'],
-      'data': {key:value for key,value in request if key != 'performed_by_id'}
-    }
+
+def create_audit(request, feedback):
+    FclFreightRateAudit.create( 
+        created_at = datetime.now(),
+        updated_at = datetime.now(),
+        data = {key:value for key,value in request.items() if key != 'performed_by_id'},
+        object_id = feedback[0].id,
+        object_type = 'FclFreightRateFeedback',
+        action_name = 'create',
+        performed_by_id = request['performed_by_id']
+    )

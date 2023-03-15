@@ -1,0 +1,1 @@
+CATEGORY_TYPES = ['airline', 'shipping_line', 'shipper', 'freight_forwarder', 'customs_service_provider', 'transporter', 'nvocc', 'overseas_agent', 'iata_agent',' cfs', 'courier', 'consolidator','warehouse', 'internal ', 'rail', 'cogoport_mituj', 'attached_leased', 'third_party_logistics_vendor', 'other']

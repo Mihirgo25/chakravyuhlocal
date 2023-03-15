@@ -1,6 +1,4 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
-from paginator import Paginator
-import json
 from operator import attrgetter
 from services.fcl_freight_rate.models.fcl_freight_rate import *
 from rails_client import client

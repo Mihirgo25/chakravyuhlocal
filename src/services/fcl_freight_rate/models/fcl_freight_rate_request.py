@@ -64,7 +64,6 @@ class FclFreightRateRequest(BaseModel):
             spot_search_data = client.ruby.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
             if len(spot_search_data) == 0:
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
-        ###### missing source
 
     def validate_performed_by_id(self):
         data = client.ruby.get_user({'id': str(self.performed_by_id)})

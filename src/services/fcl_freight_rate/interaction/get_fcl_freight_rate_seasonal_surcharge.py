@@ -1,8 +1,9 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
+from configs.defintions import FCL_FREIGHT_SEASONAL_CHARGES
 import yaml
 
 def get_fcl_freight_rate_seasonal_surcharge(request):
-    with open('/Users/user/Desktop/ocean-rms/src/configs/charges/fcl_freight_seasonal_charges.yml', 'r') as file:
+    with open(FCL_FREIGHT_SEASONAL_CHARGES, 'r') as file:
         fcl_freight_seasonal_charges = yaml.safe_load(file)
     
     if not all_fields_present(request):
