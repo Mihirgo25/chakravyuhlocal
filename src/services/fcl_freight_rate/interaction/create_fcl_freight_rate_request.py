@@ -9,9 +9,7 @@ import time
 def create_fcl_freight_rate_request(request):
     with db.atomic() as transaction:
         try:
-            start = time.time()
             t=execute_transaction_code(request)
-            print(time.time()-start)
             return t
         except Exception as e:
             transaction.rollback()
@@ -23,7 +21,6 @@ def execute_transaction_code(request):
     
     unique_object_params = get_unique_object_params(request)
     request_object = find_or_initialize(**unique_object_params)
-    print("came")
 
     create_params = get_create_params(request)
     for key, value in create_params.items(): 
@@ -69,7 +66,6 @@ def supply_agents_to_notify(request):
         print(e)
 
     route = {key['id']:key['display_name'] for key in route_data}
-    print(route)
     try:
         return { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_port_id'])], 'destination_location': route[str(locations_data['destination_port_id'])]}
     except Exception as e:

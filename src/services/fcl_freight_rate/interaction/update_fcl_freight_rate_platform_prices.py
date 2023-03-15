@@ -14,12 +14,8 @@ def update_fcl_freight_rate_platform_prices(request):
     FclFreightRate.shipping_line_id == request['shipping_line_id'],
     FclFreightRate.importer_exporter_id == request['importer_exporter_id'] if request.get('importer_exporter_id') else (FclFreightRate.importer_exporter_id.is_null(True)),
     FclFreightRate.last_rate_available_date >= date.today()).execute()
-    print(len(freight_objects))
-    for i in freight_objects:
-        print(i)
 
     for freight in freight_objects:
         freight.set_platform_prices()
         freight.set_is_best_price()
         freight.save()
-    print("bedada")

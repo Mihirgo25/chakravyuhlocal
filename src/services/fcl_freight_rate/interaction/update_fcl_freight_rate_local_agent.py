@@ -8,9 +8,7 @@ import time
 def update_fcl_freight_rate_local_agent(request):
   with db.atomic() as transaction:
     try:
-      start= time.time()
       data = execute_transaction_code(request)
-      print(time.time()-start)
       return data
     except Exception as e:
       # logger.error(e, exc_info = True)

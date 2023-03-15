@@ -136,7 +136,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   shipping_line_id: str = None
   status: str 
   trade_type: str = None
-  updated_at: datetime.datetime 
+  updated_at: datetime
   performed_by_id: str
 
 class MandatoryCharges(BaseModel):

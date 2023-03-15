@@ -32,7 +32,6 @@ def get_data(query):
 def add_service_objects(data):
     if data.count == 0:
         return [] 
-    print(data)
 
     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
     {

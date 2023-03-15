@@ -104,7 +104,8 @@ class FclFreightRate(BaseModel):
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
     init_key = TextField(index=True)
-    object_data = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
     
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -244,7 +245,8 @@ class FclFreightRate(BaseModel):
 
       if self.origin_local:
         self.origin_local_data_instance = FclFreightRateLocalData(self.origin_local)
-        response = self.origin_local_data_instance.get_line_item_messages(self.port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        # response = self.origin_local_data_instance.get_line_item_messages(self.origin_port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response={}
 
       self.origin_local_line_items_error_messages = response.get('line_items_error_messages'),
       self.is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
@@ -252,10 +254,11 @@ class FclFreightRate(BaseModel):
       self.is_origin_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present')
 
     def update_destination_local_line_item_messages(self):
-      response = {}
 
       if self.destination_local:
-        response = dict(self.local_data_get_line_item_messages())
+        response = FclFreightRateLocalData(self.destination_local)
+        # response = self.origin_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response={}
 
       self.destination_local_line_items_error_messages = response.get('line_items_error_messages'),
       self.is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
@@ -337,7 +340,7 @@ class FclFreightRate(BaseModel):
 
       origin_port = self.origin_port
       destination_port = self.destination_port
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       commodity = self.commodity
       container_type = self.container_type
       container_size = self.container_size
@@ -380,10 +383,7 @@ class FclFreightRate(BaseModel):
 
           for t in validities:
             price = []
-            print("bed",t)
             new_price =  client.ruby.get_money_exchange_for_fcl({'price': t["price"], 'from_currency': t['currency'], 'to_currency':currency})['price']
-
-            print(new_price)
             price.append(new_price)
             freight_rate_min_price = min(price)
 
@@ -419,7 +419,6 @@ class FclFreightRate(BaseModel):
         if not deleted:
             currency = [item for item in line_items if item["code"] == "BAS"][0]["currency"]
             price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price') for item in line_items))
-            print(price)
             new_validity_object = {
                 "validity_start": validity_start,
                 "validity_end": validity_end,
@@ -544,7 +543,7 @@ class FclFreightRate(BaseModel):
       charge_codes = {}
       port = self.origin_port
       main_port = self.origin_main_port
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       container_size = self.container_size
       container_type = self.container_type
       commodity = self.commodity
@@ -561,7 +560,7 @@ class FclFreightRate(BaseModel):
 
       port = self.destination_port
       main_port = self.destination_main_port
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       container_size = self.container_size
       container_type = self.container_type
       commodity = self.commodity
@@ -576,7 +575,7 @@ class FclFreightRate(BaseModel):
         fcl_freight_charges = yaml.safe_load(file)
 
       charge_codes = {}
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       container_size = self.container_size
       container_type = self.container_type
       commodity = self.commodity
@@ -605,11 +604,9 @@ class FclFreightRate(BaseModel):
     def local_data_get_line_item_messages(self):
 
       location_ids = list(set([item["location_id"] for item in self.origin_local["line_items"] if item["location_id"] is not None]))
-      print("bedada",location_ids)
       locations = {}
 
       if location_ids:
-        print("bed")
         obj = {"id": location_ids}
         locations = list_locations(obj)['list']
         

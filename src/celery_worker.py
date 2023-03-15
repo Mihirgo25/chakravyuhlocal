@@ -40,7 +40,7 @@ def delay_fcl_functions(fcl_object,request):
     services ={'objects':[
     {
       'name': 'operator',
-      'filters': { 'id': list(str(fcl_object.shipping_line_id))},
+      'filters': { 'id': [str(fcl_object.shipping_line_id)]},
       'fields': ['id', 'business_name', 'short_name', 'logo_url']
     },
     {

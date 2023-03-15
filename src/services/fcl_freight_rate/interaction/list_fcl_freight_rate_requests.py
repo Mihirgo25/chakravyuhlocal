@@ -16,7 +16,6 @@ possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_th
 def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True, spot_search_details_required = False):
     if type(filters) != dict:
         filters = json.loads(filters)
-    start = time.time()
     query = FclFreightRateRequest.select()
     query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
 
@@ -29,7 +28,6 @@ def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
     pagination_data = get_pagination_data(query, page, page_limit)
 
 
-    print(time.time()-start)
     return {'list': data } | (pagination_data) | (stats)
 
 
@@ -107,7 +105,6 @@ def add_service_objects(data, spot_search_details_required):
 
     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
     for i in range(len(data)):
-        print(i,data[i])
         data[i]['origin_port'] = service_objects['location'][data[i]['origin_port_id']] if 'location' in service_objects and data[i].get('origin_port_id') in service_objects['location'] else None
         data[i]['performed_by'] = service_objects['user'][data[i]['performed_by_id']] if 'user' in service_objects and data[i].get('performed_by_id') in service_objects['user'] else None
         data[i]['closed_by'] = service_objects['user'][data[i]['closed_by_id']] if 'user' in service_objects and data[i].get('closed_by_id') in service_objects else None

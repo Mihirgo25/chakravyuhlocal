@@ -25,7 +25,6 @@ def create_fcl_freight_rate_not_available(request):
             commodity = request['commodity'],
             service_provider_id = service_provider_id,
             rate_not_available_entry = True)
-    print(time.time() - start)
     return True
 
 def find_service_provider_ids(request):

@@ -55,11 +55,10 @@ def create_fcl_freight_rate_data(request):
   for key in list(row.keys()):
     setattr(freight, key, row[key])
   freight.set_locations()
-  freight.set_shipping_line()
   freight.set_origin_location_ids()
   freight.set_destination_location_ids()
-  freight.validate_service_provider()
-  freight.validate_importer_exporter()
+  # freight.validate_service_provider()
+  # freight.validate_importer_exporter()
 
   freight.weight_limit = to_dict(request.get("weight_limit"))
 
@@ -108,6 +107,9 @@ def create_fcl_freight_rate_data(request):
     print("Exception in saving freight rate", e)
     raise HTTPException(status_code=499, detail='rate did not save')
   
+  freight = find_or_initialize(FclFreightRate, **{"init_key": init_key})
+
+  
   freight.create_fcl_freight_free_days(freight.origin_local, freight.destination_local, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
   if not request.get('importer_exporter_id'):
@@ -115,37 +117,13 @@ def create_fcl_freight_rate_data(request):
 
   create_audit(request, freight.id)
 
-  # freight.update_special_attributes()
+  freight.update_special_attributes()
   
   freight.update_local_references()
 
   freight.update_platform_prices_for_other_service_providers()
 
-  # freight.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
-
-  # create_sailing_schedule_port_pair(request) # call this ruby api
-
-  # create_freight_trend_port_pair(request)
-
-  # if not FclFreightRate.where(service_provider_id=request["service_provider_id"], rate_not_available_entry=False).exists():
-  #   client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-
-  # if request.get("fcl_freight_rate_request_id"):
-  #   DeleteFclFreightRateRequest.run!(fcl_freight_rate_request_ids=[request.fcl_freight_rate_request_id])
+  delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
   return {"id": freight.id}
 
-def create_sailing_schedule_port_pair(request):
-  port_pair_coverage_data = {
-  'origin_port_id': request.origin_main_port_id if request.origin_main_port_id else request.origin_port_id,
-  'destination_port_id': request.destination_main_port_id if request.destination_main_port_id else request.destination_port_id,
-  'shipping_line_id': request.shipping_line_id
-  }
-  client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
-
-def create_freight_trend_port_pair(request):
-  port_pair_data = {
-      'origin_port_id': request.origin_port_id,
-      'destination_port_id': request.destination_port_id
-  }
-  client.ruby.create_freight_trend_port_pair(port_pair_data)
