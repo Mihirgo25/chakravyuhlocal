@@ -142,15 +142,15 @@ class FclFreightRate(BaseModel):
 
       for location in locations:
         if str(self.origin_port_id) == str(location['id']):
-          self.origin_port = self.get_required_lcoation_data(location)
+          self.origin_port = self.get_required_location_data(location)
         if str(self.destination_port_id) == str(location['id']):
-          self.destination_port = self.get_required_lcoation_data(location)
+          self.destination_port = self.get_required_location_data(location)
         if str(self.origin_main_port_id) == str(location['id']):
-          self.origin_main_port = self.get_required_lcoation_data(location)
+          self.origin_main_port = self.get_required_location_data(location)
         if str(self.destination_main_port_id) == str(location['id']):
-          self.destination_main_port = self.get_required_lcoation_data(location)
+          self.destination_main_port = self.get_required_location_data(location)
 
-    def get_required_lcoation_data(self, location):
+    def get_required_location_data(self, location):
         loc_data = {
           "id": location["id"],
           "name": location["name"],
