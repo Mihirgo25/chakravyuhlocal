@@ -59,13 +59,13 @@ def create_fcl_freight_rate_data(request):
   freight = find_or_initialize(FclFreightRate, **{"init_key": init_key})
   for key in list(row.keys()):
     setattr(freight, key, row[key])
-    
+  freight.updated_at = datetime.datetime.now()
   freight.set_locations()
   freight.set_shipping_line()
-  # freight.set_origin_location_ids()
-  # freight.set_destination_location_ids()
-  # freight.validate_service_provider()
-  # freight.validate_importer_exporter()
+  freight.set_origin_location_ids()
+  freight.set_destination_location_ids()
+  freight.validate_service_provider()
+  freight.validate_importer_exporter()
 
   freight.weight_limit = to_dict(request.get("weight_limit"))
 
@@ -121,7 +121,7 @@ def create_fcl_freight_rate_data(request):
 
   create_audit(request, freight.id)
 
-  freight.update_special_attributes()
+  # freight.update_special_attributes()
   
   freight.update_local_references()
 
@@ -136,7 +136,7 @@ def create_fcl_freight_rate_data(request):
   # if not FclFreightRate.where(service_provider_id=request["service_provider_id"], rate_not_available_entry=False).exists():
   #   client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
-  # if request.get(fcl_freight_rate_request_id):
+  # if request.get("fcl_freight_rate_request_id"):
   #   DeleteFclFreightRateRequest.run!(fcl_freight_rate_request_ids=[request.fcl_freight_rate_request_id])
 
   return {"id": freight.id}
