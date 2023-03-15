@@ -37,7 +37,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_seasonal_surcha
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_day_requests import list_fcl_freight_rate_free_day_requests
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.interaction.list_fcl_weight_slabs_configuration import list_fcl_weight_slabs_configuration
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_extension_rule_set import update_fcl_freight_rate_extension_rule_set_data
@@ -121,9 +121,9 @@ def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalA
     return data
 
 @app.post("/create_fcl_freight_rate")
-def create_fcl_freight_rate(request: PostFclFreightRate, response: Response):
+def create_fcl_freight_rate_data(request: PostFclFreightRate, response: Response):
     # try:
-        rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
+        rate = create_fcl_freight_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
     # except Exception as e:
         # logger.error(e,exc_info=True)
