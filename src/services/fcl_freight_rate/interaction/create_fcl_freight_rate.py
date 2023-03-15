@@ -37,16 +37,20 @@ def create_audit(request, freight_id):
         source=request.get("source"),
     )
 
-def create_fcl_freight_rate(request):
+def create_fcl_freight_rate_data(request):
+  origin_port_id = str(request.get("origin_port_id"))
+
+  query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
+  print(query)
+  db.execute_sql(query)
   with db.atomic() as transaction:
     try:
-      return create_fcl_freight_rate_data(request)
+      return create_fcl_freight_rate(request)
     except Exception as e:
       transaction.rollback()
       return e
 
-
-def create_fcl_freight_rate_data(request):
+def create_fcl_freight_rate(request):
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
@@ -142,15 +146,7 @@ def create_fcl_freight_rate_data(request):
     try:
         freight.save()
     except Exception as e:
-        print("Exception in saving freight rate", str(e))
-        if 'no partition of relation "fcl_freight_rates" found for row' in str(e):
-            origin_port_id = str(request.get("origin_port_id"))
-            query = "create table fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
-            db.execute_sql(query)
-            freight.save()
-        else:
-            raise HTTPException(status_code=499, detail="rate did not save")
-
+        raise HTTPException(status_code=499, detail="rate did not save")
     freight.create_fcl_freight_free_days(freight.origin_local, freight.destination_local, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
     if not request.get('importer_exporter_id'):
