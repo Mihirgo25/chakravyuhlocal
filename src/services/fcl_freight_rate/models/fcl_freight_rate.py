@@ -757,19 +757,15 @@ class FclFreightRate(BaseModel):
 
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
       if self.last_rate_available_date is None:
-        return
-    # api call and also expose
 
-      current_app.send_task(
-          "CreateOrganizationTradeRequirementRateMapping.run",
-          queue="low",
-          kwargs={
+        return
+      data={
               "rate_id": self.id,
               "service": "fcl_freight",
               "performed_by_id": performed_by_id,
               "procured_by_id": procured_by_id,
               "last_updated_at": self.updated_at.replace(microsecond=0).isoformat(),
-              "last_rate_available_date": self.last_rate_available_date.replace(microsecond=0).isoformat(),
+              "last_rate_available_date": datetime.datetime.strptime(str(self.last_rate_available_date), '%Y-%m-%d').date().isoformat(),
               "price": self.get_price_for_trade_requirement(),
               "price_currency": "INR",
               "is_origin_local_missing": self.is_origin_local_missing,
@@ -780,9 +776,11 @@ class FclFreightRate(BaseModel):
                   "container_size": self.container_size,
                   "container_type": self.container_type,
                   "commodity": self.commodity,
-              },
-          },
-      )
+              }
+          }
+    # api call and also expose
+      # client.ruby.create_organization_trade_requirement_rate_mapping(data)
+
 
 
     def is_origin_local_missing(self):
@@ -804,9 +802,11 @@ class FclFreightRate(BaseModel):
       return query
 
     def get_price_for_trade_requirement(self):  # check money exchange
-      validity = self.validities.last()
-      if validity is None:
+      if self.validities is None:
         return 0
+
+      validity = self.validities[-1]
+
 
       result = client.ruby.get_money_exchange_for_fcl({"price":validity['price'], "from_currency":validity['currency'], "to_currency":'INR'})
       return result.get('price')
@@ -857,6 +857,7 @@ class FclFreightRate(BaseModel):
       self.origin_demurrage_id = origin_demurrage_id
       self.destination_detention_id = destination_detention_id
       self.destination_demurrage_id = destination_demurrage_id
+      print("ajay")
       self.save()
 
 

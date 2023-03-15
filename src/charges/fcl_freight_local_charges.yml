@@ -316,7 +316,7 @@ SOB:
   name: "Shipped On Board Certificate charge"
   units: ['per_container']
   trade_types: ['export']
-  condition: "shipping_line_id == 'ac9b04bc-2524-4a90-b86b-8a3f438a5e0e'"
+  condition: "shipping_line_id == 'e6da6a42-cc37-4df2-880a-525d81251547'"
   tags: ['additional_service']
 POCH:
   name: "Port Charges"
