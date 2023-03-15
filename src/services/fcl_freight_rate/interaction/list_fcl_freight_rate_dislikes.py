@@ -5,7 +5,8 @@ from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_fi
 from rails_client import client
 from playhouse.shortcuts import model_to_dict
 from math import ceil
-from peewee import fn, JOIN
+from peewee import fn, JOIN, SQL
+from operator import attrgetter
 from datetime import datetime
 import json
 
@@ -73,11 +74,11 @@ def get_query(page, page_limit):
     return query
 
 def apply_indirect_filters(query, filters):
-  for key in filters:
-    if key in possible_indirect_filters:
-      apply_filter_function = f'apply_{key}_filter'
-      query = eval(f'{apply_filter_function}(query, filters)')
-  return query
+    for key in filters:
+        if key in possible_indirect_filters:
+            apply_filter_function = f'apply_{key}_filter'
+            query = eval(f'{apply_filter_function}(query, filters)')
+    return query
 
 def apply_trade_lane_filter(query, filters):
     return query.select(fn.array_agg(fn.filter_(fn.cast('feedbacks', 'text'), (fn.cast('feedbacks', 'text').not_in('{}')))).alias('feedbacks'), fn.COUNT(fn.concat_ws(' || ', query.c.origin_port_id, query.c.destination_port_id)).alias('port_pair_count').distinct(),query.c.origin_trade_id, query.c.destination_trade_id).group_by(query.c.origin_trade_id, query.c.destination_trade_id)

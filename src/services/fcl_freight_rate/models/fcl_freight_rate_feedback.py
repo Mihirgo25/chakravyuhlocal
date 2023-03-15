@@ -40,8 +40,16 @@ class FclFreightRateFeedback(BaseModel):
     source = CharField(null=True)
     source_id = UUIDField(null=True)
     status = CharField(null=True)
-    updated_at = DateTimeField(default = datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateFeedback, self).save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateFeedback, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_feedbacks'

@@ -88,7 +88,7 @@ SCS:
 OBS:
   name: "One Bunker surcharge"
   units: ['per_container']
-  condition: shipping_line[:short_name] == 'COGOLINE'
+  condition: shipping_line_id == 'e6da6a42-cc37-4df2-880a-525d81251547'
   tags: [] 
 LSD:
   name: "Low Sulphur Surcharge at Destination"
@@ -374,7 +374,7 @@ WCS:
 PSAF:
   name: "Peak Season Adjustment Factor"
   units: ['per_container']
-  condition: shipping_line[:short_name] == 'COGOLINE'
+  condition: shipping_line_id == 'ac9b04bc-2524-4a90-b86b-8a3f438a5e0e'
   tags: []
 EFF:
   name: "Environmental Fuel Fee"

@@ -4,16 +4,16 @@ from database.db_session import db
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from libs.logger import logger
 from fastapi import HTTPException
-
+import time
 def create_fcl_freight_rate_local_agent(request):
-    with db.atomic() as transaction:
-        try:
-          id = execute_transaction_code(request)
-          return id
-        except Exception as e:
-            logger.error(e, exc_info=True)
-            transaction.rollback()
-            return "Creation Failed"
+  with db.atomic() as transaction:
+      try:
+        id = execute_transaction_code(request)
+        return id
+      except Exception as e:
+          # logger.error(e, exc_info=True)
+          transaction.rollback()
+          return "Creation Failed"
 
 
 def execute_transaction_code(request):
@@ -29,14 +29,16 @@ def execute_transaction_code(request):
     }
     
     local_agent_object.set_location_ids_and_type()
-
     try:
       if local_agent_object.validate():
+          
           local_agent_object.save()
-    except:
-        raise HTTPException(status_code = 500, detail = "Local Agent not saved")
+    except Exception as e:
+      print(e)
+      raise HTTPException(status_code = 500, detail = "Local Agent not saved")
 
     create_audit(request, local_agent_object.id)
+    
     
     return {
       'id': local_agent_object.id
@@ -46,6 +48,7 @@ def get_create_params(request):
     return {key:value for key,value in request.items() if key != 'performed_by_id'} 
   
 def create_audit(request, local_agent_id):
+
     FclFreightRateAudit.create(
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
@@ -53,3 +56,4 @@ def create_audit(request, local_agent_id):
         object_id = local_agent_id,
         object_type = 'FclFreightRateLocalAgent'
     )
+

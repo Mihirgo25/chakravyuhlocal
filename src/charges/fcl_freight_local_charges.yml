@@ -15,7 +15,7 @@ SC:
   name: "Seal Charges"
   units: ['per_container']
   trade_types: ['export', 'import']
-  condition: "(shipping_line['short_name'] not in ['Maersk', 'Safmarine'])"
+  condition: "(shipping_line_id not in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
   tags: []
 MUC:
   name: "Mandatory User Charge"
@@ -45,7 +45,7 @@ CRS:
   name: "Container Restoration Charges"
   units: ['per_container']
   trade_types: ['export', 'import']
-  condition: "shipping_line['short_name'] == 'CMA CGM'"
+  condition: "shipping_line_id == 'b2f92d49-6180-43bd-93a5-4d64f5819a9b'"
   tags: []
 VGM:
   name: "Verified Gross Mass"
@@ -172,7 +172,7 @@ DCG:
   name: "Destination Certificate Charge"
   units: ["per_bl"]
   trade_types: ['import','export']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine', 'Zim'])"
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b', 'be57f277-0c81-47b4-9322-bf06ccc5314c'])"
   tags: ['additional_service']
 CCI:
   name: "Container Cleaning Fees"
@@ -316,7 +316,7 @@ SOB:
   name: "Shipped On Board Certificate charge"
   units: ['per_container']
   trade_types: ['export']
-  condition: "shipping_line['short_name'] == 'COGOLINE'"
+  condition: "shipping_line_id == 'e6da6a42-cc37-4df2-880a-525d81251547'"
   tags: ['additional_service']
 POCH:
   name: "Port Charges"
@@ -358,7 +358,7 @@ PAI:
   name: "Port Additionals / Port Dues Import"
   units: ['per_container']
   trade_types: ['export']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'])"
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
   locations: []
   tags: []
 PSE:
@@ -443,7 +443,7 @@ PAE:
   name: "Port Additionals / Port Dues Export"
   units: ['per_container']
   trade_types: ['import']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'] and port['country_code'] in ['SN', 'VC'])"
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'] and port['country_code'] in ['SN', 'VC'])"
   tags: []
 IGM:
   name: "Import General Manifest"
@@ -539,7 +539,7 @@ RHE:
   name: "Recovery for Handling - Export"
   units: ['per_container']
   trade_types: ['export']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'])"
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
   tags: ['additional_service']
 ASO:
   name: "Algerian Stamp"
@@ -581,7 +581,7 @@ GTE:
   name: "Governemnt and Port Tax Export"
   units: ['per_container']
   trade_types: ['export']
-  condition: "shipping_line['short_name'] == 'Safmarine'"
+  condition: "shipping_line_id == '4664abea-8964-48e1-b79c-bf8da010d01b'"
   tags: []
 PHE:
   name: "Inspection Fee Export"
@@ -702,7 +702,7 @@ MTF:
   name: "MTF Fee"
   units: ['per_shipment']
   trade_types: ['export', 'import']
-  condition: "shipping_line['short_name'] == 'Wan Hai'"
+  condition: "shipping_line_id == 'bfd2a958-b70c-4f2e-ae9b-f66f5a211535'"
   tags: []
 REPO:
   name: "Container Reposition Charges"
@@ -1237,7 +1237,7 @@ PFE:
   name: "3rd Party Fine Export"
   units: ['per_container']
   trade_types: ['export']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'])"
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
   tags: ['additional_service']
 DEF:
   name: "Discharge Expense Full"
@@ -1339,7 +1339,7 @@ IIF:
   name: "Inland Inspection Fee"
   units: ['per_container']
   trade_types: ['export']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'])"
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
   tags: []
 VCF:
   name: "Vessel Certificate fee"
@@ -1423,7 +1423,7 @@ SBCF:
   name: "Spot Booking Cancellation Fees"
   units: ['per_container']
   trade_types: ['export']
-  condition: "(shipping_line['short_name'] in ['Maersk', 'Safmarine'])"
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
   tags: ['additional_service']
 LCH:
   name: "Liner Charges"
@@ -1561,7 +1561,7 @@ FDH:
   name: "Discharge Fee Destination"
   units: ['per_container']
   trade_types: ['import']
-  condition: "shipping_line['short_name'] == 'Safmarine'"
+  condition: "shipping_line_id == '4664abea-8964-48e1-b79c-bf8da010d01b'"
   tags: []
 FRO:
   name: "Free Out Service"

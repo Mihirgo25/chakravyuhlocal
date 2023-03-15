@@ -1,19 +1,18 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from fastapi import HTTPException
-import datetime
+from datetime import datetime
 from database.db_session import db
 
 def update_fcl_freight_rate_weight_limit(request):
   with db.atomic() as transaction:
         try:
           return execute_transaction_code(request)
-        except:
+        except Exception as e:
             transaction.rollback()
-            return "Creation Failed"
+            return e
 
 def execute_transaction_code(request):
-    #### write a ciondition where if atleast one of free_limit,remarks or slabs is present then only execute update
     weight_limit = FclFreightRateWeightLimit.get_by_id(request['id'])
 
     if request.get('free_limit'):
@@ -23,15 +22,13 @@ def execute_transaction_code(request):
     if request.get('slabs'):
         weight_limit.slabs = request.get('slabs')
 
-    weight_limit.updated_at = datetime.datetime.now()
-
+    weight_limit.updated_at = datetime.now()
+   
+    weight_limit.update_special_attributes()
     try:
         weight_limit.save()
     except:
-        raise HTTPException(status_code=499, detail='fcl freight rate local did not save')
-
-    weight_limit.update_special_attributes()
-    weight_limit.save()
+        raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
 
     create_audit(request, weight_limit.id)
 

@@ -11,6 +11,7 @@ def create_audit(request, freight_id):
     audit_data['weight_limit'] = request['weight_limit']
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
+    audit_data['is_extended'] = request.get("is_extended")
 
     FclFreightRateAudit.create(
         bulk_operation_id = request.get('bulk_operation_id'),
@@ -20,7 +21,8 @@ def create_audit(request, freight_id):
         sourced_by_id = request['sourced_by_id'],
         data = audit_data,
         object_id = freight_id,
-        object_type = 'FclFreightRate'
+        object_type = 'FclFreightRate',
+        source = request.get("source")
     )
 
 def validate_freight_params(request):
@@ -28,7 +30,7 @@ def validate_freight_params(request):
     keys = ['validity_start', 'validity_end', 'line_items']
     for key in keys:
       if not request.get(key):
-       HTTPException(status_code=499, detail="{key} is blank")
+        HTTPException(status_code=499, detail="{key} is blank")
 
 def update_fcl_freight_rate_data(request):
   validate_freight_params(request)

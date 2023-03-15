@@ -7,25 +7,17 @@ def get_fcl_freight_rate_weight_limit(request):
     if not all_fields_present(request):
         return {}
     
-    object = find_object(request)
-    object = model_to_dict(object)
+    objects = find_object(request)
+    objects = model_to_dict(objects)
 
-    if object is None:
+    if not objects:
         return {}
-    return object
+    return objects
 
 def all_fields_present(request):
-    for field in (
-        'origin_location_id',
-        'destination_location_id',
-        'container_size',
-        'container_type',
-        'shipping_line_id',
-        'service_provider_id'
-    ):
-        if field not in request:
-            return False
-    return True
+    if request['origin_location_id'] and request['destination_location_id'] and request['container_size'] and request['container_type'] and request['shipping_line_id'] and request['service_provider_id']:
+        return True
+    return False
 
 def find_object(request):
     row = {
@@ -38,10 +30,7 @@ def find_object(request):
     }
 
     try:
-        object = FclFreightRateWeightLimit.get(**row)
+        objects = FclFreightRateWeightLimit.get(**row)
     except:
-        raise HTTPException(status_code=499, detail="no weight limit entry with the given id exists")
-    return object
-
-
-
+        raise HTTPException(status_code=403, detail="no weight limit entry with the given id exists")
+    return objects

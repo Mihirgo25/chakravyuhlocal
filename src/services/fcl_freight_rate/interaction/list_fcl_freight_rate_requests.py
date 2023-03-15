@@ -16,16 +16,17 @@ possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_th
 def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True, spot_search_details_required = False):
     if type(filters) != dict:
         filters = json.loads(filters)
-        
     query = FclFreightRateRequest.select()
     query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
+
     query = apply_indirect_filters(query, filters)
 
-    stats = get_stats(query, filters, is_stats_required, performed_by_id) or {}
+    stats = get_stats(filters, is_stats_required, performed_by_id) or {}
     query = get_page(query, page, page_limit)
     data = get_data(query, spot_search_details_required)
 
     pagination_data = get_pagination_data(query, page, page_limit)
+
 
     return {'list': data } | (pagination_data) | (stats)
 
@@ -51,14 +52,14 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = client.ruby.list_partner_user_expertises({'filters': {'service_type': 'fcl_freight', 'partner_user_id': filters['relevant_supply_agent']}, 'page_limit': page_limit})['list']
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where(query.c.origin_port_id == origin_port_id) or (query.where(query.c.origin_country_id == origin_port_id)) or (query.where(query.c.origin_continent_id == origin_port_id)) or (query.where(query.c.origin_trade_id == origin_port_id))
-    query = query.where(query.c.destination_port_id == destination_port_id) or (query.where(query.c.destination_country_id == destination_port_id)) or (query.where(query.c.destination_continent_id == destination_port_id)) or (query.where(query.c.destination_trade_id == destination_port_id))
+    query = query.where(FclFreightRateRequest.origin_port_id << origin_port_id) or (query.where(FclFreightRateRequest.origin_country_id << origin_port_id)) or (query.where(FclFreightRateRequest.origin_continent_id << origin_port_id)) or (query.where(FclFreightRateRequest.origin_trade_id << origin_port_id))
+    query = query.where(FclFreightRateRequest.destination_port_id << destination_port_id) or (query.where(FclFreightRateRequest.destination_country_id << destination_port_id)) or (query.where(FclFreightRateRequest.destination_continent_id << destination_port_id)) or (query.where(FclFreightRateRequest.destination_trade_id << destination_port_id))
     return query
 
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclFreightRateRequest.select().where(FclFreightRateRequest.id == filters['similar_id']).dicts().get()
-    query = query.where(not(FclFreightRateRequest.id == filters['similar_id']))
-    return query.where(query.c.origin_port_id == rate_request_obj['origin_port_id'], query.c.destination_port_id == rate_request_obj['destination_port_id'], query.c.container_size == rate_request_obj['container_size'], query.c.container_type == rate_request_obj['container_type'], query.c.commodity == rate_request_obj['commodity'], query.c.inco_term == rate_request_obj['inco_term'])
+    query = query.where(FclFreightRateRequest.id != filters['similar_id'])
+    return query.where(FclFreightRateRequest.origin_port_id == rate_request_obj['origin_port_id'], FclFreightRateRequest.destination_port_id == rate_request_obj['destination_port_id'], FclFreightRateRequest.container_size == rate_request_obj['container_size'], FclFreightRateRequest.container_type == rate_request_obj['container_type'], FclFreightRateRequest.commodity == rate_request_obj['commodity'], FclFreightRateRequest.inco_term == rate_request_obj['inco_term'])
 
 def get_data(query, spot_search_details_required):
     data = [model_to_dict(item) for item in query.execute()]
@@ -66,21 +67,30 @@ def get_data(query, spot_search_details_required):
     return data
 
 def add_service_objects(data, spot_search_details_required):
-    shipping_line_ids = [item.get('preferred_shipping_line_ids', []) for item in data]
+    shipping_line_ids = []
+    for item in data:
+        if item.get('preferred_shipping_line_ids'):
+            shipping_line_ids.append(item.get('preferred_shipping_line_ids'))
+
+    location_data = []
+    for item in data: 
+        location_data.append(str(item['origin_port_id']))
+        location_data.append(str(item['destination_port_id']))
+
     objects = [
     {
         'name': 'user',
-        'filters': { 'id': list(set([t['performed_by_id'] for t in data] + [t['closed_by_id'] for t in data]))},
+        'filters': { 'id': list(set([str(t['performed_by_id']) for t in data] + [str(t['closed_by_id']) for t in data]))},
         'fields': ['id', 'name', 'email', 'mobile_country_code', 'mobile_number']
     },
     {
         'name': 'location',
-        'filters': { 'id': list(set(item for sublist in [[item["origin_port_id"], item["destination_port_id"]] for item in data] for item in sublist))},
+        'filters': { 'id': list(set(location_data))},
         'fields': ['id', 'name', 'display_name', 'port_code', 'type']
     },
     {
         'name': 'operator',
-        'filters': { 'id': list(set(shipping_line_ids))},
+        'filters': { 'id': list(set([str(id) for id in sum(shipping_line_ids,[])]))},
         'fields': ['id', 'business_name', 'short_name', 'logo_url']
     }
     ]
@@ -91,9 +101,9 @@ def add_service_objects(data, spot_search_details_required):
         'filters': { 'id': list(set([t['source_id'] for t in data])) },
         'fields': ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']
         })
+    
 
     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
-
     for i in range(len(data)):
         data[i]['origin_port'] = service_objects['location'][data[i]['origin_port_id']] if 'location' in service_objects and data[i].get('origin_port_id') in service_objects['location'] else None
         data[i]['performed_by'] = service_objects['user'][data[i]['performed_by_id']] if 'user' in service_objects and data[i].get('performed_by_id') in service_objects['user'] else None
@@ -101,11 +111,13 @@ def add_service_objects(data, spot_search_details_required):
         data[i]['destination_port'] = service_objects['location'][data[i]['destination_port_id']]if 'location' in service_objects and data[i].get('destination_port_id') in service_objects else None
         data[i]['cargo_readiness_date'] = data[i]['cargo_readiness_date'] if 'cargo_readiness_date' in data[i] else None
         data[i]['closing_remarks'] = data[i]['closing_remarks'] if 'closing_remarks' in data[i] else None
-        for id in data[i].get('preferred_shipping_line_ids'):
-            try:
-                data[i]['preferred_shipping_lines'] = list(data[i].get('preferred_shipping_lines')) + [service_objects['operator'][id]]
-            except KeyError:
-                pass
+        data[i]['preferred_shipping_lines'] = []
+        if data[i]['preferred_shipping_line_ids']:   
+            for id in data[i].get('preferred_shipping_line_ids'):
+                try:
+                    data[i]['preferred_shipping_lines']  = data[i]['preferred_shipping_lines']+[service_objects['operator'][str(id)]]
+                except KeyError:
+                    pass
         data[i]['spot_search'] = service_objects['spot_search'][data[i]['source_id']] if 'spot_search' in service_objects and data[i].get('source_id') in service_objects['spot_search'] else None
        
     return data
@@ -120,7 +132,7 @@ def get_pagination_data(query, page, page_limit):
   
   return pagination_data
 
-def get_stats(query, filters, is_stats_required, performed_by_id):
+def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
 
@@ -143,8 +155,8 @@ def get_stats(query, filters, is_stats_required, performed_by_id):
         'total': results['get_total'],
         'total_closed_by_user': results['get_total_closed_by_user'],
         'total_opened_by_user': results['get_total_opened_by_user'],
-        'total_open':results['get_status_count'].get('active'),
-        'total_closed': results['get_status_count'].get('inactive')
+        'total_open':results['get_status_count'].get('active') or 0,
+        'total_closed': results['get_status_count'].get('inactive') or 0
     }
     return { 'stats': stats }
 

@@ -39,7 +39,7 @@ def list_fcl_freight_rate_tasks(filters, page_limit, page, sort_by, sort_type, s
   
 
 def get_query(page, page_limit, sort_by, sort_type):
-    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type))).paginate(page, page_limit)
+    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()()'.format(sort_by, sort_type))).paginate(page, page_limit)
     return query
   
 def get_pagination_data(query, filters, page, page_limit, pagination_data_required):
