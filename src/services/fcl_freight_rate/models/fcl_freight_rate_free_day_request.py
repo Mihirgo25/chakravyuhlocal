@@ -71,13 +71,13 @@ class FclFreightRateFreeDayRequest(BaseModel):
       return False
     
     
-    def validate_source_id(self):
-      data = client.ruby.list_spot_searches({'filters':{'id':self.source_id}})
-      if ('list' in data) and (len(data['list']) > 0):
-        data = data['list'][0]
-        if data.get('source_type',None) == 'spot_search':
-          return True
-      return False
+    # def validate_source_id(self):
+    #   data = client.ruby.list_spot_searches({'filters':{'id':self.source_id}})
+    #   if ('list' in data) and (len(data['list']) > 0):
+    #     data = data['list'][0]
+    #     if data.get('source_type',None) == 'spot_search':
+    #       return True
+    #   return False
       
     def validate_performed_by(self):
         data = client.ruby.list_users({'filters':{'id': self.performed_by_id}})

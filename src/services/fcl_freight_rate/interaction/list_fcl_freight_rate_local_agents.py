@@ -19,7 +19,7 @@ def list_fcl_freight_rate_local_agents(filters = {}, page_limit = 10, page = 1, 
     query = apply_direct_filters(query, filters)
     query = apply_indirect_filters(query, filters)
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required, add_service_objects_required) for method_name in ['get_data', 'get_pagination_data']]
         results = {}
         for future in futures:

@@ -1,15 +1,13 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
-from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_ID
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import to_dict
-from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
+from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS
 from playhouse.shortcuts import model_to_dict
+from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 import yaml
 
-def get_fcl_freight_local_rate_cards(request):
-    request = to_dict(request)
-    
+def get_fcl_freight_local_rate_cards(request):  
+    print(request)  
     if 'rates' in request and request['rates']:
         list = build_response_list(request['rates'])
 
@@ -31,7 +29,7 @@ def initialize_local_query(request):
         FclFreightRateLocal.container_type == request['container_type'], 
         FclFreightRateLocal.trade_type == request['trade_type'],
         FclFreightRateLocal.is_line_items_error_messages_present == False,
-        FclFreightRateLocal.service_provider_id.in_(list(set(list(filter(None, [get_local_agent_ids(request), request['service_provider_id'],DEFAULT_LOCAL_AGENT_ID]))))))
+        FclFreightRateLocal.service_provider_id.in_(list(set(list(filter(None, [get_local_agent_ids(request), request['service_provider_id'], DEFAULT_LOCAL_AGENT_IDS['ids']]))[0]))))
 
     if request['commodity'] in HAZ_CLASSES:
         query = query.where(FclFreightRateLocal.commodity == request['commodity'])
@@ -40,7 +38,6 @@ def initialize_local_query(request):
     
     if request['shipping_line_id']:
         query = query.where(FclFreightRateLocal.shipping_line_id == request['shipping_line_id'])
-
     return query
 
 def select_fields(local_query):
@@ -99,7 +96,7 @@ def build_local_line_items(result, response_object, request):
         return True   
 
 def build_local_line_item_object(line_item, request):
-    with open('/Users/user/Desktop/ocean-rms/src/configs/charges/fcl_freight_local_charges.yml', 'r') as file:
+    with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
         fcl_freight_local_charges = yaml.safe_load(file)
 
     code_config = fcl_freight_local_charges[line_item['code']]

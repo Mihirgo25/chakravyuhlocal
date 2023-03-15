@@ -1,51 +1,50 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from services.fcl_freight_rate.models.fcl_freight_rate_locals import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
 from rails_client import client
 from playhouse.shortcuts import model_to_dict
-from operator import attrgetter
 from configs.fcl_freight_rate_constants import EXPECTED_TAT
 from math import ceil
+from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from peewee import fn
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
-from datetime import datetime
-import copy, yaml, concurrent.futures
+from datetime import datetime, timedelta
+import yaml, concurrent.futures, json
+from peewee import SQL 
 
 possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
 
-def list_fcl_freight_rate_tasks(filters, page, page_limit, sort_by, sort_type, stats_required, pagination_data_required):
-    filters = remove_unexpected_filters(filters)
+def list_fcl_freight_rate_tasks(filters, page_limit, page, sort_by, sort_type, stats_required, pagination_data_required):
+    if type(filters) != dict:
+        filters = json.loads(filters)
     query = get_query(page, page_limit, sort_by, sort_type)
 
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
     query = apply_indirect_filters(query, filters)
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(eval(method_name), query, filters, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
         results = {}
         for future in futures:
             result = future.result()
             results.update(result)
         
-    method_responses = results
-    data = method_responses['get_data']
-    pagination_data = method_responses['get_pagination_data']
+    data = results['get_data']
+    pagination_data = results['get_pagination_data']
 
-    stats = get_stats(filters, stats_required)
+    stats = get_stats(query, filters, page, page_limit, sort_by, sort_type, stats_required)
 
     return {'list': data } | (pagination_data) | (stats)
   
 
 def get_query(page, page_limit, sort_by, sort_type):
-    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}'.format(sort_by, sort_type))).paginate(page, page_limit)
+    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type))).paginate(page, page_limit)
     return query
   
-
-def get_pagination_data(query, page, page_limit, pagination_data_required):
+def get_pagination_data(query, filters, page, page_limit, pagination_data_required):
     if not pagination_data_required:
-        return {}
+        return {'get_pagination_data': {}}
 
     params = {
       'page': page,
@@ -53,35 +52,39 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
       'total_count': query.count(),
       'page_limit': page_limit
     }
-    return params
+    return {'get_pagination_data' : params}
 
-def get_data(query, filters):
-    data = query.execute()
+def get_data(query, filters, page, page_limit, pagination_data_required):
+    data = [model_to_dict(item) for item in query.execute()]
+    
     new_data = []
     for object in data:
-        created_at_date = datetime.strptime(object['created_at'], '%Y-%m-%d')
-        next_date = datetime.strptime(object['created_at'], '%Y-%m-%d') + datetime.timedelta(days = 1)
+        created_at_date = object['created_at']
+        next_date = object['created_at'] + timedelta(days = 1)
 
-        object['expiration_time'] = datetime.strptime(object['created_at'], '%Y-%m-%d %H:%M:%S') + datetime.timedelta(seconds = EXPECTED_TAT * 60 * 60)
+        object['expiration_time'] = object['created_at'] + timedelta(seconds = EXPECTED_TAT * 60 * 60)
         object['skipped_time'] = 0
 
-        if datetime.strptime(object['created_at'], '%Y-%m-%d %H:%M:%S') < datetime.strptime("{} 09:30:00".format(created_at_date), '%Y-%m-%d %H:%M:%S'):
-            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(created_at_date), '%Y-%m-%d %H:%M:%S') + datetime.timedelta(seconds = EXPECTED_TAT * 60 * 60)
-        elif datetime.strptime(object['created_at'], '%Y-%m-%d %H:%M:%S') > datetime.strptime("{} 18:30:00".format(created_at_date), '%Y-%m-%d %H:%M:%S'):
-            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(next_date), '%Y-%m-%d %H:%M:%S') + datetime.timedelta(seconds = EXPECTED_TAT * 60 * 60)
+        if object['created_at'] < datetime.strptime("{} 09:30:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S'):
+            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
+        elif object['created_at'] > datetime.strptime("{} 18:30:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S'):
+            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
         else:
-            skipped_time = int((datetime.strptime(object['created_at'], '%Y-%m-%d %H:%M:%S') + datetime.timedelta(seconds = EXPECTED_TAT * 60 * 60)).strftime("%Y%m%d%H%M%S")) - int(datetime.strptime("{} 18:30:00".format(created_at_date), '%Y-%m-%d %H:%M:%S').strftime("%Y%m%d%H%M%S"))
+            skipped_time = int((object['created_at'] + timedelta(seconds = EXPECTED_TAT * 60 * 60)).timestamp()) - int(datetime.strptime("{} 18:30:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S').timestamp())
             skipped_time = max([0, skipped_time])
         
         if skipped_time > 0:
-            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(next_date), '%Y-%m-%d %H:%M:%S') + datetime.timedelta(seconds = skipped_time) 
-      
-        object['purchase_invoice_rate'] = object['job_data'].get('rate')
+            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time) 
+        
+        if object['job_data']:
+            object['purchase_invoice_rate'] = object['job_data'].get('rate')
+        else:
+            object['purchase_invoice_rate'] = None
         del object['job_data']
         new_data.append(object)
 
-    if filters['status'] == 'completed':
-        with open('/workspaces/ocean-rms/src/configs/charges/fcl_freight_local_charges.yml', 'r') as file:
+    if 'status' in filters and filters['status'] == 'completed':
+        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
             fcl_freight_local_charges = yaml.safe_load(file)
 
         for object in new_data:
@@ -108,9 +111,9 @@ def get_data(query, filters):
                 object['remark'] = 'Delayed' 
 
             del object['completion_data']
-      
-    data = add_service_objects(new_data)
-    return data
+
+    new_data = add_service_objects(new_data)
+    return {'get_data': new_data }
   
 def add_service_objects(data):
     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
@@ -171,13 +174,6 @@ def add_service_objects(data):
             data[i]['existing_system_rate']['updated_at'] = existing_system_rate['updated_at']
     
     return data
-    
-
-def apply_direct_filters(query, filters):  
-    for key in filters:
-        if key in possible_direct_filters:
-            query = query.select().where(attrgetter(key)(FclFreightRateTask) == filters[key])
-    return query
 
 def apply_indirect_filters(query, filters):
     for key in filters:
@@ -186,35 +182,38 @@ def apply_indirect_filters(query, filters):
             query = eval(f'{apply_filter_function}(query, filters)')
     return query  
 
-def apply_updated_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['updated_at_greater_than'], '%Y-%m-%d'))
+def apply_created_at_greater_than_filter(query, filters):
+    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%d'))
     return query
 
-def apply_updated_at_less_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['updated_at_less_than'], '%Y-%m-%d'))
+def apply_created_at_less_than_filter(query, filters):
+    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%d'))
     return query
 
-def get_stats(query, filters, stats_required):
+def get_stats(query, filters, page, page_limit, sort_by, sort_type, stats_required):
     if not stats_required:
         return {}
+    
+    if 'trade_type' in filters:
+        del filters['trade_type'] 
+    
+    if 'status' in filters:
+        del filters['status']
 
-    filters_copy = copy.deepcopy(filters)
+    query = FclFreightRateTask.select()
 
-    del filters_copy['trade_type']
-    del filters_copy['status']
-
-    filters = filters_copy
-
-    query = get_query(query, filters)
-
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
     query = apply_indirect_filters(query, filters)
+    
+    query = query.select(fn.COUNT(SQL('*')).alias('count_all'), FclFreightRateTask.status.alias('fcl_freight_task_status'), FclFreightRateTask.trade_type.alias('fcl_freight_task_trade_type')).group_by(FclFreightRateTask.status, FclFreightRateTask.trade_type)
+    query_result = {}
+    for i in query.execute():
+        lists = [i.fcl_freight_task_status,i.fcl_freight_task_trade_type]
+        query_result[tuple(lists)] = i.count_all
 
-    query = query.unpaginate().unorder_by().group_by(FclFreightRateTask.status, FclFreightRateTask.trade_type).select(FclFreightRateTask.status, FclFreightRateTask.trade_type, fn.COUNT(FclFreightRateTask.id))
-
-    stats = { 'ping': { 'export': 0, 'import': 0, 'total': 0 }, 'completed': { 'export': 0, 'import': 0, 'total': 0 }, 'aborted': { 'export': 0, 'import': 0, 'total': 0 } }
-
-    for stat,count in query.items():
+    stats = { 'pending': { 'export': 0, 'import': 0, 'total': 0 }, 'completed': { 'export': 0, 'import': 0, 'total': 0 }, 'aborted': { 'export': 0, 'import': 0, 'total': 0 } }
+     
+    for stat,count in query_result.items():
         stats[stat[0]][stat[1]] += count
         stats[stat[0]]['total'] += count
 

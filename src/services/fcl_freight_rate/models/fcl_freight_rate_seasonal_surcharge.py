@@ -1,7 +1,7 @@
 from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
 import yaml
 from rails_client import client

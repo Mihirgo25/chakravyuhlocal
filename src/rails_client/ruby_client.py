@@ -33,7 +33,8 @@ class RubyClient:
             return {"message": "no response"}
         
         try:
-            result=json.loads(response.text)
+            # result=json.loads(response.text)
+            result=response.json()
         except:
             print(data)
             return {"message": "no response"}

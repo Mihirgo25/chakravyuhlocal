@@ -1,12 +1,12 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 import concurrent.futures
+from operator import attrgetter
 from rails_client import client
 from math import ceil
 from datetime import datetime
-from operator import attrgetter
 from peewee import JOIN 
 from playhouse.shortcuts import model_to_dict
 from peewee import Case, SQL 
@@ -25,21 +25,20 @@ possible_hash_filters = {
 }
 
 def list_fcl_freight_rate_audits(filters, sort_by, sort_type, page, page_limit, pagination_data_required, user_data_required):
-    filters = remove_unexpected_filters(filters, possible_direct_filters, possible_indirect_filters)
+
     query = get_query(sort_by, sort_type, page, page_limit)
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateAudit)
     query = apply_indirect_filters(query, filters)
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required, user_data_required) for method_name in ['get_data', 'get_pagination_data']]
         results = {}
         for future in futures:
             result = future.result()
             results.update(result)
         
-    method_responses = results
-    data = method_responses['get_data']
-    pagination_data = method_responses['get_pagination_data']
+    data = results['get_data']
+    pagination_data = results['get_pagination_data']
 
     return {'list': data } | (pagination_data)
 
@@ -61,7 +60,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required, user_
 
 def get_data(query, page, page_limit, pagination_data_required, user_data_required):
     data = [model_to_dict(item) for item in query.execute()]
-    data = add_service_objects(data, user_data_required)
+    # data = add_service_objects(data, user_data_required)
     return data
 
 def add_service_objects(data, user_data_required):
@@ -93,12 +92,6 @@ def add_service_objects(data, user_data_required):
         object['rate_sheet'] = service_objects['rate_sheet'][object['rate_sheet_id']] if 'rate_sheet' in service_objects and object.get('rate_sheet_id') in service_objects['rate_sheet'] else None
         new_data.append(object)
     return new_data
-
-def apply_direct_filters(query, filters):
-    for key in filters:
-        if key in possible_direct_filters:
-            query = query.select().where(attrgetter(key)(FclFreightRateAudit) == filters[key])
-    return query
 
 def apply_indirect_filters(query, filters):
     for key in filters:

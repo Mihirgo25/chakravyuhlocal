@@ -1,5 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from database.db_session import db
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from datetime import datetime
 from rails_client import client
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
@@ -18,18 +19,18 @@ def execute_transaction_code(request):
         request = request.__dict__
     
     unique_object_params = get_unique_object_params(request)
-    request_object = find_or_initialize(**unique_object_params)
+    request_object = find_or_initialize(FclFreightRateRequest, **unique_object_params)
     create_params = get_create_params(request)
 
-    for key, value in create_params.items(): 
-        setattr(request_object, key, value) 
+    for attr, value in create_params.items(): 
+        setattr(request_object, attr, value) 
     
     if request_object.validate():
         request_object.save()
 
         create_audit(request, request_object.id)
 
-        # request_object.send_notifications_to_supply_agents()
+        send_notifications_to_supply_agents(request)
 
         return {
         'id': request_object.id
@@ -77,16 +78,8 @@ def send_notifications_to_supply_agents(request):
     }
     for user_id in request_info['user_ids']:
         data['user_id'] = user_id
+
         # CreateCommunication.delay(queue: 'communication', retry: 0).run!(data)
-
-
-def find_or_initialize(**kwargs):
-  try:
-    obj = FclFreightRateRequest.get(**kwargs)
-    obj.updated_at = datetime.now()
-  except FclFreightRateRequest.DoesNotExist:
-    obj = FclFreightRateRequest(**kwargs)
-  return obj
 
 def create_audit(request, request_object_id):     
     performed_by_id = request['performed_by_id']

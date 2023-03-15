@@ -1,13 +1,11 @@
-from services.fcl_freight_rate.models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from peewee import *
 from playhouse.postgres_ext import *
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import FREIGHT_CONTAINER_COMMODITY_MAPPINGS
 from rails_client import client
-
-class UnknownField(object):
-    def __init__(self, *_, **__): pass
+import datetime
 
 class BaseModel(Model):
     class Meta:
@@ -21,7 +19,7 @@ class FclFreightRateTask(BaseModel):
     container_size = CharField(null=True)
     container_type = CharField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default = datetime.datetime.now)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     job_data = JSONField(null=True)
     location_ids = ArrayField(field_class=UUIDField, null=True)
@@ -29,20 +27,20 @@ class FclFreightRateTask(BaseModel):
     port_id = UUIDField(null=True)
     service = CharField(null=True)
     shipping_line_id = UUIDField(null=True)
-    sids = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
+    shipment_serial_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     source = CharField(null=True)
     source_count = IntegerField(null=True)
     status = CharField(null=True)
     task_type = CharField(null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default = datetime.datetime.now)
 
     class Meta:
         table_name = 'fcl_freight_rate_tasks' 
 
     def validate_service(self):
-        if self.service not in ['fcl_freight_local']:
+        if self.service not in ['fcl_freight_local','subsidiary']:
             raise HTTPException(status_code=400, detail="Invalid service")
         
     def validate_port_id(self):

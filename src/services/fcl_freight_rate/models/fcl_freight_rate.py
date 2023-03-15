@@ -87,14 +87,21 @@ class FclFreightRate(BaseModel):
     validities = BinaryJSONField(default = [], null=True)
     weight_limit = BinaryJSONField(null=True)
     weight_limit_id = UUIDField(index=True, null=True)
-    source = CharField(default = 'manual', null = True)
-    accuracy = FloatField(default = 100, null = True)
+    # source = CharField(default = 'manual', null = True)
+    # accuracy = FloatField(default = 100, null = True)
     cogo_entity_id = UUIDField(index=True, null=True)
-    origin_port: dict = None
-    destination_port: dict = None
-    origin_main_port: dict = None
-    destination_main_port: dict = None
-    shipping_line: dict = None
+    procured_by_id = UUIDField(index=True, null=True)
+    sourced_by_id = UUIDField(index=True, null=True)  
+    origin_main_port = BinaryJSONField(null=True)
+    origin_port: BinaryJSONField(null=True)
+    destination_port: BinaryJSONField(null=True)
+    origin_main_port: BinaryJSONField(null=True)
+    destination_main_port: BinaryJSONField(null=True)
+    shipping_line = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
+    service_provider = BinaryJSONField(null=True)
+    importer_exporter = BinaryJSONField(null=True)
 
     class Meta:
         table_name = 'fcl_freight_rates'

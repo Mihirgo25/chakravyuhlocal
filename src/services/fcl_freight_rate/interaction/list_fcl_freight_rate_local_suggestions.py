@@ -1,9 +1,8 @@
-from operator import attrgetter
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from configs.global_constants import INTERNAL_BOOKING
 from playhouse.shortcuts import model_to_dict
-import concurrent.futures
+import concurrent.futures, json
 from rails_client import client
 from math import ceil
 
@@ -11,21 +10,22 @@ possible_direct_filters = ['port_id', 'country_id', 'trade_id', 'continent_id', 
 possible_indirect_filters = ['location_ids']
 
 def list_fcl_freight_local_suggestions(filters, service_provider_id, page, page_limit, sort_by, sort_type, pagination_data_required):
-    filters = remove_unexpected_filters(filters, possible_direct_filters, possible_indirect_filters)
-    query = get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit)
-    query = apply_direct_filters(query)
-    query = apply_indirect_filters(query)
+    if type(filters) != dict:
+        filters = json.loads(filters)
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    query = get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocal)
+    query = apply_indirect_filters(query, filters)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
         results = {}
         for future in futures:
             result = future.result()
             results.update(result)
         
-    method_responses = results
-    data = method_responses['get_data']
-    pagination_data = method_responses['get_pagination_data']
+    data = results['get_data']
+    pagination_data = results['get_pagination_data']
 
     return {'list': data } | (pagination_data)
 
@@ -35,12 +35,6 @@ def get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit
 
     query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_(INTERNAL_BOOKING['service_provider_id']), FclFreightRateLocal.is_line_items_error_messages_present == False).where(not (FclFreightRateLocal.id.in_(already_added_rates))).order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
     return query 
-
-def apply_direct_filters(query, filters):
-    for key in filters:
-        if key in possible_direct_filters:
-            query = query.select().where(attrgetter(key)(FclFreightRateLocal) == filters[key])
-    return query
 
 def apply_indirect_filters(query, filters):
     for key in filters:

@@ -55,6 +55,7 @@ class FclFreightRateLocal(BaseModel):
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     port: dict = None
+    main_port: dict = None
     shipping_line: dict = None
 
     class Meta:
@@ -238,10 +239,11 @@ class FclFreightRateLocal(BaseModel):
             elif self.main_port_id and port.get('id') == self.main_port_id:
                 self.main_port = port
 
+
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        self.shipping_line = client.ruby.list_operators({'filters': { id: self.shipping_line_id }, 'pagination_data_required': False})['list'][0]
+        self.shipping_line = client.ruby.list_operators({'filters': {'id': self.shipping_line_id }, 'pagination_data_required': False})['list'][0]
 
     def possible_charge_codes(self):
         self.set_port()
@@ -261,14 +263,14 @@ class FclFreightRateLocal(BaseModel):
             except Exception as e:
                 print(e)
 
-        try:
-            charge_codes = {}
-            for code, config in fcl_freight_local_charges_dict.items():
-                if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
-                    charge_codes[code] = config
+        # try:
+        charge_codes = {}
+        for code, config in fcl_freight_local_charges_dict.items():
+            if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
+                charge_codes[code] = config
 
-        except Exception as e:
-            print(e)
+        # except Exception as e:
+        #     print(e)
         return charge_codes
 
     def update_freight_objects(self):
@@ -299,15 +301,15 @@ class FclFreightRateLocal(BaseModel):
         from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 
         if self.detention_id or self.demurrage_id:
-            free_days = list_fcl_freight_rate_free_days({'filters': {'id': [self.detention_id, self.demurrage_id]}})['list']
+            free_days = list_fcl_freight_rate_free_days(filters = {'filters': {'id': [str(self.detention_id), str(self.demurrage_id)]}})['list']
 
         if self.detention_id:
-            t = next((t for t in free_days if t.id == self.detention_id), None)
+            t = next((t for t in free_days if t['id'] == self.detention_id), None)
             if t:
                 self.data['detention'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
 
         if self.demurrage_id:
-            t = next((t for t in free_days if t.id == self.demurrage_id), None)
+            t = next((t for t in free_days if t['id'] == self.demurrage_id), None)
             if t:
                 self.data['demurrage'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
             # for t in free_days:
