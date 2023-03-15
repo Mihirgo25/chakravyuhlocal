@@ -96,7 +96,7 @@ WRS:
 CPC:
   name: "Container Premium Charges"
   units: ['per_container']
-  condition: shipping_line['short_name'] in ['Hapag Lloyd', 'CMA', 'ANL', 'APL', 'PIL', 'Maersk']
+  condition: shipping_line_id in ['fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', 'b2f92d49-6180-43bd-93a5-4d64f5819a9b', '25c0df76-5e1a-4f14-9c85-e7f794d8e8b9', 'bf4fa5fe-0e23-4038-8daa-ced1ff02548b', '2df9777e-01e9-4f86-83b8-28b36ddf1be1', 'c3649537-0c4b-4614-b313-98540cffcf40']
   tags: []
 PCS:
   name: "Port Congestion Surcharge"
@@ -131,12 +131,12 @@ MISC:
 CDD:
   name: "Cargo Data Declaration"
   units: ['per_bl']
-  condition: (destination_port['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']) and shipping_line['short_name'] == 'MSC'
+  condition: (destination_port['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE']) and shipping_line_id == 'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd'
   tags: []
 OCC:
   name: "Operations Cost Contribution"
   units: ['per_container']
-  condition: shipping_line['short_name'] == 'MSC'
+  condition: shipping_line_id == 'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd'
   tags: []
 PTA:
   name: "Turn in Fee"
@@ -221,7 +221,7 @@ AIS:
 OBS:
   name: "One Bunker surcharge"
   units: ['per_container']
-  condition: shipping_line['short_name'] == 'COGOLINE'
+  condition: shipping_line_id == 'ac9b04bc-2524-4a90-b86b-8a3f438a5e0e'
   tags: []
 DGPS:
   name: "Dangerous Goods Premium Sea"
@@ -231,12 +231,12 @@ DGPS:
 SCMC:
   name: "Security Compliance Management Charge"
   units: ['per_bl']
-  condition: "destination_port['country_code'] == 'CN' and shipping_line['short_name'] == 'Evergreen'"
+  condition: "destination_port['country_code'] == 'CN' and shipping_line_id == '256c0d0c-e0f1-439b-8c3b-70edfe27278e'"
   tags: []
 NBF:
   name: "New Bunker Factor"
   units: ['per_container']
-  condition: "shipping_line['short_name'] in ['Zim', 'GSL', 'Nile Dutch Line', 'Interasia']"
+  condition: "shipping_line_id in ['be57f277-0c81-47b4-9322-bf06ccc5314c', '60b7b374-3269-4c9c-a647-f0eded5a4536', 'b1b65ec8-5a66-41a9-93aa-d22c8f1af2c2', 'c7b45240-2add-4e2b-86c5-a92ef8393abb']"
   tags: []
 LSD:
   name: "Low Sulphur Surcharge at Destination"
