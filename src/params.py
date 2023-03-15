@@ -459,7 +459,7 @@ class CreateFclFreightRateRequest(BaseModel):
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
   preferred_storage_free_days: int = None
-  cargo_readiness_date: datetime.datetime = None
+  cargo_readiness_date: datetime = None
   preferred_shipping_line_ids: list[str] = []
   remarks: list[str] = []
   booking_params: dict = {}
@@ -490,7 +490,7 @@ class CreateFclFreightRateLocalRequest(BaseModel):
   shipping_line_id: str = None
   continent_id: str = None
   container_size: str = None
-  cargo_readiness_date: datetime.datetime = None
+  cargo_readiness_date: datetime = None
   preferred_shipping_line_ids: list[str] = []
   remarks: list[str] = []
   booking_params: dict = {}
@@ -524,7 +524,7 @@ class CreateFclFreightRateFreeDayRequest(BaseModel):
   shipping_line_id: str = None
   service_provider_id: str = None
   inco_term: str = None
-  cargo_readiness_date: datetime.datetime = None
+  cargo_readiness_date: datetime = None
   cargo_weight_per_container: int = None
   preferred_rate: float = None
   preferred_rate_currency: str = None

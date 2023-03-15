@@ -301,21 +301,6 @@ def get_fcl_freight_rate_visibility_data(
     data = get_fcl_freight_rate_visibility(service_provider_id, origin_port_id, destination_port_id, from_date, to_date, rate_id, shipping_line_id, container_size, container_type, commodity)
     return data
 
-# @app.post("/testing")
-# def testing():
-#     start = time.time()
-#     # filters = {'origin_port_id' : '13f45f48-f725-4cd4-9629-d6a196be673f'}
-#     possible_filters = ['service_type', 'origin_port_id', 'destination_port_id', 'container_type', 'commodity', 'container_size']
-#     query = f"select count(DATE(created_at)), DATE(created_at) dateonly from fcl_freight_rates ffr where " 
-#     # for key in filters:
-#     #     if key in possible_filters:
-#     #         query = query + key + " = '" + filters[key] + "' and "
-#     query = query + f"rate_not_available_entry = false and created_at >= '{datetime.now().date()}' group by dateonly;"
-#     print(query)
-#     data = db.execute_sql(query).fetchall()
-#     print(time.time() - start)
-#     print(data)
-
 @app.get("/list_fcl_freight_rate_bulk_operations")
 def list_fcl_freight_rate_bulk_operations_data(
     filters: str = None,
@@ -349,9 +334,7 @@ def list_fcl_freight_rates_data(
     expired_rates_required: bool = False,
     all_rates_for_cogo_assured: bool = False
 ):
-    a = time.time()
     data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required, return_query, expired_rates_required, all_rates_for_cogo_assured)
-    print(time.time() - a)
     return data
 
 @app.get("/list_fcl_freight_rate_locals")
@@ -378,12 +361,12 @@ def list_fcl_freight_rate_local_agent_data(
     sort_type: str = 'desc',
     pagination_data_required: bool = True,
     add_service_objects_required: bool = True):
-    # try:
-    data = list_fcl_freight_rate_local_agents(filters, page_limit, page, sort_by, sort_type, pagination_data_required, add_service_objects_required)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code = 200, content = data)
-    # except:
-    #     return JSONResponse(status_code = 500, content = {'success':False})
+    try:
+        data = list_fcl_freight_rate_local_agents(filters, page_limit, page, sort_by, sort_type, pagination_data_required, add_service_objects_required)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code = 200, content = data)
+    except:
+        return JSONResponse(status_code = 500, content = {'success':False})
 
 @app.get("/list_fcl_freight_rate_tasks")
 def list_fcl_freight_rate_tasks_data(
@@ -549,9 +532,9 @@ def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensio
 def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
     return get_fcl_freight_rate_extension_data(request)
 
-@app.post("/update_fcl_freight_rate_task")
-def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
-    return update_fcl_freight_rate_task_data(request)
+# @app.post("/update_fcl_freight_rate_task")
+# def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
+#     return update_fcl_freight_rate_task_data(request)
 
 # @app.post("/create_fcl_freight_rate_task")
 # def create_fcl_freight_rate_task(request: CreateFclFreightRateTask):
