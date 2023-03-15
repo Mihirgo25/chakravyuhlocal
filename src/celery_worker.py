@@ -58,6 +58,13 @@ def delay_fcl_functions(fcl_object,request):
     get_multiple_service_objects(fcl_object,services)
 
 
+    fcl_object.update_special_attributes()
+
+    fcl_object.update_local_references()
+
+    fcl_object.update_platform_prices_for_other_service_providers()
+
+
 
 
 
