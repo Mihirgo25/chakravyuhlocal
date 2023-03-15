@@ -3,14 +3,13 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from rails_client import client
 import datetime
-from pydantic import BaseModel as pydantic_base_model
-import requests
 from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS,HAZ_CLASSES
 from fastapi import HTTPException
 import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
-from playhouse.shortcuts import model_to_dict
+from libs.locations import list_locations
+
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -21,14 +20,13 @@ class BaseModel(Model):
 
 class FclFreightRateLocal(BaseModel):
     commodity = CharField(null=True)
-    container_size = CharField(null=True)
-    container_type = CharField(null=True)
+    container_size = CharField(index=True, null=True)
+    container_type = CharField(index=True, null=True)
     containers_count = IntegerField(null=True)
     continent_id = UUIDField(index=True, null=True)
     country_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     data = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    # data = FclFreightRateLocalData(null=True)
     demurrage_id = UUIDField(index=True, null=True)
     detention_id = UUIDField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
@@ -37,27 +35,33 @@ class FclFreightRateLocal(BaseModel):
     is_detention_slabs_missing = BooleanField(index=True, null=True)
     is_line_items_error_messages_present = BooleanField(null=True)
     is_line_items_info_messages_present = BooleanField(null=True)
+    is_local_agent_rate = BinaryJSONField(null=True)
     is_plugin_slabs_missing = BooleanField(index=True, null=True)
     line_items = BinaryJSONField(null=True)
     line_items_error_messages = BinaryJSONField(null=True)
     line_items_info_messages = BinaryJSONField(null=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
     main_port_id = UUIDField(null=True)
+    main_port = BinaryJSONField(null=True)
     plugin_id = UUIDField(index=True, null=True)
     port_id = UUIDField(index=True, null=True)
+    port = BinaryJSONField(null=True)
     priority_score = IntegerField(null=True)
     priority_score_updated_at = DateTimeField(null=True)
+    procured_by_id = UUIDField(null=True)
+    procured_by = BinaryJSONField(null=True)
     rate_not_available_entry = BooleanField(null=True)
     selected_suggested_rate_id = UUIDField(null=True)
-    service_provider_id = UUIDField(null=True)
+    service_provider_id = UUIDField(index=True, null=True)
+    service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
+    shipping_line = BinaryJSONField(null=True)
+    sourced_by_id = UUIDField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    port: dict = None
-    main_port: dict = None
-    shipping_line: dict = None
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateLocal, self).save(*args, **kwargs)
@@ -87,10 +91,10 @@ class FclFreightRateLocal(BaseModel):
         )
 
     def validate_port(self):
-        obj = {"filters" : {"id": [str(self.port_id)]}}
-        port_data = client.ruby.list_locations(obj)['list'][0]
-        if port_data.get('type') == 'seaport':
-            self.port = port_data
+        obj = {"id": [str(self.port_id)]}
+        port_data = list_locations(obj)['list']
+        if len(port_data) != 0 and port_data[0].get('type') == 'seaport':
+            self.port = port_data[0]
 
             self.country_id = port_data.get('country_id', None)
             self.trade_id = port_data.get('trade_id', None) 
@@ -107,9 +111,9 @@ class FclFreightRateLocal(BaseModel):
                 return False
         elif self.port and self.port['is_icd']==True:
             if self.main_port_id:
-                main_port_data = client.ruby.list_locations({"filters" : {"id": [str(self.main_port_id)]}})['list'][0]
-                if main_port_data['type'] == 'seaport' and main_port_data['is_icd'] == False:
-                    self.main_port = main_port_data
+                main_port_data = list_locations({'id': [str(self.main_port_id)]})['list']
+                if len(main_port_data) != 0 and main_port_data[0].get('type') == 'seaport' and main_port_data[0].get('is_icd') == False:
+                    self.main_port = main_port_data[0]
                     return True
                 return False
             else:
@@ -117,16 +121,16 @@ class FclFreightRateLocal(BaseModel):
         return True
 
     def validate_shipping_line_id(self):
-        shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(self.shipping_line_id)]}})['list'][0]
-        if shipping_line_data.get('operator_type') == 'shipping_line':
-            self.shipping_line = shipping_line_data
+        shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(self.shipping_line_id)]}})['list']
+        if len(shipping_line_data) != 0 and shipping_line_data[0].get('operator_type') == 'shipping_line':
+            self.shipping_line = shipping_line_data[0]
             return True
         return False
 
     def validate_service_provider_id(self):
-        service_provider_data = client.ruby.list_organizations({'filters':{'id': [str(self.service_provider_id)]}})['list'][0]
-        if service_provider_data.get('account_type') == 'service_provider':
-            self.service_provider = service_provider_data
+        service_provider_data = client.ruby.list_organizations({'filters':{'id': [str(self.service_provider_id)]}})['list']
+        if len(service_provider_data) != 0 and service_provider_data[0].get('account_type') == 'service_provider':
+            self.service_provider = service_provider_data[0]
             return True
         return False
 
@@ -173,10 +177,7 @@ class FclFreightRateLocal(BaseModel):
         return self.local_data_instance.validate_duplicate_charge_codes() and self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
     def validate_before_save(self):
-        try:
-            self.local_data_instance = FclFreightRateLocalData(self.data)
-        except Exception as e:
-            print(e)
+        self.local_data_instance = FclFreightRateLocalData(self.data)
 
         if not self.validate_port():
             raise HTTPException(status_code=499, detail='port_id is not valid')
@@ -236,7 +237,7 @@ class FclFreightRateLocal(BaseModel):
         location_ids = [str(self.port_id)]
         if self.main_port_id:
             location_ids.append(str(self.main_port_id))
-        ports = client.ruby.list_locations({'filters': {'id': location_ids}, 'pagination_data_required': False})['list']
+        ports = list_locations({'id': location_ids})['list']
         for port in ports:
             if port.get('id') == self.port_id:
                 self.port = port
@@ -247,7 +248,9 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        self.shipping_line = client.ruby.list_operators({'filters': {'id': self.shipping_line_id }, 'pagination_data_required': False})['list'][0]
+        shipping_line = client.ruby.list_operators({'filters': { 'id': str(self.shipping_line_id) }, 'pagination_data_required': False})['list']
+        if len(shipping_line) != 0:
+            self.shipping_line = shipping_line[0]
 
     def possible_charge_codes(self):
         self.set_port()
@@ -260,21 +263,15 @@ class FclFreightRateLocal(BaseModel):
         container_size = self.container_size
         container_type = self.container_type
         commodity = self.commodity
-        
-        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-            try:
-                fcl_freight_local_charges_dict = yaml.safe_load(file)
-            except Exception as e:
-                print(e)
 
-        # try:
+        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
+            fcl_freight_local_charges_dict = yaml.safe_load(file)
+
         charge_codes = {}
         for code, config in fcl_freight_local_charges_dict.items():
             if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
                 charge_codes[code] = config
 
-        # except Exception as e:
-        #     print(e)
         return charge_codes
 
     def update_freight_objects(self):
