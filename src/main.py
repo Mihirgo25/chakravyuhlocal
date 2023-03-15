@@ -43,6 +43,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_request_response_time(request: Request, call_next):
+    from time import time
+    start_time = time()
+    response = await call_next(request)
+    process_time = time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
 @app.on_event("startup")
 def startup():
     if db.is_closed():
