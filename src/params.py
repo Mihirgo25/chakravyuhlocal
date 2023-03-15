@@ -132,6 +132,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   status: str 
   trade_type: str = None
   updated_at: datetime.datetime 
+  performed_by_id: str
 
 class MandatoryCharges(BaseModel):
   line_items: list[StandardLineItem] = []
