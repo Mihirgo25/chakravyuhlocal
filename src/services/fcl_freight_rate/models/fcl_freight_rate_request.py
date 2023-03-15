@@ -4,6 +4,7 @@ from playhouse.postgres_ext import *
 from rails_client import client
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import REQUEST_SOURCES
+from libs.locations import list_locations
 import datetime
 
 class BaseModel(Model):
@@ -16,6 +17,7 @@ class FclFreightRateRequest(BaseModel):
     cargo_weight_per_container = IntegerField(null=True)
     cogo_entity_id = UUIDField(null = True)
     closed_by_id = UUIDField(null=True)
+    closed_by = BinaryJSONField(null=True)
     closing_remarks = ArrayField(field_class=CharField, null=True)
     commodity = CharField(null=True)
     container_size = CharField(null=True)
@@ -25,24 +27,29 @@ class FclFreightRateRequest(BaseModel):
     destination_continent_id = UUIDField(null=True)
     destination_country_id = UUIDField(null=True)
     destination_port_id = UUIDField(null=True)
+    destination_port = BinaryJSONField(null=True)
     destination_trade_id = UUIDField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     inco_term = CharField(null=True)
     origin_continent_id = UUIDField(null=True)
     origin_country_id = UUIDField(null=True)
     origin_port_id = UUIDField(null=True)
+    origin_port = BinaryJSONField(null=True)
     origin_trade_id = UUIDField(null=True)
     performed_by_id = UUIDField(null=True)
+    performed_by = BinaryJSONField(null=True)
     performed_by_org_id = CharField(null=True)
     performed_by_type = CharField(null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
+    preferred_shipping_lines = BinaryJSONField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     request_type = CharField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_requests_serial_id_seq'::regclass)")])
+    spot_search = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(null=True)
     status = CharField(null=True)
@@ -99,7 +106,7 @@ class FclFreightRateRequest(BaseModel):
     
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.destination_port_id).where(source_id = self.source_id).limit(1).dicts().get()
-        location_pair_data = client.ruby.list_locations({'filters': { 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] }})['list']
+        location_pair_data = list_locations({ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']]})['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
             importer_exporter_id = client.ruby.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
