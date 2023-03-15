@@ -237,7 +237,7 @@ class FclFreightRateLocal(BaseModel):
         location_ids = [str(self.port_id)]
         if self.main_port_id:
             location_ids.append(str(self.main_port_id))
-        ports = client.ruby.list_locations({'filters': {'id': location_ids}, 'pagination_data_required': False})['list']
+        ports = list_locations({'id': location_ids})['list']
         for port in ports:
             if port.get('id') == self.port_id:
                 self.port = port
