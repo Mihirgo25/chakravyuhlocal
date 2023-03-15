@@ -9,7 +9,7 @@ import yaml
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
-from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local_data
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
@@ -25,7 +25,7 @@ class BaseModel(Model):
     class Meta:
         database = db
 
-class FclFreightRateBulkOperations(BaseModel):
+class FclFreightRateBulkOperation(BaseModel):
     action_name = CharField(null=True)
     created_at = DateTimeField()
     data = BinaryJSONField(null=True)
@@ -546,7 +546,7 @@ class FclFreightRateBulkOperations(BaseModel):
                 
                 local['data']['line_items'].append(line_item)
 
-                update_fcl_freight_rate_local_data({
+                update_fcl_freight_rate_local({
                     'id': local['id'],
                     'performed_by_id': self.performed_by_id,
                     'sourced_by_id': sourced_by_id,

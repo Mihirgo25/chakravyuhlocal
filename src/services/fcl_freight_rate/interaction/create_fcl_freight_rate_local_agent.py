@@ -1,9 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from database.db_session import db
-from datetime import datetime
-from services.fcl_freight_rate.helpers.find_or_initiliaze import find_or_initialize
-# from libs.logger import logger
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
+from libs.logger import logger
 from fastapi import HTTPException
 import time
 def create_fcl_freight_rate_local_agent(request):
@@ -21,15 +20,13 @@ def execute_transaction_code(request):
     if type(request) != dict:
       request = request.__dict__
     
-    # create_params = get_create_params(request)
-    
-    local_agent_object,found = find_or_initialize(FclFreightRateLocalAgent,**create_params)
-
+    create_params = get_create_params(request)
+    local_agent_object, found = find_or_initialize(FclFreightRateLocalAgent, **create_params)
 
     if found:
       return {
       'id': local_agent_object.id
-      }
+    }
     
     local_agent_object.set_location_ids_and_type()
     try:
@@ -48,17 +45,8 @@ def execute_transaction_code(request):
     }
 
 def get_create_params(request):
-    return {key:value for key,value in request.items() if key != 'performed_by_id'}
-    
-# def find_or_initialize(**kwargs):
-#   try:
-#     obj = FclFreightRateLocalAgent.get(**kwargs)
-#     obj.updated_at = datetime.now()
-#     return obj,True
-#   except FclFreightRateLocalAgent.DoesNotExist:
-#     obj = FclFreightRateLocalAgent(**kwargs)
-#     return obj,False
-
+    return {key:value for key,value in request.items() if key != 'performed_by_id'} 
+  
 def create_audit(request, local_agent_id):
 
     FclFreightRateAudit.create(

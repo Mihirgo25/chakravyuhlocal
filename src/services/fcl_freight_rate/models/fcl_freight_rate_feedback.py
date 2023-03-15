@@ -2,15 +2,12 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBACKS, FEEDBACK_TYPES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.defintions import FCL_FREIGHT_CURRENCIES
 from rails_client import client
-from playhouse.shortcuts import model_to_dict
 from fastapi import HTTPException
-import yaml
-import datetime
+import yaml, datetime
 
 
 class UnknownField(object):
@@ -24,7 +21,7 @@ class FclFreightRateFeedback(BaseModel):
     booking_params = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
-    created_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeField(default = datetime.datetime.now)
     fcl_freight_rate_id = UUIDField(null=True)
     feedback_type = CharField(null=True)
     feedbacks = ArrayField(field_class=CharField, null=True)
@@ -50,6 +47,10 @@ class FclFreightRateFeedback(BaseModel):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateFeedback, self).save(*args, **kwargs)
 
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateFeedback, self).save(*args, **kwargs)
+
     class Meta:
         table_name = 'fcl_freight_rate_feedbacks'
 
@@ -60,34 +61,42 @@ class FclFreightRateFeedback(BaseModel):
 
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = client.ruby.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
-            if len(spot_search_data) != 0:
+            spot_search_data = client.ruby.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
+            if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
                 return True
 
         if self.source == 'checkout':
-            checkout_data = client.ruby.list_checkouts({'filters':{'id': [str(self.source_id)]}})['list']
-            if len(checkout_data) != 0:
+            checkout_data = client.ruby.list_checkouts({'filters':{'id': [str(self.source_id)]}})
+            if 'list' in checkout_data and len(checkout_data['list']) != 0:
                 return True
         return False
 
     def validate_fcl_freight_rate_id(self):
-        fcl_freight_rate_data = FclFreightRate.select().where(id = self.fcl_freight_rate_id)
+        fcl_freight_rate_data = FclFreightRate.get(**{'id' : self.fcl_freight_rate_id})
         if fcl_freight_rate_data:
             return True
-        return False
-    
-    # def validate_performed_by_id
-    def validate_performed_by_org_id(self):
-        performed_by_org_data = client.ruby.list_organizations({'filters':{'id': [str(self.performed_by_org_id)]}})['list']
-        if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
+        return False    
+
+    def validate_performed_by_id(self):
+        data = client.ruby.get_users({'id': self.performed_by_id})
+        if data != {}:
             return True
-        return False
+        else:
+            raise False
+
+    def validate_performed_by_org_id(self):
+        performed_by_org_data = client.ruby.list_organizations({'filters':{'id': [str(self.performed_by_org_id)]}})
+        if 'list' in performed_by_org_data and len(performed_by_org_data) > 0 and performed_by_org_data['list'][0]['account_type'] == 'importer_exporter':
+            return True
+        else:
+            return False
 
     def validate_feedbacks(self):
         for feedback in self.feedbacks:
             if feedback in POSSIBLE_FEEDBACKS:
                 return True
             return False
+        
 
     def validate_preferred_freight_rate_currency(self):
         if not self.preferred_freight_rate_currency:
@@ -106,8 +115,8 @@ class FclFreightRateFeedback(BaseModel):
         return False
 
     def validate_preferred_shipping_line_ids(self):
-        shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(x) for x in self.preferred_shipping_line_ids]}})['list']
-        if len(shipping_line_data) == len(self.preferred_shipping_line_ids):
+        shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(x) for x in self.preferred_shipping_line_ids]}})
+        if 'list' in shipping_line_data and (len(shipping_line_data) == len(self.preferred_shipping_line_ids)):
             return True
         return False
 
@@ -117,33 +126,40 @@ class FclFreightRateFeedback(BaseModel):
         return False
 
     def validate_before_save(self):
-
         if not self.validate_source():
-            raise HTTPException(status_code=499, detail="incorrect source")
+            raise HTTPException(status_code=404, detail="incorrect source")
 
         if not self.validate_source_id():
-            raise HTTPException(status_code=499, detail="incorrect source id")
+            raise HTTPException(status_code=404, detail="incorrect source id")
         
         if not self.validate_fcl_freight_rate_id():
-            raise HTTPException(status_code=499, detail="incorrect fcl freight rate id")
-        ###validate_performed_by_id
+            raise HTTPException(status_code=404, detail="incorrect fcl freight rate id")
+        
+        if not self.validate_performed_by_id():
+            raise HTTPException(status_code=404, detail= 'invalid performed by ID')
+
         if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=499, detail="incorrect performed by org id")
+            raise HTTPException(status_code=404, detail="incorrect performed by org id")
 
         if len(self.feedbacks) != 0:
             if not self.validate_feedbacks():
-                raise HTTPException(status_code=499, detail="incorrect feedbacks")
-##### currency
+                raise HTTPException(status_code=404, detail="incorrect feedbacks")
+        
+        if not self.validate_preferred_freight_rate_currency():
+            raise HTTPException(status_code=404, detail='invalid currency')
+
         if self.preferred_detention_free_days:
             if not self.validate_preferred_detention_free_days():
-                raise HTTPException(status_code=499, detail="incorrect preferred detention free days")
+                raise HTTPException(status_code=404, detail="incorrect preferred detention free days")
 
-        if len(self.preferred_shipping_line_ids != 0):
+        if len(self.preferred_shipping_line_ids) != 0:
             if not self.validate_preferred_shipping_line_ids():
-                raise HTTPException(status_code=499, detail="incorrect preferred shipping line ids")
+                raise HTTPException(status_code=404, detail="incorrect preferred shipping line ids")
 
         if not self.validate_feedback_type():
-            raise HTTPException(status_code=499, detail="incorrect feedback type")
+            raise HTTPException(status_code=404, detail="incorrect feedback type")
+
+        return True
 
     def supply_agents_to_notify(self):
         locations_data = FclFreightRate.select(

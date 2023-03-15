@@ -37,6 +37,14 @@ def create_audit(request, freight_id):
         source=request.get("source"),
     )
 
+def create_fcl_freight_rate(request):
+  with db.atomic() as transaction:
+    try:
+      return create_fcl_freight_rate_data(request)
+    except Exception as e:
+      transaction.rollback()
+      return e
+
 
 def create_fcl_freight_rate_data(request):
     row = {
@@ -150,11 +158,6 @@ def create_fcl_freight_rate_data(request):
 
     create_audit(request, freight.id)
 
-    freight.update_special_attributes()
-
-    freight.update_local_references()
-
-    freight.update_platform_prices_for_other_service_providers()
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 

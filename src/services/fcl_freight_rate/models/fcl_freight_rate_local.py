@@ -10,6 +10,7 @@ from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from libs.locations import list_locations
 
+
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -60,7 +61,7 @@ class FclFreightRateLocal(BaseModel):
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateLocal, self).save(*args, **kwargs)
@@ -243,10 +244,11 @@ class FclFreightRateLocal(BaseModel):
             elif self.main_port_id and port.get('id') == self.main_port_id:
                 self.main_port = port
 
+
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = client.ruby.list_operators({'filters': { id: self.shipping_line_id }, 'pagination_data_required': False})['list']
+        shipping_line = client.ruby.list_operators({'filters': { 'id': str(self.shipping_line_id) }, 'pagination_data_required': False})['list']
         if len(shipping_line) != 0:
             self.shipping_line = shipping_line[0]
 
@@ -261,21 +263,15 @@ class FclFreightRateLocal(BaseModel):
         container_size = self.container_size
         container_type = self.container_type
         commodity = self.commodity
-        
+
         with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-            try:
-                fcl_freight_local_charges_dict = yaml.safe_load(file)
-            except Exception as e:
-                print(e)
+            fcl_freight_local_charges_dict = yaml.safe_load(file)
 
-        try:
-            charge_codes = {}
-            for code, config in fcl_freight_local_charges_dict.items():
-                if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
-                    charge_codes[code] = config
+        charge_codes = {}
+        for code, config in fcl_freight_local_charges_dict.items():
+            if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
+                charge_codes[code] = config
 
-        except Exception as e:
-            print(e)
         return charge_codes
 
     def update_freight_objects(self):

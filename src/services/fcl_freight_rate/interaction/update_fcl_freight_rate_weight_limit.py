@@ -4,7 +4,6 @@ from fastapi import HTTPException
 from datetime import datetime
 from database.db_session import db
 
-
 def update_fcl_freight_rate_weight_limit(request):
   with db.atomic() as transaction:
         try:

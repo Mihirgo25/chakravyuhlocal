@@ -78,3 +78,8 @@ ALL_COMMODITIES = set((STANDARD_COMMODITIES + REFER_COMMODITIES + OPEN_TOP_COMMO
 CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
 
 CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
+
+
+CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
+
+PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']

@@ -1,17 +1,21 @@
-from operator import attrgetter
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from services.fcl_freight_rate.models.fcl_freight_rate_bulk_operation import FclFreightRateBulkOperation
 from math import ceil 
 from playhouse.shortcuts import model_to_dict
+import json
 
 possible_direct_filters = ['action_name', 'service_provider_id']
 possible_indirect_filters = []
 
-def list_fcl_freight_rate_bulk_operations(filters, page, page_limit):
+def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 1):
+    if type(filters) != dict:
+        filters = json.loads(filters)
+
     query = get_query(page, page_limit)
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateBulkOperation)
     query = apply_indirect_filters(query, filters)
 
-    data = get_data(query)
+    data = [model_to_dict(item) for item in query.execute()]
     pagination_data = get_pagination_data(query, page, page_limit)
 
     return {'list': data } | (pagination_data)
@@ -20,10 +24,6 @@ def get_query(page, page_limit):
     query = FclFreightRateBulkOperation.select().order_by(FclFreightRateBulkOperation.updated_at.desc()).paginate(page, page_limit)
     return query
 
-def get_data(query):
-    data = [model_to_dict(item) for item in query.execute()]
-    return data 
-
 def get_pagination_data(query, page, page_limit):
     params = {
       'page': page,
@@ -31,13 +31,7 @@ def get_pagination_data(query, page, page_limit):
       'total_count': query.count(),
       'page_limit': page_limit
     }
-    return {'get_pagination_data':params}
-  
-def apply_direct_filters(query, filters):
-    for key in filters:
-        if key in possible_direct_filters:
-            query = query.select().where(attrgetter(key)(FclFreightRateBulkOperation) == filters[key])
-    return query
+    return params
 
 def apply_indirect_filters(query, filters):
     for key in filters:
