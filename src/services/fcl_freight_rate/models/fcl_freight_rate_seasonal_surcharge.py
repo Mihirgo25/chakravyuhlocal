@@ -111,7 +111,6 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
 
     def validate_service_provider(self):
         service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
-        print("ddd", service_provider)
         if service_provider:
             service_provider = service_provider[0]
             if service_provider.get('account_type') != 'service_provider':

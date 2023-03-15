@@ -21,7 +21,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
 from libs.locations import list_locations
-
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
@@ -106,6 +106,8 @@ class FclFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
     
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -166,7 +168,6 @@ class FclFreightRate(BaseModel):
           return True
         return False
       return True
-      
 
     def validate_destination_main_port_id(self):
       if self.destination_port and self.destination_port['is_icd'] == False:
@@ -223,41 +224,41 @@ class FclFreightRate(BaseModel):
 
       if self.origin_local:
         self.origin_local_data_instance = FclFreightRateLocalData(self.origin_local)
-        response = self.origin_local_data_instance.get_line_item_messages(self.port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        # response = self.origin_local_data_instance.get_line_item_messages(self.origin_port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response={}
 
-        self.update(
-        origin_local_line_items_error_messages = response.get('line_items_error_messages'),
-        is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
-        origin_local_line_items_info_messages = response.get('line_items_info_messages'),
-        is_origin_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present'))
+      self.origin_local_line_items_error_messages = response.get('line_items_error_messages'),
+      self.is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
+      self.origin_local_line_items_info_messages = response.get('line_items_info_messages'),
+      self.is_origin_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present')
 
     def update_destination_local_line_item_messages(self):
-      response = {}
 
       if self.destination_local:
-        response = dict(self.local_data_get_line_item_messages())
-      self.update(
-      destination_local_line_items_error_messages = response.get('line_items_error_messages'),
-      is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
-      destination_local_line_items_info_messages = response.get('line_items_info_messages'),
-      is_destination_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present'))
+        response = FclFreightRateLocalData(self.destination_local)
+        # response = self.origin_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response={}
+
+      self.destination_local_line_items_error_messages = response.get('line_items_error_messages'),
+      self.is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
+      self.destination_local_line_items_info_messages = response.get('line_items_info_messages'),
+      self.is_destination_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present')
+
 
     def update_origin_free_days_special_attributes(self):
-        self.update(
-          is_origin_detention_slabs_missing = (len(self.origin_detention.get('slabs',{})) == 0) if self.origin_detention.get("slabs") is not None else True,
-          is_origin_demurrage_slabs_missing = (len(self.origin_demurrage.get('slabs',{})) == 0) if self.origin_demurrage.get("slabs") is not None else True,
-          is_origin_plugin_slabs_missing = (len(self.origin_local.get('plugin',{}).get('slabs',{})) == 0) if self.origin_local.get("plugin") is not None else True
-        ) 
+      self.is_origin_detention_slabs_missing = (len(self.origin_detention.get('slabs',{})) == 0) if self.origin_detention.get("slabs") is not None else True,
+      self.is_origin_demurrage_slabs_missing = (len(self.origin_demurrage.get('slabs',{})) == 0) if self.origin_demurrage.get("slabs") is not None else True,
+      self.is_origin_plugin_slabs_missing = (len(self.origin_local.get('plugin',{}).get('slabs',{})) == 0) if self.origin_local.get("plugin") is not None else True
+
 
     def update_destination_free_days_special_attributes(self):
-        self.update(
-          is_destination_detention_slabs_missing = (len(self.destination_detention.get('slabs',{})) == 0) if self.destination_detention.get("slabs") is not None else True,
-          is_destination_demurrage_slabs_missing = (len(self.destination_demurrage.get('slabs',{})) == 0) if self.destination_demurrage.get("slabs") is not None else True,
-          is_destination_plugin_slabs_missing = (len(self.destination_local.get('plugin',{}).get('slabs',{})) == 0) if self.destination_local.get("plugin") is not None else True
-        )
+      self.is_destination_detention_slabs_missing = (len(self.destination_detention.get('slabs',{})) == 0) if self.destination_detention.get("slabs") is not None else True,
+      self.is_destination_demurrage_slabs_missing = (len(self.destination_demurrage.get('slabs',{})) == 0) if self.destination_demurrage.get("slabs") is not None else True,
+      self.is_destination_plugin_slabs_missing = (len(self.destination_local.get('plugin',{}).get('slabs',{})) == 0) if self.destination_local.get("plugin") is not None else True
+
 
     def update_weight_limit_special_attributes(self):
-      self.update(is_weight_limit_slabs_missing = (len(self.weight_limit.get('slabs',{})) == 0))
+      self.is_weight_limit_slabs_missing = (len(self.weight_limit.get('slabs',{})) == 0)
 
     def validate_origin_local(self):
       if 'origin_local' in self.dirty_fields and self.origin_local:
@@ -318,7 +319,7 @@ class FclFreightRate(BaseModel):
 
       origin_port = self.origin_port
       destination_port = self.destination_port
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       commodity = self.commodity
       container_type = self.container_type
       container_size = self.container_size
@@ -348,24 +349,24 @@ class FclFreightRate(BaseModel):
             (FclFreightRate.container_type == self.container_type) &
             (FclFreightRate.commodity == self.commodity) &
             (FclFreightRate.shipping_line_id == self.shipping_line_id)
-            ).where(FclFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).where(FclFreightRate.service_provider_id.not_in([self.service_provider_id]))
+            ).where(FclFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).where(((FclFreightRate.service_provider_id != self.service_provider_id) | (FclFreightRate.service_provider_id.is_null(True)))).execute()
 
       result = price
-
-      validities = []
       if freight_rates:
         for freight_rate in freight_rates:
+          validities = []
+
           for t in freight_rate.validities:
-            if (validity_start <= t.validity_end) & (validity_end >= t.validity_start):
+            if (validity_start <= t["validity_end"]) & (validity_end >= t["validity_start"]):
               validities.append(t)
 
           for t in validities:
             price = []
-            new_price =  client.ruby.get_money_exchange_for_fcl({'price': t.price, 'from_currency': t.currency, 'to_currency':currency})['price']
+            new_price =  client.ruby.get_money_exchange_for_fcl({'price': t["price"], 'from_currency': t['currency'], 'to_currency':currency})['price']
             price.append(new_price)
             freight_rate_min_price = min(price)
 
-          if freight_rate_min_price < result & freight_rate_min_price is not None:      
+          if freight_rate_min_price < result  and freight_rate_min_price is not None:      
             result = freight_rate_min_price    
       
       return result
@@ -396,7 +397,7 @@ class FclFreightRate(BaseModel):
 
         if not deleted:
             currency = [item for item in line_items if item["code"] == "BAS"][0]["currency"]
-            price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 0) for item in line_items))
+            price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price') for item in line_items))
             new_validity_object = {
                 "validity_start": validity_start,
                 "validity_end": validity_end,
@@ -521,7 +522,7 @@ class FclFreightRate(BaseModel):
       charge_codes = {}
       port = self.origin_port
       main_port = self.origin_main_port
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       container_size = self.container_size
       container_type = self.container_type
       commodity = self.commodity
@@ -538,7 +539,7 @@ class FclFreightRate(BaseModel):
 
       port = self.destination_port
       main_port = self.destination_main_port
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       container_size = self.container_size
       container_type = self.container_type
       commodity = self.commodity
@@ -553,7 +554,7 @@ class FclFreightRate(BaseModel):
         fcl_freight_charges = yaml.safe_load(file)
 
       charge_codes = {}
-      shipping_line = self.shipping_line
+      shipping_line_id = self.shipping_line_id
       container_size = self.container_size
       container_type = self.container_type
       commodity = self.commodity
@@ -599,17 +600,18 @@ class FclFreightRate(BaseModel):
         (FclFreightRateLocal.commodity == (self.commodity if self.commodity in HAZ_CLASSES else None)),
         (FclFreightRateLocal.service_provider_id == self.service_provider_id),
         (FclFreightRateLocal.shipping_line_id == self.shipping_line_id)
-      )
+      ).execute()
 
-      filtered_objects = [t for t in local_objects if t.port_id == self.origin_port_id and t.main_port_id == self.origin_main_port_id and t.trade_type == 'export']
+      filtered_objects = [t for t in local_objects if str(t.port_id) == str(self.origin_port_id) and str(t.main_port_id or '') == str(self.origin_main_port_id or '') and t.trade_type == 'export']
 
-      origin_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
+      origin_local_object_id = filtered_objects[0].id if filtered_objects else None
 
-      filtered_objects = [t for t in local_objects if t.port_id == self.destination_port_id and t.main_port_id == self.destination_main_port_id and t.trade_type == 'import']
+      filtered_objects = [t for t in local_objects if t.port_id == self.destination_port_id and str(t.main_port_id or '') == str(self.destination_main_port_id or '') and t.trade_type == 'import']
 
       destination_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
-
-      self.update(origin_local_id = origin_local_object_id, destination_local_id = destination_local_object_id)
+      FclFreightRate.update(origin_local_id = origin_local_object_id,destination_local_id=destination_local_object_id).where(
+        FclFreightRate.id == self.id
+      ).execute()
 
     def detail(self):
 
@@ -723,31 +725,22 @@ class FclFreightRate(BaseModel):
 
       return {**data, 'origin_local': origin_local, 'destination_local': destination_local}
 
-
-    def update_fcl_freight_rate_platform_prices(self, origin_port_id, origin_main_port_id, destination_port_id, destination_main_port_id, container_size, container_type, commodity, shipping_line_id, importer_exporter_id):
-      freight_objects = FclFreightRate.select().where(
-        (FclFreightRate.origin_port_id == origin_port_id),
-        (FclFreightRate.origin_main_port_id == origin_main_port_id if origin_main_port_id is not None else True),
-        (FclFreightRate.destination_port_id == destination_port_id),
-        (FclFreightRate.destination_main_port_id == destination_main_port_id if destination_main_port_id is not None else True),
-        (FclFreightRate.container_size == container_size),
-        (FclFreightRate.container_type == container_type),
-        (FclFreightRate.commodity == commodity),
-        (FclFreightRate.shipping_line_id == shipping_line_id)
-      ).where(FclFreightRate.importer_exporter_id.in_([None, importer_exporter_id])
-      ).where((FclFreightRate.last_rate_available_date >= date.today())).order_by(fn.Random())
-
-      for freight in freight_objects:
-        freight.set_platform_prices()
-        freight.set_is_best_price()
-        freight.save()
-
     # def update_priority_score(self):
     #   client.ruby.update_fcl_freight_rate_priority_scores({'filters':{'id': self.id}})
 
     def update_platform_prices_for_other_service_providers(self):  # check for delay
-      #should be in delay
-      self.update_fcl_freight_rate_platform_prices(self.origin_port_id, self.origin_main_port_id, self.destination_port_id, self.destination_main_port_id, self.container_size, self.container_type, self.commodity, self.shipping_line_id, self.importer_exporter_id)
+      data = {
+        "origin_port_id":self.origin_port_id,
+        "origin_main_port_id":self.origin_main_port_id,
+        "destination_port_id":self.destination_port_id,
+        "destination_main_port_id":self.destination_main_port_id,
+        "container_size":self.container_size,
+        "container_type":self.container_type,
+        "commodity":self.commodity,
+        "shipping_line_id":self.shipping_line_id,
+        "importer_exporter_id":self.importer_exporter_id
+      }
+      update_fcl_freight_rate_platform_prices(data)
 
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
       if self.last_rate_available_date is None:

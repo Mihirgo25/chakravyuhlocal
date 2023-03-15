@@ -1,39 +1,35 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from database.db_session import db
 from fastapi import HTTPException
-import datetime
-
-
-def find_or_initialize(**kwargs):
-    try:
-        obj = FclFreightRateFreeDay.get(**kwargs)
-        obj.updated_at = datetime.datetime.now()
-    except FclFreightRateFreeDay.DoesNotExist:
-        obj = FclFreightRateFreeDay(**kwargs)
-    return obj
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 def create_fcl_freight_rate_free_day(request):
     with db.atomic() as transaction:
           try:
               return execute_transaction_code(request)
-          except:
+          except Exception as e:
               transaction.rollback()
-              return "Creation Failed"
+              return e
 
 def execute_transaction_code(request):
 
     free_day = get_free_day_object(request)
 
+    # free_day.validate_validity_object(request['validity_start'], request['validity_end'])
+
     free_day.validate_before_save()
+    free_day.update_special_attributes()
 
     try:
         free_day.save()
     except:
-        raise HTTPException(status_code=499, detail='fcl freight rate free day did not save')
-
-    free_day.update_special_attributes()
-    free_day.save()
+        raise HTTPException(status_code=403, detail='fcl freight rate free day did not save')
+    
+    # if 'shipment_id' in request:
+    #     free_day.update_sell_quotation()
 
     create_audit(request, free_day.id)
 
@@ -50,9 +46,11 @@ def get_free_day_object(request):
         'service_provider_id' : request['service_provider_id'],
         'specificity_type' : request['specificity_type'],
         'importer_exporter_id' : request.get('importer_exporter_id')
+        # 'validity_start' : request.get('validity_start')
+        # 'validity_end' : request.get('validity_end')
     }
 
-    free_day = find_or_initialize(**row)
+    free_day = find_or_initialize(FclFreightRateFreeDay, **row)
 
     extra_fields = ['previous_days_applicable','free_limit','remarks','slabs']
     for field in extra_fields:
@@ -78,4 +76,4 @@ def create_audit(request, free_day_id):
             object_type = 'FclFreightRateFreeDay'
         )
     except:
-        raise HTTPException(status_code=499, detail='fcl freight audit did not save')
+        raise HTTPException(status_code=403, detail='fcl freight audit did not save')

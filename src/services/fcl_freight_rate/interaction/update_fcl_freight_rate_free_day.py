@@ -9,12 +9,12 @@ def update_fcl_freight_rate_free_day(request):
   with db.atomic() as transaction:
         try:
           return execute_transaction_code(request)
-        except:
+        except Exception as e:
             transaction.rollback()
-            return "Creation Failed"
+            return e
 
 def execute_transaction_code(request):
-    #### write a ciondition where if atleast one of free_limit,remarks or slabs is present then only execute update
+
     free_day = FclFreightRateFreeDay.get_by_id(request['id'])
 
     if request.get('free_limit'):
@@ -25,14 +25,12 @@ def execute_transaction_code(request):
         free_day.slabs = request.get('slabs')
 
     free_day.updated_at = datetime.datetime.now()
+    free_day.update_special_attributes()
 
     try:
         free_day.save()
     except:
-        raise HTTPException(status_code=499, detail='fcl freight rate local did not save')
-
-    free_day.update_special_attributes()
-    free_day.save()
+        raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
 
     create_audit(request, free_day.id)
 
@@ -56,4 +54,4 @@ def create_audit(request, free_day_id):
         object_type = 'FclFreightRateFreeDay'
       )
     except:
-      raise HTTPException(status_code=499, detail='fcl freight audit for free day did not save')
+      raise HTTPException(status_code=403, detail='fcl freight audit for free day did not save')

@@ -2,11 +2,9 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import json
 from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-import os
-import time
-from params import LocalData
 from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
+from celery_worker import delay_fcl_functions
 from datetime import datetime
 from database.db_session import db
 
@@ -158,40 +156,7 @@ def create_fcl_freight_rate_data(request):
 
     # freight.update_platform_prices_for_other_service_providers()
 
-    # freight.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
+  delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
-    # create_sailing_schedule_port_pair(request) # call this ruby api
+  return {"id": freight.id}
 
-    # create_freight_trend_port_pair(request)
-
-    # if not FclFreightRate.where(service_provider_id=request["service_provider_id"], rate_not_available_entry=False).exists():
-    #   client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-
-    # if request.get(fcl_freight_rate_request_id):
-    #   DeleteFclFreightRateRequest.run!(fcl_freight_rate_request_ids=[request.fcl_freight_rate_request_id])
-
-    return {"id": freight.id}
-    # return {"id": 1}
-
-
-def create_sailing_schedule_port_pair(request):
-    port_pair_coverage_data = {
-        "origin_port_id": request.origin_main_port_id
-        if request.origin_main_port_id
-        else request.origin_port_id,
-        "destination_port_id": request.destination_main_port_id
-        if request.destination_main_port_id
-        else request.destination_port_id,
-        "shipping_line_id": request.shipping_line_id,
-    }
-    # in delay private api call
-    client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
-
-
-def create_freight_trend_port_pair(request):
-    port_pair_data = {
-        "origin_port_id": request.origin_port_id,
-        "destination_port_id": request.destination_port_id,
-    }
-    # in delay(queue:low) private api call and expose
-    client.ruby.create_freight_trend_port_pair(port_pair_data)
