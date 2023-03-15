@@ -6,6 +6,7 @@ from rails_client import client
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+from libs.locations import list_locations
 
 def extend_create_fcl_freight_rate_data(request):
     
@@ -66,7 +67,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     except:
         containers = [rate_object['container_size']]
 
-    icd_data = client.ruby.list_locations({'filters': { 'id': origin_locations + destination_locations }, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+    icd_data = list_locations({'filters': { 'id': origin_locations + destination_locations }, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
 
     new_data = {}
     for t in icd_data:
