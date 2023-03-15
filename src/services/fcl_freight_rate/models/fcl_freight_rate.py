@@ -159,12 +159,14 @@ class FclFreightRate(BaseModel):
         if not self.origin_main_port_id:
           return True
         return False
+      return True
 
     def validate_destination_main_port_id(self):
       if self.destination_port and self.destination_port['is_icd'] == False:
         if not self.destination_main_port_id:
           return True
         return False
+      return True
 
     def set_shipping_line(self):
       if not self.rate_not_available_entry:
@@ -241,39 +243,37 @@ class FclFreightRate(BaseModel):
       if self.origin_local:
         response = dict(self.local_data_get_line_item_messages())
 
-      self.update(
-      origin_local_line_items_error_messages = response.get('line_items_error_messages'),
-      is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
-      origin_local_line_items_info_messages = response.get('line_items_info_messages'),
-      is_origin_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present'))
+      self.origin_local_line_items_error_messages = response.get('line_items_error_messages'),
+      self.is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
+      self.origin_local_line_items_info_messages = response.get('line_items_info_messages'),
+      self.is_origin_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present')
 
     def update_destination_local_line_item_messages(self):
       response = {}
 
       if self.destination_local:
         response = dict(self.local_data_get_line_item_messages())
-      self.update(
-      destination_local_line_items_error_messages = response.get('line_items_error_messages'),
-      is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
-      destination_local_line_items_info_messages = response.get('line_items_info_messages'),
-      is_destination_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present'))
+
+      self.destination_local_line_items_error_messages = response.get('line_items_error_messages'),
+      self.is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
+      self.destination_local_line_items_info_messages = response.get('line_items_info_messages'),
+      self.is_destination_local_line_items_info_messages_present = response.get('is_line_items_info_messages_present')
+
 
     def update_origin_free_days_special_attributes(self):
-        self.update(
-          is_origin_detention_slabs_missing = (len(self.origin_detention.get('slabs',{})) == 0) if self.origin_detention.get("slabs") is not None else True,
-          is_origin_demurrage_slabs_missing = (len(self.origin_demurrage.get('slabs',{})) == 0) if self.origin_demurrage.get("slabs") is not None else True,
-          is_origin_plugin_slabs_missing = (len(self.origin_local.get('plugin',{}).get('slabs',{})) == 0) if self.origin_local.get("plugin") is not None else True
-        ) 
+          self.is_origin_detention_slabs_missing = (len(self.origin_detention.get('slabs',{})) == 0) if self.origin_detention.get("slabs") is not None else True,
+          self.is_origin_demurrage_slabs_missing = (len(self.origin_demurrage.get('slabs',{})) == 0) if self.origin_demurrage.get("slabs") is not None else True,
+          self.is_origin_plugin_slabs_missing = (len(self.origin_local.get('plugin',{}).get('slabs',{})) == 0) if self.origin_local.get("plugin") is not None else True
+
 
     def update_destination_free_days_special_attributes(self):
-        self.update(
-          is_destination_detention_slabs_missing = (len(self.destination_detention.get('slabs',{})) == 0) if self.destination_detention.get("slabs") is not None else True,
-          is_destination_demurrage_slabs_missing = (len(self.destination_demurrage.get('slabs',{})) == 0) if self.destination_demurrage.get("slabs") is not None else True,
-          is_destination_plugin_slabs_missing = (len(self.destination_local.get('plugin',{}).get('slabs',{})) == 0) if self.destination_local.get("plugin") is not None else True
-        )
+          self.is_destination_detention_slabs_missing = (len(self.destination_detention.get('slabs',{})) == 0) if self.destination_detention.get("slabs") is not None else True,
+          self.is_destination_demurrage_slabs_missing = (len(self.destination_demurrage.get('slabs',{})) == 0) if self.destination_demurrage.get("slabs") is not None else True,
+          self.is_destination_plugin_slabs_missing = (len(self.destination_local.get('plugin',{}).get('slabs',{})) == 0) if self.destination_local.get("plugin") is not None else True
+
 
     def update_weight_limit_special_attributes(self):
-      self.update(is_weight_limit_slabs_missing = (len(self.weight_limit.get('slabs',{})) == 0))
+      self.is_weight_limit_slabs_missing = (len(self.weight_limit.get('slabs',{})) == 0)
 
     def validate_origin_local(self):
       if 'origin_local' in self.dirty_fields and self.origin_local:
