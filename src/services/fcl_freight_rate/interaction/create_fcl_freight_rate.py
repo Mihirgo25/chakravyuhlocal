@@ -2,14 +2,9 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import json
 from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-import os
-import time
-from params import LocalData
 from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
-from datetime import datetime
-
-
+from celery_worker import delay_fcl_functions
 def to_dict(obj):
     return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
@@ -59,7 +54,6 @@ def create_fcl_freight_rate_data(request):
   freight = find_or_initialize(FclFreightRate, **{"init_key": init_key})
   for key in list(row.keys()):
     setattr(freight, key, row[key])
-  freight.updated_at = datetime.datetime.now()
   freight.set_locations()
   freight.set_shipping_line()
   freight.set_origin_location_ids()
@@ -140,7 +134,6 @@ def create_fcl_freight_rate_data(request):
   #   DeleteFclFreightRateRequest.run!(fcl_freight_rate_request_ids=[request.fcl_freight_rate_request_id])
 
   return {"id": freight.id}
-  # return {"id": 1}
 
 def create_sailing_schedule_port_pair(request):
   port_pair_coverage_data = {
@@ -148,7 +141,6 @@ def create_sailing_schedule_port_pair(request):
   'destination_port_id': request.destination_main_port_id if request.destination_main_port_id else request.destination_port_id,
   'shipping_line_id': request.shipping_line_id
   }
-  # in delay private api call
   client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
 
 def create_freight_trend_port_pair(request):
@@ -156,5 +148,4 @@ def create_freight_trend_port_pair(request):
       'origin_port_id': request.origin_port_id,
       'destination_port_id': request.destination_port_id
   }
-  # in delay(queue:low) private api call and expose
   client.ruby.create_freight_trend_port_pair(port_pair_data)

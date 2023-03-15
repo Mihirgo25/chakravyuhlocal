@@ -104,6 +104,7 @@ class FclFreightRate(BaseModel):
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
     init_key = TextField(index=True)
+    object_data = BinaryJSONField(null=True)
     
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
