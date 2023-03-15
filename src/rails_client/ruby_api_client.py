@@ -10,18 +10,6 @@ class RubyApiClient:
     # def list_locations(self,data={}):
     #     return self.client.request('GET','list_locations',data)
     
-    def list_locations(self,data={}):
-        # print(data)
-        url= 'https://api.cogoport.com/location/list_locations'
-        response=requests.get(url,params={'filters':json.dumps(data['filters'])})
-        data = response.content
-        if not data:
-            return {"message": "no response"}
-        try:
-            result=json.loads(response.text)
-        except:
-            return {"message": "no response"}
-        return result
 
     def get_eligible_service_organizations(self, data = {}):
         return self.client.request('GET','get_eligible_service_organizations',data)

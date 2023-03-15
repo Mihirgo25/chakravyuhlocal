@@ -13,7 +13,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     cluster_id = CharField(index=True, null=True)
     cluster_reference_name = CharField(index=True, null=True)
     cluster_type = CharField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     extension_name = CharField(null=True)
     gri_currency = CharField(null=True)
     gri_rate = DoubleField(null=True)
@@ -23,7 +23,11 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     shipping_line_id = UUIDField(index=True, null=True)
     status = CharField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateExtensionRuleSets, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_extension_rule_sets'

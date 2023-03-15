@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_commodity_cluster import FclFr
 from operator import attrgetter
 from math import ceil
 from playhouse.shortcuts import model_to_dict
-from typing import fn
+from peewee import fn
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
 
 possible_direct_filters = ['id', 'status']

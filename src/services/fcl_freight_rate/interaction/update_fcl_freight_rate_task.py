@@ -4,7 +4,7 @@ from datetime import datetime
 from rails_client import client
 from configs.global_constants import HAZ_CLASSES
 from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local_data
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 
 def update_fcl_freight_rate_task_data(request):
@@ -92,7 +92,7 @@ def create_fcl_freight_local_rate(task,request):
         'data': { 'line_items': rate['line_items'], 'detention': rate['detention'], 'demurrage': rate['demurrage'] }
       }
 
-    return create_fcl_freight_rate_local_data(create_params)
+    return create_fcl_freight_rate_local(create_params)
 
 def update_shipment_local_charges(task,request):
     rate = task.completion_data['rate']

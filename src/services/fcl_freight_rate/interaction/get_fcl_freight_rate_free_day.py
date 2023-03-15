@@ -7,26 +7,17 @@ def get_fcl_freight_rate_free_day(request):
     if not all_fields_present(request):
         return {}
     
-    object = find_object(request)
-    object = model_to_dict(object)
+    objects = find_object(request)
+    objects = model_to_dict(objects)
 
-    if object is None:
+    if not objects:
         return {}
-    return object
+    return objects
 
 def all_fields_present(request):
-    for field in (
-        'location_id',
-        'trade_type',
-        'free_days_type',
-        'container_size',
-        'container_type',
-        'shipping_line_id',
-        'service_provider_id'
-    ):
-        if field not in request:
-            return False
-    return True
+    if request['location_id'] and request['trade_type'] and request['free_days_type'] and request['container_size'] and request['container_type'] and request['shipping_line_id'] and request['service_provider_id']:
+        return True
+    return False
 
 def find_object(request):
     row = {
@@ -41,7 +32,7 @@ def find_object(request):
     }
     
     try:
-        object = FclFreightRateFreeDay.get(**row)
+        objects = FclFreightRateFreeDay.get(**row)
     except:
-        raise HTTPException(status_code=499, detail="no free day entry with the given id exists")
-    return object
+        raise HTTPException(status_code=403, detail="no free day entry with the given id exists")
+    return objects

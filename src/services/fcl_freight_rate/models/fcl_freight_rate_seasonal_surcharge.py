@@ -51,6 +51,10 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_end = DateField(index=True, null=True)
     validity_start = DateField(null=True)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateSeasonalSurcharge, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_seasonal_surcharges'

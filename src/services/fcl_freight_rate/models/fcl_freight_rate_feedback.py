@@ -10,6 +10,7 @@ from rails_client import client
 from playhouse.shortcuts import model_to_dict
 from fastapi import HTTPException
 import yaml
+import datetime
 
 
 class UnknownField(object):
@@ -23,7 +24,7 @@ class FclFreightRateFeedback(BaseModel):
     booking_params = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     fcl_freight_rate_id = UUIDField(null=True)
     feedback_type = CharField(null=True)
     feedbacks = ArrayField(field_class=CharField, null=True)
@@ -42,8 +43,12 @@ class FclFreightRateFeedback(BaseModel):
     source = CharField(null=True)
     source_id = UUIDField(null=True)
     status = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateFeedback, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_feedbacks'

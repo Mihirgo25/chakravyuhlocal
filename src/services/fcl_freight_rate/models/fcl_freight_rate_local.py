@@ -56,6 +56,11 @@ class FclFreightRateLocal(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     port: dict = None
     shipping_line: dict = None
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateLocal, self).save(*args, **kwargs)
+
 
     class Meta:
         table_name = 'fcl_freight_rate_locals'
@@ -164,8 +169,7 @@ class FclFreightRateLocal(BaseModel):
       return False
     
     def validate_data(self):
-        self.local_data_instance.validate_duplicate_charge_codes()# for each part different error should occur
-        self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
+        return self.local_data_instance.validate_duplicate_charge_codes() and self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
     def validate_before_save(self):
         try:
@@ -272,25 +276,28 @@ class FclFreightRateLocal(BaseModel):
         return charge_codes
 
     def update_freight_objects(self):
-        try:
-            from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-            location_key = 'origin' if self.trade_type == 'export' else 'destination'
+        from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+        location_key = 'origin' if self.trade_type == 'export' else 'destination'
+        if location_key == 'origin':
+            kwargs = {
+                'origin_local_id':self.id
+            }
+        else:
+            kwargs = {
+                'destination_local_id':self.id
+            }
 
-            t=FclFreightRate.update(origin_local_id = '4bf52843-44c4-4af4-97b6-72da4d0a36bf').where(
-                FclFreightRate.container_size == self.container_size,
-                FclFreightRate.container_type == self.container_type,
-                FclFreightRate.shipping_line_id == self.shipping_line_id,
-                FclFreightRate.service_provider_id == self.service_provider_id,
-                (f"FclFreightRate.{location_key}_port_id" == self.port_id),
-                (f"FclFreightRate.{location_key}_main_port_id" == self.main_port_id)
-                (FclFreightRate.commodity == self.commodity) if self.commodity else (FclFreightRate.id.is_null(False)),
-                (f"FclFreightRate.{location_key}_local_id" == None)
-                )
-            t.execute()
-                
-            print("update done")
-        except Exception as e:
-            print(e)
+        t=FclFreightRate.update(**kwargs).where(
+            FclFreightRate.container_size == self.container_size,
+            FclFreightRate.container_type == self.container_type,
+            FclFreightRate.shipping_line_id == self.shipping_line_id,
+            FclFreightRate.service_provider_id == self.service_provider_id,
+            (eval("FclFreightRate.{}_port_id".format(location_key)) == self.port_id),
+            (eval("FclFreightRate.{}_main_port_id".format(location_key)) == self.main_port_id),
+            (FclFreightRate.commodity == self.commodity) if self.commodity else (FclFreightRate.id.is_null(False)),
+            (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
+            )
+        t.execute()
 
     def detail(self):
         with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
@@ -299,21 +306,17 @@ class FclFreightRateLocal(BaseModel):
         from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 
         if self.detention_id or self.demurrage_id:
-            free_days = list_fcl_freight_rate_free_days({'filters': {'id': [self.detention_id, self.demurrage_id]}})['list']
+            free_days = list_fcl_freight_rate_free_days({'filters': {'id': [str(self.detention_id), str(self.demurrage_id)]}})['list']
 
         if self.detention_id:
-            t = next((t for t in free_days if t.id == self.detention_id), None)
+            t = next((t for t in free_days if t['id'] == self.detention_id), None)
             if t:
-                self.data['detention'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
+                self.data['detention'] = {'free_limit':t['free_limit'], 'slabs':t['slabs'], 'remarks':t['remarks']}
 
         if self.demurrage_id:
-            t = next((t for t in free_days if t.id == self.demurrage_id), None)
+            t = next((t for t in free_days if t['id'] == self.demurrage_id), None)
             if t:
-                self.data['demurrage'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
-            # for t in free_days:
-            #     if t.id == self.demurrage_id:
-            #         self.data['demurrage'] = {'free_limit':t.free_limit, 'slabs':t.slabs, 'remarks':t.remarks}
-            #         break
+                self.data['demurrage'] = {'free_limit':t['free_limit'], 'slabs':t['slabs'], 'remarks':t['remarks']}
 
         detail = self.data | {
             'id': self.id,

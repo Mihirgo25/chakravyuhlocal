@@ -6,9 +6,10 @@ from datetime import datetime, timedelta
 from peewee import fn
 
 def get_fcl_freight_rate_stats(request):
+
     response = {}
     
-    for stats_type in request.stats_type:
+    for stats_type in request["stats_type"]:
         response[stats_type] = eval("get_{}_stats()".format(stats_type))
 
     return response

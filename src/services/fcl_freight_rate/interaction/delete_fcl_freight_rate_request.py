@@ -1,37 +1,38 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from fastapi import HTTPException
-
-
+from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
+from services.fcl_freight_rate.helpers.find_or_initiliaze import find_or_initialize
+import time
 def delete_fcl_freight_rate_request(request):
+    start = time.time()
     objects = find_objects(request)
 
     if not objects:
-      raise HTTPException(status_code=499, detail="Freight rate request id not found")
+      raise HTTPException(status_code=404, detail="Freight rate request id not found")
 
     for obj in objects:
         obj.status = 'inactive'
         obj.closed_by_id = request['performed_by_id']
 
-        # if request.get('closing_remarks'):
         obj.closing_remarks = request.get('closing_remarks')
 
         try:
             obj.save()
         except Exception as e:
-            # self.errors.append(('fcl_freight_rate_feedback_ids', str(e)))
-            # self.errors.merge!(obj.errors)
+
             raise HTTPException(status_code=499, detail="Freight rate request deletion failed")
 
         create_audit(request, obj.id)
         # obj.delay(queue: 'low').send_closed_notifications_to_sales_agent
+    print(time.time()-start)
 
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
 
 def find_objects(request):
     try:
-        return FclFreightRateRequest.select().where(FclFreightRateRequest.id << request['fcl_freight_rate_request_ids'] & (FclFreightRateRequest.status == 'active'))
+        return FclFreightRateRequest.select().where(FclFreightRateRequest.id << request['fcl_freight_rate_request_ids'] & (FclFreightRateRequest.status == 'active')).execute()
     except:
         return None
 

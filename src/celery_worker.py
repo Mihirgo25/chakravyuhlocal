@@ -1,9 +1,12 @@
 import os
 import time
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
-
+# from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from celery import Celery
 from configs.env import *
+from rails_client import client
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from services.fcl_freight_rate.helpers.get_multuple_service_bjects import get_multiple_service_objects
+
 CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
@@ -18,6 +21,66 @@ celery.conf.update(**CELERY_CONFIG)
 
 @celery.task(name="create_task")
 def create_task(param):
-    from rails_client.client import initialize_client
-    initialize_client()
     rate = create_fcl_freight_rate_data(param)
+
+
+@celery.task()
+def delay_fcl_functions(fcl_object,request):
+    # from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
+    # client.initialize_client()
+    # create_freight_trend_port_pair(request)
+    # create_sailing_schedule_port_pair(request)
+    # if not FclFreightRate.where(service_provider_id=request["service_provider_id"], rate_not_available_entry=False).exists():
+    #     client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+
+    # if request.get("fcl_freight_rate_request_id"):
+    #     delete_fcl_freight_rate_request(request)
+    
+    # fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
+    services ={'objects':[
+    {
+      'name': 'operator',
+      'filters': { 'id': list(str(fcl_object.shipping_line_id))},
+      'fields': ['id', 'business_name', 'short_name', 'logo_url']
+    },
+    {
+      'name': 'location', 
+      'filters':{"id": list(set(list(filter(None, [str(fcl_object.origin_port_id), str(fcl_object.destination_port_id)] ))))},
+      'fields': ['id', 'name', 'display_name', 'port_code', 'type', 'is_icd']
+    },
+    {
+      'name': 'organization',
+      'filters': {"id": list(set([str(fcl_object.service_provider_id), str(fcl_object.importer_exporter_id)] ))},
+      'fields': ['id', 'business_name', 'short_name']
+    },
+    {
+      'name': 'user',
+      'filters': {"id": list(set([fcl_object.procured_by_id, fcl_object.sourced_by_id]  ))},
+      'fields': ['id', 'name', 'email']
+    }
+  ]}
+    
+    get_multiple_service_objects(fcl_object,services)
+
+
+
+
+
+
+@celery.task()
+def create_sailing_schedule_port_pair(request):
+  port_pair_coverage_data = {
+  'origin_port_id': request["origin_main_port_id"] if request.get("origin_main_port_id") else request["origin_port_id"],
+  'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
+  'shipping_line_id': request["shipping_line_id"]
+  }
+  client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
+
+def create_freight_trend_port_pair(request):
+  port_pair_data = {
+      'origin_port_id': request["origin_port_id"],
+      'destination_port_id': request["destination_port_id"]
+  }
+  client.ruby.create_freight_trend_port_pair(port_pair_data)
+    
+

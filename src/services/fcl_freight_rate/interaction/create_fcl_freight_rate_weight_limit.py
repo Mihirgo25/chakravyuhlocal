@@ -1,41 +1,30 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-import datetime
 from database.db_session import db
 from fastapi import HTTPException
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 
-
-def find_or_initialize(**kwargs):
-    try:
-        obj = FclFreightRateWeightLimit.get(**kwargs)
-        obj.updated_at = datetime.datetime.now()
-    except FclFreightRateWeightLimit.DoesNotExist:
-        obj = FclFreightRateWeightLimit(**kwargs)
-    return obj
 
 def create_fcl_freight_rate_weight_limit(request):
     with db.atomic() as transaction:
         try:
             return execute_transaction_code(request)
-        except:
+        except Exception as e:
             transaction.rollback()
-            return "Creation Failed"
+            return e
 
 def execute_transaction_code(request):
     weight_limit = get_weight_limit_object(request)
 
     weight_limit.validate_before_save()
+    weight_limit.update_special_attributes()
 
     try:
         weight_limit.save()
     except:
-        raise HTTPException(status_code=499, detail='fcl freight rate weight limit did not save')
-
-    weight_limit.update_special_attributes()
-    weight_limit.save()
+        raise HTTPException(status_code=403, detail='fcl freight rate weight limit did not save')
 
     create_audit(request, weight_limit.id)
-
     return {"id": weight_limit.id}
 
 def get_weight_limit_object(request):
@@ -47,7 +36,7 @@ def get_weight_limit_object(request):
       'shipping_line_id': request['shipping_line_id'],
       'service_provider_id': request['service_provider_id']
     }
-    weight_limit = find_or_initialize(**row)
+    weight_limit = find_or_initialize(FclFreightRateWeightLimit, **row)
 
     extra_fields = ['free_limit','remarks','slabs']
     for field in extra_fields:
@@ -57,7 +46,6 @@ def get_weight_limit_object(request):
     return weight_limit
 
 def create_audit(request, weight_limit_id):
-
     audit_data = {'free_limit' : request.get('free_limit'), 'remarks' : request.get('remarks'), 'slabs' : request.get('slabs')}
 
     try:
@@ -72,4 +60,4 @@ def create_audit(request, weight_limit_id):
         object_type = 'FclFreightRateWeightLimit'
       )
     except:
-      raise HTTPException(status_code=499, detail='fcl freight audit did not save')
+      raise HTTPException(status_code=403, detail='fcl freight audit did not save')

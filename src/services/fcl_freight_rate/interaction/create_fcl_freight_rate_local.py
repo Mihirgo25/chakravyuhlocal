@@ -1,20 +1,10 @@
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-import json
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
-from playhouse.shortcuts import model_to_dict
-# import requests
 
-
-def find_or_initialize(**kwargs):
-  try:
-    obj = FclFreightRateLocal.get(**kwargs)
-  except FclFreightRateLocal.DoesNotExist:
-    obj = FclFreightRateLocal(**kwargs)
-  return obj
 
 def create_audit(request, fcl_freight_local_id):
 
@@ -33,13 +23,13 @@ def create_audit(request, fcl_freight_local_id):
         object_type = 'FclFreightRateLocal'
     )
 
-def create_fcl_freight_rate_local_data(request):
+def create_fcl_freight_rate_local(request):
     with db.atomic() as transaction:
         try:
-            return execute_transaction_code(request)
-        except:
+          return execute_transaction_code(request)
+        except Exception as e:
             transaction.rollback()
-            return "Creation Failed"
+            return e
 
 def execute_transaction_code(request):
     if not request.get('source'):
@@ -56,20 +46,16 @@ def execute_transaction_code(request):
         'service_provider_id' : request.get('service_provider_id')
     }
 
-    fcl_freight_local = find_or_initialize(**row)
+    fcl_freight_local = find_or_initialize(FclFreightRateLocal, **row)
 
     fcl_freight_local.rate_not_available_entry = False
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
     fcl_freight_local.rate_sheet_id = request.get('rate_sheet_id')
     fcl_freight_local.source = request.get('source')
     fcl_freight_local.data = request.get('data')
-    
-    if request['data'].get('line_items'):
-      # if fcl_freight_local.data:
-      #   fcl_freight_local.data.update({key : value for key, value in request['data'].items() if key == 'line_items'})
-      # else:
-        fcl_freight_local.data = {key : value for key, value in request['data'].items() if key == 'line_items'}
 
+    if request['data'].get('line_items'):
+        fcl_freight_local.data = fcl_freight_local.data | {'line_items': request['data']['line_items']}
 
     if request['data'].get('detention'):
         detention_obj = {}
@@ -78,8 +64,8 @@ def execute_transaction_code(request):
         detention_obj['specificity_type'] = 'shipping_line'
         detention_obj['previous_days_applicable'] = False
 
-        detention_obj.update({key: value for key, value in request['data']['detention'].items() if key in ('free_limit', 'slabs', 'remarks')})
-        detention_obj.update({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
+        detention_obj = detention_obj | ({key: value for key, value in request['data']['detention'].items() if key in ('free_limit', 'slabs', 'remarks')})
+        detention_obj = detention_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         detention = create_fcl_freight_rate_free_day(detention_obj)
 
@@ -92,8 +78,8 @@ def execute_transaction_code(request):
         demurrage_obj['specificity_type'] = 'shipping_line'
         demurrage_obj['previous_days_applicable'] = False
 
-        demurrage_obj.update({key: value for key, value in request['data']['demurrage'].items() if key in ('free_limit', 'slabs', 'remarks')})
-        demurrage_obj.update({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
+        demurrage_obj = demurrage_obj | ({key: value for key, value in request['data']['demurrage'].items() if key in ('free_limit', 'slabs', 'remarks')})
+        demurrage_obj = demurrage_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         demurrage = create_fcl_freight_rate_free_day(demurrage_obj)
 
@@ -106,20 +92,21 @@ def execute_transaction_code(request):
         plugin_obj['specificity_type'] = 'shipping_line'
         plugin_obj['previous_days_applicable'] = False
 
-        plugin_obj.update({key: value for key, value in request['data']['plugin'].items() if key in ('free_limit', 'slabs', 'remarks')})
-        plugin_obj.update({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
+        plugin_obj = plugin_obj | ({key: value for key, value in request['data']['plugin'].items() if key in ('free_limit', 'slabs', 'remarks')})
+        plugin_obj = plugin_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         plugin = create_fcl_freight_rate_free_day(plugin_obj)
 
         fcl_freight_local.plugin_id = plugin['id']
    
+    print("bedada")
     fcl_freight_local.validate_before_save()
 
     try:
       fcl_freight_local.save()
     except Exception as e:
-      raise HTTPException(status_code=499, detail='fcl freight rate local did not save')
-    
+      raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
+
     fcl_freight_local.update_special_attributes()
     fcl_freight_local.update_freight_objects()
     fcl_freight_local.save()
