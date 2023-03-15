@@ -1,5 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from datetime import datetime
 from database.db_session import db
 from libs.logger import logger
@@ -16,9 +17,9 @@ def create_fcl_freight_rate_free_day_request(request):
 
 def execute_transaction_code(request):
     object_params = get_unique_object_params(request)
-    free_day_request = find_or_initialize(**object_params)
+    free_day_request = find_or_initialize(FclFreightRateFreeDayRequest, **object_params)
 
-    create_params = {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id', 'free_days_type', 'service_provider_id', 'location_id']} | { 'status': 'active' }
+    create_params = {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id', 'free_days_type', 'service_provider_id', 'location_id']} | {'status': 'active'}
     for attr,value in create_params.items():
         setattr(free_day_request, attr, value)
     

@@ -1,31 +1,27 @@
 from services.fcl_freight_rate.models.fcl_freight_commodity_cluster import FclFreightCommodityCluster
-from operator import attrgetter
+from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from math import ceil
 from playhouse.shortcuts import model_to_dict
 from peewee import fn
-from services.fcl_freight_rate.interaction.list_fcl_freight_rates import remove_unexpected_filters
+import json
 
 possible_direct_filters = ['id', 'status']
 possible_indirect_filters = ['q']
 
-def list_fcl_freight_commodity_clusters(filters, page, page_limit, pagination_data_required, sort_by, sort_type):
-    filters = remove_unexpected_filters(filters)
+def list_fcl_freight_commodity_clusters(filters = None, page_limit = 10, page = 1, pagination_data_required = True, sort_by = 'updated_at', sort_type = 'desc'):
+    if type(filters) != dict:
+        filters = json.loads(filters)
     query = get_query(sort_by, sort_type, page, page_limit)
-    query = apply_direct_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightCommodityCluster)
     query = apply_indirect_filters(query, filters)
 
     data = [model_to_dict(item) for item in query.execute()]
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+
     return {'list': data } | (pagination_data)
-
+    
 def get_query(sort_by, sort_type, page, page_limit):
-    query = FclFreightCommodityCluster.select().order_by(eval("FclFreightCommodityCluster.{}.{}()".format(sort_by, sort_type)).paginate(page, page_limit))
-    return query
-
-def apply_direct_filters(query, filters):
-    for key in filters:
-        if key in possible_direct_filters:
-            query = query.select().where(attrgetter(key)(FclFreightCommodityCluster) == filters[key])
+    query = FclFreightCommodityCluster.select().order_by(eval("FclFreightCommodityCluster.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
     return query
 
 def apply_indirect_filters(query, filters):
@@ -40,7 +36,7 @@ def apply_q_filter(query, filters):
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
-    if pagination_data_required:
+    if not pagination_data_required:
         return {} 
 
     params = {

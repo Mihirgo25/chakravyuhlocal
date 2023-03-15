@@ -55,6 +55,7 @@ class FclFreightRateLocal(BaseModel):
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     port: dict = None
+    main_port: dict = None
     shipping_line: dict = None
     
     def save(self, *args, **kwargs):
@@ -242,10 +243,11 @@ class FclFreightRateLocal(BaseModel):
             elif self.main_port_id and port.get('id') == self.main_port_id:
                 self.main_port = port
 
+
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        self.shipping_line = client.ruby.list_operators({'filters': { id: self.shipping_line_id }, 'pagination_data_required': False})['list'][0]
+        self.shipping_line = client.ruby.list_operators({'filters': {'id': self.shipping_line_id }, 'pagination_data_required': False})['list'][0]
 
     def possible_charge_codes(self):
         self.set_port()
@@ -265,14 +267,14 @@ class FclFreightRateLocal(BaseModel):
             except Exception as e:
                 print(e)
 
-        try:
-            charge_codes = {}
-            for code, config in fcl_freight_local_charges_dict.items():
-                if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
-                    charge_codes[code] = config
+        # try:
+        charge_codes = {}
+        for code, config in fcl_freight_local_charges_dict.items():
+            if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
+                charge_codes[code] = config
 
-        except Exception as e:
-            print(e)
+        # except Exception as e:
+        #     print(e)
         return charge_codes
 
     def update_freight_objects(self):

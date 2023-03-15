@@ -143,6 +143,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
 
     query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
     query = apply_indirect_filters(query, filters)
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
         results = {}

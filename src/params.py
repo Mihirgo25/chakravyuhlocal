@@ -31,7 +31,7 @@ class LineItem(BaseModel):
   slabs: list[Slab] = None
 
 class LocalData(BaseModel):
-  line_items: list[LineItem] = []
+  line_items: list[LineItem]
   detention: FreeDay = None
   demurrage: FreeDay = None
   plugin: FreeDay = None
@@ -73,6 +73,33 @@ class PostFclFreightRate(BaseModel):
   mode: str = None
   source: str = 'rms_upload'
   is_extended: bool = None
+
+class CreateFclFreightCommodityCluster(BaseModel):
+  name: str
+  commodities: dict 
+
+class CreateFclFreightRateLocalAgent(BaseModel):
+  performed_by_id: str
+  service_provider_id: str
+  status: str = 'active'
+  location_id: str
+  trade_type: str
+
+class CreateFclWeightSlabsConfiguration(BaseModel):
+  origin_location_id: str = None
+  destination_location_id: str = None
+  origin_location_type: str = None
+  destination_location_type: str = None
+  organization_category: str = None
+  shipping_line_id: str = None
+  service_provider_id: str = None
+  importer_exporter_id: str = None
+  is_cogo_assured: bool = False
+  container_size: str = None
+  commodity: str = None
+  slabs: list[Slab] = None
+  max_weight: float
+  trade_type: str = None
 
 class UpdateFclFreightRate(BaseModel):
   id: str
@@ -205,19 +232,7 @@ class GetFclFreightRateExtension(BaseModel):
   container_size: str
   container_type:str = None
 
-
-class GetFclFreightRate(BaseModel):
-    origin_port_id: str = None
-    origin_main_port_id: str = None
-    destination_port_id: str = None
-    destination_main_port_id: str = None
-    container_size: str = None
-    container_type: str = None
-    commodity: str = True
-    shipping_line_id: str = None
-    service_provider_id: str = None
-    importer_exporter_id: str = None
-
+  
 class GetFclFreightRateLocal(BaseModel):
     port_id: str = None
     main_port_id: str = None
@@ -283,6 +298,25 @@ class DeleteFclFreightRateFeedback(BaseModel):
     closing_remarks: List[str] = []
     performed_by_id: str
 
+class CreateFclFreightRateFeedback(BaseModel):
+  source: str
+  source_id: str
+  performed_by_id: str
+  performed_by_org_id: str
+  performed_by_type: str
+  rate_id: str
+  validity_id: str
+  likes_count: int
+  dislikes_count: int
+  feedbacks: list[str] = []
+  remarks: list[str] = []
+  preferred_freight_rate: float = None
+  preferred_freight_rate_currency: str = None
+  preferred_detention_free_days: int = None
+  preferred_shipping_line_ids: list[str] = []
+  feedback_type: str
+  booking_params: dict = {}
+
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str
     origin_country_id: str = None
@@ -294,6 +328,11 @@ class CreateFclFreightRateNotAvailable(BaseModel):
     container_type: str
     commodity: str
 
+class UpdateFclFreightRateLocalAgent(BaseModel):
+  id: str 
+  performed_by_id: str
+  status: str = None
+  service_provider_id: str = None
 class UpdateFclFreightRateLocalPriorityScores(BaseModel):
    filters: dict = {}
 
@@ -307,13 +346,20 @@ class rate(BaseModel):
   plugin: FreeDay = None
 
 
-class UpdateFclFreightRateTask(BaseModel):
-   id: str
-   performed_by_id: str
-   performed_by_type: str
-   rate: list[rate]
-   status: str = None
-   closing_remarks:str = None
+class CreateFclFreightRateTask(BaseModel):  
+  service: str
+  port_id: str
+  main_port_id: str = None
+  container_size: str 
+  container_type: str
+  commodity: str
+  trade_type: str
+  shipping_line_id: str
+  source: str
+  task_type: str
+  shipment_id: str = None
+  performed_by_id: str
+  rate: LocalData = None
 
 class CreateFclFreightRateTask(BaseModel):
   service: str
@@ -400,5 +446,134 @@ class UpdateFclFreightRateFreeDay(BaseModel):
   free_limit: int = None
   # validity_start: datetime = datetime.now()
   # validity_end: datetime = datetime.now() + timedelta(months=3)
+  remarks: list[str] = None
+  slabs: list[Slab] = None
+class CreateFclFreightRateRequest(BaseModel):
+  source: str
+  source_id: str
+  cogo_entity_id: str
+  performed_by_id: str
+  performed_by_org_id: str
+  performed_by_type: str
+  preferred_freight_rate: float = None  
+  preferred_freight_rate_currency: str = None
+  preferred_detention_free_days: int = None
+  preferred_storage_free_days: int = None
+  cargo_readiness_date: datetime.datetime = None
+  preferred_shipping_line_ids: list[str] = []
+  remarks: list[str] = []
+  booking_params: dict = {}
+  containers_count: int
+  container_size: str
+  inco_term: str
+  commodity: str = None
+  cargo_weight_per_container: int
+  destination_continent_id: str = None
+  destination_country_id: str = None
+  destination_port_id: str
+  destination_trade_id: str = None
+  origin_continent_id: str = None
+  origin_country_id: str = None
+  origin_port_id: str 
+  origin_trade_id: str = None
+  container_type: str = None
+
+class CreateFclFreightRateLocalRequest(BaseModel):
+  source: str
+  source_id: str
+  performed_by_id: str
+  performed_by_org_id: str
+  performed_by_type: str
+  preferred_rate: float = None
+  preferred_rate_currency: str = None
+  country_id: str = None
+  shipping_line_id: str = None
+  continent_id: str = None
+  container_size: str = None
+  cargo_readiness_date: datetime.datetime = None
+  preferred_shipping_line_ids: list[str] = []
+  remarks: list[str] = []
+  booking_params: dict = {}
+  containers_count: int = None
+  commodity: str = None
+  cargo_weight_per_container: int = None
+  container_type: str = None
+  port_id: str = None
+  main_port_id: str = None  
+  trade_id: str = None
+  trade_type: str = None
+
+class CreateFclFreightRateFreeDayRequest(BaseModel):
+  source: str
+  source_id: str
+  performed_by_id: str
+  performed_by_org_id: str
+  performed_by_type: str
+  trade_type: str
+  location_id: str
+  free_days_type: str
+  code: str
+  country_id: str = None
+  trade_id: str = None
+  continent_id: str = None
+  main_port_id: str = None
+  containers_count: int = None
+  container_size: str = None
+  container_type: str = None
+  commodity: str = None
+  shipping_line_id: str = None
+  service_provider_id: str = None
+  inco_term: str = None
+  cargo_readiness_date: datetime.datetime = None
+  cargo_weight_per_container: int = None
+  preferred_rate: float = None
+  preferred_rate_currency: str = None
+  preferred_free_days: int = None
+  preferred_total_days: int = None
+  specificity_type: str = None
+  booking_params: dict = {}
+  remarks: list[str] = []
+
+class UpdateFclWeightSlabsConfiguration(BaseModel):
+  id: str = None
+  max_weight: float = None
+  status: str = None
+  trade_type: str = None
+  container_size: str = None
+  commodity: str = None
+  organization_category: str = None
+  destination_location_type: str = None
+  origin_location_type: str = None
+  origin_location_id: str = None
+  destination_location_id: str = None
+  shipping_line_id: str = None
+  service_provider_id: str = None
+  importer_exporter_id: str = None
+  is_cogo_assured: bool =False
+  slabs: list[Slab] = None
+
+class UpdateFclFreightRatePlatformPrices(BaseModel):
+  origin_port_id: str
+  origin_main_port_id:str = None
+  destination_port_id: str
+  destination_main_port_id: str = None
+  container_size: str
+  container_type: str
+  commodity: str
+  shipping_line_id: str
+  importer_exporter_id: str = None
+
+class CreateFclFreightRateWeightLimit(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  free_limit: float
   remarks: list[str] = None
   slabs: list[Slab] = None

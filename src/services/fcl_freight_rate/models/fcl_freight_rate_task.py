@@ -31,7 +31,7 @@ class FclFreightRateTask(BaseModel):
     port_id = UUIDField(null=True)
     service = CharField(null=True)
     shipping_line_id = UUIDField(null=True)
-    sids = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
+    shipment_serial_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     source = CharField(null=True)
     source_count = IntegerField(null=True)
     status = CharField(null=True)
@@ -48,7 +48,7 @@ class FclFreightRateTask(BaseModel):
         table_name = 'fcl_freight_rate_tasks' 
 
     def validate_service(self):
-        if self.service not in ['fcl_freight_local']:
+        if self.service not in ['fcl_freight_local','subsidiary']:
             raise HTTPException(status_code=400, detail="Invalid service")
         
     def validate_port_id(self):
