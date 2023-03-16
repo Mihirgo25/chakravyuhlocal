@@ -213,7 +213,7 @@ class FclFreightRateFreeDay(BaseModel):
                 "free_limit": self.free_limit,
                 "remarks": self.remarks,
                 "slabs": self.slabs,
-                "is_slabs_missing": self.is_slabs_missing,
+                "is_slabs_missing": self.is_slabs_missing
             }
         }
     
