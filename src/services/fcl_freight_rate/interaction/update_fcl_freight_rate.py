@@ -6,9 +6,6 @@ import json
 from database.db_session import db
 from playhouse.shortcuts import model_to_dict
 
-def to_dict(obj):
-    return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
-
 def create_audit(request, freight_id):
     audit_data = {}
     audit_data['validity_start'] = request['validity_start'].isoformat()
@@ -72,7 +69,7 @@ def execute_transaction_code(request):
   if request.get('validity_start'):
     freight_object.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
     freight_object.validate_line_items(request.get('line_items'))
-    freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), to_dict(request.get('line_items')), request.get('schedule_type'), False, request.get('payment_term'))
+    freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), request.get('line_items'), request.get('schedule_type'), False, request.get('payment_term'))
     freight_object.set_platform_prices()
     freight_object.set_is_best_price()
     freight_object.set_last_rate_available_date()
