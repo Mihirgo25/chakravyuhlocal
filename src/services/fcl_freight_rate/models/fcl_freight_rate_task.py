@@ -5,6 +5,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import FREIGHT_CONTAINER_COMMODITY_MAPPINGS
 from rails_client import client
+from libs.locations import list_locations
 import datetime
 
 class UnknownField(object):
@@ -19,6 +20,7 @@ class FclFreightRateTask(BaseModel):
     commodity = CharField(null=True)
     completed_at = CharField(null=True)
     completed_by_id = CharField(null=True)
+    completed_by = BinaryJSONField(null=True)
     completion_data = JSONField(null=True)
     container_size = CharField(null=True)
     container_type = CharField(null=True)
@@ -28,9 +30,12 @@ class FclFreightRateTask(BaseModel):
     job_data = JSONField(null=True)
     location_ids = ArrayField(field_class=UUIDField, null=True)
     main_port_id = UUIDField(null=True)
+    main_port = BinaryJSONField(null=True)
     port_id = UUIDField(null=True)
+    port = BinaryJSONField(null=True)
     service = CharField(null=True)
     shipping_line_id = UUIDField(null=True)
+    shipping_line = BinaryJSONField(null=True)
     shipment_serial_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     source = CharField(null=True)
     source_count = IntegerField(null=True)
@@ -52,8 +57,8 @@ class FclFreightRateTask(BaseModel):
             raise HTTPException(status_code=400, detail="Invalid service")
         
     def validate_port_id(self):
-        obj = {"filters" : {"id": [(self.port_id)],'type':'seaport'}}
-        port = client.ruby.list_locations(obj)['list']
+        obj = {"id": [(self.port_id)],'type':'seaport'}
+        port = list_locations(obj)['list']
         if port:
             port =port[0]
             self.port = port
@@ -69,7 +74,7 @@ class FclFreightRateTask(BaseModel):
             if self.main_port_id and self.main_port_id!=self.port_id:
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
         elif self.port and self.port['is_icd']==True:
-            main_port_data = client.ruby.list_locations({"filters" : {"id": [str(self.main_port_id)],'type':'seaport','is_icd':False}})['list']
+            main_port_data = list_locations({"id": [str(self.main_port_id)],'type':'seaport','is_icd':False})['list']
             if main_port_data:
                 self.main_port = main_port_data[0]
             else:

@@ -543,7 +543,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 
                 local['data']['line_items'].append(line_item)
 
-                update_fcl_freight_rate_local_data({
+                update_fcl_freight_rate_local({
                     'id': local['id'],
                     'performed_by_id': self.performed_by_id,
                     'sourced_by_id': sourced_by_id,

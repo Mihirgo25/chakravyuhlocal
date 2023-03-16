@@ -6,12 +6,15 @@ import yaml
 from configs.defintions import FCL_FREIGHT_CHARGES
 import datetime
 from libs.locations import list_location_clusters
+from playhouse.postgres_ext import *
 class BaseModel(Model):
     class Meta:
         database = db
 
 class FclFreightRateExtensionRuleSets(BaseModel):
     cluster_id = CharField(index=True, null=True)
+    location_cluster = BinaryJSONField(null=True)
+    fcl_freight_commodity_cluster = BinaryJSONField(null=True)
     cluster_reference_name = CharField(index=True, null=True)
     cluster_type = CharField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
@@ -21,7 +24,9 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     line_item_charge_code = CharField(index=True, null=True)
     service_provider_id = UUIDField(index=True, null=True)
+    service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
+    shipping_line = BinaryJSONField(null=True)
     status = CharField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)

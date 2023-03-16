@@ -226,7 +226,7 @@ OBS:
 DGPS:
   name: "Dangerous Goods Premium Sea"
   units: ['per_container']
-  condition: "commodity in HAZ_COMMODITIES"
+  condition: "commodity in HAZ_CLASSES"
   tags: []
 SCMC:
   name: "Security Compliance Management Charge"
