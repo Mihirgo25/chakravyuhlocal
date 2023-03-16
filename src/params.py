@@ -292,10 +292,16 @@ class CreateRateSheet(BaseModel):
     partner_id: str = None
     cogo_entity_id: str = None
     performed_by_id: str = None
+    performed_by_type: str = None
     procured_by_id: str = None
     sourced_by_id: str = None
     comment: str = None
     file_url: str
+
+class ConvertedFile(BaseModel):
+    service_name: str = None
+    module: str = None
+    file_url: str = None
 
 class UpdateRateSheet(BaseModel):
     performed_by_id: str
@@ -303,5 +309,5 @@ class UpdateRateSheet(BaseModel):
     sourced_by_id: str = None
     cogo_entity_id: str = None
     id: str
-    converted_files: list = None
+    converted_files: list[ConvertedFile] | None = None
 

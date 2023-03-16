@@ -2,7 +2,7 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from params import UpdateRateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import fcl_rate_sheet_converted_file
+from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 from playhouse.postgres_ext import *
 from peewee import *
 from rails_client import client
@@ -91,21 +91,24 @@ def update_rate_sheet(params: UpdateRateSheet):
     if rate_sheet.status != 'uploaded':
         return
     if 'converted_files' in params:
-        for converted_file, index in params['converted_files']:
-            converted_file['status'] = 'under_validation'
-            converted_file['id'] = uuid.uuid()
-            converted_file['service_provider_id'] = jsonable_encoder(rate_sheet.service_provider_id)
-            converted_file['cogo_entity_id'] = jsonable_encoder(rate_sheet.cogo_entity_id)
-            converted_file['rate_sheet_id'] = jsonable_encoder(rate_sheet.id)
-            converted_file['file_index'] = index+1
+        index = 0
+        for converted_file in params['converted_files']:
+                converted_file['status'] = 'under_validation'
+                converted_file['id'] = uuid.uuid1()
+                converted_file['service_provider_id'] = jsonable_encoder(rate_sheet.service_provider_id)
+                converted_file['cogo_entity_id'] = jsonable_encoder(rate_sheet.cogo_entity_id)
+                converted_file['rate_sheet_id'] = jsonable_encoder(rate_sheet.id)
+                converted_file['file_index'] = index+1
     params['status'] = 'converted'
     if not rate_sheet.save():
         return
     # create_audit(get_audit_params(params, rate_sheet))
     # send_rate_sheet_notifications(params)
-    print(params)
     rate_sheet = jsonable_encoder(rate_sheet)['__data__']
-    print(rate_sheet)
-    rate_sheet['id'] = params['id']
-    fcl_rate_sheet_converted_file(rate_sheet)
+
+    for key in params.keys():
+        if key not in ['id', 'performed_by_id', 'procured_by_id','sourced_by_id']:
+            rate_sheet[key] = params[key]
+    print(rate_sheet, "rate_sheet")
+    validate_and_process_rate_sheet_converted_file(rate_sheet)
 
