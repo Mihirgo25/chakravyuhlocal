@@ -7,7 +7,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from libs.locations import list_locations
-from extension_celery_worker import create_fcl_freight_rate_delay
+from celery_worker import create_fcl_freight_rate_delay
 def extend_create_fcl_freight_rate_data(request):
     
     if request.extend_rates_for_lens:

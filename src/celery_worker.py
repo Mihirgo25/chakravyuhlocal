@@ -1,11 +1,8 @@
+from celery import Celery
 import os
 import time
-# from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
-from celery import Celery
 from configs.env import *
-from rails_client import client
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.fcl_freight_rate.helpers.get_multuple_service_objects import get_multiple_service_objects
+
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -19,8 +16,18 @@ celery.conf.broker_url = os.getenv("CELERY_BROKER_URL")
 celery.conf.result_backend = os.getenv("CELERY_RESULT_BACKEND")
 celery.conf.update(**CELERY_CONFIG)
 
+
+@celery.task()
+def create_fcl_freight_rate_delay(request):
+    from rails_client import client
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
+    return create_fcl_freight_rate(request)
+
 @celery.task()
 def delay_fcl_functions(fcl_object,request):
+    from rails_client import client
+    from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+    from services.fcl_freight_rate.helpers.get_multuple_service_objects import get_multiple_service_objects
     from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
     client.initialize_client()
     create_freight_trend_port_pair(request)
@@ -65,27 +72,27 @@ def delay_fcl_functions(fcl_object,request):
     fcl_object.update_platform_prices_for_other_service_providers()
 
 
-
-
-
-
 @celery.task()
 def create_sailing_schedule_port_pair(request):
-  port_pair_coverage_data = {
-  'origin_port_id': request["origin_main_port_id"] if request.get("origin_main_port_id") else request["origin_port_id"],
-  'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
-  'shipping_line_id': request["shipping_line_id"]
-  }
-  data = client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
-  print(data)
+    from rails_client import client
+    port_pair_coverage_data = {
+    'origin_port_id': request["origin_main_port_id"] if request.get("origin_main_port_id") else request["origin_port_id"],
+    'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
+    'shipping_line_id': request["shipping_line_id"]
+    }
+    data = client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
+    print(data)
 
 def create_freight_trend_port_pair(request):
-  port_pair_data = {
-      'origin_port_id': request["origin_port_id"],
-      'destination_port_id': request["destination_port_id"]
-  }
+    port_pair_data = {
+        'origin_port_id': request["origin_port_id"],
+        'destination_port_id': request["destination_port_id"]
+    }
 
   
   # client.ruby.create_freight_trend_port_pair(port_pair_data) expose
     
+
+
+
 
