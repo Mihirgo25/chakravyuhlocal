@@ -603,7 +603,6 @@ class FclFreightRate(BaseModel):
       ).execute()
 
     def detail(self):
-
       data = {
           'freight': {
               'id': self.id,
@@ -614,105 +613,158 @@ class FclFreightRate(BaseModel):
               'is_rate_not_available': self.is_rate_not_available()
           },
           'weight_limit': dict(self.weight_limit)}
-
+      
       data = {k: v for k, v in data.items()}
 
       origin_local = {}
       destination_local = {}
 
-      if not self.port_origin_local['is_line_items_error_messages_present']:
-          origin_local['line_items'] = list(self.port_origin_local['data']['line_items'])
-          origin_local['is_line_items_error_messages_present'] = self.port_origin_local.is_line_items_error_messages_present
-          origin_local['line_items_error_messages'] = self.port_origin_local.line_items_error_messages
-          origin_local['is_line_items_info_messages_present'] = self.port_origin_local.is_line_items_info_messages_present
-          origin_local['line_items_info_messages'] = self.port_origin_local.line_items_info_messages
+      if self.origin_local_id:
+        if self.origin_local_id.is_line_items_error_messages_present == False:
+          origin_local['line_items'] = self.origin_local_id.data['line_items']
+          origin_local['is_line_items_error_messages_present'] = self.origin_local_id.is_line_items_error_messages_present
+          origin_local['line_items_error_messages'] = self.origin_local_id.line_items_error_messages
+          origin_local['is_line_items_info_messages_present'] = self.origin_local_id.is_line_items_info_messages_present
+          origin_local['line_items_info_messages'] = self.origin_local_id.line_items_info_messages
 
-      if not origin_local.get('line_items') or not self.is_origin_local_line_items_error_messages_present:
-          origin_local['line_items'] = list(self.origin_local['line_items'])
-          origin_local['is_line_items_error_messages_present'] = self.is_origin_local_line_items_error_messages_present
-          origin_local['line_items_error_messages'] = self.origin_local_line_items_error_messages
-          origin_local['is_line_items_info_messages_present'] = self.is_origin_local_line_items_info_messages_present
-          origin_local['line_items_info_messages'] = self.origin_local_line_items_info_messages
-        
-      if self.origin_detention.get('free_limit'):
-        origin_local['detention'] = self.origin_detention.update(
-          {'is_slabs_missing': self.is_origin_detention_slabs_missing})
+      # if self.origin_local_id and (not self.origin_local_id.is_line_items_error_messages_present):
+      #     origin_local['line_items'] = list(self.port_origin_local['data']['line_items'])
+      #     origin_local['is_line_items_error_messages_present'] = self.port_origin_local.is_line_items_error_messages_present
+      #     origin_local['line_items_error_messages'] = self.port_origin_local.line_items_error_messages
+      #     origin_local['is_line_items_info_messages_present'] = self.port_origin_local.is_line_items_info_messages_present
+      #     origin_local['line_items_info_messages'] = self.port_origin_local.line_items_info_messages
 
-      if not origin_local.get('detention'):
-        port_origin_local_dict = dict(self.port_origin_local)
-        origin_local['detention'] = port_origin_local_dict['data'].get('detention', {}).copy()
-        origin_local['detention']['is_slabs_missing'] = port_origin_local_dict.get('is_detention_slabs_missing', False)
+        if not origin_local.get('line_items') or not self.is_origin_local_line_items_error_messages_present:
+            origin_local['line_items'] = self.origin_local['line_items']
+            origin_local['is_line_items_error_messages_present'] = self.is_origin_local_line_items_error_messages_present
+            origin_local['line_items_error_messages'] = self.origin_local_line_items_error_messages
+            origin_local['is_line_items_info_messages_present'] = self.is_origin_local_line_items_info_messages_present
+            origin_local['line_items_info_messages'] = self.origin_local_line_items_info_messages
 
-      if self.origin_demurrage.get('free_limit'):
-        origin_local['demurrage'] = self.origin_demurrage.update(
-          {'is_slabs_missing': self.is_origin_demurrage_slabs_missing})
+        if 'detention' in self.origin_local and self.origin_local.get('detention'):
+          if self.origin_local['detention'].get('free_limit'):
+            origin_local['detention'] = self.origin_local['detention'] | ({'is_slabs_missing': self.is_origin_detention_slabs_missing })
+          else:
+            origin_local['detention'] = origin_local['detention'] | ({ 'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION })
 
-      if not origin_local.get('demurrage'):
-        port_origin_local_dict = dict(self.port_origin_local)
-        origin_local['demurrage'] = port_origin_local_dict['data'].get('demurrage', {}).copy()
-        origin_local['demurrage']['is_slabs_missing'] = port_origin_local_dict.get('is_demurrage_slabs_missing', False)
+        if not origin_local.get('detention'):
+          origin_local['detention'] = self.origin_local_id.data['detention'] | ({'is_slabs_missing': self.origin_local_id.is_detention_slabs_missing})
 
-      if dict(self.origin_local).get('plugin', {}).get('free_limit') is not None:
-        origin_local['plugin'] = dict(self.origin_local)['plugin']
-        origin_local['plugin']['is_slabs_missing'] = self.is_origin_plugin_slabs_missing
+        if 'demurrage' in self.origin_local and self.origin_local.get('demurrage'):
+          if self.origin_local['demurrage'].get('free_limit'):
+            origin_local['demurrage'] = self.origin_local['demurrage'] | ({'is_slabs_missing': self.is_origin_demurrage_slabs_missing })
 
-      if not origin_local.get('plugin'):
-        plugin_data = dict(self.port_origin_local).get('data', {}).get('plugin', {})
-        plugin_slabs_missing = dict(self.port_origin_local).get('is_plugin_slabs_missing')
-        origin_local['plugin'] = {**plugin_data, 'is_slabs_missing': plugin_slabs_missing}
+        if not origin_local.get('demurrage'):
+          origin_local['demurrage'] = self.origin_local_id.data['demurrage'] | ({'is_slabs_missing': self.origin_local_id.is_demurrage_slabs_missing})
 
-      if not self.port_destination_local['is_line_items_error_messages_present']:
-          destination_local['line_items'] = list(self.port_destination_local['data']['line_items'])
-          destination_local['is_line_items_error_messages_present'] = self.port_destination_local.is_line_items_error_messages_present
-          destination_local['line_items_error_messages'] = self.port_destination_local.line_items_error_messages
-          destination_local['is_line_items_info_messages_present'] = self.port_destination_local.is_line_items_info_messages_present
-          destination_local['line_items_info_messages'] = self.port_destination_local.line_items_info_messages
+        if 'plugin' in self.origin_local and self.origin_local.get('plugin'):
+          if self.origin_local['plugin'].get('free_limit'):
+            origin_local['plugin'] = self.origin_local['plugin'] | ({'is_slabs_missing': self.is_origin_plugin_slabs_missing })    
 
-      if not destination_local.get('line_items') or not self.is_destination_local_line_items_error_messages_present:
-          destination_local['line_items'] = list(self.destination_local['line_items'])
-          destination_local['is_line_items_error_messages_present'] = self.is_destination_local_line_items_error_messages_present
-          destination_local['line_items_error_messages'] = self.destination_local_line_items_error_messages
-          destination_local['is_line_items_info_messages_present'] = self.is_destination_local_line_items_info_messages_present
-          destination_local['line_items_info_messages'] = self.destination_local_line_items_info_messages
+        if not origin_local['plugin']:
+          origin_local['plugin'] = self.origin_local_id.data['plugin'] | ({'is_slabs_missing': self.origin_local_id.is_plugin_slabs_missing})
 
-      if self.destination_local.get('detention', {}).get('free_limit'):
-        destination_local['detention'] = self.destination_local.detention.update(
-          {'is_slabs_missing': self.is_destination_detention_slabs_missing})
-        
-      if self.destination_detention.get('free_limit'):
-        destination_local['detention'] = self.destination_detention.update(
-          {'is_slabs_missing': self.is_destination_detention_slabs_missing})
+        # if self.origin_local_id.origin_detention.get('free_limit'):
+        #   origin_local['detention'] = self.origin_detention.update(
+        #     {'is_slabs_missing': self.is_origin_detention_slabs_missing})
+        # if self.origin_demurrage.get('free_limit'):
+        #   origin_local['demurrage'] = self.origin_demurrage.update(
+        #     {'is_slabs_missing': self.is_origin_demurrage_slabs_missing})
+      # if not origin_local.get('demurrage'):
+      #   port_origin_local_dict = dict(self.port_origin_local)
+      #   origin_local['demurrage'] = port_origin_local_dict['data'].get('demurrage', {}).copy()
+      #   origin_local['demurrage']['is_slabs_missing'] = port_origin_local_dict.get('is_demurrage_slabs_missing', False)
+      # if dict(self.origin_local).get('plugin', {}).get('free_limit') is not None:
+      #   origin_local['plugin'] = dict(self.origin_local)['plugin']
+      #   origin_local['plugin']['is_slabs_missing'] = self.is_origin_plugin_slabs_missing
+      # if not origin_local.get('plugin'):
+      #   plugin_data = dict(self.port_origin_local).get('data', {}).get('plugin', {})
+      #   plugin_slabs_missing = dict(self.port_origin_local).get('is_plugin_slabs_missing')
+      #   origin_local['plugin'] = {**plugin_data, 'is_slabs_missing': plugin_slabs_missing}
 
-      if not destination_local.get('detention'):
-        port_destination_local_dict = dict(self.port_destination_local)
-        destination_local['detention'] = port_destination_local_dict['data'].get('detention', {}).copy()
-        destination_local['detention']['is_slabs_missing'] = port_destination_local_dict.get('is_detention_slabs_missing', False)
+      if self.destination_local_id:
+        if not self.destination_local_id.is_line_items_error_messages_present:
+            destination_local['line_items'] = self.destination_local_id.data['line_items']
+            destination_local['is_line_items_error_messages_present'] = self.destination_local_id.is_line_items_error_messages_present
+            destination_local['line_items_error_messages'] = self.destination_local_id.line_items_error_messages
+            destination_local['is_line_items_info_messages_present'] = self.destination_local_id.is_line_items_info_messages_present
+            destination_local['line_items_info_messages'] = self.destination_local_id.line_items_info_messages
 
-      if self.destination_demurrage.get('free_limit'):
-        destination_local['demurrage'] = self.destination_demurrage.update(
-          {'is_slabs_missing': self.is_destination_demurrage_slabs_missing})
+        if not destination_local.get('line_items') or not self.is_destination_local_line_items_error_messages_present:
+            destination_local['line_items'] = self.destination_local['line_items']
+            destination_local['is_line_items_error_messages_present'] = self.is_destination_local_line_items_error_messages_present
+            destination_local['line_items_error_messages'] = self.destination_local_line_items_error_messages
+            destination_local['is_line_items_info_messages_present'] = self.is_destination_local_line_items_info_messages_present
+            destination_local['line_items_info_messages'] = self.destination_local_line_items_info_messages
 
-      if not destination_local.get('demurrage'):
-        port_destination_local_dict = dict(self.port_destination_local)
-        destination_local['demurrage'] = port_destination_local_dict['data'].get('demurrage', {}).copy()
-        destination_local['demurrage']['is_slabs_missing'] = port_destination_local_dict.get('is_demurrage_slabs_missing', False)
+        if 'detention' in self.destination_local and self.destination_local.get('detention'):
+          if self.destination_local['detention'].get('free_limit'):
+            destination_local['detention'] = self.destination_local['detention'] | ({'is_slabs_missing': self.is_destination_detention_slabs_missing })
+          else:
+            destination_local['detention'] = destination_local['detention'] | ({'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION })
 
-      if dict(self.destination_local).get('plugin', {}).get('free_limit') is not None:
-        destination_local['plugin'] = dict(self.destination_local)['plugin']
-        destination_local['plugin']['is_slabs_missing'] = self.is_destination_plugin_slabs_missing
+        if not destination_local.get('detention'):
+          destination_local['detention'] = self.destination_local_id.data['detention'] | ({'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing})
+        if 'demurrage' in self.destination_local and self.destination_local.get('demurrage'):
+          if self.destination_local['demurrage'].get('free_limit'):
+            destination_local['demurrage'] = self.destination_local['demurrage'] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
 
-      if not destination_local.get('plugin'):
-        plugin_data = dict(self.port_destination_local).get('data', {}).get('plugin', {})
-        plugin_slabs_missing = dict(self.port_destination_local).get('is_plugin_slabs_missing')
-        destination_local['plugin'] = {**plugin_data, 'is_slabs_missing': plugin_slabs_missing}
+        if not destination_local.get('demurrage'):
+          destination_local['demurrage'] = self.destination_local_id.data['demurrage'] | ({'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing})
 
-      if not self.origin_detention.get('free_limit'):
-        origin_local['detention'].update({'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION})
+        if 'plugin' in self.destination_local and self.destination_local.get('plugin'):
+          if self.destination_local['plugin'].get('free_limit'):
+            destination_local['plugin'] = self.destination_local['plugin'] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
 
-      if not self.destination_detention.get('free_limit'):
-        destination_local['detention'].update({'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION})
-
+        if not destination_local.get('plugin'):
+          destination_local['plugin'] = self.destination_local_id.data['plugin'] | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
+          
+      # if destination_detention.get('free_limit'):
+      #   destination_local['detention'] = self.destination_detention.update(
+      #     {'is_slabs_missing': self.is_destination_detention_slabs_missing})
+      # if not destination_local.get('detention'):
+      #   port_destination_local_dict = dict(self.port_destination_local)
+      #   destination_local['detention'] = port_destination_local_dict['data'].get('detention', {}).copy()
+      #   destination_local['detention']['is_slabs_missing'] = port_destination_local_dict.get('is_detention_slabs_missing', False)
+      # if self.destination_demurrage.get('free_limit'):
+      #   destination_local['demurrage'] = self.destination_demurrage.update(
+      #     {'is_slabs_missing': self.is_destination_demurrage_slabs_missing})
+      # if not destination_local.get('demurrage'):
+      #   port_destination_local_dict = dict(self.port_destination_local)
+      #   destination_local['demurrage'] = port_destination_local_dict['data'].get('demurrage', {}).copy()
+      #   destination_local['demurrage']['is_slabs_missing'] = port_destination_local_dict.get('is_demurrage_slabs_missing', False)
+      # if dict(self.destination_local).get('plugin', {}).get('free_limit') is not None:
+      #   destination_local['plugin'] = dict(self.destination_local)['plugin']
+      #   destination_local['plugin']['is_slabs_missing'] = self.is_destination_plugin_slabs_missing
+      # if not destination_local.get('plugin'):
+      #   plugin_data = dict(self.port_destination_local).get('data', {}).get('plugin', {})
+      #   plugin_slabs_missing = dict(self.port_destination_local).get('is_plugin_slabs_missing')
+      #   destination_local['plugin'] = {**plugin_data, 'is_slabs_missing': plugin_slabs_missing}
+      # if not self.origin_detention.get('free_limit'):
+      #   origin_local['detention'].update({'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION})
+      # if not self.destination_detention.get('free_limit'):
+      #   destination_local['detention'].update({'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION})
+      # if ('free_limit' in self.destination_local.get('demurrage',{})):
+      #   if (self.destination_local['demurrage'].get('free_limit')):
+      #      destination_local['demurrage'] = self.destination_local['demurrage'] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
+      # if not destination_local.get('demurrage'):
+      #   destination_local['demurrage'] = self.destination_local_id.data['demurrage'] | ({'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing})
+      # if self.destination_local['plugin'] and ('free_limit' in self.destination_local.get('plugin', {})):
+      #   if self.destination_local['demurrage'].get('free_limit'):
+      #     destination_local['plugin'] = self.destination_local['plugin'] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
+      # if not destination_local.get('plugin'):
+      #   if self.destination_local_id.data.get('plugin', {}):
+      #     destination_local['plugin'] = self.destination_local_id.data.get('plugin',{}) | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
+      #   else:
+      #     destination_local['plugin'] = ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
+      # if ('free_limit' in origin_local.get('detention',{})):
+      #   if not origin_local.get('detention').get('free_limit'):
+      #     origin_local['detention'] = origin_local['detention'] | ({'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION })
+      # if 'free_limit' in destination_local.get('detention',{}):
+      #   if not destination_local.get('detention').get('free_limit'):
+      #     destination_local['detention'] = destination_local['detention'] | ({'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION })
       return {**data, 'origin_local': origin_local, 'destination_local': destination_local}
+
 
     # def update_priority_score(self):
     #   client.ruby.update_fcl_freight_rate_priority_scores({'filters':{'id': self.id}}) #expose

@@ -121,12 +121,14 @@ FEEDBACK_TYPES = ['liked', 'disliked']
 
 EXPECTED_TAT=6
 
-
-
-EXPECTED_TAT = 6 # HOURS
-
 OVERWEIGHT_SURCHARGE_LINE_ITEM = {
     'code': 'OWS',
     'unit': 'per_container',
     'name': 'Overweight Surcharge'
+}
+
+LOCATION_HIERARCHY_FOR_WEIGHT = {
+    '' : 0,
+    'seaport' : 1,
+    'country' : 2
 }
