@@ -73,6 +73,7 @@ import time
 from datetime import datetime
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
+from configs.defintions import yml_obj
 
 
 app = FastAPI(debug=True)

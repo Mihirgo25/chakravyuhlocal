@@ -39,8 +39,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
         table_name = 'fcl_freight_rate_extension_rule_sets'
 
     def gri_fields(self):
-        with open(FCL_FREIGHT_CHARGES, 'r') as file:
-            fcl_freight_charges_dict = yaml.safe_load(file)
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
         if self.line_item_charge_code and self.gri_currency and (self.gri_rate or self.gri_rate == 0):
             if not self.line_item_charge_code in fcl_freight_charges_dict.keys():
                 raise Exception('charge code not in list')

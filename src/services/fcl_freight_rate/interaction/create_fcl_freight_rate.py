@@ -8,11 +8,6 @@ from celery_worker import delay_fcl_functions
 from datetime import datetime
 from database.db_session import db
 
-
-def to_dict(obj):
-    return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
-
-
 def create_audit(request, freight_id):
 
     audit_data = {}
@@ -36,20 +31,13 @@ def create_audit(request, freight_id):
         object_type="FclFreightRate",
         source=request.get("source"),
     )
-
 def create_fcl_freight_rate_data(request):
-  origin_port_id = str(request.get("origin_port_id"))
-
-  query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
-  print(query)
-  db.execute_sql(query)
-  with db.atomic() as transaction:
-    try:
+    origin_port_id = str(request.get("origin_port_id"))
+    query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
+    db.execute_sql(query)
+    with db.atomic():
       return create_fcl_freight_rate(request)
-    except Exception as e:
-      transaction.rollback()
-      return e
-
+  
 def create_fcl_freight_rate(request):
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
@@ -67,7 +55,7 @@ def create_fcl_freight_rate(request):
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
-    
+    print(datetime.now())
     freight = (
         FclFreightRate.select()
         .where(
@@ -76,7 +64,7 @@ def create_fcl_freight_rate(request):
         )
         .first()
     )
-    
+    print(datetime.now())
     if not freight:
         freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
         for key in list(row.keys()):
@@ -125,13 +113,12 @@ def create_fcl_freight_rate(request):
     )
 
     freight.validate_validity_object(request["validity_start"], request["validity_end"])
-
-    freight.validate_line_items(to_dict(request.get("line_items")))
+    freight.validate_line_items(request.get("line_items"))
 
     freight.set_validities(
         request["validity_start"].date(),
         request["validity_end"].date(),
-        to_dict(request["line_items"]),
+        request["line_items"],
         request["schedule_type"],
         False,
         request["payment_term"],

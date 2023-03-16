@@ -7,7 +7,6 @@ from pydantic import BaseModel as pydantic_base_model
 from peewee import fn
 from typing import Set, Union
 from fastapi import FastAPI, HTTPException
-import yaml
 from params import LineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
@@ -23,15 +22,13 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from libs.locations import list_locations
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
-def to_dict(obj):
-    return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
-
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
        
 class FclFreightRate(BaseModel):
     commodity = CharField(null=True, index=True)
@@ -289,16 +286,15 @@ class FclFreightRate(BaseModel):
       if len(set(codes)) != len(codes):
         raise HTTPException(status_code=499, detail="line_items contains duplicates")
 
-      with open(FCL_FREIGHT_CHARGES, 'r') as file:
-        fcl_freight_charges_dict = yaml.safe_load(file)
+      
+      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
       invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict.keys()]
       
       if invalid_line_items:
           raise HTTPException(status_code=499, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
-      
-      with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
-        fcl_freight_currencies = yaml.safe_load(file)
+
+      fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
       currencies = [currency for currency in fcl_freight_currencies]
       line_item_currencies = [item['currency'] for item in line_items]
@@ -506,8 +502,7 @@ class FclFreightRate(BaseModel):
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
-      with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-        fcl_freight_local_charges_dict = yaml.safe_load(file)
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
       charge_codes = {}
       port = self.origin_port
@@ -524,8 +519,7 @@ class FclFreightRate(BaseModel):
 
     def possible_destination_local_charge_codes(self):
       self.port = self.destination_port
-      with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-        fcl_freight_local_charges_dict = yaml.safe_load(file)
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
       port = self.destination_port
       main_port = self.destination_main_port
@@ -539,9 +533,8 @@ class FclFreightRate(BaseModel):
               charge_codes[k] = v
       return charge_codes
 
-    def possible_charge_codes(self):
-      with open(FCL_FREIGHT_CHARGES, 'r') as file:
-        fcl_freight_charges = yaml.safe_load(file)
+    def possible_charge_codes(self):  # check what to return
+      fcl_freight_charges = FCL_FREIGHT_CHARGES
 
       charge_codes = {}
       shipping_line_id = self.shipping_line_id
