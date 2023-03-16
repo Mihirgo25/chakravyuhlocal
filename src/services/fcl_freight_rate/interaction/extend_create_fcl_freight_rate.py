@@ -7,23 +7,26 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from libs.locations import list_locations
-
+from extension_celery_worker import create_fcl_freight_rate_delay
 def extend_create_fcl_freight_rate_data(request):
     
     if request.extend_rates_for_lens:
-        temp = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return temp
+        request = request.dict(exclude_none=True)
+        request['mode']= 'cogo_lens'
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':request},queue='fcl_freight_rate')
+        return {"message":"Creating rates in delay"}
 
     if request.extend_rates:
         rate_objects = get_fcl_freight_cluster_objects(request.dict(exclude_none=True),request)
         if rate_objects:
-            temp1 = create_extended_rate_objects(rate_objects)
-            return temp1
+            create_extended_rate_objects(rate_objects)
+        return {"message":"Creating rates in delay"}
+
 
 def create_extended_rate_objects(rate_objects):
     for rate_object in rate_objects:
-        temp = create_fcl_freight_rate_data(rate_object)
-    return temp
+        rate_object['mode']='rate_extension'
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':rate_object},queue='fcl_freight_rate')
 
 def get_fcl_freight_cluster_objects(rate_object,request):
     fcl_freight_cluster_objects = []
@@ -67,7 +70,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     except:
         containers = [rate_object['container_size']]
 
-    icd_data = list_locations({'filters': { 'id': origin_locations + destination_locations }, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+    icd_data = list_locations({ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
 
     new_data = {}
     for t in icd_data:
@@ -81,12 +84,11 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                 for commodity in commodities[container_type]:
                     for container in containers:
                         param = copy.deepcopy(rate_object)
-
-                        if icd_data.get(origin_location) and not param.get('origin_main_port_id'):
+                    
+                        if icd_data[origin_location] and not param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = param['origin_port_id']
-                        elif not icd_data.get(origin_location) and param.get('origin_main_port_id'):
+                        elif not icd_data[origin_location] and param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = None
-
                         param['origin_port_id'] = origin_location
 
                         if icd_data.get(destination_location) and  not param.get('destination_main_port_id'):
@@ -103,15 +105,16 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                         updated_param = add_mandatory_line_items(param,request)
 
                         for cluster in ['origin_location_cluster', 'destination_location_cluster', 'commodity_cluster', 'container_cluster']:
-                            if data.get(cluster) and data[cluster]['line_item_charge_code'] and data[cluster]['gri_rate'] and data[cluster]['gri_currency']:
-                                if (cluster == 'origin_location_cluster' and updated_param['origin_port_id'] and updated_param['origin_location_port'] == rate_object['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param['destination_port_id'] and updated_param['destination_port_id'] == rate_object['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == rate_object[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == rate_object['container_size']) or (updated_param['origin_port_id'] and updated_param['destination_port_id'] and updated_param['origin_port_id'] == updated_param['destination_port_id']):
+                            if data.get(cluster) and data[cluster]['line_item_charge_code'] and (data[cluster]['gri_rate'] or data[cluster]['gri_rate'] == 0) and data[cluster]['gri_currency']:
+                                if (cluster == 'origin_location_cluster' and updated_param.get('origin_port_id') and updated_param['origin_location_port'] == rate_object['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param['destination_port_id'] and updated_param['destination_port_id'] == rate_object['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == rate_object[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == rate_object['container_size']) or (updated_param['origin_port_id'] and updated_param['destination_port_id'] and updated_param['origin_port_id'] == updated_param['destination_port_id']):
                                     continue
-                                line_item = [t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']][0]
+                                line_item = {t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']}
 
                                 if not line_item:
                                     continue
+                                line_item = line_item[0]
                                 updated_param['line_items'].remove(line_item)
-                                line_item['price'] = float(line_item['price']) + client.ruby.get_money_exchange_for_fcl(data[cluster]['gri_currency'], line_item['currency'], data[cluster]['gri_rate'])
+                                line_item['price'] = float(line_item['price']) + get_money_exchange(data[cluster]['gri_currency'], line_item['currency'], data[cluster]['gri_rate'])
                                 updated_param['line_items'].append(line_item)
 
                         if request.extend_rates_for_existing_system_rates or not check_rate_existence(updated_param):
@@ -120,7 +123,16 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     for i in fcl_freight_cluster_objects:
         if (i['origin_port_id'] == rate_object['origin_port_id'] and i['destination_port_id'] == rate_object['destination_port_id'] and i['commodity'] == rate_object['commodity'] and i['container_type'] == rate_object['container_type'] and i['container_size'] == rate_object['container_size']):
             fcl_freight_cluster_objects.remove(i)
+
     return fcl_freight_cluster_objects
+
+def get_money_exchange(from_currency, to_currency, gri_rate):
+    if not gri_rate:
+        return 0
+    result = client.ruby.get_money_exchange_for_fcl(from_currency= from_currency, to_currency= to_currency, price= gri_rate)
+    if result:
+        return result['price']
+    return 0
 
 def add_mandatory_line_items(param,request):
     if not request.mandatory_charges:
@@ -144,7 +156,7 @@ def add_mandatory_line_items(param,request):
 
 
 def check_rate_existence(updated_param):
-    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'] and FclFreightRate.destination_port_id == updated_param['destination_port_id'] and FclFreightRate.container_size == updated_param['container_size'] and FclFreightRate.commodity == updated_param['commodity'] and FclFreightRate.container_type == updated_param['container_type'] and FclFreightRate.service_provider_id == updated_param['service_provider_id'] and FclFreightRate.shipping_line_id == updated_param['shipping_line_id'] and FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
+    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
     if system_rate:
         return True
     else:
