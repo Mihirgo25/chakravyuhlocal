@@ -7,12 +7,11 @@ from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 import yaml
 
 def get_fcl_freight_local_rate_cards(request):  
-    print(request)  
     if 'rates' in request and request['rates']:
         list = build_response_list(request['rates'])
 
         return {'list':list}
-    
+
     local_query = initialize_local_query(request)
     
     query_results = select_fields(local_query)
@@ -29,7 +28,7 @@ def initialize_local_query(request):
         FclFreightRateLocal.container_type == request['container_type'], 
         FclFreightRateLocal.trade_type == request['trade_type'],
         FclFreightRateLocal.is_line_items_error_messages_present == False,
-        FclFreightRateLocal.service_provider_id.in_(list(set(list(filter(None, [get_local_agent_ids(request), request['service_provider_id'], DEFAULT_LOCAL_AGENT_IDS['ids']]))[0]))))
+        FclFreightRateLocal.service_provider_id.in_(list(set(list(filter(None, [[get_local_agent_ids(request)] + [request['service_provider_id']] + DEFAULT_LOCAL_AGENT_IDS['ids']][0]))))))
 
     if request['commodity'] in HAZ_CLASSES:
         query = query.where(FclFreightRateLocal.commodity == request['commodity'])
@@ -38,6 +37,7 @@ def initialize_local_query(request):
     
     if request['shipping_line_id']:
         query = query.where(FclFreightRateLocal.shipping_line_id == request['shipping_line_id'])
+
     return query
 
 def select_fields(local_query):
@@ -46,7 +46,6 @@ def select_fields(local_query):
 
 def build_response_list(query_results, request):
     response_list = []
-
     for result in query_results.dicts():
         response_object = build_response_object(result, request)
         if not response_object:
@@ -146,7 +145,8 @@ def add_free_days_objects(query_result, response_object, request):
 
     for free_days_type in free_days_types:
         if query_result['data'].get(free_days_type):
-            response_object[free_days_type] = (query_result['data'].get(free_days_type)) | ({'unit': 'per_container'})
+            if (query_result['data'].get(free_days_type)):
+                response_object[free_days_type] = (query_result['data'].get(free_days_type)) | ({'unit': 'per_container'})
         else:
             response_object[free_days_type] = {} | ({'unit': 'per_container'})
 

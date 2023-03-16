@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 from fastapi import FastAPI, Response, Query, Request, Depends
+import json
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
@@ -55,6 +56,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_weight_limit 
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_weight_limit import update_fcl_freight_rate_weight_limit
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_free_day import get_fcl_freight_rate_free_day
+from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration import get_fcl_weight_slabs_configuration
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 
 # from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
@@ -231,13 +233,21 @@ def get_fcl_freight_local_rate_cards_data(trade_type: str, port_id: str, country
         'include_confirmed_inventory_rates':include_confirmed_inventory_rates,
     }
     data = get_fcl_freight_local_rate_cards(request)
+
     return data
 
 @app.post("/get_fcl_freight_rate_cards")
-def get_fcl_freight_rate_cards_data(origin_port_id: str, origin_country_id: str, destination_port_id: str, destination_country_id: str,  trade_type: str, importer_exporter_id: str, include_origin_local: bool, include_destination_local: bool, container_size: str, container_type: str, containers_count: int,  bls_count: int, validity_start: str, validity_end: str, commodity: str = None, shipping_line_id: str = None, service_provider_id: str = None, include_confirmed_inventory_rates: bool =False, additional_services: list[str] = [], ignore_omp_dmp_sl_sps: list[str] = [], include_destination_dpd: bool = False, cargo_weight_per_container: int = None, cogo_entity_id: str = None):
+def get_fcl_freight_rate_cards_data(origin_port_id: str, origin_country_id: str, destination_port_id: str, destination_country_id: str,  trade_type: str, importer_exporter_id: str, include_origin_local: bool, include_destination_local: bool, container_size: str, container_type: str, containers_count: int,  bls_count: int, validity_start: str, validity_end: str, commodity: str = None, shipping_line_id: str = None, service_provider_id: str = None, include_confirmed_inventory_rates: bool =False, additional_services: str = None, ignore_omp_dmp_sl_sps: str = None, include_destination_dpd: bool = False, cargo_weight_per_container: int = None, cogo_entity_id: str = None):
+    if additional_services:
+        additional_services = json.loads(additional_services)
+    else:
+        additional_services = []
+    if ignore_omp_dmp_sl_sps:
+        ignore_omp_dmp_sl_sps = json.loads(ignore_omp_dmp_sl_sps)
+    else:
+        ignore_omp_dmp_sl_sps = []
     validity_start = datetime.strptime(validity_start,'%Y-%m-%d').isoformat()
     validity_end = datetime.strptime(validity_end,'%Y-%m-%d').isoformat()
-
     request = {
         'origin_port_id' : origin_port_id,
         'origin_country_id' : origin_country_id,
@@ -302,6 +312,15 @@ def get_fcl_freight_rate_visibility_data(
     data = get_fcl_freight_rate_visibility(service_provider_id, origin_port_id, destination_port_id, from_date, to_date, rate_id, shipping_line_id, container_size, container_type, commodity)
     return data
 
+@app.get("/get_fcl_weight_slabs_configuration")
+def get_fcl_weight_slabs_configuration_data(filters: str = None):
+    # try:
+    data = get_fcl_weight_slabs_configuration(filters)
+    data = jsonable_encoder(data)
+    return JSONResponse(status_code = 200, content = data)
+    # except:
+    #     return JSONResponse(status_code = 500, content = {'success' : False})
+
 @app.get("/list_fcl_freight_rate_bulk_operations")
 def list_fcl_freight_rate_bulk_operations_data(
     filters: str = None,
@@ -345,11 +364,10 @@ def list_fcl_freight_rate_locals_data(
     page: int = 1,
     sort_by: str = 'priority_score',
     sort_type: str = 'desc',
-    pagination_data_required: bool = True,
     return_query: bool = False
 ):
     a = time.time()
-    data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, pagination_data_required, return_query)
+    data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
     print(time.time() - a)
     return data
 
