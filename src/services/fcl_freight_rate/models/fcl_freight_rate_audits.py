@@ -20,16 +20,24 @@ class FclFreightRateAudit(BaseModel):
     object_id = UUIDField(null=True)
     object_type = CharField(null=True)
     performed_by_id = UUIDField(null=True)
+    performed_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
+    procured_by = BinaryJSONField(null=True)
     rate_sheet_id = UUIDField(index=True, null=True)
+    rate_sheet = BinaryJSONField(null=True)
     source = CharField(null=True)
     sourced_by_id = UUIDField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    object_id = ForeignKeyField(FclFreightRate, related_name='audits', on_delete='CASCADE')
+    # object_id = ForeignKeyField(FclFreightRate, related_name='audits', on_delete='CASCADE')
     seqnum = Window(
         partition_by = object_id,
         order_by = created_at.desc()
     )
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(FclFreightRateAudit, self).save(*args, **kwargs)
 
     class Meta:
         database = db

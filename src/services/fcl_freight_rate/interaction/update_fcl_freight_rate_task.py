@@ -1,19 +1,118 @@
+from configs.fcl_freight_rate_constants import TECHOPS_TASK_ABORT_REASONS
+from database.db_session import db
+from datetime import datetime
+from rails_client import client
+from configs.global_constants import HAZ_CLASSES
+from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from fastapi import FastAPI, HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 
+def update_fcl_freight_rate_task_data(request):
+    if type(request) != dict:
+        request = request.__dict__
+
+    if not validate_closing_remarks(request):
+        return {request['closing_remarks'], 'is not valid'}
+    
+    with db.atomic() as transaction:
+        try:
+          data = execute_transaction_code(request)
+          return data
+        except Exception as e:
+            transaction.rollback()
+            return "Updation Failed"
 
 def validate_closing_remarks(request):
-    if request.get('closing_remarks') is not None and request.get('closing_remarks') not in ['Sid Cancelled/Changed','Port Currently not served']:
-        raise HTTPException(status_code=400, detail="Closing remarks is not valid")
+    if request['closing_remarks'] and request['closing_remarks'] not in TECHOPS_TASK_ABORT_REASONS:
+        return False
+    return True
+
+def execute_transaction_code(request):
+    request['service_provider_id'] = FclFreightRateDc.get_key_value('DEFAULT_SERVICE_PROVIDER_ID')
+    request['sourced_by_id'] = FclFreightRateDc.get_key_value('DEFAULT_SOURCED_BY_ID')
+    request['procured_by_id'] = FclFreightRateDc.get_key_value('DEFAULT_PROCURED_BY_ID')
+
+    task = FclFreightRateTask.select().where('id' == request['id']).limit(1).dicts().get()
+
+    if not task:
+        return {request['id'],'is invalid'}
     
-def update_fcl_freight_rate_data(request):
-    validate_closing_remarks(request)
-    freight_object = FclFreightRateTask.get_by_id(request['id'])
-    freight_object.closing_remarks = request.get('closing_remarks')
-    freight_object.save()
-    return {
-        'id': freight_object.id,
-        'closing_remarks': freight_object.closing_remarks,
-        'status': freight_object.status
+    if not task.update(get_update_params(request)):
+        return {'error in update params'}
+    
+    if request['status']:
+        return {'id': task.id}
+    
+    result = create_fcl_freight_local_rate(task,request) 
+    
+    update_shipment_local_charges(task,request)
+
+    # if task['source'] == 'contract':
+        # UpdateContractServiceTask.delay(queue: 'low').run!({ task_id: task.id, service_type: 'fcl_freight', rate: self.rate }) if task.source == 'contract'
+ 
+    return {'id': task.id}
+
+def get_update_params(request):
+    update_params = {
+      'completion_data': {
+        'sourced_by_id': request['sourced_by_id'],
+        'procured_by_id': request['procured_by_id'],
+        'service_provider_id': request['service_provider_id'],
+        'rate': request['rate']
+      }
     }
+    if request['status']:
+        update_params = { 'completion_data': { 'closing_remarks': request['closing_remarks'] } }
+
+    update_params['completed_by_id'] = request['performed_by_id']
+    update_params['completed_at'] = datetime.now()
+    if request['status']:
+        update_params['status'] = request['status']
+    else:
+        update_params['status'] = 'completed'
+
+    return update_params
+
+def create_fcl_freight_local_rate(task,request):
+    rate = task.completion_data['rate']
+
+    create_params = {
+        'performed_by_id': request['performed_by_id'],
+        'source': 'tech_ops_dashboard',
+        'trade_type': task.trade_type,
+        'port_id': task.port_id,
+        'main_port_id': task.main_port_id,
+        'container_size': task.container_size,
+        'container_type': task.container_type,
+        'commodity': task.commodity if task.commodity in HAZ_CLASSES else None,
+        'shipping_line_id': task.shipping_line_id,
+        'service_provider_id': request['service_provider_id'],
+        'procured_by_id': request['procured_by_id'],
+        'sourced_by_id': request['sourced_by_id'],
+        'data': { 'line_items': rate['line_items'], 'detention': rate['detention'], 'demurrage': rate['demurrage'] }
+      }
+
+    return create_fcl_freight_rate_local(create_params)
+
+def update_shipment_local_charges(task,request):
+    rate = task.completion_data['rate']
+    try:
+        result = client.ruby.bulk_update_shipment_quotations({
+        'performed_by_id': request['performed_by_id'],
+        'performed_by_type': request['performed_by_type'],
+        'service': 'fcl_freight_local',
+        'line_items': rate['line_items'],
+        'filters': {
+            'port_id': task.port_id,
+            'main_port_id': task.main_port_id,
+            'container_size': task.container_size,
+            'container_type': task.container_type,
+            'commodity': task.commodity,
+            'trade_type': task.trade_type,
+            'shipping_line_id': task.shipping_line_id,
+            'service_provider_id': request['service_provider_id']
+        }
+        })
+        return result
+    except:
+        return {}

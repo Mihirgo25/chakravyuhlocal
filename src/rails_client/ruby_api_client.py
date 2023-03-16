@@ -1,12 +1,15 @@
 from configs.env import RUBY_ADDRESS_URL
 from rails_client.ruby_client import RubyClient
+import json
+import requests
 
 class RubyApiClient:
     def __init__(self):
         self.client=RubyClient(str(RUBY_ADDRESS_URL))
 
-    def list_locations(self,data={}):
-        return self.client.request('GET','list_locations',data)
+    # def list_locations(self,data={}):
+    #     return self.client.request('GET','list_locations',data)
+
 
     def get_eligible_service_organizations(self, data = {}):
         return self.client.request('GET','get_eligible_service_organizations',data)
@@ -58,3 +61,29 @@ class RubyApiClient:
 
     def list_partner_users(self, data = {}):
         return self.client.request('GET','list_partner_users',data)
+
+    def bulk_update_shipment_quotations(self, data = {}):
+        return self.client.request('POST', 'bulk_update_shipment_quotations', data)
+
+    def list_users(self, data = {}):
+        return self.client.request('GET', 'list_users', data)
+
+    def get_platform_config_constant(self, data = {}):
+        return self.client.request('GET','get_platform_config_constant',data)
+    def list_fcl_freight_rate_free_days(self, data = {}):
+        return self.client.request('GET', 'list_fcl_freight_rate_free_days', data)
+
+    def get_spot_search(self, data = {}):
+        return self.client.request('GET', 'get_spot_search', data)
+
+    def list_partner_user_expertises(self, data = {}):
+        return self.client.request('GET', 'list_partner_user_expertises', data)
+
+    def get_users(self, data = {}):
+        return self.client.request('GET', 'get_users', data)
+
+    def get_fcl_freight_rates(self, data = {}):
+        return self.client.request('GET','get_fcl_freight_rates', data)
+
+    def list_organization_services(self, data = {}):
+        return self.client.request('GET','list_organization_services', data)

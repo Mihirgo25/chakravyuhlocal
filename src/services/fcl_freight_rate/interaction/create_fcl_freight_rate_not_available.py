@@ -1,8 +1,12 @@
-from rails_client import client
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from playhouse.shortcuts import model_to_dict
+from rails_client import client
+import time
 
 def create_fcl_freight_rate_not_available(request):
-    present_service_provider_ids = FclFreightRate.select(FclFreightRate.service_provider_id).distinct().where(
+    start = time.time()
+    request = request.__dict__
+    present_service_provider_data = FclFreightRate.select(FclFreightRate.service_provider_id).distinct().where(
         FclFreightRate.origin_port_id == request['origin_port_id'],
         FclFreightRate.destination_port_id == request['destination_port_id'],
         FclFreightRate.container_size == request['container_size'],
@@ -10,17 +14,18 @@ def create_fcl_freight_rate_not_available(request):
         FclFreightRate.commodity == request['commodity'],
         FclFreightRate.importer_exporter_id == None
     )
-    
+    present_service_provider_ids = [model_to_dict(item)['service_provider_id'] for item in present_service_provider_data.execute()]
+
     for service_provider_id in list(set(find_service_provider_ids(request)).difference(set(present_service_provider_ids))):
-        FclFreightRate.create({
-            'origin_port_id': request['origin_port_id'],
-            'destination_port_id': request['destination_port_id'],
-            'container_size': request['container_size'],
-            'container_type': request['container_type'],
-            'commodity': request['commodity'],
-            'service_provider_id': service_provider_id,
-            'rate_not_available_entry': True}
-        )
+        FclFreightRate.create(
+            origin_port_id = request['origin_port_id'],
+            destination_port_id = request['destination_port_id'],
+            container_size = request['container_size'],
+            container_type = request['container_type'],
+            commodity = request['commodity'],
+            service_provider_id = service_provider_id,
+            rate_not_available_entry = True)
+    return True
 
 def find_service_provider_ids(request):
     service_provider_ids = client.ruby.get_eligible_service_organizations({
@@ -36,4 +41,5 @@ def find_service_provider_ids(request):
         'commodity': request['commodity']
     }
     })['ids']
+
     return service_provider_ids

@@ -1,25 +1,21 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
-from paginator import Paginator
-import json
 from operator import attrgetter
-from services.fcl_freight_rate.models.fcl_freight_rates import *
+from services.fcl_freight_rate.models.fcl_freight_rate import *
 from rails_client import client
 import peewee
 from math import ceil
 from playhouse.shortcuts import model_to_dict
 
-POSSIBLE_DIRECT_FILTERS = ['id', 'extension_name', 'service_provider_id', 'shipping_line_id', 'cluster_id', 'cluster_type', 'cluster_reference_name', 'status', 'trade_type']
+possible_direct_filters = ['id', 'extension_name', 'service_provider_id', 'shipping_line_id', 'cluster_id', 'cluster_type', 'cluster_reference_name', 'status', 'trade_type']
 
-POSSIBLE_INDIRECT_FILTERS = ['q']
+possible_indirect_filters = ['q']
 
 def list_fcl_freight_rate_extension_rule_set_data(request):
     request = request.__dict__
-    #request['filters'] = json.loads(request['filters'])
     query = get_query(request)
     query = apply_direct_filters(query, request)
     query = apply_indirect_filters(query, request)
     data = get_data(query)
-    # print('Query========',query)
     pagination_data = get_pagination_data(query,request)
     data = {'list':data} | (pagination_data)
     return data
@@ -35,19 +31,18 @@ def get_query(request):
 
 def apply_direct_filters(query, request):
     for key in request['filters']:
-        if key in POSSIBLE_DIRECT_FILTERS:
+        if key in possible_direct_filters:
             query = query.select().where(attrgetter(key)(FclFreightRate) == request['filters'][key]).execute()
     return query
 
 def apply_indirect_filters(query, request):
     for key in request['filters']:
-        if key in POSSIBLE_INDIRECT_FILTERS:
+        if key in possible_indirect_filters:
             apply_filter_function = f'apply_{key}_filter'      
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
 
 def get_data(query):
-    # print('Query========',query)
     results = [model_to_dict(item) for item in query.execute()]
     data = add_service_objects(results)
     return data
