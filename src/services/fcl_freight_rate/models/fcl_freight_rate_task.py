@@ -14,27 +14,28 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
         # constraints = [SQL('UNIQUE (port_id, trade_type, main_port_id, container_size, container_type, commodity, shipping_line_id, source, task_type, service, status)')]
 
 class FclFreightRateTask(BaseModel):
-    commodity = CharField(null=True)
+    commodity = CharField(index=True, null=True)
     completed_at = CharField(null=True)
     completed_by_id = CharField(null=True)
     completed_by = BinaryJSONField(null=True)
     completion_data = JSONField(null=True)
-    container_size = CharField(null=True)
-    container_type = CharField(null=True)
+    container_size = CharField(index=True, null=True)
+    container_type = CharField(index=True, null=True)
     country_id = UUIDField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     job_data = JSONField(null=True)
     location_ids = ArrayField(field_class=UUIDField, null=True)
-    main_port_id = UUIDField(null=True)
+    main_port_id = UUIDField(index=True, null=True)
     main_port = BinaryJSONField(null=True)
-    port_id = UUIDField(null=True)
+    port_id = UUIDField(index=True, null=True)
     port = BinaryJSONField(null=True)
     service = CharField(null=True)
-    shipping_line_id = UUIDField(null=True)
+    shipping_line_id = UUIDField(index=True, null=True)
     shipping_line = BinaryJSONField(null=True)
     shipment_serial_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     source = CharField(null=True)

@@ -10,6 +10,7 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateAudit(BaseModel):
     action_name = CharField(null=True)
@@ -38,9 +39,6 @@ class FclFreightRateAudit(BaseModel):
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateAudit, self).save(*args, **kwargs)
-
-    class Meta:
-        database = db
 
     class Meta:
         table_name = 'fcl_freight_rate_audits'

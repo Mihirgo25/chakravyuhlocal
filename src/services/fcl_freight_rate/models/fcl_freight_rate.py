@@ -557,13 +557,13 @@ class FclFreightRate(BaseModel):
       if self.last_rate_available_date is None:
           return None
       else:
-          return self.last_rate_available_date.date() < datetime.datetime.now().date()
+          return self.last_rate_available_date < datetime.datetime.now().date()
 
     def is_rate_about_to_expire(self):
       if self.last_rate_available_date is None:
           return None
       else:
-          return self.last_rate_available_date.date() < (datetime.datetime.now() + datetime.timedelta(days=2)).date()
+          return self.last_rate_available_date < (datetime.datetime.now() + datetime.timedelta(days=2)).date()
 
     def is_rate_not_available(self):
       return self.last_rate_available_date is None
@@ -704,20 +704,31 @@ class FclFreightRate(BaseModel):
             destination_local['detention'] = destination_local['detention'] | ({'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION })
 
         if not destination_local.get('detention'):
-          destination_local['detention'] = self.destination_local_id.data['detention'] | ({'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing})
+          if self.destination_local_id.data.get('detention'):
+            destination_local['detention'] = self.destination_local_id.data['detention'] | ({'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing})
+          else:
+            destination_local['detention'] = {'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing}
+
         if 'demurrage' in self.destination_local and self.destination_local.get('demurrage'):
           if self.destination_local['demurrage'].get('free_limit'):
             destination_local['demurrage'] = self.destination_local['demurrage'] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
 
         if not destination_local.get('demurrage'):
-          destination_local['demurrage'] = self.destination_local_id.data['demurrage'] | ({'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing})
+          if self.destination_local_id.data.get('demurrage'):
+            destination_local['demurrage'] = self.destination_local_id.data['demurrage'] | ({'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing})
+          else:
+            destination_local['demurrage'] = {'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing}
+
 
         if 'plugin' in self.destination_local and self.destination_local.get('plugin'):
           if self.destination_local['plugin'].get('free_limit'):
             destination_local['plugin'] = self.destination_local['plugin'] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
 
         if not destination_local.get('plugin'):
-          destination_local['plugin'] = self.destination_local_id.data['plugin'] | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
+          if self.destination_local_id.data.get('plugin'):
+            destination_local['plugin'] = self.destination_local_id.data['plugin'] | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
+          else:
+            destination_local['plugin'] = {'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing}
           
       # if destination_detention.get('free_limit'):
       #   destination_local['detention'] = self.destination_detention.update(

@@ -9,6 +9,7 @@ from configs.global_constants import CONTAINER_SIZES
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclWeightSlabsConfiguration(BaseModel):
     commodity = CharField(null=True)
@@ -28,7 +29,7 @@ class FclWeightSlabsConfiguration(BaseModel):
     service_provider_id = UUIDField(null=True)
     shipping_line_id = UUIDField(null=True)
     slabs = BinaryJSONField(null = True)
-    status = CharField()
+    status = CharField(index=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField()
 
