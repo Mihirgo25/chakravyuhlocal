@@ -1,13 +1,13 @@
-import os, csv
+import os, csv, json
 import shutil
 import urllib.request
 from libs.download_csv import download_file
-from services.rate_sheet.models.rate_sheet import RateSheet
+from services.rate_sheet.models.rate_sheet import RateSheets
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
 import pandas as pd
 from rails_client import client
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import (
-    create_fcl_freight_rate_data,
+    create_fcl_freight_rate_data, create_fcl_freight_rate
 )
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import (
     extend_create_fcl_freight_rate_data,
@@ -17,9 +17,9 @@ import wget
 import ssl, time, requests
 import services.rate_sheet.interactions.fcl_rate_sheet_converted_file as process_rate_sheet
 from fastapi.encoders import jsonable_encoder
-
+from libs.locations import list_locations
 from datetime import datetime
-
+import dateutil.parser as parser
 
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -127,6 +127,7 @@ def set_original_file_path(params):
     file_path = os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv")
     with open(file_path, 'wb') as f:
         response = requests.get(params["file_url"])
+        print(params["file_url"], "sabsat")
         f.write(response.content)
 
 
@@ -143,12 +144,8 @@ def delete_file_path(params):
 
 
 def get_port_id(port_code):
-    port_id = client.ruby.list_locations(
-        {
-            "filters": {"type": "seaport", "port_code": port_code, "status": "active"},
-            "fields": ["id"],
-        }
-    )["list"][0]["id"]
+    filters =  {"type": "seaport", "port_code": port_code, "status": "active"}
+    port_id =  list_locations({'filters': str(filters)})['list'][0]["id"]
     return port_id
 
 
@@ -188,7 +185,8 @@ def get_airline_id(params):
 
 
 def convert_date_format(date):
-    return datetime.strptime(date, '%d/%m/%y %H:%M:%S')
+    parsed_date = parser.parse(date)
+    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
 
 def process_fcl_freight_freight(params):
     total_lines = 0
@@ -210,7 +208,7 @@ def process_fcl_freight_freight(params):
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
     file_path = get_original_file_path(params)
-
+    print(file_path)
     with open(file_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         next(reader, None)
@@ -218,8 +216,8 @@ def process_fcl_freight_freight(params):
         for row in input_file:
             index += 1
             row = row
-            if index < last_line:
-                return
+            # if index < last_line:
+            #     return
             present_field = []
             blank_field = []
             if valid_hash(row, present_field, blank_field):
@@ -444,10 +442,9 @@ def process_fcl_freight_freight(params):
                 )
             ):
                 rows.append(row)
-
+    print(len(rows))
     if not rows:
         return
-
     create_fcl_freight_freight_rate(rows, created_by_id, procured_by_id, sourced_by_id)
     set_last_line(total_lines)
     rate_sheet.set_processed_percent = (
@@ -547,6 +544,7 @@ def create_fcl_freight_freight_rate(
     request_params = object
     if 'extended_rates' in rows[0]:
         request_params["is_extended"] = True
+    print(request_params)
     create_fcl_freight_rate_data(request_params)
     if 'extended_rates' in rows[0]:
         request_params["extend_rates"] = True
@@ -823,9 +821,9 @@ def validate_fcl_freight_freight(params):
 
     last_line = get_last_line(params)
     rows = []
-    reader = csv.reader(get_file_path(params))
-    if last_line == 0:
-        file.append(headers)
+    # reader = csv.reader(get_file_path(params))
+    # if last_line == 0:
+    #     file.append(headers)
     reader = csv.reader(get_original_file_path(params))
     index = -1
     for row in reader:
@@ -837,7 +835,7 @@ def validate_fcl_freight_freight(params):
         blank_field = []
         if valid_hash(row, present_field, blank_field):
             if rows:
-                write_fcl_freight_freight_object(rows, file)
+                write_fcl_freight_freight_object(rows, file, params)
                 set_last_line(index, params)
             rows = [row]
         elif (
@@ -1067,6 +1065,7 @@ def write_fcl_freight_freight_object(rows, csv, params):
     object = {key: rows[0][key] for key in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']}
     object['validity_start'] = convert_date_format(object['validity_start'])
     object['validity_end'] = convert_date_format(object['validity_end'])
+    print( object['validity_start'],  object['validity_end'], "date")
     object['line_items'] = []
     for t in rows:
         if t['code'] is not None:
@@ -1105,12 +1104,22 @@ def write_fcl_freight_freight_object(rows, csv, params):
 
 
 def validate_fcl_freight_local(params):
-    return
+   return
+
+
 
 
 def validate_and_process_rate_sheet_converted_file(params):
     if params['status'] != 'converted':
         return
+    print("params",params)
+    reset_counters(params)
+    for converted_file in params['converted_files']:
+        reset_counters(converted_file)
+        print("validate_{}_{}".format(converted_file['service_name'], converted_file['module']))
+        getattr(process_rate_sheet, "validate_{}_{}".format(converted_file['service_name'], converted_file['module']))(
+            params
+        )
     if params['converted_files']:
         for converted_files in params['converted_files']:
             reset_counters(converted_files)
@@ -1131,6 +1140,7 @@ def process_converted_files(params):
     params['status'] = 'processing'
     for converted_file in params['converted_files']:
         reset_counters(params)
+        print("process_{}_{}".format(converted_file['service_name'], converted_file['module']))
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
             params
         )
