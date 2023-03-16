@@ -597,7 +597,7 @@ class FclFreightRate(BaseModel):
 
       origin_local_object_id = filtered_objects[0].id if filtered_objects else None
 
-      filtered_objects = [t for t in local_objects if t.port_id == self.destination_port_id and str(t.main_port_id or '') == str(self.destination_main_port_id or '') and t.trade_type == 'import']
+      filtered_objects = [t for t in local_objects if str(t.port_id) == str(self.destination_port_id) and str(t.main_port_id or '') == str(self.destination_main_port_id or '') and t.trade_type == 'import']
 
       destination_local_object_id = filtered_objects[0].id if filtered_objects else None
       FclFreightRate.update(origin_local_id = origin_local_object_id,destination_local_id=destination_local_object_id).where(
