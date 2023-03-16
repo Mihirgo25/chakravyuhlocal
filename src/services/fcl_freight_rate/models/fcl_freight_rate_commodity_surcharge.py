@@ -137,8 +137,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
       return False
     
     def validate_currency(self):
-        with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
-            fcl_freight_currencies = yaml.safe_load(file)
+        fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
         currencies = [currency for currency in fcl_freight_currencies]
         if self.currency and self.currency in currencies:

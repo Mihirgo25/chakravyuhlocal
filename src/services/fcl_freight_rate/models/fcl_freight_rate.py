@@ -7,7 +7,6 @@ from pydantic import BaseModel as pydantic_base_model
 from peewee import fn
 from typing import Set, Union
 from fastapi import FastAPI, HTTPException
-import yaml
 from params import LineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
@@ -23,15 +22,13 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from libs.locations import list_locations
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
-def to_dict(obj):
-    return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
-
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
        
 class FclFreightRate(BaseModel):
     commodity = CharField(null=True, index=True)
@@ -159,16 +156,31 @@ class FclFreightRate(BaseModel):
 
     def validate_origin_main_port_id(self):
       if self.origin_port and self.origin_port['is_icd'] == False:
-        if not self.origin_main_port_id:
+        if not self.origin_main_port_id or self.origin_main_port_id!=self.origin_port_id:
           return True
         return False
+      elif self.origin_port and self.origin_port['is_icd']==True and not self.rate_not_available_entry:
+
+        if self.origin_main_port_id:
+          origin_main_port = list_locations({'id':[str(self.origin_main_port_id)],'type':'seaport','is_icd':False})['list']
+          if not origin_main_port:
+            return False
+        else:
+          return False
       return True
 
     def validate_destination_main_port_id(self):
       if self.destination_port and self.destination_port['is_icd'] == False:
-        if not self.destination_main_port_id:
+        if not self.destination_main_port_id or self.destination_main_port_id!=self.destination_port_id:
           return True
         return False
+      elif self.destination_port and self.destination_port['is_icd']==True and not self.rate_not_available_entry:
+        if self.destination_main_port_id:
+          destination_main_port = list_locations({'id':[str(self.destination_main_port_id)],'type':'seaport','is_icd':False})['list']
+          if not destination_main_port:
+            return False
+        else:
+          return False
       return True
 
     def validate_container_size(self):
@@ -274,16 +286,15 @@ class FclFreightRate(BaseModel):
       if len(set(codes)) != len(codes):
         raise HTTPException(status_code=499, detail="line_items contains duplicates")
 
-      with open(FCL_FREIGHT_CHARGES, 'r') as file:
-        fcl_freight_charges_dict = yaml.safe_load(file)
+      
+      fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
       invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict.keys()]
       
       if invalid_line_items:
           raise HTTPException(status_code=499, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
-      
-      with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
-        fcl_freight_currencies = yaml.safe_load(file)
+
+      fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
       currencies = [currency for currency in fcl_freight_currencies]
       line_item_currencies = [item['currency'] for item in line_items]
@@ -491,8 +502,7 @@ class FclFreightRate(BaseModel):
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
-      with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-        fcl_freight_local_charges_dict = yaml.safe_load(file)
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
       charge_codes = {}
       port = self.origin_port
@@ -509,8 +519,7 @@ class FclFreightRate(BaseModel):
 
     def possible_destination_local_charge_codes(self):
       self.port = self.destination_port
-      with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-        fcl_freight_local_charges_dict = yaml.safe_load(file)
+      fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
       port = self.destination_port
       main_port = self.destination_main_port
@@ -524,10 +533,8 @@ class FclFreightRate(BaseModel):
               charge_codes[k] = v
       return charge_codes
 
-    def possible_charge_codes(self):
-      self.set_locations()
-      with open(FCL_FREIGHT_CHARGES, 'r') as file:
-        fcl_freight_charges = yaml.safe_load(file)
+    def possible_charge_codes(self):  # check what to return
+      fcl_freight_charges = FCL_FREIGHT_CHARGES
 
       charge_codes = {}
       shipping_line_id = self.shipping_line_id
@@ -570,13 +577,13 @@ class FclFreightRate(BaseModel):
 
     def update_local_references(self):
       local_objects = FclFreightRateLocal.select().where(
-        (FclFreightRateLocal.port_id in [self.origin_port_id, self.destination_port_id]),
-        (FclFreightRateLocal.main_port_id in [self.origin_main_port_id, self.destination_main_port_id]),
-        (FclFreightRateLocal.container_size == self.container_size),
-        (FclFreightRateLocal.container_type == self.container_type),
-        (FclFreightRateLocal.commodity == (self.commodity if self.commodity in HAZ_CLASSES else None)),
-        (FclFreightRateLocal.service_provider_id == self.service_provider_id),
-        (FclFreightRateLocal.shipping_line_id == self.shipping_line_id)
+        FclFreightRateLocal.port_id << (self.origin_port_id, self.destination_port_id),
+        FclFreightRateLocal.main_port_id << (self.origin_main_port_id, self.destination_main_port_id) if self.origin_port_id !=self.origin_main_port_id or self.destination_port_id !=self.destination_main_port_id else FclFreightRateLocal.id.is_null(False),
+        FclFreightRateLocal.container_size == self.container_size,
+        FclFreightRateLocal.container_type == self.container_type,
+        FclFreightRateLocal.commodity == self.commodity if self.commodity in HAZ_CLASSES else FclFreightRateLocal.id.is_null(False),
+        FclFreightRateLocal.service_provider_id == self.service_provider_id,
+        FclFreightRateLocal.shipping_line_id == self.shipping_line_id
       ).execute()
 
       filtered_objects = [t for t in local_objects if str(t.port_id) == str(self.origin_port_id) and str(t.main_port_id or '') == str(self.origin_main_port_id or '') and t.trade_type == 'export']
@@ -585,7 +592,7 @@ class FclFreightRate(BaseModel):
 
       filtered_objects = [t for t in local_objects if t.port_id == self.destination_port_id and str(t.main_port_id or '') == str(self.destination_main_port_id or '') and t.trade_type == 'import']
 
-      destination_local_object_id = filtered_objects[0]['id'] if filtered_objects else None
+      destination_local_object_id = filtered_objects[0].id if filtered_objects else None
       FclFreightRate.update(origin_local_id = origin_local_object_id,destination_local_id=destination_local_object_id).where(
         FclFreightRate.id == self.id
       ).execute()

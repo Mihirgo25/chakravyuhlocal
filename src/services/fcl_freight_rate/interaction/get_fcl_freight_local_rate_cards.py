@@ -96,8 +96,7 @@ def build_local_line_items(result, response_object, request):
         return True   
 
 def build_local_line_item_object(line_item, request):
-    with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-        fcl_freight_local_charges = yaml.safe_load(file)
+    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
