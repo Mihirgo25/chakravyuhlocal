@@ -383,8 +383,12 @@ class FclFreightRate(BaseModel):
         new_validities = []
 
         if not deleted:
-            currency = [item for item in line_items if item["code"] == "BAS"][0]["currency"]
-            price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
+            currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
+            currency = currency_lists[0]
+            if len(set(currency_lists)) != 1:
+                price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
+            else:
+                price = float(sum(item["price"] for item in line_items))
             new_validity_object = {
                 "validity_start": validity_start,
                 "validity_end": validity_end,
@@ -493,12 +497,13 @@ class FclFreightRate(BaseModel):
 
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()
-
       self.validate_destination_local()
+      
       if not self.validate_origin_main_port_id():
-        raise HTTPException(status_code=499, detail="origin main port id is invalid")
+        raise HTTPException(status_code=499, detail="origin main port id is required")
+      
       if not self.validate_destination_main_port_id():
-        raise HTTPException(status_code=499, detail="destination main port id is invalid")
+        raise HTTPException(status_code=499, detail="destination main port id is required")
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
