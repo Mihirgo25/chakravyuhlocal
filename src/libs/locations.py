@@ -3,7 +3,7 @@ import json
 
 def list_locations(params):
     url = "https://api.cogoport.com/location/list_locations"
-    response = requests.get(url, {"filters": json.dumps(params), "includes": json.dumps({"continent_id": 1, "trade_id": 1, "country_id": 1, "default_params_required": 1})})
+    response = requests.get(url, {"filters": json.dumps({'id':params['id']}), "includes": json.dumps({"continent_id": 1, "trade_id": 1, "country_id": 1, "default_params_required": 1}),'page_limit':params.get('page_limit',10)})
     try:
         response = response.content
         return json.loads(response)

@@ -12,7 +12,7 @@ def extend_create_fcl_freight_rate_data(request):
     
     if request.extend_rates_for_lens:
         temp = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return temp
+        return {'message':'creating rates in delay'}
 
     if request.extend_rates:
         rate_objects = get_fcl_freight_cluster_objects(request.dict(exclude_none=True),request)
@@ -23,7 +23,7 @@ def extend_create_fcl_freight_rate_data(request):
 def create_extended_rate_objects(rate_objects):
     for rate_object in rate_objects:
         temp = create_fcl_freight_rate_data(rate_object)
-    return temp
+    return {'message':'creating rates in delay'}
 
 def get_fcl_freight_cluster_objects(rate_object,request):
     fcl_freight_cluster_objects = []
@@ -67,7 +67,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     except:
         containers = [rate_object['container_size']]
 
-    icd_data = list_locations({'filters': { 'id': origin_locations + destination_locations }, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+    icd_data = list_locations({ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
 
     new_data = {}
     for t in icd_data:
@@ -81,12 +81,11 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                 for commodity in commodities[container_type]:
                     for container in containers:
                         param = copy.deepcopy(rate_object)
-
-                        if icd_data.get(origin_location) and not param.get('origin_main_port_id'):
+                    
+                        if icd_data[origin_location] and not param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = param['origin_port_id']
-                        elif not icd_data.get(origin_location) and param.get('origin_main_port_id'):
+                        elif not icd_data[origin_location] and param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = None
-
                         param['origin_port_id'] = origin_location
 
                         if icd_data.get(destination_location) and  not param.get('destination_main_port_id'):
@@ -121,6 +120,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     for i in fcl_freight_cluster_objects:
         if (i['origin_port_id'] == rate_object['origin_port_id'] and i['destination_port_id'] == rate_object['destination_port_id'] and i['commodity'] == rate_object['commodity'] and i['container_type'] == rate_object['container_type'] and i['container_size'] == rate_object['container_size']):
             fcl_freight_cluster_objects.remove(i)
+
     return fcl_freight_cluster_objects
 
 def get_money_exchange(from_currency, to_currency, gri_rate):
