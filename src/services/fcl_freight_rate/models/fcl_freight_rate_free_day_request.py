@@ -21,7 +21,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
     main_port_id = UUIDField(null=True) 
     trade_type = CharField(null=True)
     commodity = CharField(null=True)
-    status = CharField(null=True)
+    status = CharField(index=True, null=True)
     free_days_type = CharField(null=True)
     preferred_free_days = CharField(null=True)
     shipping_line_id = UUIDField(null=True)
