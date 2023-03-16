@@ -79,26 +79,12 @@ def create_fcl_freight_rate(request):
 
     freight.weight_limit = request.get("weight_limit")
 
-    if freight.origin_local and request.get("origin_local"):
-        freight.origin_local.update(request.get("origin_local"))
-    elif request.get("origin_local"):
-    #     origin_local = {
-    #     k: v
-    #     for k, v in request.get("origin_local", {}).items()
-    #     if k not in ["detention", "demurrage"]
-    # }
+    if request.get("origin_local"):
         freight.origin_local = request.get("origin_local")
     else:
         freight.origin_local = {"line_items": [], "plugin": None}
 
-    if freight.destination_local and request.get("destination_local"):
-        freight.destination_local.update(request.get("destination_local"))
-    elif request.get("destination_local"):
-    #     destination_local = {
-    #     k: v
-    #     for k, v in request.get("destination_local", {}).items()
-    #     if k not in ["detention", "demurrage"]
-    # }
+    if request.get("destination_local"):
         freight.destination_local = request.get("destination_local")
     else:
         freight.destination_local = {"line_items": [], "plugin": None}

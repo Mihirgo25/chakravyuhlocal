@@ -106,15 +106,16 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                         updated_param = add_mandatory_line_items(param,request)
 
                         for cluster in ['origin_location_cluster', 'destination_location_cluster', 'commodity_cluster', 'container_cluster']:
-                            if data.get(cluster) and data[cluster]['line_item_charge_code'] and data[cluster]['gri_rate'] and data[cluster]['gri_currency']:
-                                if (cluster == 'origin_location_cluster' and updated_param['origin_port_id'] and updated_param['origin_location_port'] == rate_object['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param['destination_port_id'] and updated_param['destination_port_id'] == rate_object['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == rate_object[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == rate_object['container_size']) or (updated_param['origin_port_id'] and updated_param['destination_port_id'] and updated_param['origin_port_id'] == updated_param['destination_port_id']):
+                            if data.get(cluster) and data[cluster]['line_item_charge_code'] and (data[cluster]['gri_rate'] or data[cluster]['gri_rate'] == 0) and data[cluster]['gri_currency']:
+                                if (cluster == 'origin_location_cluster' and updated_param.get('origin_port_id') and updated_param['origin_location_port'] == rate_object['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param['destination_port_id'] and updated_param['destination_port_id'] == rate_object['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == rate_object[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == rate_object['container_size']) or (updated_param['origin_port_id'] and updated_param['destination_port_id'] and updated_param['origin_port_id'] == updated_param['destination_port_id']):
                                     continue
-                                line_item = [t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']][0]
+                                line_item = {t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']}
 
                                 if not line_item:
                                     continue
+                                line_item = line_item[0]
                                 updated_param['line_items'].remove(line_item)
-                                line_item['price'] = float(line_item['price']) + client.ruby.get_money_exchange_for_fcl(data[cluster]['gri_currency'], line_item['currency'], data[cluster]['gri_rate'])
+                                line_item['price'] = float(line_item['price']) + get_money_exchange(data[cluster]['gri_currency'], line_item['currency'], data[cluster]['gri_rate'])
                                 updated_param['line_items'].append(line_item)
 
                         if request.extend_rates_for_existing_system_rates or not check_rate_existence(updated_param):
@@ -124,6 +125,14 @@ def get_fcl_freight_cluster_objects(rate_object,request):
         if (i['origin_port_id'] == rate_object['origin_port_id'] and i['destination_port_id'] == rate_object['destination_port_id'] and i['commodity'] == rate_object['commodity'] and i['container_type'] == rate_object['container_type'] and i['container_size'] == rate_object['container_size']):
             fcl_freight_cluster_objects.remove(i)
     return fcl_freight_cluster_objects
+
+def get_money_exchange(from_currency, to_currency, gri_rate):
+    if not gri_rate:
+        return 0
+    result = client.ruby.get_money_exchange_for_fcl(from_currency= from_currency, to_currency= to_currency, price= gri_rate)
+    if result:
+        return result['price']
+    return 0
 
 def add_mandatory_line_items(param,request):
     if not request.mandatory_charges:
