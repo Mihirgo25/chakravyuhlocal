@@ -1,5 +1,4 @@
 from database.db_session import db
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate import to_dict
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
 from libs.logger import logger 
 from datetime import datetime

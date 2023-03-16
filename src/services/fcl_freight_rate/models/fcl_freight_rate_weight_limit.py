@@ -1,11 +1,11 @@
 from peewee import *
-from rails_client import client
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_PAIR_HIERARCHY
 from fastapi import HTTPException
 from params import Slab
+from libs.locations import list_locations
 
 
 class BaseModel(Model):
@@ -19,6 +19,7 @@ class FclFreightRateWeightLimit(BaseModel):
     destination_continent_id = UUIDField(index=True, null=True)
     destination_country_id = UUIDField(index=True, null=True)
     destination_location_id = UUIDField(null=True)
+    destination_location = BinaryJSONField(null=True)
     destination_location_type = CharField(null=True)
     destination_port_id = UUIDField(index=True, null=True)
     destination_trade_id = UUIDField(index=True, null=True)
@@ -29,12 +30,15 @@ class FclFreightRateWeightLimit(BaseModel):
     origin_country_id = UUIDField(index=True, null=True)
     origin_destination_location_type = CharField(index=True, null=True)
     origin_location_id = UUIDField(null=True)
+    origin_location = BinaryJSONField(null=True)
     origin_location_type = CharField(null=True)
     origin_port_id = UUIDField(index=True, null=True)
     origin_trade_id = UUIDField(index=True, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(null=True)
+    service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
+    shipping_line = BinaryJSONField(null=True)
     slabs = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     
@@ -54,8 +58,8 @@ class FclFreightRateWeightLimit(BaseModel):
 
     def validate_location_ids(self):
         LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
-        params = {"filters" : {"id": [str(self.origin_location_id), str(self.destination_location_id)]}}
-        location_data = client.ruby.list_locations(params)['list']
+        params = {"id": [str(self.origin_location_id), str(self.destination_location_id)]}
+        location_data = list_locations(params)['list']
 
         if len(location_data) != 0:
             count = 0
@@ -85,28 +89,6 @@ class FclFreightRateWeightLimit(BaseModel):
             if count != 2:
                 raise HTTPException(status_code=499, detail="Invalid location")
 
-    def validate_shipping_line(self):
-        shipping_line_data = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
-        if len(shipping_line_data)!= 0 and shipping_line_data[0].get('operator_type') == 'shipping_line':
-            return True
-        return False
-
-    def validate_service_provider(self):
-        service_provider_data = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
-        if len(service_provider_data) != 0 and service_provider_data[0].get('account_type') == 'service_provider':
-            return True
-        return False
-
-    def validate_container_size(self):
-        if self.container_size and self.container_size in CONTAINER_SIZES:
-            return True
-        return False
-
-    def validate_container_type(self):
-        if self.container_type and self.container_type in CONTAINER_TYPES:
-            return True
-        return False
-
     def valid_uniqueness(self):
         freight_weight_limit_cnt = FclFreightRateWeightLimit.select().where(
             FclFreightRateWeightLimit.origin_location_id == self.origin_location_id,
@@ -125,7 +107,7 @@ class FclFreightRateWeightLimit(BaseModel):
 
     def validate_free_limit(self):
       if not self.free_limit:
-        raise HTTPException(status_code=499, detail="Empty free limit")
+        raise HTTPException(status_code=499, detail="free limit required")
 
     def validate_slabs(self):
         if self.slabs:
@@ -148,17 +130,6 @@ class FclFreightRateWeightLimit(BaseModel):
     def validate_before_save(self):
 
         self.validate_location_ids()
-        # if not self.validate_shipping_line():
-        #     raise HTTPException(status_code=499, detail="Invalid shipping line")
-
-        # if not self.validate_service_provider():
-        #     raise HTTPException(status_code=499, detail="Invalid service provider")
-
-        # if not self.validate_container_size():
-        #     raise HTTPException(status_code=499, detail="Incorrect container size")
-
-        # if not self.validate_container_type():
-        #     raise HTTPException(status_code=499, detail="Invalid container type")
 
         self.validate_free_limit()
         if not self.valid_uniqueness():

@@ -96,9 +96,9 @@ class FclFreightRateLocal(BaseModel):
         if len(port_data) != 0 and port_data[0].get('type') == 'seaport':
             self.port = port_data[0]
 
-            self.country_id = port_data.get('country_id', None)
-            self.trade_id = port_data.get('trade_id', None) 
-            self.continent_id = port_data.get('continent_id', None)
+            self.country_id = port_data[0].get('country_id', None)
+            self.trade_id = port_data[0].get('trade_id', None) 
+            self.continent_id = port_data[0].get('continent_id', None)
             self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
 
             return True
@@ -107,8 +107,9 @@ class FclFreightRateLocal(BaseModel):
     def validate_main_port_id(self):
         self.main_port=None
         if self.port and self.port['is_icd']==False:
-            if self.main_port_id:
-                return False
+            if not self.main_port_id or self.main_port_id != self.port_id:
+                return True
+            return False
         elif self.port and self.port['is_icd']==True:
             if self.main_port_id:
                 main_port_data = list_locations({'id': [str(self.main_port_id)]})['list']
@@ -215,7 +216,7 @@ class FclFreightRateLocal(BaseModel):
         self.set_shipping_line()
         response = {}
 
-        response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
+        response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line_id, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
 
         self.line_items_error_messages = response['line_items_error_messages'],
         self.is_line_items_error_messages_present = response['is_line_items_error_messages_present'],
@@ -259,13 +260,12 @@ class FclFreightRateLocal(BaseModel):
         # setting variables for conditions in charges.yml
         port = self.port
         main_port = self.main_port
-        shipping_line = self.shipping_line
+        shipping_line_id = self.shipping_line_id
         container_size = self.container_size
         container_type = self.container_type
         commodity = self.commodity
-
-        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-            fcl_freight_local_charges_dict = yaml.safe_load(file)
+        
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
         charge_codes = {}
         for code, config in fcl_freight_local_charges_dict.items():
@@ -299,8 +299,7 @@ class FclFreightRateLocal(BaseModel):
         t.execute()
 
     def detail(self):
-        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-            fcl_freight_local_charges_dict = yaml.safe_load(file)
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
         from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 

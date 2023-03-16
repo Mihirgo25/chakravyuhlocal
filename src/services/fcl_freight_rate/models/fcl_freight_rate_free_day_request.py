@@ -3,6 +3,7 @@ from configs.fcl_freight_rate_constants import REQUEST_SOURCES
 from database.db_session import db
 from playhouse.postgres_ext import *
 from rails_client import client
+from libs.locations import list_locations
 import datetime
 
 class BaseModel(Model):
@@ -12,6 +13,7 @@ class BaseModel(Model):
 class FclFreightRateFreeDayRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     location_id = UUIDField(null=True)
+    location = BinaryJSONField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_free_day_requests_serial_id_seq'::regclass)")])
     country_id = UUIDField(null = True)
     trade_id = UUIDField(null=True)
@@ -23,13 +25,18 @@ class FclFreightRateFreeDayRequest(BaseModel):
     free_days_type = CharField(null=True)
     preferred_free_days = CharField(null=True)
     shipping_line_id = UUIDField(null=True)
+    shipping_line = BinaryJSONField(null=True)
     service_provider_id = UUIDField(null=True)
+    service_provider = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(null = True)
+    spot_search = BinaryJSONField(null=True)
     performed_by_id = UUIDField(null = True)
+    performed_by = BinaryJSONField(null=True)
     performed_by_type = CharField(null=True)
     performed_by_org_id = UUIDField(null = True)
     closed_by_id = UUIDField(null = True)
+    closed_by = BinaryJSONField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     booking_params = BinaryJSONField(null=True)
     cargo_readiness_date = DateField(null=True)
@@ -50,7 +57,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
         table_name = 'fcl_freight_rate_free_day_requests'
 
     def send_closed_notifications_to_sales_agent(self):
-      locations_data = client.ruby.list_locations({'filters': {'id': self.location_id}})['list']
+      locations_data = list_locations({'id': self.location_id})['list']
       location_name = {data['id']:data['display_name'] for data in locations_data}
       importer_exporter_id = client.ruby.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
       data = {

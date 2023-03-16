@@ -4,7 +4,6 @@ from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from configs.global_constants import HAZ_CLASSES
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate import to_dict
 from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from database.db_session import db
@@ -31,7 +30,6 @@ def execute_transaction(request):
 
 
 def create_fcl_freight_rate_task(request):
-    request = to_dict(request)
     object_unique_params = {
         'service': request.get("service"),
         'port_id': request.get("port_id"),
@@ -46,7 +44,7 @@ def create_fcl_freight_rate_task(request):
         'status': 'pending'
     }
 
-    task = find_or_initialize(FclFreightRateTask,**row)
+    task = find_or_initialize(FclFreightRateTask,**object_unique_params)
 
     if request.get('shipment_id') is not None:
         try:

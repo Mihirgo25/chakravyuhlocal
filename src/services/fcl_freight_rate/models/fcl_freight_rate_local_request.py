@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import REQUEST_SOURCES
 import datetime
 from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
+from libs.locations import list_locations
 
 class BaseModel(Model):
     class Meta:
@@ -15,6 +16,7 @@ class FclFreightRateLocalRequest(BaseModel):
     booking_params = BinaryJSONField(null=True)
     cargo_readiness_date = DateField(null=True)
     closed_by_id = UUIDField(null=True)
+    closed_by = BinaryJSONField(null=True)
     closing_remarks = ArrayField(field_class=CharField, null=True)
     commodity = CharField(null=True)
     continent_id = UUIDField(null=True)
@@ -23,18 +25,23 @@ class FclFreightRateLocalRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     main_port_id = UUIDField(null=True)
     performed_by_id = UUIDField(null=True)
+    performed_by = BinaryJSONField(null=True)
     performed_by_org_id = UUIDField(null=True)
     performed_by_type = CharField(null=True)
     port_id = UUIDField(null=True)
+    port = BinaryJSONField(null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_rate = DoubleField(null=True)
     preferred_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
+    preferred_shipping_line_id = BinaryJSONField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_local_requests_serial_id_seq'::regclass)")])
     shipping_line_id = UUIDField(null=True)
+    shipping_line_detail = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(null=True)
+    spot_search = BinaryJSONField(null=True)
     status = CharField(null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
@@ -101,7 +108,7 @@ class FclFreightRateLocalRequest(BaseModel):
 
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id).where(FclFreightRateLocalRequest.source_id == self.source_id).limit(1).dicts().get()
-        location_pair_data = client.ruby.list_locations({'filters': { 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] }})['list']
+        location_pair_data = list_locations({ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] })['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
             importer_exporter_id = client.ruby.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
@@ -125,7 +132,7 @@ class FclFreightRateLocalRequest(BaseModel):
     
 
     def send_notifications_to_supply_agents(self):
-        port = client.ruby.list_locations({'filters': {'id': self.port_id}})['list'][0]['display_name']
+        port = list_locations({'id': self.port_id})['list'][0]['display_name']
         try:
             user_ids = [item['user_id'] for item in client.ruby.list_partner_users({'filters':{'role_ids':PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID, 'status':'active','partner_status':'active'}})['list']]
         except:

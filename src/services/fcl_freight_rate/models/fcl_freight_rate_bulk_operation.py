@@ -97,8 +97,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.strptime(data['validity_start'], '%Y-%m-%d'):
             raise HTTPException(status_code=499, detail='validity_end cannot be less than validity start')
         
-        with open(FCL_FREIGHT_CHARGES, 'r') as file:
-            fcl_freight_charges_dict = yaml.safe_load(file)
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         charge_codes = fcl_freight_charges_dict.keys()
 
@@ -124,8 +123,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
         
-        with open(FCL_FREIGHT_CHARGES, 'r') as file:
-            fcl_freight_charges_dict = yaml.safe_load(file)
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         charge_codes = fcl_freight_charges_dict.keys()
 
@@ -166,8 +164,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_add_freight_line_item_data(self):
         data = self.data
 
-        with open(FCL_FREIGHT_CHARGES, 'r') as file:
-            fcl_freight_charges_dict = yaml.safe_load(file)
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         code_config = fcl_freight_charges_dict[data['code']]
 

@@ -4,7 +4,7 @@ import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
-from playhouse.shortcuts import model_to_dict
+from libs.locations import list_locations
 from fastapi import HTTPException
 from params import Slab
 
@@ -23,15 +23,19 @@ class FclFreightRateFreeDay(BaseModel):
     free_limit = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporter_id = UUIDField(null=True)
+    importer_exporter = BinaryJSONField(null=True)
     is_slabs_missing = BooleanField(null=True)
     location_id = UUIDField(null=True)
+    location = BinaryJSONField(null=True)
     location_type = CharField(index=True, null=True)
     port_id = UUIDField(index=True, null=True)
     previous_days_applicable = BooleanField(null=True)
     rate_not_available_entry = BooleanField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(null=True)
+    service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
+    shipping_line = BinaryJSONField(null=True)
     # shipment_id = UUIDField(null=True)
     slabs = BinaryJSONField(null=True)
     specificity_type = CharField(null=True)
@@ -68,7 +72,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = client.ruby.list_locations({'filters':{'id': str(self.location_id)}})['list']
+        location_data = list_locations({'id': str(self.location_id)})['list']
 
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]
@@ -170,26 +174,26 @@ class FclFreightRateFreeDay(BaseModel):
         if not self.validate_specificity_type():
             raise HTTPException(status_code=499, detail="Invalid specificity type")
 
-        # if not self.validate_shipping_line():
-        #     raise HTTPException(status_code=499, detail="Invalid shipping line")
+        if not self.validate_shipping_line():
+            raise HTTPException(status_code=499, detail="Invalid shipping line")
 
-        # if not self.validate_service_provider():
-        #     raise HTTPException(status_code=499, detail="Invalid service provider")
+        if not self.validate_service_provider():
+            raise HTTPException(status_code=499, detail="Invalid service provider")
 
-        # if not self.validate_importer_exporter():
-        #     raise HTTPException(status_code=499, detail="Invalid importer-exporter")
+        if not self.validate_importer_exporter():
+            raise HTTPException(status_code=499, detail="Invalid importer-exporter")
 
-        # if not self.validate_free_days_type():
-        #     raise HTTPException(status_code=499, detail="Invalid free day type")
+        if not self.validate_free_days_type():
+            raise HTTPException(status_code=499, detail="Invalid free day type")
 
-        # if not self.validate_trade_type():
-        #     raise HTTPException(status_code=499, detail="Invalid trade type")
+        if not self.validate_trade_type():
+            raise HTTPException(status_code=499, detail="Invalid trade type")
 
-        # if not self.validate_container_size():
-        #     raise HTTPException(status_code=499, detail="incorrect container size")
+        if not self.validate_container_size():
+            raise HTTPException(status_code=499, detail="incorrect container size")
 
-        # if not self.validate_container_type():
-        #     raise HTTPException(status_code=499, detail="Invalid container type")
+        if not self.validate_container_type():
+            raise HTTPException(status_code=499, detail="Invalid container type")
 
         if not self.validate_free_limit():
             raise HTTPException(status_code=499, detail="Empty free limit")
@@ -216,47 +220,16 @@ class FclFreightRateFreeDay(BaseModel):
     def validate_validity_object(validity_start, validity_end):
         if not validity_start:
             raise HTTPException(status_code=499, detail=validity_start + ' is invalid')
-        # self.errors.add(:validity_start, 'is invalid')
-        # return
 
         if not validity_end:
             raise HTTPException(status_code=499, detail=validity_end + ' is invalid')
-        # self.errors.add(:validity_end, 'is invalid')
-        # return
 
         if validity_end > (datetime.date.today() + datetime.timedelta(days = 60)):
             raise HTTPException(status_code=499, detail=validity_end + ' can not be greater than 60 days from current date')
-        # self.errors.add(:validity_end, 'can not be greater than 60 days from current date')
 
         if validity_start < (datetime.date.today() - datetime.timedelta(days = 15)):
             raise HTTPException(status_code=499, detail=validity_start + ' can not be less than 15 days from current date')
-        # self.errors.add(:validity_start, 'can not be less than 15 days from current date')
 
         if validity_end < validity_start:
             raise HTTPException(status_code=499, detail=validity_end + ' can not be lesser than start validity')
-        # self.errors.add(:validity_end, 'can not be lesser than start validity')
 
-    # def update_sell_quotation(self):
-    #     subsidiary_service = ShipmentSubsidiaryService.is_valid.where(shipment_id: @shipment.id, code: line_item_code).first
-
-    #     if subsidiary_service:
-    #         sell_quotation = subsidiary_service.sell_quotation
-
-    #     new_line_items = []
-    #     for line_item in sell_quotation['line_items']:
-            # line_item['price'] = total_detention_charges
-            # line_item['total_price'] = line_item[:price]*service.containers_count
-    #         line_item['price_discounted'] = line_item['price']
-    #         line_item['total_price_discounted'] = line_item['total_price']
-
-    #         new_line_items.append(line_item)
-
-    #     quotation_data = {
-    #         service_id: sell_quotation.service_id,
-    #         service_type: sell_quotation.service_type,
-    #         line_items: new_line_items
-    #     }
-
-    #     response = UpdateShipmentSellQuotations.run!(quotations: [quotation_data])
-        #  return response
-    # end

@@ -84,8 +84,7 @@ def get_data(query, filters, page, page_limit, pagination_data_required):
         new_data.append(object)
 
     if 'status' in filters and filters['status'] == 'completed':
-        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-            fcl_freight_local_charges = yaml.safe_load(file)
+        fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
 
         for object in new_data:
             rate = object['completion_data'].get('rate')

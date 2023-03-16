@@ -3,6 +3,7 @@ from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
 from rails_client import client
+from libs.locations import list_locations
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import *
 import yaml
@@ -34,6 +35,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     destination_continent_id = UUIDField(index=True, null=True)
     destination_country_id = UUIDField(index=True, null=True)
     destination_location_id = UUIDField(null=True)
+    destination_location = BinaryJSONField(null=True)
     destination_location_type = CharField(null=True)
     destination_port_id = UUIDField(index=True, null=True)
     destination_trade_id = UUIDField(index=True, null=True)
@@ -42,13 +44,16 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     origin_country_id = UUIDField(index=True, null=True)
     origin_destination_location_type = CharField(null=True)
     origin_location_id = UUIDField(null=True)
+    origin_location = BinaryJSONField(null=True)
     origin_location_type = CharField(null=True)
     origin_port_id = UUIDField(index=True, null=True)
     origin_trade_id = UUIDField(index=True, null=True)
     price = IntegerField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(null=True)
+    service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
+    shipping_line = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     def save(self, *args, **kwargs):
@@ -69,7 +74,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         )
 
     def validate_origin_location_type(self):
-        origin_location = client.ruby.list_locations({'filters':{'id': str(self.origin_location_id)}})['list']
+        origin_location = list_locations({'id': str(self.origin_location_id)})['list']
         if origin_location:
             origin_location = origin_location[0]
             if origin_location.get('type') in LOCATION_TYPES:
@@ -84,7 +89,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             raise HTTPException(status_code=404, detail="Origin Location not found")
     
     def validate_destination_location_type(self):
-        destination_location = client.ruby.list_locations({'filters':{'id': str(self.destination_location_id)}})['list']
+        destination_location = list_locations({'id': str(self.destination_location_id)})['list']
         if destination_location:
             destination_location = destination_location[0]
             if destination_location.get('type') in LOCATION_TYPES:
@@ -132,8 +137,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
       return False
     
     def validate_currency(self):
-        with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
-            fcl_freight_currencies = yaml.safe_load(file)
+        fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
         currencies = [currency for currency in fcl_freight_currencies]
         if self.currency and self.currency in currencies:
