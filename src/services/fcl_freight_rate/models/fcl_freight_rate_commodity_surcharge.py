@@ -175,12 +175,12 @@ class FclFreightRateCommoditySurcharge(BaseModel):
 
     def detail(self):
         return {
-            'seasonal_surcharge': self.as_dict(only=[
-                'id',
-                'price',
-                'currency',
-                'remarks'
-            ])
+            'seasonal_surcharge': {
+                "id": self.id,
+                "price": self.price,
+                "currency": self.currency,
+                "remarks": self.remarks
+            }
         }
     
     def validate(self):

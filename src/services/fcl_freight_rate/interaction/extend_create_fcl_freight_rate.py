@@ -15,6 +15,7 @@ def extend_create_fcl_freight_rate_data(request):
         request['mode']= 'cogo_lens'
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':request},queue='fcl_freight_rate')
         return {"message":"Creating rates in delay"}
+
     if request.extend_rates:
         rate_objects = get_fcl_freight_cluster_objects(request.dict(exclude_none=True),request)
         if rate_objects:
@@ -155,7 +156,7 @@ def add_mandatory_line_items(param,request):
 
 
 def check_rate_existence(updated_param):
-    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'] and FclFreightRate.destination_port_id == updated_param['destination_port_id'] and FclFreightRate.container_size == updated_param['container_size'] and FclFreightRate.commodity == updated_param['commodity'] and FclFreightRate.container_type == updated_param['container_type'] and FclFreightRate.service_provider_id == updated_param['service_provider_id'] and FclFreightRate.shipping_line_id == updated_param['shipping_line_id'] and FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
+    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
     if system_rate:
         return True
     else:
