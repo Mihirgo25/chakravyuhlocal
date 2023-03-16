@@ -6,12 +6,13 @@ from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import
 from peewee import *
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
+from libs.locations import list_locations
 import requests
 
 def get_cluster_objects(rate_object):
     clusters = {}
 
-    port_codes = client.ruby.list_locations({'filters':{ 'id': [rate_object['origin_port_id'], rate_object['destination_port_id']] }})['list']
+    port_codes = list_locations({'filters':{ 'id': [rate_object['origin_port_id'], rate_object['destination_port_id']] }})['list']
     param = {}
     for data in port_codes:
         param[data['id']] = data['port_code']
@@ -21,8 +22,8 @@ def get_cluster_objects(rate_object):
 
     cluster_data_q = FclFreightRateExtensionRuleSets.select().where(
         (FclFreightRateExtensionRuleSets.cluster_reference_name in [
-            port_codes[rate_object['origin_port_id']],
-            port_codes[rate_object['destination_port_id']],
+            port_codes.get(rate_object['origin_port_id']),
+            port_codes.get(rate_object['destination_port_id']),
             rate_object['commodity'],
             rate_object['container_size']
         ]) and
@@ -35,10 +36,10 @@ def get_cluster_objects(rate_object):
     cluster_data = [model_to_dict(item) for item in cluster_data_q]
     
     for data in cluster_data:
-        if data['cluster_reference_name'] == port_codes[rate_object['origin_port_id']] and (data['trade_type'] == 'export' or not data['trade_type']):
+        if data['cluster_reference_name'] == port_codes.get(rate_object['origin_port_id']) and (data['trade_type'] == 'export' or not data['trade_type']):
             if not 'origin_location_cluster' in clusters.keys():
                 clusters['origin_location_cluster'] = data
-        elif data['cluster_reference_name'] == port_codes[rate_object['destination_port_id']] and (data['trade_type'] == 'import' or not data['trade_type']):
+        elif data['cluster_reference_name'] == port_codes.get(rate_object['destination_port_id']) and (data['trade_type'] == 'import' or not data['trade_type']):
             if not 'destination_location_cluster' in clusters.keys():
                 clusters['destination_location_cluster'] = data
         elif data['cluster_reference_name'] == rate_object['commodity']:
@@ -63,7 +64,7 @@ def get_cluster_objects(rate_object):
 
     if 'container_cluster' in clusters and clusters['container_cluster']:
         clusters['container_cluster']['cluster_items'] = CONTAINER_CLUSTERS[clusters['container_cluster']['cluster_id']]
-    print(clusters)
+
     return clusters
 
 def get_required_mandatory_codes(cluster_objects):
@@ -91,8 +92,7 @@ def get_required_mandatory_codes(cluster_objects):
         # if cluster_item in cluster_container_type:
         #     container_type = cluster_item
         mandatory_codes = []
-        with open(FCL_FREIGHT_CHARGES, 'r') as file:
-            fcl_freight_charges_dict = yaml.safe_load(file)
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         for code in fcl_freight_charges_dict.keys():
             config = fcl_freight_charges_dict[code]

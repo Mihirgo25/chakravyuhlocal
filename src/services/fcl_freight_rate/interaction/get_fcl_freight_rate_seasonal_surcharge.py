@@ -3,8 +3,7 @@ from configs.defintions import FCL_FREIGHT_SEASONAL_CHARGES
 import yaml
 
 def get_fcl_freight_rate_seasonal_surcharge(request):
-    with open(FCL_FREIGHT_SEASONAL_CHARGES, 'r') as file:
-        fcl_freight_seasonal_charges = yaml.safe_load(file)
+    fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES
     
     if not all_fields_present(request):
         return {'seasonal_surcharge_charge_codes': fcl_freight_seasonal_charges} 

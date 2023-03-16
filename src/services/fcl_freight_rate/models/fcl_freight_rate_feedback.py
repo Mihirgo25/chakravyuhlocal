@@ -6,6 +6,7 @@ from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBA
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.defintions import FCL_FREIGHT_CURRENCIES
 from rails_client import client
+from libs.locations import list_locations
 from fastapi import HTTPException
 import yaml, datetime
 
@@ -20,16 +21,21 @@ class BaseModel(Model):
 class FclFreightRateFeedback(BaseModel):
     booking_params = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True)
+    closed_by = BinaryJSONField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     created_at = DateTimeField(default = datetime.datetime.now)
+    destination_port = BinaryJSONField(null=True)
     fcl_freight_rate_id = UUIDField(null=True)
     feedback_type = CharField(null=True)
     feedbacks = ArrayField(field_class=CharField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    origin_port = BinaryJSONField(null=True)
     outcome = CharField(null=True)
     outcome_object_id = UUIDField(null=True)
     performed_by_id = UUIDField(null=True)
+    performed_by = BinaryJSONField(null=True)
     performed_by_org_id = UUIDField(null=True)
+    organization = BinaryJSONField(null=True)
     performed_by_type = CharField(null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
@@ -37,8 +43,13 @@ class FclFreightRateFeedback(BaseModel):
     preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedbacks_serial_id_seq'::regclass)")])
+    service_provider = BinaryJSONField(null=True)
+    shipping_line = BinaryJSONField(null=True)
+    origin_trade = BinaryJSONField(null=True)
+    destination_trade = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(null=True)
+    spot_search = BinaryJSONField(null=True)
     status = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
@@ -102,8 +113,7 @@ class FclFreightRateFeedback(BaseModel):
         if not self.preferred_freight_rate_currency:
             return True
 
-        with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
-            fcl_freight_currencies = yaml.safe_load(file)
+        fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
         if self.preferred_freight_rate_currency in fcl_freight_currencies:
             return True
@@ -210,7 +220,7 @@ class FclFreightRateFeedback(BaseModel):
             })['list']
         supply_agents_user_ids = list(set(t['user_id'] for t in supply_agents_user_ids))
 
-        route = client.ruby.list_locations({'filters': {'id': [locations_data.origin_port_id, locations_data.destination_port_id]}})['list']
+        route = list_locations({'id': [locations_data.origin_port_id, locations_data.destination_port_id]})['list']
         route = {t['id']:t['display_name'] for t in route}
 
         return {
@@ -256,7 +266,7 @@ class FclFreightRateFeedback(BaseModel):
         
         # for item in loc_data:
         #     locations_data = model_to_dict(item)
-        location_pair_name = client.ruby.list_locations({'filters': {'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]}})['list']
+        location_pair_name = list_locations({'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]})['list']
         location_pair_name = {t['id']:t['display_name'] for t in location_pair_name}
 
         try:

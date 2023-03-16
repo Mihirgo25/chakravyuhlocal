@@ -364,8 +364,7 @@ def add_local_objects(freight_query_result, response_object,request):
 
 
 def build_local_line_item_object(line_item, request):
-    with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-        fcl_freight_local_charges = yaml.safe_load(file)
+    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
 
     code_config = fcl_freight_local_charges[line_item['code']]
 
@@ -507,8 +506,7 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
 def build_freight_line_item_object(line_item, request):
     line_item = {key: line_item[key] for key in ['code', 'unit', 'price', 'currency', 'remarks']}
     
-    with open(FCL_FREIGHT_CHARGES, 'r') as f:
-        fcl_freight_charges = yaml.safe_load(f)
+    fcl_freight_charges = FCL_FREIGHT_CHARGES
 
     code_config = fcl_freight_charges[line_item['code']]
 
