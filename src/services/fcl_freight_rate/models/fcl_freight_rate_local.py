@@ -212,8 +212,7 @@ class FclFreightRateLocal(BaseModel):
         self.update_free_days_special_attributes()
 
     def update_line_item_messages(self):
-        self.set_port()
-        self.set_shipping_line()
+
         response = {}
 
         response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line_id, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
