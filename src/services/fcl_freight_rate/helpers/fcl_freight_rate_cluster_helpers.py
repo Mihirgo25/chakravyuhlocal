@@ -64,7 +64,7 @@ def get_cluster_objects(rate_object):
 
     if 'container_cluster' in clusters and clusters['container_cluster']:
         clusters['container_cluster']['cluster_items'] = CONTAINER_CLUSTERS[clusters['container_cluster']['cluster_id']]
-    print(clusters)
+
     return clusters
 
 def get_required_mandatory_codes(cluster_objects):
