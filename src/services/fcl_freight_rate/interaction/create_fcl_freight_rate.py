@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
-from celery_worker import delay_fcl_functions
+from fcl_freight_rate_celery_worker import delay_fcl_functions
 from datetime import datetime
 from database.db_session import db
 
@@ -29,7 +29,7 @@ def create_audit(request, freight_id):
         data=audit_data,
         object_id=freight_id,
         object_type="FclFreightRate",
-        source=request.get("source"),
+        source=request.get("mode"),
     )
 def create_fcl_freight_rate_data(request):
     origin_port_id = str(request.get("origin_port_id"))
@@ -79,26 +79,12 @@ def create_fcl_freight_rate(request):
 
     freight.weight_limit = request.get("weight_limit")
 
-    if freight.origin_local and request.get("origin_local"):
-        freight.origin_local.update(request.get("origin_local"))
-    elif request.get("origin_local"):
-    #     origin_local = {
-    #     k: v
-    #     for k, v in request.get("origin_local", {}).items()
-    #     if k not in ["detention", "demurrage"]
-    # }
+    if request.get("origin_local"):
         freight.origin_local = request.get("origin_local")
     else:
         freight.origin_local = {"line_items": [], "plugin": None}
 
-    if freight.destination_local and request.get("destination_local"):
-        freight.destination_local.update(request.get("destination_local"))
-    elif request.get("destination_local"):
-    #     destination_local = {
-    #     k: v
-    #     for k, v in request.get("destination_local", {}).items()
-    #     if k not in ["detention", "demurrage"]
-    # }
+    if request.get("destination_local"):
         freight.destination_local = request.get("destination_local")
     else:
         freight.destination_local = {"line_items": [], "plugin": None}

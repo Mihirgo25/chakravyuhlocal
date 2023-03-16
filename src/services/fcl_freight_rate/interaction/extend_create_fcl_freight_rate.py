@@ -7,23 +7,26 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from libs.locations import list_locations
-
+from extension_celery_worker import create_fcl_freight_rate_delay
 def extend_create_fcl_freight_rate_data(request):
     
     if request.extend_rates_for_lens:
-        temp = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return {'message':'creating rates in delay'}
-
+        request = request.dict(exclude_none=True)
+        request['mode']= 'cogo_lens'
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':request},queue='fcl_freight_rate')
+        return {"message":"Creating rates in delay"}
     if request.extend_rates:
+        print("b")
         rate_objects = get_fcl_freight_cluster_objects(request.dict(exclude_none=True),request)
         if rate_objects:
-            temp1 = create_extended_rate_objects(rate_objects)
-            return temp1
+            create_extended_rate_objects(rate_objects)
+        return {"message":"Creating rates in delay"}
+
 
 def create_extended_rate_objects(rate_objects):
     for rate_object in rate_objects:
-        temp = create_fcl_freight_rate_data(rate_object)
-    return {'message':'creating rates in delay'}
+        rate_object['mode']='rate_extension'
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':rate_object},queue='fcl_freight_rate')
 
 def get_fcl_freight_cluster_objects(rate_object,request):
     fcl_freight_cluster_objects = []
