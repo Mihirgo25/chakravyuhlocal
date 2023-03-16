@@ -91,8 +91,7 @@ def get_required_mandatory_codes(cluster_objects):
         # if cluster_item in cluster_container_type:
         #     container_type = cluster_item
         mandatory_codes = []
-        with open(FCL_FREIGHT_CHARGES, 'r') as file:
-            fcl_freight_charges_dict = yaml.safe_load(file)
+        fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         for code in fcl_freight_charges_dict.keys():
             config = fcl_freight_charges_dict[code]

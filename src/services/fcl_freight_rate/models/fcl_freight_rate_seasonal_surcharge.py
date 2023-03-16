@@ -129,8 +129,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         return False
     
     def validate_code(self):
-        with open(FCL_FREIGHT_SEASONAL_CHARGES, 'r') as file:
-            fcl_freight_seasonal_charges = yaml.safe_load(file)
+        fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES
 
         if self.code and self.code in fcl_freight_seasonal_charges:
             return True

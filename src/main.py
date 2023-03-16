@@ -73,6 +73,7 @@ import time
 from datetime import datetime
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
+from configs.defintions import yml_obj
 
 
 app = FastAPI(debug=True)
@@ -549,9 +550,9 @@ def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensio
 def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
     return get_fcl_freight_rate_extension_data(request)
 
-@app.post("/update_fcl_freight_rate_task")
-def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
-    return update_fcl_freight_rate_task_data(request)
+# @app.post("/update_fcl_freight_rate_task")
+# def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
+#     return update_fcl_freight_rate_task_data(request)
 
 # @app.post("/create_fcl_freight_rate_task")
 # def create_fcl_freight_rate_task(request: CreateFclFreightRateTask):
@@ -645,3 +646,13 @@ def get_fcl_freight_rate_free_day_data(
 def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
     data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
     return data
+
+@app.get("/test")
+def test_func():
+    import pandas as pd
+    df = pd.read_csv("/Users/abhishek/ocean-rms/query_result_2023-03-15T12_09_01.000235Z.csv")
+    for idx, row in df.iterrows():
+        origin_port_id = str(row["origin_port_id"])
+        query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
+        db.execute_sql(query)
+        print(idx)

@@ -5,7 +5,7 @@ from datetime import datetime
 from rails_client import client
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-from celery_worker import create_communication_background
+# from celery_worker import create_communication_background
 import time
 def create_fcl_freight_rate_request(request):
     with db.atomic() as transaction:
@@ -87,7 +87,7 @@ def send_notifications_to_supply_agents(request):
     }
     for user_id in request_info['user_ids']:
         data['user_id'] = user_id
-        create_communication_background.apply_delay(args=data,queue='communication')
+        # create_communication_background.apply_delay(args=data,queue='communication')
 
         # CreateCommunication.delay(queue: 'communication', retry: 0).run!(data)
 

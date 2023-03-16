@@ -261,11 +261,7 @@ class FclFreightRateLocal(BaseModel):
         container_type = self.container_type
         commodity = self.commodity
         
-        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-            try:
-                fcl_freight_local_charges_dict = yaml.safe_load(file)
-            except Exception as e:
-                print(e)
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
         # try:
         charge_codes = {}
@@ -302,8 +298,7 @@ class FclFreightRateLocal(BaseModel):
         t.execute()
 
     def detail(self):
-        with open(FCL_FREIGHT_LOCAL_CHARGES, 'r') as file:
-            fcl_freight_local_charges_dict = yaml.safe_load(file)
+        fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
         from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 

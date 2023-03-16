@@ -102,8 +102,7 @@ class FclFreightRateFeedback(BaseModel):
         if not self.preferred_freight_rate_currency:
             return True
 
-        with open(FCL_FREIGHT_CURRENCIES, 'r') as file:
-            fcl_freight_currencies = yaml.safe_load(file)
+        fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
         if self.preferred_freight_rate_currency in fcl_freight_currencies:
             return True
