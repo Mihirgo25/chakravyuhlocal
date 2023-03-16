@@ -16,7 +16,6 @@ def extend_create_fcl_freight_rate_data(request):
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':request},queue='fcl_freight_rate')
         return {"message":"Creating rates in delay"}
     if request.extend_rates:
-        print("b")
         rate_objects = get_fcl_freight_cluster_objects(request.dict(exclude_none=True),request)
         if rate_objects:
             create_extended_rate_objects(rate_objects)

@@ -85,3 +85,6 @@ class RubyApiClient:
     
     def list_organization_services(self, data = {}):
         return self.client.request('GET','list_organization_services', data)
+    
+    def update_organization(self,data={}):
+        return self.client.request('POST','update_organization',data)
