@@ -77,7 +77,7 @@ def create_fcl_freight_rate(request):
     freight.procured_by_id = request.get("procured_by_id")
     
 
-    freight.weight_limit = to_dict(request.get("weight_limit"))
+    freight.weight_limit = request.get("weight_limit")
 
     if freight.origin_local and request.get("origin_local"):
         freight.origin_local.update(request.get("origin_local"))
