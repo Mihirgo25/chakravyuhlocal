@@ -9,6 +9,7 @@ import datetime
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateFreeDayRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)

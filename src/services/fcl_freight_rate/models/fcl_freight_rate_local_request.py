@@ -11,6 +11,7 @@ from libs.locations import list_locations
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateLocalRequest(BaseModel):
     booking_params = BinaryJSONField(index=True, null=True)

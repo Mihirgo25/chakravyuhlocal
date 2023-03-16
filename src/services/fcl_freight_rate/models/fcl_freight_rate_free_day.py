@@ -12,6 +12,7 @@ from params import Slab
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateFreeDay(BaseModel):
     container_size = CharField(index=True, null=True)

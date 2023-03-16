@@ -14,6 +14,7 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
         # constraints = [SQL('UNIQUE (port_id, trade_type, main_port_id, container_size, container_type, commodity, shipping_line_id, source, task_type, service, status)')]
 
 class FclFreightRateTask(BaseModel):

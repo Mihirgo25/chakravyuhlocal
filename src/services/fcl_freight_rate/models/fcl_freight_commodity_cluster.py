@@ -16,6 +16,7 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightCommodityCluster(BaseModel):
     commodities = JSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)

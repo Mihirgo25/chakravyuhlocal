@@ -10,6 +10,7 @@ import datetime
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateRequest(BaseModel):
     booking_params = BinaryJSONField(null=True)

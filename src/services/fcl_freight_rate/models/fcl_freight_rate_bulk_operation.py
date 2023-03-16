@@ -24,6 +24,7 @@ ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_mark
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateBulkOperation(BaseModel):
     action_name = CharField(null=True)

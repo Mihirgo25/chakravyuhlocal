@@ -8,7 +8,7 @@ def get_fcl_freight_rate(request):
   details = {}
 
   if all_fields_present(request):
-    object = find_object(request)
+    object, fcl_object = find_object(request)
     if object:
       details = object.detail()
 
@@ -41,7 +41,7 @@ def get_fcl_freight_rate(request):
 
 
   return details | ({
-    'freight_charge_codes': (FclFreightRate(**request).possible_charge_codes()),
+    'freight_charge_codes': (fcl_object.possible_charge_codes()),
     'origin_local_charge_codes': (FclFreightRateLocal(**origin_local_object_params).possible_charge_codes()),
     'destination_local_charge_codes': (FclFreightRateLocal(**destination_local_object_params).possible_charge_codes())
   })
@@ -56,7 +56,8 @@ def find_object(object_params):
   
   object = query.join(port_origin_local, JOIN.LEFT_OUTER, on = (FclFreightRate.origin_local_id == port_origin_local.c.id)).switch(
     FclFreightRate).join(port_destination_local, JOIN.LEFT_OUTER, on = (FclFreightRate.destination_local_id == port_destination_local.c.id)).first()
-  return object 
+  
+  return object, query.first()
 
 def all_fields_present(object_params):
   if (object_params['origin_port_id'] is not None) and (object_params['destination_port_id'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None):

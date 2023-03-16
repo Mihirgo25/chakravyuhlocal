@@ -18,6 +18,7 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class Mapping(Model):
     fcl_freight_id = ForeignKeyField(FclFreightRate, backref='mappings')

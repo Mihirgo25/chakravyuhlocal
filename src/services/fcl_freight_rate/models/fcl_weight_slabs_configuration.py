@@ -9,6 +9,7 @@ from configs.global_constants import CONTAINER_SIZES
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclWeightSlabsConfiguration(BaseModel):
     commodity = CharField(null=True)
