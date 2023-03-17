@@ -11,9 +11,9 @@ def delete_fcl_freight_rate(request):
         # self.errors.add('{} is invalid'.format(request['id']))
 
     object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
-    # object.set_platform_prices()
-    # object.set_is_best_price()
-    # object.set_last_rate_available_date()
+    object.set_platform_prices()
+    object.set_is_best_price()
+    object.set_last_rate_available_date()
     try:
         object.save()
     except Exception as e:
