@@ -59,14 +59,14 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     if data.get('commodity_cluster'):
         commodities = data['commodity_cluster']['cluster_items']
         if commodities[rate_object['container_type']]:
-            commodities[rate_object['container_type']] = commodities[rate_object['container_type']] or [rate_object['commodity']]
+            commodities[rate_object['container_type']] = commodities[rate_object['container_type']]
         else:
             commodities[rate_object['container_type']] = [rate_object['commodity']]
     else:
         commodities = { rate_object['container_type'] : [rate_object['commodity']] }
 
     try:    
-        containers = [rate_object['container_size']] or data['container_cluster']['cluster_items'] 
+        containers = data['container_cluster']['cluster_items'] 
     except:
         containers = [rate_object['container_size']]
 
