@@ -6,12 +6,12 @@ import uuid
 from database.db_session import db
 
 def create_fcl_freight_rate_local_request(request):
-    # with db.atomic() as transaction:
-    #     try:
-    return execute_transaction_code(request)
-        # except Exception as e:
-        #     transaction.rollback()
-        #     return e
+    with db.atomic() as transaction:
+        try:
+            return execute_transaction_code(request)
+        except Exception as e:
+            transaction.rollback()
+            return e
   
 
 def execute_transaction_code(request):
@@ -20,8 +20,24 @@ def execute_transaction_code(request):
     if request['preferred_shipping_line_ids']:
         request['preferred_shipping_line_ids'] = [uuid.UUID(str_id) for str_id in request['preferred_shipping_line_ids']]
 
-    unique_object_params = get_unique_object_params(request)
-    local_request = find_or_initialize(FclFreightRateLocalRequest, **unique_object_params)
+    unique_object_params = {
+        'source': request['source'],
+        'source_id': request['source_id'],
+        'performed_by_id': request['performed_by_id'],
+        'performed_by_type': request['performed_by_type'],
+        'performed_by_org_id': request['performed_by_org_id']
+    }
+
+    local_request = FclFreightRateLocalRequest.select().where(
+        FclFreightRateLocalRequest.source == request['source'],
+        FclFreightRateLocalRequest.source_id == request['source_id'],
+        FclFreightRateLocalRequest.performed_by_id == request['performed_by_id'],
+        FclFreightRateLocalRequest.performed_by_type == request['performed_by_type'],
+        FclFreightRateLocalRequest.performed_by_org_id == request['performed_by_org_id']
+    ).first()
+
+    if not local_request:
+        local_request = FclFreightRateLocalRequest(**unique_object_params)
    
     create_params = get_create_params(request)
 
@@ -39,15 +55,6 @@ def execute_transaction_code(request):
     'id': local_request.id
     }
 
-def get_unique_object_params(request):
-    return {
-    'source': request['source'],
-    'source_id': request['source_id'],
-    'performed_by_id': request['performed_by_id'],
-    'performed_by_type': request['performed_by_type'],
-    'performed_by_org_id': request['performed_by_org_id']
-    }
-  
 def get_create_params(request):
     return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id']} | ({'status': 'active'})
   
