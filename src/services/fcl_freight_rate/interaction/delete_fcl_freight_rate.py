@@ -4,11 +4,18 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 
 def delete_fcl_freight_rate(request):
+    with db.atomic() as transaction:
+        try:
+            return execute_transaction_code(request)
+        except Exception as e:
+            transaction.rollback()
+            return e
+
+def execute_transaction_code(request):
     object = find_object(request)
 
     if not object:
         raise HTTPException(status_code=499, detail="Rate id not found")
-        # self.errors.add('{} is invalid'.format(request['id']))
 
     object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
     object.set_platform_prices()
@@ -18,8 +25,6 @@ def delete_fcl_freight_rate(request):
         object.save()
     except Exception as e:
         print("Exception in saving freight rate", e)
-    # if not object.save():
-    #     raise HTTPException(status_code=499, detail="Rate did not save")
 
     # object.create_trade_requirement_rate_mapping(request["procured_by_id"], request["performed_by_id"])
 
@@ -28,7 +33,7 @@ def delete_fcl_freight_rate(request):
     # update_platform_prices_for_other_service_providers(object)
 
     return {
-      id: object.id
+      'id': object.id
     }
 
 def create_audit(request, freight_id):

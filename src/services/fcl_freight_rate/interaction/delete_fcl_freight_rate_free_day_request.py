@@ -1,9 +1,17 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from fastapi import HTTPException
- 
+from database.db_session import db
 
 def delete_fcl_freight_rate_free_day_request(request):
+    with db.atomic() as transaction:
+        try:
+            return execute_transaction_code(request)
+        except Exception as e:
+            transaction.rollback()
+            return e
+
+def execute_transaction_code(request):
     object = find_objects(request)
 
     if not object:
