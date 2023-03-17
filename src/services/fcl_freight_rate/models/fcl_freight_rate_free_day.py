@@ -12,33 +12,34 @@ from params import Slab
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateFreeDay(BaseModel):
-    container_size = CharField(null=True)
+    container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
-    continent_id = UUIDField(index=True, null=True)
-    country_id = UUIDField(index=True, null=True)
+    continent_id = UUIDField(null=True)
+    country_id = UUIDField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     free_days_type = CharField(index=True, null=True)
-    free_limit = IntegerField(null=True)
+    free_limit = IntegerField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    importer_exporter_id = UUIDField(null=True)
-    # importer_exporter = BinaryJSONField(null=True)
-    is_slabs_missing = BooleanField(null=True)
-    location_id = UUIDField(null=True)
-    # location = BinaryJSONField(null=True)
+    importer_exporter_id = UUIDField(index=True, null=True)
+    importer_exporter = BinaryJSONField(null=True)
+    is_slabs_missing = BooleanField(index=True, null=True)
+    location_id = UUIDField(index=True, null=True)
+    location = BinaryJSONField(null=True)
     location_type = CharField(index=True, null=True)
-    port_id = UUIDField(index=True, null=True)
-    previous_days_applicable = BooleanField(null=True)
+    port_id = UUIDField(null=True)
+    previous_days_applicable = BooleanField(index=True, null=True)
     rate_not_available_entry = BooleanField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
-    service_provider_id = UUIDField(null=True)
-    # service_provider = BinaryJSONField(null=True)
+    service_provider_id = UUIDField(index=True, null=True)
+    service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     # shipping_line = BinaryJSONField(null=True)
     # shipment_id = UUIDField(null=True)
-    slabs = BinaryJSONField(null=True)
-    specificity_type = CharField(null=True)
+    slabs = BinaryJSONField(index=True, null=True)
+    specificity_type = CharField(index=True, null=True)
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
@@ -213,7 +214,7 @@ class FclFreightRateFreeDay(BaseModel):
                 "free_limit": self.free_limit,
                 "remarks": self.remarks,
                 "slabs": self.slabs,
-                "is_slabs_missing": self.is_slabs_missing,
+                "is_slabs_missing": self.is_slabs_missing
             }
         }
     

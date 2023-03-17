@@ -58,6 +58,10 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_weight_limit 
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_free_day import get_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration import get_fcl_weight_slabs_configuration
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_stats import get_fcl_freight_rate_stats
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_seasonal_surcharge import get_fcl_freight_rate_seasonal_surcharge
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_commodity_surcharge import get_fcl_freight_rate_commodity_surcharge
+from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
 
 # from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
@@ -650,4 +654,72 @@ def get_fcl_freight_rate_free_day_data(
 @app.put("/update_fcl_freight_rate_free_day")
 def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
     data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
+    return data
+
+@app.get("/get_fcl_freight_rate_stats")
+def get_fcl_freight_rate_stats_data(
+    validity_start: datetime,
+    validity_end: datetime,
+    stats_types: str
+):
+    request = {
+        'validity_start':validity_start,
+        'validity_end':validity_end,
+        'stats_types':stats_types
+    }
+    data = get_fcl_freight_rate_stats(request)
+    return data
+
+@app.get("/get_fcl_freight_rate_seasonal_surcharge")
+def get_fcl_freight_rate_seasonal_surcharge_data(
+    origin_location_id: str = None,
+    destination_location_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    code: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None
+):
+    request = {
+        'origin_location_id':origin_location_id,
+        'destination_location_id':destination_location_id,
+        'container_size':container_size,
+        'container_type':container_type,
+        'code':code,
+        'shipping_line_id':shipping_line_id,
+        'service_provider_id':service_provider_id
+    }
+    data = get_fcl_freight_rate_seasonal_surcharge(request)
+    return data
+
+@app.get("/get_fcl_freight_rate_commodity_surcharge")
+def get_fcl_freight_rate_commodity_surcharge_data(
+    origin_location_id: str = None,
+    destination_location_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None
+):
+    request = {
+        'origin_location_id':origin_location_id,
+        'destination_location_id':destination_location_id,
+        'container_size':container_size,
+        'container_type':container_type,
+        'commodity':commodity,
+        'shipping_line_id':shipping_line_id,
+        'service_provider_id':service_provider_id
+    }
+    data = get_fcl_freight_rate_commodity_surcharge(request)
+    return data
+
+@app.get("/get_fcl_freight_commodity_cluster")
+def get_fcl_freight_commodity_cluster_data(
+    id: str = None
+):
+    request = {
+        'id':id
+    }
+    data = get_fcl_freight_commodity_cluster(request)
     return data

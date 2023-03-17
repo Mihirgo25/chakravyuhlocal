@@ -24,6 +24,7 @@ class FclFreightRateLocalData(BaseModel):
     def validate_invalid_charge_codes(self, possible_charge_codes):
         invalid_line_items = [str(t.code) for t in self.line_items if str(t.code) not in possible_charge_codes]
         if invalid_line_items:
+            print('inv', invalid_line_items)
             return False
         return True
             # self.parent.errors.add('line_items', f"{', '.join(invalid_line_items)} are invalid")

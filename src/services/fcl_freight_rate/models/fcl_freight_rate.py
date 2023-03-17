@@ -439,12 +439,19 @@ class FclFreightRate(BaseModel):
         new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end), '%Y-%m-%d').date() >= datetime.datetime.now().date()]
         new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start), '%Y-%m-%d').date())
 
-        for new_validity in new_validities:
+        main_validities=[]
+        for new_validity in new_validities:          
           new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
           new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start), '%Y-%m-%d').date().isoformat()
           new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end), '%Y-%m-%d').date().isoformat()
-
-        self.validities = [vars(new_validity) for new_validity in new_validities]
+          new_validity = vars(new_validity)
+          new_validity['id'] = new_validity['__data__']['id']
+          new_validity.pop('__data__')
+          new_validity.pop('__rel__')
+          new_validity.pop('_dirty')
+          main_validities.append(new_validity)
+        
+        self.validities = main_validities
 
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
@@ -473,17 +480,6 @@ class FclFreightRate(BaseModel):
         if (weight_limit_slab['upper_limit'] <= weight_limit_slab['lower_limit']) or (index != 0 and weight_limit_slab['lower_limit'] <= self.weight_limit['slabs'][index - 1]['upper_limit']):
           raise HTTPException(status_code=499, detail="slabs are not valid")
 
-      schema_validity = Schema({'validity_start': str, 'validity_end': str, 'price': float, 'currency': str, 'platform_price': float, Optional('remarks'): list, Optional('line_items'): list, Optional('schedule_type', lambda s: s in ('direct', 'transhipment')): str, Optional('payment_term', lambda s: s in ('prepaid', 'collect')): str, Optional('id'): str, Optional('likes_count'): int, Optional('dislikes_count'): int})
-
-      for validity in self.validities:
-        validity['id'] = validity['__data__']['id']
-        validity.pop('__data__', None)
-        validity.pop('__rel__', None)
-        validity.pop('_dirty', None)
-
-        schema_validity.validate(validity)
-
-      
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
 
       self.destination_local_instance = FclFreightRateLocalData(self.destination_local)
@@ -557,13 +553,13 @@ class FclFreightRate(BaseModel):
       if self.last_rate_available_date is None:
           return None
       else:
-          return self.last_rate_available_date.date() < datetime.datetime.now().date()
+          return self.last_rate_available_date < datetime.datetime.now().date()
 
     def is_rate_about_to_expire(self):
       if self.last_rate_available_date is None:
           return None
       else:
-          return self.last_rate_available_date.date() < (datetime.datetime.now() + datetime.timedelta(days=2)).date()
+          return self.last_rate_available_date < (datetime.datetime.now() + datetime.timedelta(days=2)).date()
 
     def is_rate_not_available(self):
       return self.last_rate_available_date is None
@@ -704,20 +700,31 @@ class FclFreightRate(BaseModel):
             destination_local['detention'] = destination_local['detention'] | ({'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION })
 
         if not destination_local.get('detention'):
-          destination_local['detention'] = self.destination_local_id.data['detention'] | ({'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing})
+          if self.destination_local_id.data.get('detention'):
+            destination_local['detention'] = self.destination_local_id.data['detention'] | ({'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing})
+          else:
+            destination_local['detention'] = {'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing}
+
         if 'demurrage' in self.destination_local and self.destination_local.get('demurrage'):
           if self.destination_local['demurrage'].get('free_limit'):
             destination_local['demurrage'] = self.destination_local['demurrage'] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
 
         if not destination_local.get('demurrage'):
-          destination_local['demurrage'] = self.destination_local_id.data['demurrage'] | ({'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing})
+          if self.destination_local_id.data.get('demurrage'):
+            destination_local['demurrage'] = self.destination_local_id.data['demurrage'] | ({'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing})
+          else:
+            destination_local['demurrage'] = {'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing}
+
 
         if 'plugin' in self.destination_local and self.destination_local.get('plugin'):
           if self.destination_local['plugin'].get('free_limit'):
             destination_local['plugin'] = self.destination_local['plugin'] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
 
         if not destination_local.get('plugin'):
-          destination_local['plugin'] = self.destination_local_id.data['plugin'] | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
+          if self.destination_local_id.data.get('plugin'):
+            destination_local['plugin'] = self.destination_local_id.data['plugin'] | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
+          else:
+            destination_local['plugin'] = {'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing}
           
       # if destination_detention.get('free_limit'):
       #   destination_local['detention'] = self.destination_detention.update(

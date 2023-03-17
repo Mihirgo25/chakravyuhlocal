@@ -10,6 +10,7 @@ from playhouse.postgres_ext import *
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateExtensionRuleSets(BaseModel):
     cluster_id = CharField(index=True, null=True)
