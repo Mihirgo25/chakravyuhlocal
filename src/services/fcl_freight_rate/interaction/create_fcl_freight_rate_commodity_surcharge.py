@@ -66,5 +66,5 @@ def execute_transaction_code(request):
     create_audit(request, commodity_surcharge.id)
 
     return {
-      id: commodity_surcharge.id
+      'id': commodity_surcharge.id
     }

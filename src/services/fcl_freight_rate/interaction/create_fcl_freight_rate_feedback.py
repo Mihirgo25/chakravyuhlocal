@@ -43,7 +43,8 @@ def execute_transaction_code(request):
         FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
 
     if not feedback:
-        feedback = FclFreightRateFeedback(row)
+        feedback = FclFreightRateFeedback(**row)
+        
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():

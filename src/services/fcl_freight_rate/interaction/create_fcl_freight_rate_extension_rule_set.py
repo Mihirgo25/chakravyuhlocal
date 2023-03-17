@@ -3,16 +3,7 @@ from fastapi import HTTPException
 from database.db_session import db
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 
-
 def get_extension_rule_set_object(request):
-  with db.atomic() as transaction:
-        try:
-          return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
-
-def execute_transaction_code(request):
   row = {
       'extension_name' : request['extension_name'],
       'service_provider_id' : request['service_provider_id'],
@@ -25,7 +16,7 @@ def execute_transaction_code(request):
   
   extension_rule_set = FclFreightRateExtensionRuleSets.select().where(
       FclFreightRateExtensionRuleSets.extension_name == request['extension_name'],
-      FclFreightRateExtensionRuleSets.service_provider_id == request['service_provider_id'],
+      FclFreightRateExtensionRuleSets.service_provider_id == request.get('service_provider_id'),
       FclFreightRateExtensionRuleSets.shipping_line_id == request.get('shipping_line_id'),
       FclFreightRateExtensionRuleSets.cluster_type == request['cluster_type'],
       FclFreightRateExtensionRuleSets.cluster_reference_name == request['cluster_reference_name'],

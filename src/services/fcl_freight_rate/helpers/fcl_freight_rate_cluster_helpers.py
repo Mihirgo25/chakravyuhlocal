@@ -54,7 +54,7 @@ def get_cluster_objects(rate_object):
         clusters['origin_location_cluster']['cluster_items'] = requests.get("https://api.cogoport.com/location/get_location_cluster",params={'id': clusters['origin_location_cluster']['cluster_id']}).json()['locations'] 
         
     if 'destination_location_cluster' in clusters and clusters['destination_location_cluster']:
-        clusters['destination_location_cluster']['cluster_items'] = client.ruby.get_location_cluster({'id': clusters['destination_location_cluster']['cluster_id']})['locations']
+        clusters['destination_location_cluster']['cluster_items'] = requests.get("https://api.cogoport.com/location/get_location_cluster",params={'id': clusters['destination_location_cluster']['cluster_id']}).json()['locations']
 
     if 'commodity_cluster' in clusters and clusters['commodity_cluster']:
         clusters['commodity_cluster']['cluster_items'] = get_fcl_freight_commodity_cluster({'id': clusters['commodity_cluster']['cluster_id']})['commodities']
