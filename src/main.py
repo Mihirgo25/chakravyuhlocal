@@ -254,8 +254,8 @@ def get_fcl_freight_rate_cards_data(origin_port_id: str, origin_country_id: str,
         ignore_omp_dmp_sl_sps = json.loads(ignore_omp_dmp_sl_sps)
     else:
         ignore_omp_dmp_sl_sps = []
-    validity_start = datetime.strptime(validity_start,'%Y-%m-%d').isoformat()
-    validity_end = datetime.strptime(validity_end,'%Y-%m-%d').isoformat()
+    validity_start = datetime.strptime(validity_start,'%Y-%m-%d')
+    validity_end = datetime.strptime(validity_end,'%Y-%m-%d')
     request = {
         'origin_port_id' : origin_port_id,
         'origin_country_id' : origin_country_id,
