@@ -87,3 +87,13 @@ class RubyApiClient:
 
     def list_organization_services(self, data = {}):
         return self.client.request('GET','list_organization_services', data)
+
+    def get_organization(self, data = {}):
+        return self.client.request('GET', 'get_organization', data)
+
+
+    def update_organization(self,data={}):
+        return self.client.request('POST','update_organization',data)
+
+    def create_organization_serviceable_port(self,data={}):
+        return self.client.request('GET','create_organization_serviceable_port',data)

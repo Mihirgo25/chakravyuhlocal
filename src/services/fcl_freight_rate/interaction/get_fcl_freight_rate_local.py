@@ -11,7 +11,10 @@ def get_fcl_freight_rate_local(request):
 
 
 def find_object(request):
+  try:
     object = FclFreightRateLocal.get(**request)
+  except: 
+    object = None
     return object
 
 def all_fields_present(object_params):

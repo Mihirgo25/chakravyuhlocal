@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from rails_client import client
-from celery import Celery
+from celery_worker import celery
 from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
 
 def send_fcl_freight_rate_task_notification(task_id):

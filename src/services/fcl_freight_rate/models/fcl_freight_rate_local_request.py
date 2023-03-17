@@ -11,9 +11,10 @@ from libs.locations import list_locations
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateLocalRequest(BaseModel):
-    booking_params = BinaryJSONField(null=True)
+    booking_params = BinaryJSONField(index=True, null=True)
     cargo_readiness_date = DateField(null=True)
     closed_by_id = UUIDField(null=True)
     closed_by = BinaryJSONField(null=True)
@@ -28,7 +29,7 @@ class FclFreightRateLocalRequest(BaseModel):
     performed_by = BinaryJSONField(null=True)
     performed_by_org_id = UUIDField(null=True)
     performed_by_type = CharField(null=True)
-    port_id = UUIDField(null=True)
+    port_id = UUIDField(index=True, null=True)
     port = BinaryJSONField(null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_rate = DoubleField(null=True)
@@ -44,7 +45,7 @@ class FclFreightRateLocalRequest(BaseModel):
     spot_search = BinaryJSONField(null=True)
     status = CharField(null=True)
     trade_id = UUIDField(null=True)
-    trade_type = CharField(null=True)
+    trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     def save(self, *args, **kwargs):

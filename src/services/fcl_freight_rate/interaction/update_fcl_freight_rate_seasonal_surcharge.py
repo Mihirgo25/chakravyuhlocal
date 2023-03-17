@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from database.db_session import db
 
 def create_audit(request, fcl_freight_rate_seasonal_surcharge_id):
     audit_data = {}
@@ -21,6 +22,14 @@ def create_audit(request, fcl_freight_rate_seasonal_surcharge_id):
     )
 
 def update_fcl_freight_rate_seasonal_surcharge(request):
+    with db.atomic as transaction:
+        try:
+            execute_transaction_code(request)
+        except Exception as e:
+            transaction.rollback()
+            raise e
+
+def execute_transaction_code(request):
     fcl_freight_rate_seasonal_surcharge = FclFreightRateSeasonalSurcharge.get(id=request['id'])
 
     if not fcl_freight_rate_seasonal_surcharge:

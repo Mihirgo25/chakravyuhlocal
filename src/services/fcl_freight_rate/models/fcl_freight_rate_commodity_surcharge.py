@@ -19,43 +19,41 @@ class UnknownField(object):
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class Mapping(Model):
     fcl_freight_id = ForeignKeyField(FclFreightRate, backref='mappings')
 
-def to_dict(obj):
-    return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
-
 class FclFreightRateCommoditySurcharge(BaseModel):
-    commodity = CharField(null=True)
-    container_size = CharField(null=True)
-    container_type = CharField(null=True)
+    commodity = CharField(index=True, null=True)
+    container_size = CharField(index=True, null=True)
+    container_type = CharField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
-    currency = CharField(null=True)
-    destination_continent_id = UUIDField(index=True, null=True)
-    destination_country_id = UUIDField(index=True, null=True)
-    destination_location_id = UUIDField(null=True)
+    currency = CharField(index=True, null=True)
+    destination_continent_id = UUIDField(null=True)
+    destination_country_id = UUIDField(null=True)
+    destination_location_id = UUIDField(index=True, null=True)
     destination_location = BinaryJSONField(null=True)
     destination_location_type = CharField(null=True)
-    destination_port_id = UUIDField(index=True, null=True)
-    destination_trade_id = UUIDField(index=True, null=True)
+    destination_port_id = UUIDField(null=True)
+    destination_trade_id = UUIDField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    origin_continent_id = UUIDField(index=True, null=True)
-    origin_country_id = UUIDField(index=True, null=True)
+    origin_continent_id = UUIDField(null=True)
+    origin_country_id = UUIDField(null=True)
     origin_destination_location_type = CharField(null=True)
-    origin_location_id = UUIDField(null=True)
+    origin_location_id = UUIDField(index=True, null=True)
     origin_location = BinaryJSONField(null=True)
     origin_location_type = CharField(null=True)
-    origin_port_id = UUIDField(index=True, null=True)
-    origin_trade_id = UUIDField(index=True, null=True)
-    price = IntegerField(null=True)
+    origin_port_id = UUIDField(null=True)
+    origin_trade_id = UUIDField(null=True)
+    price = IntegerField(index=True, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
-    service_provider_id = UUIDField(null=True)
+    service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     shipping_line = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    
+   
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateCommoditySurcharge, self).save(*args, **kwargs)
@@ -175,12 +173,12 @@ class FclFreightRateCommoditySurcharge(BaseModel):
 
     def detail(self):
         return {
-            'seasonal_surcharge': self.as_dict(only=[
-                'id',
-                'price',
-                'currency',
-                'remarks'
-            ])
+            'seasonal_surcharge': {
+                "id": self.id,
+                "price": self.price,
+                "currency": self.currency,
+                "remarks": self.remarks
+            }
         }
     
     def validate(self):

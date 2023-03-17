@@ -12,27 +12,27 @@ import requests
 def get_cluster_objects(rate_object):
     clusters = {}
 
-    port_codes = list_locations({'filters':{ 'id': [rate_object['origin_port_id'], rate_object['destination_port_id']] }})['list']
+    port_codes = list_locations({ 'id': [rate_object['origin_port_id'], rate_object['destination_port_id']] })['list']
+   
     param = {}
     for data in port_codes:
         param[data['id']] = data['port_code']
     
     port_codes = param
 
-
     cluster_data_q = FclFreightRateExtensionRuleSets.select().where(
-        (FclFreightRateExtensionRuleSets.cluster_reference_name in [
+        FclFreightRateExtensionRuleSets.cluster_reference_name << (
             port_codes.get(rate_object['origin_port_id']),
             port_codes.get(rate_object['destination_port_id']),
             rate_object['commodity'],
             rate_object['container_size']
-        ]) and
-        (FclFreightRateExtensionRuleSets.service_provider_id in [None, rate_object['service_provider_id']]) and
-        (FclFreightRateExtensionRuleSets.shipping_line_id in [None, rate_object['shipping_line_id']]) and
-        (FclFreightRateExtensionRuleSets.status == 'active') and
-        (FclFreightRateExtensionRuleSets.trade_type in [None, 'import', 'export'])
+        ) ,
+        ((FclFreightRateExtensionRuleSets.service_provider_id == rate_object.get('service_provider_id')) | (FclFreightRateExtensionRuleSets.service_provider_id.is_null(True))),
+        ((FclFreightRateExtensionRuleSets.shipping_line_id == rate_object.get('shipping_line_id'))  | (FclFreightRateExtensionRuleSets.shipping_line_id.is_null(True))),
+        FclFreightRateExtensionRuleSets.status == 'active',
+        (FclFreightRateExtensionRuleSets.trade_type <<  ('import', 'export') | FclFreightRateExtensionRuleSets.trade_type.is_null(True))
     ).order_by(FclFreightRateExtensionRuleSets.service_provider_id.desc(),FclFreightRateExtensionRuleSets.shipping_line_id.desc(),FclFreightRateExtensionRuleSets.trade_type.desc()).execute()
-    
+
     cluster_data = [model_to_dict(item) for item in cluster_data_q]
     
     for data in cluster_data:
@@ -51,9 +51,6 @@ def get_cluster_objects(rate_object):
 
     
     if 'origin_location_cluster' in clusters and clusters['origin_location_cluster']:
-        # print(clusters['origin_location_cluster']['cluster_id'])
-        # requests.get("url")
-        # clusters['origin_location_cluster']['cluster_items'] = client.ruby.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations'] 
         clusters['origin_location_cluster']['cluster_items'] = requests.get("https://api.cogoport.com/location/get_location_cluster",params={'id': clusters['origin_location_cluster']['cluster_id']}).json()['locations'] 
         
     if 'destination_location_cluster' in clusters and clusters['destination_location_cluster']:

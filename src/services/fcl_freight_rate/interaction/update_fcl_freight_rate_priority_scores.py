@@ -4,10 +4,19 @@ from datetime import datetime, timedelta
 import pytz
 from rails_client import client
 from configs.global_constants import POTENTIAL_CONTAINERS_BOOKING_COUNTS, POTENTIAL_CONVERSION_RATIO
+from database.db_session import db
 
 possible_direct_filters = ['id', 'origin_port_id', 'destination_port_id', 'origin_main_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'importer_exporter_id']
 
 def update_fcl_freight_rate_priority_scores_data(request):
+    with db.atomic as transaction:
+        try:
+            execute_transaction_code(request)
+        except Exception as e:
+            transaction.rollback()
+            raise e
+
+def execute_transaction_code(request):
     request = request.__dict__
     request['filters'] = {key: value for key, value in request['filters'] if not value.empty() and possible_direct_filters.include(key)}
     groups = get_groupings(request)

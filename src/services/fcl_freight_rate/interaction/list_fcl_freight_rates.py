@@ -2,7 +2,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from datetime import datetime, timedelta
-from math import ceil
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 import json
 from peewee import JOIN 
@@ -11,7 +10,7 @@ from playhouse.shortcuts import model_to_dict
 possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id']
 possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than', 'validity_start_greater_than', 'validity_end_less_than', 'procured_by_id', 'partner_id']
 
-def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'priority_score', sort_type = 'desc', pagination_data_required = True, return_query = False, expired_rates_required = False, all_rates_for_cogo_assured = False):
+def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, expired_rates_required = False, all_rates_for_cogo_assured = False):
   query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit)
   if filters:
     if type(filters) != dict:
@@ -25,9 +24,7 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'p
     
   data = get_data(query,expired_rates_required)
   
-  pagination_data = get_pagination_data(query, pagination_data_required, page, page_limit)
-
-  return ({'list': data} | pagination_data)
+  return {'list': data} 
 
 def get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit):
   if all_rates_for_cogo_assured:
@@ -45,18 +42,6 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit):
 
   return query
 
-def get_pagination_data(query, pagination_data_required, page, page_limit):
-  if not pagination_data_required:
-    return {}
-
-  pagination_data = {
-    'page': page,
-    'total': ceil(query.count()/page_limit),
-    'total_count': query.count(),
-    'page_limit': page_limit
-    }
-  
-  return pagination_data
 
 def get_data(query, expired_rates_required):
   data = []
@@ -189,18 +174,6 @@ def get_data(query, expired_rates_required):
 
         del result['origin_local']
         del result['destination_local']
-      
-      # if result['object_data']:
-      #   result['shipping_line'] = result['object_data']['operator'][result['shipping_line_id']] if 'operator' in result['object_data'] and result.get('shipping_line_id') in result['object_data']['operator'] else None
-      #   result['origin_port'] = result['object_data']['location'][result['origin_port_id']] if 'location' in result['object_data'] and result.get('origin_port_id') in result['object_data']['location'] else None
-      #   result['origin_main_port'] = result['object_data']['location'][result['origin_main_port_id']] if 'location' in result['object_data'] and result.get('origin_main_port_id') in result['object_data']['location'] else None
-      #   result['destination_port'] = result['object_data']['location'][result['destination_port_id']] if 'location' in result['object_data'] and result.get('destination_port_id') in result['object_data']['location'] else None
-      #   result['destination_main_port'] = result['object_data']['location'][result['destination_main_port_id']] if 'location' in result['object_data'] and result.get('destination_main_port_id') in result['object_data']['location'] else None
-      #   result['service_provider'] = result['object_data']['organization'][result['service_provider_id']] if 'organization' in result['object_data'] and result.get('service_provider_id') in result['object_data']['organization'] else None
-      #   result['importer_exporter'] = result['object_data']['organization'][result['importer_exporter_id']] if 'organization' in result['object_data'] and result.get('importer_exporter_id') in result['object_data']['organization'] else None
-      #   result['procured_by'] = result['object_data']['user'][result['procured_by_id']] if 'user' in result['object_data'] and result.get('procured_by_id') in result['object_data']['user'] else None
-      #   result['sourced_by'] = result['object_data']['user'][result['sourced_by_id']] if 'user' in result['object_data'] and result.get('sourced_by_id') in result['object_data']['user'] else None
-      #   del result['object_data']
 
     data.append(result)
   return data
