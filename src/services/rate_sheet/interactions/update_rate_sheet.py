@@ -1,5 +1,5 @@
 
-from services.rate_sheet.models.rate_sheet import RateSheet
+from services.rate_sheet.models.rate_sheet import RateSheets
 from params import UpdateRateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
@@ -38,7 +38,7 @@ def send_rate_sheet_notifications(params):
     if params['serial_id']:
         serial_id = params['serial_id']
     else:
-        serial_id = RateSheet.select(fn.MAX(RateSheet.serial_id)).scalar()
+        serial_id = RateSheets.select(fn.MAX(RateSheets.serial_id)).scalar()
 
     variables = {'file_name': params['file_url'].split('/').pop(), 'serial_id': serial_id}
 
@@ -87,7 +87,8 @@ def create_audit(request):
 
 
 def update_rate_sheet(params: UpdateRateSheet):
-    rate_sheet = RateSheet.get(RateSheet.id == params['id'])
+    rate_sheet = RateSheets.get(RateSheets.id == params['id'])
+    print(rate_sheet)
     if rate_sheet.status != 'uploaded':
         return
     if 'converted_files' in params:

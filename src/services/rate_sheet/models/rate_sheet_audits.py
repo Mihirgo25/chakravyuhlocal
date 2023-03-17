@@ -18,6 +18,7 @@ class RateSheetAudits(BaseModel):
         index=True
     )
     object_type = CharField(index=True, null=True)
+    # object id may be a foreign keyy to rate sheet
     object_id = UUIDField(null=True)
     action_name = CharField(null=True)
     performed_by_id = UUIDField(index=True, null=True)

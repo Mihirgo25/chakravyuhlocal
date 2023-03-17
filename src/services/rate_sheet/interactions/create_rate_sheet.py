@@ -1,5 +1,5 @@
 
-from services.rate_sheet.models.rate_sheet import RateSheet
+from services.rate_sheet.models.rate_sheet import RateSheets
 from params import CreateRateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
 from playhouse.postgres_ext import *
@@ -16,19 +16,20 @@ def get_audit_params(parameters, location_mapping):
         "performed_by_id": parameters['performed_by_id'],
         "procured_by_id": parameters['procured_by_id'],
         "sourced_by_id": parameters['sourced_by_id'],
+        "rate_sheet_id": parameters['rate_sheet_id'],
         "data": audit_data,
     }
 
 def create_audit(request):
 
     audit_data = {}
-    audit_data['price'] = request['price']
-    audit_data['currency'] = request['currency']
-    audit_data['remarks'] = request.get('remarks')
+    # audit_data['price'] = request['price']
+    # audit_data['currency'] = request['currency']
+    # audit_data['remarks'] = request.get('remarks')
 
     RateSheetAudits.create(
         action_name = 'create',
-        rate_sheet_id = request.get('rate_sheet_id'),
+        object_id = request['rate_sheet_id'],
         performed_by_id = request['performed_by_id'],
         procured_by_id = request['procured_by_id'],
         sourced_by_id = request['sourced_by_id'],
@@ -61,7 +62,7 @@ def send_rate_sheet_notifications(params):
     if params['serial_id']:
         serial_id = params['serial_id']
     else:
-        serial_id = RateSheet.select(fn.MAX(RateSheet.serial_id)).scalar()
+        serial_id = RateSheets.select(fn.MAX(RateSheets.serial_id)).scalar()
 
     variables = {'file_name': params['file_url'].split('/').pop(), 'serial_id': serial_id}
 
@@ -94,12 +95,15 @@ def send_rate_sheet_notifications(params):
 
 
 def create_rate_sheet(params: CreateRateSheet):
-    location = RateSheet.create(**get_create_params(params))
-    try:
-        location.save()
-    except:
-        return 
+    location = RateSheets.create(**get_create_params(params))
+    location.save()
+    # try:
+    #     location.save()
+    # except:
+    #     return
     params['rate_sheet_id'] = jsonable_encoder(location.id)
     create_audit(get_audit_params(params, location))
-    send_rate_sheet_notifications(params)
+    return  params['rate_sheet_id']
+
+    # send_rate_sheet_notifications(params)
 

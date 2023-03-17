@@ -1,6 +1,6 @@
 import os, csv, json
 from csv import writer
-
+import time
 import shutil
 import urllib.request
 from libs.download_csv import download_file
@@ -198,6 +198,8 @@ def get_airline_id(params):
 
 def convert_date_format(date):
     print(date)
+    if not date:
+        return date
     parsed_date = parser.parse(date)
     return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
 
@@ -231,18 +233,19 @@ def process_fcl_freight_freight(params):
             row = row
             # if index < last_line:
             #     return
-            present_field = []
-            blank_field = []
+            present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
+            blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
             if valid_hash(row, present_field, blank_field):
                 if rows:
+                    print(rows,"testing-process")
                     create_fcl_freight_freight_rate(
                         params, rows, created_by_id, procured_by_id, sourced_by_id
                     )
                     set_last_line(index, params)
-                    rate_sheet.set_processed_percent = (
-                        ((params.file_index * 1.0) / rate_sheet.converted_files.count)
-                        * ((get_last_line * 1.0) / get_total_line)
-                    ) * 100
+                    # rate_sheet.set_processed_percent = (
+                    #     ((params.file_index * 1.0) / rate_sheet.converted_files.count)
+                    #     * ((get_last_line * 1.0) / get_total_line)
+                    # ) * 100
                 rows = [row]
             elif (
                 valid_hash(
@@ -454,23 +457,28 @@ def process_fcl_freight_freight(params):
                     ],
                 )
             ):
+                print("testing-process2")
                 rows.append(row)
     print(len(rows))
     if not rows:
         return
-    create_fcl_freight_freight_rate(rows, created_by_id, procured_by_id, sourced_by_id)
-    set_last_line(total_lines)
-    rate_sheet.set_processed_percent = (
-        ((params.file_index * 1.0) / rate_sheet.converted_files.count)
-        * ((get_last_line * 1.0) / get_total_line)
-    ) * 100
+    # create_fcl_freight_freight_rate(params, rows, created_by_id, procured_by_id, sourced_by_id)
+    # set_last_line(total_lines)
+    # rate_sheet.set_processed_percent = (
+    #     ((params.file_index * 1.0) / rate_sheet.converted_files.count)
+    #     * ((get_last_line * 1.0) / get_total_line)
+    # ) * 100
 
 
 
 def create_fcl_freight_freight_rate(
     params, rows, created_by_id, procured_by_id, sourced_by_id
 ):
-    object = rows[0]
+    keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']
+    object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+
+    object['validity_start'] = convert_date_format(object['validity_start'])
+    object['validity_end'] = convert_date_format(object['validity_end'])
     for port in [
         "origin_port",
         "origin_main_port",
@@ -483,69 +491,97 @@ def create_fcl_freight_freight_rate(
     object["line_items"] = []
     # incomplete rows
     for t in rows:
-        if "code" in t:
-            line_item = t
-            line_item["remark"] = list(
-                filter(None, [t["remark1"], t["remark2"], t["remark3"]])
-            )
-            line_item["slabs"] = []
-            line_item["line_items"].append(line_item)
-        elif "weight_free_limit" in t or "weight_lower_limit" in t:
-            object["weight_limit"] = object["weight_limit"] or {}
-            object["weight_limit"]["free_limit"] = (
-                object["weight_limit"]["free_limit"] or t["weight_free_limit"]
-            )
-            object["weight_limit"]["slabs"] = object["weight_limit"]["slabs"] or []
-            keys_to_extract = [
-                "weight_lower_limit",
-                "weight_upper_limit",
-                "weight_limit_price",
-                "weight_limit_currency",
-            ]
-            weight_slab = dict(
-                filter(lambda item: item[0] in keys_to_extract, t.items())
-            )
-            del weight_slab["weight_lower_limit"]
-            weight_slab["lower_limit"] = weight_slab
-            del weight_slab["weight_upper_limit"]
-            weight_slab["upper_limit"] = weight_slab
-            del weight_slab["weight_limit_price"]
-            weight_slab["price"] = weight_slab
-            del weight_slab["weight_limit_currency"]
-            weight_slab["currency"] = weight_slab
+        print(t, "sal")
+        if t['code']:
+            line_item = {
+            'code': t['code'],
+            'unit': t['unit'],
+            'price': t['price'],
+            'currency': t['currency'],
+            'remarks': [t['remark1'], t['remark2'], t['remark3']] if any([t['remark1'], t['remark2'], t['remark3']]) else None,
+            'slabs': []
+            }
+            object["line_items"].append(line_item)
+        elif t['weight_free_limit'] or t['weight_lower_limit']:
+            if 'weight_limit' not in object:
+                object['weight_limit'] = {}
+            if not object['weight_limit'].get('free_limit'):
+                object['weight_limit']['free_limit'] = float(t['weight_free_limit'])
+            if 'slabs' not in object['weight_limit']:
+                object['weight_limit']['slabs'] = []
+            if t['weight_lower_limit']:
+                weight_slab = {
+                    'lower_limit': t['weight_lower_limit'],
+                    'upper_limit': t['weight_upper_limit'],
+                    'price': t['weight_limit_price'],
+                    'currency': t['weight_limit_currency']
+                }
+                object['weight_limit']['slabs'].append(weight_slab)
 
-            if weight_slab["lower_limit"] is not None:
-                object["weight_limit"]["slabs"].append(weight_slab)
+            # object["weight_limit"]["free_limit"] = (
+            #     object["weight_limit"]["free_limit"] or t["weight_free_limit"]
+            # )
+            # keys_to_extract = [
+            #     "weight_lower_limit",
+            #     "weight_upper_limit",
+            #     "weight_limit_price",
+            #     "weight_limit_currency",
+            # ]
+            # weight_slab = dict(
+            #     filter(lambda item: item[0] in keys_to_extract, t.items())
+            # )
+            # del weight_slab["weight_lower_limit"]
+            # weight_slab["lower_limit"] = weight_slab
+            # del weight_slab["weight_upper_limit"]
+            # weight_slab["upper_limit"] = weight_slab
+            # del weight_slab["weight_limit_price"]
+            # weight_slab["price"] = weight_slab
+            # del weight_slab["weight_limit_currency"]
+            # weight_slab["currency"] = weight_slab
 
-        elif (
-            t["destination_detention_free_limit"] is not None
-            or t["destination_detention_lower_limit"] is not None
-        ):
-            object["destination_local"] = {"detention": {}}
-            object["destination_local"]["detention"]["free_limit"] = (
-                object["destination_local"]["detention"]["free_limit"]
-                or t["destination_detention_free_limit"]
-            )
-            object["destination_local"]["detention"]["slabs"] = (
-                object["destination_local"]["detention"]["slabs"] or []
-            )
-            keys_to_extract = [
-                "destination_detention_lower_limit",
-                "destination_detention_upper_limit",
-                "destination_detention_price",
-                "destination_detention_currency",
-            ]
-            slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
-            del slab["destination_detention_lower_limit"]
-            slab["lower_limit"] = slab
-            del slab["destination_detention_upper_limit"]
-            slab["upper_limit"] = slab
-            del slab["destination_detention_price"]
-            slab["price"] = slab
-            del slab["destination_detention_currency"]
-            slab["currency"] = slab
-            if slab["lower_limit"] is not None:
-                object["destination_local"]["detention"]["slabs"].append(slab)
+            # if weight_slab["lower_limit"] is not None:
+            #     object["weight_limit"]["slabs"].append(weight_slab)
+
+        elif t['destination_detention_free_limit'] or t['destination_detention_lower_limit']:
+            if 'destination_local' not in object:
+                object['destination_local'] = {'detention': {}}
+            if not object['destination_local']['detention'].get('free_limit'):
+                object['destination_local']['detention']['free_limit'] = float(t['destination_detention_free_limit'])
+            if 'slabs' not in object['destination_local']['detention']:
+                object['destination_local']['detention']['slabs'] = []
+            if t['destination_detention_lower_limit']:
+                slab = {
+                    'lower_limit': t['destination_detention_lower_limit'],
+                    'upper_limit': t['destination_detention_upper_limit'],
+                    'price': t['destination_detention_price'],
+                    'currency': t['destination_detention_currency']
+                }
+                object['destination_local']['detention']['slabs'].append(slab)
+            # object["destination_local"] = {"detention": {}}
+            # object["destination_local"]["detention"]["free_limit"] = (
+            #     object["destination_local"]["detention"]["free_limit"]
+            #     or t["destination_detention_free_limit"]
+            # )
+            # object["destination_local"]["detention"]["slabs"] = (
+            #     object["destination_local"]["detention"]["slabs"] or []
+            # )
+            # keys_to_extract = [
+            #     "destination_detention_lower_limit",
+            #     "destination_detention_upper_limit",
+            #     "destination_detention_price",
+            #     "destination_detention_currency",
+            # ]
+            # slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
+            # del slab["destination_detention_lower_limit"]
+            # slab["lower_limit"] = slab
+            # del slab["destination_detention_upper_limit"]
+            # slab["upper_limit"] = slab
+            # del slab["destination_detention_price"]
+            # slab["price"] = slab
+            # del slab["destination_detention_currency"]
+            # slab["currency"] = slab
+            # if slab["lower_limit"] is not None:
+            #     object["destination_local"]["detention"]["slabs"].append(slab)
     object["rate_sheet_id"] = params['rate_sheet_id']
     object["performed_by_id"] = created_by_id
     object["service_provider_id"] = params['service_provider_id']
@@ -554,15 +590,22 @@ def create_fcl_freight_freight_rate(
     object["cogo_entity_id"] = params['cogo_entity_id']
     object["source"] = "rate_sheet"
     object["is_extended"] = False
+    for line_items in object['line_items']:
+        if line_items['price']:
+            line_items['price'] = float(line_items['price'])
     request_params = object
     if 'extended_rates' in rows[0]:
         request_params["is_extended"] = True
-    print(request_params)
+    print(request_params, "sak final")
+    # try:
     create_fcl_freight_rate_data(request_params)
+    print("pass")
     if 'extended_rates' in rows[0]:
         request_params["extend_rates"] = True
         del request_params["is_extended"]
         extend_create_fcl_freight_rate_data(request_params)
+    # except:
+    #     print("fail")
 
 
 def write_fcl_freight_local_object(params, rows, csv):
@@ -826,12 +869,17 @@ def validate_fcl_freight_freight(params):
     print(params["status"])
     last_line = get_last_line(params)
     rows = []
-    with open(get_file_path(params)) as csvfile:
-        reader = csv.reader(csvfile)
+    with open(get_file_path(params), 'a+', newline='') as csv_file:
+        # reader = csv.reader(csv_file)
+        csv_writer = csv.writer(csv_file)
+        last_line = get_last_line(params)
+        # print(last_line)
+        if last_line == 0:
+            csv_writer.writerow(headers)
+        index = -1
         with open(get_original_file_path(params), "r") as csvfile:
                 new_reader = csv.DictReader(csvfile)
                 print(new_reader)
-                index = -1
                 for row in new_reader:
                     index += 1
                     # if index < last_line:
@@ -843,9 +891,10 @@ def validate_fcl_freight_freight(params):
                         print('y1')
                         if rows:
                             print(rows)
-                            write_fcl_freight_freight_object(rows, file, params)
+                            write_fcl_freight_freight_object(rows, csv_writer, params)
                             set_last_line(index, params)
-                        rows.append(row)
+                        # rows.append(row)
+                        rows = [row]
                     elif rows and (
                         (valid_hash(
                             row,
@@ -1059,17 +1108,17 @@ def validate_fcl_freight_freight(params):
                         rows.append(row)
                     else:
                         if rows:
-                            write_fcl_freight_freight_object(rows, file)
+                            write_fcl_freight_freight_object(rows, csv_writer, params)
                             set_last_line(index)
-                        # writer_object = writer(file)
-                        # writer_object.writerow(row.values() + ['Incorrect Row'])
-                        # rows = []
-    print(rows, "fineal_rows")
-
-    if rows:
-        write_fcl_freight_freight_object(rows,file)
-        set_last_line(total_lines, params)
-        return
+                        csv_writer.writerow(list(row.values()) + ['Incorrect Row'])
+                        rows = []
+        print(rows, "fineal_rows")
+        with open("text.json", "w") as outfile:
+            json.dump(rows, outfile)
+        if rows:
+            write_fcl_freight_freight_object(rows,csv_file, params)
+            set_last_line(total_lines, params)
+            return
 
     return
 
@@ -1154,12 +1203,15 @@ def validate_and_process_rate_sheet_converted_file(params):
 
 def process_converted_files(params):
     params['status'] = 'processing'
+    initial_time = time.time()
     for converted_file in params['converted_files']:
         reset_counters(params)
         print("process_{}_{}".format(converted_file['service_name'], converted_file['module']))
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
             params
         )
+        final_time = time.time() -initial_time
+        print(final_time, "final_time")
         print("done")
     params['status'] = 'complete'
     for _ in params['converted_files']:
