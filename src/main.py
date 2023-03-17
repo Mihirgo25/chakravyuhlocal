@@ -181,7 +181,7 @@ def get_fcl_freight_commodity_cluster_data(id: str):
         return JSONResponse(status_code = 500, content = {'success' : False})
 
 @app.get("/get_fcl_freight_rate_data")
-def get_fcl_freight_rate_data(origin_port_id: str = None, origin_main_port_id: str = None, destination_port_id: str = None, destination_main_port_id: str = None, container_size: str = None, container_type: str = None, commodity: str = True, shipping_line_id: str = None, service_provider_id: str = None, importer_exporter_id: str = None):
+def get_fcl_freight_rate_data(origin_port_id: str = None, origin_main_port_id: str = None, destination_port_id: str = None, destination_main_port_id: str = None, container_size: str = None, container_type: str = None, commodity: str = None, shipping_line_id: str = None, service_provider_id: str = None, importer_exporter_id: str = None):
     request = {
         'origin_port_id':origin_port_id,
         'origin_main_port_id':origin_main_port_id,
@@ -210,8 +210,12 @@ def get_fcl_freight_local_data(port_id: str = None, main_port_id: str = None, tr
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id
     }
-    data = get_fcl_freight_rate_local(request)
-    return data
+    try:
+        data = get_fcl_freight_rate_local(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content = data)
+    except:
+        return JSONResponse(status_code=500, content = {'success':False})
 
 @app.post("/get_fcl_freight_local_rate_cards")
 def get_fcl_freight_local_rate_cards_data(trade_type: str, port_id: str, country_id: str, container_size: str, container_type: str, containers_count: int,  bls_count: int, commodity: str = None, shipping_line_id: str = None, service_provider_id: str = None, rates: list[str] = [], include_confirmed_inventory_rates: bool =False, additional_services: list[str] = [], include_destination_dpd: bool = False, cargo_weight_per_container: int = None):
