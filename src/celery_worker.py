@@ -2,6 +2,7 @@ from celery import Celery
 import os
 import time
 from configs.env import *
+from services.fcl_freight_rate.helpers.get_multuple_service_objects import get_multiple_service_objects
 
 
 CELERY_CONFIG = {
@@ -91,7 +92,16 @@ def create_freight_trend_port_pair(request):
 
   
   # client.ruby.create_freight_trend_port_pair(port_pair_data) expose
-    
+
+@celery.task()
+def fcl_freight_local_data_updation(local_object,request):
+  print("bed")
+  from rails_client import client
+  client.initialize_client()
+  from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
+
+  local_updations(local_object,request)
+
 
 
 

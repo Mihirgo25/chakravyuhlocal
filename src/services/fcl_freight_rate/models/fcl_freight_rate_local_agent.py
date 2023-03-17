@@ -12,6 +12,7 @@ STATUSES = ('active', 'inactive')
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
 class FclFreightRateLocalAgent(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)

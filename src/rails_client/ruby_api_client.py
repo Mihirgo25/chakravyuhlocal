@@ -92,3 +92,6 @@ class RubyApiClient:
     
     def update_organization(self,data={}):
         return self.client.request('POST','update_organization',data)
+    
+    def create_organization_serviceable_port(self,data={}):
+        return self.client.request('GET','create_organization_serviceable_port',data)
