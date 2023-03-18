@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_commodity_surcharge import FclFreightRateCommoditySurcharge
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 
 
@@ -11,12 +11,10 @@ def create_audit(request, commodity_surcharge_id):
     audit_data['currency'] = request['currency']
     audit_data['remarks'] = request.get('remarks')
 
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         action_name = 'create',
         rate_sheet_id = request.get('rate_sheet_id'),
         performed_by_id = request['performed_by_id'],
-        procured_by_id = request['procured_by_id'],
-        sourced_by_id = request['sourced_by_id'],
         data = audit_data,
         object_id = commodity_surcharge_id,
         object_type = 'FclFreightRateCommoditySurcharge'

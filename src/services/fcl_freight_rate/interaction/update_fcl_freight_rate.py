@@ -19,8 +19,6 @@ def create_audit(request, freight_id):
         bulk_operation_id = request.get('bulk_operation_id'),
         action_name = 'update',
         performed_by_id = request['performed_by_id'],
-        procured_by_id = request['procured_by_id'],
-        sourced_by_id = request['sourced_by_id'],
         data = audit_data,
         object_id = freight_id,
         object_type = 'FclFreightRate',

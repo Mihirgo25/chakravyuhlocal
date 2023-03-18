@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 
 
 def create_audit(request, seasonal_surcharge_id):
@@ -12,12 +12,10 @@ def create_audit(request, seasonal_surcharge_id):
     audit_data['currency'] = request['currency']
     audit_data['remarks'] = request.get('remarks')
 
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         rate_sheet_id = request.get('rate_sheet_id'),
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
-        procured_by_id = request['procured_by_id'],
-        sourced_by_id = request['sourced_by_id'],
         data = audit_data,
         object_id = seasonal_surcharge_id,
         object_type = 'FclFreightRateSeasonalSurcharge'

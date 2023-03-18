@@ -1,6 +1,6 @@
 from rails_client import client
 from datetime import datetime
-from models.fcl_freight_rates import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from interaction.create_fcl_freight_rate import find_or_initialize 
 from configs.fcl_freight_rate_constants import SCHEDULE_TYPES,PAYMENT_TERM,SPECIFICITY_TYPE
 import json

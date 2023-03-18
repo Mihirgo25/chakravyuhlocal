@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 from database.db_session import db
@@ -20,12 +20,10 @@ def create_audit(request, fcl_freight_local_id):
     audit_data['data'] = request.get('data')
     audit_data['selected_suggested_rate_id'] = request.get('selected_suggested_rate_id')
 
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         rate_sheet_id = request.get('rate_sheet_id'),
         action_name = 'create',
         performed_by_id = request.get('performed_by_id'),
-        procured_by_id = request.get('procured_by_id'),
-        sourced_by_id = request.get('sourced_by_id'),
         data = audit_data,
         object_id = fcl_freight_local_id,
         object_type = 'FclFreightRateLocal'

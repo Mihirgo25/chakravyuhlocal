@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from datetime import datetime
 import uuid
@@ -64,7 +64,7 @@ def create_audit(request, local_request_id):
     if request['preferred_shipping_line_ids']:
         request['preferred_shipping_line_ids'] = [str(str_id) for str_id in request['preferred_shipping_line_ids']]
 
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
