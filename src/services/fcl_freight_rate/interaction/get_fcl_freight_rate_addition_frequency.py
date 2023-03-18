@@ -18,8 +18,8 @@ def get_fcl_freight_rate_addition_frequency(filters, sort_type, group_by):
       query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRate)
       query = apply_indirect_filters(query, filters)
 
-      data = get_data(query, sort_type, group_by)
-      return data
+    data = get_data(query, sort_type, group_by)
+    return data
 
 def apply_indirect_filters(query, filters):
   for key in filters:
@@ -35,4 +35,4 @@ def get_data(query, group_by, sort_type):
         ).order_by(eval(f"fn.date_trunc('{group_by}', FclFreightRate.updated_at).{sort_type}()")))
 
 def apply_procured_by_id_filter(query, filters):
-    return query.join(FclFreightRateAudit, JOIN.INNER, on = (FclFreightRateAudit.object_id == FclFreightRate.id)).where(FclFreightRateAudit.object_type == 'FclFreightRate', FclFreightRateAudit.procured_by_id == filters['procured_by_id'])
+    return query.where(FclFreightRate.procured_by_id == filters['procured_by_id'])
