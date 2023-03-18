@@ -60,8 +60,6 @@ def execute_transaction_code(request):
         fcl_freight_local = FclFreightRateLocal(**row)
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
-        fcl_freight_local.set_shipping_line()
-
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
     fcl_freight_local.rate_sheet_id = request.get('rate_sheet_id')
     fcl_freight_local.source = request.get('source')
