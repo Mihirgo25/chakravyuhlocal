@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi import HTTPException
 from database.db_session import db
 
@@ -29,12 +29,10 @@ def execute_transaction_code(request):
     }
 
 def create_audit(request, freight_rate_local_id):
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         action_name = 'delete',
         performed_by_id = request['performed_by_id'],
         bulk_operation_id = request.get('bulk_operation_id'),
-        procured_by_id = request['procured_by_id'],
-        sourced_by_id = request['sourced_by_id'],
         data = delete_params,
         object_id = freight_rate_local_id,
         object_type = 'FclFreightRateLocal'

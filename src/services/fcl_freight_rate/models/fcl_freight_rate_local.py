@@ -91,50 +91,22 @@ class FclFreightRateLocal(BaseModel):
             (('updated_at', 'service_provider_id'), False),
         )
 
-    def validate_port(self):
-        obj = {"id": [str(self.port_id)]}
-        port_data = list_locations(obj)['list']
-        if len(port_data) != 0 and port_data[0].get('type') == 'seaport':
-            self.port = port_data[0]
 
-            self.country_id = port_data[0].get('country_id', None)
-            self.trade_id = port_data[0].get('trade_id', None) 
-            self.continent_id = port_data[0].get('continent_id', None)
-            self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
-
-            return True
-        return False
 
     def validate_main_port_id(self):
-        self.main_port=None
         if self.port and self.port['is_icd']==False:
             if not self.main_port_id or self.main_port_id != self.port_id:
                 return True
             return False
         elif self.port and self.port['is_icd']==True:
             if self.main_port_id:
-                main_port_data = list_locations({'id': [str(self.main_port_id)]})['list']
-                if len(main_port_data) != 0 and main_port_data[0].get('type') == 'seaport' and main_port_data[0].get('is_icd') == False:
-                    self.main_port = main_port_data[0]
-                    return True
-                return False
+                if not self.main_port or self.main_port['is_icd'] == True:
+                    return False
+                return True
             else:
                 return False
         return True
 
-    def validate_shipping_line_id(self):
-        shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(self.shipping_line_id)]}})['list']
-        if len(shipping_line_data) != 0 and shipping_line_data[0].get('operator_type') == 'shipping_line':
-            self.shipping_line = shipping_line_data[0]
-            return True
-        return False
-
-    def validate_service_provider_id(self):
-        service_provider_data = client.ruby.list_organizations({'filters':{'id': [str(self.service_provider_id)]}})['list']
-        if len(service_provider_data) != 0 and service_provider_data[0].get('account_type') == 'service_provider':
-            self.service_provider = service_provider_data[0]
-            return True
-        return False
 
     def validate_trade_type(self):
         if self.trade_type not in TRADE_TYPES:
@@ -156,24 +128,6 @@ class FclFreightRateLocal(BaseModel):
             return False
         return True
 
-    def validate_uniqueness(self):
-      freight_local_cnt = FclFreightRateLocal.select().where(
-        FclFreightRateLocal.port_id == self.port_id,
-        FclFreightRateLocal.trade_type == self.trade_type,
-        FclFreightRateLocal.main_port_id == self.main_port_id,
-        FclFreightRateLocal.container_size == self.container_size,
-        FclFreightRateLocal.container_type == self.container_type,
-        FclFreightRateLocal.commodity == self.commodity,
-        FclFreightRateLocal.shipping_line_id == self.shipping_line_id,
-        FclFreightRateLocal.service_provider_id == self.service_provider_id
-      ).count()
-
-      if self.id and freight_local_cnt==1:
-        return True
-      if not self.id and freight_local_cnt==0:
-        return True
-
-      return False
     
     def validate_data(self):
         return self.local_data_instance.validate_duplicate_charge_codes() and self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
@@ -181,32 +135,26 @@ class FclFreightRateLocal(BaseModel):
     def validate_before_save(self):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
-        if not self.validate_port():
-            raise HTTPException(status_code=499, detail='port_id is not valid')
-
+        print(1)
         if not self.validate_main_port_id():
             raise HTTPException(status_code=499, detail='main_port_id is not valid')
+        print(1)
 
-        if not self.validate_shipping_line_id():
-            raise HTTPException(status_code=499, detail='shipping_line_id is not valid')
-
-        if not self.validate_service_provider_id():
-            raise HTTPException(status_code=499, detail='service_provider_id is not valid')
-        
         if not self.validate_trade_type():
             raise HTTPException(status_code=499, detail='trade_type is not valid')
+        print(1)
 
         if not self.validate_container_size():
             raise HTTPException(status_code=499, detail='container_size is not valid')
-        
+        print(1)
+
         if not self.validate_container_type():
             raise HTTPException(status_code=499, detail='container_type is not valid')
-
-        if not self.validate_uniqueness():
-            raise HTTPException(status_code=499, detail='violates uniqueness validation')
+        print(1)
 
         if not self.validate_data():
             raise HTTPException(status_code=499, detail='data is not valid')
+        print(1)
 
     def update_special_attributes(self):
         self.update_line_item_messages()
@@ -242,6 +190,10 @@ class FclFreightRateLocal(BaseModel):
         for port in ports:
             if port.get('id') == self.port_id:
                 self.port = port
+                self.country_id = port.get('country_id', None)
+                self.trade_id = port.get('trade_id', None) 
+                self.continent_id = port.get('continent_id', None)
+                self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
             elif self.main_port_id and port.get('id') == self.main_port_id:
                 self.main_port = port
 
@@ -332,17 +284,3 @@ class FclFreightRateLocal(BaseModel):
             item.update({'name': line_item_name})
 
         return detail
-
-
-# idx1 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id == None).where(FclFreightRateLocal.commodity == None)
-
-# idx2 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.commodity, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id == None).where(FclFreightRateLocal.commodity != None)
-
-# idx3 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.main_port_id, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.commodity, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id != None).where(FclFreightRateLocal.commodity != None)
-
-# idx4 = FclFreightRateLocal.index(FclFreightRateLocal.port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.main_port_id, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.shipping_line_id, FclFreightRateLocal.service_provider_id, unique=True).where(FclFreightRateLocal.main_port_id != None).where(FclFreightRateLocal.commodity == None)
-
-# FclFreightRateLocal.add_index(idx1)
-# FclFreightRateLocal.add_index(idx2)
-# FclFreightRateLocal.add_index(idx3)
-# FclFreightRateLocal.add_index(idx4)

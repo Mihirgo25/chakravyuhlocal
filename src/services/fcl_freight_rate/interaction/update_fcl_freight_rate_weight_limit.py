@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi import HTTPException
 from datetime import datetime
 from database.db_session import db
@@ -41,11 +41,9 @@ def create_audit(request, weight_limit_id):
     audit_data = {'free_limit': request.get('free_limit'),'remarks': request.get('remarks'),'slabs': request.get('slabs')}
 
     try:
-      FclFreightRateAudit.create(
+      FclServiceAudit.create(
         action_name = 'update',
         performed_by_id = request.get('performed_by_id'),
-        procured_by_id = request.get('procured_by_id'),
-        sourced_by_id = request.get('sourced_by_id'),
         data = audit_data,
         object_id = weight_limit_id,
         object_type = 'FclFreightRateWeightLimit'

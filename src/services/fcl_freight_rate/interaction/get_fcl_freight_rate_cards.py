@@ -5,12 +5,20 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT, CONFIRM
 from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
 from datetime import datetime
 from configs.fcl_freight_rate_constants import RATE_CONSTANT_MAPPING, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, ELIGIBLE_SERVICE_ORGANIZATION_IDS
-import concurrent.futures, json
+import concurrent.futures
 from rails_client import client
 from peewee import fn, JOIN
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration import get_fcl_weight_slabs_configuration
+import time
+import ujson as json
+
+
+
+def to_json(item,key):
+    json_ = json.loads(item[key]) if item.get(key) else None
+    return json_,key
 
 def get_fcl_freight_rate_cards(request):
     freight_query = initialize_freight_query(request)
@@ -80,10 +88,22 @@ def ignore_non_active_shipping_lines(lists):
 
 def initialize_freight_query(request):
     # if request['cogo_entity_id']:
-    rate_constant_mapping_key = request['cogo_entity_id']
-    allow_entity_ids = list(filter(None,[rate_mapping for rate_mapping in RATE_CONSTANT_MAPPING if rate_mapping['cogo_entity_id'] == rate_constant_mapping_key][0].get('allowed_entity_ids')))
+    freight_query = FclFreightRate.select().where(FclFreightRate.origin_port_id == request['origin_port_id'],
+    FclFreightRate.destination_port_id == request['destination_port_id'],
+    FclFreightRate.container_size == request['container_size'],
+    FclFreightRate.container_type == request['container_type'],
+    FclFreightRate.commodity == request['commodity'], 
+    FclFreightRate.rate_not_available_entry == False, 
+    (FclFreightRate.importer_exporter_id == request['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
 
-    freight_query = FclFreightRate.select().where(FclFreightRate.origin_port_id == request['origin_port_id'],FclFreightRate.destination_port_id == request['destination_port_id'],FclFreightRate.container_size == request['container_size'],FclFreightRate.container_type == request['container_type'],FclFreightRate.commodity == request['commodity'], (FclFreightRate.cogo_entity_id.in_(allow_entity_ids)) | (FclFreightRate.cogo_entity_id == None), FclFreightRate.rate_not_available_entry == False, (FclFreightRate.importer_exporter_id == request['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
+    rate_constant_mapping_key = request['cogo_entity_id']
+    allow_entity_ids = list(filter(None,[rate_mapping for rate_mapping in RATE_CONSTANT_MAPPING if rate_mapping['cogo_entity_id'] == rate_constant_mapping_key]))
+    if allow_entity_ids:
+        allow_entity_ids = allow_entity_ids[0].get('allowed_entity_ids')
+        freight_query = freight_query.where(FclFreightRate.cogo_entity_id.in_(allow_entity_ids) | FclFreightRate.cogo_entity_id == None)
+    else:
+        freight_query = freight_query.where(FclFreightRate.cogo_entity_id == None)
+
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= request['validity_start'])
 
     if request['ignore_omp_dmp_sl_sps']:
@@ -123,7 +143,7 @@ def select_fields(freight_query):
                 )).alias("freight"),
         fn.json_agg(
             fn.json_build_object(
-                'line_items', PortOriginLocals.data['line_items'],
+                'line_items', PortOriginLocals.data['line_items'], 
                 'is_line_items_error_messages_present', PortOriginLocals.is_line_items_error_messages_present,
                 'detention', PortOriginLocals.data['detention'],
                 'demurrage', PortOriginLocals.data['demurrage'],
@@ -195,19 +215,39 @@ def freight_query_results(request, freight_query):
 
     origin_local_agent_service_rates = {k: v for k, v in origin_local_agent_service_rates.items() if v['service_provider_id'] != DEFAULT_LOCAL_AGENT_IDS[0]['value']}
     destination_local_agent_service_rates = {k: v for k, v in destination_local_agent_service_rates.items() if v['service_provider_id'] != DEFAULT_LOCAL_AGENT_IDS[0]['value']}
-
-    for query in freight_query.execute():
+    results = list(freight_query.dicts())
+    for query in results:            
         result = {}
-        result['freight'] = query.freight[0] if query.freight else {}
-        result['port_origin_local'] = query.port_origin_local[0] if query.port_origin_local else {}
-        result['port_destination_local'] = query.port_destination_local[0] if query.port_destination_local else {}
+        # print(query["port_origin_local"])
+        # query.port_origin_local[0]['line_items'] = json.loads(query.port_origin_local[0]['line_items']) if query.port_origin_local[0].get('line_items') else None
+        # query.port_origin_local[0]['detention'] = json.loads(query.port_origin_local[0]['detention']) if query.port_origin_local[0].get('detention') else None
+        # query.port_origin_local[0]['demurrage'] = json.loads(query.port_origin_local[0]['demurrage']) if query.port_origin_local[0].get('demurrage') else None
+        # query.port_origin_local[0]['plugin'] = json.loads(query.port_origin_local[0]['plugin']) if query.port_origin_local[0].get('plugin') else None
+        # query.port_destination_local[0]['line_items'] = json.loads(query.port_destination_local[0]['line_items']) if query.port_destination_local[0].get('line_items') else None
+        # query.port_destination_local[0]['detention'] = json.loads(query.port_destination_local[0]['detention']) if query.port_destination_local[0].get('detention') else None
+        # query.port_destination_local[0]['demurrage'] = json.loads(query.port_destination_local[0]['demurrage']) if query.port_destination_local[0].get('demurrage') else None
+        # query.port_destination_local[0]['plugin'] = json.loads(query.port_destination_local[0]['plugin']) if query.port_destination_local[0].get('plugin') else None
+        start = time.time()
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+            futures = [executor.submit(to_json, query["port_origin_local"][0], key) for key in ['line_items','detention','demurrage','plugin']]
+            for i in range(0,len(futures)):
+                query["port_origin_local"][0][futures[i].result()[1]] = futures[i].result()[0]
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+            futures = [executor.submit(to_json, query["port_destination_local"][0], key) for key in ['line_items','detention','demurrage','plugin']]
+            for i in range(0,len(futures)):
+                query["port_destination_local"][0][futures[i].result()[1]] = futures[i].result()[0]
+        result['freight'] = query["freight"][0] if query["freight"] else {}
+        result['port_origin_local'] = query["port_origin_local"][0] if query["port_origin_local"] else {}
+        result['port_destination_local'] = query["port_destination_local"][0] if query["port_destination_local"] else {}
         
-        result['port_origin_local']['line_items'] = json.loads(result['port_origin_local']['line_items']) if type(result['port_origin_local']['line_items']) == str else result['port_origin_local']['line_items']
-        result['port_destination_local']['line_items'] = json.loads(result['port_destination_local']['line_items']) if type(result['port_destination_local']['line_items']) == str else result['port_destination_local']['line_items']
+        result['port_origin_local']['line_items'] = result['port_origin_local']['line_items']  
+        result['port_destination_local']['line_items'] = result['port_destination_local']['line_items']
 
         result['weight_limit'] = result['freight']['weight_limit'] or {}
         if (result.get('weight_limit',{}).get('free_limit') is None) or (not result.get('weight_limit',{}).get('slabs')):
-            fcl_weight_slabs = get_default_overweight_surcharges(result, request)
+            # fcl_weight_slabs = get_default_overweight_surcharges(result, request)
+            fcl_weight_slabs = None
             if fcl_weight_slabs:
                 result['weight_limit']['free_limit'] = fcl_weight_slabs['max_weight']
                 if fcl_weight_slabs['slabs']:
@@ -434,7 +474,10 @@ def add_free_days_objects(freight_query_result, response_object, request):
         free_days_types += ['origin_plugin', 'destination_plugin']
 
     for free_days_type in free_days_types:
-        response_object[free_days_type] = freight_query_result[free_days_type] | {'unit': 'per_container'}
+        if freight_query_result[free_days_type]:
+            response_object[free_days_type] = freight_query_result[free_days_type] | {'unit': 'per_container'}
+        else:
+            response_object[free_days_type] = {'unit': 'per_container'}
 
     return True
 
@@ -444,13 +487,13 @@ def add_weight_limit_object(freight_query_result, response_object, request):
     if not request['cargo_weight_per_container']:
         return True 
 
-    if not response_object['weight_limit']['free_limit']:
+    if not response_object['weight_limit'].get('free_limit'):
         return True
 
-    if request['cargo_weight_per_container'] <= response_object['weight_limit']['free_limit']:
+    if request['cargo_weight_per_container'] <= response_object['weight_limit'].get('free_limit'):
         return True
 
-    if not response_object['weight_limit']['slabs'][-1]:
+    if not response_object['weight_limit'].get('slabs')[-1]:
         return False
 
     if request['cargo_weight_per_container'] > (response_object['weight_limit']['free_limit'] + response_object['weight_limit']['slabs'])[-1]['upper_limit']:
@@ -464,8 +507,8 @@ def add_freight_objects(freight_query_result, response_object, request):
     additional_weight_rate = 0
     additional_weight_rate_currency = 'USD'
 
-    if request['cargo_weight_per_container'] and (request['cargo_weight_per_container'] - response_object['weight_limit']['free_limit']) > 0:
-        for slab in response_object['weight_limit']['slabs']:
+    if request['cargo_weight_per_container'] and (request['cargo_weight_per_container'] - (response_object['weight_limit'].get('free_limit',0))) > 0:
+        for slab in response_object['weight_limit'].get('slabs',[]):
             if slab['upper_limit'] < request['cargo_weight_per_container']:
                 continue
 
@@ -483,7 +526,7 @@ def add_freight_objects(freight_query_result, response_object, request):
       response_object['freights'].append(freight_object)
 
 
-    return (response_object['freights'].count > 0)
+    return (len(response_object['freights']) > 0)
 
 def build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request):
     freight_validity['validity_start'] = datetime.strptime(freight_validity['validity_start'],'%Y-%m-%d')
@@ -503,14 +546,14 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
         'line_items': []
     }
 
-    if freight_object['validity_start'] < datetime.strptime(request['validity_start'],'%Y-%m-%d'):
+    if freight_object['validity_start'] < request['validity_start']:
         freight_object['validity_start'] = request['validity_start'] 
     
-    if freight_object['validity_end'] > datetime.strptime(request['validity_end'],'%Y-%m-%d'):
+    if freight_object['validity_end'] > request['validity_end']:
         freight_object['validity_end'] = request['validity_end'] 
     
     for line_item in freight_validity['line_items']:
-        line_item = build_freight_line_item_object(line_item, additional_weight_rate, additional_weight_rate_currency, request)
+        line_item = build_freight_line_item_object(line_item, request)
 
         if not line_item:
             continue
@@ -532,7 +575,7 @@ def build_freight_line_item_object(line_item, request):
 
     slab_value = None
 
-    if line_item['slabs'] and ('slab_containers_count' in code_config.get('tags')):
+    if line_item.get('slabs') and ('slab_containers_count' in code_config.get('tags')):
         slab_value = request['containers_count']
 
     if slab_value:
