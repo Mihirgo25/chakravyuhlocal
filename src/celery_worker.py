@@ -47,11 +47,6 @@ def delay_fcl_functions(fcl_object,request):
       'fields': ['id', 'business_name', 'short_name', 'logo_url']
     },
     {
-      'name': 'location', 
-      'filters':{"id": list(set(list(filter(None, [str(fcl_object.origin_port_id), str(fcl_object.destination_port_id)] ))))},
-      'fields': ['id', 'name', 'display_name', 'port_code', 'type', 'is_icd']
-    },
-    {
       'name': 'organization',
       'filters': {"id": list(set([str(fcl_object.service_provider_id), str(fcl_object.importer_exporter_id)] ))},
       'fields': ['id', 'business_name', 'short_name']
@@ -82,7 +77,6 @@ def create_sailing_schedule_port_pair(request):
     'shipping_line_id': request["shipping_line_id"]
     }
     data = client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
-    print(data)
 
 def create_freight_trend_port_pair(request):
     port_pair_data = {
@@ -99,6 +93,26 @@ def fcl_freight_local_data_updation(local_object,request):
   from rails_client import client
   client.initialize_client()
   from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
+
+  services ={'objects':[
+    {
+      'name': 'operator',
+      'filters': { 'id': [str(local_object.shipping_line_id)]},
+      'fields': ['id', 'business_name', 'short_name', 'logo_url']
+    },
+    {
+      'name': 'organization',
+      'filters': {"id": list(set([str(local_object.service_provider_id), str(local_object.importer_exporter_id)] ))},
+      'fields': ['id', 'business_name', 'short_name']
+    },
+    {
+      'name': 'user',
+      'filters': {"id": list(set([local_object.procured_by_id, local_object.sourced_by_id]  ))},
+      'fields': ['id', 'name', 'email']
+    }
+  ]}
+    
+  get_multiple_service_objects(local_object,services)
 
   local_updations(local_object,request)
 
