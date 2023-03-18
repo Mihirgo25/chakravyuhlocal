@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
