@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from datetime import datetime
 import uuid

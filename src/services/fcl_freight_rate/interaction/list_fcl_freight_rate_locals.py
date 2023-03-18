@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from operator import itemgetter
 import json

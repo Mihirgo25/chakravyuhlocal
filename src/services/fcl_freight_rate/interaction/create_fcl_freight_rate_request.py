@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreight
 from database.db_session import db
 from rails_client import client
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 
 import time
 def create_fcl_freight_rate_request(request):
