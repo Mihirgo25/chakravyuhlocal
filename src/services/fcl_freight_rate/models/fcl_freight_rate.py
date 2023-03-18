@@ -115,7 +115,7 @@ class FclFreightRate(BaseModel):
 
     def set_locations(self):
 
-      obj = {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)]}
+      obj = {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)],"type":'seaport'}
       locations = list_locations(obj)['list']
       
 
@@ -162,8 +162,7 @@ class FclFreightRate(BaseModel):
       elif self.origin_port and self.origin_port['is_icd']==True and not self.rate_not_available_entry:
 
         if self.origin_main_port_id:
-          origin_main_port = list_locations({'id':[str(self.origin_main_port_id)],'type':'seaport','is_icd':False})['list']
-          if not origin_main_port:
+          if not self.origin_main_port or self.origin_main_port['is_icd']==True:
             return False
         else:
           return False
@@ -176,8 +175,7 @@ class FclFreightRate(BaseModel):
         return False
       elif self.destination_port and self.destination_port['is_icd']==True and not self.rate_not_available_entry:
         if self.destination_main_port_id:
-          destination_main_port = list_locations({'id':[str(self.destination_main_port_id)],'type':'seaport','is_icd':False})['list']
-          if not destination_main_port:
+          if not self.destination_main_port or self.destination_main_port['is_icd']==True:
             return False
         else:
           return False
