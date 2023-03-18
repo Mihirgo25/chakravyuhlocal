@@ -156,24 +156,6 @@ class FclFreightRateLocal(BaseModel):
             return False
         return True
 
-    def validate_uniqueness(self):
-      freight_local_cnt = FclFreightRateLocal.select().where(
-        FclFreightRateLocal.port_id == self.port_id,
-        FclFreightRateLocal.trade_type == self.trade_type,
-        FclFreightRateLocal.main_port_id == self.main_port_id,
-        FclFreightRateLocal.container_size == self.container_size,
-        FclFreightRateLocal.container_type == self.container_type,
-        FclFreightRateLocal.commodity == self.commodity,
-        FclFreightRateLocal.shipping_line_id == self.shipping_line_id,
-        FclFreightRateLocal.service_provider_id == self.service_provider_id
-      ).count()
-
-      if self.id and freight_local_cnt==1:
-        return True
-      if not self.id and freight_local_cnt==0:
-        return True
-
-      return False
     
     def validate_data(self):
         return self.local_data_instance.validate_duplicate_charge_codes() and self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
@@ -186,13 +168,7 @@ class FclFreightRateLocal(BaseModel):
 
         if not self.validate_main_port_id():
             raise HTTPException(status_code=499, detail='main_port_id is not valid')
-
-        if not self.validate_shipping_line_id():
-            raise HTTPException(status_code=499, detail='shipping_line_id is not valid')
-
-        if not self.validate_service_provider_id():
-            raise HTTPException(status_code=499, detail='service_provider_id is not valid')
-        
+      
         if not self.validate_trade_type():
             raise HTTPException(status_code=499, detail='trade_type is not valid')
 
@@ -201,9 +177,6 @@ class FclFreightRateLocal(BaseModel):
         
         if not self.validate_container_type():
             raise HTTPException(status_code=499, detail='container_type is not valid')
-
-        if not self.validate_uniqueness():
-            raise HTTPException(status_code=499, detail='violates uniqueness validation')
 
         if not self.validate_data():
             raise HTTPException(status_code=499, detail='data is not valid')
