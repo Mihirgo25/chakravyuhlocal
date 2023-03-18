@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from fastapi import FastAPI, HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
 
 def create_audit(request, fcl_freight_rate_seasonal_surcharge_id):

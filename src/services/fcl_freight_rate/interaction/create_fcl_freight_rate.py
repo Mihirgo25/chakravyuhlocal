@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import json
 from fastapi import FastAPI, HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from celery_worker import delay_fcl_functions

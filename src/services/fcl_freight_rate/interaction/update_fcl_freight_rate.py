@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import FastAPI, HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 import json
 from database.db_session import db
 from playhouse.shortcuts import model_to_dict

@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from configs.global_constants import HAZ_CLASSES
 from rails_client import client

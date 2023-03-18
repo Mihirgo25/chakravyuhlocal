@@ -16,7 +16,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import list_fcl_freight_rate_locals
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 

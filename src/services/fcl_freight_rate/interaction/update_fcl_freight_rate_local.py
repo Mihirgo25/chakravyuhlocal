@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 from database.db_session import db

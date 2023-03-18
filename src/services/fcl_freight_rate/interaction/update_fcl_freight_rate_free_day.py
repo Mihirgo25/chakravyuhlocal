@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 import datetime
 from database.db_session import db

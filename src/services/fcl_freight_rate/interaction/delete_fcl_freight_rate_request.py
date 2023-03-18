@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from services.fcl_freight_rate.helpers.find_or_initiliaze import find_or_initialize
