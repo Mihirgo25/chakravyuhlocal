@@ -1,10 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from database.db_session import db
 from fastapi import HTTPException
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+
 
 def create_fcl_freight_rate_free_day(request):
     with db.atomic() as transaction:
@@ -46,11 +44,24 @@ def get_free_day_object(request):
         'service_provider_id' : request['service_provider_id'],
         'specificity_type' : request['specificity_type'],
         'importer_exporter_id' : request.get('importer_exporter_id')
-        # 'validity_start' : request.get('validity_start')
+        # 'validity_start' : request.get('validity_start'),
         # 'validity_end' : request.get('validity_end')
     }
+    free_day = FclFreightRateFreeDay.select().where(
+        FclFreightRateFreeDay.location_id == request['location_id'],
+        FclFreightRateFreeDay.trade_type == request['trade_type'],
+        FclFreightRateFreeDay.free_days_type == request['free_days_type'],
+        FclFreightRateFreeDay.container_type == request['container_type'],
+        FclFreightRateFreeDay.container_size == request['container_size'],
+        FclFreightRateFreeDay.shipping_line_id == request['shipping_line_id'],
+        FclFreightRateFreeDay.service_provider_id == request['service_provider_id'],
+        FclFreightRateFreeDay.specificity_type == request['specificity_type'],
+        FclFreightRateFreeDay.importer_exporter_id == request.get('importer_exporter_id') if request.get('importer_exporter_id') else FclFreightRateFreeDay.id.is_null(False)).first()
+        # FclFreightRateFreeDay.validity_start == request.get('validity_start')
+        # FclFreightRateFreeDay.validity_end == request.get('validity_end'))
 
-    free_day = find_or_initialize(FclFreightRateFreeDay, **row)
+    if not free_day:
+        free_day = FclFreightRateFreeDay(**row)
 
     extra_fields = ['previous_days_applicable','free_limit','remarks','slabs']
     for field in extra_fields:

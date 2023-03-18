@@ -1,7 +1,16 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from database.db_session import db
 
 def update_fcl_freight_rate_extension_rule_set_data(request):
+    with db.atomic as transaction:
+        try:
+            execute_transaction_code(request)
+        except Exception as e:
+            transaction.rollback()
+            raise e
+
+def execute_transaction_code(request):
     request = request.__dict__
     
     fcl_rule_set = FclFreightRateExtensionRuleSets.get_by_id(request['id'])

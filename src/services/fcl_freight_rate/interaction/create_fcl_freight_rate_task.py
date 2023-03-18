@@ -1,35 +1,32 @@
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-import json
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from configs.global_constants import HAZ_CLASSES
 from rails_client import client
-from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from database.db_session import db
 
-def create_audit(request, freight_id):
-
+def create_audit(request, task_id):
     performed_by_id = request['performed_by_id']
     del request['performed_by_id']
+
     FclFreightRateAudit.create(
         action_name = 'create',
         performed_by_id = performed_by_id,
-        data = request
+        data = request,
+        object_id = task_id,
+        object_type = 'FclFreightRateTask'
     )
 
-def execute_transaction(request):
+def create_fcl_freight_rate_task(request):
     with db.atomic() as transaction:
         try:
-            return create_fcl_freight_rate_task(request)
+            return execute_transaction_code(request)
         except Exception as e:
             transaction.rollback()
-            print(e)
             return e
-            raise HTTPException(status_code=500,detail='Creation Failed')
 
 
-def create_fcl_freight_rate_task(request):
+def execute_transaction_code(request):
     object_unique_params = {
         'service': request.get("service"),
         'port_id': request.get("port_id"),
@@ -44,7 +41,21 @@ def create_fcl_freight_rate_task(request):
         'status': 'pending'
     }
 
-    task = find_or_initialize(FclFreightRateTask,**object_unique_params)
+    task = FclFreightRateTask.select().where(
+        FclFreightRateTask.service == request.get("service"),
+        FclFreightRateTask.port_id == request.get("port_id"),
+        FclFreightRateTask.main_port_id == request.get("main_port_id"),
+        FclFreightRateTask.container_size == request.get("container_size"),
+        FclFreightRateTask.container_type == request.get("container_type"),
+        FclFreightRateTask.commodity == request.get("commodity") if request["commodity"] in HAZ_CLASSES else FclFreightRateTask.commodity.is_null(True),
+        FclFreightRateTask.trade_type == request.get("trade_type"),
+        FclFreightRateTask.shipping_line_id == request.get("shipping_line_id"),
+        FclFreightRateTask.source == request.get("source"),
+        FclFreightRateTask.task_type == request.get('task_type'),
+        FclFreightRateTask.status == 'pending').first()
+
+    if not task:
+        task = FclFreightRateTask(**object_unique_params)
 
     if request.get('shipment_id') is not None:
         try:
@@ -52,10 +63,12 @@ def create_fcl_freight_rate_task(request):
         except:
             sid = None
         task.shipment_serial_ids.append(sid)
+
     if task.source_count:
         task.source_count = int(task.source_count) + 1
     else:
         task.source_count=1
+
     if request.get('rate') is not None:
         task.job_data = {"rate": request['rate']}
 
@@ -73,10 +86,3 @@ def create_fcl_freight_rate_task(request):
     return {
       "id": task.id
     }
-
-# def find_or_initialize(**kwargs):
-#   try:
-#     obj = FclFreightRateTask.get(**kwargs)
-#   except FclFreightRateTask.DoesNotExist:
-#     obj = FclFreightRateTask(**kwargs)
-#   return obj

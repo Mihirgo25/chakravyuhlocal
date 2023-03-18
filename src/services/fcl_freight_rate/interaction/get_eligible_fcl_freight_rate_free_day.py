@@ -13,29 +13,31 @@ def get_eligible_fcl_freight_rate_free_day(filters):
         if not all_fields_present(filters):
             return {}
     
-    query = FclFreightRateFreeDay.select().where(FclFreightRateFreeDay.rate_not_available_entry == False,
-                        FclFreightRateFreeDay.location_id.in_(filters['location_id']),
-                        FclFreightRateFreeDay.trade_type == filters['trade_type'],
-                        FclFreightRateFreeDay.free_days_type == filters['free_days_type'],
-                        FclFreightRateFreeDay.container_size == filters['container_size'],
-                        FclFreightRateFreeDay.container_type == filters['container_type'],
-                        FclFreightRateFreeDay.shipping_line_id == filters['shipping_line_id'],
-                        FclFreightRateFreeDay.service_provider_id.in_(list(set([filters.get('service_provider_id')] + filters.get('local_service_provider_ids', '')))),
-                        FclFreightRateFreeDay.specificity_type == filters['specificity_type']
-                      )
+        query = FclFreightRateFreeDay.select().where(FclFreightRateFreeDay.rate_not_available_entry == False,
+                            FclFreightRateFreeDay.location_id.in_(filters['location_id']),
+                            FclFreightRateFreeDay.trade_type == filters['trade_type'],
+                            FclFreightRateFreeDay.free_days_type == filters['free_days_type'],
+                            FclFreightRateFreeDay.container_size == filters['container_size'],
+                            FclFreightRateFreeDay.container_type == filters['container_type'],
+                            FclFreightRateFreeDay.shipping_line_id == filters['shipping_line_id'],
+                            FclFreightRateFreeDay.service_provider_id.in_(list(set([filters.get('service_provider_id')] + (filters.get('local_service_provider_ids') or [])))),
+                            FclFreightRateFreeDay.specificity_type == filters['specificity_type']
+                        )
+        if 'importer_exporter_id' in filters:
+            query = query.where(FclFreightRateFreeDay.importer_exporter_id == filters['importer_exporter_id'])
 
-    if 'importer_exporter_id' in filters:
-        query = query.where(FclFreightRateFreeDay.importer_exporter_id == filters['importer_exporter_id'])
+        if 'free_limit' in filters:
+            query = query.where(FclFreightRateFreeDay.free_limit == filters['free_limit'])
 
-    if 'free_limit' in filters:
-        query = query.where(FclFreightRateFreeDay.free_limit == filters['free_limit'])
-
-    if 'validity_start' in filters and 'validity_end':
-        query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'] and FclFreightRateFreeDay.validity_end >= filters['validity_end'])
+        if 'validity_start' in filters and 'validity_end':
+            query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'] and FclFreightRateFreeDay.validity_end >= filters['validity_end'])
     
     data = [model_to_dict(item) for item in query.execute()]
     data = sorted(data, key=lambda t:LOCATION_HIERARCHY[t['location_type']])
-    data = data[0] if data else {}
+    try:
+        data = data[0]
+    except:
+        data = None
 
     # if not filters['sort_by_specificity_type']:
     #     data = sorted(data, key=lambda t: [

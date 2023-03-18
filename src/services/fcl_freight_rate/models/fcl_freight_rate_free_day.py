@@ -36,7 +36,7 @@ class FclFreightRateFreeDay(BaseModel):
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
-    shipping_line = BinaryJSONField(null=True)
+    # shipping_line = BinaryJSONField(null=True)
     # shipment_id = UUIDField(null=True)
     slabs = BinaryJSONField(index=True, null=True)
     specificity_type = CharField(index=True, null=True)

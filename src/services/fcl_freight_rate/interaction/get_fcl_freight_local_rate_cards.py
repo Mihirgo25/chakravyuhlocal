@@ -8,12 +8,12 @@ import yaml
 
 def get_fcl_freight_local_rate_cards(request):  
     if 'rates' in request and request['rates']:
-        list = build_response_list(request['rates'])
+        list = build_response_list(request['rates'], request)
 
         return {'list':list}
 
     local_query = initialize_local_query(request)
-    
+
     query_results = select_fields(local_query)
 
     list = build_response_list(query_results, request)
@@ -22,13 +22,14 @@ def get_fcl_freight_local_rate_cards(request):
 
 
 def initialize_local_query(request):
+    service_provider_ids = list(set(list(filter(None, [[get_local_agent_ids(request)] + [request['service_provider_id']] + [DEFAULT_LOCAL_AGENT_IDS[0]['value']]][0]))))
     query = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id == request['port_id'], 
         FclFreightRateLocal.container_size == request['container_size'], 
         FclFreightRateLocal.container_type == request['container_type'], 
         FclFreightRateLocal.trade_type == request['trade_type'],
         FclFreightRateLocal.is_line_items_error_messages_present == False,
-        FclFreightRateLocal.service_provider_id.in_(list(set(list(filter(None, [[get_local_agent_ids(request)] + [request['service_provider_id']] + DEFAULT_LOCAL_AGENT_IDS['ids']][0]))))))
+        FclFreightRateLocal.service_provider_id.in_(service_provider_ids))
 
     if request['commodity'] in HAZ_CLASSES:
         query = query.where(FclFreightRateLocal.commodity == request['commodity'])
@@ -41,12 +42,12 @@ def initialize_local_query(request):
     return query
 
 def select_fields(local_query):
-    local_query = local_query.select(FclFreightRateLocal.service_provider_id,FclFreightRateLocal.main_port_id,FclFreightRateLocal.shipping_line_id,FclFreightRateLocal.data)
+    local_query = local_query.select(FclFreightRateLocal.service_provider_id,FclFreightRateLocal.main_port_id,FclFreightRateLocal.shipping_line_id,FclFreightRateLocal.data).dicts()
     return local_query
 
 def build_response_list(query_results, request):
     response_list = []
-    for result in query_results.dicts():
+    for result in query_results:
         response_object = build_response_object(result, request)
         if not response_object:
             continue
@@ -121,7 +122,6 @@ def build_local_line_item_object(line_item, request):
         if slab:
             line_item['price'] = slab['price']
             line_item['currency'] = slab['currency']
- 
 
     line_item = {key: line_item[key] for key in ['code', 'unit', 'price', 'currency', 'remarks']}
     if line_item['unit'] == 'per_container':
@@ -148,7 +148,7 @@ def add_free_days_objects(query_result, response_object, request):
             if (query_result['data'].get(free_days_type)):
                 response_object[free_days_type] = (query_result['data'].get(free_days_type)) | ({'unit': 'per_container'})
         else:
-            response_object[free_days_type] = {} | ({'unit': 'per_container'})
+            response_object[free_days_type] = {'unit': 'per_container'} 
 
     if not response_object['detention'].get('free_limit'):
         response_object['detention']['free_limit'] = eval("DEFAULT_{}_DESTINATION_DETENTION".format(request['trade_type'].upper()))
@@ -166,8 +166,10 @@ def get_local_agent_ids(request):
         FclFreightRateLocalAgent.trade_type == request['trade_type'],
         FclFreightRateLocalAgent.status == 'active'
     )
-
-    result = [[str(model_to_dict(item)['service_provider_id']),model_to_dict(item)['location_type']] for item in results]
+    result = []
+    for item in results.dicts():
+        result.append([str(item['service_provider_id']),str(item['location_type'])])
+    # result = [[str(model_to_dict(item)['service_provider_id']),model_to_dict(item)['location_type']] for item in results]
     if len(result) == 1:
         local_agent_ids = result[0][0]
     else:
