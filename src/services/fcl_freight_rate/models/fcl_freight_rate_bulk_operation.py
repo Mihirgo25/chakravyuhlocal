@@ -32,6 +32,10 @@ class FclFreightRateBulkOperation(BaseModel):
     data = BinaryJSONField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     performed_by_id = UUIDField(null=True)
+    sourced_by_id = UUIDField(index=True,null=True)
+    source_by = BinaryJSONField(null=True)
+    procured_by_id = UUIDField(index=True,null=True)
+    procured_by = BinaryJSONField(null=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
     service_provider_id = UUIDField(null=True)
     updated_at = DateTimeField()
@@ -844,8 +848,6 @@ def create_audit(self,id):
         rate_sheet_id = self.get('rate_sheet_id'),
         action_name = 'create',
         performed_by_id = self['performed_by_id'],
-        procured_by_id = self['procured_by_id'],
-        sourced_by_id = self['sourced_by_id'],
         data = audit_data,
         object_id = id,
         object_type = 'FclFreightRate'

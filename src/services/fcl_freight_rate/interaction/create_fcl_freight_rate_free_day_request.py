@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from libs.logger import logger
 
@@ -57,7 +57,7 @@ def create_audit(request, free_day_request_id):
     performed_by_id = request['performed_by_id']
     del request['performed_by_id']
 
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         action_name = 'create',
         performed_by_id = performed_by_id,
         data = request,

@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from configs.global_constants import HAZ_CLASSES
 from rails_client import client
@@ -9,7 +9,7 @@ def create_audit(request, task_id):
     performed_by_id = request['performed_by_id']
     del request['performed_by_id']
 
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         action_name = 'create',
         performed_by_id = performed_by_id,
         data = request,

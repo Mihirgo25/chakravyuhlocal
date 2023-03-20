@@ -54,6 +54,10 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_end = DateField(index=True, null=True)
     validity_start = DateField(index=True, null=True)
+    sourced_by_id = UUIDField(index=True,null=True)
+    source_by = BinaryJSONField(null=True)
+    procured_by_id = UUIDField(index=True,null=True)
+    procured_by = BinaryJSONField(null=True)
     
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 
 def update_fcl_freight_rate_extension_rule_set_data(request):
@@ -19,7 +19,7 @@ def execute_transaction_code(request):
     create_audit(get_update_params, request['id'], request['performed_by_id'])
 
 def create_audit(get_update_params, fcl_freight_rate_extension_id, performed_by_id):
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
     action_name = 'update',
     performed_by_id = performed_by_id,
     data = get_update_params,

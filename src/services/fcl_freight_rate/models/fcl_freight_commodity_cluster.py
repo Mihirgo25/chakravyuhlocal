@@ -36,17 +36,6 @@ class FclFreightCommodityCluster(BaseModel):
             (('name', 'status'), True),
         )
 
-    def validate_uniqueness(self):
-        query = (
-        FclFreightCommodityCluster.select()
-        .where(FclFreightCommodityCluster.name == self.name)
-        .where(FclFreightCommodityCluster.status == 'active')).count()
-
-        if self.id and query==1:
-            return True
-        if not self.id and query==0:
-            return True
-        return False
 
     def validate_commodity_cluster(self):
         for container_type, commodity_names in self.commodities.items():
@@ -54,7 +43,4 @@ class FclFreightCommodityCluster(BaseModel):
                 if commodity_name not in FREIGHT_CONTAINER_COMMODITY_MAPPINGS[container_type]:
                     raise HTTPException(status_code=400, detail="Invalid commodities")
 
-    def validate(self):
-        if not self.validate_uniqueness():
-            raise HTTPException(status_code=400, detail="Commodity cluster already exists")
-        self.validate_commodity_cluster()
+

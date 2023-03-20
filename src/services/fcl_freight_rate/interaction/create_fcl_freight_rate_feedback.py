@@ -1,7 +1,7 @@
 from database.db_session import db
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from datetime import datetime
 from libs.logger import logger
 
@@ -98,7 +98,7 @@ def get_create_params(request):
 
 
 def create_audit(request, feedback):
-    FclFreightRateAudit.create( 
+    FclServiceAudit.create( 
         created_at = datetime.now(),
         updated_at = datetime.now(),
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
