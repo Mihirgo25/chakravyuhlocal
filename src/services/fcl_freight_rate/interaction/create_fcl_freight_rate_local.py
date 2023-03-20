@@ -1,23 +1,21 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
-from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
 from celery_worker import fcl_freight_local_data_updation
 from rails_client import client
-def create_audit(request, fcl_freight_local_id):
 
+
+def create_audit(request, fcl_freight_local_id):
     audit_data = {}
     audit_data['data'] = request.get('data')
     audit_data['selected_suggested_rate_id'] = request.get('selected_suggested_rate_id')
 
-    FclFreightRateAudit.create(
+    FclServiceAudit.create(
         rate_sheet_id = request.get('rate_sheet_id'),
         action_name = 'create',
         performed_by_id = request.get('performed_by_id'),
-        procured_by_id = request.get('procured_by_id'),
-        sourced_by_id = request.get('sourced_by_id'),
         data = audit_data,
         object_id = fcl_freight_local_id,
         object_type = 'FclFreightRateLocal'
@@ -43,26 +41,25 @@ def execute_transaction_code(request):
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
         'shipping_line_id' : request.get('shipping_line_id'),
-        'service_provider_id' : request.get('service_provider_id')
+        'service_provider_id' : request.get('service_provider_id'),
+        "sourced_by_id": request.get("sourced_by_id"),
+        "procured_by_id": request.get("procured_by_id"),
     }
-    print("bed")
+
     fcl_freight_local = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id == request.get('port_id'),
         FclFreightRateLocal.trade_type ==request.get('trade_type'),
         ((FclFreightRateLocal.main_port_id == request.get('main_port_id')) if request.get('main_port_id') else (FclFreightRateLocal.id.is_null(False))),
         FclFreightRateLocal.container_size==request.get('container_size'),
         FclFreightRateLocal.container_type==request.get('container_type'),
-        FclFreightRateLocal.commodity == request.get('commodity') if request.get('commodity') else FclFreightRateLocal.id.is_null(False),
+        FclFreightRateLocal.commodity == request.get('commodity'),
         FclFreightRateLocal.shipping_line_id==request.get('shipping_line_id'),
-        FclFreightRateLocal.service_provider_id==request.get('service_provider_id'))
+        FclFreightRateLocal.service_provider_id==request.get('service_provider_id')).first()
 
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
-        fcl_freight_local.service_provider_id = request.get('service_provider_id')
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
-        fcl_freight_local.set_shipping_line()
-
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
     fcl_freight_local.rate_sheet_id = request.get('rate_sheet_id')
     fcl_freight_local.source = request.get('source')
@@ -80,8 +77,7 @@ def execute_transaction_code(request):
 
 
     fcl_freight_local_data_updation.apply_async(kwargs={"local_object":fcl_freight_local,"request":request},queue='low')
-    # create_organization_serviceable_port
-    print(fcl_freight_local.id)
+
     return {"id": fcl_freight_local.id}
 
 
@@ -92,7 +88,7 @@ def create_organization_serviceable_port(request):
       'port_id': request['port_id'],
       'trade_type': request['trade_type']
     }
-    # CreateOrganizationServiceablePort.delay(queue: 'low').run!(params) #api call
+    client.ruby.create_organization_serviceable_port(params)
 
 
 def local_updations(fcl_freight_local,request):
@@ -142,14 +138,8 @@ def local_updations(fcl_freight_local,request):
     fcl_freight_local.save()
 
     create_audit(request, fcl_freight_local.id)
-    params = {
-      'performed_by_id': request['performed_by_id'],
-      'organization_id': request['service_provider_id'],
-      'port_id': request['port_id'],
-      'trade_type': request['trade_type']
-    }
-    client.ruby.create_organization_serviceable_port(params)
-    
+
+    create_organization_serviceable_port(request)
 
 
   

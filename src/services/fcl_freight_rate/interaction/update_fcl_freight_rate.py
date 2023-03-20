@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import FastAPI, HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 import json
 from database.db_session import db
 from playhouse.shortcuts import model_to_dict
@@ -19,8 +19,6 @@ def create_audit(request, freight_id):
         bulk_operation_id = request.get('bulk_operation_id'),
         action_name = 'update',
         performed_by_id = request['performed_by_id'],
-        procured_by_id = request['procured_by_id'],
-        sourced_by_id = request['sourced_by_id'],
         data = audit_data,
         object_id = freight_id,
         object_type = 'FclFreightRate',

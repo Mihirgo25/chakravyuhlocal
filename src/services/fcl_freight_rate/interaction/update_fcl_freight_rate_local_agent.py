@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from fastapi import HTTPException
 # from libs.logger import logger
@@ -51,7 +51,7 @@ def get_update_params(request):
   return params
 
 def create_audits(request, local_agent_object_id):  
-  FclFreightRateAudit.create(
+  FclServiceAudit.create(
     action_name = 'update',
     performed_by_id = request['performed_by_id'],
     data = get_update_params(request),

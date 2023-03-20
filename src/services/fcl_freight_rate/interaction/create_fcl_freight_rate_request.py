@@ -1,10 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from database.db_session import db
-from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
-from datetime import datetime
 from rails_client import client
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 
 import time
 def create_fcl_freight_rate_request(request):
@@ -19,9 +17,26 @@ def create_fcl_freight_rate_request(request):
 def execute_transaction_code(request):
     if type(request) != dict:
         request = request.__dict__
-    
-    unique_object_params = get_unique_object_params(request)
-    request_object = find_or_initialize(FclFreightRateRequest, **unique_object_params)
+
+    unique_object_params = {
+        'source': request['source'],
+        'source_id': request['source_id'],
+        'performed_by_id': request['performed_by_id'],
+        'performed_by_type': request['performed_by_type'],
+        'performed_by_org_id': request['performed_by_org_id']
+    }
+
+    request_object = FclFreightRateRequest.select().where(
+        FclFreightRateRequest.source == request['source'],
+        FclFreightRateRequest.source_id == request['source_id'],
+        FclFreightRateRequest.performed_by_id == request['performed_by_id'],
+        FclFreightRateRequest.performed_by_type == request['performed_by_type'],
+        FclFreightRateRequest.performed_by_org_id == request['performed_by_org_id']
+    ).first()
+
+    if not request_object:
+        request_object = FclFreightRateRequest(**unique_object_params)
+
     create_params = get_create_params(request)
 
     for attr, value in create_params.items(): 
@@ -37,15 +52,6 @@ def execute_transaction_code(request):
         return {
         'id': request_object.id
         }
-
-def get_unique_object_params(request):
-    return {
-    'source': request['source'],
-    'source_id': request['source_id'],
-    'performed_by_id': request['performed_by_id'],
-    'performed_by_type': request['performed_by_type'],
-    'performed_by_org_id': request['performed_by_org_id']
-    }
 
 def get_create_params(request):
     return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id']} | ({'status': 'active' })

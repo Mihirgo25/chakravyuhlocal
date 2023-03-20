@@ -20,7 +20,6 @@ celery.conf.update(**CELERY_CONFIG)
 
 @celery.task()
 def create_fcl_freight_rate_delay(request):
-    from rails_client import client
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
     return create_fcl_freight_rate(request)
 
@@ -40,30 +39,9 @@ def delay_fcl_functions(fcl_object,request):
         delete_fcl_freight_rate_request(request)
     
     fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
-    services ={'objects':[
-    {
-      'name': 'operator',
-      'filters': { 'id': [str(fcl_object.shipping_line_id)]},
-      'fields': ['id', 'business_name', 'short_name', 'logo_url']
-    },
-    {
-      'name': 'location', 
-      'filters':{"id": list(set(list(filter(None, [str(fcl_object.origin_port_id), str(fcl_object.destination_port_id)] ))))},
-      'fields': ['id', 'name', 'display_name', 'port_code', 'type', 'is_icd']
-    },
-    {
-      'name': 'organization',
-      'filters': {"id": list(set([str(fcl_object.service_provider_id), str(fcl_object.importer_exporter_id)] ))},
-      'fields': ['id', 'business_name', 'short_name']
-    },
-    {
-      'name': 'user',
-      'filters': {"id": list(set([fcl_object.procured_by_id, fcl_object.sourced_by_id]  ))},
-      'fields': ['id', 'name', 'email']
-    }
-  ]}
+
     
-    get_multiple_service_objects(fcl_object,services)
+    get_multiple_service_objects(fcl_object)
 
 
     fcl_object.update_special_attributes()
@@ -82,7 +60,6 @@ def create_sailing_schedule_port_pair(request):
     'shipping_line_id': request["shipping_line_id"]
     }
     data = client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
-    print(data)
 
 def create_freight_trend_port_pair(request):
     port_pair_data = {
@@ -100,7 +77,16 @@ def fcl_freight_local_data_updation(local_object,request):
   client.initialize_client()
   from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
 
+    
+  update_multiple_service_objects.apply_async(kwargs={"local_object":local_object},queue='low')
+
   local_updations(local_object,request)
+
+
+@celery.task()
+def update_multiple_service_objects(object):
+  print("1")
+  get_multiple_service_objects(object)
 
 
 
