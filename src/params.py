@@ -76,7 +76,7 @@ class PostFclFreightRate(BaseModel):
 
 class CreateFclFreightCommodityCluster(BaseModel):
   name: str
-  commodities: dict 
+  commodities: dict
 
 class CreateFclFreightRateLocalAgent(BaseModel):
   performed_by_id: str
@@ -151,7 +151,7 @@ class UpdateFclFreightRateLocal(BaseModel):
     data: Data
 
 class PostFclFreightRateExtensionRuleSet(BaseModel):
-  cluster_id: str 
+  cluster_id: str
   cluster_reference_name: str
   cluster_type: str
   created_at: datetime
@@ -161,7 +161,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   line_item_charge_code: str = None
   service_provider_id: str = None
   shipping_line_id: str = None
-  status: str 
+  status: str
   trade_type: str = None
   updated_at: datetime
   performed_by_id: str
@@ -232,7 +232,7 @@ class GetFclFreightRateExtension(BaseModel):
   container_size: str
   container_type:str = None
 
-  
+
 class GetFclFreightRateLocal(BaseModel):
     port_id: str = None
     main_port_id: str = None
@@ -329,7 +329,7 @@ class CreateFclFreightRateNotAvailable(BaseModel):
     commodity: str
 
 class UpdateFclFreightRateLocalAgent(BaseModel):
-  id: str 
+  id: str
   performed_by_id: str
   status: str = None
   service_provider_id: str = None
@@ -361,20 +361,30 @@ class ConvertedFile(BaseModel):
     service_name: str = None
     module: str = None
     file_url: str = None
+    rate_sheet_id: str = None
+    service_provider_id: str = None
+    cogo_entity_id: str = None
+    file_index: int = None
+    id: str = None
+    status: str = None
+    rates_count: int = None
+    total_lines: int = None
+    last_line: int = None
+
 
 class UpdateRateSheet(BaseModel):
-    performed_by_id: str
-    procured_by_id: str
+    performed_by_id: str = None
+    procured_by_id: str = None
     sourced_by_id: str = None
     cogo_entity_id: str = None
     id: str
     converted_files: list[ConvertedFile] | None = None
 
-class CreateFclFreightRateTask(BaseModel):  
+class CreateFclFreightRateTask(BaseModel):
   service: str
   port_id: str
   main_port_id: str = None
-  container_size: str 
+  container_size: str
   container_type: str
   commodity: str
   trade_type: str
@@ -424,12 +434,12 @@ class DeleteFclFreightRateLocalRequest(BaseModel):
   closing_remarks: List[str] = []
   performed_by_id: str
 class UpdateFclFreightRateWeightLimit(BaseModel):
-  performed_by_id: str 
-  procured_by_id: str 
-  sourced_by_id: str 
-  id: str 
-  free_limit: int = None 
-  remarks: list[str] = None 
+  performed_by_id: str
+  procured_by_id: str
+  sourced_by_id: str
+  id: str
+  free_limit: int = None
+  remarks: list[str] = None
   slabs: list[Slab] = None
 
 class DeleteFclFreightRateLocal(BaseModel):
@@ -479,7 +489,7 @@ class CreateFclFreightRateRequest(BaseModel):
   performed_by_id: str
   performed_by_org_id: str
   performed_by_type: str
-  preferred_freight_rate: float = None  
+  preferred_freight_rate: float = None
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
   preferred_storage_free_days: int = None
@@ -498,7 +508,7 @@ class CreateFclFreightRateRequest(BaseModel):
   destination_trade_id: str = None
   origin_continent_id: str = None
   origin_country_id: str = None
-  origin_port_id: str 
+  origin_port_id: str
   origin_trade_id: str = None
   container_type: str = None
 
@@ -523,7 +533,7 @@ class CreateFclFreightRateLocalRequest(BaseModel):
   cargo_weight_per_container: int = None
   container_type: str = None
   port_id: str = None
-  main_port_id: str = None  
+  main_port_id: str = None
   trade_id: str = None
   trade_type: str = None
 

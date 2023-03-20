@@ -1,5 +1,6 @@
 from operator import attrgetter
 
+
 def get_filters(filters: dict, query, model, ilike_string: str):
     filter_keys = list(filters.keys())
 
@@ -9,8 +10,15 @@ def get_filters(filters: dict, query, model, ilike_string: str):
         if isinstance(filter_value, str):
             if filter_value != "":
                 query = query.where(attrgetter(filter_key)(model) == filter_value)
+        elif isinstance(filter_value, bool):
+                if filter_value:
+                    query = query.where(attrgetter(filter_key)(model))
+                else:
+                    query = query.where(~attrgetter(filter_key)(model))
         elif isinstance(filter_value, list):
             if 'None' in filter_value:
                 filter_value.remove('None')
             query = query.where(attrgetter(filter_key)(model) << filter_value)
+        elif isinstance(filter_value, (str, type(None))):
+            query = query.where(attrgetter(filter_key)(model) == filter_value)
     return query

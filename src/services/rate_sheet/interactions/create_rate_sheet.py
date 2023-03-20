@@ -1,109 +1,41 @@
 
-from services.rate_sheet.models.rate_sheet import RateSheets
+from services.rate_sheet.models.rate_sheet import RateSheet
 from params import CreateRateSheet
-from services.rate_sheet.models.rate_sheet_audits import RateSheetAudits
+from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from playhouse.postgres_ext import *
 from peewee import *
-from rails_client import client
-from fastapi.encoders import jsonable_encoder
+from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
+from services.rate_sheet.interactions.create_rate_sheet_audits import create_audit
+#   validates :service_provider_id, service_object: { object: 'organization', filters: { account_type: 'service_provider' } }
+#   validates :service_name, inclusion: { in: GlobalConstants::LOGISTICS_SERVICES.keys + ['cogo_assured'] }
+#   validates :partner_id, service_object: { object: 'partner' }, allow_blank: true
+# validates :agent_id, service_object: { object: 'user' }, allow_blank: true
 
-PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
 
-def get_audit_params(parameters, location_mapping):
-    audit_data = parameters
+
+def get_audit_params(parameters):
+    keys_to_extract = ["service_name","comment","file_url"]
+    audit_data = dict(filter(lambda item: item[0] in keys_to_extract, parameters.items()))
     return {
         "action_name": "create",
-        "performed_by_id": parameters['performed_by_id'],
-        "procured_by_id": parameters['procured_by_id'],
-        "sourced_by_id": parameters['sourced_by_id'],
-        "rate_sheet_id": parameters['rate_sheet_id'],
+        "performed_by_id": parameters.get('performed_by_id'),
+        "procured_by_id": parameters.get('procured_by_id'),
+        "sourced_by_id": parameters.get('sourced_by_id'),
+        "object_id": parameters.get('object_id'),
         "data": audit_data,
     }
 
-def create_audit(request):
-
-    audit_data = {}
-    # audit_data['price'] = request['price']
-    # audit_data['currency'] = request['currency']
-    # audit_data['remarks'] = request.get('remarks')
-
-    RateSheetAudits.create(
-        action_name = 'create',
-        object_id = request['rate_sheet_id'],
-        performed_by_id = request['performed_by_id'],
-        procured_by_id = request['procured_by_id'],
-        sourced_by_id = request['sourced_by_id'],
-        data = audit_data
-    )
-
 def get_create_params(params):
-    relevant_params = {}
-    for key, val in params.items():
-        if key not in [
-            "performed_by_id",
-            "procured_by_id",
-            "sourced_by_id"
-        ]:
-            relevant_params[key] = val
+    keys_to_extract = ["performed_by_id","procured_by_id","sourced_by_id"]
+    relevant_params = dict(filter(lambda item: item[0] not in keys_to_extract, params.items()))
     relevant_params['status'] = 'uploaded'
-    relevant_params['agent_id'] = params['procured_by_id']
+    relevant_params['agent_id'] = params.get('procured_by_id')
     return relevant_params
-
-def get_relevant_user_ids(params):
-    user_ids = []
-    audit_data = params['audits'].filter(action_name='update').first()
-    user_ids.append(audit_data.performed_by_id)
-    user_ids.append(audit_data.procured_by_id)
-    return user_ids
-
-
-def send_rate_sheet_notifications(params):
-    user_ids = []
-    if params['serial_id']:
-        serial_id = params['serial_id']
-    else:
-        serial_id = RateSheets.select(fn.MAX(RateSheets.serial_id)).scalar()
-
-    variables = {'file_name': params['file_url'].split('/').pop(), 'serial_id': serial_id}
-
-    if params['status'] == 'uploaded':
-        user_ids = [user.user_id for user in client.ruby.list_partner_users.run(filters={
-            'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID,
-            'status': 'active',
-            'partner_status': 'active',
-        }).list()]
-        template_name = 'rate_sheet_uploaded'
-    elif params['status'] == 'converted' or params['status'] == 'processing' or params['status'] == 'complete':
-        user_ids = get_relevant_user_ids()
-        if params['status'] == 'converted':
-            template_name = 'rate_sheet_converted'
-        elif params['status'] == 'processing':
-            template_name = 'rate_sheet_processing'
-        else:
-            template_name = 'rate_sheet_complete'
-
-    for user_id in user_ids:
-        data = {
-            'type': 'platform_notification',
-            'user_id': user_id,
-            'service': 'rate_sheet',
-            'service_id': params['id'],
-            'template_name': template_name,
-            'variables': variables
-        }
-        client.ruby.create_communication(data)
 
 
 def create_rate_sheet(params: CreateRateSheet):
-    location = RateSheets.create(**get_create_params(params))
-    location.save()
-    # try:
-    #     location.save()
-    # except:
-    #     return
-    params['rate_sheet_id'] = jsonable_encoder(location.id)
-    create_audit(get_audit_params(params, location))
-    return  params['rate_sheet_id']
-
-    # send_rate_sheet_notifications(params)
-
+    rate_sheet = RateSheet.create(**get_create_params(params))
+    params['object_id'] = str(rate_sheet.id)
+    create_audit(get_audit_params(params))
+    send_rate_sheet_notifications(params)
+    return  {"id": params.get('object_id')}

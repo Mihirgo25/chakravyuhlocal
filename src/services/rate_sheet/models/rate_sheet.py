@@ -3,14 +3,12 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 
-class UnknownField(object):
-    def __init__(self, *_, **__): pass
 
 class BaseModel(Model):
+    # db.execute_sql('CREATE SEQUENCE rate_sheets_serial_id_seq START WITH 1')
     class Meta:
         database = db
-
-class RateSheets(BaseModel):
+class RateSheet(BaseModel):
     id = UUIDField(
         primary_key=True,
         constraints=[SQL("DEFAULT uuid_generate_v4()")],
@@ -26,13 +24,13 @@ class RateSheets(BaseModel):
     agent_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    serial_id = IntegerField()
+    serial_id = BigIntegerField(constraints=[SQL(" DEFAULT nextval('rate_sheets_serial_id_seq')")],)
     cogo_entity_id = UUIDField(index=True, null=True)
 
     class Meta:
         table_name = 'rate_sheets'
 
-# RateSheets.add_index(SQL("CREATE INDEX index_rate_sheets_on_service_provider_id_and_status ON rate_sheets (service_provider_id, status);"))
-# RateSheets.add_index(SQL("CREATE INDEX index_rate_sheets_on_service_provider_id_and_service_name ON rate_sheets (service_provider_id, service_name);"))
-# RateSheets.add_index(SQL("CREATE INDEX index_rate_sheets_on_partner_id_and_agent_id_and_status ON rate_sheets (partner_id, agent_id, status);"))
-# RateSheets.add_index(SQL("CREATE INDEX index_rate_sheets_on_agent_id_and_status ON rate_sheets (agent_id, status);"))
+RateSheet.add_index(SQL("CREATE INDEX index_rate_sheets_on_service_provider_id_and_status ON rate_sheets (service_provider_id, status);"))
+RateSheet.add_index(SQL("CREATE INDEX index_rate_sheets_on_service_provider_id_and_service_name ON rate_sheets (service_provider_id, service_name);"))
+RateSheet.add_index(SQL("CREATE INDEX index_rate_sheets_on_partner_id_and_agent_id_and_status ON rate_sheets (partner_id, agent_id, status);"))
+RateSheet.add_index(SQL("CREATE INDEX index_rate_sheets_on_agent_id_and_status ON rate_sheets (agent_id, status);"))

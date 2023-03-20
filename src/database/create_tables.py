@@ -7,11 +7,13 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audits import FclFreightR
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
+from services.rate_sheet.models.rate_sheet import RateSheet
+from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRateLocal,FclFreightRateFreeDay, FclFreightRateAudit])
+        db.create_tables([RateSheetAudit])
         db.close()
         print("created table")
     except:

@@ -84,9 +84,13 @@ from datetime import datetime
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
 from configs.defintions import yml_obj
+from services.rate_sheet.rate_sheet import rate_sheet
+
 
 
 app = FastAPI(debug=True)
+app.include_router(prefix = "/rate_sheet", router=rate_sheet)
+
 
 
 app.add_middleware(
@@ -109,7 +113,7 @@ async def log_request_response_time(request: Request, call_next):
 def startup():
     if db.is_closed():
         db.connect()
-    # create_table()
+    create_table()
     initialize_client()
 
 @app.on_event("shutdown")
@@ -659,17 +663,6 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
     data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
     return data
 
-@app.post("/create_rate_sheet")
-def create_rate_sheets(request: CreateRateSheet, response: Response):
-    rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content={"success": True})
-
-
-
-@app.post("/update_rate_sheet")
-def update_rate_sheets(request: UpdateRateSheet, response: Response):
-    rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content={"success": True})
 
 @app.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
