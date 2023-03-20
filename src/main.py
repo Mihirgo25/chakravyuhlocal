@@ -539,7 +539,7 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
     delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content={"success": True})
 
-@app.post("/create_fcl_freight_rate_exclusive_rule_set")
+@app.post("/create_fcl_freight_rate_extension_rule_set")
 def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet):
     return create_fcl_freight_rate_extension_rule_set_data(request)
 
@@ -551,13 +551,39 @@ def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet):
     return update_fcl_freight_rate_extension_rule_set_data(request)
 
-@app.post("/list_fcl_freight_rate_extension_rule_set")
-def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensionRuleSets):
-    return list_fcl_freight_rate_extension_rule_set_data(request)
+@app.get("/list_fcl_freight_rate_extension_rule_set")
+def list_fcl_freight_rate_extension_rule_set(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc'
+):
+    try:
+        data =  list_fcl_freight_rate_extension_rule_set_data(filters, page_limit, page, sort_by, sort_type)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        return JSONResponse(status_code=500, content={'success':False})
 
-@app.post("/get_fcl_freight_rate_extension")
-def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
-    return get_fcl_freight_rate_extension_data(request)
+
+@app.get("/get_fcl_freight_rate_extension")
+def get_fcl_freight_rate_extension(
+    service_provider_id: str,
+    shipping_line_id: str,
+    origin_port_id: str,
+    destination_port_id: str,
+    commodity: str,
+    container_size: str,
+    container_type:str = None
+  ):
+    try:
+        data = get_fcl_freight_rate_extension_data(service_provider_id, shipping_line_id, origin_port_id, destination_port_id, commodity, container_size, container_type)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        return JSONResponse(status_code=500, content={'success':False})
+
 
 # @app.post("/update_fcl_freight_rate_task")
 # def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):

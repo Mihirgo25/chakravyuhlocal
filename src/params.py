@@ -215,21 +215,6 @@ class UpdateFclFreightRateExtensionRuleSet(BaseModel):
   status: str = None
   trade_type: str = None
 
-class ListFclFreightRateExtensionRuleSets(BaseModel):
-  filters: dict = {}
-  page_limit: int = 10
-  page: int = 1
-  sort_by: str = 'updated_at'
-  sort_type: str = 'desc'
-
-class GetFclFreightRateExtension(BaseModel):
-  service_provider_id: str
-  shipping_line_id: str
-  origin_port_id: str
-  destination_port_id: str
-  commodity: str
-  container_size: str
-  container_type:str = None
 
   
 class GetFclFreightRateLocal(BaseModel):

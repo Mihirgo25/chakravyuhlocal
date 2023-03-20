@@ -1,12 +1,12 @@
 from peewee import * 
 from database.db_session import db
-from rails_client import client
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
 import yaml
 from configs.defintions import FCL_FREIGHT_CHARGES
 import datetime
 from libs.locations import list_location_clusters
 from playhouse.postgres_ext import *
+from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
 class BaseModel(Model):
     class Meta:
         database = db
@@ -51,47 +51,8 @@ class FclFreightRateExtensionRuleSets(BaseModel):
         else:
             raise Exception('all fields charge_code, gri_rate, gri_currency are necessary')
 
-    # def validate_service_provider(self):
-    #     if not self.service_provider_id:
-    #         return True
-    #     service_provider_data = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})
-    #     if service_provider_data.get('account_type') == 'service_provider':
-    #         return True
-    #     return False
-
-    # def validate_shipping_line(self):
-    #     if not self.service_provider_id:
-    #         return True
-    #     shipping_line_data = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})
-    #     if shipping_line_data.get('operator_type') == 'shipping_line' and self.service_provider_id:
-    #         return True
-    #     return False
-
-    def validate_uniqueness(self):
-        freight_extension_count = FclFreightRateExtensionRuleSets.select().where(
-            FclFreightRateExtensionRuleSets.cluster_id == self.cluster_id,
-            FclFreightRateExtensionRuleSets.service_provider_id == self.service_provider_id,
-            FclFreightRateExtensionRuleSets.shipping_line_id == self.shipping_line_id,
-            FclFreightRateExtensionRuleSets.cluster_reference_name == self.cluster_reference_name,
-            FclFreightRateExtensionRuleSets.line_item_charge_code == self.line_item_charge_code,
-            FclFreightRateExtensionRuleSets.gri_rate == self.gri_rate,
-            FclFreightRateExtensionRuleSets.gri_currency == self.gri_currency
-        ).count()
-        if not freight_extension_count == 0:
-            raise Exception('Validate uniqueness error')
-
-    # def validate_trade_type(self):
-    #     if self.trade_type in ['import', 'export']:
-    #         return True
-    #     return False
-
-    # def validate_cluster_type(self):
-    #     if self.cluster_type in ['location', 'commodity', 'container']:
-    #         return True
-    #     return False
-
     def validate_cluster_id(self):
-        if self.cluster_type == 'commodity' and client.ruby.list_fcl_freight_commodity_cluster({'filters':{'id': self.cluster_id}}):
+        if self.cluster_type == 'commodity' and list_fcl_freight_commodity_clusters({'filters':{'id': self.cluster_id}}):
             return
         elif self.cluster_type == 'location' and list_location_clusters({'filters':{'id': self.cluster_id}}):
             return
@@ -99,16 +60,5 @@ class FclFreightRateExtensionRuleSets(BaseModel):
             return
         return Exception('Validate Cluster id error')
 
-    def validate_extension_name(self):
-        extension_count = FclFreightRateExtensionRuleSets.select().where(
-            FclFreightRateExtensionRuleSets.extension_name == self.extension_name,
-            FclFreightRateExtensionRuleSets.status == 'active'
-        ).count()
-        if not extension_count == 0:
-            raise Exception('Extension name uniqueness error')
-
     def validate_all(self):
-        # if self.gri_fields() and self.validate_service_provider() and self.validate_shipping_line() and self.valid_uniqueness() and self.validate_trade_type() and self.validate_cluster_type() and self.validate_cluster_id() and self.validate_extension_name():
-        self.validate_uniqueness()
-        self.validate_extension_name()
         self.validate_cluster_id()
