@@ -173,17 +173,8 @@ def get_port_id(port_code):
 
 
 def get_airport_id(port_code, country_code):
-    airport_id = client.ruby.list_locations(
-        {
-            "filters": {
-                "type": "airport",
-                "port_code": port_code,
-                "status": "active",
-                "country_code": country_code,
-            },
-            "fields": ["id"],
-        }
-    )["list"][0]["id"]
+    filters =  {"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}
+    airport_id = list_locations({'filters': str(filters)})['list'][0]["id"]
     return airport_id
 
 
@@ -410,65 +401,42 @@ def create_fcl_freight_rate_weight_limit(params):
     return
 
 
-def get_location_id(q, country_code=None, service_provider_id=None):
-    pincode_filters = {"type": "pincode", "postal_code": q, "status": "active"}
+def get_location_id(q, country_code, service_provider_id):
+    pincode_filters =  {"type": "pincode", "postal_code": q, "status": "active"}
     if country_code is not None:
-        pincode_filters = pincode_filters.merge({country_code: country_code})
-    locations = client.ruby.list_locations(
-        {"filters": pincode_filters, "fields": ["id"]}
-    )["list"]
+        pincode_filters['country_code'] = country_code
+    locations = list_locations({'filters': str(pincode_filters)})['list']
+    filters = {"type": "country", "country_code": q, "status": "active"}
     if not locations:
-        locations = client.ruby.list_locations(
-            {
-                "filters": {"type": "country", "country_code": q, "status": "active"},
-                "fields": ["id"],
-            }
-        )["list"]
+        locations = list_locations({"filters": filters})['list']
+
     seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
     if not locations:
         country_filters = {"type": "country", "country_code": q, "status": "active"}
         if country_code is not None:
-            country_filters = {**country_filters, "country_code": country_code}
-        locations = client.ruby.list_locations(filters=country_filters, fields=["id"])[
-            "list"
-        ]
+            country_filters["country_code"]= country_code
+        locations = list_locations({"filters": country_filters})['list']
     seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
     if country_code is not None:
-        seaport_filters = {**seaport_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=seaport_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
+        seaport_filters['country_code'] = country_code
+    if not locations:
+        locations = list_locations(seaport_filters)['list']
     airport_filters = {"type": "airport", "port_code": q, "status": "active"}
     if country_code is not None:
-        airport_filters = {**airport_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=airport_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
+        airport_filters['country_code'] = country_code
+    if not locations:
+        locations = list_locations(airport_filters)['list']
     name_filters = {"name": q, "status": "active"}
     if country_code is not None:
-        name_filters = {**name_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=name_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
+        name_filters["country_code"] = country_code
+    if not locations:
+        locations = list_locations(name_filters)['list']
     display_name_filters = {"display_name": q, "status": "active"}
     if country_code is not None:
-        display_name_filters = {**display_name_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=display_name_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
-    # check
+        display_name_filters = list_locations(display_name_filters)
     if not locations:
         locations = client.ruby.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
         return locations[0] if locations else None
-
     return locations[0]["id"] if locations else None
 
 
@@ -847,7 +815,7 @@ def write_fcl_freight_freight_object(rows, csv, params):
     return
 
 
-def process_fcl_freight_freight(params):
+def process_fcl_freight_freight(params, converted_file):
     total_lines = 0
     original_path = get_original_file_path(params)
     with open(original_path, encoding='iso-8859-1') as file:
@@ -875,21 +843,21 @@ def process_fcl_freight_freight(params):
         for row in input_file:
             index += 1
             row = row
-            if index < last_line:
-                return
+            # if index < last_line:
+            #     return
             present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
             blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
             if valid_hash(row, present_field, blank_field):
                 if rows:
                     print(rows,"testing-process")
                     create_fcl_freight_freight_rate(
-                        params, rows, created_by_id, procured_by_id, sourced_by_id
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
                     )
                     set_last_line(index, params)
-                    rate_sheet.set_processed_percent = (
-                        ((params.file_index * 1.0) / rate_sheet.converted_files.count)
-                        * ((get_last_line(params) * 1.0) / get_total_line(params))
-                    ) * 100
+                    # rate_sheet.set_processed_percent = (
+                    #     ((params.file_index * 1.0) / rate_sheet.converted_files.count)
+                    #     * ((get_last_line(params) * 1.0) / get_total_line(params))
+                    # ) * 100
                 rows = [row]
             elif (
                 valid_hash(
@@ -1106,16 +1074,18 @@ def process_fcl_freight_freight(params):
     print(len(rows))
     if not rows:
         return
-    create_fcl_freight_freight_rate(params, rows, created_by_id, procured_by_id, sourced_by_id)
+    create_fcl_freight_freight_rate(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
     set_last_line(total_lines, params)
-    rate_sheet.set_processed_percent = (
-        ((params.file_index * 1.0) / rate_sheet.converted_files.count)
-        * ((get_last_line(params) * 1.0) / get_total_line(params))
-    ) * 100
+    print(len(rows), "total_length")
+
+    # rate_sheet.set_processed_percent = (
+    #     ((params.file_index * 1.0) / rate_sheet.converted_files.count)
+    #     * ((get_last_line(params) * 1.0) / get_total_line(params))
+    # ) * 100
 
 
 def create_fcl_freight_freight_rate(
-    params, rows, created_by_id, procured_by_id, sourced_by_id
+    params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id
 ):
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
@@ -1191,51 +1161,42 @@ def create_fcl_freight_freight_rate(
     if 'extended_rates' in rows[0]:
         request_params["is_extended"] = True
     print(request_params, "sak final")
-    create_fcl_freight_rate_data(request_params)
-    if 'extended_rates' in rows[0]:
-        request_params["extend_rates"] = True
-        del request_params["is_extended"]
-        extend_create_fcl_freight_rate_data(request_params)
+    object_validity = validate_fcl_freight_object(converted_file.get('module'), request_params)
+    if object_validity.get("valid"):
+        create_fcl_freight_rate_data(request_params)
+        if 'extended_rates' in rows[0]:
+            request_params["extend_rates"] = True
+            del request_params["is_extended"]
+            extend_create_fcl_freight_rate_data(request_params)
+        csv.writerow(rows[0].values())
+    else:
+        csv.writerow(rows[0].values() + [", ".join(object_validity.get("errors"))])
+        raise Exception("Invalid object")
+
+    for t in rows[1:]:
+        csv.writerow(t.values())
+
+    params['rates_count'] = int(params['rates_count']) + 1
+
+    print('done')
 
 
 
 
 def validate_and_process_rate_sheet_converted_file(params):
-    # self.reload
-    # how to reload in python
-    if params['status'] != 'converted':
-        return
-    reset_counters(params)
-    for converted_file in params['converted_files']:
-        reset_counters(converted_file)
-        print("validate_{}_{}".format(converted_file['service_name'], converted_file['module']))
-        getattr(process_rate_sheet, "validate_{}_{}".format(converted_file['service_name'], converted_file['module']))(
-            converted_file
-        )
-    if params['converted_files']:
-        for converted_files in params['converted_files']:
-            reset_counters(converted_files)
-            validation_statuses = converted_files['status']
-
-            if 'invalidated' in validation_statuses:
-                params['status'] = 'uploaded'
-                converted_files = delete_temp_data
-            else:
-                converted_files = mark_processing
-                params['status'] = 'processing'
-                send_rate_sheet_notifications(params)
-                converted_files = delete_temp_data
-                process_converted_files(params)
+    process_converted_files(params)
+    return 'done'
 
 
 def process_converted_files(params):
     params['status'] = 'processing'
     initial_time = time.time()
+
     for converted_file in params['converted_files']:
-        reset_counters(params)
-        print("process_{}_{}".format(converted_file['service_name'], converted_file['module']))
+        # reset_counters(params)
+        # print("process_{}_{}".format(converted_file['service_name'], converted_file['module']))
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
-            params
+            params,converted_file
         )
         final_time = time.time() -initial_time
         print(final_time, "final_time")

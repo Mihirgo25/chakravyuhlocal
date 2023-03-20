@@ -19,8 +19,9 @@ def validate_fcl_freight_object(module, object):
     return
 
 def get_freight_object(object):
+    print(object)
     for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
-        object[f'{port}_id'] = get_port_id(object[port])
+        object[f'{port}_id'] = get_port_id(object.get(port))
         del object[port]
     object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
     del object['shipping_line_id']

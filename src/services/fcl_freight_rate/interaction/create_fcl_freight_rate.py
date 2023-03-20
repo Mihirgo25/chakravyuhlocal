@@ -37,7 +37,7 @@ def create_fcl_freight_rate_data(request):
     db.execute_sql(query)
     with db.atomic():
       return create_fcl_freight_rate(request)
-  
+
 def create_fcl_freight_rate(request):
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
@@ -70,12 +70,12 @@ def create_fcl_freight_rate(request):
         for key in list(row.keys()):
             setattr(freight, key, row[key])
         freight.set_locations()
-        freight.set_origin_location_ids()
-        freight.set_destination_location_ids()
+        # freight.set_origin_location_ids()
+        # freight.set_destination_location_ids()
 
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
-    
+
 
     freight.weight_limit = request.get("weight_limit")
 
@@ -98,7 +98,7 @@ def create_fcl_freight_rate(request):
         "demurrage", {}
     )
 
-    freight.validate_validity_object(request["validity_start"], request["validity_end"])
+    # freight.validate_validity_object(request["validity_start"], request["validity_end"])
     freight.validate_line_items(request.get("line_items"))
 
     freight.set_validities(
@@ -113,7 +113,7 @@ def create_fcl_freight_rate(request):
     freight.set_platform_prices()
     freight.set_is_best_price()
     freight.set_last_rate_available_date()
-    freight.validate_before_save()
+    # freight.validate_before_save()
 
     try:
         freight.save()
@@ -127,7 +127,7 @@ def create_fcl_freight_rate(request):
     create_audit(request, freight.id)
 
 
-    delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+    # delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
     return {"id": freight.id}
 

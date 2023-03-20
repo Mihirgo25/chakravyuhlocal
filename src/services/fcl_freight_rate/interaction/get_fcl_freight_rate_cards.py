@@ -12,7 +12,7 @@ from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_da
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration import get_fcl_weight_slabs_configuration
 import time
-import ujson as json
+import json as json
 
 
 
@@ -24,7 +24,7 @@ def get_fcl_freight_rate_cards(request):
     freight_query = initialize_freight_query(request)
     freight_query = join_origin_local(freight_query)
     freight_query = join_destination_local(freight_query)
-   
+
     freight_query = select_fields(freight_query)
 
     freight_query_result = freight_query_results(request, freight_query)
@@ -40,17 +40,17 @@ def get_fcl_freight_rate_cards(request):
         lists = get_fcl_freight_rate_cards(request)['list']
         for i in range(len(lists)):
             lists[i]['source'] = 'predicted'
-        
+
     return {'list': lists}
 
 
 def join_origin_local(freight_query):
     port_origin_locals = (FclFreightRateLocal.select(FclFreightRateLocal.id, FclFreightRateLocal.rate_not_available_entry, FclFreightRateLocal.is_line_items_error_messages_present, FclFreightRateLocal.data).alias('port_origin_locals'))
-                
+
     freight_query = (freight_query
                      .join(port_origin_locals, JOIN.LEFT_OUTER, on=(port_origin_locals.c.id == FclFreightRate.origin_local_id))
                      .where(
-                         (port_origin_locals.c.rate_not_available_entry.is_null(True)) | 
+                         (port_origin_locals.c.rate_not_available_entry.is_null(True)) |
                          (port_origin_locals.c.rate_not_available_entry == False)
                      ))
 
@@ -63,7 +63,7 @@ def join_destination_local(freight_query):
     freight_query = (freight_query.
                      join(port_destination_locals, JOIN.LEFT_OUTER, on=(port_destination_locals.c.id == FclFreightRate.destination_local_id))
                      .where(
-                         (port_destination_locals.c.rate_not_available_entry.is_null(True)) | 
+                         (port_destination_locals.c.rate_not_available_entry.is_null(True)) |
                          (port_destination_locals.c.rate_not_available_entry == False)
                      ))
 
@@ -92,8 +92,8 @@ def initialize_freight_query(request):
     FclFreightRate.destination_port_id == request['destination_port_id'],
     FclFreightRate.container_size == request['container_size'],
     FclFreightRate.container_type == request['container_type'],
-    FclFreightRate.commodity == request['commodity'], 
-    FclFreightRate.rate_not_available_entry == False, 
+    FclFreightRate.commodity == request['commodity'],
+    FclFreightRate.rate_not_available_entry == False,
     (FclFreightRate.importer_exporter_id == request['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
 
     rate_constant_mapping_key = request['cogo_entity_id']
@@ -143,7 +143,7 @@ def select_fields(freight_query):
                 )).alias("freight"),
         fn.json_agg(
             fn.json_build_object(
-                'line_items', PortOriginLocals.data['line_items'], 
+                'line_items', PortOriginLocals.data['line_items'],
                 'is_line_items_error_messages_present', PortOriginLocals.is_line_items_error_messages_present,
                 'detention', PortOriginLocals.data['detention'],
                 'demurrage', PortOriginLocals.data['demurrage'],
@@ -158,7 +158,7 @@ def select_fields(freight_query):
                 'plugin', PortDestinationLocals.data["plugin"]
             )).alias("port_destination_local")
         )
-        
+
     freight_query = freight_query.group_by(FclFreightRate.id)
     return freight_query
 
@@ -192,7 +192,7 @@ def freight_query_results(request, freight_query):
 
     if request['include_destination_local']:
         result_destination = get_fcl_freight_local_rate_cards({
-        'trade_type': 'import',  
+        'trade_type': 'import',
         'country_id': request['destination_country_id'],
         'port_id': request['destination_port_id'],
         'container_size': request['container_size'],
@@ -216,7 +216,7 @@ def freight_query_results(request, freight_query):
     origin_local_agent_service_rates = {k: v for k, v in origin_local_agent_service_rates.items() if v['service_provider_id'] != DEFAULT_LOCAL_AGENT_IDS[0]['value']}
     destination_local_agent_service_rates = {k: v for k, v in destination_local_agent_service_rates.items() if v['service_provider_id'] != DEFAULT_LOCAL_AGENT_IDS[0]['value']}
     results = list(freight_query.dicts())
-    for query in results:            
+    for query in results:
         result = {}
         # print(query["port_origin_local"])
         # query.port_origin_local[0]['line_items'] = json.loads(query.port_origin_local[0]['line_items']) if query.port_origin_local[0].get('line_items') else None
@@ -240,8 +240,8 @@ def freight_query_results(request, freight_query):
         result['freight'] = query["freight"][0] if query["freight"] else {}
         result['port_origin_local'] = query["port_origin_local"][0] if query["port_origin_local"] else {}
         result['port_destination_local'] = query["port_destination_local"][0] if query["port_destination_local"] else {}
-        
-        result['port_origin_local']['line_items'] = result['port_origin_local']['line_items']  
+
+        result['port_origin_local']['line_items'] = result['port_origin_local']['line_items']
         result['port_destination_local']['line_items'] = result['port_destination_local']['line_items']
 
         result['weight_limit'] = result['freight']['weight_limit'] or {}
@@ -251,7 +251,7 @@ def freight_query_results(request, freight_query):
             if fcl_weight_slabs:
                 result['weight_limit']['free_limit'] = fcl_weight_slabs['max_weight']
                 if fcl_weight_slabs['slabs']:
-                    result['weight_limit']['slabs'] = fcl_weight_slabs['slabs'] 
+                    result['weight_limit']['slabs'] = fcl_weight_slabs['slabs']
 
         result['origin_detention'] = result['freight']['origin_local'].get('detention') or result['port_origin_local'].get('detention')
         result['destination_detention'] = result['freight']['destination_local'].get('detention') or result['port_destination_local'].get('detention')
@@ -262,7 +262,7 @@ def freight_query_results(request, freight_query):
         if request['container_type'] == 'refer':
             result['origin_plugin'] = (result['freight']['origin_local'].get('plugin') or result['port_origin_local']['plugin'])
             result['destination_plugin'] = (result['freight']['destination_local'].get('plugin') or result['port_destination_local']['plugin'])
-        
+
         result['origin_demurrage'] = {}
         result['destination_demurrage'] = (result['freight']['destination_local'].get('demurrage') or result['port_destination_local']['demurrage'])
 
@@ -272,15 +272,15 @@ def freight_query_results(request, freight_query):
 
         if request['include_origin_local']:
             if result['freight']['is_origin_local_line_items_error_messages_present'] == False:
-                result['origin_local'] = result['freight']['origin_local'] 
+                result['origin_local'] = result['freight']['origin_local']
             if (not result['origin_local']) and (result['port_origin_local'].get('is_line_items_error_messages_present') == False):
-                result['origin_local'] = result['port_origin_local'] 
-            
-            if not result['origin_local']: 
+                result['origin_local'] = result['port_origin_local']
+
+            if not result['origin_local']:
                 result['origin_local'] = origin_local_agent_service_rates.get(':'.join([str(result['freight']['shipping_line_id']), str(result['freight']['origin_main_port_id'])])) or {}
                 result['origin_local'] = origin_default_local_agent_service_rates.get(':'.join([str(result['freight']['shipping_line_id']), str(result['freight']['origin_main_port_id'])])) or {}
             # if result['origin_local']["service_provider_id"]:
-                # result['origin_local_service_provider'].append(result['origin_local']["service_provider_id"]) 
+                # result['origin_local_service_provider'].append(result['origin_local']["service_provider_id"])
 
         result['destination_local'] = {}
         if request['include_destination_local']:
@@ -288,24 +288,24 @@ def freight_query_results(request, freight_query):
                 result['destination_local'] = result['freight']['destination_local']
             if not (result['destination_local']) and result['port_destination_local']['is_line_items_error_messages_present'] == False:
                 result['destination_local'] = result['port_destination_local']
-            
+
             if not result['destination_local']:
                 result['destination_local'] = destination_local_agent_service_rates.get(':'.join([str(result['freight']['shipping_line_id']), str(result['freight']['destination_main_port_id'])])) or {}
                 result['destination_local'] = destination_default_local_agent_service_rates.get(':'.join([str(result['freight']['shipping_line_id']), str(result['freight']['destination_main_port_id'])])) or {}
             # if result['destination_local']["service_provider_id"]:
-                # result['destination_local_service_provider'].append(result['destination_local']["service_provider_id"]) 
+                # result['destination_local_service_provider'].append(result['destination_local']["service_provider_id"])
 
         # if result['origin_detention'] and result['origin_demurrage'] and result['destination_demurrage'] and result['destination_detention']:
         if ((result.get('origin_detention') or {}).get('free_limit') is None) or ((result.get('destination_detention') or {}).get('free_limit') is None) or ((result.get('origin_demurrage') or {}).get('free_limit') is None) or ((result.get('destination_demurrage') or {}).get('free_limit') is None):
             result = get_eligible_detention_and_demurrage_free_days(result, request)
-        
+
         # result['origin_detention'] = {}
         # result['destination_detention'] = {}
         # result['origin_demurrage'] = {}
         # result['destination_demurrage'] = {}
 
         # result = get_eligible_detention_and_demurrage_free_days(result,request)
-        
+
         if result['destination_detention']:
             if (result['destination_detention'].get('free_limit') is None):
                 continue
@@ -321,9 +321,9 @@ def build_response_list(freight_query_results, request):
         if grouping.get(key) and grouping[key].get('importer_exporter_id'):
             continue
         response_object = build_response_object(freight_query_result, request)
-        
+
         if response_object:
-            grouping[key] = response_object 
+            grouping[key] = response_object
 
     return grouping.values()
 
@@ -355,10 +355,10 @@ def build_response_object(freight_query_result, request):
 
     if not add_free_days_objects(freight_query_result, response_object, request):
         return None
-    
+
     if not add_weight_limit_object(freight_query_result, response_object, request):
         return None
-        
+
     if not add_freight_objects(freight_query_result, response_object, request):
         return None
 
@@ -376,13 +376,13 @@ def add_local_objects(freight_query_result, response_object, request):
             response_object['destination_local']['service_provider_id'] = freight_query_result['destination_local']['service_provider_id']
         else:
             response_object['destination_local']['service_provider_id'] = response_object['service_provider_id']
-        
+
         if freight_query_result['destination_local'].get('source'):
             response_object['destination_local']['source'] = freight_query_result['destination_local']['source']
         else:
             response_object['destination_local']['source'] = response_object['source']
         response_object['destination_local']['line_items'] = []
-        
+
 
     for line_item in (freight_query_result.get('origin_local') or {}).get('line_items',[]):
         if line_item.get('location_id'):
@@ -410,7 +410,7 @@ def add_local_objects(freight_query_result, response_object, request):
 
     if len(list(set(request['additional_services']).difference([item['code'] for item in (response_object['origin_local']['line_items'] + response_object.get('destination_local').get('line_items',[]))]))) > 0:
         return False
-    
+
     is_dpd_list = [t for t in response_object['destination_local'].get('line_items',[]) if t.get('is_dpd') == True]
     if len(is_dpd_list) > 0:
         is_dpd_list = is_dpd_list[0]
@@ -431,7 +431,7 @@ def build_local_line_item_object(line_item, request):
     is_additional_service = True if 'additional_service' in code_config.get('tags') else None
     if is_additional_service and line_item['code'] not in request['additional_services']:
         return None
-    
+
     is_dpd = True if 'dpd' in code_config.get('tags') else False
     if is_dpd and ('import' in code_config.get('trade_types')) and (not request['include_destination_dpd']):
         return None
@@ -450,7 +450,7 @@ def build_local_line_item_object(line_item, request):
         if slab:
             line_item['price'] = slab['price']
             line_item['currency'] = slab['currency']
-    
+
     line_item = {key: line_item[key] for key in ['code', 'unit', 'price', 'currency', 'remarks']}
     if line_item['unit'] == 'per_container':
         line_item['quantity'] = request['containers_count']
@@ -470,7 +470,7 @@ def build_local_line_item_object(line_item, request):
 def add_free_days_objects(freight_query_result, response_object, request):
     free_days_types = ['origin_detention', 'origin_demurrage', 'destination_detention', 'destination_demurrage']
 
-    if request['container_type'] == 'refer': 
+    if request['container_type'] == 'refer':
         free_days_types += ['origin_plugin', 'destination_plugin']
 
     for free_days_type in free_days_types:
@@ -483,9 +483,9 @@ def add_free_days_objects(freight_query_result, response_object, request):
 
 def add_weight_limit_object(freight_query_result, response_object, request):
     response_object['weight_limit'] = freight_query_result['weight_limit'] | {'unit': 'per_container'}
-    
+
     if not request['cargo_weight_per_container']:
-        return True 
+        return True
 
     if not response_object['weight_limit'].get('free_limit'):
         return True
@@ -517,7 +517,7 @@ def add_freight_objects(freight_query_result, response_object, request):
             break
 
     freight_validities = freight_query_result['freight']['validities']
-    
+
     for freight_validity in freight_validities:
       freight_object = build_freight_object(freight_validity, additional_weight_rate, additional_weight_rate_currency, request)
       if not freight_object:
@@ -547,11 +547,11 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
     }
 
     if freight_object['validity_start'] < request['validity_start']:
-        freight_object['validity_start'] = request['validity_start'] 
-    
+        freight_object['validity_start'] = request['validity_start']
+
     if freight_object['validity_end'] > request['validity_end']:
-        freight_object['validity_end'] = request['validity_end'] 
-    
+        freight_object['validity_end'] = request['validity_end']
+
     for line_item in freight_validity['line_items']:
         line_item = build_freight_line_item_object(line_item, request)
 
@@ -562,13 +562,13 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
 
     overweight_surcharge = build_additional_weight_line_item_object(additional_weight_rate, additional_weight_rate_currency, request)
     if overweight_surcharge:
-        freight_object['line_items'].append(overweight_surcharge) 
+        freight_object['line_items'].append(overweight_surcharge)
 
     return freight_object
 
 def build_freight_line_item_object(line_item, request):
     line_item = {key: line_item[key] for key in ['code', 'unit', 'price', 'currency', 'remarks']}
-    
+
     fcl_freight_charges = FCL_FREIGHT_CHARGES
 
     code_config = fcl_freight_charges[line_item['code']]
@@ -583,7 +583,7 @@ def build_freight_line_item_object(line_item, request):
         if slab:
             line_item['price'] = slab['price']
             line_item['currency'] = slab['currency']
-    
+
     if line_item['unit'] == 'per_container':
         line_item['quantity'] = request['containers_count']
     elif line_item['unit'] == 'per_bl':
@@ -602,11 +602,11 @@ def build_additional_weight_line_item_object(additional_weight_rate, additional_
     if not additional_weight_rate > 0:
         return
 
-    line_item = OVERWEIGHT_SURCHARGE_LINE_ITEM 
+    line_item = OVERWEIGHT_SURCHARGE_LINE_ITEM
 
     line_item['price'] = additional_weight_rate
     line_item['currency'] = additional_weight_rate_currency
-    
+
     if line_item['unit'] == 'per_container':
         line_item['quantity'] = request['containers_count']
     elif line_item['unit'] == 'per_bl':
@@ -620,20 +620,20 @@ def build_additional_weight_line_item_object(additional_weight_rate, additional_
 
 # def ignore_internal_service_providers(list):
 #     internal_service_provider_ids = [INTERNAL_BOOKING['service_provider_id']]
-    
+
 #     rates = [rate for rate in list if rate['service_provider_id'] not in internal_service_provider_ids]
 #     shipping_line_ids = [rate['shipping_line_id'] for rate in rates]
-    
+
 #     internal_rates = [rate for rate in list if rate['service_provider_id'] in internal_service_provider_ids]
 #     internal_rates = [rate for rate in internal_rates if rate['shipping_line_id'] not in shipping_line_ids]
 
 
 #     return (rates + internal_rates)
 
-# def ignore_confirmed_inventory_rates(list, request): 
+# def ignore_confirmed_inventory_rates(list, request):
 #     if request['include_confirmed_inventory_rates'] == True:
 #         return list
-    
+
 #     rates = [rate for rate in list if rate['tags'] not in CONFIRMED_INVENTORY['tag']]
 #     return rates
 
@@ -642,19 +642,19 @@ def get_default_overweight_surcharges(result, request):
     organization_category = client.ruby.get_organization({'id': result['freight']['service_provider_id']})['data']['category_types']
 
     weight_slab_result = get_fcl_weight_slabs_configuration({
-            'origin_location_id': [request['origin_port_id'], request['origin_country_id']], 
-            'destination_location_id': [request['destination_port_id'], request['destination_country_id']], 
-            'origin_location_type': ['seaport', 'country'], 
-            'destination_location_type': ['seaport', 'country'], 
+            'origin_location_id': [request['origin_port_id'], request['origin_country_id']],
+            'destination_location_id': [request['destination_port_id'], request['destination_country_id']],
+            'origin_location_type': ['seaport', 'country'],
+            'destination_location_type': ['seaport', 'country'],
             'organization_category': organization_category,
-            'shipping_line_id': [result['freight']['shipping_line_id']], 
-            'service_provider_id': [result['freight']['service_provider_id']], 
-            'importer_exporter_id': [request['importer_exporter_id']], 
-            'is_cogo_assured': [False], 
-            'container_size': [request['container_size']], 
+            'shipping_line_id': [result['freight']['shipping_line_id']],
+            'service_provider_id': [result['freight']['service_provider_id']],
+            'importer_exporter_id': [request['importer_exporter_id']],
+            'is_cogo_assured': [False],
+            'container_size': [request['container_size']],
             'commodity': [request['commodity']]
             })
-    return weight_slab_result 
+    return weight_slab_result
 
 def get_eligible_detention_and_demurrage_free_days(result,request):
     detention_and_demurrage_free_days = []
@@ -672,7 +672,7 @@ def get_eligible_detention_and_demurrage_free_days(result,request):
 
     if (result.get('origin_detention') or {}).get('free_limit') is None:
         detention_and_demurrage_free_days.append({
-            'filters': {'location_id': [request['origin_port_id'], request['origin_country_id']], 'trade_type': 'export','free_days_type': 'detention'} | common_filters, 
+            'filters': {'location_id': [request['origin_port_id'], request['origin_country_id']], 'trade_type': 'export','free_days_type': 'detention'} | common_filters,
             'interaction': 'origin_detention'
         })
 
@@ -696,7 +696,7 @@ def get_eligible_detention_and_demurrage_free_days(result,request):
     # detention_and_demurrage_free_days.append({
     #    'filters': { 'location_id': [request['origin_port_id'], request['origin_country_id']], 'trade_type': 'export', 'free_days_type': 'demurrage', 'local_service_provider_ids': origin_local_service_providers } | (common_filters),
     #    'interaction': 'origin_detention'
-    #  })    
+    #  })
 
 
     if (result.get('destination_demurrage') or {}).get('free_limit'):
@@ -714,7 +714,7 @@ def get_eligible_detention_and_demurrage_free_days(result,request):
     #    'filters': { 'location_id': [request['destination_port_id'], request['destination_country_id']], 'trade_type': 'import', 'free_days_type': 'detention', 'local_service_provider_ids': destination_local_service_providers } | (common_filters),
     #    'interaction': 'destination_detention'
     #  })
-    
+
     # detention_and_demurrage_free_days.append({
     #    'filters': { 'location_id': [request['destination_port_id'], request['destination_country_id']], 'trade_type': 'import', 'free_days_type': 'demurrage', 'local_service_provider_ids': destination_local_service_providers } | (common_filters),
     #    'interaction': 'destination_demurrage'
@@ -734,7 +734,7 @@ def get_eligible_detention_and_demurrage_free_days(result,request):
 
     if (not ((result.get('origin_demurrage') or {}).get('free_limit'))) and method_responses.get('origin_demurrage'):
         result['origin_demurrage'] = {k: method_responses['origin_demurrage'][k] for k in required_attributes if k in method_responses['origin_demurrage']}
-    
+
     if not (result.get('destination_detention') or {}).get('free_limit'):
         if (method_responses.get('destination_detention') or {}):
             result['destination_detention'] = {k: method_responses['destination_detention'][k] for k in required_attributes if k in method_responses['destination_detention']}
@@ -745,21 +745,21 @@ def get_eligible_detention_and_demurrage_free_days(result,request):
     #    result['destination_detention'] = {key:value for key,value in method_responses['destination_detention'].items() if key in required_attributes}
     # else:
     #    result['destination_detention'] = {'free_limit' : DEFAULT_IMPORT_DESTINATION_DETENTION }
-    
+
     if not (result.get('destination_demurrage') or {}).get('free_limit'):
         if (method_responses.get('destination_demurrage') or {}):
             result['destination_demurrage'] = {k: method_responses['destination_demurrage'][k] for k in required_attributes if k in method_responses['destination_demurrage']}
         else:
-            result['destination_demurrage'] = {'free_limit':eval("DEFAULT_{}_DESTINATION_DEMURRAGE".format(request['trade_type'].upper()))} 
-    
+            result['destination_demurrage'] = {'free_limit':eval("DEFAULT_{}_DESTINATION_DEMURRAGE".format(request['trade_type'].upper()))}
+
     # if method_responses['destination_demurrage']:
     #    result['destination_demurrage'] = {key:value for key,value in method_responses['destination_demurrage'].items() if key in required_attributes}
     # else:
     #    result['destination_demurrage'] = {'free_limit' : DEFAULT_IMPORT_DESTINATION_DEMURRAGE}
-    
+
     return result
 
 def get_eligible_fcl_freight_rate_free_day_data(free_day):
-    data = get_eligible_fcl_freight_rate_free_day(free_day['filters']) 
+    data = get_eligible_fcl_freight_rate_free_day(free_day['filters'])
 
     return data
