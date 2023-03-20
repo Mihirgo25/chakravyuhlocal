@@ -1,8 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
-from playhouse.shortcuts import model_to_dict
-from rails_client import client
 from math import ceil
 from datetime import datetime
 import concurrent.futures, json

@@ -1,7 +1,6 @@
 from peewee import * 
 from database.db_session import db
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
-import yaml
 from configs.defintions import FCL_FREIGHT_CHARGES
 import datetime
 from libs.locations import list_location_clusters
@@ -17,9 +16,9 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     location_cluster = BinaryJSONField(null=True)
     fcl_freight_commodity_cluster = BinaryJSONField(null=True)
     cluster_reference_name = CharField(index=True, null=True)
-    cluster_type = CharField(null=True)
+    cluster_type = CharField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
-    extension_name = CharField(null=True)
+    extension_name = CharField(index=True, null=True)
     gri_currency = CharField(null=True)
     gri_rate = DoubleField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
@@ -28,8 +27,8 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     shipping_line = BinaryJSONField(null=True)
-    status = CharField(null=True)
-    trade_type = CharField(null=True)
+    status = CharField(index=True, null=True)
+    trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     def save(self, *args, **kwargs):

@@ -3,7 +3,6 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
-import yaml
 from rails_client import client
 from libs.locations import list_locations
 from fastapi import HTTPException
@@ -27,22 +26,22 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     container_type = CharField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     currency = CharField(index=True, null=True)
-    destination_continent_id = UUIDField(null=True)
-    destination_country_id = UUIDField(null=True)
+    destination_continent_id = UUIDField(index=True, null=True)
+    destination_country_id = UUIDField(index=True, null=True)
     destination_location_id = UUIDField(index=True, null=True)
     destination_location = BinaryJSONField(null=True)
     destination_location_type = CharField(null=True)
-    destination_port_id = UUIDField(null=True)
-    destination_trade_id = UUIDField(null=True)
+    destination_port_id = UUIDField(index=True, null=True)
+    destination_trade_id = UUIDField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    origin_continent_id = UUIDField(null=True)
-    origin_country_id = UUIDField(null=True)
+    origin_continent_id = UUIDField(index=True, null=True)
+    origin_country_id = UUIDField(index=True, null=True)
     origin_destination_location_type = CharField(null=True)
     origin_location_id = UUIDField(index=True, null=True)
     origin_location = BinaryJSONField(null=True)
     origin_location_type = CharField(null=True)
-    origin_port_id = UUIDField(null=True)
-    origin_trade_id = UUIDField(null=True)
+    origin_port_id = UUIDField(index=True, null=True)
+    origin_trade_id = UUIDField(index=True, null=True)
     price = IntegerField(index=True, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(index=True, null=True)
@@ -52,9 +51,9 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_end = DateField(index=True, null=True)
     validity_start = DateField(index=True, null=True)
-    sourced_by_id = UUIDField(index=True,null=True)
+    sourced_by_id = UUIDField(null=True)
     source_by = BinaryJSONField(null=True)
-    procured_by_id = UUIDField(index=True,null=True)
+    procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
     
     def save(self, *args, **kwargs):

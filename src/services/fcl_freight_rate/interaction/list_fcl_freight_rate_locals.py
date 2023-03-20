@@ -1,5 +1,4 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from operator import itemgetter
 import json
@@ -7,7 +6,6 @@ from datetime import datetime
 from rails_client import client
 from playhouse.shortcuts import model_to_dict
 from math import ceil
-import time
 
 possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id']
 possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than']
