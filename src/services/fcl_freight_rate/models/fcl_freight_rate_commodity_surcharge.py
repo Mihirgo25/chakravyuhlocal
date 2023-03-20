@@ -105,23 +105,6 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         else:
             raise HTTPException(status_code=404, detail="Destination Location not found")
     
-    def validate_shipping_line(self):
-        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
-        if shipping_line:
-            shipping_line = shipping_line[0]
-            if shipping_line.get('operator_type') != 'shipping_line':
-                raise HTTPException(status_code=404, detail="Invalid operator type")
-        else:
-            raise HTTPException(status_code=404, detail="Shipping Line not found")
-   
-    def validate_service_provider(self):
-        service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
-        if service_provider:
-            service_provider = service_provider[0]
-            if service_provider.get('account_type') != 'service_provider':
-                raise HTTPException(status_code=404, detail="Invalid operator type")
-        else:
-            raise HTTPException(status_code=404, detail="Service Provider not found")
     
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -146,19 +129,6 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             return True
         return False
     
-    def valid_uniqueness(self):
-        freight_commodity_surcharge_cnt = FclFreightRateCommoditySurcharge.select().where(
-            FclFreightRateCommoditySurcharge.origin_location_id == self.origin_location_id,
-            FclFreightRateCommoditySurcharge.destination_location_id == self.destination_location_id,
-            FclFreightRateCommoditySurcharge.container_size == self.container_size,
-            FclFreightRateCommoditySurcharge.container_type == self.container_type,
-            FclFreightRateCommoditySurcharge.commodity == self.commodity,
-            FclFreightRateCommoditySurcharge.shipping_line_id == self.shipping_line_id,
-            FclFreightRateCommoditySurcharge.service_provider_id == self.service_provider_id
-        ).count()
-       
-        if freight_commodity_surcharge_cnt > 0:
-            raise HTTPException(status_code=400, detail="Freight commodity surcharge already exists")
 
     def update_freight_objects(self):
         freight_query = FclFreightRate.select().where(
@@ -188,8 +158,6 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     def validate(self):
         self.validate_origin_location_type()
         self.validate_destination_location_type()
-        self.validate_shipping_line()
-        self.validate_service_provider()
         if not self.validate_container_size():
             raise HTTPException(status_code=404, detail="Container size not valid")
         if not self.validate_container_type():
@@ -198,5 +166,4 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             raise HTTPException(status_code=404, detail="Commodity not valid")
         if not self.validate_currency():
             raise HTTPException(status_code=404, detail="Currency not valid")
-        self.valid_uniqueness()
         return True

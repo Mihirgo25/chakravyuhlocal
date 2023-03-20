@@ -2,7 +2,7 @@ from peewee import *
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
-from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_PAIR_HIERARCHY
+from configs.fcl_freight_rate_constants import  LOCATION_PAIR_HIERARCHY
 from fastapi import HTTPException
 from params import Slab
 from libs.locations import list_locations
@@ -43,7 +43,7 @@ class FclFreightRateWeightLimit(BaseModel):
     slabs = BinaryJSONField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     sourced_by_id = UUIDField(index=True,null=True)
-    source_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(index=True,null=True)
     procured_by = BinaryJSONField(null=True)
     
@@ -121,29 +121,31 @@ class FclFreightRateWeightLimit(BaseModel):
                 try:
                     Slab.validate(slab)
                 except:
-                    raise HTTPException(status_code=499, detail=f"Incorrect Slab: {slab}")
+                    raise HTTPException(status_code=404, detail=f"Incorrect Slab: {slab}")
 
             slabs = sorted(self.slabs, key=lambda slab:slab['lower_limit'])
 
             if len(slabs) != 0 and float(self.free_limit) != 0 and (float(self.free_limit) > float(slabs[0]['lower_limit'])):
-                raise (slabs, 'lower limit should be greater than free limit')
+                raise HTTPException(status_code=404, detail='lower limit should be greater than free limit')
             
             for index, slab in enumerate(slabs):
                 if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index != 0 and float(slab['lower_limit']) <= float(slabs[index - 1]['upper_limit'])):
-                        raise (slabs, 'invalid')
+                    raise HTTPException(status_code=404, detail=f'{slab} invalid')
 
     def validate_before_save(self):
 
         self.validate_location_ids()
 
         self.validate_free_limit()
-        if not self.valid_uniqueness():
-            raise HTTPException(status_code=499, detail="Violates uniqueness validation")
+
         
         self.validate_slabs()
 
     def update_special_attributes(self):
-        self.update(is_slabs_missing = False) if self.slabs and len(self.slabs) != 0 else self.update(is_slabs_missing = True)
+        if self.slabs and len(self.slabs) != 0:
+            self.is_slabs_missing = False
+        else :
+            self.is_slabs_missing = True
 
     def detail(self):
       return {
