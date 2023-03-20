@@ -19,7 +19,7 @@ def get_instance_url(service_name=None):
         service = COGOMAPS_SERVICE_NAME
     
     if service_name == 'location':
-        instance_url = "http://{}:{}/{}".format(INTERNAL_NLB, service_port, service_name)
+        instance_url = "http://{}:8104/{}".format(INTERNAL_NLB, service_name)
         return instance_url
     
     response = client.discover_instances(
