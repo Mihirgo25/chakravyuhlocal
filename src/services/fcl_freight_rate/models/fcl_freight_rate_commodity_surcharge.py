@@ -4,7 +4,6 @@ import datetime
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import *
-import yaml
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_CURRENCIES ,FCL_FREIGHT_SEASONAL_CHARGES
@@ -130,7 +129,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             (getattr(FclFreightRate, str(f"destination_{self.destination_location_type}_id")) == self.destination_location_id)
         )
         for freight_id in freight_query:
-            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateCommoditySurcharge', object_id=FclFreightRateCommoditySurcharge.id)
+            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateCommoditySurcharge', object_id=self.id)
             mapping.save()
 
     def detail(self):

@@ -5,7 +5,6 @@ import datetime
 from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS
 from configs.global_constants import HAZ_CLASSES
 from fastapi import HTTPException
-import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.operator import Operator
@@ -32,8 +31,8 @@ class FclFreightRateLocal(BaseModel):
     detention_id = UUIDField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporters_count = IntegerField(null=True)
-    is_demurrage_slabs_missing = BooleanField(null=True)
-    is_detention_slabs_missing = BooleanField(null=True)
+    is_demurrage_slabs_missing = BooleanField(index=True, null=True)
+    is_detention_slabs_missing = BooleanField(index=True, null=True)
     is_line_items_error_messages_present = BooleanField(index=True, null=True)
     is_line_items_info_messages_present = BooleanField(index=True, null=True)
     is_local_agent_rate = BinaryJSONField(index=True, null=True)
@@ -70,28 +69,6 @@ class FclFreightRateLocal(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_locals'
-        indexes = (
-            (('container_size', 'container_type', 'commodity'), False),
-            (('container_type', 'commodity'), False),
-            (('port_id', 'container_size', 'container_type', 'commodity', 'trade_type', 'is_line_items_error_messages_present', 'service_provider_id'), False),
-            (('priority_score', 'id', 'service_provider_id'), False),
-            (('priority_score', 'service_provider_id'), False),
-            (('priority_score', 'service_provider_id', 'is_line_items_error_messages_present'), False),
-            (('priority_score', 'service_provider_id', 'is_line_items_info_messages_present'), False),
-            (('priority_score', 'service_provider_id', 'port_id'), False),
-            (('priority_score', 'service_provider_id', 'shipping_line_id', 'is_line_items_error_messages_present'), False),
-            (('priority_score', 'service_provider_id', 'shipping_line_id', 'is_line_items_info_messages_present'), False),
-            (('priority_score', 'service_provider_id', 'trade_type', 'is_line_items_error_messages_present'), False),
-            (('priority_score', 'service_provider_id', 'trade_type', 'is_line_items_info_messages_present'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'port_id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'trade_type'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-        )
-
-
 
     def validate_main_port_id(self):
         if self.port and self.port['is_icd']==False:

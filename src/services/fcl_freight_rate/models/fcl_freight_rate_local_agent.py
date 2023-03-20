@@ -33,9 +33,6 @@ class FclFreightRateLocalAgent(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_local_agents'
-        indexes = (
-            (('location_id', 'trade_type'), True),
-        )
 
     def validate_service_provider(self):
         service_provider_data = organization.list_organizations({'filters':{'id': str(self.service_provider_id)}})

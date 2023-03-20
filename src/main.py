@@ -852,4 +852,4 @@ def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSea
     data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
     end_time = time.time()
     response_time = end_time - start_time
-    return JSONResponse(content={"time": response_time})
+    return JSONResponse(content=data)

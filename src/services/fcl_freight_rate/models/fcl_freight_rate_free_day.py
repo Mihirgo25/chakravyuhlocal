@@ -15,8 +15,8 @@ class BaseModel(Model):
 class FclFreightRateFreeDay(BaseModel):
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
-    continent_id = UUIDField(null=True)
-    country_id = UUIDField(null=True)
+    continent_id = UUIDField(index=True, null=True)
+    country_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     free_days_type = CharField(index=True, null=True)
     free_limit = IntegerField(index=True, null=True)
@@ -27,9 +27,9 @@ class FclFreightRateFreeDay(BaseModel):
     location_id = UUIDField(index=True, null=True)
     location = BinaryJSONField(null=True)
     location_type = CharField(index=True, null=True)
-    port_id = UUIDField(null=True)
+    port_id = UUIDField(index=True, null=True)
     previous_days_applicable = BooleanField(index=True, null=True)
-    rate_not_available_entry = BooleanField(null=True)
+    rate_not_available_entry = BooleanField(index=True, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
@@ -53,24 +53,6 @@ class FclFreightRateFreeDay(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_free_days'
-        indexes = (
-            (('container_size', 'container_type'), False),
-            (('importer_exporter_id', 'service_provider_id'), False),
-            (('rate_not_available_entry', 'location_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'specificity_type', 'importer_exporter_id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'free_days_type', 'port_id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'port_id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'trade_type', 'free_days_type', 'port_id'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'port_id'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'shipping_line_id', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'trade_type', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'port_id'), False),
-            (('updated_at', 'service_provider_id', 'shipping_line_id', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'trade_type', 'is_slabs_missing'), False),
-        )
 
     def validate_location_ids(self):
 
