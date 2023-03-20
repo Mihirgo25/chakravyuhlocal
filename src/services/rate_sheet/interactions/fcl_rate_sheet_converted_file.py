@@ -36,6 +36,7 @@ csv_options = {
 
 last_line_hash = "last_line"
 total_line_hash = "total_line"
+error_present_hash = "error_present"
 
 
 def last_line_key(params):
@@ -61,7 +62,7 @@ def delete_last_line(last_line_hash):
         rd.delete(last_line_hash, last_line_key)
 
 def errors_present_key(params):
-    return  f"rate_sheet_converted_file_errors_present_#{params['id']}"
+    return  f"rate_sheet_converted_file_errors_present_{params['id']}"
 
 def delete_errors_present(params):
     if rd:
@@ -143,13 +144,16 @@ def delete_file_path(params):
     except FileNotFoundError:
         pass
 
+def errors_present_key(params):
+    return f"rate_sheet_converted_file_errors_present_{params['id']}"
 
+def set_errors_present(errors_present, params):
+    if rd:
+        rd.hset(error_present_hash, errors_present_key(params), errors_present)
 
-def get_errors_present():
-    errors_present_key = 'errors_present'
-    value = rd.get(errors_present_key)
+def get_errors_present(params):
+    value = rd.hget(total_line_hash, errors_present_key(params))
     return str(value.decode('utf-8')) == 'true' if value is not None else False
-
 
 def valid_hash(hash, present_fields, blank_fields):
     # print(hash, "hash")
@@ -209,6 +213,639 @@ def convert_date_format(date):
         return date
     parsed_date = parser.parse(date)
     return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
+
+
+def validate_fcl_freight_local(params):
+    headers = ['trade_type', 'port', 'main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'location', 'code', 'unit', 'lower_limit', 'upper_limit', 'price', 'currency', 'remark1', 'remark2', 'remark3']
+
+    total_lines = 0
+    first_row = None
+
+    path = get_original_file_path(params)
+
+    with open(path, "r") as file:
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        for row in reader:
+            total_lines += 1
+            if total_lines == 1:
+                first_row = row
+
+    set_total_line(params, total_lines)
+
+
+    if len([i for i in first_row if i in headers]) != len(headers):
+        params["status"] = "invalidated"
+
+
+    last_line = get_last_line(params)
+    rows = []
+
+    with open(get_file_path(params), 'a+', newline='') as csv_file:
+
+        csv_writer = csv.writer(csv_file)
+        last_line = get_last_line(params)
+        if last_line == 0:
+            csv_writer.writerow(headers)
+
+        index = -1
+        with open(get_original_file_path(params), "r") as csvfile:
+                new_reader = csv.DictReader(csvfile)
+                for row in new_reader:
+                    index += 1
+                    if index < last_line:
+                        continue
+                    present_field = ['trade_type', 'port', 'container_type', 'container_size', 'shipping_line', 'code', 'unit', 'price', 'currency']
+                    blank_field = ['lower_limit', 'upper_limit']
+                    if valid_hash(row, present_field, blank_field):
+                        if rows:
+                            write_fcl_freight_local_object(rows, csv_writer, params)
+                            set_last_line(index, params)
+                        rows = [row]
+
+                    elif rows and (
+                        (valid_hash(
+                            row,
+                            ["code", "unit", "price", "currency"],
+                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit']
+                        )
+                        or valid_hash(
+                            row,
+                            ['lower_limit', 'upper_limit', 'price', 'currency'],
+                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit']
+                        )
+                    )):
+                        rows.append(row)
+                    else:
+                        if rows:
+                            write_fcl_freight_local_object(rows, csv_writer, params)
+                            set_last_line(index, params)
+
+                        set_errors_present(True, params)
+                        set_last_line(index+1, params)
+                        csv_writer.writerow(list(row.values()) + ['Incorrect Row'])
+                        rows = []
+        if rows:
+            write_fcl_freight_local_object(rows, csv_writer, params)
+            set_last_line(total_lines, params)
+            return
+    errors_present = get_errors_present()
+    if errors_present:
+        params['status']= 'invalidated'
+    else:
+        params['status']= 'validated'
+    return params
+
+
+def write_fcl_freight_local_object(rows, csv, params):
+    # correct this if needed
+    object = {key: rows[0][key] for key in ['trade_type', 'port', 'main_port', 'container_size', 'container_type', 'commodity', 'shipping_line']}
+    object['line_items'] = []
+
+    for t in rows[0:-1]:
+        if t["code"]:
+            line_item = {
+                "location": t["location"],
+                "code": t["code"],
+                "unit": t["unit"],
+                "price": t["price"],
+                "currency": t["currency"],
+                "remarks": [t["remark1"], t["remark2"], t["remark3"]].compact(),
+                "slabs": [],
+            }
+            object["data"]["line_items"].append(line_item)
+        else:
+            slab = {
+                "lower_limit": t["lower_limit"],
+                "upper_limit": t["upper_limit"],
+                "price": t["price"],
+                "currency": t["currency"],
+            }
+            object["data"]["line_items"][-1]["slabs"].append(slab)
+
+    # will have to create ValidateFclFreightObject seprately
+    object_validity = validate_fcl_freight_object(params['module'], object)
+
+    if object_validity["valid"]:
+        csv.writerow(rows[0].values())
+    else:
+        csv.writerow(rows[0].values() + [", ".join(object_validity["errors"])])
+        raise Exception("Invalid object")
+
+    for t in rows[1:]:
+        csv.writerow(t.values())
+
+    params['rates_count'] = int(params.get('rates_count')) + 1
+
+
+def process_fcl_freight_local(params):
+    return
+
+
+def create_fcl_freight_rate_local(params):
+    return
+
+
+def validate_fcl_freight_free_day(params):
+    return
+
+
+def write_fcl_freight_free_day_object(params):
+    return
+
+
+def process_fcl_freight_free_day(params):
+    return
+
+
+def create_fcl_freight_rate_free_day(params):
+    return
+
+
+def validate_fcl_freight_commodity_surcharge(params):
+    return
+
+
+def write_fcl_freight_commodity_surcharge_object(params):
+    return
+
+
+def process_fcl_freight_commodity_surcharge(params):
+    return
+
+
+def create_fcl_freight_rate_commodity_surcharge(params):
+    return
+
+
+def validate_fcl_freight_seasonal_surcharge(params):
+    return
+
+
+def write_fcl_freight_seasonal_surcharge_object(params):
+    return
+
+
+def process_fcl_freight_seasonal_surcharge(params):
+    return
+
+
+def create_fcl_freight_rate_seasonal_surcharge(params):
+    return
+
+
+def validate_fcl_freight_weight_limit(params):
+    return
+
+
+def write_fcl_freight_weight_limit_object(params):
+    return
+
+
+def process_fcl_freight_weight_limit(params):
+    total_lines = 0
+    return
+
+
+def create_fcl_freight_rate_weight_limit(params):
+    return
+
+
+def get_location_id(q, country_code=None, service_provider_id=None):
+    pincode_filters = {"type": "pincode", "postal_code": q, "status": "active"}
+    if country_code is not None:
+        pincode_filters = pincode_filters.merge({country_code: country_code})
+    locations = client.ruby.list_locations(
+        {"filters": pincode_filters, "fields": ["id"]}
+    )["list"]
+    if not locations:
+        locations = client.ruby.list_locations(
+            {
+                "filters": {"type": "country", "country_code": q, "status": "active"},
+                "fields": ["id"],
+            }
+        )["list"]
+    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
+    if not locations:
+        country_filters = {"type": "country", "country_code": q, "status": "active"}
+        if country_code is not None:
+            country_filters = {**country_filters, "country_code": country_code}
+        locations = client.ruby.list_locations(filters=country_filters, fields=["id"])[
+            "list"
+        ]
+    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
+    if country_code is not None:
+        seaport_filters = {**seaport_filters, "country_code": country_code}
+    locations = (
+        client.ruby.list_locations(filters=seaport_filters, fields=["id"])["list"]
+        if not locations
+        else locations
+    )
+    airport_filters = {"type": "airport", "port_code": q, "status": "active"}
+    if country_code is not None:
+        airport_filters = {**airport_filters, "country_code": country_code}
+    locations = (
+        client.ruby.list_locations(filters=airport_filters, fields=["id"])["list"]
+        if not locations
+        else locations
+    )
+    name_filters = {"name": q, "status": "active"}
+    if country_code is not None:
+        name_filters = {**name_filters, "country_code": country_code}
+    locations = (
+        client.ruby.list_locations(filters=name_filters, fields=["id"])["list"]
+        if not locations
+        else locations
+    )
+    display_name_filters = {"display_name": q, "status": "active"}
+    if country_code is not None:
+        display_name_filters = {**display_name_filters, "country_code": country_code}
+    locations = (
+        client.ruby.list_locations(filters=display_name_filters, fields=["id"])["list"]
+        if not locations
+        else locations
+    )
+    # check
+    if not locations:
+        locations = client.ruby.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
+        return locations[0] if locations else None
+
+    return locations[0]["id"] if locations else None
+
+
+
+def get_location(location, type):
+    if type == "port":
+        location = client.ruby.list_locations(
+            {"filters": {"type": "seaport", "port_code": location, "status": "active"}}
+        )["list"][0]
+    else:
+        location = client.ruby.list_locations(
+            {"filters": {"type": type, "name": location, "status": "active"}}
+        )["list"][0]
+    return
+
+
+def get_importer_exporter_id(importer_exporter_name):
+    importer_exporter_id = client.ruby.list_organizations(
+        {
+            "filters": {
+                "account_type": "importer_exporter",
+                "short_name": importer_exporter_name,
+                "status": "active",
+            }
+        }
+    )["list"][0]
+    return importer_exporter_id
+
+
+def validate_fcl_freight_freight(params):
+    headers = [
+        "origin_port",
+        "origin_main_port",
+        "destination_port",
+        "destination_main_port",
+        "container_size",
+        "container_type",
+        "commodity",
+        "shipping_line",
+        "validity_start",
+        "validity_end",
+        "code",
+        "unit",
+        "price",
+        "currency",
+        "extend_rates",
+        "weight_free_limit",
+        "weight_lower_limit",
+        "weight_upper_limit",
+        "weight_limit_price",
+        "weight_limit_currency",
+        "destination_detention_free_limit",
+        "destination_detention_lower_limit",
+        "destination_detention_upper_limit",
+        "destination_detention_price",
+        "destination_detention_currency",
+        "schedule_type",
+        "remark1",
+        "remark2",
+        "remark3",
+        "payment_term",
+    ]
+    total_lines = 0
+    first_row = None
+    path = get_original_file_path(params)
+    with open(path, "r") as file:
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        for row in reader:
+            total_lines += 1
+            if total_lines == 1:
+                first_row = row
+    set_total_line(params, total_lines)
+    if len([i for i in first_row if i in headers]) != len(headers):
+        params["status"] = "invalidated"
+    last_line = get_last_line(params)
+    rows = []
+    with open(get_file_path(params), 'a+', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        last_line = get_last_line(params)
+        if last_line == 0:
+            csv_writer.writerow(headers)
+        index = -1
+        with open(get_original_file_path(params), "r") as csvfile:
+                new_reader = csv.DictReader(csvfile)
+                for row in new_reader:
+                    index += 1
+                    # if index < last_line:
+                    #     continue
+                    present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
+                    blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
+                    if valid_hash(row, present_field, blank_field):
+                        if rows:
+                            write_fcl_freight_freight_object(rows, csv_writer, params)
+                            set_last_line(index, params)
+                        rows = [row]
+                    elif rows and (
+                        (valid_hash(
+                            row,
+                            ["code", "unit", "price", "currency"],
+                            [
+                                "origin_port",
+                                "origin_main_port",
+                                "destination_port",
+                                "destination_main_port",
+                                "container_size",
+                                "container_type",
+                                "commodity",
+                                "shipping_line",
+                                "validity_start",
+                                "validity_end",
+                                "weight_free_limit",
+                                "weight_lower_limit",
+                                "weight_upper_limit",
+                                "weight_limit_price",
+                                "weight_limit_currency",
+                                "destination_detention_free_limit",
+                                "destination_detention_lower_limit",
+                                "destination_detention_upper_limit",
+                                "destination_detention_price",
+                                "destination_detention_currency",
+                            ],
+                        )
+                        or valid_hash(
+                            row,
+                            ["weight_free_limit"],
+                            [
+                                "origin_port",
+                                "origin_main_port",
+                                "destination_port",
+                                "destination_main_port",
+                                "container_size",
+                                "container_type",
+                                "commodity",
+                                "shipping_line",
+                                "code",
+                                "unit",
+                                "price",
+                                "currency",
+                                "validity_start",
+                                "validity_end",
+                                "weight_lower_limit",
+                                "weight_upper_limit",
+                                "weight_limit_price",
+                                "weight_limit_currency",
+                                "destination_detention_free_limit",
+                                "destination_detention_lower_limit",
+                                "destination_detention_upper_limit",
+                                "destination_detention_price",
+                                "destination_detention_currency",
+                            ],
+                        )
+                        or valid_hash(
+                            row,
+                            [
+                                "weight_free_limit",
+                                "weight_lower_limit",
+                                "weight_upper_limit",
+                                "weight_limit_price",
+                                "weight_limit_currency",
+                            ],
+                            [
+                                "origin_port",
+                                "origin_main_port",
+                                "destination_port",
+                                "destination_main_port",
+                                "container_size",
+                                "container_type",
+                                "commodity",
+                                "shipping_line",
+                                "code",
+                                "unit",
+                                "price",
+                                "currency",
+                                "validity_start",
+                                "validity_end",
+                                "destination_detention_free_limit",
+                                "destination_detention_lower_limit",
+                                "destination_detention_upper_limit",
+                                "destination_detention_price",
+                                "destination_detention_currency",
+                            ],
+                        )
+                        or valid_hash(
+                            row,
+                            [
+                                "weight_lower_limit",
+                                "weight_upper_limit",
+                                "weight_limit_price",
+                                "weight_limit_currency",
+                            ],
+                            [
+                                "origin_port",
+                                "origin_main_port",
+                                "destination_port",
+                                "destination_main_port",
+                                "container_size",
+                                "container_type",
+                                "commodity",
+                                "shipping_line",
+                                "code",
+                                "unit",
+                                "price",
+                                "currency",
+                                "validity_start",
+                                "validity_end",
+                                "weight_free_limit",
+                                "destination_detention_free_limit",
+                                "destination_detention_lower_limit",
+                                "destination_detention_upper_limit",
+                                "destination_detention_price",
+                                "destination_detention_currency",
+                            ],
+                        )
+                        or valid_hash(
+                            row,
+                            ["destination_detention_free_limit"],
+                            [
+                                "origin_port",
+                                "origin_main_port",
+                                "destination_port",
+                                "destination_main_port",
+                                "container_size",
+                                "container_type",
+                                "commodity",
+                                "shipping_line",
+                                "code",
+                                "unit",
+                                "price",
+                                "currency",
+                                "validity_start",
+                                "validity_end",
+                                "weight_free_limit",
+                                "weight_lower_limit",
+                                "weight_upper_limit",
+                                "weight_limit_price",
+                                "weight_limit_currency",
+                                "destination_detention_lower_limit",
+                                "destination_detention_upper_limit",
+                                "destination_detention_price",
+                                "destination_detention_currency",
+                            ],
+                        )
+                        or valid_hash(
+                            row,
+                            [
+                                "destination_detention_free_limit",
+                                "destination_detention_lower_limit",
+                                "destination_detention_upper_limit",
+                                "destination_detention_price",
+                                "destination_detention_currency",
+                            ],
+                            [
+                                "origin_port",
+                                "origin_main_port",
+                                "destination_port",
+                                "destination_main_port",
+                                "container_size",
+                                "container_type",
+                                "commodity",
+                                "shipping_line",
+                                "code",
+                                "unit",
+                                "price",
+                                "currency",
+                                "validity_start",
+                                "validity_end",
+                                "weight_free_limit",
+                                "weight_lower_limit",
+                                "weight_upper_limit",
+                                "weight_limit_price",
+                                "weight_limit_currency",
+                            ],
+                        )
+                        or valid_hash(
+                            row,
+                            [
+                                "destination_detention_lower_limit",
+                                "destination_detention_upper_limit",
+                                "destination_detention_price",
+                                "destination_detention_currency",
+                            ],
+                            [
+                                "origin_port",
+                                "origin_main_port",
+                                "destination_port",
+                                "destination_main_port",
+                                "container_size",
+                                "container_type",
+                                "commodity",
+                                "shipping_line",
+                                "code",
+                                "unit",
+                                "price",
+                                "currency",
+                                "validity_start",
+                                "validity_end",
+                                "weight_free_limit",
+                                "weight_lower_limit",
+                                "weight_upper_limit",
+                                "weight_limit_price",
+                                "weight_limit_currency",
+                                "destination_detention_free_limit",
+                            ],
+                        )
+                    )):
+                        rows.append(row)
+                    else:
+                        if rows:
+                            write_fcl_freight_freight_object(rows, csv_writer, params)
+                            set_last_line(index, params)
+                        csv_writer.writerow(list(row.values()) + ['Incorrect Row'])
+                        set_errors_present(True, params)
+                        set_last_line(index+1, params)
+                        rows = []
+        if rows:
+            write_fcl_freight_freight_object(rows, csv_writer, params)
+            set_last_line(total_lines, params)
+            return
+    errors_present = get_errors_present()
+    if errors_present:
+        params['status']= 'invalidated'
+    else:
+        params['status']= 'validated'
+    return params
+
+
+def write_fcl_freight_freight_object(rows, csv, params):
+    object = {key: rows[0][key] for key in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']}
+    object['validity_start'] = convert_date_format(object['validity_start'])
+    object['validity_end'] = convert_date_format(object['validity_end'])
+    object['line_items'] = []
+    for t in rows:
+        if t['code'] is not None:
+            line_item = {key: t[key] for key in ['code', 'unit', 'price', 'currency']}
+            line_item['remarks'] = [t['remark1'], t['remark2'], t['remark3']]
+            line_item['remarks'] = list(filter(None, line_item['remarks']))
+            line_item['slabs'] = []
+            object['line_items'].append(line_item)
+        elif t['weight_free_limit'] is not None or t['weight_lower_limit'] is not None:
+            object['weight_limit'] = object['weight_limit'] or {}
+            object['weight_limit']['free_limit'] = t['weight_free_limit'] or object['weight_limit']['free_limit']
+            object['weight_limit']['slabs'] = [] or object['weight_limit']['slabs']
+            weight_slab = {key: t[key] for key in ['weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency']}
+            weight_slab['lower_limit'] = weight_slab.pop('weight_lower_limit')
+            weight_slab['upper_limit'] = weight_slab.pop('weight_upper_limit')
+            weight_slab['price'] = weight_slab.pop('weight_limit_price')
+            weight_slab['currency'] = weight_slab.pop('weight_limit_currency')
+            if weight_slab['lower_limit'] is not None:
+                object['weight_limit']['slabs'].append(weight_slab)
+        elif t['destination_detention_free_limit'] is not None or t['destination_detention_lower_limit'] is not None:
+             object['destination_local'] =  object['destination_local'] or {'detention': {} }
+             object['destination_local']['detention']['free_limit'] = object['destination_local']['detention']['free_limit'] or t['destination_detention_free_limit']
+             object['destination_local']['detention']['slabs'] = [] or object['destination_local']['detention']['slabs']
+             slab = {key: t[key] for key in ['destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']}
+             slab['lower_limit'] = slab.pop('destination_detention_lower_limit')
+             slab['upper_limit'] = slab.pop('destination_detention_upper_limit')
+             slab['price'] = slab.pop('destination_detention_price')
+             slab['currency'] = slab.pop('destination_detention_currency')
+             if slab['lower_limit'] is not None:
+                object['destination_local']['detention']['slabs'].append(slab)
+
+    object['service_provider_id'] = params['service_provider_id']
+    object['cogo_entity_id'] = params['cogo_entity_id']
+    object_validity = validate_fcl_freight_object(params.get('module'), object)
+    if object_validity.get("valid"):
+        csv.writerow(rows[0].values())
+    else:
+        csv.writerow(rows[0].values() + [", ".join(object_validity.get("errors"))])
+        raise Exception("Invalid object")
+
+    for t in rows[1:]:
+        csv.writerow(t.values())
+
+    params['rates_count'] = int(params['rates_count']) + 1
+
+    return
+
 
 def process_fcl_freight_freight(params):
     total_lines = 0
@@ -477,7 +1114,6 @@ def process_fcl_freight_freight(params):
     ) * 100
 
 
-
 def create_fcl_freight_freight_rate(
     params, rows, created_by_id, procured_by_id, sourced_by_id
 ):
@@ -560,569 +1196,6 @@ def create_fcl_freight_freight_rate(
         request_params["extend_rates"] = True
         del request_params["is_extended"]
         extend_create_fcl_freight_rate_data(request_params)
-
-
-def write_fcl_freight_local_object(params, rows, csv):
-    object = {
-        "trade_type": rows[0]["trade_type"],
-        "port": rows[0]["port"],
-        "main_port": rows[0]["main_port"],
-        "container_size": rows[0]["container_size"],
-        "container_type": rows[0]["container_type"],
-        "commodity": rows[0]["commodity"],
-        "shipping_line": rows[0]["shipping_line"],
-        "data": {"line_items": []},
-        "service_provider_id": params["service_provider_id"],
-    }
-
-    for t in rows[0:-1]:
-        if t["code"]:
-            line_item = {
-                "location": t["location"],
-                "code": t["code"],
-                "unit": t["unit"],
-                "price": t["price"],
-                "currency": t["currency"],
-                "remarks": [t["remark1"], t["remark2"], t["remark3"]].compact(),
-                "slabs": [],
-            }
-            object["data"]["line_items"].append(line_item)
-        else:
-            slab = {
-                "lower_limit": t["lower_limit"],
-                "upper_limit": t["upper_limit"],
-                "price": t["price"],
-                "currency": t["currency"],
-            }
-            object["data"]["line_items"][-1]["slabs"].append(slab)
-
-    # will have to create ValidateFclFreightObject seprately
-    object_validity = validate_fcl_freight_object(params['module'], object)
-
-    if object_validity["valid"]:
-        csv.writerow(rows[0].values())
-    else:
-        csv.writerow(rows[0].values() + [", ".join(object_validity["errors"])])
-        raise Exception("Invalid object")
-
-    for t in rows[1:]:
-        csv.writerow(t.values())
-
-    params.rates_count = int(params.rates_count) + 1
-
-
-def process_fcl_freight_local(params):
-    return
-
-
-def create_fcl_freight_rate_local(params):
-    return
-
-
-def validate_fcl_freight_free_day(params):
-    return
-
-
-def write_fcl_freight_free_day_object(params):
-    return
-
-
-def process_fcl_freight_free_day(params):
-    return
-
-
-def create_fcl_freight_rate_free_day(params):
-    return
-
-
-def validate_fcl_freight_commodity_surcharge(params):
-    return
-
-
-def write_fcl_freight_commodity_surcharge_object(params):
-    return
-
-
-def process_fcl_freight_commodity_surcharge(params):
-    return
-
-
-def create_fcl_freight_rate_commodity_surcharge(params):
-    return
-
-
-def validate_fcl_freight_seasonal_surcharge(params):
-    return
-
-
-def write_fcl_freight_seasonal_surcharge_object(params):
-    return
-
-
-def process_fcl_freight_seasonal_surcharge(params):
-    return
-
-
-def create_fcl_freight_rate_seasonal_surcharge(params):
-    return
-
-
-def validate_fcl_freight_weight_limit(params):
-    return
-
-
-def write_fcl_freight_weight_limit_object(params):
-    return
-
-
-def process_fcl_freight_weight_limit(params):
-    total_lines = 0
-    return
-
-
-def create_fcl_freight_rate_weight_limit(params):
-    return
-
-
-def get_location_id(q, country_code=None, service_provider_id=None):
-    pincode_filters = {"type": "pincode", "postal_code": q, "status": "active"}
-    if country_code is not None:
-        pincode_filters = pincode_filters.merge({country_code: country_code})
-    locations = client.ruby.list_locations(
-        {"filters": pincode_filters, "fields": ["id"]}
-    )["list"]
-    if not locations:
-        locations = client.ruby.list_locations(
-            {
-                "filters": {"type": "country", "country_code": q, "status": "active"},
-                "fields": ["id"],
-            }
-        )["list"]
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if not locations:
-        country_filters = {"type": "country", "country_code": q, "status": "active"}
-        if country_code is not None:
-            country_filters = {**country_filters, "country_code": country_code}
-        locations = client.ruby.list_locations(filters=country_filters, fields=["id"])[
-            "list"
-        ]
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        seaport_filters = {**seaport_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=seaport_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
-    airport_filters = {"type": "airport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        airport_filters = {**airport_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=airport_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
-    name_filters = {"name": q, "status": "active"}
-    if country_code is not None:
-        name_filters = {**name_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=name_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
-    display_name_filters = {"display_name": q, "status": "active"}
-    if country_code is not None:
-        display_name_filters = {**display_name_filters, "country_code": country_code}
-    locations = (
-        client.ruby.list_locations(filters=display_name_filters, fields=["id"])["list"]
-        if not locations
-        else locations
-    )
-    # check
-    if not locations:
-        locations = client.ruby.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
-        return locations[0] if locations else None
-
-    return locations[0]["id"] if locations else None
-
-
-
-def get_location(location, type):
-    if type == "port":
-        location = client.ruby.list_locations(
-            {"filters": {"type": "seaport", "port_code": location, "status": "active"}}
-        )["list"][0]
-    else:
-        location = client.ruby.list_locations(
-            {"filters": {"type": type, "name": location, "status": "active"}}
-        )["list"][0]
-    return
-
-
-def get_importer_exporter_id(importer_exporter_name):
-    importer_exporter_id = client.ruby.list_organizations(
-        {
-            "filters": {
-                "account_type": "importer_exporter",
-                "short_name": importer_exporter_name,
-                "status": "active",
-            }
-        }
-    )["list"][0]
-    return importer_exporter_id
-
-
-def validate_fcl_freight_freight(params):
-    headers = [
-        "origin_port",
-        "origin_main_port",
-        "destination_port",
-        "destination_main_port",
-        "container_size",
-        "container_type",
-        "commodity",
-        "shipping_line",
-        "validity_start",
-        "validity_end",
-        "code",
-        "unit",
-        "price",
-        "currency",
-        "extend_rates",
-        "weight_free_limit",
-        "weight_lower_limit",
-        "weight_upper_limit",
-        "weight_limit_price",
-        "weight_limit_currency",
-        "destination_detention_free_limit",
-        "destination_detention_lower_limit",
-        "destination_detention_upper_limit",
-        "destination_detention_price",
-        "destination_detention_currency",
-        "schedule_type",
-        "remark1",
-        "remark2",
-        "remark3",
-        "payment_term",
-    ]
-    total_lines = 0
-    first_row = None
-    path = get_original_file_path(params)
-    first_row = None
-    with open(path, "r") as file:
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        for row in reader:
-            total_lines += 1
-            if total_lines == 1:
-                first_row = row
-    set_total_line(params, total_lines)
-    if len([i for i in first_row if i in headers]) != len(headers):
-        params["status"] = "invalidated"
-    last_line = get_last_line(params)
-    rows = []
-    with open(get_file_path(params), 'a+', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file)
-        last_line = get_last_line(params)
-        if last_line == 0:
-            csv_writer.writerow(headers)
-        index = -1
-        with open(get_original_file_path(params), "r") as csvfile:
-                new_reader = csv.DictReader(csvfile)
-                for row in new_reader:
-                    index += 1
-                    # if index < last_line:
-                    #     continue
-                    present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
-                    blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
-                    if valid_hash(row, present_field, blank_field):
-                        if rows:
-                            write_fcl_freight_freight_object(rows, csv_writer, params)
-                            set_last_line(index, params)
-                        rows = [row]
-                    elif rows and (
-                        (valid_hash(
-                            row,
-                            ["code", "unit", "price", "currency"],
-                            [
-                                "origin_port",
-                                "origin_main_port",
-                                "destination_port",
-                                "destination_main_port",
-                                "container_size",
-                                "container_type",
-                                "commodity",
-                                "shipping_line",
-                                "validity_start",
-                                "validity_end",
-                                "weight_free_limit",
-                                "weight_lower_limit",
-                                "weight_upper_limit",
-                                "weight_limit_price",
-                                "weight_limit_currency",
-                                "destination_detention_free_limit",
-                                "destination_detention_lower_limit",
-                                "destination_detention_upper_limit",
-                                "destination_detention_price",
-                                "destination_detention_currency",
-                            ],
-                        )
-                        or valid_hash(
-                            row,
-                            ["weight_free_limit"],
-                            [
-                                "origin_port",
-                                "origin_main_port",
-                                "destination_port",
-                                "destination_main_port",
-                                "container_size",
-                                "container_type",
-                                "commodity",
-                                "shipping_line",
-                                "code",
-                                "unit",
-                                "price",
-                                "currency",
-                                "validity_start",
-                                "validity_end",
-                                "weight_lower_limit",
-                                "weight_upper_limit",
-                                "weight_limit_price",
-                                "weight_limit_currency",
-                                "destination_detention_free_limit",
-                                "destination_detention_lower_limit",
-                                "destination_detention_upper_limit",
-                                "destination_detention_price",
-                                "destination_detention_currency",
-                            ],
-                        )
-                        or valid_hash(
-                            row,
-                            [
-                                "weight_free_limit",
-                                "weight_lower_limit",
-                                "weight_upper_limit",
-                                "weight_limit_price",
-                                "weight_limit_currency",
-                            ],
-                            [
-                                "origin_port",
-                                "origin_main_port",
-                                "destination_port",
-                                "destination_main_port",
-                                "container_size",
-                                "container_type",
-                                "commodity",
-                                "shipping_line",
-                                "code",
-                                "unit",
-                                "price",
-                                "currency",
-                                "validity_start",
-                                "validity_end",
-                                "destination_detention_free_limit",
-                                "destination_detention_lower_limit",
-                                "destination_detention_upper_limit",
-                                "destination_detention_price",
-                                "destination_detention_currency",
-                            ],
-                        )
-                        or valid_hash(
-                            row,
-                            [
-                                "weight_lower_limit",
-                                "weight_upper_limit",
-                                "weight_limit_price",
-                                "weight_limit_currency",
-                            ],
-                            [
-                                "origin_port",
-                                "origin_main_port",
-                                "destination_port",
-                                "destination_main_port",
-                                "container_size",
-                                "container_type",
-                                "commodity",
-                                "shipping_line",
-                                "code",
-                                "unit",
-                                "price",
-                                "currency",
-                                "validity_start",
-                                "validity_end",
-                                "weight_free_limit",
-                                "destination_detention_free_limit",
-                                "destination_detention_lower_limit",
-                                "destination_detention_upper_limit",
-                                "destination_detention_price",
-                                "destination_detention_currency",
-                            ],
-                        )
-                        or valid_hash(
-                            row,
-                            ["destination_detention_free_limit"],
-                            [
-                                "origin_port",
-                                "origin_main_port",
-                                "destination_port",
-                                "destination_main_port",
-                                "container_size",
-                                "container_type",
-                                "commodity",
-                                "shipping_line",
-                                "code",
-                                "unit",
-                                "price",
-                                "currency",
-                                "validity_start",
-                                "validity_end",
-                                "weight_free_limit",
-                                "weight_lower_limit",
-                                "weight_upper_limit",
-                                "weight_limit_price",
-                                "weight_limit_currency",
-                                "destination_detention_lower_limit",
-                                "destination_detention_upper_limit",
-                                "destination_detention_price",
-                                "destination_detention_currency",
-                            ],
-                        )
-                        or valid_hash(
-                            row,
-                            [
-                                "destination_detention_free_limit",
-                                "destination_detention_lower_limit",
-                                "destination_detention_upper_limit",
-                                "destination_detention_price",
-                                "destination_detention_currency",
-                            ],
-                            [
-                                "origin_port",
-                                "origin_main_port",
-                                "destination_port",
-                                "destination_main_port",
-                                "container_size",
-                                "container_type",
-                                "commodity",
-                                "shipping_line",
-                                "code",
-                                "unit",
-                                "price",
-                                "currency",
-                                "validity_start",
-                                "validity_end",
-                                "weight_free_limit",
-                                "weight_lower_limit",
-                                "weight_upper_limit",
-                                "weight_limit_price",
-                                "weight_limit_currency",
-                            ],
-                        )
-                        or valid_hash(
-                            row,
-                            [
-                                "destination_detention_lower_limit",
-                                "destination_detention_upper_limit",
-                                "destination_detention_price",
-                                "destination_detention_currency",
-                            ],
-                            [
-                                "origin_port",
-                                "origin_main_port",
-                                "destination_port",
-                                "destination_main_port",
-                                "container_size",
-                                "container_type",
-                                "commodity",
-                                "shipping_line",
-                                "code",
-                                "unit",
-                                "price",
-                                "currency",
-                                "validity_start",
-                                "validity_end",
-                                "weight_free_limit",
-                                "weight_lower_limit",
-                                "weight_upper_limit",
-                                "weight_limit_price",
-                                "weight_limit_currency",
-                                "destination_detention_free_limit",
-                            ],
-                        )
-                    )):
-                        rows.append(row)
-                    else:
-                        if rows:
-                            write_fcl_freight_freight_object(rows, csv_writer, params)
-                            set_last_line(index, params)
-                        csv_writer.writerow(list(row.values()) + ['Incorrect Row'])
-                        rows = []
-        if rows:
-            write_fcl_freight_freight_object(rows,csv_writer, params)
-            set_last_line(total_lines, params)
-            return
-    errors_present = get_errors_present()
-    if errors_present:
-        params['status']= 'invalidated'
-    else:
-        params['status']= 'validated'
-    return params
-
-
-def write_fcl_freight_freight_object(rows, csv, params):
-    object = {key: rows[0][key] for key in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']}
-    object['validity_start'] = convert_date_format(object['validity_start'])
-    object['validity_end'] = convert_date_format(object['validity_end'])
-    object['line_items'] = []
-    for t in rows:
-        if t['code'] is not None:
-            line_item = {key: t[key] for key in ['code', 'unit', 'price', 'currency']}
-            line_item['remarks'] = [t['remark1'], t['remark2'], t['remark3']]
-            line_item['remarks'] = list(filter(None, line_item['remarks']))
-            line_item['slabs'] = []
-            object['line_items'].append(line_item)
-        elif t['weight_free_limit'] is not None or t['weight_lower_limit'] is not None:
-            object['weight_limit'] = object['weight_limit'] or {}
-            object['weight_limit']['free_limit'] = t['weight_free_limit'] or object['weight_limit']['free_limit']
-            object['weight_limit']['slabs'] = [] or object['weight_limit']['slabs']
-            weight_slab = {key: t[key] for key in ['weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency']}
-            weight_slab['lower_limit'] = weight_slab.pop('weight_lower_limit')
-            weight_slab['upper_limit'] = weight_slab.pop('weight_upper_limit')
-            weight_slab['price'] = weight_slab.pop('weight_limit_price')
-            weight_slab['currency'] = weight_slab.pop('weight_limit_currency')
-            if weight_slab['lower_limit'] is not None:
-                object['weight_limit']['slabs'].append(weight_slab)
-        elif t['destination_detention_free_limit'] is not None or t['destination_detention_lower_limit'] is not None:
-             object['destination_local'] =  object['destination_local'] or {'detention': {} }
-             object['destination_local']['detention']['free_limit'] = object['destination_local']['detention']['free_limit'] or t['destination_detention_free_limit']
-             object['destination_local']['detention']['slabs'] = [] or object['destination_local']['detention']['slabs']
-             slab = {key: t[key] for key in ['destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']}
-             slab['lower_limit'] = slab.pop('destination_detention_lower_limit')
-             slab['upper_limit'] = slab.pop('destination_detention_upper_limit')
-             slab['price'] = slab.pop('destination_detention_price')
-             slab['currency'] = slab.pop('destination_detention_currency')
-             if slab['lower_limit'] is not None:
-                object['destination_local']['detention']['slabs'].append(slab)
-
-    object['service_provider_id'] = params['service_provider_id']
-    object['cogo_entity_id'] = params['cogo_entity_id']
-    object_validity = validate_fcl_freight_object(params.get('module'), object)
-    if object_validity.get("valid"):
-        csv.writerow(rows[0].values())
-    else:
-        csv.writerow(rows[0].values() + [", ".join(object_validity.get("errors"))])
-        raise Exception("Invalid object")
-
-    for t in rows[1:]:
-        csv.writerow(t.values())
-
-    params['rates_count'] = int(params['rates_count']) + 1
-
-    return
-
-
-
-def validate_fcl_freight_local(params):
-   return
 
 
 
