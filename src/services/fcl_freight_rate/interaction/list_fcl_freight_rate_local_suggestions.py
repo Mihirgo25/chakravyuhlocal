@@ -5,6 +5,7 @@ from playhouse.shortcuts import model_to_dict
 import concurrent.futures, json
 from rails_client import client
 from math import ceil
+from micro_services.client import *
 
 possible_direct_filters = ['port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'trade_type', 'container_size', 'container_type', 'commodity']
 possible_indirect_filters = ['location_ids']
@@ -82,7 +83,7 @@ def get_data(query):
         if result['total_price_currency']:
             total_price = 0
             for line_item in result['line_items']:
-                conversion = client.ruby.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
+                conversion = common.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
                 if 'price' in conversion:
                     total_price += conversion['price']
             result['total_price'] = total_price

@@ -3,7 +3,7 @@ from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_fi
 from operator import itemgetter
 import json
 from datetime import datetime
-from rails_client import client
+from micro_services.client import *
 from playhouse.shortcuts import model_to_dict
 from math import ceil
 
@@ -91,7 +91,7 @@ def get_data(query):
             total_price = 0
             for line_item in result['line_items']:
                 if line_item['currency'] != result['total_price_currency']:
-                    conversion = client.ruby.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
+                    conversion = common.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
                     if 'price' in conversion:
                         total_price += conversion['price']
                     else:

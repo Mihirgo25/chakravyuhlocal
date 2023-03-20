@@ -9,6 +9,7 @@ from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL
 from math import ceil
+from micro_services.client import *
 
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'shipping_line_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
@@ -49,7 +50,7 @@ def apply_indirect_filters(query, filters):
 
 def apply_relevant_supply_agent_filter(query, filters):
     page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-    expertises = client.ruby.list_partner_user_expertises({ 'filters': { 'service_type': 'fcl_freight', 'partner_user_id': filters['relevant_supply_agent'] }, page_limit: page_limit })['list']
+    expertises = partner.list_partner_user_expertises({ 'filters': { 'service_type': 'fcl_freight', 'partner_user_id': filters['relevant_supply_agent'] }, page_limit: page_limit })['list']
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id = [t['destination_location_id'] for t in expertises]
     query = query.where((FclFreightRate.origin_port_id == origin_port_id) |

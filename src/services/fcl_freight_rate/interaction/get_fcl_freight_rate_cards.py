@@ -5,7 +5,7 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT, CONFIRM
 from datetime import datetime
 from configs.fcl_freight_rate_constants import RATE_CONSTANT_MAPPING, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, ELIGIBLE_SERVICE_ORGANIZATION_IDS
 import concurrent.futures
-from rails_client import client
+from micro_services.client import *
 from peewee import fn, JOIN
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES
@@ -77,7 +77,7 @@ def ignore_non_eligible_service_providers(lists):
     return result
 
 def ignore_non_active_shipping_lines(lists):
-    operator_result = client.ruby.list_operators({'filters':{'operator_type': 'shipping_line', 'status': 'active'}, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT, 'pagination_data_required':False})
+    operator_result = common.list_operators({'filters':{'operator_type': 'shipping_line', 'status': 'active'}, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT, 'pagination_data_required':False})
     if 'list' in operator_result and len(operator_result['list']) > 0:
         ids = [item['id'] for item in operator_result['list']]
     else:
@@ -638,7 +638,7 @@ def build_additional_weight_line_item_object(additional_weight_rate, additional_
 
 
 def get_default_overweight_surcharges(result, request):
-    organization_category = client.ruby.get_organization({'id': result['freight']['service_provider_id']})['data']['category_types']
+    organization_category = organization.get_organization({'id': result['freight']['service_provider_id']})['data']['category_types']
 
     weight_slab_result = get_fcl_weight_slabs_configuration({
             'origin_location_id': [request['origin_port_id'], request['origin_country_id']], 

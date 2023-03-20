@@ -38,3 +38,6 @@ class CommonApiClient:
     
     def bulk_update_shipment_quotations(self, data = {}):
         return self.client.request('GET','bulk_update_shipment_quotations',data)
+    
+    def get_shipment(self, data = {}):
+        return self.client.request('GET','get_shipment',data)
