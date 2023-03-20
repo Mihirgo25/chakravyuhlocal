@@ -56,6 +56,9 @@ def execute_transaction_code(request):
             setattr(commodity_surcharge, k, v)
     commodity_surcharge.validate()
 
+    commodity_surcharge.sourced_by_id = request.get('sourced_by_id')
+    commodity_surcharge.procured_by_id = request.get('procured_by_id')
+
     if not commodity_surcharge.save():
         raise HTTPException(status_code=422, detail="Commodity Surcharge not saved")
     
@@ -64,5 +67,5 @@ def execute_transaction_code(request):
     create_audit(request, commodity_surcharge.id)
 
     return {
-      'id': commodity_surcharge.id
+      'id': str(commodity_surcharge.id)
     }
