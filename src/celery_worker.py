@@ -79,14 +79,13 @@ def fcl_freight_local_data_updation(local_object,request):
   from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
 
     
-  update_multiple_service_objects.apply_async(kwargs={"local_object":local_object},queue='low')
+  update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
 
   local_updations(local_object,request)
 
 
 @celery.task()
 def update_multiple_service_objects(object):
-  print("1")
   get_multiple_service_objects(object)
 
 

@@ -17,6 +17,8 @@ def create_audit(request, fcl_freight_local_id):
         action_name = 'create',
         performed_by_id = request.get('performed_by_id'),
         data = audit_data,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id'),
         object_id = fcl_freight_local_id,
         object_type = 'FclFreightRateLocal'
     )
@@ -61,8 +63,6 @@ def execute_transaction_code(request):
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
-    fcl_freight_local.rate_sheet_id = request.get('rate_sheet_id')
-    fcl_freight_local.source = request.get('source')
     fcl_freight_local.data = request.get('data')
 
     if request['data'].get('line_items'):

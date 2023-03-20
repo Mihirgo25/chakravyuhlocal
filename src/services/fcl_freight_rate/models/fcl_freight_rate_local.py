@@ -9,7 +9,7 @@ import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from libs.locations import list_locations
-
+from services.fcl_freight_rate.models.operator import Operator
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -135,26 +135,20 @@ class FclFreightRateLocal(BaseModel):
     def validate_before_save(self):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
-        print(1)
         if not self.validate_main_port_id():
             raise HTTPException(status_code=499, detail='main_port_id is not valid')
-        print(1)
 
         if not self.validate_trade_type():
             raise HTTPException(status_code=499, detail='trade_type is not valid')
-        print(1)
 
         if not self.validate_container_size():
             raise HTTPException(status_code=499, detail='container_size is not valid')
-        print(1)
 
         if not self.validate_container_type():
             raise HTTPException(status_code=499, detail='container_type is not valid')
-        print(1)
 
         if not self.validate_data():
             raise HTTPException(status_code=499, detail='data is not valid')
-        print(1)
 
     def update_special_attributes(self):
         self.update_line_item_messages()
@@ -189,11 +183,11 @@ class FclFreightRateLocal(BaseModel):
         ports = list_locations({'id': location_ids})['list']
         for port in ports:
             if port.get('id') == self.port_id:
-                self.port = port
                 self.country_id = port.get('country_id', None)
                 self.trade_id = port.get('trade_id', None) 
                 self.continent_id = port.get('continent_id', None)
                 self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
+                self.port = {key:value for key,value in port.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
             elif self.main_port_id and port.get('id') == self.main_port_id:
                 self.main_port = port
 
@@ -201,9 +195,10 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = client.ruby.list_operators({'filters': { 'id': str(self.shipping_line_id) }, 'pagination_data_required': False})['list']
+        shipping_line = Operator.select().where(Operator.id== self.shipping_line_id).first()
+        print(shipping_line)
         if len(shipping_line) != 0:
-            self.shipping_line = shipping_line[0]
+            self.shipping_line = {key:value for key,value in shipping_line[0] if key in ['id', 'business_name', 'short_name', 'logo_url']}
 
     def possible_charge_codes(self):
         self.set_port()
