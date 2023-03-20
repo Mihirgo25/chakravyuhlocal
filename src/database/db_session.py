@@ -19,3 +19,6 @@ db_rails = PostgresqlDatabase(
     host = RAILS_DATABASE_HOST,
     port = RAILS_DATABASE_PORT
     )
+
+rd = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+
