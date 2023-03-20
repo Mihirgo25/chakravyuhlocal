@@ -1,4 +1,4 @@
-from configs.env import MICRO_SERVICE_NAMESPACE, COMMON_SERVICE_PORT, COMMON_SERVICE_NAME, AUTH_SERVICE_PORT, AUTH_SERVICE_NAME ,APP_ENV,RUBY_ADDRESS_URL
+from configs.env import *
 import boto3
 
 client = boto3.client(
@@ -14,6 +14,13 @@ def get_instance_url(service_name=None):
     if service_name in ['organization', 'user', 'lead', 'partner']:
         port = AUTH_SERVICE_PORT
         service = AUTH_SERVICE_NAME
+    if service_name == 'location':
+        port = COGOMAPS_SERVICE_PORT
+        service = COGOMAPS_SERVICE_NAME
+    
+    if service_name == 'location':
+        instance_url = "http://{}:{}/{}".format(INTERNAL_NLB, service_port, service_name)
+        return instance_url
     
     response = client.discover_instances(
         NamespaceName=MICRO_SERVICE_NAMESPACE,
