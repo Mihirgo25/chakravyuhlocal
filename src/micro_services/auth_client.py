@@ -14,4 +14,7 @@ class AuthApiClient:
 
     def list_organizations(self, data):
         return self.client.request('GET', 'list_organizations', data)
+        
+    def update_organization(self,data={}):
+        return self.client.request('POST','update_organization',data)
 

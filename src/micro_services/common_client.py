@@ -17,4 +17,7 @@ class CommonApiClient:
 
     def list_partners(self, data):
         return self.client.request('GET', 'list_partners', data)
+    
+    def create_sailing_schedule_port_pair_coverage(self, data = {}):
+        return self.client.request('POST','create_sailing_schedule_port_pair_coverage',data)
 
