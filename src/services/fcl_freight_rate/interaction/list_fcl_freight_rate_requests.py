@@ -1,34 +1,33 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
-from playhouse.shortcuts import model_to_dict
-from micro_services.client import *
+from micro_services.client import partner
 from math import ceil
 from peewee import fn, SQL
 from datetime import datetime
 import concurrent.futures, json
+from playhouse.shortcuts import model_to_dict
 
 possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
-def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True, spot_search_details_required = False):
-    if type(filters) != dict:
-        filters = json.loads(filters)
+def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
     query = FclFreightRateRequest.select()
-    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
+    if filters:
+        if type(filters) != dict:
+            filters = json.loads(filters)
 
-    query = apply_indirect_filters(query, filters)
+        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
+        query = apply_indirect_filters(query, filters)
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
     query = get_page(query, page, page_limit)
-    data = get_data(query, spot_search_details_required)
+    data = get_data(query)
 
     pagination_data = get_pagination_data(query, page, page_limit)
 
-
     return {'list': data } | (pagination_data) | (stats)
-
 
 def get_page(query, page, page_limit):
     return query.select().order_by(FclFreightRateRequest.created_at.desc()).paginate(page, page_limit)
@@ -61,67 +60,8 @@ def apply_similar_id_filter(query,filters):
     return query.where(FclFreightRateRequest.origin_port_id == rate_request_obj['origin_port_id'], FclFreightRateRequest.destination_port_id == rate_request_obj['destination_port_id'], FclFreightRateRequest.container_size == rate_request_obj['container_size'], FclFreightRateRequest.container_type == rate_request_obj['container_type'], FclFreightRateRequest.commodity == rate_request_obj['commodity'], FclFreightRateRequest.inco_term == rate_request_obj['inco_term'])
 
 def get_data(query):
-    data = []
-    item['preferred_shipping_lines'] = []
-    for item in query.dicts():
-        for id in item.get('preferred_shipping_line_ids',[]):
-            try:
-                item['preferred_shipping_lines']  = item['preferred_shipping_lines']+[item['shipping_line'][str(id)]]
-            except KeyError:
-                item['preferred_shipping_lines'] = None
-        data.append(item)
+    data = [model_to_dict(item) for item in query.execute()]
     return data
-
-# def add_service_objects(data):
-#     shipping_line_ids = []
-#     for item in data:
-#         if item.get('preferred_shipping_line_ids'):
-#             shipping_line_ids.append(item.get('preferred_shipping_line_ids'))
-
-#     location_data = []
-#     for item in data: 
-#         location_data.append(str(item['origin_port_id']))
-#         location_data.append(str(item['destination_port_id']))
-
-#     objects = [
-#     {
-#         'name': 'user',
-#         'filters': { 'id': list(set([str(t['performed_by_id']) for t in data] + [str(t['closed_by_id']) for t in data]))},
-#         'fields': ['id', 'name', 'email', 'mobile_country_code', 'mobile_number']
-#     },
-#     {
-#         'name': 'location',
-#         'filters': { 'id': list(set(location_data))},
-#         'fields': ['id', 'name', 'display_name', 'port_code', 'type']
-#     },
-#     {
-#         'name': 'operator',
-#         'filters': { 'id': list(set([str(id) for id in sum(shipping_line_ids,[])]))},
-#         'fields': ['id', 'business_name', 'short_name', 'logo_url']
-#     }
-#     ]
-
-#     if spot_search_details_required:
-#         objects.append({
-#         'name': 'spot_search', 
-#         'filters': { 'id': list(set([t['source_id'] for t in data])) },
-#         'fields': ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']
-#         })
-    
-
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
-#     for i in range(len(data)):
-#         data[i]['origin_port'] = service_objects['location'][data[i]['origin_port_id']] if 'location' in service_objects and data[i].get('origin_port_id') in service_objects['location'] else None
-#         data[i]['performed_by'] = service_objects['user'][data[i]['performed_by_id']] if 'user' in service_objects and data[i].get('performed_by_id') in service_objects['user'] else None
-#         data[i]['closed_by'] = service_objects['user'][data[i]['closed_by_id']] if 'user' in service_objects and data[i].get('closed_by_id') in service_objects else None
-#         data[i]['destination_port'] = service_objects['location'][data[i]['destination_port_id']]if 'location' in service_objects and data[i].get('destination_port_id') in service_objects else None
-#         data[i]['cargo_readiness_date'] = data[i]['cargo_readiness_date'] if 'cargo_readiness_date' in data[i] else None
-#         data[i]['closing_remarks'] = data[i]['closing_remarks'] if 'closing_remarks' in data[i] else None
-#         data[i]['preferred_shipping_lines'] = []
-
-#         data[i]['spot_search'] = service_objects['spot_search'][data[i]['source_id']] if 'spot_search' in service_objects and data[i].get('source_id') in service_objects['spot_search'] else None
-       
-#     return data
 
 def get_pagination_data(query, page, page_limit):
   pagination_data = {

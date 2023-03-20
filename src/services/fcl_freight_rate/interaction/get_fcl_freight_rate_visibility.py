@@ -1,7 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from datetime import datetime
 from services.fcl_freight_rate.models.organization import Organization
-from services.fcl_freight_rate.models.organization_services import OrganizationService
+from database.rails_db import *
+from micro_services.client import *
 from datetime import datetime
 
 def get_fcl_freight_rate_visibility(request):
@@ -13,10 +14,14 @@ def get_fcl_freight_rate_visibility(request):
 
     response_object = {'reason': '', 'is_rate_available': False, 'is_visible': False }
 
-    org_details = Organization.select().where(Organization.id == request['service_provider_id'], Organization.account_type == 'service_provider').dicts().get()
+    org_details = get_service_provider(request['service_provider_id'])[0]
 
     if org_details:
-        org_services_data = list(OrganizationService.select().where(OrganizationService.organization_id == org_details['id'], OrganizationService.status == 'active').dicts())
+        org_services_data = organization.list_organization_users({'filters':{'organization_id' : org_details['id'], 'status' : 'active'}})
+        if org_services_data:
+            org_services_data = org_services_data['list']
+        else:
+            org_services_data = []
         org_services = [service['service'] for service in org_services_data]
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)

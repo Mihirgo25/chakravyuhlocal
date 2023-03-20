@@ -2,7 +2,6 @@ from services.fcl_freight_rate.models.fcl_freight_commodity_cluster import FclFr
 from fastapi import HTTPException
 from database.db_session import db
 
-
 def create_fcl_freight_commodity_cluster(request):
     with db.atomic() as transaction:
         try:

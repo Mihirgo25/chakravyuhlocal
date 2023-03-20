@@ -3,7 +3,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate import *
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 import peewee, json
 from math import ceil
-from playhouse.shortcuts import model_to_dict
+from micro_services.client import maps
+from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
 
 possible_direct_filters = ['id', 'extension_name', 'service_provider_id', 'shipping_line_id', 'cluster_id', 'cluster_type', 'cluster_reference_name', 'status', 'trade_type']
 
@@ -18,7 +19,7 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateExtensionRuleSets)
         query = apply_indirect_filters(query, filters)
 
-    data = [model_to_dict(item) for item in query.execute()]
+    data = get_data(query)
     pagination_data = get_pagination_data(query, page, page_limit)
 
     data = {'list':data} | (pagination_data)
@@ -33,6 +34,7 @@ def get_query(page, page_limit, sort_by, sort_type):
         .from_(FclFreightRateExtensionRuleSets.alias('t1')))
     return query
 
+
 def apply_indirect_filters(query, filters):
     for key in filters:
         if key in possible_indirect_filters:
@@ -44,7 +46,22 @@ def apply_indirect_filters(query, filters):
 def apply_q_filter(query, filters):
     return query.where(FclFreightRateExtensionRuleSets.extension_name.contains(filters['q']))
 
-
+def get_data(query):
+    data = []
+    for item in query.dicts():
+        cluster_data = maps.list_location_cluster({'filters':{'id':item['cluster_id']}})
+        if cluster_data:
+            item['location_cluster'] = {'id':cluster_data['list'][0]['id'], 'cluster_name' : cluster_data['list'][0]['cluster_name'], 'cluster_type':cluster_data['list'][0]['cluster_type'], 'location_type':cluster_data[0]['location_type']}
+        else:
+            item['location_cluster'] = {}
+        commodity_cluster_data = list_fcl_freight_commodity_clusters(filters = {'id':item['cluster_id']})
+        if commodity_cluster_data:
+            item['fcl_freight_commodity_cluster'] = {'id':commodity_cluster_data['list'][0]['id'], 'name' : commodity_cluster_data['list'][0]['name']}
+        else:
+            item['fcl_freight_commodity_cluster'] = {}
+        data.append(item)
+    return data
+        
 def get_pagination_data(query, page, page_limit):
     return {
         'page': page,

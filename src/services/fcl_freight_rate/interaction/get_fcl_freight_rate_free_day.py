@@ -1,7 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from fastapi import HTTPException
 
-
 def get_fcl_freight_rate_free_day(request):
     if not all_fields_present(request):
         return {}

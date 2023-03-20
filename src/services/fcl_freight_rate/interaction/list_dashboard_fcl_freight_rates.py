@@ -1,4 +1,3 @@
-from services.fcl_freight_rate.models.organization_services import OrganizationService
 import concurrent.futures
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates

@@ -1,8 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-import json
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from rails_client import client
 from celery_worker import delay_fcl_functions
 from datetime import datetime
 from database.db_session import db
@@ -54,7 +52,6 @@ def create_fcl_freight_rate(request):
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
-    print(datetime.now())
     freight = (
         FclFreightRate.select()
         .where(
@@ -63,7 +60,7 @@ def create_fcl_freight_rate(request):
         )
         .first()
     )
-    print(datetime.now())
+
     if not freight:
         freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
         for key in list(row.keys()):

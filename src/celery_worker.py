@@ -4,6 +4,11 @@ import time
 from configs.env import *
 from micro_services.client import organization, common
 from services.fcl_freight_rate.helpers.get_multuple_service_objects import get_multiple_service_objects
+from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
+from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
+from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
+from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
+from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 
 
 CELERY_CONFIG = {
@@ -81,6 +86,42 @@ def fcl_freight_local_data_updation(local_object,request):
 @celery.task()
 def update_multiple_service_objects(object):
   get_multiple_service_objects(object)
+
+@celery.task()
+def send_closed_notifications_to_sales_agent_function(object):
+    object.send_closed_notifications_to_sales_agent()
+
+@celery.task()
+def send_create_notifications_to_supply_agents_function(object):
+    object.send_create_notifications_to_supply_agents()
+
+@celery.task()
+def send_notifications_to_supply_agents_local_request(object):
+    object.send_notifications_to_supply_agents()
+
+@celery.task()
+def create_communication_background(data):
+    common.create_communication(data)
+
+@celery.task()
+def send_fcl_freight_rate_task_notification(task_id):
+    send_fcl_freight_rate_task_notification(task_id)
+
+
+@celery.task()
+def send_closed_notifications_to_sales_agent_local_request(object):
+    object.send_closed_notifications_to_sales_agent()
+
+@celery.task()
+def send_closed_notifications_to_sales_agent_free_day_request(object):
+    object.send_closed_notifications_to_sales_agent()
+
+@celery.task()
+def send_closed_notifications_to_sales_agent_feedback(object):
+    object.send_closed_notifications_to_sales_agent()
+
+
+
 
 
 

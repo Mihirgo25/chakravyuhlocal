@@ -45,7 +45,6 @@ class FclFreightRateRequest(BaseModel):
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
-    preferred_shipping_lines = BinaryJSONField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     request_type = CharField(null=True)
@@ -66,6 +65,7 @@ class FclFreightRateRequest(BaseModel):
     def validate_source(self):
         if self.source and self.source not in REQUEST_SOURCES:
             raise HTTPException(status_code=400, detail="Invalid source")
+
     
     def validate_source_id(self):
         if self.source == 'spot_search':

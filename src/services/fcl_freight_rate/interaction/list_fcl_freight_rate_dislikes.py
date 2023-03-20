@@ -21,9 +21,8 @@ def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
         query = apply_indirect_filters(query, filters)
-
     data = get_data(query)
-
+    
     pagination_data = get_pagination_data(query, page, page_limit)
 
     return { 'list': data } | (pagination_data)

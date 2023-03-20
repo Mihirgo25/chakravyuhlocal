@@ -380,10 +380,9 @@ def list_fcl_freight_rate_free_day_requests_data(
     page_limit: int = 10,
     page: int = 1,
     is_stats_required: bool = True,
-    performed_by_id: str = None,
-    spot_search_details_required: bool = False
+    performed_by_id: str = None
     ):
-    data = list_fcl_freight_rate_free_day_requests(filters, page_limit, page, is_stats_required, performed_by_id, spot_search_details_required)
+    data = list_fcl_freight_rate_free_day_requests(filters, page_limit, page, is_stats_required, performed_by_id)
     return data
 
 @app.get("/list_fcl_freight_rates")
@@ -419,8 +418,7 @@ def list_fcl_freight_rate_local_agent_data(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    pagination_data_required: bool = True,
-    add_service_objects_required: bool = True):
+    pagination_data_required: bool = True):
     try:
         data = list_fcl_freight_rate_local_agents(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
         data = jsonable_encoder(data)
@@ -447,10 +445,9 @@ def list_fcl_freight_rate_requests_data(
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
-    is_stats_required: bool = True,
-    spot_search_details_required: bool = False
+    is_stats_required: bool = True
     ):
-    data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required, spot_search_details_required)
+    data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
     return data
 
 @app.get("/list_fcl_freight_rate_seasonal_surcharges")
@@ -470,10 +467,9 @@ def list_fcl_freight_rate_feedbacks_data(
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
-    is_stats_required: bool = True,
-    spot_search_details_required: bool = False
+    is_stats_required: bool = True
     ):
-    data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required, spot_search_details_required)
+    data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required)
     return data
 
 

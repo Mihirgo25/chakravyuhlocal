@@ -1,9 +1,8 @@
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from rails_client import client
-from services.fcl_freight_rate.models.user import User
 from datetime import datetime, timedelta
 from peewee import fn
+from database.rails_db import *
 
 
 def get_fcl_freight_rate_stats(request):
@@ -35,9 +34,9 @@ def get_tech_ops_dashboard_stats(request):
         return stats 
 
     user_ids = list(set([t['performed_by_id'] for t in stats]))
-    users = list(User.select().where(User.id.in_(user_ids)).limit(MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT).dicts())
+    users = get_user(user_ids)
     
-    users = [{'id':str(user['id']), 'name':user['name'], 'email':user['name'], 'mobile_number_eformat':user['name']} for user in users]
+    users = [{'id':str(user['id']), 'name':user['name'], 'email':user['email'], 'mobile_number_eformat':user['mobile_number_eformat']} for user in users]
     users = {user['id']: user for user in users}
 
     average_tat = 0

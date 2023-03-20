@@ -60,7 +60,7 @@ def get_user(id):
         id = (id,)
     else:
         id = tuple(id)
-    sql = 'select users.id, users.name, users.email from users where users.id in %s'
+    sql = 'select users.id, users.name, users.email, users.mobile_number_eformat from users where users.id in %s'
     cur.execute(sql, (id,))
     result = cur.fetchall()
     all_result = []

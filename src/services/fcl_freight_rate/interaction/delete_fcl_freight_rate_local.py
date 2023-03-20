@@ -17,7 +17,6 @@ def execute_transaction_code(request):
     if not object:
         raise HTTPException(status_code=499, detail="Freight rate local id not found")
 
-    # object.update_columns(get_delete_params())
     for key, value in delete_params.items():
         setattr(object, key, value)
     object.save()
@@ -45,7 +44,6 @@ def find_object(request):
         object = None
     return object
 
-# def get_delete_params():
 delete_params = {
         'line_items': [],
         'data': {},

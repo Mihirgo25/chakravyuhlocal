@@ -8,7 +8,7 @@ def create_fcl_freight_rate_bulk_operation(request):
     params = {'action_name':action_name, 'data':data, 'performed_by_id':request['performed_by_id'], 'service_provider_id':request['service_provider_id']}
     bulk_operation = FclFreightRateBulkOperation(**params)
 
-    # bulk_operation.delay.eval(f"perform_{action_name}_action({request['sourced_by_id']},{request['procured_by_id']}, {request['cogo_entity_id']})")
+    bulk_operation.delay.eval(f"perform_{action_name}_action({request['sourced_by_id']},{request['procured_by_id']}, {request['cogo_entity_id']})")
     
     bulk_operation.save()
     
