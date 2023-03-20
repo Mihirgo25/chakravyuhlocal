@@ -154,7 +154,6 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   cluster_id: str 
   cluster_reference_name: str
   cluster_type: str
-  created_at: datetime
   extension_name: str
   gri_currency: str = None
   gri_rate: float = None
@@ -577,3 +576,37 @@ class CreateFclFreightRateWeightLimit(BaseModel):
   free_limit: float
   remarks: list[str] = None
   slabs: list[Slab] = None
+
+class CreateFclFreightCommoditySurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  commodity: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+
+class CreateFclFreightSeasonalSurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  code: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+  validity_start: datetime = None
+  validity_end: datetime = None

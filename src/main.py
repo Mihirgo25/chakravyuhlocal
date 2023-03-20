@@ -80,6 +80,8 @@ from datetime import datetime
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
 from configs.defintions import yml_obj
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 
 
 app = FastAPI(debug=True)
@@ -723,3 +725,19 @@ def get_fcl_freight_commodity_cluster_data(
     }
     data = get_fcl_freight_commodity_cluster(request)
     return data
+
+@app.post("/create_fcl_freight_commodity_surcharge")
+def create_fcl_freight_commodity_surcharge_data(request: CreateFclFreightCommoditySurcharge):
+    start_time = time.time()
+    data = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
+    end_time = time.time()
+    response_time = end_time - start_time
+    return JSONResponse(content=data, headers={"X-Response-Time": str(response_time)})
+
+@app.post("/create_fcl_freight_rate_seasonal_surcharge")
+def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSeasonalSurcharge):
+    start_time = time.time()
+    data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
+    end_time = time.time()
+    response_time = end_time - start_time
+    return JSONResponse(content={"time": response_time})

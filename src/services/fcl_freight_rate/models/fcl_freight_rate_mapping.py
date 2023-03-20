@@ -14,7 +14,7 @@ class BaseModel(Model):
 
 class FclFreightRateMappings(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
-    fcl_freight_id = ForeignKeyField(FclFreightRate, backref='fcl_freight_rate_mappings')
+    fcl_freight_id = UUIDField(null=True )
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     object_id = UUIDField(null=True)
     object_type = CharField(index=True, null=True)
@@ -26,7 +26,3 @@ class FclFreightRateMappings(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_mappings'
-        indexes = (
-            (('fcl_freight_id', 'object_type', 'object_id'), False),
-            (('object_id', 'object_type'), False),
-        )
