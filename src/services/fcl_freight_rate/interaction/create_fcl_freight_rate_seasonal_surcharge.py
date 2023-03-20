@@ -71,5 +71,5 @@ def execute_transaction_code(request):
     create_audit(request, seasonal_surcharge.id)
 
     return {
-      id: str(seasonal_surcharge.id)
+      'id': str(seasonal_surcharge.id)
     }

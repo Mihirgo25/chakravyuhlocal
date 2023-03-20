@@ -131,7 +131,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             (getattr(FclFreightRate, str(f"destination_{self.destination_location_type}_id")) == self.destination_location_id)
         )
         for freight_id in freight_query:
-            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateCommoditySurcharge', object_id=FclFreightRateCommoditySurcharge.id)
+            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateCommoditySurcharge', object_id=self.id)
             mapping.save()
 
     def detail(self):
