@@ -11,7 +11,7 @@ def create_audit(request, freight_id):
     audit_data["validity_start"] = request["validity_start"].isoformat()
     audit_data["validity_end"] = request["validity_end"].isoformat()
     audit_data["line_items"] = request["line_items"]
-    audit_data["weight_limit"] = request["weight_limit"]
+    audit_data["weight_limit"] = request.get("weight_limit")
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
     audit_data["is_extended"] = request.get("is_extended")

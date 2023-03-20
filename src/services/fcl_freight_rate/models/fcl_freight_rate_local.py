@@ -7,7 +7,6 @@ from configs.global_constants import HAZ_CLASSES
 from fastapi import HTTPException
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
-from services.fcl_freight_rate.models.operator import Operator
 from micro_services.client import *
 
 class UnknownField(object):
@@ -172,8 +171,7 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = Operator.select().where(Operator.id== self.shipping_line_id).first()
-        print(shipping_line)
+        shipping_line = common.list_operators({'id':self.shipping_line_id})['list']
         if len(shipping_line) != 0:
             self.shipping_line = {key:value for key,value in shipping_line[0] if key in ['id', 'business_name', 'short_name', 'logo_url']}
 

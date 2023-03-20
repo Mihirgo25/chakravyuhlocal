@@ -1,6 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from datetime import datetime
-from services.fcl_freight_rate.models.organization import Organization
 from database.rails_db import *
 from micro_services.client import *
 from datetime import datetime
