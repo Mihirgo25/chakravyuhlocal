@@ -17,6 +17,8 @@ def create_audit(request, seasonal_surcharge_id):
         rate_sheet_id = request.get('rate_sheet_id'),
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
+        sourced_by_id = request['sourced_by_id'],
+        procured_by_id = request['procured_by_id'],
         data = audit_data,
         object_id = seasonal_surcharge_id,
         object_type = 'FclFreightRateSeasonalSurcharge'
