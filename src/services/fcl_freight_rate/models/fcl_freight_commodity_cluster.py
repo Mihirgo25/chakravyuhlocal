@@ -2,12 +2,10 @@ from peewee import *
 from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
-from rails_client import client
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import FREIGHT_CONTAINER_COMMODITY_MAPPINGS
 from configs.fcl_freight_rate_constants import *
 import yaml
-from rails_client import client
 from fastapi import HTTPException
 
 class UnknownField(object):

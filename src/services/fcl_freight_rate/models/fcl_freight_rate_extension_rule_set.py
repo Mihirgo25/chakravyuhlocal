@@ -1,12 +1,11 @@
 from peewee import * 
 from database.db_session import db
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
-import yaml
 from configs.defintions import FCL_FREIGHT_CHARGES
 import datetime
-from libs.locations import list_location_clusters
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
+from micro_services.client import *
 class BaseModel(Model):
     class Meta:
         database = db
@@ -54,7 +53,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     def validate_cluster_id(self):
         if self.cluster_type == 'commodity' and list_fcl_freight_commodity_clusters({'filters':{'id': self.cluster_id}}):
             return
-        elif self.cluster_type == 'location' and list_location_clusters({'filters':{'id': self.cluster_id}}):
+        elif self.cluster_type == 'location' and maps.list_location_cluster({'filters':{'id': self.cluster_id}}):
             return
         elif self.cluster_type == 'container' and self.cluster_id in CONTAINER_CLUSTERS.keys():
             return

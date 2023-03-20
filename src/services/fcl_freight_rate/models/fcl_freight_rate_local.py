@@ -1,7 +1,6 @@
 from peewee import * 
 from database.db_session import db
 from playhouse.postgres_ext import *
-from rails_client import client
 import datetime
 from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS
 from configs.global_constants import HAZ_CLASSES
@@ -9,8 +8,8 @@ from fastapi import HTTPException
 import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
-from libs.locations import list_locations
 from services.fcl_freight_rate.models.operator import Operator
+from micro_services.client import *
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -181,7 +180,7 @@ class FclFreightRateLocal(BaseModel):
         location_ids = [str(self.port_id)]
         if self.main_port_id:
             location_ids.append(str(self.main_port_id))
-        ports = list_locations({'id': location_ids})['list']
+        ports = maps.list_locations({'id': location_ids})['list']
         for port in ports:
             if port.get('id') == self.port_id:
                 self.country_id = port.get('country_id', None)

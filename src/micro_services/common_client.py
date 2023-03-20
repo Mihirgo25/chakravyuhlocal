@@ -20,4 +20,21 @@ class CommonApiClient:
     
     def create_sailing_schedule_port_pair_coverage(self, data = {}):
         return self.client.request('POST','create_sailing_schedule_port_pair_coverage',data)
-
+    
+    def list_spot_searches(self, data = {}):
+        return self.client.request('GET', 'list_spot_searches', data)
+    
+    def list_checkouts(self, data = {}):
+        return self.client.request('GET', 'list_checkouts', data)
+    
+    def get_spot_search(self, data = {}):
+        return self.client.request('GET', 'get_spot_search', data)
+    
+    def create_communication(self, data = {}):
+        return self.client.request('POST','create_communication',data)
+    
+    def get_money_exchange_for_fcl(self, data = {}):
+        return self.client.request('GET','get_money_exchange_for_fcl',data)
+    
+    def bulk_update_shipment_quotations(self, data = {}):
+        return self.client.request('GET','bulk_update_shipment_quotations',data)

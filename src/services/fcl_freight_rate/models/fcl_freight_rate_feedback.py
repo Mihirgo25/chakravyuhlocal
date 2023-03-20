@@ -5,10 +5,10 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBACKS, FEEDBACK_TYPES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.defintions import FCL_FREIGHT_CURRENCIES
-from rails_client import client
-from libs.locations import list_locations
 from fastapi import HTTPException
 import yaml, datetime
+from database.rails_db import *
+from micro_services.client import *
 
 
 class UnknownField(object):
@@ -42,6 +42,7 @@ class FclFreightRateFeedback(BaseModel):
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
+    preferred_shipping_lines = BinaryJSONField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedbacks_serial_id_seq'::regclass)")])
     service_provider = BinaryJSONField(null=True)
@@ -59,10 +60,6 @@ class FclFreightRateFeedback(BaseModel):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateFeedback, self).save(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
-      self.updated_at = datetime.datetime.now()
-      return super(FclFreightRateFeedback, self).save(*args, **kwargs)
-
     class Meta:
         table_name = 'fcl_freight_rate_feedbacks'
 
@@ -73,12 +70,12 @@ class FclFreightRateFeedback(BaseModel):
 
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = client.ruby.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
+            spot_search_data = common.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
             if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
                 return True
 
         if self.source == 'checkout':
-            checkout_data = client.ruby.list_checkouts({'filters':{'id': [str(self.source_id)]}})
+            checkout_data = common.list_checkouts({'filters':{'id': [str(self.source_id)]}})
             if 'list' in checkout_data and len(checkout_data['list']) != 0:
                 return True
         return False
@@ -90,14 +87,14 @@ class FclFreightRateFeedback(BaseModel):
         return False    
 
     def validate_performed_by_id(self):
-        data = client.ruby.get_users({'id': self.performed_by_id})
+        data = get_user(self.performed_by_id)
         if data != {}:
             return True
         else:
             raise False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = client.ruby.list_organizations({'filters':{'id': [str(self.performed_by_org_id)]}})
+        performed_by_org_data = get_service_provider(self.performed_by_org_id)
         if 'list' in performed_by_org_data and len(performed_by_org_data) > 0 and performed_by_org_data['list'][0]['account_type'] == 'importer_exporter':
             return True
         else:
@@ -126,10 +123,17 @@ class FclFreightRateFeedback(BaseModel):
         return False
 
     def validate_preferred_shipping_line_ids(self):
-        shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(x) for x in self.preferred_shipping_line_ids]}})
-        if 'list' in shipping_line_data and (len(shipping_line_data) == len(self.preferred_shipping_line_ids)):
-            return True
-        return False
+        if not self.preferred_shipping_line_ids:
+            pass 
+
+        if self.preferred_shipping_line_ids:
+            preferred_shipping_lines = []
+            for shipping_line_id in self.preferred_shipping_line_ids:
+                shipping_line_data = get_shipping_line(shipping_line_id)
+                if len(shipping_line_data) == 0:
+                    return False
+                preferred_shipping_lines.append(shipping_line_data[0])
+            self.preferred_shipping_lines = preferred_shipping_lines
 
     def validate_feedback_type(self):
         if self.feedback_type in FEEDBACK_TYPES:
@@ -163,9 +167,8 @@ class FclFreightRateFeedback(BaseModel):
             if not self.validate_preferred_detention_free_days():
                 raise HTTPException(status_code=404, detail="incorrect preferred detention free days")
 
-        if len(self.preferred_shipping_line_ids) != 0:
-            if not self.validate_preferred_shipping_line_ids():
-                raise HTTPException(status_code=404, detail="incorrect preferred shipping line ids")
+        if not self.validate_preferred_shipping_line_ids():
+            raise HTTPException(status_code=404, detail="incorrect preferred shipping line ids")
 
         if not self.validate_feedback_type():
             raise HTTPException(status_code=404, detail="incorrect feedback type")
@@ -206,22 +209,22 @@ class FclFreightRateFeedback(BaseModel):
             destination_locations = [t for t in destination_locations if t is not None]
         else:
             destination_locations = []
-
-        supply_agents_list = client.ruby.list_partner_user_expertises({
+        
+        supply_agents_list = partner.list_partner_user_expertises({
             'filters': {'service_type': 'fcl_freight','status': 'active','origin_location_id': origin_locations,'destination_location_id': destination_locations},
             'pagination_data_required': False,
             'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         })['list']
         supply_agents_list = list(set(t['partner_user_id'] for t in supply_agents_list))
 
-        supply_agents_user_ids = client.ruby.list_partner_users({   ##############
+        supply_agents_user_ids = partner.list_partner_users({   ##############
             'filters': {'id': supply_agents_list},
             'pagination_data_required': False,
             'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
             })['list']
         supply_agents_user_ids = list(set(t['user_id'] for t in supply_agents_user_ids))
 
-        route = list_locations({'id': [locations_data.origin_port_id, locations_data.destination_port_id]})['list']
+        route = maps.list_locations({'id': [locations_data.origin_port_id, locations_data.destination_port_id]})['list']
         route = {t['id']:t['display_name'] for t in route}
 
         return {
@@ -251,7 +254,7 @@ class FclFreightRateFeedback(BaseModel):
 
         for user_id in feedback_info['user_ids']:
             data['user_id'] = user_id
-            client.ruby.create_communication(data)
+            common.create_communication(data)
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(
@@ -267,11 +270,11 @@ class FclFreightRateFeedback(BaseModel):
         
         # for item in loc_data:
         #     locations_data = model_to_dict(item)
-        location_pair_name = list_locations({'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]})['list']
+        location_pair_name = maps.list_locations({'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]})['list']
         location_pair_name = {t['id']:t['display_name'] for t in location_pair_name}
 
         try:
-            importer_exporter_id = client.ruby.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id'] 
+            importer_exporter_id = common.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id'] 
         except:
             importer_exporter_id = None
 
@@ -291,4 +294,4 @@ class FclFreightRateFeedback(BaseModel):
                 'importer_exporter_id': importer_exporter_id
             }
         }
-        client.ruby.create_communication(data)
+        common.create_communication(data)

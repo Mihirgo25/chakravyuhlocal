@@ -39,7 +39,7 @@ def get_service_provider(id):
         id = (id,)
     else:
         id = tuple(id)
-    sql = 'select organizations.id, organizations.business_name, organizations.short_name from organizations where organizations.id in %s'
+    sql = 'select organizations.id, organizations.business_name, organizations.short_name, organizations.account_type from organizations where organizations.id in %s'
     cur.execute(sql, (id,))
     result = cur.fetchall()
     all_result = []
@@ -48,7 +48,8 @@ def get_service_provider(id):
             {
                 "id": res[0],
                 "business_name": res[1],
-                "short_name": res[2]
+                "short_name": res[2],
+                "account_type":res[3]
             }
         )
     cur.close()

@@ -25,7 +25,7 @@ def execute_transaction_code(request):
     create_audit(request, object.id)
 
     return {
-      id: object.id
+      'id': object.id
     }
 
 def create_audit(request, freight_rate_local_id):

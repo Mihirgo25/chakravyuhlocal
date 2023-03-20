@@ -1,13 +1,11 @@
 from peewee import *
-from rails_client import client
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
-from libs.locations import list_locations
 from fastapi import HTTPException
 from params import Slab
-
+from micro_services.client import *
 
 class BaseModel(Model):
     class Meta:
@@ -76,7 +74,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = list_locations({'id': str(self.location_id)})['list']
+        location_data = maps.list_locations({'id': str(self.location_id)})['list']
 
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]
@@ -98,14 +96,14 @@ class FclFreightRateFreeDay(BaseModel):
         return False
 
     def validate_shipping_line(self):
-        shipping_line_data = client.ruby.list_operators({'filters': {'id': str(self.shipping_line_id)}})['list']
+        shipping_line_data = common.list_operators({'filters': {'id': str(self.shipping_line_id)}})['list']
         if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
             self.shipping_line = shipping_line_data[0]
             return True
         return False
 
     def validate_service_provider(self):
-        service_provider_data = client.ruby.list_organizations({'filters': {'id': str(self.service_provider_id)}})['list']
+        service_provider_data = organization.list_organizations({'filters': {'id': str(self.service_provider_id)}})['list']
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
@@ -113,7 +111,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_importer_exporter(self):
         if self.importer_exporter_id:
-            importer_exporter_data = client.ruby.list_organizations({'filters': {'id': str(self.importer_exporter_id)}})['list']
+            importer_exporter_data = organization.list_organizations({'filters': {'id': str(self.importer_exporter_id)}})['list']
             if (len(importer_exporter_data) != 0) and importer_exporter_data[0].get('account_type') == 'importer_exporter':
                 self.importer_exporter = importer_exporter_data[0]
                 return True

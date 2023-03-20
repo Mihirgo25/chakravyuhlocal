@@ -4,9 +4,8 @@ from playhouse.postgres_ext import *
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import FREIGHT_CONTAINER_COMMODITY_MAPPINGS
-from rails_client import client
-from libs.locations import list_locations
 import datetime
+from micro_services.client import *
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -59,7 +58,7 @@ class FclFreightRateTask(BaseModel):
         
     def validate_port_id(self):
         obj = {"id": [(self.port_id)],'type':'seaport'}
-        port = list_locations(obj)['list']
+        port = maps.list_locations(obj)['list']
         if port:
             port =port[0]
             self.port = {key:value for key,value in port.items() if key in ['id', 'name','display_name', 'port_code', 'type']}
@@ -75,14 +74,14 @@ class FclFreightRateTask(BaseModel):
             if self.main_port_id and self.main_port_id!=self.port_id:
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
         elif self.port and self.port['is_icd']==True:
-            main_port_data = list_locations({"id": [str(self.main_port_id)],'type':'seaport','is_icd':False})['list']
+            main_port_data = maps.list_locations({"id": [str(self.main_port_id)],'type':'seaport','is_icd':False})['list']
             if main_port_data:
                 self.main_port = {key:value for key,value in main_port_data[0].items() if key in ['id', 'name','display_name', 'port_code', 'type']}
             else:
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
 
     def validate_shipping_line_id(self):
-        shipping_line_data = client.ruby.list_operators({'filters':{'id': [str(self.shipping_line_id)],'operator_type':'shipping_line'}})['list']
+        shipping_line_data = common.list_operators({'filters':{'id': [str(self.shipping_line_id)],'operator_type':'shipping_line'}})['list']
         if shipping_line_data:
             self.shipping_line = shipping_line_data[0]
         else:
