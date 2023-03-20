@@ -20,7 +20,6 @@ celery.conf.update(**CELERY_CONFIG)
 
 @celery.task()
 def create_fcl_freight_rate_delay(request):
-    from rails_client import client
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
     return create_fcl_freight_rate(request)
 
