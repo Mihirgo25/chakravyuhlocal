@@ -154,7 +154,6 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   cluster_id: str 
   cluster_reference_name: str
   cluster_type: str
-  created_at: datetime
   extension_name: str
   gri_currency: str = None
   gri_rate: float = None
