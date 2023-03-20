@@ -12,7 +12,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional, Or, SchemaError
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
-from rails_client import client
 from params import FreeDay
 from celery import current_app, shared_task
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
@@ -22,6 +21,7 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from libs.locations import list_locations
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
+from micro_services.client import *
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -347,7 +347,7 @@ class FclFreightRate(BaseModel):
 
           for t in validities:
             price = []
-            new_price =  client.ruby.get_money_exchange_for_fcl({'price': t["price"], 'from_currency': t['currency'], 'to_currency':currency})['price']
+            new_price =  common.get_money_exchange_for_fcl({'price': t["price"], 'from_currency': t['currency'], 'to_currency':currency})['price']
             price.append(new_price)
             freight_rate_min_price = min(price)
 
@@ -384,7 +384,7 @@ class FclFreightRate(BaseModel):
             currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
             currency = currency_lists[0]
             if len(set(currency_lists)) != 1:
-                price = float(sum(client.ruby.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
+                price = float(sum(common.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             else:
                 price = float(sum(item["price"] for item in line_items))
             new_validity_object = {
@@ -839,7 +839,7 @@ class FclFreightRate(BaseModel):
       validity = self.validities[-1]
 
 
-      result = client.ruby.get_money_exchange_for_fcl({"price":validity['price'], "from_currency":validity['currency'], "to_currency":'INR'})
+      result = common.get_money_exchange_for_fcl({"price":validity['price'], "from_currency":validity['currency'], "to_currency":'INR'})
       return result.get('price')
     
     def create_fcl_freight_free_days(self, origin_local, destination_local, performed_by_id, sourced_by_id, procured_by_id):

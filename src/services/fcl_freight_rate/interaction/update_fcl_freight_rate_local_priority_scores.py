@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 import concurrent.futures
 from datetime import datetime, timedelta
 import pytz
-from rails_client import client
+from micro_services.client import *
 from configs.global_constants import POTENTIAL_CONTAINERS_BOOKING_COUNTS, POTENTIAL_CONVERSION_RATIO
 from database.db_session import db
 
@@ -39,7 +39,7 @@ def update_priority_score(group):
     spot_searches = SpotSearch.select().where(id == spot_search_ids)
     importer_exporter_ids = set(spot_searches.select(spot_searches.importer_exporter_id).execute())
     spot_searches_importer_exporters_count = importer_exporter_ids.count()
-    organization_sizes = client.ruby.get_organization({'pagination_data_required': False, 'filters': { 'id': importer_exporter_ids }, 'page_limit': 1000 })['list']
+    organization_sizes = organization.list_organizations({'pagination_data_required': False, 'filters': { 'id': importer_exporter_ids }, 'page_limit': 1000 })['list']
     res = {}
     for i, v in organization_sizes['sizes'].items():
         res[v] = [i] if v not in res.keys() else res[v] + [i]

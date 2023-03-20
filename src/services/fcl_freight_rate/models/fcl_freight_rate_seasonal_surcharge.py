@@ -4,12 +4,11 @@ from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
 import yaml
-from rails_client import client
-from libs.locations import list_locations
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_SEASONAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
+from micro_services.client import *
 
 LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
 
@@ -27,22 +26,22 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     container_type = CharField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     currency = CharField(index=True, null=True)
-    destination_continent_id = UUIDField(null=True)
-    destination_country_id = UUIDField(null=True)
+    destination_continent_id = UUIDField(index=True, null=True)
+    destination_country_id = UUIDField(index=True, null=True)
     destination_location_id = UUIDField(index=True, null=True)
     destination_location = BinaryJSONField(null=True)
     destination_location_type = CharField(null=True)
-    destination_port_id = UUIDField(null=True)
-    destination_trade_id = UUIDField(null=True)
+    destination_port_id = UUIDField(index=True, null=True)
+    destination_trade_id = UUIDField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    origin_continent_id = UUIDField(null=True)
-    origin_country_id = UUIDField(null=True)
+    origin_continent_id = UUIDField(index=True, null=True)
+    origin_country_id = UUIDField(index=True, null=True)
     origin_destination_location_type = CharField(null=True)
     origin_location_id = UUIDField(index=True, null=True)
     origin_location = BinaryJSONField(null=True)
     origin_location_type = CharField(null=True)
-    origin_port_id = UUIDField(null=True)
-    origin_trade_id = UUIDField(null=True)
+    origin_port_id = UUIDField(index=True, null=True)
+    origin_trade_id = UUIDField(index=True, null=True)
     price = IntegerField(index=True, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(index=True, null=True)
@@ -52,9 +51,9 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_end = DateField(index=True, null=True)
     validity_start = DateField(index=True, null=True)
-    sourced_by_id = UUIDField(index=True,null=True)
+    sourced_by_id = UUIDField(null=True)
     source_by = BinaryJSONField(null=True)
-    procured_by_id = UUIDField(index=True,null=True)
+    procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
     
     def save(self, *args, **kwargs):
@@ -65,7 +64,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         table_name = 'fcl_freight_rate_seasonal_surcharges'
 
     def validate_origin_location(self):
-        origin_location = list_locations({'id': str(self.origin_location_id)})['list']
+        origin_location = maps.list_locations({'id': str(self.origin_location_id)})['list']
         if origin_location:
             origin_location = origin_location[0]
             if origin_location.get('type') in LOCATION_TYPES:
@@ -81,7 +80,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Origin location is not valid")
 
     def validate_destination_location(self):
-        destination_location = list_locations({'id': str(self.destination_location_id)})['list']
+        destination_location = maps.list_locations({'id': str(self.destination_location_id)})['list']
         if destination_location:
             destination_location = destination_location[0]
             if destination_location.get('type') in LOCATION_TYPES:
@@ -97,7 +96,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Destination location is not valid")
 
     def validate_shipping_line(self):
-        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
+        shipping_line = common.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
         if shipping_line:
             shipping_line = shipping_line[0]
             if shipping_line.get('operator_type') != 'shipping_line':
@@ -107,7 +106,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Shipping line is not valid")
 
     def validate_service_provider(self):
-        service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
+        service_provider = organization.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
         if service_provider:
             service_provider = service_provider[0]
             if service_provider.get('account_type') != 'service_provider':
@@ -154,7 +153,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             (getattr(FclFreightRate, f"destination_{self.destination_location_type}_id") == self.destination_location_id)
         )
         for freight_id in freight_query:
-            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateSeasonalSurcharge', object_id=FclFreightRateSeasonalSurcharge.id)
+            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateSeasonalSurcharge', object_id=self.id)
             mapping.save()
 
     def detail(self):

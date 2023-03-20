@@ -1,10 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
-from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from services.fcl_freight_rate.helpers.find_or_initiliaze import find_or_initialize
-import time
 from database.db_session import db
+from celery_worker import send_closed_notifications_to_sales_agent_function
 
 def delete_fcl_freight_rate_request(request):
     with db.atomic() as transaction:
@@ -15,7 +13,6 @@ def delete_fcl_freight_rate_request(request):
             return e
 
 def execute_transaction_code(request):
-    start = time.time()
     objects = find_objects(request)
 
     if not objects:
@@ -30,12 +27,11 @@ def execute_transaction_code(request):
         try:
             obj.save()
         except Exception as e:
-
-            raise HTTPException(status_code=499, detail="Freight rate request deletion failed")
+            raise HTTPException(status_code=500, detail="Freight rate request deletion failed")
 
         create_audit(request, obj.id)
-        # obj.delay(queue: 'low').send_closed_notifications_to_sales_agent
-
+        
+    send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
 

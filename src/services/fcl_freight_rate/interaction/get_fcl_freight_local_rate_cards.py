@@ -2,9 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
 from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS
-from playhouse.shortcuts import model_to_dict
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
-import yaml
 
 def get_fcl_freight_local_rate_cards(request):  
     if 'rates' in request and request['rates']:
@@ -169,7 +167,7 @@ def get_local_agent_ids(request):
     result = []
     for item in results.dicts():
         result.append([str(item['service_provider_id']),str(item['location_type'])])
-    # result = [[str(model_to_dict(item)['service_provider_id']),model_to_dict(item)['location_type']] for item in results]
+
     if len(result) == 1:
         local_agent_ids = result[0][0]
     else:

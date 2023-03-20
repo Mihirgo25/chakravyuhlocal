@@ -2,8 +2,9 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from configs.global_constants import HAZ_CLASSES
-from rails_client import client
+from micro_services.client import common
 from database.db_session import db
+from celery_worker import send_fcl_freight_rate_task_notification
 
 def create_audit(request, task_id):
     performed_by_id = request['performed_by_id']
@@ -59,7 +60,7 @@ def execute_transaction_code(request):
 
     if request.get('shipment_id') is not None:
         try:
-            sid = client.ruby.get_shipment(request['shipment_id'])['summary']['serial_id']
+            sid = common.get_shipment(request['shipment_id'])['summary']['serial_id']
         except:
             sid = None
         task.shipment_serial_ids.append(sid)
@@ -80,8 +81,7 @@ def execute_transaction_code(request):
         task.save()
     
     create_audit(request, task.id)
-
-    # SendFclFreightRateTaskNotification.delay_until(5.seconds.from_now, queue: 'low').run!({ task_id: task.id })
+    send_fcl_freight_rate_task_notification.apply_async(kwargs={'task_id':task.id},queue='low')
 
     return {
       "id": task.id

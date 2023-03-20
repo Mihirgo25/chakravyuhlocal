@@ -4,7 +4,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
 from celery_worker import fcl_freight_local_data_updation
-from rails_client import client
+from micro_services.client import *
 
 
 def create_audit(request, fcl_freight_local_id):
@@ -88,7 +88,7 @@ def create_organization_serviceable_port(request):
       'port_id': request['port_id'],
       'trade_type': request['trade_type']
     }
-    client.ruby.create_organization_serviceable_port(params)
+    organization.create_organization_serviceable_port(params)
 
 
 def local_updations(fcl_freight_local,request):

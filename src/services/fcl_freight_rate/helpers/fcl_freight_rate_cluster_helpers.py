@@ -31,7 +31,7 @@ def get_cluster_objects(rate_object):
         ((FclFreightRateExtensionRuleSets.shipping_line_id == rate_object.get('shipping_line_id'))  | (FclFreightRateExtensionRuleSets.shipping_line_id.is_null(True))),
         FclFreightRateExtensionRuleSets.status == 'active',
         (FclFreightRateExtensionRuleSets.trade_type <<  ('import', 'export') | FclFreightRateExtensionRuleSets.trade_type.is_null(True))
-    ).order_by(FclFreightRateExtensionRuleSets.service_provider_id.desc(),FclFreightRateExtensionRuleSets.shipping_line_id.desc(),FclFreightRateExtensionRuleSets.trade_type.desc()).execute()
+    ).execute()
 
     cluster_data = [model_to_dict(item) for item in cluster_data_q]
     
@@ -76,7 +76,7 @@ def get_required_mandatory_codes(cluster_objects):
 
     container_cluster_object = [i for i in cluster_objects if i['cluster_type']== 'container_cluster']
 
-    if commodity_cluster_object:
+    if container_cluster_object:
         container_size_cluster_items = container_cluster_object[0]['cluster_items']
 
     all_cluster_items = commodity_cluster_items + container_size_cluster_items + cluster_container_type

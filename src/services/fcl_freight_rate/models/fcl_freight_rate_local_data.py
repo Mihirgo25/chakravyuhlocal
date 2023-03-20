@@ -1,10 +1,10 @@
 from params import LineItem,FreeDay
-from rails_client import client
 import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from pydantic import BaseModel
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
-from libs.locations import list_locations
+from micro_services.client import *
+
 class FclFreightRateLocalData(BaseModel):
     line_items: list[LineItem] = []
     detention: FreeDay = None
@@ -37,7 +37,9 @@ class FclFreightRateLocalData(BaseModel):
         locations = {}
 
         if location_ids:
-            locations = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [{'name': 'location','filters': { 'id': location_ids },'fields': ['id', 'type', 'country_code']}]})['list']['location'] #check this
+            locations_data = maps.list_locations({'filters': { 'id': location_ids },'fields': ['id', 'type', 'country_code']})
+            if locations_data:
+                locations = [{'id': location['id'], 'type': location['type'], 'country_code': location['country_code']} for location in locations_data['list']]
 
         line_items_error_messages = {}
         line_items_info_messages = {}

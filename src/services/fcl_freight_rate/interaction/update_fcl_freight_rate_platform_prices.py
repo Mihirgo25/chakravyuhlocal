@@ -1,5 +1,6 @@
 from datetime import date
 from peewee import fn
+
 def update_fcl_freight_rate_platform_prices(request):
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 

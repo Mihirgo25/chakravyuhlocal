@@ -2,15 +2,13 @@ from peewee import *
 from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
-from rails_client import client
-from libs.locations import list_locations
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import *
-import yaml
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_CURRENCIES ,FCL_FREIGHT_SEASONAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
+from micro_services.client import *
 
 LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
 
@@ -64,7 +62,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         table_name = 'fcl_freight_rate_commodity_surcharges'
 
     def validate_origin_location_type(self):
-        origin_location = list_locations({'id': str(self.origin_location_id)})['list']
+        origin_location = maps.list_locations({'id': str(self.origin_location_id)})['list']
         if origin_location:
             origin_location = origin_location[0]
             if origin_location.get('type') in LOCATION_TYPES:
@@ -80,7 +78,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             raise HTTPException(status_code=404, detail="Origin Location not found")
     
     def validate_destination_location_type(self):
-        destination_location = list_locations({'id': str(self.destination_location_id)})['list']
+        destination_location = maps.list_locations({'id': str(self.destination_location_id)})['list']
         if destination_location:
             destination_location = destination_location[0]
             if destination_location.get('type') in LOCATION_TYPES:
@@ -131,7 +129,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             (getattr(FclFreightRate, str(f"destination_{self.destination_location_type}_id")) == self.destination_location_id)
         )
         for freight_id in freight_query:
-            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateCommoditySurcharge', object_id=FclFreightRateCommoditySurcharge.id)
+            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateCommoditySurcharge', object_id=self.id)
             mapping.save()
 
     def detail(self):

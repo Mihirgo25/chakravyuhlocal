@@ -2,6 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclF
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from celery_worker import send_closed_notifications_to_sales_agent_local_request
 
 def delete_fcl_freight_rate_local_request(request):
     with db.atomic() as transaction:
@@ -21,18 +22,16 @@ def execute_transaction_code(request):
         obj.status = 'inactive'
         obj.closed_by_id = request['performed_by_id']
 
-        # if request.get('closing_remarks'):
         obj.closing_remarks = request.get('closing_remarks')
 
         try:
             obj.save()
         except Exception as e:
-            # self.errors.append(('fcl_freight_rate_feedback_ids', str(e)))
-            # self.errors.merge!(obj.errors)
             raise HTTPException(status_code=499, detail="Freight rate local deletion failed")
 
         create_audit(request, obj.id)
-        # obj.delay(queue: 'low').send_closed_notifications_to_sales_agent
+        send_closed_notifications_to_sales_agent_local_request.apply_async(kwargs={'object':obj},queue='low')
+
 
     return {'fcl_freight_rate_local_request_ids' : request['fcl_freight_rate_local_request_ids']}
 

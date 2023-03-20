@@ -35,6 +35,8 @@ INTERNAL_BOOKING = {
     'service_provider_id': "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
 }
 
+FAK_COMMODITY = "general"
+
 MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT = 100000
 
 DEFAULT_SPECIFICITY_TYPE = 'shipping_line'
@@ -83,3 +85,5 @@ CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'i
 CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
 
 PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
+
+TRADE_TYPES = ['import', 'export', 'domestic']

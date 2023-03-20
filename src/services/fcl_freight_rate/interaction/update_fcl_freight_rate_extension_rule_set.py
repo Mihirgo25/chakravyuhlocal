@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 
 def update_fcl_freight_rate_extension_rule_set_data(request):
-    with db.atomic as transaction:
+    with db.atomic() as transaction:
         try:
             execute_transaction_code(request)
         except Exception as e:

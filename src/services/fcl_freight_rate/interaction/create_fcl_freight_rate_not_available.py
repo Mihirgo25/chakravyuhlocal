@@ -1,10 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.shortcuts import model_to_dict
-from rails_client import client
-import time
+from micro_services.client import organization
 
 def create_fcl_freight_rate_not_available(request):
-    start = time.time()
     request = request.__dict__
     present_service_provider_data = FclFreightRate.select(FclFreightRate.service_provider_id).distinct().where(
         FclFreightRate.origin_port_id == request['origin_port_id'],
@@ -28,7 +26,7 @@ def create_fcl_freight_rate_not_available(request):
     return True
 
 def find_service_provider_ids(request):
-    service_provider_ids = client.ruby.get_eligible_service_organizations({
+    service_provider_ids = organization.get_eligible_service_organizations({
     'service': 'fcl_freight',
     'data': {
         'origin_port_id': request['origin_port_id'],

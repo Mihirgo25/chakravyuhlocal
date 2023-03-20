@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from datetime import datetime
+from celery_worker import send_create_notifications_to_supply_agents_function
 from libs.logger import logger
 
 
@@ -61,10 +62,9 @@ def execute_transaction_code(request):
     create_audit(request, feedback)
 
     update_likes_dislikes_count(rate, request)
-    # if request['feedback_type'] == 'disliked':
-        # return None
-        # feedback.delay(queue: 'low').send_create_notifications_to_supply_agents
-
+    if request['feedback_type'] == 'disliked':
+        send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
+        
     return {'id': request['rate_id']}
 
 def update_likes_dislikes_count(rate, request):

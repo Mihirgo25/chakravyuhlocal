@@ -53,7 +53,7 @@ def get_fcl_weight_slabs_configuration(filters = {}):
             
     else:
         direct_filters = {}
-        
+
     data = [model_to_dict(item) for item in query.execute()]
 
     for object in data:
