@@ -51,7 +51,7 @@ def get_update_params(request):
   return params
 
 def create_audits(request, local_agent_object_id):  
-  FclFreightRateAudit.create(
+  FclServiceAudit.create(
     action_name = 'update',
     performed_by_id = request['performed_by_id'],
     data = get_update_params(request),
