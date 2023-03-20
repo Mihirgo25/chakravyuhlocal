@@ -117,6 +117,7 @@ class FclFreightRateLocalRequest(BaseModel):
             self.preferred_shipping_lines = preferred_shipping_lines
 
     def validate(self):
+        self.set_ports()
         if not self.validate_source():
             raise HTTPException(status_code=404, detail="incorrect source")
 

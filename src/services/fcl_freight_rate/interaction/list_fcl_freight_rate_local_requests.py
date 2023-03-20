@@ -2,7 +2,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclF
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from playhouse.shortcuts import model_to_dict
-from rails_client import client
 from math import ceil
 from datetime import datetime
 import concurrent.futures, json
@@ -50,15 +49,7 @@ def apply_similar_id_filter(query,filters):
     return query.where(query.c.port_id == rate_request_obj['port_id'], query.c.trade_type == rate_request_obj['trade_type'], query.c.container_size == rate_request_obj['container_size'], query.c.container_type == rate_request_obj['container_type'])
 
 def get_data(query):
-    data = []
-    item['preferred_shipping_lines'] = []
-    for item in query.dicts():
-        for id in item.get('preferred_shipping_line_ids'):
-            try:
-                item['preferred_shipping_lines'] = item.get('preferred_shipping_lines') + [item['shipping_line']['id']]
-            except KeyError:
-                item['preferred_shipping_lines'] = None      
-        data.append(item)
+    data = [model_to_dict(item) for item in query.execute()]
     return data
 
 # def add_service_objects(data):
@@ -87,7 +78,7 @@ def get_data(query):
 #     ]
 
 #     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
-
+ 
 #     for i in range(len(data)):
 #         data[i]['port'] = service_objects['location'][data[i]['port_id']] if 'location' in service_objects and data[i].get('port_id') in service_objects['location'] else None
 #         data[i]['performed_by'] = service_objects['user'][data[i]['performed_by_id']] if 'user' in service_objects and data[i].get('performed_by_id') in service_objects['user'] else None
