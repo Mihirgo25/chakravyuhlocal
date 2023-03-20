@@ -23,8 +23,7 @@ def execute_transaction_code(request):
 
     fcl_freight_commodity_cluster.commodities = request['commodities']
     fcl_freight_commodity_cluster.status = 'active'
-
-    fcl_freight_commodity_cluster.validate()
+    fcl_freight_commodity_cluster.validate_commodity_cluster()
 
     if not fcl_freight_commodity_cluster.save():
         raise HTTPException(status_code=422, detail="Commodity Cluster not saved")

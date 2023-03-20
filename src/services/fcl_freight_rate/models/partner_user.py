@@ -1,10 +1,10 @@
 from peewee import *
 from playhouse.postgres_ext import *
-from database.db_session import db_nirvana
+from database.db_session import db_rails
 
 class BaseModel(Model):
     class Meta:
-        database = db_nirvana
+        database = db_rails
 
 class PartnerUser(BaseModel):
     all_geo_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)

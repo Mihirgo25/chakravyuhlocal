@@ -36,8 +36,7 @@ class FclFreightRateFreeDay(BaseModel):
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
-    # shipping_line = BinaryJSONField(null=True)
-    # shipment_id = UUIDField(null=True)
+    shipping_line = BinaryJSONField(null=True)
     slabs = BinaryJSONField(index=True, null=True)
     specificity_type = CharField(index=True, null=True)
     trade_id = UUIDField(index=True, null=True)
@@ -88,6 +87,7 @@ class FclFreightRateFreeDay(BaseModel):
             self.trade_id = location_data.get('trade_id', None)
             self.continent_id = location_data.get('continent_id', None)
             self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
+            self.location = {key:value for key,value in location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
             return True
         return False

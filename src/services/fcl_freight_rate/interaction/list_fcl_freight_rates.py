@@ -286,18 +286,3 @@ def apply_procured_by_id_filter(query, filters):
     query = query.where(FclFreightRate.procured_by_id == filters['procured_by_id'])
     return query
 
-
-# def get_fcl_freight_rate_visibility_params(data):
-#   object = {
-#       'rate_id': data['id'],
-#       'service_provider_id': data['service_provider_id'],
-#       'from_date': data['validities'][0].get('validity_start') if data['validities'] else None,
-#       'to_date': data['validities'][0].get('validity_end') if data['validities'] else None,
-#       'shipping_line_id': data['shipping_line_id'],
-#       'origin_port_id': data['origin_port_id'],
-#       'destination_port_id': data['destination_port_id'],
-#       'origin_main_port_id': data['origin_main_port_id'],
-#       'destination_main_port_id': data['destination_main_port_id']
-#   }
-
-#   return object

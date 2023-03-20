@@ -1,35 +1,34 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from datetime import datetime
-from rails_client import client
+from services.fcl_freight_rate.models.organization import Organization
+from services.fcl_freight_rate.models.organization_services import OrganizationService
+from datetime import datetime
 
-def get_fcl_freight_rate_visibility(service_provider_id, origin_port_id, destination_port_id, from_date, to_date, rate_id, shipping_line_id, container_size, container_type, commodity):
-    import time
-    start = time.time()
-    if from_date:
-        from_date = datetime.strptime(from_date, '%Y-%m-%d')
+def get_fcl_freight_rate_visibility(request):
+    if request['from_date']:
+        request['from_date'] = datetime.strptime(request['from_date'], '%Y-%m-%d')
     
-    if to_date:
-        to_date = datetime.strptime(to_date, '%Y-%m-%d')
+    if request['to_date']:
+        request['to_date'] = datetime.strptime(request['to_date'], '%Y-%m-%d')
 
     response_object = {'reason': '', 'is_rate_available': False, 'is_visible': False }
 
-    org_details = client.ruby.list_organizations({'filters': {'id': service_provider_id, 'account_type': 'service_provider'}})['list'][0]
-    
+    org_details = Organization.select().where(Organization.id == request['service_provider_id'], Organization.account_type == 'service_provider').dicts().get()
+
     if org_details:
-        org_services = client.ruby.list_organization_services({'filters': {'organization_id': org_details['id'], 'status': 'active' }})['list']
-        org_services = [service['service'] for service in org_services]
+        org_services_data = list(OrganizationService.select().where(OrganizationService.organization_id == org_details['id'], OrganizationService.status == 'active').dicts())
+        org_services = [service['service'] for service in org_services_data]
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
     if kyc_and_service_status:
         response_object['reason'] += kyc_and_service_status 
 
-    fcl_freight_rate_data = get_fcl_freight_rate_data(rate_id, origin_port_id, destination_port_id, container_size,container_type, commodity, service_provider_id, shipping_line_id)
+    fcl_freight_rate_data = get_fcl_freight_rate_data(request)
 
-    if (not fcl_freight_rate_data) or ((not from_date) or (not to_date)):
+    if (not fcl_freight_rate_data) or ((not request['from_date']) or (not request['to_date'])):
         response_object['is_visible'] = False
-        if (not from_date) or (not to_date):
+        if (not request['from_date']) or (not request['to_date']):
             response_object['is_visible'] = False 
-        print(time.time() - start)
         return response_object
 
     weight_limit_status = is_weight_limit_verified(fcl_freight_rate_data)
@@ -49,12 +48,10 @@ def get_fcl_freight_rate_visibility(service_provider_id, origin_port_id, destina
 
     response_object['is_visible'] = not response_object['reason']
     response_object['is_rate_available'] = True if fcl_freight_rate_data else False
-    print(time.time() - start)
     return response_object
 
 def is_kyc_verified_and_service_validation_status(org_details, org_services):
     kyc_and_service_reason = ''
-
     if not org_details:
         kyc_and_service_reason += ' service provider not present' 
     if org_details and org_details['kyc_status'] != 'verified':
@@ -67,13 +64,21 @@ def is_kyc_verified_and_service_validation_status(org_details, org_services):
     return kyc_and_service_reason
 
 
-def get_fcl_freight_rate_data(rate_id, origin_port_id, destination_port_id, container_size,container_type, commodity, service_provider_id, shipping_line_id):
+def get_fcl_freight_rate_data(request):
     fcl_freight_rate_data = None
 
-    if rate_id:
-        fcl_freight_rate_data = FclFreightRate.get_or_none(**{'id':rate_id})
+    if request['rate_id']:
+        fcl_freight_rate_data = FclFreightRate.select().where(FclFreightRate.id == request['rate_id']).first()
     else:
-        fcl_freight_rate_data = FclFreightRate.get_or_none(**{'id':origin_port_id, 'destination_port_id':destination_port_id, 'container_size':container_size, 'container_type':container_type, 'commodity':commodity, 'service_provider_id':service_provider_id, 'shipping_line_id':shipping_line_id, 'rate_not_available_entry':False})
+        fcl_freight_rate_data = FclFreightRate.select().where(
+            FclFreightRate.id  == request['origin_port_id'], 
+            FclFreightRate.destination_port_id == request['destination_port_id'], 
+            FclFreightRate.container_size  ==  request['container_size'], 
+            FclFreightRate.container_type  ==  request['container_type'], 
+            FclFreightRate.commodity  ==  request['commodity'], 
+            FclFreightRate.service_provider_id  ==  request['service_provider_id'], 
+            FclFreightRate.shipping_line_id  ==  request['shipping_line_id'], 
+            FclFreightRate.rate_not_available_entry == False).first()
     return fcl_freight_rate_data
 
 
@@ -81,10 +86,10 @@ def is_detention_verified(fcl_freight_rate_data):
     detention_reason = ''
 
     if fcl_freight_rate_data.origin_local:
-        origin_detention_data = fcl_freight_rate_data.origin_local['detention']
+        origin_detention_data = fcl_freight_rate_data.origin_local.get('detention')
     
     if fcl_freight_rate_data.destination_local:
-        destination_detention_data = fcl_freight_rate_data.destination_local['detention'] 
+        destination_detention_data = fcl_freight_rate_data.destination_local.get('detention') 
     
     if origin_detention_data and (not origin_detention_data['free_limit']):
         detention_reason += ' origin detention does not exist,' 
@@ -98,10 +103,10 @@ def is_demurrage_verified(fcl_freight_rate_data):
     demurrage_reason = ''
     
     if fcl_freight_rate_data.origin_local:
-        origin_demurrage_data = fcl_freight_rate_data.origin_local['demurrage'] 
+        origin_demurrage_data = fcl_freight_rate_data.origin_local.get('demurrage') 
     
     if fcl_freight_rate_data.destination_local:
-        destination_demurrage_data = fcl_freight_rate_data.destination_local['demurrage'] 
+        destination_demurrage_data = fcl_freight_rate_data.destination_local.get('demurrage') 
     
     if origin_demurrage_data and (not origin_demurrage_data['free_limit']):
         demurrage_reason += ' origin demurrage does not exist,' 

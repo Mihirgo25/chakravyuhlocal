@@ -10,6 +10,7 @@ import yaml
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_CURRENCIES ,FCL_FREIGHT_SEASONAL_CHARGES
+from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 
 LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
 
@@ -20,9 +21,6 @@ class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
-
-class Mapping(Model):
-    fcl_freight_id = ForeignKeyField(FclFreightRate, backref='mappings')
 
 class FclFreightRateCommoditySurcharge(BaseModel):
     commodity = CharField(index=True, null=True)
@@ -64,16 +62,6 @@ class FclFreightRateCommoditySurcharge(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_commodity_surcharges'
-        indexes = (
-            (('container_size', 'container_type', 'commodity'), False),
-            (('container_type', 'commodity'), False),
-            (('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id'), True),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'commodity'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id', 'container_type', 'commodity'), False),
-            (('updated_at', 'service_provider_id', 'shipping_line_id', 'container_type', 'commodity'), False),
-        )
 
     def validate_origin_location_type(self):
         origin_location = list_locations({'id': str(self.origin_location_id)})['list']
@@ -85,6 +73,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
                 self.origin_trade_id = origin_location.get('trade_id', None)
                 self.origin_continent_id = origin_location.get('continent_id', None)
                 self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
+                self.origin_location = {key:value for key,value in origin_location.items() if key in ['id','name','display_name','port_code','type']}
             else:
                 raise HTTPException(status_code=404, detail="Origin Location type not valid")
         else:
@@ -100,28 +89,11 @@ class FclFreightRateCommoditySurcharge(BaseModel):
                 self.destination_trade_id = destination_location.get('trade_id', None)
                 self.destination_continent_id = destination_location.get('continent_id', None)
                 self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
+                self.destination_location = {key:value for key,value in destination_location.items() if key in ['id','name','display_name','port_code','type']}
             else:
                 raise HTTPException(status_code=404, detail="Destination Location type not valid")
         else:
             raise HTTPException(status_code=404, detail="Destination Location not found")
-    
-    def validate_shipping_line(self):
-        shipping_line = client.ruby.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
-        if shipping_line:
-            shipping_line = shipping_line[0]
-            if shipping_line.get('operator_type') != 'shipping_line':
-                raise HTTPException(status_code=404, detail="Invalid operator type")
-        else:
-            raise HTTPException(status_code=404, detail="Shipping Line not found")
-   
-    def validate_service_provider(self):
-        service_provider = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
-        if service_provider:
-            service_provider = service_provider[0]
-            if service_provider.get('account_type') != 'service_provider':
-                raise HTTPException(status_code=404, detail="Invalid operator type")
-        else:
-            raise HTTPException(status_code=404, detail="Service Provider not found")
     
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -146,33 +118,20 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             return True
         return False
     
-    def valid_uniqueness(self):
-        freight_commodity_surcharge_cnt = FclFreightRateCommoditySurcharge.select().where(
-            FclFreightRateCommoditySurcharge.origin_location_id == self.origin_location_id,
-            FclFreightRateCommoditySurcharge.destination_location_id == self.destination_location_id,
-            FclFreightRateCommoditySurcharge.container_size == self.container_size,
-            FclFreightRateCommoditySurcharge.container_type == self.container_type,
-            FclFreightRateCommoditySurcharge.commodity == self.commodity,
-            FclFreightRateCommoditySurcharge.shipping_line_id == self.shipping_line_id,
-            FclFreightRateCommoditySurcharge.service_provider_id == self.service_provider_id
-        ).count()
-       
-        if freight_commodity_surcharge_cnt > 0:
-            raise HTTPException(status_code=400, detail="Freight commodity surcharge already exists")
 
     def update_freight_objects(self):
-        freight_query = FclFreightRate.select().where(
-            (FclFreightRate.container_size == self.container_size) &
-            (FclFreightRate.container_type == 'standard') &
-            (FclFreightRate.commodity == 'general') &
-            (FclFreightRate.shipping_line_id == self.shipping_line_id) &
-            (FclFreightRate.service_provider_id == self.service_provider_id) &
-            (FclFreightRate.importer_exporter_id == None) &
-            (getattr(FclFreightRate, f"origin_{self.origin_location_type}_id") == self.origin_location_id) &
-            (getattr(FclFreightRate, f"destination_{self.destination_location_type}_id") == self.destination_location_id)
+        freight_query = FclFreightRate.select(FclFreightRate.id).where(
+            (FclFreightRate.container_size == self.container_size),
+            (FclFreightRate.container_type == 'standard') ,
+            (FclFreightRate.commodity == 'general') ,
+            (FclFreightRate.shipping_line_id == self.shipping_line_id) ,
+            (FclFreightRate.service_provider_id == self.service_provider_id) ,
+            (FclFreightRate.importer_exporter_id == None) ,
+            (getattr(FclFreightRate, str(f"origin_{self.origin_location_type}_id")) == self.origin_location_id) ,
+            (getattr(FclFreightRate, str(f"destination_{self.destination_location_type}_id")) == self.destination_location_id)
         )
-        for freight_id in freight_query.select(FclFreightRate.id):
-            mapping = Mapping(fcl_freight_id=freight_id.id)
+        for freight_id in freight_query:
+            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateCommoditySurcharge', object_id=FclFreightRateCommoditySurcharge.id)
             mapping.save()
 
     def detail(self):
@@ -184,12 +143,10 @@ class FclFreightRateCommoditySurcharge(BaseModel):
                 "remarks": self.remarks
             }
         }
-    
+   
     def validate(self):
         self.validate_origin_location_type()
         self.validate_destination_location_type()
-        self.validate_shipping_line()
-        self.validate_service_provider()
         if not self.validate_container_size():
             raise HTTPException(status_code=404, detail="Container size not valid")
         if not self.validate_container_type():
@@ -198,5 +155,4 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             raise HTTPException(status_code=404, detail="Commodity not valid")
         if not self.validate_currency():
             raise HTTPException(status_code=404, detail="Currency not valid")
-        self.valid_uniqueness()
         return True

@@ -57,6 +57,7 @@ class FclFreightRateLocalAgent(BaseModel):
                 continent_id = location_data.get('continent_id')
                 self.location_ids = list(filter(None, [uuid.UUID(self.location_id), uuid.UUID(country_id), uuid.UUID(trade_id), uuid.UUID(continent_id)]))
                 self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
+                self.location = {key:value for key,value in location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
         else:
             raise HTTPException(status_code=400, detail="Service Provider Id Invalid")
 

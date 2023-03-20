@@ -74,9 +74,31 @@ class PostFclFreightRate(BaseModel):
   source: str = 'rms_upload'
   is_extended: bool = None
 
+class CreateFclFreightRateCommoditySurcharge(BaseModel): 
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  commodity: str
+  shipping_line_id: str
+  service_provider_id: str
+  price: int 
+  currency: str
+  remarks: list[str] = []
+  
 class CreateFclFreightCommodityCluster(BaseModel):
   name: str
   commodities: dict 
+
+class UpdateFclFreightCommodityCluster(BaseModel):
+  id: str
+  name: str = None
+  status: str = None
+  commodities: dict = {}
 
 class CreateFclFreightRateLocalAgent(BaseModel):
   performed_by_id: str
@@ -154,7 +176,6 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   cluster_id: str 
   cluster_reference_name: str
   cluster_type: str
-  created_at: datetime
   extension_name: str
   gri_currency: str = None
   gri_rate: float = None
@@ -380,6 +401,7 @@ class DeleteFclFreightRateRequest(BaseModel):
   fcl_freight_rate_request_ids: List[str]
   closing_remarks: List[str] = []
   performed_by_id: str
+
 class CreateFclFreightRateWeightLimit(BaseModel):
   rate_sheet_id: str = None
   performed_by_id: str
@@ -577,3 +599,46 @@ class CreateFclFreightRateWeightLimit(BaseModel):
   free_limit: float
   remarks: list[str] = None
   slabs: list[Slab] = None
+
+class UpdateFclFreightRateCommoditySurcharge(BaseModel):
+  performed_by_id: str
+  procured_by_id: str
+  sourced_by_id: str
+  id: str
+  price: int
+  currency: str
+  remarks: list[str] = [] 
+
+class CreateFclFreightCommoditySurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  commodity: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+
+class CreateFclFreightSeasonalSurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  code: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+  validity_start: datetime = None
+  validity_end: datetime = None

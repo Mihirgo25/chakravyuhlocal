@@ -6,12 +6,14 @@ from itertools import groupby
 from playhouse.shortcuts import model_to_dict
 import json
 
-def get_fcl_freight_rate_suggestions(validity_start, validity_end, searched_origin_port_id, searched_destination_port_id, filters):
-    if type(filters) != dict:
-        filters = json.loads(filters)
+def get_fcl_freight_rate_suggestions(validity_start, validity_end, searched_origin_port_id, searched_destination_port_id, filters = {}):
+    if filters:
+        if type(filters) != dict:
+            filters = json.loads(filters)
+
     validity_start = datetime.strptime(validity_start, '%Y-%m-%d')
     validity_end = datetime.strptime(validity_end, '%Y-%m-%d')
-
+    
     fcl_freight_rates = get_fcl_freight_rates(filters, searched_origin_port_id, searched_destination_port_id, validity_start)
 
     grouped_rates = get_grouped_rates(fcl_freight_rates, validity_start, validity_end)

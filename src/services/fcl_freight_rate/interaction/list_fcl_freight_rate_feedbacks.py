@@ -14,12 +14,15 @@ possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by
 possible_indirect_filters = ['relevant_supply_agent', 'origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'shipping_line_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
 
 def list_fcl_freight_rate_feedbacks(filters, page_limit, page, is_stats_required, performed_by_id, spot_search_details_required):
-    if type(filters) != dict:
-        filters = json.loads(filters)
-
     query = FclFreightRateFeedback.select()
-    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
-    query = apply_indirect_filters(query, filters)
+
+    if filters:
+        if type(filters) != dict:
+            filters = json.loads(filters)
+
+        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
+        query = apply_indirect_filters(query, filters)
+        
     query = get_join_query(query)
     stats = get_stats(query, is_stats_required, performed_by_id) or {}
 

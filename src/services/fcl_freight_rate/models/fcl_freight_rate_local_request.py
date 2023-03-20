@@ -7,8 +7,14 @@ from configs.fcl_freight_rate_constants import REQUEST_SOURCES
 import datetime
 from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
 from libs.locations import list_locations
+from services.fcl_freight_rate.models.user import User
+from services.fcl_freight_rate.models.spot_search import SpotSearch
+from services.fcl_freight_rate.models.organization import Organization
+from services.fcl_freight_rate.models.partner_user import PartnerUser
+
 
 class BaseModel(Model):
+    # db.execute_sql('create sequence fcl_freight_rate_local_requests_serial_id_seq')
     class Meta:
         database = db
         only_save_dirty = True
@@ -23,6 +29,7 @@ class FclFreightRateLocalRequest(BaseModel):
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
+    destination_port = BinaryJSONField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     main_port_id = UUIDField(null=True)
     performed_by_id = UUIDField(null=True)
@@ -35,10 +42,10 @@ class FclFreightRateLocalRequest(BaseModel):
     preferred_rate = DoubleField(null=True)
     preferred_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
-    preferred_shipping_line_id = BinaryJSONField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_local_requests_serial_id_seq'::regclass)")])
     shipping_line_id = UUIDField(null=True)
+    shipping_line = BinaryJSONField(null=True)
     shipping_line_detail = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(null=True)
@@ -62,20 +69,21 @@ class FclFreightRateLocalRequest(BaseModel):
     
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = client.ruby.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
+            spot_search_data = SpotSearch.select(SpotSearch.id, SpotSearch.importer_exporter_id, SpotSearch.importer_exporter, SpotSearch.service_details).where(SpotSearch.id  == str(self.source_id)).dicts().get()
             if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
+                self.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
                 return True
             return False
 
     def validate_performed_by_id(self):
-        data = client.ruby.get_users({'id': str(self.performed_by_id)})
-        if data!={}:
+        data = User.select(User.id, User.name).where(User.id == str(self.performed_by_id)).dicts().get()
+        if data:
             return True  
         else:
             return False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = client.ruby.list_organizations({'filters':{'id': [str(self.performed_by_org_id)]}})['list']
+        performed_by_org_data = Organization.select().where(Organization.id == str(self.performed_by_org_id)).dicts().get()
         if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
             return True
         return False
@@ -83,10 +91,10 @@ class FclFreightRateLocalRequest(BaseModel):
     def validate_closed_by_id(self):
         if not self.closed_by_id:
             return True
-
-        data = client.ruby.get_users({'id': str(self.closed_by_id)})
-        if data!={}:
-            return True       
+            
+        data = User.select().where(User.id == str(self.closed_by)).dicts().get()
+        if data:
+            return True
         else:
             return False
 
@@ -112,7 +120,7 @@ class FclFreightRateLocalRequest(BaseModel):
         location_pair_data = list_locations({ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] })['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
-            importer_exporter_id = client.ruby.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
+            importer_exporter_id = SpotSearch.select().where(SpotSearch.id == self.source_id).dicts().get()['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
         data = {
@@ -135,7 +143,7 @@ class FclFreightRateLocalRequest(BaseModel):
     def send_notifications_to_supply_agents(self):
         port = list_locations({'id': self.port_id})['list'][0]['display_name']
         try:
-            user_ids = [item['user_id'] for item in client.ruby.list_partner_users({'filters':{'role_ids':PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID, 'status':'active','partner_status':'active'}})['list']]
+            user_ids = [item['user_id'] for item in PartnerUser.select().where(PartnerUser.role_ids == PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID, PartnerUser.status == 'active',PartnerUser.partner_status == 'active').dicts()]
         except:
             user_ids = None
        

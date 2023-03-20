@@ -42,6 +42,7 @@ def execute_transaction_code(request):
     for attr,value in create_params.items():
         setattr(free_day_request, attr, value)
     
+    free_day_request.set_location()
     if check_validations(free_day_request):
         free_day_request.save()
     else:
