@@ -14,12 +14,12 @@ def create_audit(request, freight_id):
     audit_data["validity_start"] = request["validity_start"].isoformat()
     audit_data["validity_end"] = request["validity_end"].isoformat()
     audit_data["line_items"] = request["line_items"]
-    audit_data["weight_limit"] = request["weight_limit"]
+    audit_data["weight_limit"] = request.get("weight_limit")
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
     audit_data["is_extended"] = request.get("is_extended")
 
-    FclFreightRateAudit.create(
+    id = FclFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
         rate_sheet_id=request.get("rate_sheet_id"),
         action_name="create",
@@ -31,6 +31,7 @@ def create_audit(request, freight_id):
         object_type="FclFreightRate",
         source=request.get("mode"),
     )
+    print("bed",id)
 def create_fcl_freight_rate_data(request):
     origin_port_id = str(request.get("origin_port_id"))
     query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
@@ -104,10 +105,10 @@ def create_fcl_freight_rate(request):
     freight.set_validities(
         request["validity_start"].date(),
         request["validity_end"].date(),
-        request["line_items"],
-        request["schedule_type"],
+        request.get("line_items"),
+        request.get("schedule_type"),
         False,
-        request["payment_term"],
+        request.get("payment_term"),
     )
 
     freight.set_platform_prices()

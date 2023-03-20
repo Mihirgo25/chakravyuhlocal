@@ -469,14 +469,14 @@ class FclFreightRate(BaseModel):
       if self.weight_limit:
         schema_weight_limit.validate(self.weight_limit)
 
-      self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
+        self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
 
-      if self.weight_limit['slabs'] and self.weight_limit['free_limit']!=0 and (self.weight_limit['free_limit'] >= self.weight_limit['slabs'][0]['lower_limit']):
-        raise HTTPException(status_code=499, detail="slabs lower limit should be greater than free limit")
+        if self.weight_limit['slabs'] and self.weight_limit['free_limit']!=0 and (self.weight_limit['free_limit'] >= self.weight_limit['slabs'][0]['lower_limit']):
+          raise HTTPException(status_code=499, detail="slabs lower limit should be greater than free limit")
 
-      for index, weight_limit_slab in enumerate(self.weight_limit['slabs']):
-        if (weight_limit_slab['upper_limit'] <= weight_limit_slab['lower_limit']) or (index != 0 and weight_limit_slab['lower_limit'] <= self.weight_limit['slabs'][index - 1]['upper_limit']):
-          raise HTTPException(status_code=499, detail="slabs are not valid")
+        for index, weight_limit_slab in enumerate(self.weight_limit['slabs']):
+          if (weight_limit_slab['upper_limit'] <= weight_limit_slab['lower_limit']) or (index != 0 and weight_limit_slab['lower_limit'] <= self.weight_limit['slabs'][index - 1]['upper_limit']):
+            raise HTTPException(status_code=499, detail="slabs are not valid")
 
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
 

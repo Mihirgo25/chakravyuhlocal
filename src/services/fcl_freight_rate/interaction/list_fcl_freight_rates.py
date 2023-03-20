@@ -187,10 +187,10 @@ def apply_indirect_filters(query, filters):
 
 def apply_partner_id_filter(query, filters):
   cogo_entity_id = filters['partner_id']
-  if filters['cogo_entity_id']:
+  if cogo_entity_id:
     query = query.where(FclFreightRate.cogo_entity_id.in_([cogo_entity_id,None]))
   else:
-    query = query.where(FclFreightRate.cogo_entity_id is None)
+    query = query.where(FclFreightRate.cogo_entity_id == None)
   return query
 
 def apply_is_origin_local_missing_filter(query, filters):
