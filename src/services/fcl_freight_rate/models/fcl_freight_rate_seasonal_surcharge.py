@@ -154,7 +154,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             (getattr(FclFreightRate, f"destination_{self.destination_location_type}_id") == self.destination_location_id)
         )
         for freight_id in freight_query:
-            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateSeasonalSurcharge')
+            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateSeasonalSurcharge', object_id=FclFreightRateSeasonalSurcharge.id)
             mapping.save()
 
     def detail(self):
