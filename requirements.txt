@@ -2,10 +2,6 @@ amqp==5.1.1
 anyio==3.6.2
 async-timeout==4.0.2
 attrs==22.2.0
-aws-cdk-lib==2.60.0
-aws-cdk.asset-awscli-v1==2.2.49
-aws-cdk.asset-kubectl-v20==2.1.1
-aws-cdk.asset-node-proxy-agent-v5==2.0.38
 billiard==3.6.4.0
 boto3==1.26.94
 botocore==1.29.94
