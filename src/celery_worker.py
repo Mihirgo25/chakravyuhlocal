@@ -2,6 +2,7 @@ from celery import Celery
 import os
 import time
 from configs.env import *
+from micro_services.client import organization, common
 from services.fcl_freight_rate.helpers.get_multuple_service_objects import get_multiple_service_objects
 
 
@@ -20,21 +21,18 @@ celery.conf.update(**CELERY_CONFIG)
 
 @celery.task()
 def create_fcl_freight_rate_delay(request):
-    from rails_client import client
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
     return create_fcl_freight_rate(request)
 
 @celery.task()
 def delay_fcl_functions(fcl_object,request):
-    from rails_client import client
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
     from services.fcl_freight_rate.helpers.get_multuple_service_objects import get_multiple_service_objects
     from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
-    client.initialize_client()
     create_freight_trend_port_pair(request)
     create_sailing_schedule_port_pair(request)
     if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
-        client.ruby.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+        organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
     if request.get("fcl_freight_rate_request_id"):
         delete_fcl_freight_rate_request(request)
@@ -54,13 +52,12 @@ def delay_fcl_functions(fcl_object,request):
 
 @celery.task()
 def create_sailing_schedule_port_pair(request):
-    from rails_client import client
     port_pair_coverage_data = {
     'origin_port_id': request["origin_main_port_id"] if request.get("origin_main_port_id") else request["origin_port_id"],
     'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
     'shipping_line_id': request["shipping_line_id"]
     }
-    data = client.ruby.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
+    common.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
 
 def create_freight_trend_port_pair(request):
     port_pair_data = {
@@ -69,24 +66,20 @@ def create_freight_trend_port_pair(request):
     }
 
   
-  # client.ruby.create_freight_trend_port_pair(port_pair_data) expose
+  # common.create_freight_trend_port_pair(port_pair_data) expose
 
 @celery.task()
 def fcl_freight_local_data_updation(local_object,request):
-  print("bed")
-  from rails_client import client
-  client.initialize_client()
   from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
 
     
-  update_multiple_service_objects.apply_async(kwargs={"local_object":local_object},queue='low')
+  update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
 
   local_updations(local_object,request)
 
 
 @celery.task()
 def update_multiple_service_objects(object):
-  print("1")
   get_multiple_service_objects(object)
 
 

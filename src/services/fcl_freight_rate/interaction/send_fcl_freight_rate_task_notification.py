@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from rails_client import client
 from celery_worker import celery
-from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
+from services.fcl_freight_rate.models.partner_user import PartnerUser
+from configs.fcl_freight_rate_constants import *
 
 def send_fcl_freight_rate_task_notification(task_id):
     task = FclFreightRateTask.select().where(FclFreightRateTask.id == task_id).dicts().get()
@@ -12,7 +12,7 @@ def send_fcl_freight_rate_task_notification(task_id):
   
 
 def send_communication(shipping_line_id, port_id,task_id):
-    # partners_list = PartnerUser.select(PartnerUser.user_id).where(PartnerUser.role_ids.in_(','.join(FclFreightRateDc.get_key_value('ROLE_IDS_FOR_NOTIFICATIONS'))) and PartnerUser.status = 'active')
+    partners_list = PartnerUser.select(PartnerUser.user_id).where(PartnerUser.role_ids.in_(','.join(ROLE_IDS_FOR_NOTIFICATIONS)), PartnerUser.status == 'active')
 
     for partner_user in partners_list:
         data = {

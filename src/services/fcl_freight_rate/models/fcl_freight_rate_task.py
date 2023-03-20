@@ -62,7 +62,7 @@ class FclFreightRateTask(BaseModel):
         port = list_locations(obj)['list']
         if port:
             port =port[0]
-            self.port = port
+            self.port = {key:value for key,value in port.items() if key in ['id', 'name','display_name', 'port_code', 'type']}
             self.country_id = port.get('country_id', None)
             self.trade_id = port.get('trade_id', None) 
             self.continent_id = port.get('continent_id', None)
@@ -77,7 +77,7 @@ class FclFreightRateTask(BaseModel):
         elif self.port and self.port['is_icd']==True:
             main_port_data = list_locations({"id": [str(self.main_port_id)],'type':'seaport','is_icd':False})['list']
             if main_port_data:
-                self.main_port = main_port_data[0]
+                self.main_port = {key:value for key,value in main_port_data[0].items() if key in ['id', 'name','display_name', 'port_code', 'type']}
             else:
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
 

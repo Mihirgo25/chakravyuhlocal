@@ -1,13 +1,13 @@
 from peewee import *
 from playhouse.postgres_ext import *
-from database.db_session import db_nirvana
+from database.db_session import db_rails
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
 class BaseModel(Model):
     class Meta:
-        database = db_nirvana
+        database = db_rails
 
 class SpotSearch(BaseModel):
     booking_proof = CharField(null=True)

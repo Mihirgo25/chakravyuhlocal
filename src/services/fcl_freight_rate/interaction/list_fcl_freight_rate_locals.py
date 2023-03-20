@@ -27,7 +27,7 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
         return {'list': items}
 
     data = get_data(query)
-    
+
     return { 'list': data }
 
     
@@ -92,11 +92,14 @@ def get_data(query):
         if result['total_price_currency']:
             total_price = 0
             for line_item in result['line_items']:
-                conversion = client.ruby.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
-                if 'price' in conversion:
-                    total_price += conversion['price']
+                if line_item['currency'] != result['total_price_currency']:
+                    conversion = client.ruby.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
+                    if 'price' in conversion:
+                        total_price += conversion['price']
+                    else:
+                        total_price += line_item['price']
             result['total_price'] = total_price
-    
+
         data.append(result)
     return data
 

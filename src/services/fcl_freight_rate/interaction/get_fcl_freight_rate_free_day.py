@@ -1,5 +1,4 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
-from playhouse.shortcuts import model_to_dict
 from fastapi import HTTPException
 
 
@@ -8,10 +7,10 @@ def get_fcl_freight_rate_free_day(request):
         return {}
     
     objects = find_object(request)
-    objects = model_to_dict(objects)
-
     if not objects:
         return {}
+    
+    objects = objects.detail()
     return objects
 
 def all_fields_present(request):

@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+from database.db_session import db
 
 
 def create_audit(request, seasonal_surcharge_id):
@@ -16,12 +17,22 @@ def create_audit(request, seasonal_surcharge_id):
         rate_sheet_id = request.get('rate_sheet_id'),
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
+        sourced_by_id = request['sourced_by_id'],
+        procured_by_id = request['procured_by_id'],
         data = audit_data,
         object_id = seasonal_surcharge_id,
         object_type = 'FclFreightRateSeasonalSurcharge'
     )
 
 def create_fcl_freight_rate_seasonal_surcharge(request):
+    with db.atomic() as transaction:
+        try:
+          return execute_transaction_code(request)
+        except Exception as e:
+            transaction.rollback()
+            return e
+
+def execute_transaction_code(request):
     row = {
         'origin_location_id' : request["origin_location_id"],
         'destination_location_id' : request["destination_location_id"],
@@ -49,6 +60,9 @@ def create_fcl_freight_rate_seasonal_surcharge(request):
             setattr(seasonal_surcharge, k, v)
     seasonal_surcharge.validate()
 
+    seasonal_surcharge.sourced_by_id = request['sourced_by_id']
+    seasonal_surcharge.procured_by_id = request['procured_by_id']
+
     if not seasonal_surcharge.save():
         raise HTTPException(status_code=422, detail="Seasonal Surcharge not saved")
     
@@ -57,5 +71,5 @@ def create_fcl_freight_rate_seasonal_surcharge(request):
     create_audit(request, seasonal_surcharge.id)
 
     return {
-      id: seasonal_surcharge.id
+      id: str(seasonal_surcharge.id)
     }

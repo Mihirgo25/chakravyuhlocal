@@ -70,6 +70,7 @@ class FclFreightRateWeightLimit(BaseModel):
             count = 0
             for location in location_data:
                 if location['id'] == str(self.origin_location_id) and location['type'] in LOCATION_TYPES:
+                    location = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
                     self.origin_location = location
 
                     self.origin_port_id = location.get('seaport_id', None)
@@ -81,6 +82,7 @@ class FclFreightRateWeightLimit(BaseModel):
                     count += 1
 
                 elif location['id'] == str(self.destination_location_id) and location['type'] in LOCATION_TYPES:
+                    location = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
                     self.destination_location = location
 
                     self.destination_port_id = location.get('seaport_id', None)

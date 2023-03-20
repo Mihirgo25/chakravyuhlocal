@@ -8,7 +8,7 @@ import concurrent.futures, json
 possible_direct_filters = ['origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'container_size', 'container_type', 'commodity', 'origin_location_id', 'destination_location_id']
 possible_indirect_filters = []
 
-def list_fcl_freight_rate_commodity_surcharges(filters, page_limit, page, pagination_data_required):
+def list_fcl_freight_rate_commodity_surcharges(filters = {}, page_limit =10, page = 1, pagination_data_required = True):
     query = get_query(page, page_limit)
 
     if filters:

@@ -1,7 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from math import ceil 
-from rails_client import client
 import concurrent.futures, json
 from playhouse.shortcuts import model_to_dict
 
@@ -35,7 +34,8 @@ def get_query(page, page_limit):
     return query
   
 def get_data(query, page, page_limit, pagination_data_required):
-  data = query.select(FclFreightRateWeightLimit.id,
+  data = query.select(
+        FclFreightRateWeightLimit.id,
         FclFreightRateWeightLimit.origin_location_id,
         FclFreightRateWeightLimit.destination_location_id,
         FclFreightRateWeightLimit.shipping_line_id,
