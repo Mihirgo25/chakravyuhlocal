@@ -9,6 +9,7 @@ from libs.locations import list_locations
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_SEASONAL_CHARGES
+from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 
 LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
 
@@ -19,9 +20,6 @@ class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
-
-class Mapping(Model):
-    fcl_freight_id = ForeignKeyField(FclFreightRate, backref='mappings')
 
 class FclFreightRateSeasonalSurcharge(BaseModel):
     code = CharField(index=True, null=True)
@@ -65,17 +63,6 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_seasonal_surcharges'
-        # constraints = [SQL('UNIQUE (origin_location_id, destination_location_id, container_size, container_type, shipping_line_id, service_provider_id, code)')]
-        indexes = (
-            (('container_size', 'container_type'), False),
-            (('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'code'), True),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'code'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id', 'code'), False),
-            (('updated_at', 'service_provider_id', 'shipping_line_id', 'code'), False),
-            (('validity_start', 'validity_end'), False),
-        )
 
     def validate_origin_location(self):
         origin_location = list_locations({'id': str(self.origin_location_id)})['list']
@@ -87,6 +74,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
                 self.origin_trade_id = origin_location.get('trade_id', None)
                 self.origin_continent_id = origin_location.get('continent_id', None)
                 self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
+                self.origin_location = {key:value for key,value in origin_location.items() if key in ['id','name','display_name','port_code','type']}
             else:
                 raise HTTPException(status_code=400, detail="Origin location type is not valid")
         else:
@@ -102,6 +90,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
                 self.destination_trade_id = destination_location.get('trade_id', None)
                 self.destination_continent_id = destination_location.get('continent_id', None)
                 self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
+                self.destination_location = {key:value for key,value in destination_location.items() if key in ['id','name','display_name','port_code','type']}
             else:
                 raise HTTPException(status_code=400, detail="Destination location type is not valid")
         else:
@@ -112,6 +101,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         if shipping_line:
             shipping_line = shipping_line[0]
             if shipping_line.get('operator_type') != 'shipping_line':
+                self.shipping_line = shipping_line
                 raise HTTPException(status_code=400, detail="Invalid operator type")
         else:
             raise HTTPException(status_code=400, detail="Shipping line is not valid")
@@ -121,6 +111,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         if service_provider:
             service_provider = service_provider[0]
             if service_provider.get('account_type') != 'service_provider':
+                self.service_provider = service_provider
                 raise HTTPException(status_code=400, detail="Invalid operator type")
         else:
             raise HTTPException(status_code=400, detail="Service provider is not valid")
@@ -147,18 +138,6 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             if self.validity_start > self.validity_end:
                 raise HTTPException(status_code=499, detail="Validity start date should be less than validity end date")
 
-    def valid_uniqueness(self):
-        freight_seasonal_surcharge_cnt = FclFreightRateSeasonalSurcharge.select().where(
-            FclFreightRateSeasonalSurcharge.origin_location_id == self.origin_location_id,
-            FclFreightRateSeasonalSurcharge.destination_location_id == self.destination_location_id,
-            FclFreightRateSeasonalSurcharge.container_size == self.container_size,
-            FclFreightRateSeasonalSurcharge.container_type == self.container_type,
-            FclFreightRateSeasonalSurcharge.shipping_line_id == self.shipping_line_id,
-            FclFreightRateSeasonalSurcharge.service_provider_id == self.service_provider_id
-        ).count()
-        if freight_seasonal_surcharge_cnt != 0:
-            raise HTTPException(status_code=499, detail="Seasonal surcharge already exists for this origin and destination")
-    
     def is_active(self):
         if self.validity_start and self.validity_end:
             if datetime.date.today() < self.validity_end:
@@ -166,7 +145,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         return False
 
     def update_freight_objects(self):
-        freight_query = FclFreightRate.select().where(
+        freight_query = FclFreightRate.select(FclFreightRate.id).where(
             (FclFreightRate.container_size == self.container_size) &
             (FclFreightRate.container_type == self.container_type) &
             (FclFreightRate.shipping_line_id == self.shipping_line_id) &
@@ -174,8 +153,8 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             (getattr(FclFreightRate, f"origin_{self.origin_location_type}_id") == self.origin_location_id) &
             (getattr(FclFreightRate, f"destination_{self.destination_location_type}_id") == self.destination_location_id)
         )
-        for freight_id in freight_query.select(FclFreightRate.id):
-            mapping = Mapping(fcl_freight_id=freight_id.id)
+        for freight_id in freight_query:
+            mapping = FclFreightRateMappings(fcl_freight_id=freight_id.id, object_type='FclFreightRateSeasonalSurcharge', object_id=FclFreightRateSeasonalSurcharge.id)
             mapping.save()
 
     def detail(self):
@@ -202,5 +181,4 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         if not self.validate_code():
             raise HTTPException(status_code=499, detail="Invalid code")
         self.validate_validity()
-        self.valid_uniqueness()
         return True
