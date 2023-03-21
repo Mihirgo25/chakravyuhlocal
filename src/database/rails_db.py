@@ -24,7 +24,7 @@ def get_shipping_line(id=None):
     else:
         id = tuple(id)
     if id:
-        sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url from operators where operators.id in %s'
+        sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type from operators where operators.id in %s'
         cur.execute(sql, (id,))
     result = cur.fetchall()
     all_result = []
@@ -34,7 +34,8 @@ def get_shipping_line(id=None):
                 "id": res[0],
                 "business_name": res[1],
                 "short_name": res[2],
-                "logo_url": res[3]
+                "logo_url": res[3],
+                "operator_type": res[4]
             }
         )
     cur.close()
@@ -58,7 +59,7 @@ def get_service_provider(id):
                 "business_name": res[1],
                 "short_name": res[2],
                 "category_types":res[3],
-                "account_type":res[3]
+                "account_type":res[4]
             }
         )
     cur.close()

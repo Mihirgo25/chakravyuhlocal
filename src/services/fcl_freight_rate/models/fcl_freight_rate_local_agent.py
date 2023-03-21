@@ -21,7 +21,7 @@ class FclFreightRateLocalAgent(BaseModel):
     location_id = UUIDField(index=True, null=True)
     location = BinaryJSONField(null=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    location_type = UUIDField(null=True)
+    location_type = CharField(null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     status = CharField(index=True, null=True)
@@ -39,6 +39,8 @@ class FclFreightRateLocalAgent(BaseModel):
         service_provider_data = get_service_provider(str(self.service_provider_id))
         if len(service_provider_data) > 0 :
             service_provider_data = service_provider_data[0]
+            service_provider_data['id'] = str(service_provider_data['id'])
+            self.service_provider = service_provider_data
             if service_provider_data.get('account_type') != 'service_provider':
                 raise HTTPException(status_code=400, detail="Invalid Account Type - Not Service Provider")
         else:
@@ -46,7 +48,7 @@ class FclFreightRateLocalAgent(BaseModel):
         return True
     
     def set_location_ids_and_type(self):
-        location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})['list']
+        location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})
         if 'list' in location_data and len(location_data['list']) > 0:
             location_data = location_data['list'][0]
             if location_data.get('type') in ['seaport', 'country', 'trade']:
@@ -57,7 +59,7 @@ class FclFreightRateLocalAgent(BaseModel):
                 self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
                 self.location = {key:value for key,value in location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
         else:
-            raise HTTPException(status_code=400, detail="Service Provider Id Invalid")
+            raise HTTPException(status_code=400, detail="location Id Invalid")
 
     
     def validate_trade_type(self):
@@ -94,7 +96,3 @@ class FclFreightRateLocalAgent(BaseModel):
         self.validate_status()
         self.validate_uniqueness()
         return True
-
-    # def save(self, *args, **kwargs):
-    #     self.validate()
-    #     return super().save(*args, **kwargs)

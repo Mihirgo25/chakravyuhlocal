@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
-
+from celery_worker import update_multiple_service_objects
 
 def create_audit(request, seasonal_surcharge_id):
 
@@ -69,6 +69,8 @@ def execute_transaction_code(request):
     seasonal_surcharge.update_freight_objects()
 
     create_audit(request, seasonal_surcharge.id)
+    update_multiple_service_objects.apply_async(kwargs={'object':seasonal_surcharge},queue='low')
+
 
     return {
       'id': str(seasonal_surcharge.id)

@@ -2,6 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreigh
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from fastapi import HTTPException
+from celery_worker import update_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day(request):
@@ -30,6 +31,7 @@ def execute_transaction_code(request):
     #     free_day.update_sell_quotation()
 
     create_audit(request, free_day.id)
+    update_multiple_service_objects.apply_async(kwargs={'object':free_day},queue='low')
 
     return {"id": free_day.id}
 
@@ -43,9 +45,9 @@ def get_free_day_object(request):
         'shipping_line_id' : request['shipping_line_id'],
         'service_provider_id' : request['service_provider_id'],
         'specificity_type' : request['specificity_type'],
-        'importer_exporter_id' : request.get('importer_exporter_id')
-        # 'validity_start' : request.get('validity_start'),
-        # 'validity_end' : request.get('validity_end')
+        'importer_exporter_id' : request.get('importer_exporter_id'),
+        'sourced_by_id' : request.get('sourced_by_id'),
+        'procured_by_id' : request.get('procured_by_id')
     }
     free_day = FclFreightRateFreeDay.select().where(
         FclFreightRateFreeDay.location_id == request['location_id'],

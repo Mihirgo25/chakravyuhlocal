@@ -44,7 +44,7 @@ class FclFreightRateFreeDay(BaseModel):
     # validity_start = DateTimeField(index=True, null=True)
     # validity_end = DateTimeField(index=True, null=True)
     sourced_by_id = UUIDField(index=True,null=True)
-    source_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(index=True,null=True)
     procured_by = BinaryJSONField(null=True)
 
@@ -57,7 +57,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})['list']
+        location_data = maps.list_locations({'filters':{'filters' : {'id': str(self.location_id)}}})['list']
 
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]

@@ -50,7 +50,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     shipping_line = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     sourced_by_id = UUIDField(index=True,null=True)
-    source_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(index=True,null=True)
     procured_by = BinaryJSONField(null=True)
    
