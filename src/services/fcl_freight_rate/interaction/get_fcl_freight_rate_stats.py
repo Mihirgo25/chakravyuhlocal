@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from peewee import fn
 from database.rails_db import *
 
-
 def get_fcl_freight_rate_stats(request):
     response = {}
     for stats_type in request["stats_types"]:

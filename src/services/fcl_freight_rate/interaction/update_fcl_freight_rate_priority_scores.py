@@ -10,9 +10,9 @@ from database.rails_db import *
 possible_direct_filters = ['id', 'origin_port_id', 'destination_port_id', 'origin_main_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'importer_exporter_id']
 
 def update_fcl_freight_rate_priority_scores_data(request):
-    with db.atomic as transaction:
+    with db.atomic() as transaction:
         try:
-            execute_transaction_code(request)
+            return execute_transaction_code(request)
         except Exception as e:
             transaction.rollback()
             raise e
@@ -40,9 +40,9 @@ def update_priority_score(group):
     importer_exporter_ids = set(spot_searches.select('importer_exporter_id').execute())
     spot_searches_importer_exporters_count = importer_exporter_ids.count()
 
-    organization_sizes = get_service_provider(importer_exporter_ids )
+    organization_sizes = get_service_provider(importer_exporter_ids)
     res = {}
-    for i, v in organization_sizes['sizes'].items():
+    for i, v in organization_sizes.get('sizes').items():
         res[v] = [i] if v not in res.keys() else res[v] + [i]
 
     organization_sizes = res

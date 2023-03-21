@@ -20,7 +20,7 @@ def update_fcl_freight_rate_local_priority_scores_data(request):
 
 def execute_transaction_code(request):
     request = request.__dict__
-    request['filters'] = {key: value for key, value in request['filters'] if not value.empty() and possible_direct_filters.include(key)}
+    request['filters'] = {key: value for key, value in request['filters'].items() if not value.empty() and possible_direct_filters.include(key)}
     groups = get_groupings(request)
     for group in groups:
         with concurrent.futures.ThreadPoolExecutor() as executor: 
@@ -29,7 +29,7 @@ def execute_transaction_code(request):
 def get_groupings(request):
     groups = FclFreightRateLocal.select(FclFreightRateLocal.port_id, FclFreightRateLocal.main_port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.commodity, FclFreightRateLocal.shipping_line_id)
     for filter in request['filters']:
-        query = query.select().where(attrgetter(filter)(FclFreightRateLocal) == request['filters'][filter])
+        groups = groups.select().where(attrgetter(filter)(FclFreightRateLocal) == request['filters'][filter])
     groups = [ {k:v for k,v in t.items() if k != 'id'} for t in groups ]
     return groups
 
@@ -40,9 +40,10 @@ def update_priority_score(group):
     else:
         spot_searches.select().where('destination_port_id' == group['port_id'])
     spot_search_ids = spot_searches.select(spot_searches.spot_search_id).execute()
-    importer_exporter_ids = [item['importer_exporter_id'] for item in common.list_spot_searches({'filters':{'id':spot_search_ids}})['list']]
-    spot_searches_importer_exporters_count = len(importer_exporter_ids)
-    organization_sizes = get_service_provider(importer_exporter_ids)
+    spot_searches = common.list_spot_searches({'filters':{'id':spot_search_ids}})
+    importer_exporter_ids = set(spot_searches.select(spot_searches.importer_exporter_id).execute())
+    spot_searches_importer_exporters_count = importer_exporter_ids.count()
+    organization_sizes = organization.list_organizations({'pagination_data_required': False, 'filters': { 'id': importer_exporter_ids }, 'page_limit': 1000 })['list']
     res = {}
     for i, v in organization_sizes['sizes'].items():
         res[v] = [i] if v not in res.keys() else res[v] + [i]

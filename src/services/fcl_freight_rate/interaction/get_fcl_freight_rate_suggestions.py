@@ -7,15 +7,15 @@ from playhouse.shortcuts import model_to_dict
 import json
 
 def get_fcl_freight_rate_suggestions(validity_start, validity_end, searched_origin_port_id, searched_destination_port_id, filters = {}):
+    validity_start = datetime.strptime(validity_start, '%Y-%m-%d')
+    validity_end = datetime.strptime(validity_end, '%Y-%m-%d')
+
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
 
-    validity_start = datetime.strptime(validity_start, '%Y-%m-%d')
-    validity_end = datetime.strptime(validity_end, '%Y-%m-%d')
-    
     fcl_freight_rates = get_fcl_freight_rates(filters, searched_origin_port_id, searched_destination_port_id, validity_start)
-
+    
     grouped_rates = get_grouped_rates(fcl_freight_rates, validity_start, validity_end)
 
     fcl_freight_rate_ids = [t['id'] for t in list(filter(None,grouped_rates.values()))]
@@ -24,8 +24,9 @@ def get_fcl_freight_rate_suggestions(validity_start, validity_end, searched_orig
 
 def get_fcl_freight_rates(filters, searched_origin_port_id, searched_destination_port_id, validity_start):
     query = FclFreightRate.select()
-    for key in filters:
-        query = query.where(attrgetter(key)(FclFreightRate) == filters[key])
+    if filters:
+        for key in filters:
+            query = query.where(attrgetter(key)(FclFreightRate) == filters[key])
 
     fcl_freight_query = query.where(FclFreightRate.rate_not_available_entry == False, FclFreightRate.origin_port_id != searched_origin_port_id, FclFreightRate.destination_port_id != searched_destination_port_id, FclFreightRate.last_rate_available_date >= max([validity_start, datetime.now()]))
     fcl_freight_rates = [model_to_dict(item) for item in fcl_freight_query.execute()]
@@ -38,7 +39,7 @@ def get_grouped_rates(fcl_freight_rates, validity_start, validity_end):
         groupings[(origin, dest)] = list(group)
 
     min_rate_groupings = {}
-    
+
     for key,rates in groupings.items():
         for rate in rates:  
             validities = [t for t in rate['validities'] if (datetime.strptime(t['validity_end'],'%Y-%m-%d') >= max([validity_start, datetime.now()])) and (datetime.strptime(t['validity_start'],'%Y-%m-%d') <= validity_end) or (datetime.strptime(t['validity_start'],'%Y-%m-%d') >= validity_end)]
