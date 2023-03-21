@@ -29,7 +29,7 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
 
     query = get_page(query, page, page_limit)
     data = get_data(query)
-    
+    print(query)
     pagination_data = get_pagination_data(query, page, page_limit)
     return {'list': data } | (pagination_data) | (stats)
 
@@ -269,7 +269,7 @@ def get_stats(query, filters, is_stats_required, performed_by_id):
         method_responses = {}
         for future in futures:
             result = future.result()
-            method_responses.update(result)  #we don't need this update last line me hi ho jaa rha (once check)
+            method_responses.update(result)  
 
     stats = {
       'total': method_responses['get_total'],

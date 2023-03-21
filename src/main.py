@@ -29,6 +29,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_addition_frequen
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_suggestions import get_fcl_freight_rate_suggestions
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_visibility import get_fcl_freight_rate_visibility
 # from database.create_tables import create_table
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_audits import list_fcl_freight_rate_audits
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_bulk_operations import list_fcl_freight_rate_bulk_operations
 from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates import list_dashboard_fcl_freight_rates
 from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates import list_dashboard_fcl_freight_rates
@@ -374,6 +375,19 @@ def list_dashboard_fcl_freight_rates_data():
     data = list_dashboard_fcl_freight_rates()
     return data 
 
+@app.get("/list_fcl_freight_rate_audits")
+def list_fcl_freight_audits_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'created_at',
+    sort_type: str = 'asc',
+    pagination_data_required: bool = False,
+    user_data_required: bool = False
+):
+    data = list_fcl_freight_rate_audits(filters, page_limit, page, sort_by, sort_type, pagination_data_required, user_data_required)
+    return data
+
 @app.get("/list_fcl_freight_rate_bulk_operations")
 def list_fcl_freight_rate_bulk_operations_data(
     filters: str = None,
@@ -399,7 +413,7 @@ def list_fcl_freight_rates_data(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    sort_by: str = 'priority_score',
+    sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     return_query: bool = False,
     expired_rates_required: bool = False,
@@ -413,7 +427,7 @@ def list_fcl_freight_rate_locals_data(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    sort_by: str = 'priority_score',
+    sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     return_query: bool = False
 ):

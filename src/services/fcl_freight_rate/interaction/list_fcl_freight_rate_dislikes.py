@@ -21,7 +21,7 @@ def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
         query = apply_indirect_filters(query, filters)
-    print(query)
+
     data = get_data(query)
     
     pagination_data = get_pagination_data(query, page, page_limit)
@@ -60,27 +60,36 @@ def apply_indirect_filters(query, filters):
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
 
-# def apply_trade_lane_filter(query, filters):
-#     return query.select(fn.array_agg(fn.filter_(fn.cast('feedbacks', 'text'), (fn.cast('feedbacks', 'text').not_in('{}')))).alias('feedbacks'), fn.COUNT(fn.concat_ws(' || ', query.c.origin_port_id, query.c.destination_port_id)).alias('port_pair_count').distinct(),query.c.origin_trade_id, query.c.destination_trade_id).group_by(query.c.origin_trade_id, query.c.destination_trade_id)
 
 def apply_trade_lane_filter(query, filters):
     return query.select(
-        fn.array_agg((fn.concat_ws(' || ', FclFreightRate.origin_port_id, FclFreightRate.destination_port_id))).alias('feedbacks').distinct(),
-        fn.count((fn.concat_ws(' || ', FclFreightRate.origin_port_id, FclFreightRate.destination_port_id))).alias('port_pair_count').distinct(),
+        fn.array_agg((
+            fn.CONCAT(FclFreightRate.origin_port_id, '||', FclFreightRate.destination_port_id)
+            ).distinct()
+        ).alias('feedbacks'),
+        fn.count((fn.CONCAT(FclFreightRate.origin_port_id, ' || ', FclFreightRate.destination_port_id)).distinct()).alias('port_pair_count'),
         FclFreightRate.origin_trade_id,
         FclFreightRate.destination_trade_id
-    ).where(FclFreightRateFeedback.feedbacks != '{}').group_by(
+    ).where(FclFreightRateFeedback.feedbacks.cast('VARCHAR') != '{}').group_by(
         FclFreightRate.origin_trade_id,
         FclFreightRate.destination_trade_id
     )
     
-
 def apply_service_provider_id_filter(query, filters):
     query = query.where(FclFreightRate.service_provider_id == filters['service_provider_id'])
     return query
 
 def apply_shipping_line_filter(query, filters):
-    return query.select(fn.array_agg(fn.filter_(fn.cast('feedbacks', 'text'), (fn.cast('feedbacks', 'text').not_in('{}')))).alias('feedbacks'), fn.COUNT(fn.concat_ws(' || ', query.c.origin_port_id, query.c.destination_port_id)).alias('port_pair_count').distinct(), query.c.shipping_line_id).group_by(query.c.shipping_line_id)
+    return query.select(
+        fn.array_agg((
+            fn.CONCAT(FclFreightRate.origin_port_id, '||', FclFreightRate.destination_port_id)
+            ).distinct()
+        ).alias('feedbacks'),
+        fn.count((fn.CONCAT(FclFreightRate.origin_port_id, ' || ', FclFreightRate.destination_port_id)).distinct()).alias('port_pair_count'),
+        FclFreightRate.shipping_line_id
+    ).where(FclFreightRateFeedback.feedbacks.cast('VARCHAR') != '{}').group_by(
+        FclFreightRate.shipping_line_id
+    )
     
 def apply_validity_start_greater_than_filter(query, filters):
     query = query.where(FclFreightRateFeedback.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d'))
