@@ -30,7 +30,7 @@ def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pag
         
     data = results['get_data']
     pagination_data = results['get_pagination_data']
-
+    
     return {'list': data} | (pagination_data)
 
 def get_query(page, page_limit):
@@ -66,33 +66,6 @@ def get_data(query, page, page_limit, pagination_data_required):
     data = [model_to_dict(item) for item in data.execute()]
     return {'get_data' : data}
 
-# def add_service_objects(data):
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
-#         {
-#         'name': 'operator',
-#         'filters': { 'id': list(set(str(item["shipping_line_id"]) for item in data))},
-#         'fields': ['id', 'business_name', 'short_name', 'logo_url']
-#         },
-#         {
-#         'name': 'location',
-#         'filters': { 'id': list(set(item for sublist in [str(item["location_id"]) for item in data] for item in sublist)) },
-#         'fields': ['id', 'name', 'display_name', 'port_code', 'type']
-#         },
-#         {
-#         'name': 'organization',
-#         'filters': { 'id': list(set(item for sublist in [[str(item["service_provider_id"]), str(item["importer_exporter_id"])] for item in data] for item in sublist))},
-#         'fields': ['id', 'business_name', 'short_name']
-#         }
-#     ]})
-    
-#     new_data = []
-#     for objects in data:
-#         objects['shipping_line'] = service_objects['operator'][objects['shipping_line_id']] if 'operator' in service_objects and objects.get('shipping_line_id') in service_objects['operator'] else None
-#         objects['location'] = service_objects['location'][objects['location_id']] if 'location' in service_objects and objects.get('location_id') in service_objects['location'] else None
-#         objects['service_provider'] = service_objects['organization'][objects['service_provider_id']] if 'organization' in service_objects and objects.get('service_provider_id') in service_objects['organization'] else None
-#         objects['importer_exporter'] = service_objects['organization'][objects['importer_exporter_id']] if 'organization' in service_objects and objects.get('importer_exporter_id') in service_objects['organization'] else None
-#         new_data.append(objects)
-#         return new_data
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:

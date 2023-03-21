@@ -1,5 +1,4 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_commodity_surcharge import FclFreightRateCommoditySurcharge
-from rails_client import client
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from math import ceil
 from playhouse.shortcuts import model_to_dict
@@ -56,41 +55,6 @@ def get_data(query, page, page_limit, pagination_data_required):
     data = [model_to_dict(item) for item in query.execute()]
     return {'get_data' : data}
 
-# def add_service_objects(data):
-#     operator_ids = []
-#     location_ids = []
-#     organization_ids = []
-
-#     for item in data:
-#         operator_ids.append(str(item['shipping_line_id']))
-#         location_ids.append(str(item['origin_location_id']))
-#         location_ids.append(str(item['destination_location_id']))
-#         organization_ids.append(str(item['service_provider_id']))
-    
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
-#         {
-#         'name': 'operator',
-#         'filters': { 'id': list(set(operator_ids))},
-#         'fields': ['id', 'business_name', 'short_name', 'logo_url']
-#         },
-#         {
-#         'name': 'location',
-#         'filters': { 'id': {"id": list(set(location_ids))}},
-#         'fields': ['id', 'name', 'display_name', 'port_code', 'type']
-#         },
-#         {
-#         'name': 'organization',
-#         'filters': { 'id': list(set(organization_ids))},
-#         'fields': ['id', 'business_name', 'short_name']
-#         }
-#     ]})      
-
-#     for i in range(len(data)):
-#         data[i]['shipping_line'] = service_objects['operator'][data[i]['shipping_line_id']] if 'operator' in service_objects and data[i].get('shipping_line_id') in service_objects['operator'] else None
-#         data[i]['origin_location'] = service_objects['location'][data[i]['origin_location_id']] if 'location' in service_objects and data[i].get('origin_location_id') in service_objects['location'] else None
-#         data[i]['destination_location'] = service_objects['location'][data[i]['destination_location_id']] if 'location' in service_objects and data[i].get('destination_location_id') in service_objects['location'] else None
-#         data[i]['service_provider'] = service_objects['organization'][data[i]['service_provider_id']] if 'organization' in service_objects and data[i].get('service_provider_id') in service_objects['organization'] else None
-#     return data
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:

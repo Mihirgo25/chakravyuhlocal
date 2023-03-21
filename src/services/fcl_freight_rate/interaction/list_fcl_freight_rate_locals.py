@@ -19,7 +19,7 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocal)
         query = apply_indirect_filters(query, filters)   
-    
+
     if return_query:
         items = [model_to_dict(item) for item in query.execute()]
         return {'list': items}
@@ -64,10 +64,10 @@ def get_data(query):
                 )
 
     for result in results.dicts():
-        result['line_items'] = result['data']['line_items']
-        result['detention'] = result['data']['detention']
-        result['demurrage'] = result['data']['demurrage']
-        result['plugin'] = result['data']['plugin']
+        result['line_items'] = result['data'].get('line_items')
+        result['detention'] = result['data'].get('detention')
+        result['demurrage'] = result['data'].get('demurrage')
+        result['plugin'] = result['data'].get('plugin')
 
         if result['detention']:
             if 'free_limit' in result['detention']:

@@ -3,21 +3,20 @@ from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_fi
 from configs.global_constants import INTERNAL_BOOKING
 from playhouse.shortcuts import model_to_dict
 import concurrent.futures, json
-from rails_client import client
+from operator import attrgetter
 from math import ceil
 from micro_services.client import *
 
 possible_direct_filters = ['port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'trade_type', 'container_size', 'container_type', 'commodity']
 possible_indirect_filters = ['location_ids']
 
-def list_fcl_freight_local_suggestions(filters = {}, service_provider_id = None, page = 1, page_limit = 10, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True):
-    query = get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit)
-
+def list_fcl_freight_rate_local_suggestions(service_provider_id, filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True):
     if type(filters) != dict:
         filters = json.loads(filters)
+    query = get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocal)
-        query = apply_indirect_filters(query, filters)
+    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocal)
+    query = apply_indirect_filters(query, filters)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
@@ -32,12 +31,13 @@ def list_fcl_freight_local_suggestions(filters = {}, service_provider_id = None,
     return {'list': data } | (pagination_data)
 
 def get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit):
-    if filters:
-        direct_filters = {key:value for key,value in filters if key in possible_direct_filters}
-        already_added_rates = [model_to_dict(item)['selected_suggested_rate_id'] for item in FclFreightRateLocal.where(FclFreightRateLocal.service_provider_id == service_provider_id).where(**direct_filters).execute()]
-    else:
-        already_added_rates = []
-    query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_(INTERNAL_BOOKING['service_provider_id']), FclFreightRateLocal.is_line_items_error_messages_present == False).where(not (FclFreightRateLocal.id.in_(already_added_rates))).order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
+    query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id == service_provider_id)
+    direct_filters = {key:value for key,value in filters.items() if key in possible_direct_filters}
+    for key in direct_filters:
+        query = query.select().where(attrgetter(key)(FclFreightRateLocal) == filters[key])
+    already_added_rates = [item.selected_suggested_rate_id for item in query.execute()]
+ 
+    query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_([INTERNAL_BOOKING['service_provider_id']]), FclFreightRateLocal.is_line_items_error_messages_present == False).where(FclFreightRateLocal.id.not_in(already_added_rates)).order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
     return query 
 
 def apply_indirect_filters(query, filters):
@@ -53,7 +53,7 @@ def apply_location_ids_filter(query, filters):
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
-        return {}
+        return {'get_pagination_data' : {}}
 
     params = {
       'page': page,
@@ -61,13 +61,13 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
       'total_count': query.count(),
       'page_limit': page_limit
     }
-    return params
+    return {'get_pagination_data' : params}
 
 
-def get_data(query):
+def get_data(query, page, page_limit, pagination_data_required):
     data = []
     
-    query = query.select(query.c.id,query.c.port_id,query.c.main_port_id,query.c.shipping_line_id,query.c.service_provider_id,query.c.trade_type,query.c.container_size,query.c.container_type,query.c.commodity,query.c.data)
+    query = query.select(FclFreightRateLocal.id,FclFreightRateLocal.port_id,FclFreightRateLocal.main_port_id,FclFreightRateLocal.shipping_line_id,FclFreightRateLocal.service_provider_id,FclFreightRateLocal.trade_type,FclFreightRateLocal.container_size,FclFreightRateLocal.container_type,FclFreightRateLocal.commodity,FclFreightRateLocal.data)
     for result in query.execute():
         result['line_items'] = result['data'].get('line_items')
         result['detention'] = result['data'].get('detention')
@@ -89,40 +89,38 @@ def get_data(query):
             result['total_price'] = total_price
 
         data.append(result)
+    return {'get_data':data}
 
-    data = add_service_objects(data)
-    return data
+# def add_service_objects(data):
+#     if data.count == 0:
+#         return data 
 
-def add_service_objects(data):
-    if data.count == 0:
-        return data 
+#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
+#     {
+#         'name': 'operator',
+#         'filters': { id: list(set([t['shipping_line_id'] for t in data]))},
+#         'fields': ['id', 'business_name', 'short_name', 'logo_url']
+#     },
+#     {      
 
-    service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
-    {
-        'name': 'operator',
-        'filters': { id: list(set([t['shipping_line_id'] for t in data]))},
-        'fields': ['id', 'business_name', 'short_name', 'logo_url']
-    },
-    {      
-
-        'name': 'location',
-        'filters': {"id": list(set(item for sublist in [[item["port_id"], item["main_port_id"]] for item in data] for item in sublist))},
-        'fields': ['id', 'name', 'display_name', 'port_code', 'type', 'is_icd']
-    },
-    {
-        'name': 'organization',
-        'filters': { id:list(set(item for sublist in [item["service_provider_id"] for item in data] for item in sublist))},
-        'fields': ['id', 'business_name', 'short_name']
-    }
-    ]})
+#         'name': 'location',
+#         'filters': {"id": list(set(item for sublist in [[item["port_id"], item["main_port_id"]] for item in data] for item in sublist))},
+#         'fields': ['id', 'name', 'display_name', 'port_code', 'type', 'is_icd']
+#     },
+#     {
+#         'name': 'organization',
+#         'filters': { id:list(set(item for sublist in [item["service_provider_id"] for item in data] for item in sublist))},
+#         'fields': ['id', 'business_name', 'short_name']
+#     }
+#     ]})
     
-    for i in range(len(data)):
-        data[i]['shipping_line'] = service_objects['operator'][str(data[i]['shipping_line_id'])] if ('operator' in service_objects) and (str(data[i].get('shipping_line_id')) in service_objects['operator']) else None 
-        data[i]['port'] = service_objects['location'][str(data[i]['port_id'])] if ('location' in service_objects) and (str(data[i].get('port_id')) in service_objects['location']) else None
-        if data[i]['main_port_id']:
-            data[i]['main_port'] = service_objects['location'][str(data[i]['main_port_id'])] if ('location' in service_objects) and (str(data[i].get('main_port_id')) in service_objects['location']) else None
-        else:
-            data[i]['main_port'] = None
-        data[i]['service_provider'] = service_objects['organization'][str(data[i]['service_provider_id'])] if 'organization' in service_objects and str(data[i].get('service_provider_id')) in service_objects['organization'] else None
+#     for i in range(len(data)):
+#         data[i]['shipping_line'] = service_objects['operator'][str(data[i]['shipping_line_id'])] if ('operator' in service_objects) and (str(data[i].get('shipping_line_id')) in service_objects['operator']) else None 
+#         data[i]['port'] = service_objects['location'][str(data[i]['port_id'])] if ('location' in service_objects) and (str(data[i].get('port_id')) in service_objects['location']) else None
+#         if data[i]['main_port_id']:
+#             data[i]['main_port'] = service_objects['location'][str(data[i]['main_port_id'])] if ('location' in service_objects) and (str(data[i].get('main_port_id')) in service_objects['location']) else None
+#         else:
+#             data[i]['main_port'] = None
+#         data[i]['service_provider'] = service_objects['organization'][str(data[i]['service_provider_id'])] if 'organization' in service_objects and str(data[i].get('service_provider_id')) in service_objects['organization'] else None
 
-    return data
+#     return data

@@ -95,7 +95,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
       
     def validate_performed_by(self):
         data = get_user(self.performed_by_id)
-        if ('list' in data) and (len(data['list']) > 0):
+        if (len(data) > 0):
           return True
         return False
 

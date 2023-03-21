@@ -34,13 +34,13 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
     data = results['get_data']
     pagination_data = results['get_pagination_data']
 
-    stats = get_stats(query, filters, page, page_limit, sort_by, sort_type, stats_required)
+    stats = get_stats(query, filters, stats_required)
 
     return {'list': data } | (pagination_data) | (stats)
   
 
 def get_query(page, page_limit, sort_by, sort_type):
-    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()()'.format(sort_by, sort_type))).paginate(page, page_limit)
+    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type))).paginate(page, page_limit)
     return query
   
 def get_pagination_data(query, filters, page, page_limit, pagination_data_required):
@@ -57,6 +57,7 @@ def get_pagination_data(query, filters, page, page_limit, pagination_data_requir
 
 def get_data(query, filters, page, page_limit, pagination_data_required):
     new_data = []
+    port_ids, main_port_ids, container_sizes, container_types, commodities, trade_types, shipping_line_ids = [],[], [],[], [],[], []
     for object in query.dicts():
         created_at_date = object['created_at']
         next_date = object['created_at'] + timedelta(days = 1)
@@ -80,6 +81,14 @@ def get_data(query, filters, page, page_limit, pagination_data_required):
         else:
             object['purchase_invoice_rate'] = None
         del object['job_data']
+
+        port_ids.append(object['port_id'])
+        main_port_ids.append(object['main_port_id']), 
+        container_sizes.append(object['container_size']), 
+        container_types.append(object['container_type']), 
+        commodities.append(object['commodity']),
+        trade_types.append(object['trade_type']) 
+        shipping_line_ids.append(object['shipping_line_id'])
         new_data.append(object)
 
     if 'status' in filters and filters['status'] == 'completed':
@@ -96,10 +105,10 @@ def get_data(query, filters, page, page_limit, pagination_data_required):
 
             object['rate'] = rate
 
-            object['expiration_time'] = datetime.strptime(object['created_at'], '%Y-%m-%d %H:%M:%S') + timedelta(hours = 6)
-            
-            object['completion_time'] = int(datetime.strptime(object['completed_at'], '%Y-%m-%d %H:%M:%S').strftime("%Y%m%d%H%M%S")) - int(datetime.strptime(object['created_at'], '%Y-%m-%d %H:%M:%S').strftime("%Y%m%d%H%M%S"))
-            object['completed_at'] = str(datetime.strptime(object['completed_at'], '%Y-%m-%d %H:%M:%S'))
+            object['expiration_time'] = object['created_at'] + timedelta(hours = 6)
+
+            object['completion_time'] = int(datetime.fromisoformat(object['completed_at']).timestamp()) - int(object['created_at'].timestamp())
+            object['completed_at'] = str(datetime.fromisoformat(object['completed_at']))
             
             if object['completion_time'] < (2 * 60 * 60):
                 object['remark'] = 'Super Fast' 
@@ -109,17 +118,17 @@ def get_data(query, filters, page, page_limit, pagination_data_required):
                 object['remark'] = 'Delayed' 
 
             del object['completion_data']
-
+    
     existing_system_query = FclFreightRateLocal.select().where(
-      FclFreightRateLocal.port_id.in_(list(set([t['port_id'] for t in new_data]))),
-      FclFreightRateLocal.main_port_id.in_(list(set([t['main_port_id'] for t in new_data]))),
-      FclFreightRateLocal.container_size.in_(list(set([t['container_size'] for t in new_data]))),
-      FclFreightRateLocal.container_type.in_(list(set([t['container_type'] for t in new_data]))),
-      FclFreightRateLocal.commodity.in_(list(set([t['commodity'] for t in new_data]))),
-      FclFreightRateLocal.trade_type.in_(list(set([t['trade_type'] for t in new_data])),
-      FclFreightRateLocal.shipping_line_id.in_(list(set([t['shipping_line_id'] for t in new_data]))),
+      FclFreightRateLocal.port_id.in_(list(set(port_ids))),
+      FclFreightRateLocal.main_port_id.in_(list(set(main_port_ids))),
+      FclFreightRateLocal.container_size.in_(list(set(container_sizes))),
+      FclFreightRateLocal.container_type.in_(list(set(container_types))),
+      FclFreightRateLocal.commodity.in_(list(set(commodities))),
+      FclFreightRateLocal.trade_type.in_(list(set(trade_types))),
+      FclFreightRateLocal.shipping_line_id.in_(list(set(shipping_line_ids))),
       FclFreightRateLocal.service_provider_id == DEFAULT_SERVICE_PROVIDER_ID
-    ))
+    )
     existing_system_rates = [model_to_dict(item) for item in existing_system_query]
     
     for i in range(len(new_data)):
@@ -127,48 +136,28 @@ def get_data(query, filters, page, page_limit, pagination_data_required):
         new_data[i]['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
         new_data[i]['procured_by_id'] = DEFAULT_PROCURED_BY_ID
         new_data[i]['existing_system_rate'] = None
-    
+        
+        if existing_system_rates:
+            existing_system_rate = list(filter(lambda rate: 
+                                    rate['port_id'] == new_data[i]['port_id'] and
+                                    rate['main_port_id'] == new_data[i]['main_port_id'] and
+                                    rate['container_size'] == new_data[i]['container_size'] and
+                                    rate['container_type'] == new_data[i]['container_type'] and
+                                    rate['commodity'] == new_data[i]['commodity'] and
+                                    rate['trade_type'] == new_data[i]['trade_type'] and
+                                    rate['shipping_line_id'] == new_data[i]['shipping_line_id'],
+                                existing_system_rates))
 
-        existing_system_rate = list(filter(lambda rate: 
-                                rate['port_id'] == new_data[i]['port_id'] and
-                                rate['main_port_id'] == new_data[i]['main_port_id'] and
-                                rate['container_size'] == new_data[i]['container_size'] and
-                                rate['container_type'] == new_data[i]['container_type'] and
-                                rate['commodity'] == new_data[i]['commodity'] and
-                                rate['trade_type'] == new_data[i]['trade_type'] and
-                                rate['shipping_line_id'] == new_data[i]['shipping_line_id'],
-                            existing_system_rates))[0]
 
-
-        if existing_system_rate:
-            new_data[i]['existing_system_rate'] = existing_system_rate['data']
-            new_data[i]['existing_system_rate']['updated_at'] = existing_system_rate['updated_at']
+            if existing_system_rate:
+                new_data[i]['existing_system_rate'] = existing_system_rate[0]['data']
+                new_data[i]['existing_system_rate']['updated_at'] = existing_system_rate[0]['updated_at']
+        else:
+            new_data[i]['existing_system_rate'] = {}
+            new_data[i]['existing_system_rate']['updated_at'] = None
             
     return {'get_data': new_data }
-  
-# def add_service_objects(data):
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
-#     {
-#         'name': 'operator',
-#         'filters': {'id': list(set(filter(None, [t['shipping_line_id'] for t in data]))) },
-#         'fields': ['id', 'business_name', 'short_name', 'logo_url']
-#     },
-#     {
-#         'name': 'location',
-#         'filters': {'id': list(set(filter(None, [d.get('port_id') for d in data] + [d.get('main_port_id') for d in data]))) }, 
 
-#         'fields': ['id', 'name', 'display_name', 'port_code', 'type']
-#     },
-#     {
-#         'name': 'user',
-#         'filters': {'id': list(set(filter(None, [t['completed_by_id'] for t in data])))}, 
-#         'fields': ['name', 'email']
-#     }
-#     ]})
-
-
-    
-#     return data
 
 def apply_indirect_filters(query, filters):
     for key in filters:
@@ -185,20 +174,20 @@ def apply_created_at_less_than_filter(query, filters):
     query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%d'))
     return query
 
-def get_stats(query, filters, page, page_limit, sort_by, sort_type, stats_required):
+def get_stats(query, filters, stats_required):
     if not stats_required:
         return {}
-    
-    if 'trade_type' in filters:
-        del filters['trade_type'] 
-    
-    if 'status' in filters:
-        del filters['status']
-
     query = FclFreightRateTask.select()
 
-    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
-    query = apply_indirect_filters(query, filters)
+    if filters:
+        if 'trade_type' in filters:
+            del filters['trade_type'] 
+        
+        if 'status' in filters:
+            del filters['status']
+
+        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
+        query = apply_indirect_filters(query, filters)
     
     query = query.select(fn.COUNT(SQL('*')).alias('count_all'), FclFreightRateTask.status.alias('fcl_freight_task_status'), FclFreightRateTask.trade_type.alias('fcl_freight_task_trade_type')).group_by(FclFreightRateTask.status, FclFreightRateTask.trade_type)
     query_result = {}
