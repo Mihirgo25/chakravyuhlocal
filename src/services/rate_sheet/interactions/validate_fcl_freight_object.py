@@ -15,25 +15,27 @@ PAYMENT_TERM = []
 
 # validate_validity_object
 def validate_fcl_freight_object(module, object):
-    rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
-    return
+    response = {}
+    response['valid'] = False
+    try:
+        rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
+        response['valid'] = True
+    except Exception as e:
+        response['errors'] = e
+    return response
 
 def get_freight_object(object):
-    print(object)
-    for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
-        object[f'{port}_id'] = get_port_id(object.get(port))
-        del object[port]
-    object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-    del object['shipping_line_id']
+    # print(object)
+    # for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
+    #     object[f'{port}_id'] = get_port_id(object.get(port))
+    #     del object[port]
+    # object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
+    # del object['shipping_line_id']
     object['validity_start'] = object['validity_start']
-    try:
-        object['validity_start'] = datetime.datetime.strptime(object.get('validity_start'), '%Y-%m-%d').date()
-    except:
-        object['validity_start'] = None
-    try:
-        object['validity_end'] = datetime.datetime.strptime(object.get('validity_end'), '%Y-%m-%d').date()
-    except :
-        object['validity_end'] = None
+    object['validity_start'] = object.get('validity_start')
+    # object['validity_start'] = None
+    print(object.get('validity_end'))
+    object['validity_end'] = object.get('validity_end')
     keys_to_extract = ['origin_port_id',
       'origin_main_port_id',
       'destination_port_id',

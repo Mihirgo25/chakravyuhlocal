@@ -142,18 +142,17 @@ class FclFreightRate(BaseModel):
         }
         return loc_data
 
-    # def set_origin_location_ids(self):
-    #   print(self)
-    #   self.origin_country_id = self.origin_port.get('country_id')
-    #   self.origin_continent_id = self.origin_port.get('continent_id')
-    #   self.origin_trade_id = self.origin_port.get('trade_id')
-    #   self.origin_location_ids = [uuid.UUID(str(self.origin_port_id)),uuid.UUID(str(self.origin_country_id)),uuid.UUID(str(self.origin_trade_id)),uuid.UUID(str(self.origin_continent_id))]
+    def set_origin_location_ids(self):
+      self.origin_country_id = self.origin_port.get('country_id')
+      self.origin_continent_id = self.origin_port.get('continent_id')
+      self.origin_trade_id = self.origin_port.get('trade_id')
+      self.origin_location_ids = [uuid.UUID(str(self.origin_port_id)),uuid.UUID(str(self.origin_country_id)),uuid.UUID(str(self.origin_trade_id)),uuid.UUID(str(self.origin_continent_id))]
 
-    # def set_destination_location_ids(self):
-    #   self.destination_country_id = self.destination_port.get('country_id')
-    #   self.destination_continent_id = self.destination_port.get('continent_id')
-    #   self.destination_trade_id = self.destination_port.get('trade_id')
-    #   self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
+    def set_destination_location_ids(self):
+      self.destination_country_id = self.destination_port.get('country_id')
+      self.destination_continent_id = self.destination_port.get('continent_id')
+      self.destination_trade_id = self.destination_port.get('trade_id')
+      self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
 
     def validate_origin_main_port_id(self):
       if self.origin_port and self.origin_port['is_icd'] == False:
@@ -263,21 +262,21 @@ class FclFreightRate(BaseModel):
       if not  (duplicate and invalid):
           raise HTTPException(status_code=404,detail="Destination Local Invalid")
 
-    # def validate_validity_object(self, validity_start, validity_end):
-    #   if not validity_start:
-    #     raise HTTPException(status_code=499, detail="validity_start is invalid")
+    def validate_validity_object(self, validity_start, validity_end):
+      if not validity_start:
+        raise HTTPException(status_code=499, detail="validity_start is invalid")
 
-    #   if not validity_end:
-    #     raise HTTPException(status_code=499, detail="validity_end is invalid")
+      if not validity_end:
+        raise HTTPException(status_code=499, detail="validity_end is invalid")
 
-    #   if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
-    #     raise HTTPException(status_code=499, detail="validity_end can not be greater than 60 days from current date")
+      if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
+        raise HTTPException(status_code=499, detail="validity_end can not be greater than 60 days from current date")
 
-    #   if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
-    #     raise HTTPException(status_code=499, detail="validity_start can not be less than 15 days from current date")
+      # if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
+      #   raise HTTPException(status_code=499, detail="validity_start can not be less than 15 days from current date")
 
-    #   if validity_end < validity_start:
-    #     raise HTTPException(status_code=499, detail="validity_end can not be lesser than validity_start")
+      if validity_end < validity_start:
+        raise HTTPException(status_code=499, detail="validity_end can not be lesser than validity_start")
 
     def validate_line_items(self, line_items):
       codes = [item['code'] for item in line_items]
