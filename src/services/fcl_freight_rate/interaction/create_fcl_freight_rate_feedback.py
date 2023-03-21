@@ -5,6 +5,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from datetime import datetime
 from celery_worker import send_create_notifications_to_supply_agents_function
 from libs.logger import logger
+from celery_worker import update_multiple_service_objects
 
 
 def create_fcl_freight_rate_feedback(request):
@@ -18,8 +19,10 @@ def create_fcl_freight_rate_feedback(request):
 def execute_transaction_code(request):
     if type(request) != dict:
         request = request.__dict__
-
-    rate = FclFreightRate.get(**{'id' :request['rate_id']})
+    try:
+        rate = FclFreightRate.get_by_id(request['rate_id'])
+    except:
+        rate = None
 
     if not rate:
         raise Exception('{} is invalid'.format(request['rate_id']))
@@ -60,6 +63,7 @@ def execute_transaction_code(request):
         return e
 
     create_audit(request, feedback)
+    update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
     update_likes_dislikes_count(rate, request)
     if request['feedback_type'] == 'disliked':

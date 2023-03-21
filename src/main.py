@@ -82,6 +82,7 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_pric
 from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster import update_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
 
 # from rails_client.client import initialize_client
 from params import *
@@ -159,7 +160,7 @@ def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRa
 @app.post("/create_fcl_freight_rate_local_agent")
 def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalAgent):
     data = create_fcl_freight_rate_local_agent(request.__dict__)
-    return data
+    return JSONResponse(status_code=200, content={'success':True})
 
 @app.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate_test(request: PostFclFreightRate):
@@ -173,7 +174,7 @@ def create_fcl_freight_rate_test(request: PostFclFreightRate):
 @app.post("/create_fcl_freight_rate_feedback")
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback):
     rate_id = create_fcl_freight_rate_feedback(request)
-    return rate_id
+    return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
 
 @app.post("/create_fcl_freight_rate_not_available")
 def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotAvailable):
@@ -872,11 +873,8 @@ def create_fcl_freight_commodity_surcharge_data(request: CreateFclFreightCommodi
 
 @app.post("/create_fcl_freight_rate_seasonal_surcharge")
 def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSeasonalSurcharge):
-    start_time = time.time()
     data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
-    end_time = time.time()
-    response_time = end_time - start_time
-    return JSONResponse(content={"time": response_time})
+    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
 
 
 @app.post("/create_fcl_freight_rate_bulk_operation")
@@ -886,18 +884,7 @@ def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation):
 
 
 
-@app.post("/create_fcl_freight_commodity_surcharge")
-def create_fcl_freight_commodity_surcharge_data(request: CreateFclFreightCommoditySurcharge):
-    start_time = time.time()
-    data = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
-    end_time = time.time()
-    response_time = end_time - start_time
-    return JSONResponse(content=data, headers={"X-Response-Time": str(response_time)})
-
-@app.post("/create_fcl_freight_rate_seasonal_surcharge")
-def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSeasonalSurcharge):
-    start_time = time.time()
-    data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
-    end_time = time.time()
-    response_time = end_time - start_time
-    return JSONResponse(content=data)
+@app.post("/create_fcl_freight_rate_free_day_request")
+def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeDayRequest):
+    data = create_fcl_freight_rate_free_day_request(request.dict(exclude_none=False))
+    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
