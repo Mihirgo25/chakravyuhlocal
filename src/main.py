@@ -80,7 +80,7 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster 
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
 
 
-from rails_client.client import initialize_client
+# from rails_client.client import initialize_client
 from params import *
 from database.create_tables import create_table
 import time
@@ -116,7 +116,7 @@ def startup():
     if db.is_closed():
         db.connect()
     # create_table() 
-    initialize_client()
+    # initialize_client()
     
 @app.on_event("shutdown")
 def shutdown():
@@ -846,11 +846,8 @@ def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateComm
 
 @app.post("/create_fcl_freight_commodity_surcharge")
 def create_fcl_freight_commodity_surcharge_data(request: CreateFclFreightCommoditySurcharge):
-    start_time = time.time()
     data = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
-    end_time = time.time()
-    response_time = end_time - start_time
-    return JSONResponse(content=data, headers={"X-Response-Time": str(response_time)})
+    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
 
 @app.post("/create_fcl_freight_rate_seasonal_surcharge")
 def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSeasonalSurcharge):

@@ -1,7 +1,7 @@
 from database.db_session import db
 from peewee import * 
 from playhouse.postgres_ext import *
-from rails_client import client
+# from rails_client import client
 from fastapi import HTTPException
 from datetime import datetime
 from configs.defintions import FCL_FREIGHT_CHARGES
