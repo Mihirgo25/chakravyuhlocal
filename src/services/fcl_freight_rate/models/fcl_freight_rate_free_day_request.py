@@ -5,6 +5,7 @@ from playhouse.postgres_ext import *
 import datetime
 from micro_services.client import *
 from database.rails_db import get_user
+from micro_services.client import common
 
 class BaseModel(Model):
     class Meta:
@@ -86,7 +87,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
       self.location = {key:value for key, value in maps.list_locations({'id': self.location_id})['list'] if key in ['id', 'name', 'display_name', 'port_code', 'type']}
       
     # def validate_source_id(self):
-    #   data = client.ruby.list_spot_searches({'filters':{'id':self.source_id}})
+    #   data = common.list_spot_searches({'filters':{'id':self.source_id}})
     #   if ('list' in data) and (len(data['list']) > 0):
     #     data = data['list'][0]
     #     if data.get('source_type',None) == 'spot_search':
@@ -95,7 +96,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
       
     def validate_performed_by(self):
         data = get_user(self.performed_by_id)
-        if ('list' in data) and (len(data['list']) > 0):
+        if (len(data) > 0):
           return True
         return False
 

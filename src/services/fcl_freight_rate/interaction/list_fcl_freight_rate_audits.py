@@ -88,7 +88,7 @@ def get_data(query, page, page_limit, pagination_data_required, user_data_requir
 #     if not objects:
 #         return data 
 
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
+#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': objects})
 
 #     new_data = []
 #     for object in data:

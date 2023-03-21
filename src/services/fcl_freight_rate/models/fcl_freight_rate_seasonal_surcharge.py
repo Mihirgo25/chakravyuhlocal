@@ -3,12 +3,12 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
-import yaml
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_SEASONAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 from micro_services.client import *
+from database.rails_db import *
 
 LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
 
@@ -96,7 +96,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Destination location is not valid")
 
     def validate_shipping_line(self):
-        shipping_line = common.list_operators({'filters':{'id': str(self.shipping_line_id)}})['list']
+        shipping_line = get_shipping_line(str(self.shipping_line_id))
         if shipping_line:
             shipping_line = shipping_line[0]
             if shipping_line.get('operator_type') != 'shipping_line':
@@ -106,7 +106,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Shipping line is not valid")
 
     def validate_service_provider(self):
-        service_provider = organization.list_organizations({'filters':{'id': str(self.service_provider_id)}})['list']
+        service_provider = get_service_provider(str(self.service_provider_id))
         if service_provider:
             service_provider = service_provider[0]
             if service_provider.get('account_type') != 'service_provider':

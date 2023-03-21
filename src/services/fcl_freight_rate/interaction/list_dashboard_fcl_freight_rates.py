@@ -1,13 +1,11 @@
-import concurrent.futures
-from playhouse.shortcuts import model_to_dict
+from micro_services.client import organization
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
-from rails_client import client
+import concurrent.futures
 
 def list_dashboard_fcl_freight_rates():
-    fcl_service_provider_query = [model_to_dict(item) for item in OrganizationService.select().where(OrganizationService.service == 'fcl_freight', OrganizationService.status == 'active').execute()]
-    fcl_service_provider_ids = list(set([query['organization_id'] for query in fcl_service_provider_query]))
-    air_service_provider_query = [model_to_dict(item) for item in OrganizationService.select().where(OrganizationService.service == 'air_freight', OrganizationService.status == 'active').execute()]
-    air_service_provider_ids = list(set([query['organization_id'] for query in air_service_provider_query]))
+    fcl_service_provider_ids = list(set([item['organization_id'] for item in organization.list_organization_services({'filters':{'service':'fcl_freight', 'status':'active'}})['list']]))
+    air_service_provider_ids = list(set([item['organization_id'] for item in organization.list_organization_services({'filters':{'service':'air_freight', 'status':'active'}})['list']]))
+    
     port_pairs = get_port_pairs()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = len(port_pairs)) as executor:
@@ -89,5 +87,5 @@ def get_rate(port_pair, fcl_service_provider_ids, air_service_provider_ids):
     }
 
     data = data['filters'] | (port_pair)
-    response = eval("client.ruby.list_{}_rates(data)".format(port_pair['service']))['list'][0]
+    response = eval("list_{}_rates(data)".format(port_pair['service']))['list'][0]
     return response

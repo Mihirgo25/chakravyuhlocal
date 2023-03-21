@@ -3,7 +3,7 @@ import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from pydantic import BaseModel
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
-from micro_services.client import *
+from micro_services.client import common, maps
 
 class FclFreightRateLocalData(BaseModel):
     line_items: list[LineItem] = []
@@ -107,7 +107,7 @@ class FclFreightRateLocalData(BaseModel):
         # for code, config in possible_charge_codes.items():
         #     if config.get('locations'):
         #         location_codes = config['locations'] or []
-        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data_for_fcl(
+        #         required_code_specific_locations = common.get_multiple_service_objects_data_for_fcl(
         #             objects=[{
         #                 'name': 'location',
         #                 'filters': {'type': 'country', 'country_code': location_codes},
@@ -118,7 +118,7 @@ class FclFreightRateLocalData(BaseModel):
         #     for code, config in filter(lambda x: x[1]['locations'], possible_charge_codes.items()):
         #         # code = str(code)
         #         location_codes = config['locations'] or []
-        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data_for_fcl(
+        #         required_code_specific_locations = common.get_multiple_service_objects_data_for_fcl(
         #             objects=[{
         #                 'name': 'location',
         #                 'filters': {'type': 'country', 'country_code': location_codes},

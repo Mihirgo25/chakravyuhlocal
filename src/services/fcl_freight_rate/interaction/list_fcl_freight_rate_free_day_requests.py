@@ -3,7 +3,6 @@ from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_fi
 from playhouse.shortcuts import model_to_dict
 from math import ceil
 import concurrent.futures, json
-from rails_client import client
 from datetime import datetime
 from peewee import fn, SQL
 
@@ -47,50 +46,6 @@ def apply_validity_end_less_than_filter(query, filters):
 def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
     return data
-
-# def add_service_objects(data, spot_search_details_required):
-#     shipping_line_ids = list(filter(None,[t['shipping_line_id'] for t in data]))
-#     objects = [
-#     {
-#         'name': 'user',
-#         'filters': { 'id': list(set([t['performed_by_id'] for t in data] + [t['closed_by_id'] for t in data]))},
-#         'fields': ['id', 'name', 'email']
-#     },
-#     {
-#         'name': 'location',
-#         'filters': { 'id': list(set([t['location_id'] for t in data]))},
-#         'fields': ['id', 'name', 'display_name', 'port_code', 'type']
-#     },
-#     {
-#         'name': 'operator',
-#         'filters': { 'id': list(set(shipping_line_ids)) },
-#         'fields': ['id', 'business_name', 'short_name', 'logo_url']
-#     },
-#     {
-#         'name': 'organization',
-#         'filters': { 'id': list(set([t['service_provider_id'] for t in data]))},
-#         'fields': ['id', 'business_name', 'short_name', 'logo']
-#     }
-#     ]
-#     if spot_search_details_required:
-#         objects.append({
-#             'name': 'spot_search',
-#             'filters': { 'id': list(set([t['source_id'] for t in data])) },
-#             'fields': ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']
-#         })
-    
-
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
-    
-#     for i in range(len(data)): 
-#         data[i]['location']= service_objects['location'][data[i]['location_id']] if 'location' in service_objects and data[i].get('location_id') in service_objects['location'] else None
-#         data[i]['performed_by'] = service_objects['user'][data[i]['performed_by_id']] if 'user' in service_objects and data[i].get('performed_by_id') in service_objects['user'] else None
-#         data[i]['closed_by'] = service_objects['user'][data[i]['closed_by_id']] if 'user' in service_objects and data[i].get('closed_by_id') in service_objects['user'] else None
-#         data[i]['shipping_line'] = service_objects['operator'][data[i]['shipping_line_id']] if 'operator' in service_objects and data[i].get('shipping_line_id') in service_objects['operator'] else None
-#         data[i]['service_provider'] = service_objects['organization'][objects['service_provider_id']] if 'organization' in service_objects and data[i].get('service_provider_id') in service_objects['organization'] else None
-#         data[i]['spot_search'] = service_objects['spot_search'][objects['source_id']] if 'spot_search' in service_objects and data[i].get('source_id') in service_objects['spot_search'] else None
-    
-#     return data
 
 def get_pagination_data(query, page, page_limit):
     params = {

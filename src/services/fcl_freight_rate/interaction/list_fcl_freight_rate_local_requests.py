@@ -6,13 +6,14 @@ from math import ceil
 from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL
+from micro_services.client import common
 
-possible_direct_filters = ['validity_start_greater_than', 'validity_end_less_than', 'similar_id']
+possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
-possible_indirect_filters = ['port_id','performed_by_id', 'status', 'closed_by_id', 'trade_id', 'country_id']
+possible_direct_filters = ['port_id','performed_by_id', 'status', 'closed_by_id', 'trade_id', 'country_id']
 
 
-def list_fcl_freight_rate_local_requests(filters = {}, page = 1, page_limit = 10, is_stats_required = True, performed_by_id = None):
+def list_fcl_freight_rate_local_requests(filters = {}, page_limit = 10, page = 1, is_stats_required = True, performed_by_id = None):
     query = FclFreightRateLocalRequest.select().order_by(FclFreightRateLocalRequest.created_at.desc())
 
     if filters:
@@ -22,11 +23,11 @@ def list_fcl_freight_rate_local_requests(filters = {}, page = 1, page_limit = 10
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocalRequest)
         query = apply_indirect_filters(query, filters)
 
-    stats = get_stats(query, is_stats_required, performed_by_id) or {}
-
     query = query.paginate(page, page_limit)
     data = get_data(query)
     pagination_data = get_pagination_data(query, page, page_limit)
+
+    stats = get_stats(query, filters, is_stats_required, performed_by_id) or {}
 
     return {'list': data } | (pagination_data) | (stats)
 
@@ -77,7 +78,7 @@ def get_data(query):
 #     }
 #     ]
 
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
+#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': objects})
  
 #     for i in range(len(data)):
 #         data[i]['port'] = service_objects['location'][data[i]['port_id']] if 'location' in service_objects and data[i].get('port_id') in service_objects['location'] else None
@@ -103,19 +104,21 @@ def get_pagination_data(query, page, page_limit):
   return pagination_data
 
 
-def get_stats(query, filters, is_stats_required, page, page_limit):
+def get_stats(query, filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
-    
-    if 'status' in filters:
-        del filters['status']
-    
+
     query = FclFreightRateLocalRequest.select()
-    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocalRequest)
-    query = apply_indirect_filters(query, filters)
+    
+    if filters:
+        if 'status' in filters:
+            del filters['status']
+    
+        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocalRequest)
+        query = apply_indirect_filters(query, filters)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
+        futures = [executor.submit(eval(method_name),query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
         results = {}
         for future in futures:
             result = future.result()
@@ -130,7 +133,7 @@ def get_stats(query, filters, is_stats_required, page, page_limit):
     }
     return { 'stats': stats }
 
-def get_total(query):
+def get_total(query, performed_by_id):
     try:
         return {'get_total' : query.count()}
     except:
@@ -149,7 +152,7 @@ def get_total_opened_by_user(query, performed_by_id):
     except:
         return {'get_total_opened_by_user' : {}}
 
-def get_status_count(query):
+def get_status_count(query, performed_by_id):
     try:
         query = query.select(FclFreightRateLocalRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclFreightRateLocalRequest.status)
         result = {}
