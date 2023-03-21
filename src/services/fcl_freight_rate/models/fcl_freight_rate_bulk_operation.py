@@ -137,7 +137,7 @@ class FclFreightRateBulkOperation(BaseModel):
             raise HTTPException(status_code=499, detail='slabs is invalid')
 
         if slabs[0] and (int(slabs[0]['lower_limit']) <= int(data['free_limit'])):
-            raise HTTPException(status_code=499, detail='slabs lower limit should be greater than free limit')\
+            raise HTTPException(status_code=499, detail='slabs lower limit should be greater than free limit')
 
         if any(index > 0 and slab.get('lower_limit', 0) <= slabs[index - 1].get('upper_limit', 0) for index, slab in enumerate(slabs)):
             raise HTTPException(status_code=499, detail='slabs is invalid')
