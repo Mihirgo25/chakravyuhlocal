@@ -2,18 +2,17 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_local_rate_cards impo
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT, CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS, DEFAULT_PAYMENT_TERM, INTERNAL_BOOKING, DEFAULT_SPECIFICITY_TYPE
-from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
 from datetime import datetime
 from configs.fcl_freight_rate_constants import RATE_CONSTANT_MAPPING, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, ELIGIBLE_SERVICE_ORGANIZATION_IDS
 import concurrent.futures
-from rails_client import client
+from micro_services.client import *
 from peewee import fn, JOIN
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration import get_fcl_weight_slabs_configuration
 import time
 import ujson as json
-
+from database.rails_db import get_shipping_line,get_service_provider
 
 
 def to_json(item,key):
@@ -26,11 +25,10 @@ def get_fcl_freight_rate_cards(request):
     freight_query = join_destination_local(freight_query)
    
     freight_query = select_fields(freight_query)
-
+    print(freight_query)
     freight_query_result = freight_query_results(request, freight_query)
 
     lists = build_response_list(freight_query_result, request)
-
     lists = ignore_non_eligible_service_providers(lists)
 
     lists = ignore_non_active_shipping_lines(lists)
@@ -40,7 +38,6 @@ def get_fcl_freight_rate_cards(request):
         lists = get_fcl_freight_rate_cards(request)['list']
         for i in range(len(lists)):
             lists[i]['source'] = 'predicted'
-        
     return {'list': lists}
 
 
@@ -71,16 +68,15 @@ def join_destination_local(freight_query):
 
 
 def ignore_non_eligible_service_providers(lists):
-    # ids = client.ruby.get_eligible_service_organizations({'service': 'fcl_freight'})['ids']
     ids = ELIGIBLE_SERVICE_ORGANIZATION_IDS['ids']
 
     result = [rate for rate in lists if rate['service_provider_id'] in ids]
     return result
 
 def ignore_non_active_shipping_lines(lists):
-    operator_result = client.ruby.list_operators({'filters':{'operator_type': 'shipping_line', 'status': 'active'}, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT, 'pagination_data_required':False})
-    if 'list' in operator_result and len(operator_result['list']) > 0:
-        ids = [item['id'] for item in operator_result['list']]
+    operator_result = get_shipping_line(connection_close=False)
+    if len(operator_result) > 0:
+        ids = [item['id'] for item in operator_result]
     else:
         ids = []
     result = [rate for rate in lists if rate['shipping_line_id'] in ids]
@@ -246,7 +242,7 @@ def freight_query_results(request, freight_query):
 
         result['weight_limit'] = result['freight']['weight_limit'] or {}
         if (result.get('weight_limit',{}).get('free_limit') is None) or (not result.get('weight_limit',{}).get('slabs')):
-            # fcl_weight_slabs = get_default_overweight_surcharges(result, request)
+            fcl_weight_slabs = get_default_overweight_surcharges(result, request)
             fcl_weight_slabs = None
             if fcl_weight_slabs:
                 result['weight_limit']['free_limit'] = fcl_weight_slabs['max_weight']
@@ -639,7 +635,9 @@ def build_additional_weight_line_item_object(additional_weight_rate, additional_
 
 
 def get_default_overweight_surcharges(result, request):
-    organization_category = client.ruby.get_organization({'id': result['freight']['service_provider_id']})['data']['category_types']
+    organization_category = get_service_provider(result['freight']['service_provider_id'],connection_close=False)
+    if organization_category:
+        organization_category= organization_category[0]['category_types']
 
     weight_slab_result = get_fcl_weight_slabs_configuration({
             'origin_location_id': [request['origin_port_id'], request['origin_country_id']], 

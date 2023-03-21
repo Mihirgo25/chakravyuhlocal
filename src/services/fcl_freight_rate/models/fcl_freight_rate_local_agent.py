@@ -1,11 +1,11 @@
 from configs.fcl_freight_rate_constants import TRADE_TYPES
 from peewee import *
-from rails_client import client
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
 import uuid
+from micro_services.client import *
 
 STATUSES = ('active', 'inactive')
 
@@ -33,12 +33,9 @@ class FclFreightRateLocalAgent(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_local_agents'
-        indexes = (
-            (('location_id', 'trade_type'), True),
-        )
 
     def validate_service_provider(self):
-        service_provider_data = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})
+        service_provider_data = organization.list_organizations({'filters':{'id': str(self.service_provider_id)}})
         if 'list' in service_provider_data and len(service_provider_data['list']) > 0 :
             service_provider_data = service_provider_data['list'][0]
             if service_provider_data.get('account_type') != 'service_provider':
@@ -48,7 +45,7 @@ class FclFreightRateLocalAgent(BaseModel):
         return True
     
     def set_location_ids_and_type(self):
-        location_data = client.ruby.list_locations({'filters':{'id': str(self.location_id)}})
+        location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})
         if 'list' in location_data and len(location_data['list']) > 0:
             location_data = location_data['list'][0]
             if location_data.get('type') in ['seaport', 'country', 'trade']:
@@ -57,6 +54,7 @@ class FclFreightRateLocalAgent(BaseModel):
                 continent_id = location_data.get('continent_id')
                 self.location_ids = list(filter(None, [uuid.UUID(self.location_id), uuid.UUID(country_id), uuid.UUID(trade_id), uuid.UUID(continent_id)]))
                 self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
+                self.location = {key:value for key,value in location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
         else:
             raise HTTPException(status_code=400, detail="Service Provider Id Invalid")
 

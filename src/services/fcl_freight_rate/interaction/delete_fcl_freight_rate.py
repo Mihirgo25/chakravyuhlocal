@@ -15,7 +15,7 @@ def execute_transaction_code(request):
     object = find_object(request)
 
     if not object:
-        raise HTTPException(status_code=499, detail="Rate id not found")
+        raise HTTPException(status_code=404, detail="Rate id not found")
 
     object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
     object.set_platform_prices()
@@ -26,11 +26,11 @@ def execute_transaction_code(request):
     except Exception as e:
         print("Exception in saving freight rate", e)
 
-    # object.create_trade_requirement_rate_mapping(request["procured_by_id"], request["performed_by_id"])
+    object.create_trade_requirement_rate_mapping(request["procured_by_id"], request["performed_by_id"])
 
     create_audit(request, object.id)
 
-    # update_platform_prices_for_other_service_providers(object)
+    update_platform_prices_for_other_service_providers(object)
 
     return {
       'id': object.id
@@ -46,7 +46,6 @@ def create_audit(request, freight_id):
         bulk_operation_id = request.get('bulk_operation_id'),
         action_name = 'delete',
         performed_by_id = request['performed_by_id'],
-
         data = audit_data,
         object_id = freight_id,
         object_type = 'FclFreightRate'
@@ -59,5 +58,14 @@ def find_object(request):
         object = None
     return object
 
-def update_platform_prices_for_other_service_providers(self):
-    self.update_fcl_freight_rate_platform_prices(self.origin_port_id, self.origin_main_port_id, self.destination_port_id, self.destination_main_port_id, self.container_size, self.container_type, self.commodity, self.shipping_line_id, self.importer_exporter_id)
+def update_platform_prices_for_other_service_providers(object):
+    update_fcl_freight_rate_platform_prices({
+    'origin_port_id' : object.origin_port_id, 
+    'origin_main_port_id' : object.origin_main_port_id, 
+    'destination_port_id' : object.destination_port_id, 
+    'destination_main_port_id' : object.destination_main_port_id, 
+    'container_size' : object.container_size, 
+    'container_type' : object.container_type, 
+    'commodity' : object.commodity, 
+    'shipping_line_id' : object.shipping_line_id, 
+    'importer_exporter_id' : object.importer_exporter_id})

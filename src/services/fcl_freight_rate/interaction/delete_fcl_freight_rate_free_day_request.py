@@ -2,6 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import F
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from celery_worker import send_closed_notifications_to_sales_agent_free_day_request
 
 def delete_fcl_freight_rate_free_day_request(request):
     with db.atomic() as transaction:
@@ -20,18 +21,15 @@ def execute_transaction_code(request):
     object.status = 'inactive'
     object.closed_by_id = request['performed_by_id']
 
-    # if request.get('closing_remarks'):
     object.closing_remarks = request.get('closing_remarks')
 
     try:
         object.save()
     except Exception as e:
-        # self.errors.append(('fcl_freight_rate_feedback_ids', str(e)))
-        # self.errors.merge!(obj.errors)
         raise HTTPException(status_code=499, detail="Freight rate free day request deletion failed")
 
     create_audit(request, object.id)
-    # obj.delay(queue: 'low').send_closed_notifications_to_sales_agent
+    send_closed_notifications_to_sales_agent_free_day_request.apply_async(kwargs={'object':object},queue='low')
 
     return {'fcl_freight_rate_free_day_request_id' : request['fcl_freight_rate_free_day_request_id']}
 

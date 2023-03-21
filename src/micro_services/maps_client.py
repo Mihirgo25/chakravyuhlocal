@@ -14,4 +14,6 @@ class MapsApiClient:
 
     def list_locations(self, data):
         return self.client.request('GET', 'list_locations', data)
-
+    
+    def list_location_cluster(self,data={}):
+        return self.client.request('GET','list_location_cluster',data)

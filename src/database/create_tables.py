@@ -4,7 +4,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 
-from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
