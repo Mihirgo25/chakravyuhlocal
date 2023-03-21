@@ -12,7 +12,7 @@ def create_fcl_freight_rate_bulk_operation(request):
     bulk_operation.save()
     bulk_operation_perform_action_functions.apply_async(kwargs={'action_name':action_name,
     'object':bulk_operation,'sourced_by_id':request["sourced_by_id"],
-    'procured_by_id':request['procured_by_id'],'cogo_entity_id':request['cogo_entity_id']},queue='low')
+    'procured_by_id':request['procured_by_id'],'cogo_entity_id':request.get('cogo_entity_id')},queue='low')
     return {
     'id': str(bulk_operation.id)
     }

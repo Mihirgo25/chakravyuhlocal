@@ -45,7 +45,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
     
     def validate_action_name(self):
-        if self.action_name in ACTION_NAMES:
+        if self.action_name not in ACTION_NAMES:
             raise HTTPException(status_code=404,detail='Invalid action Name')
     
     def validate_extend_validity_data(self):
@@ -143,9 +143,9 @@ class FclFreightRateBulkOperation(BaseModel):
             raise HTTPException(status_code=499, detail='slabs is invalid')
 
         currencies = slabs[0]['currency']
-        # valid_currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
+        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
-        # if currencies - valid_currencies:
+        # if [x for x in currencies if x not in valid_currencies] != []:
         #     raise HTTPException(status_code=499, detail='slabs.currency is invalid')
 
     def validate_add_freight_line_item_data(self):
@@ -251,7 +251,7 @@ class FclFreightRateBulkOperation(BaseModel):
             if not isinstance(rate_id, str):
                 rate_id = rate_id[0]
 
-            rate = FclFreightRate.get(id=rate_id)
+            rate = FclFreightRate.get_or_none(id=rate_id)
             # locations = maps.list_locations({'filters': { 'id': [str(rate.origin_port_id), str(rate.destination_port_id)] }, 'includes': { 'icd_ports': {} }})['list']
             # origin_icd_location = [t for t in locations if t['id'] == rate.origin_port_id][0]['icd_ports']['id']
             
@@ -723,8 +723,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_update_weight_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id = None):
         data = self.data
-        
-        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': eval(cogo_entity_id) })
+        try:
+            cogo_entity_id = eval(cogo_entity_id)
+        except:
+            cogo_entity_id = None
+        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
@@ -756,8 +759,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_extend_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id = None):
         data = self.data
-
-        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': eval(cogo_entity_id) })
+        try:
+            cogo_entity_id = eval(cogo_entity_id)
+        except:
+            cogo_entity_id = None
+        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
@@ -834,14 +840,19 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def perform_extend_freight_rate_to_icds_action(self, sourced_by_id, procured_by_id, cogo_entity_id = None):
         data = self.data
-
-        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': eval(cogo_entity_id )})
+        try:
+            cogo_entity_id = eval(cogo_entity_id)
+        except:
+            cogo_entity_id = None
+        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id' : cogo_entity_id })
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
-
-        validities = [k for k in fcl_freight_rate["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d') >= datetime.now().date()]
+        if fcl_freight_rate:
+            validities = [k for k in fcl_freight_rate["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d') >= datetime.now().date()]
+        else:
+            validities = None
 
         if not validities or FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=fcl_freight_rate['id']):
             self.progress = 100

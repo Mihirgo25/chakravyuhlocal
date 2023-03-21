@@ -2,16 +2,18 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 import concurrent.futures
 from datetime import datetime, timedelta
 import pytz
+from operator import attrgetter
 from micro_services.client import *
 from configs.global_constants import POTENTIAL_CONTAINERS_BOOKING_COUNTS, POTENTIAL_CONVERSION_RATIO
 from database.db_session import db
+from database.rails_db import *
 
 possible_direct_filters = ['id', 'port_id', 'main_port_id', 'trade_type', 'container_size', 'container_type', 'commodity', 'shipping_line_id']
 
 def update_fcl_freight_rate_local_priority_scores_data(request):
-    with db.atomic as transaction:
+    with db.atomic() as transaction:
         try:
-            execute_transaction_code(request)
+            return execute_transaction_code(request)
         except Exception as e:
             transaction.rollback()
             raise e
@@ -25,7 +27,9 @@ def execute_transaction_code(request):
             update_priority_score(group)
 
 def get_groupings(request):
-    groups = FclFreightRateLocal.select(FclFreightRateLocal.port_id, FclFreightRateLocal.main_port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.commodity, FclFreightRateLocal.shipping_line_id).where(request['filters']).execute()
+    groups = FclFreightRateLocal.select(FclFreightRateLocal.port_id, FclFreightRateLocal.main_port_id, FclFreightRateLocal.trade_type, FclFreightRateLocal.container_size, FclFreightRateLocal.container_type, FclFreightRateLocal.commodity, FclFreightRateLocal.shipping_line_id)
+    for filter in request['filters']:
+        query = query.select().where(attrgetter(filter)(FclFreightRateLocal) == request['filters'][filter])
     groups = [ {k:v for k,v in t.items() if k != 'id'} for t in groups ]
     return groups
 
@@ -36,10 +40,9 @@ def update_priority_score(group):
     else:
         spot_searches.select().where('destination_port_id' == group['port_id'])
     spot_search_ids = spot_searches.select(spot_searches.spot_search_id).execute()
-    spot_searches = SpotSearch.select().where(id == spot_search_ids)
-    importer_exporter_ids = set(spot_searches.select(spot_searches.importer_exporter_id).execute())
-    spot_searches_importer_exporters_count = importer_exporter_ids.count()
-    organization_sizes = organization.list_organizations({'pagination_data_required': False, 'filters': { 'id': importer_exporter_ids }, 'page_limit': 1000 })['list']
+    importer_exporter_ids = [item['importer_exporter_id'] for item in common.list_spot_searches({'filters':{'id':spot_search_ids}})['list']]
+    spot_searches_importer_exporters_count = len(importer_exporter_ids)
+    organization_sizes = get_service_provider(importer_exporter_ids)
     res = {}
     for i, v in organization_sizes['sizes'].items():
         res[v] = [i] if v not in res.keys() else res[v] + [i]

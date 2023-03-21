@@ -50,12 +50,12 @@ def get_data(query):
     data = []
     for item in query.dicts():
         cluster_data = maps.list_location_cluster({'filters':{'id':item['cluster_id']}})
-        if cluster_data:
-            item['location_cluster'] = {'id':cluster_data['list'][0]['id'], 'cluster_name' : cluster_data['list'][0]['cluster_name'], 'cluster_type':cluster_data['list'][0]['cluster_type'], 'location_type':cluster_data[0]['location_type']}
+        if cluster_data['list']:
+            item['location_cluster'] = {'id':cluster_data['list'][0]['id'], 'cluster_name' : cluster_data['list'][0]['cluster_name'], 'cluster_type':cluster_data['list'][0]['cluster_type'], 'location_type':cluster_data['list'][0]['location_type']}
         else:
             item['location_cluster'] = {}
         commodity_cluster_data = list_fcl_freight_commodity_clusters(filters = {'id':item['cluster_id']})
-        if commodity_cluster_data:
+        if commodity_cluster_data['list']:
             item['fcl_freight_commodity_cluster'] = {'id':commodity_cluster_data['list'][0]['id'], 'name' : commodity_cluster_data['list'][0]['name']}
         else:
             item['fcl_freight_commodity_cluster'] = {}
