@@ -1,13 +1,12 @@
 from peewee import *
-from rails_client import client
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
-from libs.locations import list_locations
 from fastapi import HTTPException
 from params import Slab
-
+from micro_services.client import *
+from database.rails_db import *
 
 class BaseModel(Model):
     class Meta:
@@ -17,8 +16,8 @@ class BaseModel(Model):
 class FclFreightRateFreeDay(BaseModel):
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
-    continent_id = UUIDField(null=True)
-    country_id = UUIDField(null=True)
+    continent_id = UUIDField(index=True, null=True)
+    country_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     free_days_type = CharField(index=True, null=True)
     free_limit = IntegerField(index=True, null=True)
@@ -29,15 +28,14 @@ class FclFreightRateFreeDay(BaseModel):
     location_id = UUIDField(index=True, null=True)
     location = BinaryJSONField(null=True)
     location_type = CharField(index=True, null=True)
-    port_id = UUIDField(null=True)
+    port_id = UUIDField(index=True, null=True)
     previous_days_applicable = BooleanField(index=True, null=True)
-    rate_not_available_entry = BooleanField(null=True)
+    rate_not_available_entry = BooleanField(index=True, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
-    # shipping_line = BinaryJSONField(null=True)
-    # shipment_id = UUIDField(null=True)
+    shipping_line = BinaryJSONField(null=True)
     slabs = BinaryJSONField(index=True, null=True)
     specificity_type = CharField(index=True, null=True)
     trade_id = UUIDField(index=True, null=True)
@@ -46,7 +44,7 @@ class FclFreightRateFreeDay(BaseModel):
     # validity_start = DateTimeField(index=True, null=True)
     # validity_end = DateTimeField(index=True, null=True)
     sourced_by_id = UUIDField(index=True,null=True)
-    source_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(index=True,null=True)
     procured_by = BinaryJSONField(null=True)
 
@@ -56,28 +54,10 @@ class FclFreightRateFreeDay(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_free_days'
-        indexes = (
-            (('container_size', 'container_type'), False),
-            (('importer_exporter_id', 'service_provider_id'), False),
-            (('rate_not_available_entry', 'location_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'specificity_type', 'importer_exporter_id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'free_days_type', 'port_id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'port_id'), False),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type', 'trade_type', 'free_days_type', 'port_id'), False),
-            (('updated_at', 'id', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'port_id'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'shipping_line_id', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'free_days_type', 'trade_type', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'port_id'), False),
-            (('updated_at', 'service_provider_id', 'shipping_line_id', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'trade_type', 'is_slabs_missing'), False),
-        )
 
     def validate_location_ids(self):
 
-        location_data = list_locations({'id': str(self.location_id)})['list']
+        location_data = maps.list_locations({'filters':{'filters' : {'id': str(self.location_id)}}})['list']
 
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]
@@ -88,6 +68,7 @@ class FclFreightRateFreeDay(BaseModel):
             self.trade_id = location_data.get('trade_id', None)
             self.continent_id = location_data.get('continent_id', None)
             self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
+            self.location = {key:value for key,value in location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
             return True
         return False
@@ -98,14 +79,14 @@ class FclFreightRateFreeDay(BaseModel):
         return False
 
     def validate_shipping_line(self):
-        shipping_line_data = client.ruby.list_operators({'filters': {'id': str(self.shipping_line_id)}})['list']
+        shipping_line_data = get_shipping_line(str(self.shipping_line_id))
         if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
             self.shipping_line = shipping_line_data[0]
             return True
         return False
 
     def validate_service_provider(self):
-        service_provider_data = client.ruby.list_organizations({'filters': {'id': str(self.service_provider_id)}})['list']
+        service_provider_data = get_service_provider(str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
@@ -113,7 +94,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_importer_exporter(self):
         if self.importer_exporter_id:
-            importer_exporter_data = client.ruby.list_organizations({'filters': {'id': str(self.importer_exporter_id)}})['list']
+            importer_exporter_data = get_service_provider(str(self.importer_exporter_id))
             if (len(importer_exporter_data) != 0) and importer_exporter_data[0].get('account_type') == 'importer_exporter':
                 self.importer_exporter = importer_exporter_data[0]
                 return True

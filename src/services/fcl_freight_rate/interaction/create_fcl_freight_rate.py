@@ -1,9 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-import json
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from rails_client import client
-from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 from celery_worker import delay_fcl_functions
 from datetime import datetime
 from database.db_session import db
@@ -14,12 +11,12 @@ def create_audit(request, freight_id):
     audit_data["validity_start"] = request["validity_start"].isoformat()
     audit_data["validity_end"] = request["validity_end"].isoformat()
     audit_data["line_items"] = request["line_items"]
-    audit_data["weight_limit"] = request["weight_limit"]
+    audit_data["weight_limit"] = request.get("weight_limit")
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
     audit_data["is_extended"] = request.get("is_extended")
 
-    FclFreightRateAudit.create(
+    id = FclFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
         rate_sheet_id=request.get("rate_sheet_id"),
         action_name="create",
@@ -55,7 +52,6 @@ def create_fcl_freight_rate(request):
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
-    print(datetime.now())
     freight = (
         FclFreightRate.select()
         .where(
@@ -64,7 +60,7 @@ def create_fcl_freight_rate(request):
         )
         .first()
     )
-    print(datetime.now())
+
     if not freight:
         freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
         for key in list(row.keys()):
@@ -104,10 +100,10 @@ def create_fcl_freight_rate(request):
     freight.set_validities(
         request["validity_start"].date(),
         request["validity_end"].date(),
-        request["line_items"],
-        request["schedule_type"],
+        request.get("line_items"),
+        request.get("schedule_type"),
         False,
-        request["payment_term"],
+        request.get("payment_term"),
     )
 
     freight.set_platform_prices()

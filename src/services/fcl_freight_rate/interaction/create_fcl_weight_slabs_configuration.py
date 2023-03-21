@@ -1,13 +1,11 @@
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
 from database.db_session import db
-from libs.logger import logger
 
 def create_fcl_weight_slabs_configuration(request):
     with db.atomic() as transaction:
         try:
             return execute_transaction_code(request)
         except Exception as e:
-            logger.error(e, exc_info=True)
             transaction.rollback()
             return e
 

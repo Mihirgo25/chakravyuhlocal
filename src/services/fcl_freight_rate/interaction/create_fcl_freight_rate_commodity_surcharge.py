@@ -2,7 +2,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_commodity_surcharge impor
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
-
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from celery_worker import update_multiple_service_objects
 
 def create_audit(request, commodity_surcharge_id):
 
@@ -15,6 +16,8 @@ def create_audit(request, commodity_surcharge_id):
         action_name = 'create',
         rate_sheet_id = request.get('rate_sheet_id'),
         performed_by_id = request['performed_by_id'],
+        sourced_by_id = request['sourced_by_id'],
+        procured_by_id = request['procured_by_id'],
         data = audit_data,
         object_id = commodity_surcharge_id,
         object_type = 'FclFreightRateCommoditySurcharge'
@@ -56,6 +59,9 @@ def execute_transaction_code(request):
             setattr(commodity_surcharge, k, v)
     commodity_surcharge.validate()
 
+    commodity_surcharge.sourced_by_id = request.get('sourced_by_id')
+    commodity_surcharge.procured_by_id = request.get('procured_by_id')
+
     if not commodity_surcharge.save():
         raise HTTPException(status_code=422, detail="Commodity Surcharge not saved")
     
@@ -63,6 +69,8 @@ def execute_transaction_code(request):
 
     create_audit(request, commodity_surcharge.id)
 
+    update_multiple_service_objects.apply_async(kwargs={'object':commodity_surcharge},queue='low')
+
     return {
-      'id': commodity_surcharge.id
+      'id': str(commodity_surcharge.id)
     }

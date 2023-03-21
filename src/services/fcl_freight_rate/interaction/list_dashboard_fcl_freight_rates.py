@@ -1,22 +1,20 @@
-from rails_client import client
+from micro_services.client import organization
+from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 import concurrent.futures
-from playhouse.shortcuts import model_to_dict
 
 def list_dashboard_fcl_freight_rates():
-    fcl_service_provider_query = [model_to_dict(item) for item in OrganizationService.select().where(OrganizationService.service == 'fcl_freight', OrganizationService.status == 'active').execute()]
-    fcl_service_provider_ids = list(set([query['organization_id'] for query in fcl_service_provider_query]))
-    air_service_provider_query = [model_to_dict(item) for item in OrganizationService.select().where(OrganizationService.service == 'air_freight', OrganizationService.status == 'active').execute()]
-    air_service_provider_ids = list(set([query['organization_id'] for query in air_service_provider_query]))
+    fcl_service_provider_ids = list(set([item['organization_id'] for item in organization.list_organization_services({'filters':{'service':'fcl_freight', 'status':'active'}})['list']]))
+    air_service_provider_ids = list(set([item['organization_id'] for item in organization.list_organization_services({'filters':{'service':'air_freight', 'status':'active'}})['list']]))
+    
     port_pairs = get_port_pairs()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = len(port_pairs)) as executor:
         futures = [executor.submit(get_rate, port_pair, fcl_service_provider_ids, air_service_provider_ids) for port_pair in port_pairs]
-        results = {}
+        lists = {}
         for future in futures:
             result = future.result()
-            results | (result)
+            lists = lists | (result)
         
-    lists = results
     
     for rate in list(filter(None,lists)):
         for validity in rate['validities']:
@@ -30,11 +28,11 @@ def list_dashboard_fcl_freight_rates():
             if not validity['price']:
                 validity['price'] = validity['min_price'] 
 
-    return {'list': list }
+    return {'list': lists }
 
 
 def get_port_pairs():
-    [
+    return [
     {
     'service': 'fcl_freight',
     'origin_port_id': '6eb66c1b-9348-4fb9-a9e7-37c5d153272e',
@@ -89,6 +87,5 @@ def get_rate(port_pair, fcl_service_provider_ids, air_service_provider_ids):
     }
 
     data = data['filters'] | (port_pair)
-
-    response = eval("client.ruby.list_{}_rates(data)".format(port_pair['service']))['list'][0]
+    response = eval("list_{}_rates(data)".format(port_pair['service']))['list'][0]
     return response

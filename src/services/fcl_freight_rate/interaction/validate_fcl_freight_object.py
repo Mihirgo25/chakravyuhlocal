@@ -1,11 +1,12 @@
-from rails_client import client
 from datetime import datetime
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from interaction.create_fcl_freight_rate import find_or_initialize 
 from configs.fcl_freight_rate_constants import SCHEDULE_TYPES,PAYMENT_TERM,SPECIFICITY_TYPE
 import json
+from micro_services.client import maps
 from interaction.create_fcl_freight_rate_local import find_or_initialize as fcl_freight_rate_local_instance
 from interaction.create_fcl_freight_rate_free_day import find_or_initialize as fcl_freight_rate_free_days_instance
+from micro_services.client import maps
 class ValidateFclFreightObject:
     module :str
     object :dict
@@ -172,7 +173,7 @@ class ValidateFclFreightObject:
            "filters":{ "type" : 'seaport',
             "port_code": port_code}
         }
-        locations = client.ruby.list_locations(request)
+        locations = maps.list_locations(request)
 
         return locations
     

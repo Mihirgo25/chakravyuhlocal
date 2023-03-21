@@ -17,8 +17,7 @@ def get_fcl_freight_rate_commodity_surcharge(request):
 def all_fields_present(request):
     if request.get('origin_location_id') and request.get('destination_location_id') and request.get('container_size') and request.get('container_type') and request.get('commodity') and request.get('shipping_line_id') and request.get('service_provider_id'):
         return True
-    else:
-        return False
+    return False
 
 def find_object(request):
     row = {

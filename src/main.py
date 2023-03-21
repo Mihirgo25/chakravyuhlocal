@@ -7,6 +7,8 @@ from fastapi import FastAPI, Response, Query, Request, Depends
 import json
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_not_available import create_fcl_freight_rate_not_available
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task
@@ -27,9 +29,12 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_addition_frequen
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_suggestions import get_fcl_freight_rate_suggestions
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_visibility import get_fcl_freight_rate_visibility
 # from database.create_tables import create_table
-import time
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_audits import list_fcl_freight_rate_audits
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_bulk_operations import list_fcl_freight_rate_bulk_operations
+from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates import list_dashboard_fcl_freight_rates
+from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates import list_dashboard_fcl_freight_rates
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_requests import list_fcl_freight_rate_requests
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_requests import list_fcl_freight_rate_local_requests
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_feedbacks import list_fcl_freight_rate_feedbacks
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_commodity_surcharges import list_fcl_freight_rate_commodity_surcharges
@@ -38,6 +43,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_seasonal_surcha
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_day_requests import list_fcl_freight_rate_free_day_requests
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.interaction.list_fcl_weight_slabs_configuration import list_fcl_weight_slabs_configuration
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_suggestions import list_fcl_freight_rate_local_suggestions
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
@@ -60,13 +66,14 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_weight_limit 
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_weight_limit import update_fcl_freight_rate_weight_limit
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_free_day import get_fcl_freight_rate_free_day
+from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration import get_fcl_weight_slabs_configuration
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_stats import get_fcl_freight_rate_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_seasonal_surcharge import get_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_commodity_surcharge import get_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
-
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
 # from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_feedback import delete_fcl_freight_rate_feedback
@@ -76,7 +83,12 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_free_day_requ
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local_agent import update_fcl_freight_rate_local_agent
 from services.fcl_freight_rate.interaction.update_fcl_weight_slabs_configuration import update_fcl_weight_slabs_configuration
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
-from rails_client.client import initialize_client
+from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster import update_fcl_freight_commodity_cluster
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
+from typing import Union, List
+# from rails_client.client import initialize_client
 from params import *
 from database.create_tables import create_table
 import time
@@ -86,6 +98,8 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from configs.defintions import yml_obj
 from services.rate_sheet.rate_sheet import rate_sheet
 
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 
 
 app = FastAPI(debug=True)
@@ -113,8 +127,8 @@ async def log_request_response_time(request: Request, call_next):
 def startup():
     if db.is_closed():
         db.connect()
-    create_table()
-    initialize_client()
+    # create_table()
+    # initialize_client()
 
 @app.on_event("shutdown")
 def shutdown():
@@ -125,15 +139,36 @@ def shutdown():
 def read_root():
     return "WELCOME TO OCEAN RMS"
 
+@app.post("/create_fcl_freight_rate_bulk_operation")
+def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation):
+    data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+    return JSONResponse(content=str(data))
+
 @app.post("/create_fcl_freight_commodity_cluster")
 def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodityCluster):
-    data = create_fcl_freight_commodity_cluster(request)
+    data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False).dict(exclude_none=False))
     return data
+
+@app.post("/create_fcl_freight_rate_commodity_surcharge")
+def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRateCommoditySurcharge):
+    try:
+        rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False})
+
+@app.post("/create_fcl_freight_rate_commodity_surcharge")
+def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRateCommoditySurcharge):
+    try:
+        rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False})
 
 @app.post("/create_fcl_freight_rate_local_agent")
 def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalAgent):
     data = create_fcl_freight_rate_local_agent(request.__dict__)
-    return data
+    return JSONResponse(status_code=200, content={'success':True})
 
 @app.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate_test(request: PostFclFreightRate):
@@ -147,7 +182,7 @@ def create_fcl_freight_rate_test(request: PostFclFreightRate):
 @app.post("/create_fcl_freight_rate_feedback")
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback):
     rate_id = create_fcl_freight_rate_feedback(request)
-    return rate_id
+    return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
 
 @app.post("/create_fcl_freight_rate_not_available")
 def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotAvailable):
@@ -182,15 +217,6 @@ def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLoca
 def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConfiguration):
     data = create_fcl_weight_slabs_configuration(request.dict(exclude_none = False))
     return data
-
-@app.get("/get_fcl_freight_commodity_cluser")
-def get_fcl_freight_commodity_cluster_data(id: str):
-    try:
-        data = get_fcl_freight_commodity_cluster(id)
-        data = jsonable_encoder(data)
-        return JSONResponse(status_code = 200, content = data)
-    except:
-        return JSONResponse(status_code = 500, content = {'success' : False})
 
 @app.get("/get_fcl_freight_rate_data")
 def get_fcl_freight_rate_data(origin_port_id: str = None, origin_main_port_id: str = None, destination_port_id: str = None, destination_main_port_id: str = None, container_size: str = None, container_type: str = None, commodity: str = None, shipping_line_id: str = None, service_provider_id: str = None, importer_exporter_id: str = None):
@@ -298,8 +324,12 @@ def get_fcl_freight_rate_addition_frequency_data(
     filters: str = None,
     sort_type: str = 'desc'
 ):
-    data = get_fcl_freight_rate_addition_frequency(filters, sort_type, group_by)
-    return data
+    try:
+        data = get_fcl_freight_rate_addition_frequency( group_by, filters, sort_type)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        return JSONResponse(status_code=500, content={'success':False})
 
 @app.get("/get_fcl_freight_rate_suggestions")
 def get_fcl_freight_rate_suggestions_data(
@@ -323,19 +353,49 @@ def get_fcl_freight_rate_visibility_data(
     shipping_line_id: str = None,
     container_size: str = None,
     container_type: str = None,
-    commodity: str = None
-):
-    data = get_fcl_freight_rate_visibility(service_provider_id, origin_port_id, destination_port_id, from_date, to_date, rate_id, shipping_line_id, container_size, container_type, commodity)
+    commodity: str = None):
+
+    request = {
+        'service_provider_id' : service_provider_id,
+        'origin_port_id': origin_port_id,
+        'destination_port_id': destination_port_id,
+        'from_date': from_date,
+        'to_date': to_date,
+        'rate_id': rate_id,
+        'shipping_line_id': shipping_line_id,
+        'container_size': container_size,
+        'container_type': container_type,
+        'commodity': commodity
+    }
+    data = get_fcl_freight_rate_visibility(request)
     return data
 
 @app.get("/get_fcl_weight_slabs_configuration")
 def get_fcl_weight_slabs_configuration_data(filters: str = None):
-    # try:
-    data = get_fcl_weight_slabs_configuration(filters)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code = 200, content = data)
-    # except:
-    #     return JSONResponse(status_code = 500, content = {'success' : False})
+    try:
+        data = get_fcl_weight_slabs_configuration(filters)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code = 200, content = data)
+    except:
+        return JSONResponse(status_code = 500, content = {'success' : False})
+
+@app.get("/list_dashboard_fcl_freight_rates")
+def list_dashboard_fcl_freight_rates_data():
+    data = list_dashboard_fcl_freight_rates()
+    return data
+
+@app.get("/list_fcl_freight_rate_audits")
+def list_fcl_freight_audits_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'created_at',
+    sort_type: str = 'asc',
+    pagination_data_required: bool = False,
+    user_data_required: bool = False
+):
+    data = list_fcl_freight_rate_audits(filters, page_limit, page, sort_by, sort_type, pagination_data_required, user_data_required)
+    return data
 
 @app.get("/list_fcl_freight_rate_bulk_operations")
 def list_fcl_freight_rate_bulk_operations_data(
@@ -352,10 +412,9 @@ def list_fcl_freight_rate_free_day_requests_data(
     page_limit: int = 10,
     page: int = 1,
     is_stats_required: bool = True,
-    performed_by_id: str = None,
-    spot_search_details_required: bool = False
+    performed_by_id: str = None
     ):
-    data = list_fcl_freight_rate_free_day_requests(filters, page_limit, page, is_stats_required, performed_by_id, spot_search_details_required)
+    data = list_fcl_freight_rate_free_day_requests(filters, page_limit, page, is_stats_required, performed_by_id)
     return data
 
 @app.get("/list_fcl_freight_rates")
@@ -363,14 +422,13 @@ def list_fcl_freight_rates_data(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    sort_by: str = 'priority_score',
+    sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    pagination_data_required: bool = True,
     return_query: bool = False,
     expired_rates_required: bool = False,
     all_rates_for_cogo_assured: bool = False
 ):
-    data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required, return_query, expired_rates_required, all_rates_for_cogo_assured)
+    data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
     return data
 
 @app.get("/list_fcl_freight_rate_locals")
@@ -378,26 +436,23 @@ def list_fcl_freight_rate_locals_data(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    sort_by: str = 'priority_score',
+    sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     return_query: bool = False
 ):
-    a = time.time()
     data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
-    print(time.time() - a)
     return data
 
-@app.get("/list_fcl_freight_rate_local_agent")
+@app.get("/list_fcl_freight_rate_local_agents")
 def list_fcl_freight_rate_local_agent_data(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    pagination_data_required: bool = True,
-    add_service_objects_required: bool = True):
+    pagination_data_required: bool = True):
     try:
-        data = list_fcl_freight_rate_local_agents(filters, page_limit, page, sort_by, sort_type, pagination_data_required, add_service_objects_required)
+        data = list_fcl_freight_rate_local_agents(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
         data = jsonable_encoder(data)
         return JSONResponse(status_code = 200, content = data)
     except:
@@ -422,10 +477,20 @@ def list_fcl_freight_rate_requests_data(
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
-    is_stats_required: bool = True,
-    spot_search_details_required: bool = False
+    is_stats_required: bool = True
     ):
-    data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required, spot_search_details_required)
+    data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
+    return data
+
+@app.get("/list_fcl_freight_rate_local_requests")
+def list_fcl_freight_rate_local_requests_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True
+    ):
+    data = list_fcl_freight_rate_local_requests(filters, page_limit, page, is_stats_required, performed_by_id)
     return data
 
 @app.get("/list_fcl_freight_rate_seasonal_surcharges")
@@ -445,10 +510,9 @@ def list_fcl_freight_rate_feedbacks_data(
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
-    is_stats_required: bool = True,
-    spot_search_details_required: bool = False
+    is_stats_required: bool = True
     ):
-    data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required, spot_search_details_required)
+    data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required)
     return data
 
 
@@ -481,6 +545,19 @@ def list_fcl_freight_rate_dislikes_data(
     page: int = 1
     ):
     data = list_fcl_freight_rate_dislikes(filters, page_limit, page)
+    return data
+
+@app.get("/list_fcl_freight_rate_local_suggestions")
+def list_fcl_freight_local_suggestions_data(
+    service_provider_id: str,
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    pagination_data_required: bool = True
+    ):
+    data = list_fcl_freight_rate_local_suggestions(service_provider_id, filters, page_limit, page, sort_by, sort_type, pagination_data_required)
     return data
 
 @app.get("/list_fcl_freight_rate_free_days")
@@ -546,7 +623,8 @@ def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePl
 def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
     delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content={"success": True})
-@app.post("/create_fcl_freight_rate_exclusive_rule_set")
+
+@app.post("/create_fcl_freight_rate_extension_rule_set")
 def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet):
     return create_fcl_freight_rate_extension_rule_set_data(request)
 
@@ -558,13 +636,40 @@ def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet):
     return update_fcl_freight_rate_extension_rule_set_data(request)
 
-@app.post("/list_fcl_freight_rate_extension_rule_set")
-def list_fcl_freight_rate_extension_rule_set(request: ListFclFreightRateExtensionRuleSets):
-    return list_fcl_freight_rate_extension_rule_set_data(request)
+@app.get("/list_fcl_freight_rate_extension_rule_set")
+def list_fcl_freight_rate_extension_rule_set(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc'
+):
+    try:
+        data =  list_fcl_freight_rate_extension_rule_set_data(filters, page_limit, page, sort_by, sort_type)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        return JSONResponse(status_code=500, content={'success':False})
 
-@app.post("/get_fcl_freight_rate_extension")
-def get_fcl_freight_rate_extension(request: GetFclFreightRateExtension):
-    return get_fcl_freight_rate_extension_data(request)
+
+@app.get("/get_fcl_freight_rate_extension")
+def get_fcl_freight_rate_extension(
+    service_provider_id: str,
+    shipping_line_id: str,
+    origin_port_id: str,
+    destination_port_id: str,
+    commodity: str,
+    container_size: str,
+    container_type:str = None
+  ):
+    try:
+        data = get_fcl_freight_rate_extension_data(service_provider_id, shipping_line_id, origin_port_id, destination_port_id, commodity, container_size, container_type)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        return JSONResponse(status_code=500, content={'success':False})
+
+
 
 # @app.post("/update_fcl_freight_rate_task")
 # def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
@@ -655,8 +760,23 @@ def get_fcl_freight_rate_free_day_data(
         'service_provider_id':service_provider_id,
         'importer_exporter_id':importer_exporter_id
     }
-    data = get_fcl_freight_rate_free_day(request)
-    return data
+    try:
+        data = get_fcl_freight_rate_free_day(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content= data)
+    except:
+        return JSONResponse(status_code= 500, content= {'success':False})
+
+@app.get("/get_eligible_fcl_freight_rate_free_day")
+def get_eligible_fcl_freight_rate_free_day_data(
+    filters: str = None
+):
+    try:
+        data = get_eligible_fcl_freight_rate_free_day(filters)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content= data)
+    except:
+        return JSONResponse(status_code= 500, content= {'success':False})
 
 @app.put("/update_fcl_freight_rate_free_day")
 def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
@@ -666,10 +786,12 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
 
 @app.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
-    validity_start: datetime,
-    validity_end: datetime,
-    stats_types: str
+    validity_start: str,
+    validity_end: str,
+    stats_types: Union[List[str],None]= Query(None),
 ):
+    validity_start = datetime.strptime(validity_start, '%Y-%m-%d').date().isoformat()
+    validity_end = datetime.strptime(validity_end, '%Y-%m-%d').date().isoformat()
     request = {
         'validity_start':validity_start,
         'validity_end':validity_end,
@@ -697,6 +819,7 @@ def get_fcl_freight_rate_seasonal_surcharge_data(
         'shipping_line_id':shipping_line_id,
         'service_provider_id':service_provider_id
     }
+
     data = get_fcl_freight_rate_seasonal_surcharge(request)
     return data
 
@@ -724,10 +847,52 @@ def get_fcl_freight_rate_commodity_surcharge_data(
 
 @app.get("/get_fcl_freight_commodity_cluster")
 def get_fcl_freight_commodity_cluster_data(
-    id: str = None
+    id: str
 ):
-    request = {
-        'id':id
-    }
-    data = get_fcl_freight_commodity_cluster(request)
-    return data
+    try:
+        data = get_fcl_freight_commodity_cluster(id)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code = 200, content = data)
+    except:
+        return JSONResponse(status_code = 500, content = {'success' : False})
+
+@app.put('/update_fcl_freight_commodity_cluster')
+def update_fcl_freight_commodity_cluster_data(request:UpdateFclFreightCommodityCluster):
+    try:
+        data = update_fcl_freight_commodity_cluster(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content = data)
+    except:
+        return JSONResponse(status_code=500, content = {'success':False})
+
+@app.put('/update_fcl_freight_commodity_surcharge')
+def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateCommoditySurcharge):
+    # try:
+    data = update_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
+    data = jsonable_encoder(data)
+    #     return JSONResponse(status_code=200, content = data)
+    # except:
+    #     return JSONResponse(status_code=500, content = {'success':False})
+
+@app.post("/create_fcl_freight_commodity_surcharge")
+def create_fcl_freight_commodity_surcharge_data(request: CreateFclFreightCommoditySurcharge):
+    data = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
+    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
+
+@app.post("/create_fcl_freight_rate_seasonal_surcharge")
+def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSeasonalSurcharge):
+    data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
+    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
+
+
+@app.post("/create_fcl_freight_rate_bulk_operation")
+def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation):
+    data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+    return JSONResponse(content=data)
+
+
+
+@app.post("/create_fcl_freight_rate_free_day_request")
+def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeDayRequest):
+    data = create_fcl_freight_rate_free_day_request(request.dict(exclude_none=False))
+    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))

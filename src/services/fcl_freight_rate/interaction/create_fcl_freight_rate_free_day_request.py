@@ -2,6 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import F
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from libs.logger import logger
+from celery_worker import update_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day_request(request):
@@ -42,12 +43,15 @@ def execute_transaction_code(request):
     for attr,value in create_params.items():
         setattr(free_day_request, attr, value)
     
+    free_day_request.set_location()
     if check_validations(free_day_request):
         free_day_request.save()
     else:
         return 
 
     create_audit(request, free_day_request.id)
+
+    update_multiple_service_objects.apply_async(kwargs={'object':free_day_request},queue='low')
 
     return {
       'id': request.id

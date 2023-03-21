@@ -1,13 +1,11 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from operator import itemgetter
 import json
 from datetime import datetime
-from rails_client import client
+from micro_services.client import *
 from playhouse.shortcuts import model_to_dict
 from math import ceil
-import time
 
 possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id']
 possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than']
@@ -21,13 +19,13 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocal)
         query = apply_indirect_filters(query, filters)   
-    
+
     if return_query:
         items = [model_to_dict(item) for item in query.execute()]
         return {'list': items}
 
     data = get_data(query)
-    
+
     return { 'list': data }
 
     
@@ -66,10 +64,10 @@ def get_data(query):
                 )
 
     for result in results.dicts():
-        result['line_items'] = result['data']['line_items']
-        result['detention'] = result['data']['detention']
-        result['demurrage'] = result['data']['demurrage']
-        result['plugin'] = result['data']['plugin']
+        result['line_items'] = result['data'].get('line_items')
+        result['detention'] = result['data'].get('detention')
+        result['demurrage'] = result['data'].get('demurrage')
+        result['plugin'] = result['data'].get('plugin')
 
         if result['detention']:
             if 'free_limit' in result['detention']:
@@ -92,11 +90,14 @@ def get_data(query):
         if result['total_price_currency']:
             total_price = 0
             for line_item in result['line_items']:
-                conversion = client.ruby.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
-                if 'price' in conversion:
-                    total_price += conversion['price']
+                if line_item['currency'] != result['total_price_currency']:
+                    conversion = common.get_money_exchange_for_fcl({"price":line_item['price'], "from_currency":line_item['currency'], "to_currency":result['total_price_currency']})
+                    if 'price' in conversion:
+                        total_price += conversion['price']
+                    else:
+                        total_price += line_item['price']
             result['total_price'] = total_price
-    
+
         data.append(result)
     return data
 

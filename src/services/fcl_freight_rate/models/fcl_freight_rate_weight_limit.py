@@ -5,8 +5,7 @@ from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import  LOCATION_PAIR_HIERARCHY
 from fastapi import HTTPException
 from params import Slab
-from libs.locations import list_locations
-
+from micro_services.client import *
 
 class BaseModel(Model):
     class Meta:
@@ -19,28 +18,28 @@ class FclFreightRateWeightLimit(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
     destination_continent_id = UUIDField(null=True)
     destination_country_id = UUIDField(null=True)
-    destination_location_id = UUIDField(null=True)
-    destination_location = BinaryJSONField(index=True, null=True)
+    destination_location_id = UUIDField(index=True, null=True)
+    destination_location = BinaryJSONField(null=True)
     destination_location_type = CharField(null=True)
-    destination_port_id = UUIDField(index=True, null=True)
-    destination_trade_id = UUIDField(index=True, null=True)
-    free_limit = DoubleField(index=True, null=True)
+    destination_port_id = UUIDField(null=True)
+    destination_trade_id = UUIDField(null=True)
+    free_limit = DoubleField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    is_slabs_missing = BooleanField(index=True, null=True)
+    is_slabs_missing = BooleanField(null=True)
     origin_continent_id = UUIDField(null=True)
     origin_country_id = UUIDField(null=True)
     origin_destination_location_type = CharField(null=True)
     origin_location_id = UUIDField(index=True, null=True)
     origin_location = BinaryJSONField(null=True)
     origin_location_type = CharField(null=True)
-    origin_port_id = UUIDField(index=True, null=True)
-    origin_trade_id = UUIDField(index=True, null=True)
+    origin_port_id = UUIDField(null=True)
+    origin_trade_id = UUIDField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     shipping_line = BinaryJSONField(null=True)
-    slabs = BinaryJSONField(index=True, null=True)
+    slabs = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     sourced_by_id = UUIDField(index=True,null=True)
     sourced_by = BinaryJSONField(null=True)
@@ -53,23 +52,17 @@ class FclFreightRateWeightLimit(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_weight_limits'
-        indexes = (
-            (('container_size', 'container_type'), False),
-            (('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id'), True),
-            (('service_provider_id', 'shipping_line_id', 'container_size', 'container_type'), False),
-            (('updated_at', 'service_provider_id', 'is_slabs_missing'), False),
-            (('updated_at', 'service_provider_id', 'shipping_line_id', 'is_slabs_missing'), False),
-        )
 
     def validate_location_ids(self):
         LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
-        params = {"id": [str(self.origin_location_id), str(self.destination_location_id)]}
-        location_data = list_locations(params)['list']
+        params = {"filters":{"id": [str(self.origin_location_id), str(self.destination_location_id)]}}
+        location_data = maps.list_locations(params)['list']
 
         if len(location_data) != 0:
             count = 0
             for location in location_data:
                 if location['id'] == str(self.origin_location_id) and location['type'] in LOCATION_TYPES:
+                    location = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
                     self.origin_location = location
 
                     self.origin_port_id = location.get('seaport_id', None)
@@ -81,6 +74,7 @@ class FclFreightRateWeightLimit(BaseModel):
                     count += 1
 
                 elif location['id'] == str(self.destination_location_id) and location['type'] in LOCATION_TYPES:
+                    location = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
                     self.destination_location = location
 
                     self.destination_port_id = location.get('seaport_id', None)

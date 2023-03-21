@@ -2,9 +2,10 @@ from peewee import *
 from configs.fcl_freight_rate_constants import REQUEST_SOURCES
 from database.db_session import db
 from playhouse.postgres_ext import *
-from rails_client import client
-from libs.locations import list_locations
 import datetime
+from micro_services.client import *
+from database.rails_db import *
+from micro_services.client import common
 
 class BaseModel(Model):
     class Meta:
@@ -13,41 +14,41 @@ class BaseModel(Model):
 
 class FclFreightRateFreeDayRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    location_id = UUIDField(null=True)
+    location_id = UUIDField(index=True, null=True)
     location = BinaryJSONField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_free_day_requests_serial_id_seq'::regclass)")])
-    country_id = UUIDField(null = True)
+    country_id = UUIDField(index=True, null = True)
     trade_id = UUIDField(null=True)
     continent_id = UUIDField(null = True)
     main_port_id = UUIDField(null=True) 
-    trade_type = CharField(null=True)
+    trade_type = CharField(index=True, null=True)
     commodity = CharField(null=True)
     status = CharField(index=True, null=True)
-    free_days_type = CharField(null=True)
+    free_days_type = CharField(index=True, null=True)
     preferred_free_days = CharField(null=True)
     shipping_line_id = UUIDField(null=True)
     shipping_line = BinaryJSONField(null=True)
-    service_provider_id = UUIDField(null=True)
+    service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
-    source = CharField(null=True)
-    source_id = UUIDField(null = True)
+    source = CharField(index=True, null=True)
+    source_id = UUIDField(index=True, null = True)
     spot_search = BinaryJSONField(null=True)
-    performed_by_id = UUIDField(null = True)
+    performed_by_id = UUIDField(index=True, null = True)
     performed_by = BinaryJSONField(null=True)
-    performed_by_type = CharField(null=True)
-    performed_by_org_id = UUIDField(null = True)
-    closed_by_id = UUIDField(null = True)
+    performed_by_type = CharField(index=True, null=True)
+    performed_by_org_id = UUIDField(index=True, null = True)
+    closed_by_id = UUIDField(index=True, null = True)
     closed_by = BinaryJSONField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     booking_params = BinaryJSONField(null=True)
     cargo_readiness_date = DateField(null=True)
     cargo_weight_per_container = IntegerField(null=True)
     containers_count = IntegerField(null=True)
-    container_size = CharField(null=True)
-    container_type = CharField(null=True)
+    container_size = CharField(index=True, null=True)
+    container_type = CharField(index=True, null=True)
     inco_term = CharField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
-    created_at = DateTimeField(default = datetime.datetime.now)   
+    created_at = DateTimeField(index=True, default = datetime.datetime.now)   
     updated_at = DateTimeField(default = datetime.datetime.now)
     
     def save(self, *args, **kwargs):
@@ -58,9 +59,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
         table_name = 'fcl_freight_rate_free_day_requests'
 
     def send_closed_notifications_to_sales_agent(self):
-      locations_data = list_locations({'id': self.location_id})['list']
+      locations_data = maps.list_locations({'filters':{'filters' : {'id': self.location_id}}})['list']
       location_name = {data['id']:data['display_name'] for data in locations_data}
-      importer_exporter_id = client.ruby.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
+      importer_exporter_id = common.get_spot_search({'filters':{'id': self.source_id}})['detail']['importer_exporter_id']
       data = {
         'user_id': self.performed_by_id,
         'type': 'platform_notification',
@@ -75,16 +76,18 @@ class FclFreightRateFreeDayRequest(BaseModel):
           'spot_search_id': self.source_id,
           'importer_exporter_id': importer_exporter_id }
       }
-      client.ruby.create_communication(data)
+      common.create_communication(data)
 
     def validate_source(self):
       if self.source in REQUEST_SOURCES:
         return True
       return False
     
-    
+    def set_location(self):
+      self.location = {key:value for key, value in maps.list_locations({'filters':{'filters' : {'id': self.location_id}}})['list'] if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+      
     # def validate_source_id(self):
-    #   data = client.ruby.list_spot_searches({'filters':{'id':self.source_id}})
+    #   data = common.list_spot_searches({'filters':{'id':self.source_id}})
     #   if ('list' in data) and (len(data['list']) > 0):
     #     data = data['list'][0]
     #     if data.get('source_type',None) == 'spot_search':
@@ -92,15 +95,15 @@ class FclFreightRateFreeDayRequest(BaseModel):
     #   return False
       
     def validate_performed_by(self):
-        data = client.ruby.list_users({'filters':{'id': self.performed_by_id}})
-        if ('list' in data) and (len(data['list']) > 0):
+        data = get_user(self.performed_by_id)
+        if (len(data) > 0):
           return True
         return False
 
     def validate_performed_by_org(self):
-      data = client.ruby.list_organizations({'filters':{'id': self.performed_by_id}})
-      if ('list' in data) and (len(data['list']) > 0):
-          data = data['list'][0]
+      data = get_service_provider(self.performed_by_id)
+      if (len(data) > 0):
+          data = data[0]
           if data.get('account_type',None) == 'importer_exporter':
               return True
       return False
@@ -109,9 +112,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
       if not self.shipping_line_id:
         return True
         
-      data = client.ruby.list_organizations({'filters':{'id': self.shipping_line_id}})
-      if ('list' in data) and (len(data['list']) > 0):
-        data = data['list'][0]
+      data = get_shipping_line(self.shipping_line_id)
+      if len(data) > 0:
+        data = data[0]
         if data.get('account_type',None) == 'shipping_line':
           return True
       return False

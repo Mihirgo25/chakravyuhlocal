@@ -1,9 +1,8 @@
-from configs.fcl_freight_rate_constants import TECHOPS_TASK_ABORT_REASONS
+from configs.fcl_freight_rate_constants import *
 from database.db_session import db
 from datetime import datetime
-from rails_client import client
+from micro_services.client import *
 from configs.global_constants import HAZ_CLASSES
-from libs.dynamic_constants.fcl_freight_rate_dc import FclFreightRateDc
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 
@@ -28,9 +27,9 @@ def validate_closing_remarks(request):
     return True
 
 def execute_transaction_code(request):
-    request['service_provider_id'] = FclFreightRateDc.get_key_value('DEFAULT_SERVICE_PROVIDER_ID')
-    request['sourced_by_id'] = FclFreightRateDc.get_key_value('DEFAULT_SOURCED_BY_ID')
-    request['procured_by_id'] = FclFreightRateDc.get_key_value('DEFAULT_PROCURED_BY_ID')
+    request['service_provider_id'] = DEFAULT_SERVICE_PROVIDER_ID
+    request['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
+    request['procured_by_id'] = DEFAULT_PROCURED_BY_ID
 
     task = FclFreightRateTask.select().where('id' == request['id']).limit(1).dicts().get()
 
@@ -97,7 +96,7 @@ def create_fcl_freight_local_rate(task,request):
 def update_shipment_local_charges(task,request):
     rate = task.completion_data['rate']
     try:
-        result = client.ruby.bulk_update_shipment_quotations({
+        result = common.bulk_update_shipment_quotations({
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
         'service': 'fcl_freight_local',

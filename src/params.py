@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from datetime import datetime
 from peewee import *
 from typing import List
-
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
@@ -74,9 +73,31 @@ class PostFclFreightRate(BaseModel):
   source: str = 'rms_upload'
   is_extended: bool = None
 
+class CreateFclFreightRateCommoditySurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  commodity: str
+  shipping_line_id: str
+  service_provider_id: str
+  price: int
+  currency: str
+  remarks: list[str] = []
+
 class CreateFclFreightCommodityCluster(BaseModel):
   name: str
   commodities: dict
+
+class UpdateFclFreightCommodityCluster(BaseModel):
+  id: str
+  name: str = None
+  status: str = None
+  commodities: dict = {}
 
 class CreateFclFreightRateLocalAgent(BaseModel):
   performed_by_id: str
@@ -215,21 +236,6 @@ class UpdateFclFreightRateExtensionRuleSet(BaseModel):
   status: str = None
   trade_type: str = None
 
-class ListFclFreightRateExtensionRuleSets(BaseModel):
-  filters: dict = {}
-  page_limit: int = 10
-  page: int = 1
-  sort_by: str = 'updated_at'
-  sort_type: str = 'desc'
-
-class GetFclFreightRateExtension(BaseModel):
-  service_provider_id: str
-  shipping_line_id: str
-  origin_port_id: str
-  destination_port_id: str
-  commodity: str
-  container_size: str
-  container_type:str = None
 
 
 class GetFclFreightRateLocal(BaseModel):
@@ -413,6 +419,7 @@ class DeleteFclFreightRateRequest(BaseModel):
   fcl_freight_rate_request_ids: List[str]
   closing_remarks: List[str] = []
   performed_by_id: str
+
 class CreateFclFreightRateWeightLimit(BaseModel):
   rate_sheet_id: str = None
   performed_by_id: str
@@ -610,3 +617,180 @@ class CreateFclFreightRateWeightLimit(BaseModel):
   free_limit: float
   remarks: list[str] = None
   slabs: list[Slab] = None
+
+class UpdateFclFreightRateCommoditySurcharge(BaseModel):
+  performed_by_id: str
+  procured_by_id: str
+  sourced_by_id: str
+  id: str
+  price: int
+  currency: str
+  remarks: list[str] = []
+
+class CreateFclFreightCommoditySurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  commodity: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+
+class CreateFclFreightSeasonalSurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  code: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+  validity_start: datetime = None
+  validity_end: datetime = None
+
+class CreateFclFreightCommoditySurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  commodity: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+
+class CreateFclFreightSeasonalSurcharge(BaseModel):
+  rate_sheet_id: str = None
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  shipping_line_id: str
+  service_provider_id: str
+  code: str
+  price: int
+  currency: str
+  remarks: list[str] = None
+  validity_start: datetime = None
+  validity_end: datetime = None
+
+class ExtendValidty(BaseModel):
+  filters:dict={}
+  source_date:str
+  validity_end:str
+  sourced_by_ids:dict=None
+  procured_by_ids:dict=None
+
+class DeleteFreightRate(BaseModel):
+  filters:dict={}
+  validity_start:str
+  validity_end:str
+
+class AddFreightRateMarkup(BaseModel):
+  filters:dict={}
+  markup:float
+  markup_type:str
+  markup_currency:str=None
+  line_item_code:str='BAS'
+  validity_start:str
+  validity_end:str
+
+class AddLocalRateMarkup(BaseModel):
+  filters:dict={}
+  markup:float
+  markup_type:str
+  markup_currency:str=None
+  line_item_code:str
+
+class ExtendFreightRateToIcds(BaseModel):
+  filters: dict={}
+  markup_type : str
+  markup : float
+  markup_currency:str
+  line_item_code : str
+  origin_port_ids : List[str]
+  destination_port_ids : List[str]
+
+class ExtendFreightRate(BaseModel):
+  filters: dict={}
+  commodities : List[str]
+  container_sizes : List[str]
+  container_types:List[str]
+  markup_type : str
+  markup : float
+  markup_currency:str
+  line_item_code : str
+class UpdateWeightLimit(BaseModel):
+  filters: dict={}
+  free_limit : int
+  slabs : List[Slab] = None
+class UpdateFreeDays(BaseModel):
+  filters: dict={}
+  free_days_type:str
+  free_limit : int
+  slabs : List[Slab] = None
+
+class AddFreightLineItem(BaseModel):
+  filters : dict={}
+  code : str
+  units : str
+  price : float
+  currency : str
+  validity_start : str
+  validity_end : str
+class UpdateFreeDaysLimit(BaseModel):
+  filters: dict={}
+  free_limit : int
+  slabs : List[Slab] = None
+  lower_limit : int
+  upper_limit : int
+  price : float
+  currency : str
+class DeleteLocalRate(BaseModel):
+  filters : dict={}
+
+class CreateBulkOperation(BaseModel):
+  performed_by_id:str
+  service_provider_id:str
+  procured_by_id:str
+  sourced_by_id:str
+  cogo_entity_id:str=None
+  extend_validity:ExtendValidty=None
+  delete_freight_rate:DeleteFreightRate=None
+  add_freight_rate_markup:AddFreightRateMarkup=None
+  add_local_rate_markup:AddLocalRateMarkup=None
+  delete_local_rate:DeleteLocalRate=None
+  update_free_days_limit:UpdateFreeDaysLimit=None
+  add_freight_line_item:AddFreightLineItem=None
+  update_free_days:UpdateFreeDays=None
+  update_weight_limit:UpdateWeightLimit=None
+  extend_freight_rate:ExtendFreightRate=None
+  extend_freight_rate_to_icds:ExtendFreightRateToIcds=None
+
+
+
+
+
+
+

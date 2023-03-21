@@ -18,9 +18,9 @@ def create_audit(request, fcl_freight_rate_commodity_surcharge_id):
     )
 
 def update_fcl_freight_rate_commodity_surcharge(request):
-    with db.atomic as transaction:
+    with db.atomic() as transaction:
         try:
-            execute_transaction_code(request)
+            return execute_transaction_code(request)
         except Exception as e:
             transaction.rollback()
             raise e
