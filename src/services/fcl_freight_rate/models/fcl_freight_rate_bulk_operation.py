@@ -33,7 +33,7 @@ class FclFreightRateBulkOperation(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     performed_by_id = UUIDField(null=True)
     sourced_by_id = UUIDField(index=True,null=True)
-    source_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(index=True,null=True)
     procured_by = BinaryJSONField(null=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
@@ -251,7 +251,7 @@ class FclFreightRateBulkOperation(BaseModel):
             if not isinstance(rate_id, str):
                 rate_id = rate_id[0]
 
-            rate = FclFreightRate.get(id=rate_id)
+            rate = FclFreightRate.get_or_none(id=rate_id)
             # locations = maps.list_locations({'filters': { 'id': [str(rate.origin_port_id), str(rate.destination_port_id)] }, 'includes': { 'icd_ports': {} }})['list']
             # origin_icd_location = [t for t in locations if t['id'] == rate.origin_port_id][0]['icd_ports']['id']
             
