@@ -6,7 +6,7 @@ from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBA
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.defintions import FCL_FREIGHT_CURRENCIES
 from fastapi import HTTPException
-import yaml, datetime
+import datetime
 from database.rails_db import *
 from micro_services.client import *
 
@@ -88,7 +88,7 @@ class FclFreightRateFeedback(BaseModel):
 
     def validate_performed_by_id(self):
         data = get_user(self.performed_by_id)
-        if data != {}:
+        if len(data) != 0:
             return True
         else:
             raise False
@@ -224,7 +224,7 @@ class FclFreightRateFeedback(BaseModel):
             })['list']
         supply_agents_user_ids = list(set(t['user_id'] for t in supply_agents_user_ids))
 
-        route = maps.list_locations({'id': [locations_data.origin_port_id, locations_data.destination_port_id]})['list']
+        route = maps.list_locations({'filters':{'id': [locations_data.origin_port_id, locations_data.destination_port_id]}})['list']
         route = {t['id']:t['display_name'] for t in route}
 
         return {
@@ -270,7 +270,7 @@ class FclFreightRateFeedback(BaseModel):
         
         # for item in loc_data:
         #     locations_data = model_to_dict(item)
-        location_pair_name = maps.list_locations({'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]})['list']
+        location_pair_name = maps.list_locations({'filters':{'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]}})['list']
         location_pair_name = {t['id']:t['display_name'] for t in location_pair_name}
 
         try:

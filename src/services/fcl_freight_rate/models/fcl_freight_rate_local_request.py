@@ -7,6 +7,7 @@ from configs.fcl_freight_rate_constants import REQUEST_SOURCES
 import datetime
 from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
 from micro_services.client import *
+from database.rails_db import *
 from database.rails_db import get_shipping_line
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
@@ -86,7 +87,7 @@ class FclFreightRateLocalRequest(BaseModel):
             return False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = organization.list_organizations({'filters':{'id': self.performed_by_id}})['list']
+        performed_by_org_data = get_service_provider(self.performed_by_id)
         if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
             return True
         return False
@@ -134,7 +135,7 @@ class FclFreightRateLocalRequest(BaseModel):
 
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id).where(FclFreightRateLocalRequest.source_id == self.source_id).limit(1).dicts().get()
-        location_pair_data = maps.list_locations({ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] })['list']
+        location_pair_data = maps.list_locations({'filters':{ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] }})['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
             importer_exporter_id = common.list_spot_searches({'filters': {'id': str(self.source_id)}})['list'][0]['detail']['importer_exporter_id']
@@ -158,7 +159,7 @@ class FclFreightRateLocalRequest(BaseModel):
     
 
     def send_notifications_to_supply_agents(self):
-        port = maps.list_locations({'id': self.port_id})['list'][0]['display_name']
+        port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
         try:
             partner.list_partner_users({
             'filters': {'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID, 'status':'active', 'partner_status':'active'},
