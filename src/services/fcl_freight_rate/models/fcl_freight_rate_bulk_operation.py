@@ -1,11 +1,11 @@
 from database.db_session import db
 from peewee import * 
 from playhouse.postgres_ext import *
+from micro_services.client import *
 # from rails_client import client
 from fastapi import HTTPException
 from datetime import datetime
 from configs.defintions import FCL_FREIGHT_CHARGES
-import yaml
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
@@ -17,7 +17,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import list_fcl_freight_rate_locals
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from micro_services.client import common
+import datetime
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 
@@ -29,7 +29,7 @@ class BaseModel(Model):
 
 class FclFreightRateBulkOperation(BaseModel):
     action_name = CharField(index=True, null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     data = BinaryJSONField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     performed_by_id = UUIDField(null=True)
@@ -39,7 +39,7 @@ class FclFreightRateBulkOperation(BaseModel):
     procured_by = BinaryJSONField(null=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
     service_provider_id = UUIDField(index=True, null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         table_name = 'fcl_freight_rate_bulk_operations'
@@ -161,11 +161,11 @@ class FclFreightRateBulkOperation(BaseModel):
         if any(index > 0 and slab.get('lower_limit', 0) <= slabs[index - 1].get('upper_limit', 0) for index, slab in enumerate(slabs)):
             raise HTTPException(status_code=499, detail='slabs is invalid')
 
-        currencies = slabs['currency']
-        valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
+        currencies = slabs[0]['currency']
+        # valid_currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
 
-        if currencies - valid_currencies:
-            raise HTTPException(status_code=499, detail='slabs.currency is invalid')
+        # if currencies - valid_currencies:
+        #     raise HTTPException(status_code=499, detail='slabs.currency is invalid')
 
     def validate_add_freight_line_item_data(self):
         data = self.data
@@ -271,8 +271,8 @@ class FclFreightRateBulkOperation(BaseModel):
             if not isinstance(rate_id, str):
                 rate_id = rate_id[0]
 
-            rate = FclFreightRate.find_by_id(rate_id)
-            locations = common.list_locations({'filters': { 'id': [rate.origin_port_id, rate.destination_port_id] }, 'includes': { 'icd_ports': {} }})['list']
+            rate = FclFreightRate.get(id = rate_id)
+            locations = maps.list_locations({'filters': { 'id': [str(rate.origin_port_id), str(rate.destination_port_id)] }, 'includes': { 'icd_ports': {} }})['list']
             origin_icd_location = [t for t in locations if t['id'] == rate.origin_port_id][0]['icd_ports']['id']
             
             destination_icd_location = [t for t in locations if t['id']== rate.destination_port_id][0]['icd_ports']['id']
@@ -572,18 +572,18 @@ class FclFreightRateBulkOperation(BaseModel):
 
         free_days = list_fcl_freight_rate_free_days(filters= filters, return_query= True, page_limit= page_limit)['list']
 
-        total_count = free_days.__sizeof__
+        total_count = len(free_days)
         count = 0
 
         for free_day in free_days:
             count += 1
 
-            if FclFreightRateAudit.select().where('bulk_operation_id' == self.id).limit(1).dicts().get():
+            if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=free_day['id']):
                 self.progress = int((count * 100.0) / total_count)
                 continue
 
             update_fcl_freight_rate_free_day({
-                'id': free_day.id,
+                'id': free_day['id'],
                 'performed_by_id': self.performed_by_id,
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
@@ -593,6 +593,7 @@ class FclFreightRateBulkOperation(BaseModel):
             })
 
             self.progress = int((count * 100.0) / total_count)
+            self.save()
 
     def perform_add_freight_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id = None):
         data = self.data

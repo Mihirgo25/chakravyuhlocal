@@ -78,7 +78,7 @@ from services.fcl_freight_rate.interaction.update_fcl_weight_slabs_configuration
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster import update_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
-
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
 
 # from rails_client.client import initialize_client
 from params import *
@@ -126,6 +126,11 @@ def shutdown():
 @app.get("/")
 def read_root():
     return "WELCOME TO OCEAN RMS"
+
+@app.post("/create_fcl_freight_rate_bulk_operation")
+def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation):
+    data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+    return JSONResponse(content=str(data))
 
 @app.post("/create_fcl_freight_commodity_cluster")
 def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodityCluster):

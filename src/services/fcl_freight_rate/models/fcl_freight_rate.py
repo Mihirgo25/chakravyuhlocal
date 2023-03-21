@@ -1,19 +1,13 @@
 from peewee import *
 import datetime
-from datetime import date
 from database.db_session import db
 from playhouse.postgres_ext import *
-from pydantic import BaseModel as pydantic_base_model
-from peewee import fn
-from typing import Set, Union
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
 from params import LineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
-from schema import Schema, Optional, Or, SchemaError
+from schema import Schema, Optional
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
-from params import FreeDay
-from celery import current_app, shared_task
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay

@@ -661,3 +661,104 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
   remarks: list[str] = None
   validity_start: datetime = None
   validity_end: datetime = None
+
+class ExtendValidty(BaseModel):
+  filters:dict={}
+  source_date:str  
+  validity_end:str  
+  sourced_by_ids:dict=None  
+  procured_by_ids:dict=None
+
+class DeleteFreightRate(BaseModel):
+  filters:dict={}
+  validity_start:str  
+  validity_end:str
+
+class AddFreightRateMarkup(BaseModel):
+  filters:dict={}
+  markup:float  
+  markup_type:str  
+  markup_currency:str=None  
+  line_item_code:str='BAS'  
+  validity_start:str  
+  validity_end:str
+
+class AddLocalRateMarkup(BaseModel):
+  filters:dict={}
+  markup:float  
+  markup_type:str  
+  markup_currency:str=None  
+  line_item_code:str
+
+class ExtendFreightRateToIcds(BaseModel):
+  filters: dict={}
+  markup_type : str  
+  markup : float  
+  markup_currency:str  
+  line_item_code : str  
+  origin_port_ids : List[str]
+  destination_port_ids : List[str]
+class ExtendFreightRate(BaseModel):
+  filters: dict={}
+  commodities : List[str]
+  container_sizes : List[str]
+  markup_type : str  
+  markup : float  
+  markup_currency:str  
+  line_item_code : str
+
+class UpdateWeightLimit(BaseModel):
+  filters: dict={}
+  free_limit : int  
+  slabs : List[Slab] = None  
+  lower_limit : int  
+  upper_limit : int  
+  price : float  
+  currency : str
+
+class UpdateFreeDays(BaseModel):
+  filters: dict={}
+  free_limit : int  
+  slabs : List[Slab] = None  
+  lower_limit : int  
+  upper_limit : int  
+  price : float  
+  currency : str
+  
+class AddFreightLineItem(BaseModel):
+  filters : dict={}
+  code : str  
+  unit : str  
+  price : float  
+  currency : str  
+  validity_start : str  
+  validity_end : str
+  
+class UpdateFreeDaysLimit(BaseModel):
+  filters: dict={}
+  free_limit : int  
+  slabs : List[Slab] = None  
+  lower_limit : int  
+  upper_limit : int  
+  price : float  
+  currency : str
+
+class DeleteLocalRate(BaseModel):
+  filters : dict={}
+class CreateBulkOperation(BaseModel):
+  performed_by_id:str  
+  service_provider_id:str  
+  procured_by_id:str  
+  sourced_by_id:str  
+  cogo_entity_id:str=None  
+  extend_validity:ExtendValidty=None  
+  delete_freight_rate:DeleteFreightRate=None  
+  add_freight_rate_markup:AddFreightRateMarkup=None  
+  add_local_rate_markup:AddLocalRateMarkup=None  
+  delete_local_rate:DeleteLocalRate=None  
+  update_free_days_limit:UpdateFreeDaysLimit=None  
+  add_freight_line_item:AddFreightLineItem=None  
+  update_free_days:UpdateFreeDays=None  
+  update_weight_limit:UpdateWeightLimit=None  
+  extend_freight_rate:ExtendFreightRate=None
+  extend_freight_rate_to_icds:ExtendFreightRateToIcds=None
