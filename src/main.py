@@ -33,6 +33,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_bulk_operations
 from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates import list_dashboard_fcl_freight_rates
 from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates import list_dashboard_fcl_freight_rates
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_requests import list_fcl_freight_rate_requests
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_requests import list_fcl_freight_rate_local_requests
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_feedbacks import list_fcl_freight_rate_feedbacks
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_commodity_surcharges import list_fcl_freight_rate_commodity_surcharges
@@ -41,6 +42,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_seasonal_surcha
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_day_requests import list_fcl_freight_rate_free_day_requests
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.interaction.list_fcl_weight_slabs_configuration import list_fcl_weight_slabs_configuration
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_suggestions import list_fcl_freight_rate_local_suggestions
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
@@ -450,6 +452,17 @@ def list_fcl_freight_rate_requests_data(
     data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
     return data
 
+@app.get("/list_fcl_freight_rate_local_requests")
+def list_fcl_freight_rate_local_requests_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True
+    ):
+    data = list_fcl_freight_rate_local_requests(filters, page_limit, page, is_stats_required, performed_by_id)
+    return data
+
 @app.get("/list_fcl_freight_rate_seasonal_surcharges")
 def list_fcl_freight_rate_seasonal_surcharges_data(
     filters: str = None,
@@ -502,6 +515,19 @@ def list_fcl_freight_rate_dislikes_data(
     page: int = 1
     ):
     data = list_fcl_freight_rate_dislikes(filters, page_limit, page)
+    return data
+
+@app.get("/list_fcl_freight_rate_local_suggestions")
+def list_fcl_freight_local_suggestions_data(
+    service_provider_id: str,
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    pagination_data_required: bool = True
+    ):
+    data = list_fcl_freight_rate_local_suggestions(service_provider_id, filters, page_limit, page, sort_by, sort_type, pagination_data_required)
     return data
 
 @app.get("/list_fcl_freight_rate_free_days")

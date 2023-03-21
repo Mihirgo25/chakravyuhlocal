@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
-from micro_services.client import partner
+from micro_services.client import *
 from math import ceil
 from peewee import fn, SQL
 from datetime import datetime
@@ -10,7 +10,7 @@ from playhouse.shortcuts import model_to_dict
 
 possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 
 def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
     query = FclFreightRateRequest.select()
@@ -50,8 +50,17 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = partner.list_partner_user_expertises({'filters': {'service_type': 'fcl_freight', 'partner_user_id': filters['relevant_supply_agent']}, 'page_limit': page_limit})['list']
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where(FclFreightRateRequest.origin_port_id << origin_port_id) or (query.where(FclFreightRateRequest.origin_country_id << origin_port_id)) or (query.where(FclFreightRateRequest.origin_continent_id << origin_port_id)) or (query.where(FclFreightRateRequest.origin_trade_id << origin_port_id))
-    query = query.where(FclFreightRateRequest.destination_port_id << destination_port_id) or (query.where(FclFreightRateRequest.destination_country_id << destination_port_id)) or (query.where(FclFreightRateRequest.destination_continent_id << destination_port_id)) or (query.where(FclFreightRateRequest.destination_trade_id << destination_port_id))
+    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id)) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id)
+    query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
+    return query
+
+def apply_supply_agent_id_filter(query, filters):
+    page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+    expertises = organization.list_organization_service_expertises({'filters': {'service_type': 'fcl_freight', 'supply_agent_id': filters['supply_agent_id']}, 'page_limit': page_limit})['list']
+    origin_port_id = [t['origin_location_id'] for t in expertises]
+    destination_port_id =  [t['destination_location_id'] for t in expertises]
+    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id)) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id)
+    query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
     return query
 
 def apply_similar_id_filter(query,filters):
@@ -76,14 +85,15 @@ def get_pagination_data(query, page, page_limit):
 def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
-
-    if 'status' in filters:
-        del filters['status']
-
+    
     query = FclFreightRateRequest.select()
 
-    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
-    query = apply_indirect_filters(query, filters)
+    if filters:
+        if 'status' in filters:
+            del filters['status']
+
+        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateRequest)
+        query = apply_indirect_filters(query, filters)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
