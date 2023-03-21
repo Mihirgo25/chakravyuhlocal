@@ -366,16 +366,13 @@ def process_fcl_freight_local(params, converted_file):
     last_line = get_last_line(params)
     rows = []
     params["rate_sheet_id"] = params["id"]
-    print(params["id"], "seeing2")
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) )
     rate_sheet = jsonable_encoder(rate_sheet)['__data__']
-    print(rate_sheet, "seeing")
     created_by_id = rate_sheet['performed_by_id']
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
     file_path = get_original_file_path(params)
-    print(file_path)
     with open(file_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         next(reader, None)
@@ -389,7 +386,6 @@ def process_fcl_freight_local(params, converted_file):
             blank_field = ['lower_limit', 'upper_limit']
             if valid_hash(row, present_field, blank_field):
                 if rows:
-                    print(rows,"testing-process")
                     create_fcl_freight_local_rate(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
                     )
@@ -409,7 +405,6 @@ def process_fcl_freight_local(params, converted_file):
                             ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit']
                         )
                     )):
-                print("testing-process2")
                 rows.append(row)
     print(len(rows))
     if not rows:
@@ -461,70 +456,378 @@ def create_fcl_freight_local_rate(
 #     return
 
 
-def validate_fcl_freight_free_day(params):
-    return
+# def validate_fcl_freight_free_day(params):
+#     return
 
 
-def write_fcl_freight_free_day_object(params):
-    return
+def write_fcl_freight_free_day_object(rows, csv, params, converted_file):
+    object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
+    print('-------------------------------------------------------------Done-------------------------------', object_validity)
+    if object_validity.get("valid"):
+        try:
+            csv.writerow(rows[0].values())
+        except:
+            print('no csv')
+    else:
+        try:
+            csv.writerow(rows[0].values() + [", ".join(object_validity.get("errors"))])
+            raise Exception("Invalid object")
+        except:
+            print('no csv')
 
 
-def process_fcl_freight_free_day(params):
-    return
-
-
-def create_fcl_freight_rate_free_day(params):
-    return
-
-
-def validate_fcl_freight_commodity_surcharge(params):
-    return
-
-
-def write_fcl_freight_commodity_surcharge_object(params):
-    return
-
-
-def process_fcl_freight_commodity_surcharge(params):
-    return
-
-
-def create_fcl_freight_rate_commodity_surcharge(params):
-    return
-
-
-def validate_fcl_freight_seasonal_surcharge(params):
-    return
-
-
-def write_fcl_freight_seasonal_surcharge_object(params):
-    return
-
-
-def process_fcl_freight_seasonal_surcharge(params):
-    return
-
-
-def create_fcl_freight_rate_seasonal_surcharge(params):
-    return
-
-
-def validate_fcl_freight_weight_limit(params):
-    return
-
-
-def write_fcl_freight_weight_limit_object(params):
-    return
-
-
-def process_fcl_freight_weight_limit(params):
+def process_fcl_freight_free_day(params, converted_file):
     total_lines = 0
+    original_path = get_original_file_path(params)
+    with open(original_path, encoding='iso-8859-1') as file:
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        headers = next(reader)
+        for row in reader:
+            total_lines += 1
+    set_total_line(params, total_lines)
+
+    last_line = get_last_line(params)
+    rows = []
+    params["rate_sheet_id"] = params["id"]
+    rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
+    rate_sheet = jsonable_encoder(rate_sheet)['__data__']
+    created_by_id = rate_sheet['performed_by_id']
+    procured_by_id = rate_sheet['procured_by_id']
+    sourced_by_id = rate_sheet['sourced_by_id']
+    index = -1
+    file_path = get_original_file_path(params)
+    with open(file_path, encoding='iso-8859-1') as file:
+        csv_writer = csv.writer(file)
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        if last_line == 0:
+            csv_writer.writerow(headers)
+        input_file = csv.DictReader(open(file_path))
+        for row in input_file:
+            index += 1
+            row = row
+            last_line = get_last_line(params)
+            present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable']
+            blank_field = ['lower_limit','upper_limit', 'price', 'currency']
+            if valid_hash(row, present_field, blank_field) or valid_hash(row, ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable', 'lower_limit', 'upper_limit', 'price', 'currency']):
+                if rows:
+                    create_fcl_freight_freight_rate(
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
+                    )
+                    set_last_line(index, params)
+                    percent = (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))* 100
+                    set_processed_percent(percent, params)
+                rows = [row]
+            elif (
+                valid_hash(
+                    row,
+                    ["lower_limit", "upper_limit", "price", "currency"],
+                    [
+                        "location_type",
+                        "location",
+                        "trade_type",
+                        "free_days_type",
+                        "container_size",
+                        "container_type",
+                        "shipping_line",
+                        "free_limit",
+                        "specificity_type",
+                        "previous_days_applicable"
+                    ],
+                )
+            ):
+                rows.append(row)
+
+    if not rows:
+        return
+    create_fcl_freight_rate_free_day(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
+    set_last_line(total_lines, params)
+    percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
+    set_processed_percent(percent, params)
+
+
+
     return
 
 
-def create_fcl_freight_rate_weight_limit(params):
+def create_fcl_freight_rate_free_day(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
+    keys_to_extract = ['location_type', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'specificity_type', 'previous_days_applicable']
+    object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    location = get_location(rows[0]['location'], rows[0]['location_type'])
+    object['location_id'] = location['id']
+    object['port_id'] = location['seaport_id']
+    object['country_id'] = location['country_id']
+    object['trade_id'] = location['trade_id']
+    object['continent_id'] = location['continent_id']
+    object['shipping_line_id'] = get_shipping_line_id(rows[0]['shipping_line'])
+    object['importer_exporter_id'] = get_importer_exporter_id(rows[0]['importer_exporter'])
+    object['remarks'] = [rows[0]['remark1'], rows[0]['remark2'], rows[0]['remark3']]
+    object['slabs'] = []
+    for t in rows:
+        keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']
+        slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
+        if object['slabs']:
+            object['slabs'].append(slab)
+    object['rate_sheet_id'] = params['rate_sheet_id']
+    object['performed_by_id'] = created_by_id
+    object['service_provider_id'] = params['service_provider_id']
+    object['procured_by_id'] = procured_by_id
+    object['sourced_by_id'] = sourced_by_id
+    create_fcl_freight_rate_free_day(object)
     return
 
+
+# def validate_fcl_freight_commodity_surcharge(params):
+#     return
+
+
+def write_fcl_freight_commodity_surcharge_object(rows, csv, params, converted_file):
+    object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
+    print('-------------------------------------------------------------Done-------------------------------', object_validity)
+    if object_validity.get("valid"):
+        try:
+            csv.writerow(rows[0].values())
+        except:
+            print('no csv')
+    else:
+        try:
+            csv.writerow(rows[0].values() + [", ".join(object_validity.get("errors"))])
+            raise Exception("Invalid object")
+        except:
+            print('no csv')
+
+
+def process_fcl_freight_commodity_surcharge(params, converted_file):
+    total_lines = 0
+    original_path = get_original_file_path(params)
+    with open(original_path, encoding='iso-8859-1') as file:
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        headers = next(reader)
+        for row in reader:
+            total_lines += 1
+    set_total_line(params, total_lines)
+
+    last_line = get_last_line(params)
+    rows = []
+    params["rate_sheet_id"] = params["id"]
+    rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
+    rate_sheet = jsonable_encoder(rate_sheet)['__data__']
+    created_by_id = rate_sheet['performed_by_id']
+    procured_by_id = rate_sheet['procured_by_id']
+    sourced_by_id = rate_sheet['sourced_by_id']
+    index = -1
+    file_path = get_original_file_path(params)
+    with open(file_path, encoding='iso-8859-1') as file:
+        csv_writer = csv.writer(file)
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        if last_line == 0:
+            csv_writer.writerow(headers)
+        input_file = csv.DictReader(open(file_path))
+        for row in input_file:
+            index += 1
+            row = row
+            last_line = get_last_line(params)
+            present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'code', 'price', 'currency']
+            if valid_hash(row, present_field, None):
+                create_fcl_freight_rate_commodity_surcharge(
+                    params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
+                )
+                set_last_line(index+1, params)
+    return
+
+
+def create_fcl_freight_rate_commodity_surcharge(params, converted_file, rows, created_by_id, sourced_by_id, procured_by_id):
+    keys_to_extract = ['container_size', 'container_type', 'commodity', 'price', 'currency']
+    object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    object['origin_location_id'] = get_location_id(rows[0]['origin_location'])
+    object['destination_location_id'] = get_location_id(rows[0]['destination_location'])
+    object['shipping_line_id'] = get_shipping_line_id(rows[0]['shipping_line'])
+    object['rate_sheet_id'] = params['rate_sheet_id']
+    object['performed_by_id'] = created_by_id
+    object['service_provider_id'] = params['service_provider_id']
+    object['procured_by_id'] = procured_by_id
+    object['sourced_by_id'] = sourced_by_id
+    create_fcl_freight_rate_commodity_surcharge(object)
+    return
+
+
+# def validate_fcl_freight_seasonal_surcharge(params):
+#     return
+
+
+def write_fcl_freight_seasonal_surcharge_object(rows, csv, params, converted_file):
+    object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
+    print('-------------------------------------------------------------Done-------------------------------', object_validity)
+    if object_validity.get("valid"):
+        try:
+            csv.writerow(rows[0].values())
+        except:
+            print('no csv')
+    else:
+        try:
+            csv.writerow(rows[0].values() + [", ".join(object_validity.get("errors"))])
+            raise Exception("Invalid object")
+        except:
+            print('no csv')
+    return
+
+
+def process_fcl_freight_seasonal_surcharge(params, converted_file):
+    total_lines = 0
+    original_path = get_original_file_path(params)
+    with open(original_path, encoding='iso-8859-1') as file:
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        headers = next(reader)
+        for row in reader:
+            total_lines += 1
+    set_total_line(params, total_lines)
+
+    last_line = get_last_line(params)
+    rows = []
+    params["rate_sheet_id"] = params["id"]
+    rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
+    rate_sheet = jsonable_encoder(rate_sheet)['__data__']
+    created_by_id = rate_sheet['performed_by_id']
+    procured_by_id = rate_sheet['procured_by_id']
+    sourced_by_id = rate_sheet['sourced_by_id']
+    index = -1
+    file_path = get_original_file_path(params)
+    with open(file_path, encoding='iso-8859-1') as file:
+        csv_writer = csv.writer(file)
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        if last_line == 0:
+            csv_writer.writerow(headers)
+        input_file = csv.DictReader(open(file_path))
+        for row in input_file:
+            index += 1
+            row = row
+            last_line = get_last_line(params)
+            present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'code', 'price', 'currency', 'validity_start', 'validity_end']
+            if valid_hash(row, present_field, None):
+                create_fcl_freight_freight_rate(
+                    params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
+                )
+                set_last_line(index, params)
+
+
+
+def create_fcl_freight_rate_seasonal_surcharge(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
+    keys_to_extract = ['container_size', 'container_type', 'free_limit', 'code', 'price', 'currency', 'validity_start', 'validity_end']
+    object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    object['validity_start'] = convert_date_format(object['validity_start'])
+    object['validity_end'] = convert_date_format(object['validity_end'])
+    object['origin_location_id'] = get_location_id(rows[0]['origin_location'])
+    object['destination_location_id'] = get_location_id(rows[0]['destination_location'])
+    object['shipping_line_id'] = get_shipping_line_id(rows[0]['shipping_line'])
+    object['rate_sheet_id'] = params['rate_sheet_id']
+    object['performed_by_id'] = created_by_id
+    object['service_provider_id'] = params['service_provider_id']
+    object['procured_by_id'] = procured_by_id
+    object['sourced_by_id'] = sourced_by_id
+    create_fcl_freight_rate_seasonal_surcharge(object)
+    return
+
+
+
+def write_fcl_freight_weight_limit_object(rows, csv, params, converted_file):
+    object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
+    print('-------------------------------------------------------------Done-------------------------------', object_validity)
+    if object_validity.get("valid"):
+        try:
+            csv.writerow(rows[0].values())
+        except:
+            print('no csv')
+    else:
+        try:
+            csv.writerow(rows[0].values() + [", ".join(object_validity.get("errors"))])
+            raise Exception("Invalid object")
+        except:
+            print('no csv')
+
+
+
+def process_fcl_freight_weight_limit(params, converted_file):
+    total_lines = 0
+    original_path = get_original_file_path(params)
+    with open(original_path, encoding='iso-8859-1') as file:
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        headers = next(reader)
+        for row in reader:
+            total_lines += 1
+    set_total_line(params, total_lines)
+
+    last_line = get_last_line(params)
+    rows = []
+    params["rate_sheet_id"] = params["id"]
+    rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
+    rate_sheet = jsonable_encoder(rate_sheet)['__data__']
+    created_by_id = rate_sheet['performed_by_id']
+    procured_by_id = rate_sheet['procured_by_id']
+    sourced_by_id = rate_sheet['sourced_by_id']
+    index = -1
+    file_path = get_original_file_path(params)
+    with open(file_path, encoding='iso-8859-1') as file:
+        csv_writer = csv.writer(file)
+        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
+        if last_line == 0:
+            csv_writer.writerow(headers)
+        input_file = csv.DictReader(open(file_path))
+        for row in input_file:
+            index += 1
+            row = row
+            last_line = get_last_line(params)
+            present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'free_limit']
+            blank_field = ['lower_limit','upper_limit', 'price', 'currency']
+            if valid_hash(row, present_field, blank_field) or valid_hash(row, ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'lower_limit', 'upper_limit', 'price', 'currency']):
+                if rows:
+                    create_fcl_freight_freight_rate(
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
+                    )
+                    set_last_line(index, params)
+                    percent = (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))* 100
+                    set_processed_percent(percent, params)
+                rows = [row]
+            elif (
+                valid_hash(
+                    row,
+                    ["lower_limit", "upper_limit", "price", "currency"],
+                    [
+                        "origin_location",
+                        "destination_location",
+                        "container_size",
+                        "container_type",
+                        "shipping_line",
+                        "free_limit"
+                    ],
+                )
+            ):
+                rows.append(row)
+
+    if not rows:
+        return
+    create_fcl_freight_freight_rate(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
+    set_last_line(total_lines, params)
+    percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
+    set_processed_percent(percent, params)
+
+
+def create_fcl_freight_rate_weight_limit(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
+    keys_to_extract = ['container_size', 'container_type', 'free_limit']
+    object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    object['origin_location_id'] = get_location_id(rows[0]['origin_location'])
+    object['destination_location_id'] = get_location_id(rows[0]['destination_location'])
+    object['shipping_line_id'] = get_shipping_line_id(rows[0]['shipping_line'])
+    object['slabs'] = []
+    for t in rows:
+        keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']
+        slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
+        if slab:
+            object['slabs'].append(slab)
+    object['rate_sheet_id'] = params['rate_sheet_id']
+    object['performed_by_id'] = created_by_id
+    object['service_provider_id'] = params['service_provider_id']
+    object['procured_by_id'] = procured_by_id
+    object['sourced_by_id'] = sourced_by_id
+    create_fcl_freight_rate_weight_limit(object)
 
 def get_location_id(q, country_code, service_provider_id):
     pincode_filters =  {"type": "pincode", "postal_code": q, "status": "active"}
@@ -888,12 +1191,9 @@ def validate_fcl_freight_freight(params):
     return params
 
 
-def write_fcl_freight_freight_object(rows, csv, params):
-    # try:
-    object_validity = validate_fcl_freight_object('freight', rows)
+def write_fcl_freight_freight_object(rows, csv, params, converted_file):
+    object_validity = validate_fcl_freight_object(converted_file['module'], rows)
     print('-------------------------------------------------------------Done-------------------------------', object_validity)
-    # except:
-    #     return False
     if object_validity.get("valid"):
         try:
             csv.writerow(rows[0].values())
@@ -905,11 +1205,6 @@ def write_fcl_freight_freight_object(rows, csv, params):
             raise Exception("Invalid object")
         except:
             print('no csv')
-
-    # for t in rows[1:]:
-    #     csv.writerow(t.values())
-
-    # params['rates_count'] = int(params['rates_count']) + 1
 
 
 def process_fcl_freight_freight(params, converted_file):
@@ -933,7 +1228,7 @@ def process_fcl_freight_freight(params, converted_file):
     index = -1
     file_path = get_original_file_path(params)
     print(file_path)
-    with open(file_path, "a+", encoding='iso-8859-1', newline='') as file:
+    with open(file_path, encoding='iso-8859-1') as file:
         csv_writer = csv.writer(file)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         if last_line == 0:
@@ -943,6 +1238,7 @@ def process_fcl_freight_freight(params, converted_file):
         for row in input_file:
             index += 1
             row = row
+            last_line = get_last_line(params)
             print(last_line, index, "index")
             # last_line = get_last_line(params)
             # if index < last_line:
@@ -1170,19 +1466,14 @@ def process_fcl_freight_freight(params, converted_file):
                 )
             ):
                 rows.append(row)
-            else:
-                if rows:
-                    write_fcl_freight_freight_object(rows, csv_writer, params)
-                    set_last_line(index-1, params)
-                csv_writer.writerow(list(row.values()) + ['Incorrect Row'])
-                set_errors_present('True', params)
-                set_last_line(index-1, params)
-                rows = []
-
-        if rows:
-                write_fcl_freight_freight_object(rows, csv_writer, params)
-                set_last_line(total_lines, params)
-                return
+            # else:
+            #     if rows:
+            #         write_fcl_freight_freight_object(rows, csv_writer, params)
+            #         set_last_line(index-1, params)
+            #     # csv_writer.writerow(list(row.values()) + ['Incorrect Row'])
+            #     set_errors_present('True', params)
+            #     set_last_line(index-1, params)
+            #     rows = []
     if not rows:
         return
     create_fcl_freight_freight_rate(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
@@ -1267,8 +1558,9 @@ def create_fcl_freight_freight_rate(
     if 'extended_rates' in rows[0]:
         request_params["is_extended"] = True
     print(request_params, "sak final")
-    if write_fcl_freight_freight_object(request_params, "", params):
+    if write_fcl_freight_freight_object(request_params, "", params, converted_file):
         create_fcl_freight_rate_data(request_params)
+    print('done')
 
 
 
@@ -1288,6 +1580,7 @@ def process_converted_files(params):
             params,converted_file
         )
         final_time = time.time() -initial_time
+        print(get_processed_percent(params))
         print(final_time, "final_time")
         print("done")
     params['status'] = 'complete'

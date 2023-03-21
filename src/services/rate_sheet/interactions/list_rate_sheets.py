@@ -157,20 +157,19 @@ def add_service_objects(data):
             objects_organizations
         )
         for org in list_organizations['list']:
-            objects_organizations_hash[org['id']] =org['business_name']
+            objects_organizations_hash[org['id']] =org
 
     if len(user_ids):
         objects_user['filters']['id'] = user_ids
         list_user = client.ruby.list_users(objects_user)
         for user_obj in list_user['list']:
-            objects_user_hash[user_obj['id']] =user_obj['business_name']
+            objects_user_hash[user_obj['id']] =user_obj
 
     for object in data:
-        object['service_provider'] = objects_organizations_hash.get('organization')
-        # if cluster['organization_id'] in objects_organizations_hash:
-        #     cluster['organization_name'] = objects_organizations_hash[cluster['organization_id']]
-        # if cluster['user_id'] in objects_user_hash:
-        #     cluster['user_name'] = objects_user_hash[cluster['user_id']]
+        object['service_provider'] = objects_organizations_hash.get(data.get('service_provider_id'))
+        object['procured_by'] = objects_organizations_hash.get(data.get('procured_by_id'))
+        object['sourced_by'] = objects_organizations_hash.get(data.get('sourced_by_id'))
+        object['performed_by'] = objects_organizations_hash.get(data.get('performed_by_id'))
 
     return data
 
@@ -197,7 +196,6 @@ def get_final_data(query):
 
     final_data = add_service_objects(final_data)
 
-
     return final_data
 
 def add_pagination_data(
@@ -212,16 +210,6 @@ def add_pagination_data(
     response["list"] = final_data
     return response
 
-
-def get_data(query):
-    # perform some computation or database query
-    # ...
-    return query
-
-def get_pagination_data(query):
-    # perform some computation or database query
-    # ...
-    return query
 
 def list_rate_sheets(filters, stats_required, page, page_limit, sort_by, sort_type, pagination_data_required):
     response = {"success": False, "status_code": 200}
@@ -238,13 +226,13 @@ def list_rate_sheets(filters, stats_required, page, page_limit, sort_by, sort_ty
         query = apply_indirect_filters(
             query, indirect_filters
         )
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        # submit each method to the executor and store the resulting futures
-        data_future = executor.submit(get_final_data, query)
-        pagination_data_future = executor.submit(get_pagination_data, query)
+    # with concurrent.futures.ThreadPoolExecutor() as executor:
+    #     # submit each method to the executor and store the resulting futures
+    #     final_data = executor.submit(get_final_data, query)
+    #     pagination_data_future = executor.submit(get_pagination_data, query)
 
-    data = data_future.result()
-    pagination_data = pagination_data_future.result()
+    # data = final_data.result()
+    # pagination_data = pagination_data_future.result()
     # with concurrent.futures.ThreadPoolExecutor(max_workers = len(detention_and_demurrage_free_days)) as executor:
     #     futures = [executor.submit(get_eligible_fcl_freight_rate_free_day_data, free_day) for free_day in detention_and_demurrage_free_days]
     #     method_responses = {}
