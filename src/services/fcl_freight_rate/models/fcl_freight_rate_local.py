@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from micro_services.client import *
+from database.rails_db import *
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -156,7 +157,7 @@ class FclFreightRateLocal(BaseModel):
         location_ids = [str(self.port_id)]
         if self.main_port_id:
             location_ids.append(str(self.main_port_id))
-        ports = maps.list_locations({'id': location_ids})['list']
+        ports = maps.list_locations({'filters':{'id': location_ids}})['list']
         for port in ports:
             if port.get('id') == self.port_id:
                 self.country_id = port.get('country_id', None)
@@ -171,7 +172,7 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = common.list_operators({'id':self.shipping_line_id})['list']
+        shipping_line = get_shipping_line(self.shipping_line_id)
         if len(shipping_line) != 0:
             self.shipping_line = {key:value for key,value in shipping_line[0] if key in ['id', 'business_name', 'short_name', 'logo_url']}
 
