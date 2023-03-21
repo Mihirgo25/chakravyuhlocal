@@ -6,6 +6,7 @@ import datetime
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
 from micro_services.client import *
+from database.rails_db import *
 class BaseModel(Model):
     class Meta:
         database = db

@@ -1,7 +1,6 @@
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
 import yaml
 from configs.defintions import FCL_FREIGHT_CHARGES
-from rails_client import client
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
 from peewee import *
 from playhouse.shortcuts import model_to_dict

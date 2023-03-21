@@ -1,3 +1,5 @@
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from peewee import fn
 from database.rails_db import get_service_provider,get_shipping_line,get_user
 
 def get_multiple_service_objects(freight_object):

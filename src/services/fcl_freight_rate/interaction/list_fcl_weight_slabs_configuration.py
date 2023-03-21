@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from libs.locations import list_locations
+from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from math import ceil
 import json
@@ -21,7 +21,12 @@ def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1,
     for row in data:
         location_ids.extend([str(row['origin_location_id']), str(row['destination_location_id'])])
 
-    locations = list_locations({'filters': {'id': list(set(filter(None, location_ids)))}, 'page_limit' : MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+    locations = maps.list_locations({'filters': {'id': list(set(filter(None, location_ids)))}, 'page_limit' : MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})
+    if locations:
+        locations = locations['list']
+    else:
+        locations = []
+        
     locations_hash = {}
     for location in locations:
         locations_hash[str(location['id'])] = location['name']

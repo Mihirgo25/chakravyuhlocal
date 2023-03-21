@@ -2,7 +2,7 @@ from params import *
 from peewee import * 
 from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 import copy
-from micro_services.client import common
+from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
