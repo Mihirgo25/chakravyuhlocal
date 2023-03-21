@@ -86,12 +86,6 @@ class FclFreightRateFeedback(BaseModel):
             return True
         return False    
 
-    def validate_performed_by_id(self):
-        data = get_user(self.performed_by_id)
-        if len(data) != 0:
-            return True
-        else:
-            raise False
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_service_provider(self.performed_by_org_id)
@@ -149,9 +143,6 @@ class FclFreightRateFeedback(BaseModel):
         
         if not self.validate_fcl_freight_rate_id():
             raise HTTPException(status_code=404, detail="incorrect fcl freight rate id")
-        
-        if not self.validate_performed_by_id():
-            raise HTTPException(status_code=404, detail= 'invalid performed by ID')
 
         if not self.validate_performed_by_org_id():
             raise HTTPException(status_code=404, detail="incorrect performed by org id")
