@@ -37,10 +37,6 @@ def get_fcl_freight_rate_cards(request):
         lists = get_fcl_freight_rate_cards(request)['list']
         for i in range(len(lists)):
             lists[i]['source'] = 'predicted'
-<<<<<<< HEAD
-
-=======
->>>>>>> 074be602d7b8b89c77bc642c2dcf8aa94334786f
     return {'list': lists}
 
 
