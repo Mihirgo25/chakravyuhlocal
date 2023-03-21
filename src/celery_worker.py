@@ -8,7 +8,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclF
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
-
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 CELERY_CONFIG = {
     "enable_utc": True,

@@ -25,7 +25,6 @@ def get_fcl_freight_rate_cards(request):
     freight_query = join_destination_local(freight_query)
    
     freight_query = select_fields(freight_query)
-    print(freight_query)
     freight_query_result = freight_query_results(request, freight_query)
 
     lists = build_response_list(freight_query_result, request)

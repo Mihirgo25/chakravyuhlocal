@@ -41,3 +41,6 @@ class CommonApiClient:
     
     def get_shipment(self, data = {}):
         return self.client.request('GET','get_shipment',data)
+    
+    def list_money_currencies(self,data={}):
+        return self.client.request('GET','list_money_currencies',data)

@@ -65,6 +65,8 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day impo
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_stats import get_fcl_freight_rate_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_seasonal_surcharge import get_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_commodity_surcharge import get_fcl_freight_rate_commodity_surcharge
+from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
 # from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_feedback import delete_fcl_freight_rate_feedback
@@ -833,6 +835,14 @@ def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSea
     end_time = time.time()
     response_time = end_time - start_time
     return JSONResponse(content={"time": response_time})
+
+
+@app.post("/create_fcl_freight_rate_bulk_operation")
+def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation):
+    data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+    return JSONResponse(content=data)
+
+
 
 @app.post("/create_fcl_freight_commodity_surcharge")
 def create_fcl_freight_commodity_surcharge_data(request: CreateFclFreightCommoditySurcharge):

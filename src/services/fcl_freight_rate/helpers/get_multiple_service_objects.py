@@ -1,8 +1,4 @@
-from rails_client import client
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.fcl_freight_rate.models.user import User
-from services.fcl_freight_rate.models.operator import Operator
-from services.fcl_freight_rate.models.organization import Organization
 from peewee import fn
 from database.rails_db import get_service_provider,get_shipping_line,get_user
 
