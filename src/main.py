@@ -83,7 +83,7 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster 
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
-
+from typing import Union, List
 # from rails_client.client import initialize_client
 from params import *
 from database.create_tables import create_table
@@ -779,11 +779,10 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
 def get_fcl_freight_rate_stats_data(
     validity_start: str,
     validity_end: str,
-    stats_types: str
+    stats_types: Union[List[str],None]= Query(None),
 ):
     validity_start = datetime.strptime(validity_start, '%Y-%m-%d').date().isoformat()
     validity_end = datetime.strptime(validity_end, '%Y-%m-%d').date().isoformat()
-    stats_types = json.loads(stats_types)
     request = {
         'validity_start':validity_start,
         'validity_end':validity_end,
