@@ -2,7 +2,7 @@ from params import *
 from peewee import * 
 from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 import copy
-from rails_client import client
+from micro_services.client import common
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
@@ -129,7 +129,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
 def get_money_exchange(from_currency, to_currency, gri_rate):
     if not gri_rate:
         return 0
-    result = client.ruby.get_money_exchange_for_fcl(from_currency= from_currency, to_currency= to_currency, price= gri_rate)
+    result = common.get_money_exchange_for_fcl(from_currency= from_currency, to_currency= to_currency, price= gri_rate)
     if result:
         return result['price']
     return 0

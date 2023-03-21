@@ -21,7 +21,7 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from libs.locations import list_locations
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
-from micro_services.client import *
+from micro_services.client import common
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -772,7 +772,7 @@ class FclFreightRate(BaseModel):
 
 
     # def update_priority_score(self):
-    #   client.ruby.update_fcl_freight_rate_priority_scores({'filters':{'id': self.id}}) #expose
+    #   common.update_fcl_freight_rate_priority_scores({'filters':{'id': self.id}}) #expose
 
     def update_platform_prices_for_other_service_providers(self):  # check for delay
       data = {
@@ -812,7 +812,7 @@ class FclFreightRate(BaseModel):
               }
           }
     # api call and also expose
-      # client.ruby.create_organization_trade_requirement_rate_mapping(data)
+      # common.create_organization_trade_requirement_rate_mapping(data)
 
 
 

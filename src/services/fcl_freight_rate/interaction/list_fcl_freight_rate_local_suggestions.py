@@ -6,6 +6,7 @@ import concurrent.futures, json
 from operator import attrgetter
 from math import ceil
 from micro_services.client import *
+from micro_services.client import common
 
 possible_direct_filters = ['port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'trade_type', 'container_size', 'container_type', 'commodity']
 possible_indirect_filters = ['location_ids']
@@ -95,7 +96,7 @@ def get_data(query, page, page_limit, pagination_data_required):
 #     if data.count == 0:
 #         return data 
 
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
+#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': [
 #     {
 #         'name': 'operator',
 #         'filters': { id: list(set([t['shipping_line_id'] for t in data]))},

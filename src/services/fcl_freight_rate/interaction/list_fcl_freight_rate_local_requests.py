@@ -6,6 +6,7 @@ from math import ceil
 from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL
+from micro_services.client import common
 
 possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
@@ -77,7 +78,7 @@ def get_data(query):
 #     }
 #     ]
 
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
+#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': objects})
  
 #     for i in range(len(data)):
 #         data[i]['port'] = service_objects['location'][data[i]['port_id']] if 'location' in service_objects and data[i].get('port_id') in service_objects['location'] else None

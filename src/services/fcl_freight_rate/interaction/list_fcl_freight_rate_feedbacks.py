@@ -4,7 +4,7 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.fcl_freight_rate_constants import RATE_CONSTANT_MAPPING
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
-from rails_client import client
+from micro_services.client import common
 from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL
@@ -209,7 +209,7 @@ def get_data(query):
     #         'fields': ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']
     #     })
 
-    # service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({"objects": objects})
+    # service_objects = common.get_multiple_service_objects_data_for_fcl({"objects": objects})
     # for object in data:
     #     rate = fcl_freight_rate_mappings[object.get('fcl_freight_rate_id', None)] or {}
     #     object['performed_by'] = service_objects['user'].get(object.get('performed_by_id'), None)

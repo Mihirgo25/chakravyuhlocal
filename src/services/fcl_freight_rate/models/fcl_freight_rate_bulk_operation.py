@@ -17,6 +17,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import list_fcl_freight_rate_locals
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from micro_services.client import common
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 
@@ -46,7 +47,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_service_provider(self):
         if not self.service_provider_id:
             return True
-        service_provider_data = client.ruby.list_organizations({'filters':{'id': str(self.service_provider_id)}})
+        service_provider_data = common.list_organizations({'filters':{'id': str(self.service_provider_id)}})
         if service_provider_data.get('account_type') == 'service_provider':
             return True
         return False
@@ -54,7 +55,7 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_performed_by_id(self):
         if not self.service_provider_id:
             return True
-        performed_by_data = client.ruby.list_users({'filters':{'id': str(self.performed_by_id)}})
+        performed_by_data = common.list_users({'filters':{'id': str(self.performed_by_id)}})
         if performed_by_data:
             return True
         return False
@@ -112,7 +113,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
+        currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=499, detail='markup_currency is invalid')
@@ -138,7 +139,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
+        currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=499, detail='markup_currency is invalid')
@@ -161,7 +162,7 @@ class FclFreightRateBulkOperation(BaseModel):
             raise HTTPException(status_code=499, detail='slabs is invalid')
 
         currencies = slabs['currency']
-        valid_currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
+        valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
         if currencies - valid_currencies:
             raise HTTPException(status_code=499, detail='slabs.currency is invalid')
@@ -179,7 +180,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if data['units'] not in code_config['units']:
             raise HTTPException(status_code=499, detail='unit is invalid')
         
-        valid_currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
+        valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
         if data['currency'] not in valid_currencies:
             raise HTTPException(status_code=499, detail='currency is invalid')
@@ -244,7 +245,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
         
-        valid_currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
+        valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
         if data['currency'] not in valid_currencies:
             raise HTTPException(status_code=499, detail='currency is invalid')
@@ -257,7 +258,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
         
-        valid_currencies = [t['iso_code'] for t in client.ruby.list_money_currencies()['list']]
+        valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
         
         if data['currency'] not in valid_currencies:
             raise HTTPException(status_code=499, detail='currency is invalid')
@@ -271,7 +272,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 rate_id = rate_id[0]
 
             rate = FclFreightRate.find_by_id(rate_id)
-            locations = client.ruby.list_locations({'filters': { 'id': [rate.origin_port_id, rate.destination_port_id] }, 'includes': { 'icd_ports': {} }})['list']
+            locations = common.list_locations({'filters': { 'id': [rate.origin_port_id, rate.destination_port_id] }, 'includes': { 'icd_ports': {} }})['list']
             origin_icd_location = [t for t in locations if t['id'] == rate.origin_port_id][0]['icd_ports']['id']
             
             destination_icd_location = [t for t in locations if t['id']== rate.destination_port_id][0]['icd_ports']['id']
@@ -457,7 +458,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
                 
                 if data['markup_type'].lower() == 'net':
-                    markup = client.ruby.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
+                    markup = common.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -526,7 +527,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
 
                 if data['markup_type'].lower() == 'net':
-                    markup = client.ruby.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
+                    markup = common.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -540,7 +541,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         markup = data['markup']
                     
                     if data['markup_type'].lower() == 'net':
-                        markup = client.ruby.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
+                        markup = common.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
 
                     slab['price'] = slab['price'] + markup
                     if slab['price'] < 0:
@@ -635,7 +636,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
                 
                 if data['markup_type'].lower() == 'net':
-                    markup = client.ruby.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
+                    markup = common.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -816,7 +817,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
 
                 if data['markup_type'].lower() == 'net':
-                    markup = client.ruby.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
+                    markup = common.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -908,7 +909,7 @@ def perform_extend_freight_rate_to_icds_action(self, sourced_by_id, procured_by_
             markup = data['markup']
 
         if data['markup_type'].lower() == 'net':
-            markup = client.ruby.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
+            markup = common.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
 
         line_item['price'] = line_item['price'] + markup
         
