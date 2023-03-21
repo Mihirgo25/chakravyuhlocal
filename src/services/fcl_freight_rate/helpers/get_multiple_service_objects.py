@@ -17,18 +17,18 @@ def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'closed_by_id'):
         user_list.append(freight_object.closed_by_id)
 
-    if user_data:
+    if user_list:
         user_data = get_user(user_list)
         for user in user_data:
             user['id'] = str(user['id'])
-            if user['id']==str(freight_object.procured_by_id):
+            if hasattr(freight_object,'procured_by_id') and user['id']==str(freight_object.procured_by_id):
                 freight_object.procured_by= user        
-            elif user['id']== str(freight_object.sourced_by_id):
+            elif hasattr(freight_object,'sourced_by_id') and user['id']== str(freight_object.sourced_by_id):
                 freight_object.sourced_by= user
             elif hasattr(freight_object,'performed_by_id') and user['id']==str(freight_object.performed_by_id):
-                freight_object.performed_by_id = user        
+                freight_object.performed_by = user        
             elif hasattr(freight_object,'closed_by_id') and user['id']==str(freight_object.closed_by_id):
-                freight_object.closed_by_id = user    
+                freight_object.closed_by = user    
     organization_list=[]
     if hasattr(freight_object,'importer_exporter_id'):
         organization_list.append(freight_object.importer_exporter_id)
