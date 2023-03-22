@@ -2,9 +2,9 @@ import concurrent.futures
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
-import uuid
 from math import ceil
 import json
+from micro_services.client import common
 
 possible_direct_filters = ['service_provider_id', 'trade_type', 'status']
 possible_indirect_filters = ['location_ids']
@@ -40,7 +40,7 @@ def get_data(query, page, page_limit, pagination_data_required):
     return {'get_data':data}
 
 # def add_service_objects(data):
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': [
+#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': [
 #         {
 #         'name': 'location',
 #         'filters': { 'id': list(set([str(d['location_id']) for d in data if d.get('location_id')]))}, 

@@ -13,6 +13,7 @@ from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration im
 import time
 import ujson as json
 from database.rails_db import get_shipping_line,get_service_provider
+from playhouse.shortcuts import model_to_dict
 
 
 def to_json(item,key):
@@ -25,7 +26,6 @@ def get_fcl_freight_rate_cards(request):
     freight_query = join_destination_local(freight_query)
    
     freight_query = select_fields(freight_query)
-    print(freight_query)
     freight_query_result = freight_query_results(request, freight_query)
 
     lists = build_response_list(freight_query_result, request)

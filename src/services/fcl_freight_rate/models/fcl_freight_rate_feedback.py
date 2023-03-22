@@ -6,9 +6,9 @@ from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBA
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.defintions import FCL_FREIGHT_CURRENCIES
 from fastapi import HTTPException
-import yaml, datetime
+import datetime
 from database.rails_db import *
-from micro_services.client import *
+from micro_services.client import partner, common, maps
 
 
 class UnknownField(object):
@@ -46,7 +46,6 @@ class FclFreightRateFeedback(BaseModel):
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedbacks_serial_id_seq'::regclass)")])
     service_provider = BinaryJSONField(null=True)
-    shipping_line = BinaryJSONField(null=True)
     origin_trade = BinaryJSONField(null=True)
     destination_trade = BinaryJSONField(null=True)
     source = CharField(index=True, null=True)
@@ -62,6 +61,7 @@ class FclFreightRateFeedback(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_feedbacks'
+
 
     def validate_source(self):
         if self.source and self.source in FEEDBACK_SOURCES:
@@ -85,13 +85,6 @@ class FclFreightRateFeedback(BaseModel):
         if fcl_freight_rate_data:
             return True
         return False    
-
-    def validate_performed_by_id(self):
-        data = get_user(self.performed_by_id)
-        if data != {}:
-            return True
-        else:
-            raise False
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_service_provider(self.performed_by_org_id)
@@ -149,9 +142,6 @@ class FclFreightRateFeedback(BaseModel):
         
         if not self.validate_fcl_freight_rate_id():
             raise HTTPException(status_code=404, detail="incorrect fcl freight rate id")
-        
-        if not self.validate_performed_by_id():
-            raise HTTPException(status_code=404, detail= 'invalid performed by ID')
 
         if not self.validate_performed_by_org_id():
             raise HTTPException(status_code=404, detail="incorrect performed by org id")
@@ -166,9 +156,10 @@ class FclFreightRateFeedback(BaseModel):
         if self.preferred_detention_free_days:
             if not self.validate_preferred_detention_free_days():
                 raise HTTPException(status_code=404, detail="incorrect preferred detention free days")
-
-        if not self.validate_preferred_shipping_line_ids():
-            raise HTTPException(status_code=404, detail="incorrect preferred shipping line ids")
+        
+        if self.preferred_shipping_line_ids:
+            if not self.validate_preferred_shipping_line_ids():
+                raise HTTPException(status_code=404, detail="incorrect preferred shipping line ids")
 
         if not self.validate_feedback_type():
             raise HTTPException(status_code=404, detail="incorrect feedback type")
@@ -224,7 +215,7 @@ class FclFreightRateFeedback(BaseModel):
             })['list']
         supply_agents_user_ids = list(set(t['user_id'] for t in supply_agents_user_ids))
 
-        route = maps.list_locations({'id': [locations_data.origin_port_id, locations_data.destination_port_id]})['list']
+        route = maps.list_locations({'filters':{'id': [locations_data.origin_port_id, locations_data.destination_port_id]}})['list']
         route = {t['id']:t['display_name'] for t in route}
 
         return {
@@ -270,7 +261,7 @@ class FclFreightRateFeedback(BaseModel):
         
         # for item in loc_data:
         #     locations_data = model_to_dict(item)
-        location_pair_name = maps.list_locations({'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]})['list']
+        location_pair_name = maps.list_locations({'filters':{'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]}})['list']
         location_pair_name = {t['id']:t['display_name'] for t in location_pair_name}
 
         try:

@@ -7,9 +7,8 @@ from operator import attrgetter
 from math import ceil
 from datetime import datetime
 import json
-from peewee import JOIN 
 from playhouse.shortcuts import model_to_dict
-from peewee import Case, SQL 
+from peewee import Case, SQL, fn, JOIN
 
 possible_direct_filters = ['object_type']
 possible_indirect_filters = ['created_at_greater_than']
@@ -24,14 +23,15 @@ possible_hash_filters = {
     }
 }
 
-def list_fcl_freight_rate_audits(filters = {}, sort_by = 'updated_at', sort_type = 'desc', page = 1, page_limit = 10, pagination_data_required = True, user_data_required = False):
+def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True, user_data_required = False):
     query = get_query(sort_by, sort_type, page, page_limit)
-
+    
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateAudit)
         query = apply_indirect_filters(query, filters)
+        query = apply_hash_filters(query, filters)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required, user_data_required) for method_name in ['get_data', 'get_pagination_data']]
@@ -46,7 +46,7 @@ def list_fcl_freight_rate_audits(filters = {}, sort_by = 'updated_at', sort_type
     return {'list': data } | (pagination_data)
 
 def get_query(sort_by, sort_type, page, page_limit):
-    query = FclFreightRateAudit.select().order("FclFreightRateAudit.{}.{}()".format(sort_by,sort_type)).paginate(page, page_limit)
+    query = FclFreightRateAudit.select().order_by(eval("FclFreightRateAudit.{}.{}()".format(sort_by,sort_type))).paginate(page, page_limit)
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required, user_data_required):
@@ -63,32 +63,17 @@ def get_pagination_data(query, page, page_limit, pagination_data_required, user_
 
 def get_data(query, page, page_limit, pagination_data_required, user_data_required):
     data = []
-    for item in query.execute():
-        item['procured_by'] = item.object_id.procured_by
-        item['sourced_by'] = item.object_id.sourced_by
+    for item in query.dicts():
+        try:
+            item['procured_by'] = item.object_id.procured_by
+            item['sourced_by'] = item.object_id.sourced_by
+        except:
+            item['procured_by'] = None
+            item['sourced_by'] = None
         data.append(item)
-    return data
+    return {'get_data' : data}
 
-# def add_service_objects(data, user_data_required):
-#     objects = []
-
-#     if user_data_required: 
-#         user_ids = list(set(filter(None, [item for sublist in [(d.get('sourced_by_id'), d.get('procured_by_id'), d.get('performed_by_id')) for d in data] for item in sublist])))
-#         objects.append({
-#             'name': 'user',
-#             'filters': { 'id': user_ids },
-#             'fields': ['id', 'name', 'email']
-#         })
-#         objects.append({
-#             'name': 'rate_sheet', 
-#             'filters': { 'id': list(set(filter(None, [d.get('rate_sheet_id') for d in data])))},
-#             'fields': ['serial_id', 'file_name', 'created_at', 'updated_at']
-#         })
-    
-#     if not objects:
-#         return data 
-
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
+#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': objects})
 
 #     new_data = []
 #     for object in data:
@@ -119,13 +104,13 @@ def apply_hash_filters(query, filters):
 
 def apply_hash_indirect_filters(query, filter, filters):
     filter = 'fcl_freight_rate'
-    indirect_filters = {key:value for key,value in filters[filter]['indirect'].items() if key in possible_hash_filters[filter]['indirect']}
+    indirect_filters = {key:value for key,value in filters[filter].items() if key in possible_hash_filters[filter]['indirect']}
     for indirect_filter in indirect_filters:
         query = eval("apply_{}_{}_filter(query,filters)".format(filter,indirect_filter))
         return query
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateAudit.created_at > datetime.strptime(filters['created_at'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateAudit.created_at > datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%d'))
     return query
 
 def apply_fcl_freight_rate_filter(query, filters):
@@ -133,7 +118,7 @@ def apply_fcl_freight_rate_filter(query, filters):
     return query
 
 def apply_fcl_freight_rate_direct_filter(query, filters):
-    direct_filters = {key:value for key,value in filters['fcl_freight_rate']['direct'].items() if key in possible_hash_filters['fcl_freight_rate']['direct']}
+    direct_filters = {key:value for key,value in filters['fcl_freight_rate'].items() if key in possible_hash_filters['fcl_freight_rate']['direct']}
     for direct_filter in direct_filters:
         query = query.where(attrgetter(direct_filter)(FclFreightRate) == direct_filters[direct_filter])
     return query
@@ -143,48 +128,39 @@ def apply_fcl_freight_rate_seasonal_surcharge_filter(query, filters):
     return query
 
 def apply_fcl_freight_rate_seasonal_surcharge_direct_filter(query, filters):
-    direct_filters = {key:value for key,value in filters['fcl_freight_rate_seasonal_surcharge']['direct'].items() if key in possible_hash_filters['fcl_freight_rate_seasonal_surcharge']['direct']}
+    direct_filters = {key:value for key,value in filters['fcl_freight_rate_seasonal_surcharge'].items() if key in possible_hash_filters['fcl_freight_rate_seasonal_surcharge']['direct']}
     for direct_filter in direct_filters:
         query = query.where(attrgetter(direct_filter)(FclFreightRateSeasonalSurcharge) == direct_filters[direct_filter])
     return query
 
 def apply_fcl_freight_rate_validity_start_less_than_equal_to_filter(query, filters):
     validity_start_less_than_equal_to = filters["fcl_freight_rate"]["validity_start_less_than_equal_to"]
-    case_query = (
+    query = query.where(
         Case(
-            None, (
-                (
-                    SQL("FclFreightRateAudit.data ->> 'validity_start' like '%/%/%'"),
-                    datetime.strptime(SQL("FclFreightRateAudit.data ->> 'validity_start'"), "DD/MM/YY")
-                ),
-                (
-                    SQL("FclFreightRateAudit.data ->> 'validity_start' like '%-%-____'"),
-                    datetime.strptime(SQL("FclFreightRateAudit.data ->> 'validity_start'"), "DD-MM-YYYY")
-                ),
+            None,
+            (
+                (FclFreightRateAudit.data.contains('%/%/%'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD/MM/YY')),
+                (FclFreightRateAudit.data.contains('%-%-____'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD-MM-YYYY')),
             ),
-            datetime.strptime(SQL("FclFreightRateAudit.data ->> 'validity_start'"), "YYYY-MM-DD")
-        )
-    ).alias("case_query")
-    return query.where(case_query <= datetime.strptime(validity_start_less_than_equal_to, "YYYY-MM-DD"))
+            fn.to_date(FclFreightRateAudit.data['validity_start'], 'YYYY-MM-DD')
+        ) <= fn.to_date(validity_start_less_than_equal_to, 'YYYY-MM-DD')
+    )
+    return query
 
-def apply_fcl_freight_rate_validity_start_greater_than_equal_to_filter(query, filters):
+
+def apply_fcl_freight_rate_validity_end_greater_than_equal_to_filter(query, filters):
     validity_start_greater_than_equal_to = filters["fcl_freight_rate"]["validity_start_greater_than_equal_to"]
-    case_query = (
+    query = query.where(
         Case(
-            None, (
-                (
-                    SQL("FclFreightRateAudit.data ->> 'validity_start' like '%/%/%'"),
-                    datetime.strptime(SQL("FclFreightRateAudit.data ->> 'validity_start'"), "DD/MM/YY")
-                ),
-                (
-                    SQL("FclFreightRateAudit.data ->> 'validity_start' like '%-%-____'"),
-                    datetime.strptime(SQL("FclFreightRateAudit.data ->> 'validity_start'"), "DD-MM-YYYY")
-                ),
+            None,
+            (
+                (FclFreightRateAudit.data.contains('%/%/%'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD/MM/YY')),
+                (FclFreightRateAudit.data.contains('%-%-____'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD-MM-YYYY')),
             ),
-            datetime.strptime(SQL("FclFreightRateAudit.data ->> 'validity_start'"), "YYYY-MM-DD")
-        )
-    ).alias("case_query")
-    return query.where(case_query >= datetime.strptime(validity_start_greater_than_equal_to, "YYYY-MM-DD"))
+            fn.to_date(FclFreightRateAudit.data['validity_start'], 'YYYY-MM-DD')
+        ) >= fn.to_date(validity_start_greater_than_equal_to, 'YYYY-MM-DD')
+    )
+    return query
 
 
 def apply_fcl_freight_rate_seasonal_surcharge_validity_start_less_than_equal_to_filter(query, filters):

@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from micro_services.client import *
+from database.rails_db import get_shipping_line
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -45,8 +46,6 @@ class FclFreightRateLocal(BaseModel):
     plugin_id = UUIDField(index=True, null=True)
     port_id = UUIDField(index=True, null=True)
     port = BinaryJSONField(null=True)
-    priority_score = IntegerField(null=True)
-    priority_score_updated_at = DateTimeField(null=True)
     procured_by_id = UUIDField(index=True, null=True)
     procured_by = BinaryJSONField(null=True)
     rate_not_available_entry = BooleanField(null=True)
@@ -156,14 +155,14 @@ class FclFreightRateLocal(BaseModel):
         location_ids = [str(self.port_id)]
         if self.main_port_id:
             location_ids.append(str(self.main_port_id))
-        ports = maps.list_locations({'id': location_ids})['list']
+        ports = maps.list_locations({'filters':{'id': location_ids}})['list']
         for port in ports:
             if port.get('id') == self.port_id:
                 self.country_id = port.get('country_id', None)
                 self.trade_id = port.get('trade_id', None) 
                 self.continent_id = port.get('continent_id', None)
                 self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
-                self.port = {key:value for key,value in port.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+                self.port = port
             elif self.main_port_id and port.get('id') == self.main_port_id:
                 self.main_port = port
 
@@ -171,9 +170,9 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = common.list_operators({'id':self.shipping_line_id})['list']
+        shipping_line = get_shipping_line(self.shipping_line_id)
         if len(shipping_line) != 0:
-            self.shipping_line = {key:value for key,value in shipping_line[0] if key in ['id', 'business_name', 'short_name', 'logo_url']}
+            self.shipping_line = {key:value for key,value in shipping_line[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}
 
     def possible_charge_codes(self):
         self.set_port()

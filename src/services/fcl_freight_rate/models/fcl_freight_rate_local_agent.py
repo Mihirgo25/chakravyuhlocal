@@ -6,6 +6,7 @@ from playhouse.postgres_ext import *
 from fastapi import HTTPException
 import uuid
 from micro_services.client import *
+from database.rails_db import *
 
 STATUSES = ('active', 'inactive')
 
@@ -20,7 +21,7 @@ class FclFreightRateLocalAgent(BaseModel):
     location_id = UUIDField(index=True, null=True)
     location = BinaryJSONField(null=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    location_type = UUIDField(null=True)
+    location_type = CharField(null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     status = CharField(index=True, null=True)
@@ -35,9 +36,11 @@ class FclFreightRateLocalAgent(BaseModel):
         table_name = 'fcl_freight_rate_local_agents'
 
     def validate_service_provider(self):
-        service_provider_data = organization.list_organizations({'filters':{'id': str(self.service_provider_id)}})
-        if 'list' in service_provider_data and len(service_provider_data['list']) > 0 :
-            service_provider_data = service_provider_data['list'][0]
+        service_provider_data = get_service_provider(str(self.service_provider_id))
+        if len(service_provider_data) > 0 :
+            service_provider_data = service_provider_data[0]
+            service_provider_data['id'] = str(service_provider_data['id'])
+            self.service_provider = service_provider_data
             if service_provider_data.get('account_type') != 'service_provider':
                 raise HTTPException(status_code=400, detail="Invalid Account Type - Not Service Provider")
         else:
@@ -56,7 +59,7 @@ class FclFreightRateLocalAgent(BaseModel):
                 self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
                 self.location = {key:value for key,value in location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
         else:
-            raise HTTPException(status_code=400, detail="Service Provider Id Invalid")
+            raise HTTPException(status_code=400, detail="location Id Invalid")
 
     
     def validate_trade_type(self):
@@ -93,7 +96,3 @@ class FclFreightRateLocalAgent(BaseModel):
         self.validate_status()
         self.validate_uniqueness()
         return True
-
-    # def save(self, *args, **kwargs):
-    #     self.validate()
-    #     return super().save(*args, **kwargs)

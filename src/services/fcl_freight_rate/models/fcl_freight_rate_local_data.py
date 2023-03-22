@@ -3,7 +3,7 @@ import yaml
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from pydantic import BaseModel
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
-from micro_services.client import *
+from micro_services.client import common, maps
 
 class FclFreightRateLocalData(BaseModel):
     line_items: list[LineItem] = []
@@ -19,16 +19,15 @@ class FclFreightRateLocalData(BaseModel):
     def validate_duplicate_charge_codes(self):
         if len(set([(t.code, t.location_id) for t in self.line_items])) == len(self.line_items):
             return True
-        # raise HTTPException(status_code=499, detail="line item contains duplicate")
         return False
+    
     def validate_invalid_charge_codes(self, possible_charge_codes):
         invalid_line_items = [str(t.code) for t in self.line_items if str(t.code) not in possible_charge_codes]
         if invalid_line_items:
-            print('inv', invalid_line_items)
             return False
         return True
             # self.parent.errors.add('line_items', f"{', '.join(invalid_line_items)} are invalid")
-        return True
+
 
     def get_line_item_messages(self, port, main_port, shipping_line, container_size, container_type, commodity, trade_type, possible_charge_codes):
         fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
@@ -37,7 +36,7 @@ class FclFreightRateLocalData(BaseModel):
         locations = {}
 
         if location_ids:
-            locations_data = maps.list_locations({'filters': { 'id': location_ids },'fields': ['id', 'type', 'country_code']})
+            locations_data = maps.list_locations({'filters': { 'id': location_ids }})['list']
             if locations_data:
                 locations = [{'id': location['id'], 'type': location['type'], 'country_code': location['country_code']} for location in locations_data['list']]
 
@@ -108,7 +107,7 @@ class FclFreightRateLocalData(BaseModel):
         # for code, config in possible_charge_codes.items():
         #     if config.get('locations'):
         #         location_codes = config['locations'] or []
-        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data_for_fcl(
+        #         required_code_specific_locations = common.get_multiple_service_objects_data_for_fcl(
         #             objects=[{
         #                 'name': 'location',
         #                 'filters': {'type': 'country', 'country_code': location_codes},
@@ -119,7 +118,7 @@ class FclFreightRateLocalData(BaseModel):
         #     for code, config in filter(lambda x: x[1]['locations'], possible_charge_codes.items()):
         #         # code = str(code)
         #         location_codes = config['locations'] or []
-        #         required_code_specific_locations = client.ruby.get_multiple_service_objects_data_for_fcl(
+        #         required_code_specific_locations = common.get_multiple_service_objects_data_for_fcl(
         #             objects=[{
         #                 'name': 'location',
         #                 'filters': {'type': 'country', 'country_code': location_codes},

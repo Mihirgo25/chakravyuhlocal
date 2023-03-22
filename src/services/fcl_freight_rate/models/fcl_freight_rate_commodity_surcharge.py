@@ -50,7 +50,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     shipping_line = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     sourced_by_id = UUIDField(index=True,null=True)
-    source_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(index=True,null=True)
     procured_by = BinaryJSONField(null=True)
    
@@ -62,7 +62,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         table_name = 'fcl_freight_rate_commodity_surcharges'
 
     def validate_origin_location_type(self):
-        origin_location = maps.list_locations({'id': str(self.origin_location_id)})['list']
+        origin_location = maps.list_locations({'filters' : {'id': str(self.origin_location_id)}})['list']
         if origin_location:
             origin_location = origin_location[0]
             if origin_location.get('type') in LOCATION_TYPES:
@@ -78,7 +78,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
             raise HTTPException(status_code=404, detail="Origin Location not found")
     
     def validate_destination_location_type(self):
-        destination_location = maps.list_locations({'id': str(self.destination_location_id)})['list']
+        destination_location = maps.list_locations({'filters' : {'id': str(self.destination_location_id)}})['list']
         if destination_location:
             destination_location = destination_location[0]
             if destination_location.get('type') in LOCATION_TYPES:

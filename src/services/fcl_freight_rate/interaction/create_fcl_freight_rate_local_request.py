@@ -1,8 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
-from celery_worker import send_notifications_to_supply_agents_local_request
 import uuid
 from database.db_session import db
+from celery_worker import update_multiple_service_objects,send_notifications_to_supply_agents_local_request
 
 def create_fcl_freight_rate_local_request(request):
     with db.atomic() as transaction:
@@ -47,6 +47,8 @@ def execute_transaction_code(request):
         local_request.save()
 
     create_audit(request, local_request.id)
+
+    update_multiple_service_objects.apply_async(kwargs={'object':local_request},queue='low')
 
     send_notifications_to_supply_agents_local_request.apply_async(kwargs={'object':local_request},queue='communication')
 

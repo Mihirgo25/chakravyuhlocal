@@ -9,7 +9,7 @@ conn = psycopg2.connect(
     port=RAILS_DATABASE_PORT
     )
 
-print("connection successfull")
+print("connection successful")
 
 
 def get_shipping_line(id=None):
@@ -24,7 +24,7 @@ def get_shipping_line(id=None):
     else:
         id = tuple(id)
     if id:
-        sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url from operators where operators.id in %s'
+        sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type from operators where operators.id in %s'
         cur.execute(sql, (id,))
     result = cur.fetchall()
     all_result = []
@@ -34,7 +34,8 @@ def get_shipping_line(id=None):
                 "id": res[0],
                 "business_name": res[1],
                 "short_name": res[2],
-                "logo_url": res[3]
+                "logo_url": res[3],
+                "operator_type": res[4]
             }
         )
     cur.close()
@@ -47,7 +48,7 @@ def get_service_provider(id):
         id = (id,)
     else:
         id = tuple(id)
-    sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type from organizations where organizations.id in %s'
+    sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type, organizations.kyc_status, organizations.status from organizations where organizations.id in %s'
     cur.execute(sql, (id,))
     result = cur.fetchall()
     all_result = []
@@ -58,7 +59,9 @@ def get_service_provider(id):
                 "business_name": res[1],
                 "short_name": res[2],
                 "category_types":res[3],
-                "account_type":res[3]
+                "account_type":res[4],
+                "kyc_status" : res[5],
+                "status":res[6]
             }
         )
     cur.close()
@@ -80,7 +83,8 @@ def get_user(id):
             {
                 "id": res[0],
                 "name": res[1],
-                "email": res[2]
+                "email": res[2],
+                "mobile_number_eformat":res[3]
             }
         )
     cur.close()

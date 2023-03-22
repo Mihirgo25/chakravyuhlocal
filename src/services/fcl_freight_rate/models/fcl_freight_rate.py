@@ -1,24 +1,17 @@
 from peewee import *
 import datetime
-from datetime import date
 from database.db_session import db
 from playhouse.postgres_ext import *
-from pydantic import BaseModel as pydantic_base_model
-from peewee import fn
-from typing import Set, Union
-from fastapi import FastAPI, HTTPException
+from fastapi import HTTPException
 from params import LineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
-from schema import Schema, Optional, Or, SchemaError
+from schema import Schema, Optional
 from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
-from params import FreeDay
-from celery import current_app, shared_task
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
-from libs.locations import list_locations
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
@@ -84,8 +77,6 @@ class FclFreightRate(BaseModel):
     origin_port_id = UUIDField(null=True, index=True)
     origin_port = BinaryJSONField(null=True)
     origin_trade_id = UUIDField(null=True)
-    priority_score = IntegerField(null=True)
-    priority_score_updated_at = DateTimeField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
@@ -115,8 +106,8 @@ class FclFreightRate(BaseModel):
 
     def set_locations(self):
 
-      obj = {"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)],"type":'seaport'}
-      locations = list_locations(obj)['list']
+      obj = {'filters':{"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)],"type":'seaport'}}
+      locations = maps.list_locations(obj)['list']
       
 
       for location in locations:
@@ -259,7 +250,7 @@ class FclFreightRate(BaseModel):
         duplicate = self.destination_local_instance.validate_duplicate_charge_codes()
         invalid = self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes())
 
-      if not  (duplicate and invalid):
+      if not (duplicate and invalid):
           raise HTTPException(status_code=404,detail="Destination Local Invalid")
 
     def validate_validity_object(self, validity_start, validity_end):
@@ -532,7 +523,7 @@ class FclFreightRate(BaseModel):
               charge_codes[k] = v
       return charge_codes
 
-    def possible_charge_codes(self):  # check what to return
+    def possible_charge_codes(self):  
       fcl_freight_charges = FCL_FREIGHT_CHARGES
 
       charge_codes = {}
@@ -569,8 +560,8 @@ class FclFreightRate(BaseModel):
       locations = {}
 
       if location_ids:
-        obj = {"id": location_ids}
-        locations = list_locations(obj)['list']
+        obj = {'filters':{"id": location_ids}}
+        locations = maps.list_locations(obj)['list']
         
       return locations
 
@@ -771,10 +762,8 @@ class FclFreightRate(BaseModel):
       return {**data, 'origin_local': origin_local, 'destination_local': destination_local}
 
 
-    # def update_priority_score(self):
-    #   client.ruby.update_fcl_freight_rate_priority_scores({'filters':{'id': self.id}}) #expose
 
-    def update_platform_prices_for_other_service_providers(self):  # check for delay
+    def update_platform_prices_for_other_service_providers(self):  
       data = {
         "origin_port_id":self.origin_port_id,
         "origin_main_port_id":self.origin_main_port_id,
@@ -812,7 +801,7 @@ class FclFreightRate(BaseModel):
               }
           }
     # api call and also expose
-      # client.ruby.create_organization_trade_requirement_rate_mapping(data)
+      # common.create_organization_trade_requirement_rate_mapping(data)
 
 
 

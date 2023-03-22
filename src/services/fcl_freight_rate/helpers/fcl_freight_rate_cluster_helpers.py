@@ -1,7 +1,6 @@
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
 import yaml
 from configs.defintions import FCL_FREIGHT_CHARGES
-from rails_client import client
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
 from peewee import *
 from playhouse.shortcuts import model_to_dict
@@ -57,7 +56,7 @@ def get_cluster_objects(rate_object):
         clusters['destination_location_cluster']['cluster_items'] = requests.get("https://api.cogoport.com/location/get_location_cluster",params={'id': clusters['destination_location_cluster']['cluster_id']}).json()['locations']
 
     if 'commodity_cluster' in clusters and clusters['commodity_cluster']:
-        clusters['commodity_cluster']['cluster_items'] = get_fcl_freight_commodity_cluster({'id': clusters['commodity_cluster']['cluster_id']})['commodities']
+        clusters['commodity_cluster']['cluster_items'] = get_fcl_freight_commodity_cluster(clusters['commodity_cluster']['cluster_id'])['commodities']
 
     if 'container_cluster' in clusters and clusters['container_cluster']:
         clusters['container_cluster']['cluster_items'] = CONTAINER_CLUSTERS[clusters['container_cluster']['cluster_id']]

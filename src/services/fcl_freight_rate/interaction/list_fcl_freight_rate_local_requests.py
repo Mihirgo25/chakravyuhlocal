@@ -6,6 +6,7 @@ from math import ceil
 from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL
+from micro_services.client import common
 
 possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
@@ -26,7 +27,7 @@ def list_fcl_freight_rate_local_requests(filters = {}, page_limit = 10, page = 1
     data = get_data(query)
     pagination_data = get_pagination_data(query, page, page_limit)
 
-    stats = get_stats(query, filters, is_stats_required, performed_by_id) or {}
+    stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     return {'list': data } | (pagination_data) | (stats)
 
@@ -45,8 +46,8 @@ def apply_validity_end_less_than_filter(query, filters):
 
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id, FclFreightRateLocalRequest.trade_type, FclFreightRateLocalRequest.container_size, FclFreightRateLocalRequest.container_type).where(FclFreightRateLocalRequest.id == filters['similar_id']).dicts().get()
-    query = query.where(not(FclFreightRateLocalRequest.id == filters['similar_id']))
-    return query.where(query.c.port_id == rate_request_obj['port_id'], query.c.trade_type == rate_request_obj['trade_type'], query.c.container_size == rate_request_obj['container_size'], query.c.container_type == rate_request_obj['container_type'])
+    query = query.where(FclFreightRateLocalRequest.id != filters['similar_id'])
+    return query.where(FclFreightRateLocalRequest.port_id == rate_request_obj['port_id'], FclFreightRateLocalRequest.trade_type == rate_request_obj['trade_type'], FclFreightRateLocalRequest.container_size == rate_request_obj['container_size'], FclFreightRateLocalRequest.container_type == rate_request_obj['container_type'])
 
 def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
@@ -77,7 +78,7 @@ def get_data(query):
 #     }
 #     ]
 
-#     service_objects = client.ruby.get_multiple_service_objects_data_for_fcl({'objects': objects})
+#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': objects})
  
 #     for i in range(len(data)):
 #         data[i]['port'] = service_objects['location'][data[i]['port_id']] if 'location' in service_objects and data[i].get('port_id') in service_objects['location'] else None
@@ -103,7 +104,7 @@ def get_pagination_data(query, page, page_limit):
   return pagination_data
 
 
-def get_stats(query, filters, is_stats_required, performed_by_id):
+def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
 

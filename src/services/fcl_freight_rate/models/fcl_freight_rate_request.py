@@ -8,6 +8,7 @@ from micro_services.client import *
 from database.rails_db import *
 
 class BaseModel(Model):
+    # db.execute_sql('create sequence fcl_freight_rate_requests_serial_id_seq')
     class Meta:
         database = db
         only_save_dirty = True
@@ -83,7 +84,7 @@ class FclFreightRateRequest(BaseModel):
             raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = organization.list_organizations({'filters':{'id': [str(self.performed_by_org_id)]}})['list']
+        performed_by_org_data = get_service_provider(str(self.performed_by_org_id))
         if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
             raise HTTPException(status_code=400, detail='Invalid Account Type')
 
@@ -101,9 +102,9 @@ class FclFreightRateRequest(BaseModel):
             self.preferred_shipping_lines = preferred_shipping_lines
 
     def set_location(self):
-        origin_location_data = maps.list_locations({'id':self.origin_port_id})['list']
+        origin_location_data = maps.list_locations({'filters':{'id':self.origin_port_id}})['list']
         self.origin_port = {key:value for key,value in origin_location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-        destination_location_data = maps.list_locations({'id':self.destination_port_id})['list']
+        destination_location_data = maps.list_locations({'filters':{'id':self.destination_port_id}})['list']
         self.destination_port = {key:value for key,value in destination_location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def validate(self):

@@ -28,7 +28,6 @@ def create_audit(request, freight_id):
         object_type="FclFreightRate",
         source=request.get("mode"),
     )
-    print("bed",id)
 def create_fcl_freight_rate_data(request):
     origin_port_id = str(request.get("origin_port_id"))
     query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)

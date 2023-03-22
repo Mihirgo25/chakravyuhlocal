@@ -66,7 +66,6 @@ def get_data(query, expired_rates_required):
     'last_rate_available_date' : item.last_rate_available_date, 
     'containers_count' : item.containers_count, 
     'importer_exporters_count' : item.importer_exporters_count, 
-    'priority_score' : item.priority_score,
     'weight_limit' : item.weight_limit, 
     'origin_local' : item.origin_local, 
     'destination_local' : item.destination_local, 
@@ -262,7 +261,7 @@ def apply_destination_location_ids_filter(query,filters):
 
 def apply_importer_exporter_present_filter(query, filters):
   if filters['importer_exporter_present']:
-    return query.where(not (FclFreightRate.importer_exporter_id == None))
+    return query.where(FclFreightRate.importer_exporter_id != None)
   
   query = query.where(FclFreightRate.importer_exporter_id == None)
   return query

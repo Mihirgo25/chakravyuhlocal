@@ -3,7 +3,6 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
-import yaml
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.defintions import FCL_FREIGHT_SEASONAL_CHARGES
@@ -53,7 +52,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     validity_end = DateField(index=True, null=True)
     validity_start = DateField(index=True, null=True)
     sourced_by_id = UUIDField(null=True)
-    source_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
     
@@ -65,7 +64,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         table_name = 'fcl_freight_rate_seasonal_surcharges'
 
     def validate_origin_location(self):
-        origin_location = maps.list_locations({'id': str(self.origin_location_id)})['list']
+        origin_location = maps.list_locations({'filters':{'filters' : {'id': str(self.origin_location_id)}}})['list']
         if origin_location:
             origin_location = origin_location[0]
             if origin_location.get('type') in LOCATION_TYPES:
@@ -81,7 +80,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Origin location is not valid")
 
     def validate_destination_location(self):
-        destination_location = maps.list_locations({'id': str(self.destination_location_id)})['list']
+        destination_location = maps.list_locations({'filters' : {'id': str(self.destination_location_id)}})['list']
         if destination_location:
             destination_location = destination_location[0]
             if destination_location.get('type') in LOCATION_TYPES:
@@ -100,8 +99,9 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         shipping_line = get_shipping_line(str(self.shipping_line_id))
         if shipping_line:
             shipping_line = shipping_line[0]
+            shipping_line['id'] = str(shipping_line['id'])
+            self.shipping_line = shipping_line
             if shipping_line.get('operator_type') != 'shipping_line':
-                self.shipping_line = shipping_line
                 raise HTTPException(status_code=400, detail="Invalid operator type")
         else:
             raise HTTPException(status_code=400, detail="Shipping line is not valid")
@@ -110,6 +110,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         service_provider = get_service_provider(str(self.service_provider_id))
         if service_provider:
             service_provider = service_provider[0]
+            service_provider['id'] = str(service_provider['id'])
             if service_provider.get('account_type') != 'service_provider':
                 self.service_provider = service_provider
                 raise HTTPException(status_code=400, detail="Invalid operator type")

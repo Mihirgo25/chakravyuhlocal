@@ -5,8 +5,7 @@ from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import  LOCATION_PAIR_HIERARCHY
 from fastapi import HTTPException
 from params import Slab
-from libs.locations import list_locations
-
+from micro_services.client import *
 
 class BaseModel(Model):
     class Meta:
@@ -56,8 +55,8 @@ class FclFreightRateWeightLimit(BaseModel):
 
     def validate_location_ids(self):
         LOCATION_TYPES = ('seaport', 'country', 'trade', 'continent')
-        params = {"id": [str(self.origin_location_id), str(self.destination_location_id)]}
-        location_data = list_locations(params)['list']
+        params = {"filters":{"id": [str(self.origin_location_id), str(self.destination_location_id)]}}
+        location_data = maps.list_locations(params)['list']
 
         if len(location_data) != 0:
             count = 0

@@ -4,7 +4,8 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from micro_services.client import *
-from database.rails_db import get_user
+from database.rails_db import *
+from micro_services.client import common
 
 class BaseModel(Model):
     class Meta:
@@ -58,9 +59,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
         table_name = 'fcl_freight_rate_free_day_requests'
 
     def send_closed_notifications_to_sales_agent(self):
-      locations_data = maps.list_locations({'id': self.location_id})['list']
+      locations_data = maps.list_locations({'filters' : {'id': self.location_id}})['list']
       location_name = {data['id']:data['display_name'] for data in locations_data}
-      importer_exporter_id = common.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
+      importer_exporter_id = common.get_spot_search({'filters':{'id': self.source_id}})['detail']['importer_exporter_id']
       data = {
         'user_id': self.performed_by_id,
         'type': 'platform_notification',
@@ -83,10 +84,10 @@ class FclFreightRateFreeDayRequest(BaseModel):
       return False
     
     def set_location(self):
-      self.location = {key:value for key, value in maps.list_locations({'id': self.location_id})['list'] if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+      self.location = {key:value for key, value in maps.list_locations({'filters':{'filters' : {'id': self.location_id}}})['list'] if key in ['id', 'name', 'display_name', 'port_code', 'type']}
       
     # def validate_source_id(self):
-    #   data = client.ruby.list_spot_searches({'filters':{'id':self.source_id}})
+    #   data = common.list_spot_searches({'filters':{'id':self.source_id}})
     #   if ('list' in data) and (len(data['list']) > 0):
     #     data = data['list'][0]
     #     if data.get('source_type',None) == 'spot_search':
@@ -100,9 +101,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
         return False
 
     def validate_performed_by_org(self):
-      data = organization.list_organizations({'filters':{'id': self.performed_by_id}})
-      if ('list' in data) and (len(data['list']) > 0):
-          data = data['list'][0]
+      data = get_service_provider(self.performed_by_id)
+      if (len(data) > 0):
+          data = data[0]
           if data.get('account_type',None) == 'importer_exporter':
               return True
       return False
@@ -111,9 +112,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
       if not self.shipping_line_id:
         return True
         
-      data = organization.list_organizations({'filters':{'id': self.shipping_line_id}})
-      if ('list' in data) and (len(data['list']) > 0):
-        data = data['list'][0]
+      data = get_shipping_line(self.shipping_line_id)
+      if len(data) > 0:
+        data = data[0]
         if data.get('account_type',None) == 'shipping_line':
           return True
       return False
