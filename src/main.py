@@ -88,7 +88,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from configs.defintions import yml_obj
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
-
+from peewee import Query
 
 app = FastAPI(debug=True)
 
