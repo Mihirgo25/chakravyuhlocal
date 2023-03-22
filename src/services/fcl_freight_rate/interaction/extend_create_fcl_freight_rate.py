@@ -119,9 +119,9 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                         if request.extend_rates_for_existing_system_rates or not check_rate_existence(updated_param):
                             if updated_param.get('origin_port_id') and updated_param.get('destination_port_id') and updated_param['origin_port_id'] != updated_param['destination_port_id']:
                                 fcl_freight_cluster_objects.append(updated_param)
-    for fcl_freight_cluster_object in fcl_freight_cluster_objects:
-        if (fcl_freight_cluster_object['origin_port_id'] == rate_object['origin_port_id'] and fcl_freight_cluster_object['destination_port_id'] == rate_object['destination_port_id'] and fcl_freight_cluster_object['commodity'] == rate_object['commodity'] and fcl_freight_cluster_object['container_type'] == rate_object['container_type'] and fcl_freight_cluster_object['container_size'] == rate_object['container_size']):
-            fcl_freight_cluster_objects.remove(fcl_freight_cluster_object)
+    for object in fcl_freight_cluster_objects:
+        if (object['origin_port_id'] == rate_object['origin_port_id'] and object['destination_port_id'] == rate_object['destination_port_id'] and object['commodity'] == rate_object['commodity'] and object['container_type'] == rate_object['container_type'] and object['container_size'] == rate_object['container_size']):
+            fcl_freight_cluster_objects.remove(object)
 
     return fcl_freight_cluster_objects
 
