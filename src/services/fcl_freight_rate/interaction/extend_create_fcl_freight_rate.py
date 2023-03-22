@@ -7,6 +7,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from celery_worker import create_fcl_freight_rate_delay
+
 def extend_create_fcl_freight_rate_data(request):
     
     if request.extend_rates_for_lens:
@@ -41,8 +42,8 @@ def get_fcl_freight_cluster_objects(rate_object,request):
             new_hash["cluster_type"] = str(key)
             cluster_objects.append(new_hash)
         required_mandatory_codes = get_required_mandatory_codes(cluster_objects)
-        common_line_items = set([i for i in rate_object['line_items']['code'] if i is not None]) and set([i for i in required_mandatory_codes['mandatory_codes'] if i is not None])
-        if common_line_items.__len__ != set([i for i in required_mandatory_codes['mandatory_codes'] if i is not None]).__len__:
+        common_line_items = list(set([i for i in rate_object['line_items']['code'] if i is not None]).intersection(set([i for i in required_mandatory_codes['mandatory_codes'] if i is not None])))
+        if len(common_line_items) != len(set([i for i in required_mandatory_codes['mandatory_codes'] if i is not None])):
             return
 
     try:
@@ -69,7 +70,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     except:
         containers = [rate_object['container_size']]
 
-    icd_data = maps.list_locations({ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+    icd_data = maps.list_locations({'filters':{ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT}})['list']
 
     new_data = {}
     for t in icd_data:
@@ -84,9 +85,9 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                     for container in containers:
                         param = copy.deepcopy(rate_object)
                     
-                        if icd_data[origin_location] and not param.get('origin_main_port_id'):
+                        if icd_data.get(origin_location) and not param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = param['origin_port_id']
-                        elif not icd_data[origin_location] and param.get('origin_main_port_id'):
+                        elif not icd_data.get(origin_location) and param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = None
                         param['origin_port_id'] = origin_location
 
@@ -107,7 +108,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                             if data.get(cluster) and data[cluster]['line_item_charge_code'] and (data[cluster]['gri_rate'] or data[cluster]['gri_rate'] == 0) and data[cluster]['gri_currency']:
                                 if (cluster == 'origin_location_cluster' and updated_param.get('origin_port_id') and updated_param['origin_location_port'] == rate_object['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param['destination_port_id'] and updated_param['destination_port_id'] == rate_object['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == rate_object[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == rate_object['container_size']) or (updated_param['origin_port_id'] and updated_param['destination_port_id'] and updated_param['origin_port_id'] == updated_param['destination_port_id']):
                                     continue
-                                line_item = {t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']}
+                                line_item = [t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']]
 
                                 if not line_item:
                                     continue
@@ -128,7 +129,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
 def get_money_exchange(from_currency, to_currency, gri_rate):
     if not gri_rate:
         return 0
-    result = common.get_money_exchange_for_fcl(from_currency= from_currency, to_currency= to_currency, price= gri_rate)
+    result = common.get_money_exchange_for_fcl({'from_currency': from_currency, 'to_currency': to_currency, 'price': gri_rate})
     if result:
         return result['price']
     return 0
@@ -136,21 +137,24 @@ def get_money_exchange(from_currency, to_currency, gri_rate):
 def add_mandatory_line_items(param,request):
     if not request.mandatory_charges:
         return param
-
     commodity_mandatory_charges = [t for t in request.mandatory_charges.required_mandatory_codes if t['cluster_type'] == param['commodity']]
     container_size_mandatory_charges = [t for t in request.mandatory_charges.required_mandatory_codes if t['cluster_type'] == param['container_size']]
     commodity_type_mandatory_charges = [t for t in request.mandatory_charges.required_mandatory_codes if t['cluster_type'] == param['container_type']]
 
     mandatory_charges = commodity_mandatory_charges + container_size_mandatory_charges + commodity_type_mandatory_charges
-    existing_line_items = [t['code'] for t in param.get('line_items')]
-    missing_line_items = []
-    if mandatory_charges:
-        missing_line_items = [t for t in mandatory_charges['mandatory_codes'] if t not in existing_line_items]
-    
-    if missing_line_items:
-        for missing_line_item in missing_line_items:
-            param.get('line_items').append([t for t in request.mandatory_charges.line_items if t['code'] == missing_line_item][0])
 
+    existing_line_items = [t['code'] for t in param.get('line_items')]
+    line_items = []
+
+    if mandatory_charges:
+        for t in mandatory_charges:
+            line_items.extend(t['mandatory_codes'])
+        missing_line_items = list(set(line_items).difference(set(existing_line_items)))
+        if missing_line_items:
+            for missing_line_item in missing_line_items:
+                line_item = [t for t in request.mandatory_charges.line_items if t.code == missing_line_item]
+                if line_item:
+                    param.get('line_items').append(line_item[0])
     return param
 
 

@@ -3,16 +3,16 @@ import yaml
 from configs.defintions import FCL_FREIGHT_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
 from peewee import *
+from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
-from libs.locations import list_locations
 import requests
 
 def get_cluster_objects(rate_object):
     clusters = {}
 
-    port_codes = list_locations({ 'id': [rate_object['origin_port_id'], rate_object['destination_port_id']] })['list']
-   
+    port_codes = maps.list_locations({'filters':{'id': rate_object['origin_port_id']}})['list']
+
     param = {}
     for data in port_codes:
         param[data['id']] = data['port_code']
