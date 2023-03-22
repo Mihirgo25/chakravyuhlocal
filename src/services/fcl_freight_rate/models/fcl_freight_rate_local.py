@@ -46,8 +46,6 @@ class FclFreightRateLocal(BaseModel):
     plugin_id = UUIDField(index=True, null=True)
     port_id = UUIDField(index=True, null=True)
     port = BinaryJSONField(null=True)
-    priority_score = IntegerField(null=True)
-    priority_score_updated_at = DateTimeField(null=True)
     procured_by_id = UUIDField(index=True, null=True)
     procured_by = BinaryJSONField(null=True)
     rate_not_available_entry = BooleanField(null=True)

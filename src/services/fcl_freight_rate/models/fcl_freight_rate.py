@@ -77,8 +77,6 @@ class FclFreightRate(BaseModel):
     origin_port_id = UUIDField(null=True, index=True)
     origin_port = BinaryJSONField(null=True)
     origin_trade_id = UUIDField(null=True)
-    priority_score = IntegerField(null=True)
-    priority_score_updated_at = DateTimeField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
@@ -764,8 +762,6 @@ class FclFreightRate(BaseModel):
       return {**data, 'origin_local': origin_local, 'destination_local': destination_local}
 
 
-    # def update_priority_score(self):
-    #   common.update_fcl_freight_rate_priority_scores({'filters':{'id': self.id}}) #expose
 
     def update_platform_prices_for_other_service_providers(self):  
       data = {
