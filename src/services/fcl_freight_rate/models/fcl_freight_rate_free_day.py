@@ -57,8 +57,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = maps.list_locations({'filters':{'filters' : {'id': str(self.location_id)}}})['list']
-
+        location_data = maps.list_locations({'filters' : {'id': str(self.location_id)}})['list']
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]
 
@@ -126,25 +125,6 @@ class FclFreightRateFreeDay(BaseModel):
             return True
         return False
 
-    def validate_uniqueness(self):
-        freight_free_day_cnt = FclFreightRateFreeDay.select().where(
-            FclFreightRateFreeDay.location_id == self.location_id,
-            FclFreightRateFreeDay.trade_type == self.trade_type,
-            FclFreightRateFreeDay.free_days_type == self.free_days_type,
-            FclFreightRateFreeDay.container_size == self.container_size,
-            FclFreightRateFreeDay.container_type == self.container_type,
-            FclFreightRateFreeDay.shipping_line_id == self.shipping_line_id,
-            FclFreightRateFreeDay.service_provider_id == self.service_provider_id,
-            FclFreightRateFreeDay.importer_exporter_id == self.importer_exporter_id,
-            FclFreightRateFreeDay.specificity_type == self.specificity_type,
-            FclFreightRateFreeDay.free_limit == self.free_limit
-        ).count()
-
-        if freight_free_day_cnt <= 1:
-            return True
-
-        return False
-
     def validate_before_save(self):
         if self.slabs:
             for slab in self.slabs:
@@ -183,9 +163,6 @@ class FclFreightRateFreeDay(BaseModel):
 
         if not self.validate_free_limit():
             raise HTTPException(status_code=499, detail="Empty free limit")
-
-        if not self.validate_uniqueness():
-            raise HTTPException(status_code=499, detail='violates uniqueness validation')
 
     def update_special_attributes(self):
         self.is_slabs_missing = False if self.slabs and len(self.slabs) != 0 else True

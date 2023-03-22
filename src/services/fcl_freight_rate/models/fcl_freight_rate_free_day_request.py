@@ -59,7 +59,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
         table_name = 'fcl_freight_rate_free_day_requests'
 
     def send_closed_notifications_to_sales_agent(self):
-      locations_data = maps.list_locations({'filters':{'filters' : {'id': self.location_id}}})['list']
+      locations_data = maps.list_locations({'filters' : {'id': self.location_id}})['list']
       location_name = {data['id']:data['display_name'] for data in locations_data}
       importer_exporter_id = common.get_spot_search({'filters':{'id': self.source_id}})['detail']['importer_exporter_id']
       data = {
