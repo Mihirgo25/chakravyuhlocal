@@ -8,7 +8,7 @@ from configs.defintions import FCL_FREIGHT_CURRENCIES
 from fastapi import HTTPException
 import datetime
 from database.rails_db import *
-from micro_services.client import *
+from micro_services.client import partner, common, maps
 
 
 class UnknownField(object):

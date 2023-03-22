@@ -5,8 +5,8 @@ from configs.defintions import FCL_FREIGHT_CHARGES
 import datetime
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
-from micro_services.client import *
-from database.rails_db import *
+from micro_services.client import maps
+from fastapi import HTTPException
 class BaseModel(Model):
     class Meta:
         database = db
@@ -43,7 +43,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
         if self.line_item_charge_code and self.gri_currency and (self.gri_rate or self.gri_rate == 0):
             if not self.line_item_charge_code in fcl_freight_charges_dict.keys():
-                raise Exception('charge code not in list')
+                raise HTTPException('charge code not in list')
             else:
                 return True
         elif not self.line_item_charge_code and not self.gri_currency and not (self.gri_rate or self.gri_rate == 0):
@@ -58,7 +58,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
             return
         elif self.cluster_type == 'container' and self.cluster_id in CONTAINER_CLUSTERS.keys():
             return
-        return Exception('Validate Cluster id error')
+        return HTTPException('Validate Cluster id error')
 
     def validate_all(self):
         self.validate_cluster_id()

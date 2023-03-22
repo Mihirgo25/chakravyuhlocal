@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from micro_services.client import *
-from database.rails_db import *
+from database.rails_db import get_shipping_line
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass

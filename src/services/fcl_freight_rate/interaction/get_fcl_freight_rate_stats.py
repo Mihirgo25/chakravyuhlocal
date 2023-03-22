@@ -2,7 +2,7 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from datetime import datetime, timedelta
 from peewee import fn
-from database.rails_db import *
+from database.rails_db import get_user
 
 def get_fcl_freight_rate_stats(request):
     response = {}
