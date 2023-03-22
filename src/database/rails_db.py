@@ -9,7 +9,7 @@ conn = psycopg2.connect(
     port=RAILS_DATABASE_PORT
     )
 
-print("connection successfull")
+print("connection successful")
 
 
 def get_shipping_line(id=None):

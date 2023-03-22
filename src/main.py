@@ -1,9 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from database.db_session import db
-from fastapi import FastAPI, Response, Query, Request, Depends
 import json
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
@@ -28,7 +27,6 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_cards import get
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_addition_frequency import get_fcl_freight_rate_addition_frequency
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_suggestions import get_fcl_freight_rate_suggestions
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_visibility import get_fcl_freight_rate_visibility
-# from database.create_tables import create_table
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_audits import list_fcl_freight_rate_audits
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_bulk_operations import list_fcl_freight_rate_bulk_operations
 from services.fcl_freight_rate.interaction.list_dashboard_fcl_freight_rates import list_dashboard_fcl_freight_rates
@@ -84,10 +82,8 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_sur
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
 
-# from rails_client.client import initialize_client
 from params import *
 from database.create_tables import create_table
-import time
 from datetime import datetime
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local

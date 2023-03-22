@@ -13,6 +13,7 @@ from services.fcl_freight_rate.interaction.get_fcl_weight_slabs_configuration im
 import time
 import ujson as json
 from database.rails_db import get_shipping_line,get_service_provider
+from playhouse.shortcuts import model_to_dict
 
 
 def to_json(item,key):

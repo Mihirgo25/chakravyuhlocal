@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from datetime import datetime
-from database.rails_db import *
-from micro_services.client import *
+from database.rails_db import get_service_provider
+from micro_services.client import organization
 from datetime import datetime
 
 def get_fcl_freight_rate_visibility(request):
