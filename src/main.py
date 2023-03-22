@@ -757,7 +757,7 @@ def get_eligible_fcl_freight_rate_free_day_data(
 @app.put("/update_fcl_freight_rate_free_day")
 def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
     data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
-    return data
+    return JSONResponse(status_code=200, content=data)
 
 @app.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
@@ -773,7 +773,7 @@ def get_fcl_freight_rate_stats_data(
         'stats_types':stats_types
     }
     data = get_fcl_freight_rate_stats(request)
-    return data
+    return JSONResponse(status_code=200, content=data)
 
 @app.get("/get_fcl_freight_rate_seasonal_surcharge")
 def get_fcl_freight_rate_seasonal_surcharge_data(
@@ -796,7 +796,7 @@ def get_fcl_freight_rate_seasonal_surcharge_data(
     }
 
     data = get_fcl_freight_rate_seasonal_surcharge(request)
-    return data
+    return JSONResponse(status_code=200, content=data)
 
 @app.get("/get_fcl_freight_rate_commodity_surcharge")
 def get_fcl_freight_rate_commodity_surcharge_data(
@@ -818,7 +818,7 @@ def get_fcl_freight_rate_commodity_surcharge_data(
         'service_provider_id':service_provider_id
     }
     data = get_fcl_freight_rate_commodity_surcharge(request)
-    return data
+    return JSONResponse(status_code=200, content=data)
 
 @app.get("/get_fcl_freight_commodity_cluster")
 def get_fcl_freight_commodity_cluster_data(
