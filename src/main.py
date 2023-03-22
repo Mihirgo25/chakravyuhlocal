@@ -122,11 +122,6 @@ def shutdown():
 def read_root():
     return "WELCOME TO OCEAN RMS"
 
-@app.post("/create_fcl_freight_rate_bulk_operation")
-def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation):
-    data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
-    return JSONResponse(content=str(data))
-
 @app.post("/create_fcl_freight_commodity_cluster")
 def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodityCluster):
     data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False).dict(exclude_none=False))
