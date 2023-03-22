@@ -8,6 +8,7 @@ from micro_services.client import *
 from database.rails_db import *
 
 class BaseModel(Model):
+    # db.execute_sql('create sequence fcl_freight_rate_requests_serial_id_seq')
     class Meta:
         database = db
         only_save_dirty = True
