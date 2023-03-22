@@ -43,11 +43,11 @@ def get_multiple_service_objects(freight_object):
         organization_data = get_service_provider(organization_list)
         for organization in organization_data:
             organization['id']= str(organization['id'])
-            if organization['id']==str(freight_object.service_provider_id):
+            if hasattr(freight_object,'service_provider_id') and organization['id']==str(freight_object.service_provider_id):
                 freight_object.service_provider = organization       
-            if organization['id']==str(freight_object.importer_exporter_id):
+            if hasattr(freight_object,'importer_exporter_id') and organization['id']==str(freight_object.importer_exporter_id):
                 freight_object.importer_exporter= organization
-            if organization['id']==str(freight_object.performed_by_org_id):
+            if hasattr(freight_object,'performed_by_org_id') and organization['id']==str(freight_object.performed_by_org_id):
                 freight_object.organization = organization
 
     # if hasattr(freight_object,'rate_sheet_id'):
