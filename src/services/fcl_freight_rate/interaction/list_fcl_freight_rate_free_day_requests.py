@@ -21,7 +21,7 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
         query = apply_indirect_filters(query, filters)
 
     data = get_data(query)
-    stats = get_stats(query, filters, is_stats_required, performed_by_id) or {}
+    stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     pagination_data = get_pagination_data(query, page, page_limit)
 
@@ -57,7 +57,7 @@ def get_pagination_data(query, page, page_limit):
     return params
   
 
-def get_stats(query, filters, is_stats_required, performed_by_id):
+def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
     

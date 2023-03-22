@@ -4,7 +4,7 @@ from database.db_session import db
 from fastapi import HTTPException
 # from libs.logger import logger
 from datetime import datetime
-import time
+
 def update_fcl_freight_rate_local_agent(request):
   with db.atomic() as transaction:
     try:

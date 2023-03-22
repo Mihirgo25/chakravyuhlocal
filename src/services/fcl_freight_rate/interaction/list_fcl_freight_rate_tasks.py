@@ -34,7 +34,7 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
     data = results['get_data']
     pagination_data = results['get_pagination_data']
 
-    stats = get_stats(query, filters, stats_required)
+    stats = get_stats(filters, stats_required)
 
     return {'list': data } | (pagination_data) | (stats)
   
@@ -108,6 +108,7 @@ def get_data(query, filters, page, page_limit, pagination_data_required):
             object['expiration_time'] = object['created_at'] + timedelta(hours = 6)
 
             object['completion_time'] = int(datetime.fromisoformat(object['completed_at']).timestamp()) - int(object['created_at'].timestamp())
+
             object['completed_at'] = str(datetime.fromisoformat(object['completed_at']))
             
             if object['completion_time'] < (2 * 60 * 60):
@@ -174,7 +175,7 @@ def apply_created_at_less_than_filter(query, filters):
     query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%d'))
     return query
 
-def get_stats(query, filters, stats_required):
+def get_stats(filters, stats_required):
     if not stats_required:
         return {}
     query = FclFreightRateTask.select()

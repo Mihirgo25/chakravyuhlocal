@@ -261,7 +261,7 @@ def apply_destination_location_ids_filter(query,filters):
 
 def apply_importer_exporter_present_filter(query, filters):
   if filters['importer_exporter_present']:
-    return query.where(not (FclFreightRate.importer_exporter_id == None))
+    return query.where(FclFreightRate.importer_exporter_id != None)
   
   query = query.where(FclFreightRate.importer_exporter_id == None)
   return query

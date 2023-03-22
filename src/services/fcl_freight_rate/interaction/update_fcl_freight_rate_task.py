@@ -5,6 +5,7 @@ from micro_services.client import *
 from configs.global_constants import HAZ_CLASSES
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
+from celery_worker import update_multiple_service_objects
 
 def update_fcl_freight_rate_task_data(request):
     if type(request) != dict:
@@ -45,6 +46,9 @@ def execute_transaction_code(request):
     result = create_fcl_freight_local_rate(task,request) 
     
     update_shipment_local_charges(task,request)
+
+    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
+
 
     # if task['source'] == 'contract':
         # UpdateContractServiceTask.delay(queue: 'low').run!({ task_id: task.id, service_type: 'fcl_freight', rate: self.rate }) if task.source == 'contract'
