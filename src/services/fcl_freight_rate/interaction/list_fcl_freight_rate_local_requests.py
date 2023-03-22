@@ -27,7 +27,7 @@ def list_fcl_freight_rate_local_requests(filters = {}, page_limit = 10, page = 1
     data = get_data(query)
     pagination_data = get_pagination_data(query, page, page_limit)
 
-    stats = get_stats(query, filters, is_stats_required, performed_by_id) or {}
+    stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     return {'list': data } | (pagination_data) | (stats)
 
@@ -46,8 +46,8 @@ def apply_validity_end_less_than_filter(query, filters):
 
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id, FclFreightRateLocalRequest.trade_type, FclFreightRateLocalRequest.container_size, FclFreightRateLocalRequest.container_type).where(FclFreightRateLocalRequest.id == filters['similar_id']).dicts().get()
-    query = query.where(not(FclFreightRateLocalRequest.id == filters['similar_id']))
-    return query.where(query.c.port_id == rate_request_obj['port_id'], query.c.trade_type == rate_request_obj['trade_type'], query.c.container_size == rate_request_obj['container_size'], query.c.container_type == rate_request_obj['container_type'])
+    query = query.where(FclFreightRateLocalRequest.id != filters['similar_id'])
+    return query.where(FclFreightRateLocalRequest.port_id == rate_request_obj['port_id'], FclFreightRateLocalRequest.trade_type == rate_request_obj['trade_type'], FclFreightRateLocalRequest.container_size == rate_request_obj['container_size'], FclFreightRateLocalRequest.container_type == rate_request_obj['container_type'])
 
 def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
@@ -104,7 +104,7 @@ def get_pagination_data(query, page, page_limit):
   return pagination_data
 
 
-def get_stats(query, filters, is_stats_required, performed_by_id):
+def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
 

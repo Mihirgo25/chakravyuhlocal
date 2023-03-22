@@ -1,5 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from peewee import fn
+from micro_services.client import *
 from database.rails_db import get_service_provider,get_shipping_line,get_user
 
 def get_multiple_service_objects(freight_object):
@@ -29,27 +30,35 @@ def get_multiple_service_objects(freight_object):
                 freight_object.performed_by = user        
             elif hasattr(freight_object,'closed_by_id') and user['id']==str(freight_object.closed_by_id):
                 freight_object.closed_by = user    
+            elif hasattr(freight_object,'completed_by_id') and user['id']==str(freight_object.completed_by_id):
+                freight_object.completed_by = user
     organization_list=[]
     if hasattr(freight_object,'importer_exporter_id'):
         organization_list.append(freight_object.importer_exporter_id)
     if hasattr(freight_object,'service_provider_id'):
         organization_list.append(freight_object.service_provider_id)
+    if hasattr(freight_object,'performed_by_org_id'):
+        user_list.append(freight_object.performed_by_org_id)
     if organization_list:
         organization_data = get_service_provider(organization_list)
         for organization in organization_data:
             organization['id']= str(organization['id'])
             if organization['id']==str(freight_object.service_provider_id):
                 freight_object.service_provider = organization       
-            else:
+            if organization['id']==str(freight_object.importer_exporter_id):
                 freight_object.importer_exporter= organization
+            if organization['id']==str(freight_object.performed_by_org_id):
+                freight_object.organization = organization
 
     # if hasattr(freight_object,'rate_sheet_id'):
     #     rate_sheet_data = RateSheet.select(RateSheet.serial_id,RateSheet.file_name,RateSheet.created_at,RateSheet.updated_at).dicts().get()
     #     rate_sheet_data['serial_id'] = str(rate_sheet_data['serial_id'])
     #     freight_object.rate_sheet = rate_sheet_data    
 
-    # if hasattr(freight_object,'spot_search_id'):
-    #     sport_search_data = SpotSearch.select(SpotSearch.id,SpotSearch.importer_exporter_id,SpotSearch.importer_exporter,SpotSearch.service_details).dicts().get()
-    #     sport_search_data['id']= str(sport_search_data['id'])
-    #     sport_search_data['importer_exporter_id'] = str(sport_search_data['importer_exporter_id'])
+    if hasattr(freight_object,'source_id'):
+        spot_search_data = common.list_spot_searches({'filters':{'id':freight_object.source_id}})['list']
+        if spot_search_data:
+            spot_search_data = spot_search_data[0]
+            freight_object.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id','importer_exporter_id','importer_exporter','service_details']}
+            
     freight_object.save()

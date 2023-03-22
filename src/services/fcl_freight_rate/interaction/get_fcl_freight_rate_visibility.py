@@ -16,7 +16,7 @@ def get_fcl_freight_rate_visibility(request):
     org_details = get_service_provider(request['service_provider_id'])[0]
 
     if org_details:
-        org_services_data = organization.list_organization_users({'filters':{'organization_id' : org_details['id'], 'status' : 'active'}})
+        org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})
         if org_services_data:
             org_services_data = org_services_data['list']
         else:
