@@ -6,7 +6,6 @@ from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from libs.locations import list_locations
 from celery_worker import create_fcl_freight_rate_delay
 def extend_create_fcl_freight_rate_data(request):
     
@@ -70,7 +69,7 @@ def get_fcl_freight_cluster_objects(rate_object,request):
     except:
         containers = [rate_object['container_size']]
 
-    icd_data = list_locations({ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+    icd_data = maps.list_locations({ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
 
     new_data = {}
     for t in icd_data:
@@ -120,9 +119,9 @@ def get_fcl_freight_cluster_objects(rate_object,request):
                         if request.extend_rates_for_existing_system_rates or not check_rate_existence(updated_param):
                             if updated_param.get('origin_port_id') and updated_param.get('destination_port_id') and updated_param['origin_port_id'] != updated_param['destination_port_id']:
                                 fcl_freight_cluster_objects.append(updated_param)
-    for i in fcl_freight_cluster_objects:
-        if (i['origin_port_id'] == rate_object['origin_port_id'] and i['destination_port_id'] == rate_object['destination_port_id'] and i['commodity'] == rate_object['commodity'] and i['container_type'] == rate_object['container_type'] and i['container_size'] == rate_object['container_size']):
-            fcl_freight_cluster_objects.remove(i)
+    for fcl_freight_cluster_object in fcl_freight_cluster_objects:
+        if (fcl_freight_cluster_object['origin_port_id'] == rate_object['origin_port_id'] and fcl_freight_cluster_object['destination_port_id'] == rate_object['destination_port_id'] and fcl_freight_cluster_object['commodity'] == rate_object['commodity'] and fcl_freight_cluster_object['container_type'] == rate_object['container_type'] and fcl_freight_cluster_object['container_size'] == rate_object['container_size']):
+            fcl_freight_cluster_objects.remove(fcl_freight_cluster_object)
 
     return fcl_freight_cluster_objects
 
@@ -146,7 +145,7 @@ def add_mandatory_line_items(param,request):
     existing_line_items = [t['code'] for t in param.get('line_items')]
     missing_line_items = []
     if mandatory_charges:
-        missing_line_items = mandatory_charges['mandatory_codes'].flatten() - existing_line_items
+        missing_line_items = [t for t in mandatory_charges['mandatory_codes'] if t not in existing_line_items]
     
     if missing_line_items:
         for missing_line_item in missing_line_items:

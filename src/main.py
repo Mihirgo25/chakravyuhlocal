@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Request, Depends
+from fastapi import FastAPI, Response, Request, Depends,Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
@@ -6,8 +6,6 @@ from database.db_session import db
 import json
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_not_available import create_fcl_freight_rate_not_available
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_task import create_fcl_freight_rate_task
@@ -88,7 +86,6 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from configs.defintions import yml_obj
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
-from peewee import Query
 
 app = FastAPI(debug=True)
 
@@ -143,13 +140,6 @@ def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRa
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False})
 
-@app.post("/create_fcl_freight_rate_commodity_surcharge")
-def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRateCommoditySurcharge):
-    try:
-        rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False})
 
 @app.post("/create_fcl_freight_rate_local_agent")
 def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalAgent):
@@ -859,10 +849,6 @@ def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateComm
     # except:
     #     return JSONResponse(status_code=500, content = {'success':False})
 
-@app.post("/create_fcl_freight_commodity_surcharge")
-def create_fcl_freight_commodity_surcharge_data(request: CreateFclFreightCommoditySurcharge):
-    data = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
 
 @app.post("/create_fcl_freight_rate_seasonal_surcharge")
 def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSeasonalSurcharge):
