@@ -2,10 +2,6 @@ amqp==5.1.1
 anyio==3.6.2
 async-timeout==4.0.2
 attrs==22.2.0
-aws-cdk-lib==2.60.0
-aws-cdk.asset-awscli-v1==2.2.49
-aws-cdk.asset-kubectl-v20==2.1.1
-aws-cdk.asset-node-proxy-agent-v5==2.0.38
 billiard==3.6.4.0
 boto3==1.26.94
 botocore==1.29.94
@@ -17,7 +13,6 @@ click==8.1.3
 click-didyoumean==0.3.0
 click-plugins==1.1.1
 click-repl==0.2.0
-cmdstanpy==1.1.0
 constructs==10.1.217
 contextlib2==21.6.0
 contourpy==1.0.7
@@ -53,7 +48,6 @@ peewee-migrate==1.6.5
 Pillow==9.4.0
 prometheus-client==0.15.0
 prompt-toolkit==3.0.36
-prophet==1.1.2
 psycopg-binary==3.1.8
 psycopg2==2.9.5
 publication==0.0.3
