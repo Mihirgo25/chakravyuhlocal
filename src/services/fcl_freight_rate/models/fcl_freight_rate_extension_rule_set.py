@@ -49,7 +49,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
         elif not self.line_item_charge_code and not self.gri_currency and not (self.gri_rate or self.gri_rate == 0):
             return True
         else:
-            raise Exception('all fields charge_code, gri_rate, gri_currency are necessary')
+            raise HTTPException('all fields charge_code, gri_rate, gri_currency are necessary')
 
     def validate_cluster_id(self):
         if self.cluster_type == 'commodity' and list_fcl_freight_commodity_clusters({'filters':{'id': self.cluster_id}}):
