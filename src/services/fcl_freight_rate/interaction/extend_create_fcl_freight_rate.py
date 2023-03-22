@@ -20,7 +20,7 @@ def extend_create_fcl_freight_rate_data(request):
         rate_objects = get_fcl_freight_cluster_objects(request.dict(exclude_none=True),request)
         if rate_objects:
             create_extended_rate_objects(rate_objects)
-        return {"message":"Creating rates in delay"}
+            return {"message":"Creating rates in delay"}
 
 
 def create_extended_rate_objects(rate_objects):
@@ -42,8 +42,12 @@ def get_fcl_freight_cluster_objects(rate_object,request):
             new_hash["cluster_type"] = str(key)
             cluster_objects.append(new_hash)
         required_mandatory_codes = get_required_mandatory_codes(cluster_objects)
-        common_line_items = list(set([i for i in rate_object['line_items']['code'] if i is not None]).intersection(set([i for i in required_mandatory_codes['mandatory_codes'] if i is not None])))
-        if len(common_line_items) != len(set([i for i in required_mandatory_codes['mandatory_codes'] if i is not None])):
+        mandatory_codes = []
+        for required_mandatory_code in required_mandatory_codes:
+            for mandatory_code in required_mandatory_code['mandatory_codes']:
+                mandatory_codes.append(mandatory_code)
+        common_line_items = list(set([i['code'] for i in rate_object['line_items'] if i is not None]).intersection(set(mandatory_codes)))
+        if len(common_line_items) != len(set(mandatory_codes)):
             return
 
     try:
@@ -130,6 +134,7 @@ def get_money_exchange(from_currency, to_currency, gri_rate):
     if not gri_rate:
         return 0
     result = common.get_money_exchange_for_fcl({'from_currency': from_currency, 'to_currency': to_currency, 'price': gri_rate})
+    print(result)
     if result:
         return result['price']
     return 0
