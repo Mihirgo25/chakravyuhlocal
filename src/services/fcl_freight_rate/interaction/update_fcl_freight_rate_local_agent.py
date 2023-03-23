@@ -40,7 +40,7 @@ def execute_transaction_code(request):
   # except:
   #   raise HTTPException(status_code = '', detail = '{} is invalid'.format(request['id']))
 
-  # create_audits(request, request['id'])
+  create_audits(request, request['id'])
 
   return {
     'id': request['id'] 
