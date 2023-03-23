@@ -21,8 +21,6 @@ def create_audit(request, freight_id):
         rate_sheet_id=request.get("rate_sheet_id"),
         action_name="create",
         performed_by_id=request["performed_by_id"],
-        procured_by_id=request["procured_by_id"],
-        sourced_by_id=request["sourced_by_id"],
         data=audit_data,
         object_id=freight_id,
         object_type="FclFreightRate",

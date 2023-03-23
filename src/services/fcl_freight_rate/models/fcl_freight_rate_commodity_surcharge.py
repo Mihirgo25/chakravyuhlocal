@@ -61,37 +61,33 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     class Meta:
         table_name = 'fcl_freight_rate_commodity_surcharges'
 
-    def validate_origin_location_type(self):
-        origin_location = maps.list_locations({'filters' : {'id': str(self.origin_location_id)}})['list']
-        if origin_location:
-            origin_location = origin_location[0]
-            if origin_location.get('type') in LOCATION_TYPES:
-                self.origin_port_id = origin_location.get('id', None)
-                self.origin_country_id = origin_location.get('country_id', None)
-                self.origin_trade_id = origin_location.get('trade_id', None)
-                self.origin_continent_id = origin_location.get('continent_id', None)
-                self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
-                self.origin_location = {key:value for key,value in origin_location.items() if key in ['id','name','display_name','port_code','type']}
+    def validate_location_types(self):
+        locations = maps.list_locations({'id': [str(self.origin_location_id), str(self.destination_location_id)]})['list']
+        for location in locations:
+            if location['id']==str(self.origin_location_id):
+                origin_location = location
+                if origin_location.get('type') in LOCATION_TYPES:
+                    self.origin_port_id = origin_location.get('id', None)
+                    self.origin_country_id = origin_location.get('country_id', None)
+                    self.origin_trade_id = origin_location.get('trade_id', None)
+                    self.origin_continent_id = origin_location.get('continent_id', None)
+                    self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
+                    self.origin_location = {key:value for key,value in origin_location.items() if key in ['id','name','display_name','port_code','type']}
+                else:
+                    raise HTTPException(status_code=404, detail="Origin Location type not valid")
+            elif location['id']==str(self.destination_location_id):
+                destination_location = location
+                if destination_location.get('type') in LOCATION_TYPES:
+                    self.destination_port_id = destination_location.get('id', None)
+                    self.destination_country_id = destination_location.get('country_id', None)
+                    self.destination_trade_id = destination_location.get('trade_id', None)
+                    self.destination_continent_id = destination_location.get('continent_id', None)
+                    self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
+                    self.destination_location = {key:value for key,value in destination_location.items() if key in ['id','name','display_name','port_code','type']}
+                else:
+                    raise HTTPException(status_code=404, detail="Destination Location type not valid")
             else:
-                raise HTTPException(status_code=404, detail="Origin Location type not valid")
-        else:
-            raise HTTPException(status_code=404, detail="Origin Location not found")
-    
-    def validate_destination_location_type(self):
-        destination_location = maps.list_locations({'filters' : {'id': str(self.destination_location_id)}})['list']
-        if destination_location:
-            destination_location = destination_location[0]
-            if destination_location.get('type') in LOCATION_TYPES:
-                self.destination_port_id = destination_location.get('id', None)
-                self.destination_country_id = destination_location.get('country_id', None)
-                self.destination_trade_id = destination_location.get('trade_id', None)
-                self.destination_continent_id = destination_location.get('continent_id', None)
-                self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
-                self.destination_location = {key:value for key,value in destination_location.items() if key in ['id','name','display_name','port_code','type']}
-            else:
-                raise HTTPException(status_code=404, detail="Destination Location type not valid")
-        else:
-            raise HTTPException(status_code=404, detail="Destination Location not found")
+                raise HTTPException(status_code=404,detail='Invalid Location')
     
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -120,7 +116,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     def update_freight_objects(self):
         freight_query = FclFreightRate.select(FclFreightRate.id).where(
             (FclFreightRate.container_size == self.container_size),
-            (FclFreightRate.container_type == 'standard') ,
+            (FclFreightRate.container_type == 'standard'),
             (FclFreightRate.commodity == 'general') ,
             (FclFreightRate.shipping_line_id == self.shipping_line_id) ,
             (FclFreightRate.service_provider_id == self.service_provider_id) ,
@@ -143,8 +139,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         }
    
     def validate(self):
-        self.validate_origin_location_type()
-        self.validate_destination_location_type()
+        self.validate_location_types()
         if not self.validate_container_size():
             raise HTTPException(status_code=404, detail="Container size not valid")
         if not self.validate_container_type():

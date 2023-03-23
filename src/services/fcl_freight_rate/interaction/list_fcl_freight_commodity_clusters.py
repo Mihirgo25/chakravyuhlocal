@@ -13,7 +13,7 @@ def list_fcl_freight_commodity_clusters(filters = {}, page_limit = 10, page = 1,
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightCommodityCluster)
+        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightCommodityCluster)           
         query = apply_indirect_filters(query, filters)
 
     data = [model_to_dict(item) for item in query.execute()]
