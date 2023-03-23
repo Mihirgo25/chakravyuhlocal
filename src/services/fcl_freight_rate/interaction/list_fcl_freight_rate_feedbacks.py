@@ -36,7 +36,7 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
     return {'list': data } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
-    query = query.order_by(FclFreightRateFeedback.created_at.desc()).paginate(page, page_limit)
+    query = query.order_by(FclFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
     return query
 
 def get_join_query(query):
@@ -282,20 +282,20 @@ def get_total(query, performed_by_id):
     try:
         return {'get_total':query.count()}
     except:
-        return {'get_total' : None}
+        return {'get_total' : 0}
 
 def get_total_closed_by_user(query, performed_by_id):
     try:
         return {'get_total_closed_by_user':query.where(FclFreightRateFeedback.status == 'inactive', FclFreightRateFeedback.closed_by_id == performed_by_id).count() }
     except:
-        return {'get_total_closed_by_user':None}
+        return {'get_total_closed_by_user':0}
 
 
 def get_total_opened_by_user(query, performed_by_id):
     try:
         return {'get_total_opened_by_user' : query.where(FclFreightRateFeedback.status == 'active', FclFreightRateFeedback.closed_by_id == performed_by_id).count() }
     except:
-        return {'get_total_opened_by_user' : None}
+        return {'get_total_opened_by_user' : 0}
 
 def get_status_count(query, performed_by_id):
     try:
@@ -305,5 +305,5 @@ def get_status_count(query, performed_by_id):
             result[row.status] = row.count_all
         return {'get_status_count' : result}
     except:
-        return {'get_status_count' : None}
+        return {'get_status_count' : 0}
 

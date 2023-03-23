@@ -15,7 +15,6 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
             filters = json.loads(filters)
 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateBulkOperation)
-        query = apply_indirect_filters(query, filters)
 
     data = [model_to_dict(item) for item in query.execute()]
     pagination_data = get_pagination_data(query, page, page_limit)

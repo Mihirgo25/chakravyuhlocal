@@ -85,7 +85,7 @@ def get_pagination_data(query, page, page_limit):
 def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
-    
+    import time
     query = FclFreightRateRequest.select()
 
     if filters:
@@ -101,7 +101,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
         for future in futures:
             result = future.result()
             results.update(result)
-    
+
     stats = {
         'total': results['get_total'],
         'total_closed_by_user': results['get_total_closed_by_user'],

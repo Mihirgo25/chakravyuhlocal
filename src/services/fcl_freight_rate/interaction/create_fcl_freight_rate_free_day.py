@@ -8,7 +8,7 @@ from celery_worker import update_multiple_service_objects
 def create_fcl_freight_rate_free_day(request):
     with db.atomic() as transaction:
           try:
-              return execute_transaction_code(request)
+            return execute_transaction_code(request)
           except Exception as e:
               transaction.rollback()
               return e
@@ -87,4 +87,4 @@ def create_audit(request, free_day_id):
             object_type = 'FclFreightRateFreeDay'
         )
     except:
-        raise HTTPException(status_code=403, detail='fcl freight audit did not save')
+        raise HTTPException(status_code=403, detail='Fcl Freight Audit did not save')

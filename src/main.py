@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from database.db_session import db
+from fastapi import FastAPI, Response, Query, Request
 import json
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
@@ -124,7 +125,7 @@ def read_root():
 
 @app.post("/create_fcl_freight_commodity_cluster")
 def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodityCluster):
-    data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False).dict(exclude_none=False))
+    data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
     return data
 
 @app.post("/create_fcl_freight_rate_commodity_surcharge")
@@ -756,12 +757,10 @@ def get_fcl_freight_rate_free_day_data(
         'service_provider_id':service_provider_id,
         'importer_exporter_id':importer_exporter_id
     }
-    try:
-        data = get_fcl_freight_rate_free_day(request)
-        data = jsonable_encoder(data)
-        return JSONResponse(status_code=200, content= data)
-    except:
-        return JSONResponse(status_code= 500, content= {'success':False})
+    data = get_fcl_freight_rate_free_day(request)
+    data = jsonable_encoder(data)
+    return JSONResponse(status_code=200, content= data)
+
 
 @app.get("/get_eligible_fcl_freight_rate_free_day")
 def get_eligible_fcl_freight_rate_free_day_data(
@@ -777,7 +776,7 @@ def get_eligible_fcl_freight_rate_free_day_data(
 @app.put("/update_fcl_freight_rate_free_day")
 def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay):
     data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=data)
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
 
 @app.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
@@ -887,3 +886,9 @@ def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation):
 def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeDayRequest):
     data = create_fcl_freight_rate_free_day_request(request.dict(exclude_none=False))
     return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
+
+
+# @app.post('/test')
+# def test_fcl():
+#     query = query.where(attrgetter(key)(Model).contains_any(filters[key]))
+

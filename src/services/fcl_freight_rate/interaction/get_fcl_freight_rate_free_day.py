@@ -30,7 +30,17 @@ def find_object(request):
     }
     
     try:
-        objects = FclFreightRateFreeDay.get(**row)
+        # objects = FclFreightRateFreeDay.get(**row)
+        objects = FclFreightRateFreeDay.select().where(
+            FclFreightRateFreeDay.location_id == request['location_id'],
+            FclFreightRateFreeDay.trade_type == request['trade_type'],
+            FclFreightRateFreeDay.free_days_type == request['free_days_type'],
+            FclFreightRateFreeDay.container_size == request['container_size'],
+            FclFreightRateFreeDay.shipping_line_id == request['shipping_line_id'],
+            FclFreightRateFreeDay.service_provider_id == request['service_provider_id'],
+            FclFreightRateFreeDay.importer_exporter_id == request['importer_exporter_id']
+        ).first()
+        print(objects)
     except:
         raise HTTPException(status_code=403, detail="no free day entry with the given id exists")
     return objects
