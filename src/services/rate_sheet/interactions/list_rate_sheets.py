@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
-from rails_client import client
+from micro_services.client import *
 
 from peewee import *
 from database.db_session import rd
@@ -153,7 +153,7 @@ def add_service_objects(data):
 
     if len(org_ids):
         objects_organizations['filters']['id'] = org_ids
-        list_organizations = client.ruby.list_organizations(
+        list_organizations = organization.list_organizations(
             objects_organizations
         )
         for org in list_organizations['list']:
@@ -161,7 +161,7 @@ def add_service_objects(data):
 
     if len(user_ids):
         objects_user['filters']['id'] = user_ids
-        list_user = client.ruby.list_users(objects_user)
+        list_user = common.list_users(objects_user)
         for user_obj in list_user['list']:
             objects_user_hash[user_obj['id']] =user_obj
 

@@ -1,13 +1,14 @@
 import services.rate_sheet.interactions.validate_fcl_freight_object as validate_rate_sheet
 from libs.locations import list_locations
-from rails_client import client
+from micro_services.client import *
+from operator import attrgetter
+
 # from services.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
-from services.fcl_freight_rate.helpers.find_or_initialize import find_or_initialize
 # from services.fcl_freight_rate.models.fcl_freight_rate import
 VALID_UNITS = ['per_bl', 'per_container', 'per_shipment']
 SCHEDULE_TYPES = ['direct', 'transhipment']
@@ -25,11 +26,15 @@ def validate_fcl_freight_object(module, object):
     return response
 
 def get_freight_object(object):
-    # print(object)
-    # for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
-    #     object[f'{port}_id'] = get_port_id(object.get(port))
-    #     del object[port]
-    # object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
+    print(object)
+    errors = {}
+    for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
+        try:
+            object[f'{port}_id'] = get_port_id(object.get(port))
+        except Exception as e:
+            errors['errors'] = e
+        # del object[port]
+    object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
     # del object['shipping_line_id']
     object['validity_start'] = object['validity_start']
     object['validity_start'] = object.get('validity_start')
@@ -49,8 +54,12 @@ def get_freight_object(object):
       'cogo_entity_id']
     res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
     res['rate_not_available_entry'] = False
-    rate_object = find_or_initialize(FclFreightRate,**res)
-    rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
+    rate_object = FclFreightRate.select()
+    for key ,val in res.items():
+        rate_object = rate_object.where(attrgetter(key)(FclFreightRate) == val)
+    if not rate_object:
+        rate_object = FclFreightRate(**res)
+        rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
     for line_item in object['line_items']:
         if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
             return "line_item_price is invalid"
@@ -63,13 +72,18 @@ def get_freight_object(object):
     rate_object.validate_line_items(object['line_items'])
     rate_object.weight_limit = object.get('weight_limit')
     # rate_object.destination_local['']
+    if 'error' in errors:
+        rate_object['error'] = errors['error']
     print(rate_object, "final_object")
     return rate_object
 
 def get_local_object(object):
+    errors = {}
     for port in ['port', 'main_port']:
-        object[f'{port}_id'] = get_port_id(object[port])
-        del object[port]
+        try:
+            object[f'{port}_id'] = get_port_id(object.get(port))
+        except Exception as e:
+            errors['errors'] = e
 
     for line_item in object.get('data').get('line_items'):
         line_item['location_id'] = get_location_id(line_item.get('location'))
@@ -86,12 +100,18 @@ def get_local_object(object):
       'shipping_line_id',
       'service_provider_id']
     res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-    local = find_or_initialize(FclFreightRateLocal,**res)
+    local = FclFreightRateLocal.select()
+    for key ,val in res.items():
+        local = local.where(attrgetter(key)(FclFreightRateLocal) == val)
+    if not local:
+        local = FclFreightRateLocal(**res)
     for line_item in object.get('data').get('line_items'):
         if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
             return "line_item_price is invalid"
         if line_item['unit'] not in VALID_UNITS:
             return "unit is_invalid"
+    if 'error' in errors:
+        local['error'] = errors['error']
     return local
 
 def get_free_day_object(object):
@@ -118,7 +138,12 @@ def get_free_day_object(object):
       'importer_exporter_id']
 
     res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-    free_day = find_or_initialize(FclFreightRateFreeDay,**res)
+    free_day = FclFreightRateFreeDay.select()
+    for key ,val in res.items():
+        free_day = free_day.where(attrgetter(key)(FclFreightRateFreeDay) == val)
+    if not free_day:
+        free_day = FclFreightRateFreeDay(**res)
+
     for key, val in object:
         free_day[key] = val
     # if object.get('location_id'):
@@ -150,15 +175,18 @@ def get_port_id(port_code):
     return port_id
 
 def get_shipping_line_id(shipping_line_name):
-    shipping_line_id = client.ruby.list_operators(
-        {
-            "filters": {
-                "operator_type": "shipping_line",
-                "short_name": shipping_line_name,
-                "status": "active",
+    try:
+        shipping_line_id = common.list_operators(
+            {
+                "filters": {
+                    "operator_type": "shipping_line",
+                    "short_name": shipping_line_name,
+                    "status": "active",
+                }
             }
-        }
-    )["list"][0]['id']
+        )["list"][0]['id']
+    except:
+        shipping_line_id = None
     return shipping_line_id
 
 def get_location_id(query):
@@ -180,7 +208,7 @@ def get_location_id(query):
 
 
 def get_importer_exporter_id(importer_exporter_name):
-    importer_exporter_id = client.ruby.list_organizations(
+    importer_exporter_id = organization.list_organizations(
         {
             "filters": {
                 "account_type": "importer_exporter",

@@ -2,7 +2,7 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from playhouse.postgres_ext import *
 from peewee import *
-from rails_client import client
+from micro_services.client import *
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 
 
@@ -30,7 +30,7 @@ def send_rate_sheet_notifications(params):
         variables = {'file_name': params.get('file_url').split('/').pop(), 'serial_id': serial_id}
 
     if params.get('status') == 'uploaded':
-        user_ids = [user.user_id for user in client.ruby.list_partner_users.run(filters={
+        user_ids = [user.user_id for user in common.list_partner_users.run(filters={
             'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID,
             'status': 'active',
             'partner_status': 'active',
@@ -54,4 +54,4 @@ def send_rate_sheet_notifications(params):
             'template_name': template_name,
             'variables': variables
         }
-        client.ruby.create_communication(data)
+        common.create_communication(data)
