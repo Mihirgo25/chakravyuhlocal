@@ -604,8 +604,8 @@ def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalA
     data = jsonable_encoder(data)
     return data
 
-@app.put("/update_fcl_freight_slabs_configuration")
-def update_fcl_freight_slabs_configuration_data(request: UpdateFclWeightSlabsConfiguration):
+@app.put("/update_fcl_weight_slabs_configuration")
+def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConfiguration):
     data = update_fcl_weight_slabs_configuration(request.dict(exclude_none=True))
     data = jsonable_encoder(data)
     return data
