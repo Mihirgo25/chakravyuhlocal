@@ -24,7 +24,7 @@ def create_audit(request, freight_id):
         data=audit_data,
         object_id=freight_id,
         object_type="FclFreightRate",
-        source=request.get("mode"),
+        source=request.get("source"),
     )
 def create_fcl_freight_rate_data(request):
     origin_port_id = str(request.get("origin_port_id"))

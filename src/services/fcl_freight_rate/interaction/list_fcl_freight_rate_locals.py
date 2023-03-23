@@ -1,11 +1,11 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_agents import list_fcl_freight_rate_local_agents
 from operator import itemgetter
 import json
 from datetime import datetime
 from micro_services.client import *
 from playhouse.shortcuts import model_to_dict
-from math import ceil
 
 possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id']
 possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than']
@@ -62,6 +62,16 @@ def get_data(query):
                 FclFreightRateLocal.procured_by,
                 FclFreightRateLocal.sourced_by,
                 )
+    local_agent_mappings = {}
+    port_ids = []
+    service_provider_ids = []
+    for item in list(query.dicts()):
+        port_ids.append(item['port_id'])
+        service_provider_ids.append(item['service_provider_id'])
+
+    local_agent_objects = list_fcl_freight_rate_local_agents(filters = {'location_id': list(set(port_ids)), 'service_provider_id': list(set(service_provider_ids))})['list']
+    for value in local_agent_objects:
+        local_agent_mappings[':'.join([str(value['service_provider_id']), str(value['location_id']), str(value['trade_type'])])] = value
 
     for result in results.dicts():
         result['line_items'] = result['data'].get('line_items')
@@ -97,7 +107,7 @@ def get_data(query):
                 else:
                     total_price += line_item['price']
             result['total_price'] = total_price
-
+        result['is_local_agent_rate'] = True if local_agent_mappings.get(':'.join([str(result['service_provider_id'] or ''), str((result.get('port') or {}).get('id') or ''), result['trade_type']])) else False
         data.append(result)
     return data
 

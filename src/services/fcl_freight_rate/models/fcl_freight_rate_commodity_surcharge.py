@@ -25,7 +25,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
-    currency = CharField(index=True, null=True)
+    currency = CharField(null=True)
     destination_continent_id = UUIDField(null=True)
     destination_country_id = UUIDField(null=True)
     destination_location_id = UUIDField(index=True, null=True)
@@ -42,16 +42,16 @@ class FclFreightRateCommoditySurcharge(BaseModel):
     origin_location_type = CharField(null=True)
     origin_port_id = UUIDField(null=True)
     origin_trade_id = UUIDField(null=True)
-    price = IntegerField(index=True, null=True)
+    price = IntegerField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     shipping_line = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    sourced_by_id = UUIDField(index=True,null=True)
+    sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
-    procured_by_id = UUIDField(index=True,null=True)
+    procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
    
     def save(self, *args, **kwargs):
@@ -88,6 +88,12 @@ class FclFreightRateCommoditySurcharge(BaseModel):
                     raise HTTPException(status_code=404, detail="Destination Location type not valid")
             else:
                 raise HTTPException(status_code=404,detail='Invalid Location')
+    
+    def set_origin_destination_location_type(self):
+        try:
+            self.origin_destination_location_type = ':'.join([self.origin_location_type,self.destination_location_type])
+        except:
+            self.origin_destination_location_type
     
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -140,6 +146,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
    
     def validate(self):
         self.validate_location_types()
+        self.set_origin_destination_location_type()
         if not self.validate_container_size():
             raise HTTPException(status_code=404, detail="Container size not valid")
         if not self.validate_container_type():

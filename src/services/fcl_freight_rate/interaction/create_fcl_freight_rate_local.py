@@ -29,7 +29,7 @@ def create_fcl_freight_rate_local(request):
           return execute_transaction_code(request)
         except Exception as e:
             transaction.rollback()
-            return e
+            raise HTTPException(status_code=500, detail=str(e))
 
 def execute_transaction_code(request):
     if not request.get('source'):

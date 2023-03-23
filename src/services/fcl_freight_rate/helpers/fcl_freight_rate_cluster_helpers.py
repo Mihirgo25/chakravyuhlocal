@@ -6,12 +6,12 @@ from peewee import *
 from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster import get_fcl_freight_commodity_cluster
-import requests
+import json
 
 def get_cluster_objects(rate_object):
     clusters = {}
 
-    port_codes = maps.list_locations({'filters':{'id': rate_object['origin_port_id']}})['list']
+    port_codes = maps.list_locations({'filters':{'id': [rate_object['origin_port_id'], rate_object['destination_port_id']]}})['list']
 
     param = {}
     for data in port_codes:
@@ -50,10 +50,10 @@ def get_cluster_objects(rate_object):
 
     
     if 'origin_location_cluster' in clusters and clusters['origin_location_cluster']:
-        clusters['origin_location_cluster']['cluster_items'] = requests.get("https://api.cogoport.com/location/get_location_cluster",params={'id': clusters['origin_location_cluster']['cluster_id']}).json()['locations'] 
+        clusters['origin_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations'] 
         
     if 'destination_location_cluster' in clusters and clusters['destination_location_cluster']:
-        clusters['destination_location_cluster']['cluster_items'] = requests.get("https://api.cogoport.com/location/get_location_cluster",params={'id': clusters['destination_location_cluster']['cluster_id']}).json()['locations']
+        clusters['destination_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['destination_location_cluster']['cluster_id']})['locations']
 
     if 'commodity_cluster' in clusters and clusters['commodity_cluster']:
         clusters['commodity_cluster']['cluster_items'] = get_fcl_freight_commodity_cluster(clusters['commodity_cluster']['cluster_id'])['commodities']

@@ -4,7 +4,8 @@ from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from configs.organization_constants import CATEGORY_TYPES
 from configs.global_constants import CONTAINER_SIZES
-from micro_services.client import *
+from micro_services.client import maps
+import datetime
 from database.rails_db import *
 
 class BaseModel(Model):
@@ -15,116 +16,117 @@ class BaseModel(Model):
 class FclWeightSlabsConfiguration(BaseModel):
     commodity = CharField(index=True, null=True)
     container_size = CharField(index=True, null=True)
-    created_at = DateTimeField()
-    currency = CharField()
+    created_at = DateTimeField(default=datetime.datetime.now)
+    currency = CharField(null = True)
     destination_location_id = UUIDField(index=True, null=True)
     destination_location_type = CharField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporter_id = UUIDField(index=True, null=True)
-    is_cogo_assured = BooleanField(index=True, null=True)
-    max_weight = DoubleField(index=True)
+    is_cogo_assured = BooleanField(null=True)
+    max_weight = DoubleField(null = True)
     organization_category = CharField(index=True, null=True)
     origin_location_id = UUIDField(index=True, null=True)
     origin_location_type = CharField(index=True, null=True)
-    price = DoubleField()
+    price = DoubleField(null =True)
     service_provider_id = UUIDField(index=True, null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     slabs = BinaryJSONField(null = True)
-    status = CharField(index=True)
+    status = CharField(index=True, null = True)
     trade_type = CharField(index=True, null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now, index = True)
+    
 
     class Meta:
-        table_name = 'fcl_weight_slabs_configurations'
-    
-    def validate_origin_location_id(self):
+        table_name = 'fcl_weight_slabs_configurations'        
+
+    def validate_origin_location(self):
         if not self.origin_location_id:
-            pass
+            return
         
         location_data = maps.list_locations({'filters':{'id':self.origin_location_id}})['list']
         if len(location_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid location ID")
+            raise HTTPException(status_code=422, detail="Invalid Origin location ID")
+        if self.origin_location_type not in ['seaport', 'country'] or self.origin_location_type != location_data[0]['type']:
+            raise HTTPException(status_code= 422, detail='Invalid Origin Location Type')
+
     
-    def validate_destination_location_id(self):
+    def validate_destination_location(self):
         if not self.destination_location_id:
-            pass
+            return
         
         location_data = maps.list_locations({'filters':{'id':self.destination_location_id}})['list']
         if len(location_data) == 0:
             raise HTTPException(status_code=400, detail="Invalid location ID")
 
-    def validate_origin_location_type(self):
-        if not self.origin_location_type:
-            pass
+    # def validate_origin_location_type(self):
+    #     if not self.origin_location_type:
+    #         return
         
-        if self.origin_location_type not in ['seaport', 'country']:
-            raise HTTPException(status_code= 400, detail='Invalid Origin Location Type')
+    #     if :
+    #         raise HTTPException(status_code= 422, detail='Invalid Origin Location Type')
     
-    def validate_destination_location_type(self):
-        if not self.destination_location_type:
-            pass
+    # def validate_destination_location_type(self):
+    #     if not self.destination_location_type:
+    #         return
         
-        if self.destination_location_type not in ['seaport', 'country']:
-            raise HTTPException(status_code= 400, detail='Invalid Destination Location Type')
+    #     if self.destination_location_type not in ['seaport', 'country']:
+    #         raise HTTPException(status_code= 422, detail='Invalid Destination Location Type')
 
     def validate_organization_category(self):
         if not self.organization_category:
-            pass
+            return
         
         if self.organization_category not in CATEGORY_TYPES:
-            raise HTTPException(status_code = 400, detail = 'Invalid Organization Type')
+            raise HTTPException(status_code = 422, detail = 'Invalid Organization Category')
     
     def validate_shipping_line_id(self):
         if not self.shipping_line_id:
-            pass
+            return
         
         shipping_line_data = get_shipping_line(self.shipping_line_id)
         if len(shipping_line_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid shipping line ID")
+            raise HTTPException(status_code=422, detail="Invalid shipping line ID")
     
     def validate_service_provider_id(self):
         if not self.service_provider_id:
-            pass
+            return
         
         service_provider_data = get_service_provider(self.service_provider_id)
         if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
+            raise HTTPException(status_code=422, detail="Invalid service provider ID")
     
     def validate_importer_exporter_id(self):
         if not self.importer_exporter_id:
-            pass
+            return
         
         importer_exporter_data = get_service_provider(self.importer_exporter_id)
         if len(importer_exporter_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid importer exporter ID")
+            raise HTTPException(status_code=422, detail="Invalid importer exporter ID")
 
     def validate_container_size(self):
         if not self.container_size:
-            pass
+            return
         
         if self.container_size not in CONTAINER_SIZES:
-            raise HTTPException(status_code=400, detail="Invalid container size")
+            raise HTTPException(status_code=422, detail="Invalid container size")
             
-    def validate_status(self):
-        if not self.status:
-            pass
-        
+    def validate_status(self):        
         if self.status not in ['inactive', 'active']:
-            raise HTTPException(status_code=400, detail="Invalid status")
+            raise HTTPException(status_code=422, detail="Invalid status")
     
     def validate_trade_type(self):
         if not self.trade_type:
-            pass
+            return
         
-        if self.status not in ['import', 'export']:
-            raise HTTPException(status_code=400, detail="Invalid trade type")
+        if self.trade_type not in ['import', 'export']:
+            raise HTTPException(status_code=422, detail="Invalid trade type")
 
     def validate(self):
-        self.validate_origin_location_id()
-        self.validate_destination_location_id()
-        self.validate_origin_location_type()
-        self.validate_destination_location_type()
-        self.validate_organization_category()
+        self.validate_origin_location()
+        self.validate_destination_location()
+        # self.validate_origin_location_type()
+        # self.validate_destination_location_type()
+        self.validate_organization_category() 
         self.validate_shipping_line_id()
         self.validate_service_provider_id()
         self.validate_importer_exporter_id()

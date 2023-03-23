@@ -14,7 +14,6 @@ def update_fcl_freight_rate_weight_limit(request):
 
 def execute_transaction_code(request):
     weight_limit = FclFreightRateWeightLimit.get_by_id(request['id'])
-
     if request.get('free_limit'):
         weight_limit.free_limit = request.get('free_limit')
     if request.get('remarks'):
@@ -28,7 +27,7 @@ def execute_transaction_code(request):
     try:
         weight_limit.save()
     except:
-        raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
+        raise HTTPException(status_code=500, detail='fcl freight rate local did not save')
 
     create_audit(request, weight_limit.id)
 
@@ -49,4 +48,4 @@ def create_audit(request, weight_limit_id):
         object_type = 'FclFreightRateWeightLimit'
       )
     except:
-      raise HTTPException(status_code=499, detail='fcl freight audit for weight limit did not save')
+      raise HTTPException(status_code=500, detail='fcl freight audit for weight limit did not save')
