@@ -9,7 +9,7 @@ conn = psycopg2.connect(
     port=RAILS_DATABASE_PORT
     )
 
-print("connection successfull")
+print("connection successful")
 
 
 def get_shipping_line(id=None):
@@ -31,7 +31,7 @@ def get_shipping_line(id=None):
     for res in result:
         all_result.append(
             {
-                "id": res[0],
+                "id": str(res[0]),
                 "business_name": res[1],
                 "short_name": res[2],
                 "logo_url": res[3],
@@ -55,7 +55,7 @@ def get_service_provider(id):
     for res in result:
         all_result.append(
             {
-                "id": res[0],
+                "id": str(res[0]),
                 "business_name": res[1],
                 "short_name": res[2],
                 "category_types":res[3],

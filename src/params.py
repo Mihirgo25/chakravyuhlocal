@@ -338,11 +338,7 @@ class UpdateFclFreightRateLocalAgent(BaseModel):
   performed_by_id: str
   status: str = None
   service_provider_id: str = None
-class UpdateFclFreightRateLocalPriorityScores(BaseModel):
-   filters: dict = {}
 
-class UpdateFclFreightRatePriorityScores(BaseModel):
-   filters: dict = {}
 
 class rate(BaseModel):
   line_items: list[LineItem] = None

@@ -21,7 +21,7 @@ def execute_transaction_code(request):
     try:
         weight_limit.save()
     except:
-        raise HTTPException(status_code=403, detail='fcl freight rate weight limit did not save')
+        raise HTTPException(status_code=500, detail='fcl freight rate weight limit did not save')
     update_multiple_service_objects.apply_async(kwargs={"object":weight_limit},queue='low')
     create_audit(request, weight_limit.id)
     return {"id": weight_limit.id}
@@ -69,4 +69,4 @@ def create_audit(request, weight_limit_id):
         object_type = 'FclFreightRateWeightLimit'
       )
     except:
-      raise HTTPException(status_code=404, detail='fcl freight audit did not save')
+      raise HTTPException(status_code=500, detail='fcl freight audit did not save')

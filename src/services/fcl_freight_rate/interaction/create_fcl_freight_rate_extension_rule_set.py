@@ -46,7 +46,6 @@ def create_fcl_freight_rate_extension_rule_set_data(request):
       return e
 
 def execute_transaction_code(request):
-  request = request.__dict__
 
   data = {key:str(value) for key, value in request.items() if key not in ['performed_by_id'] and not value == None}
 

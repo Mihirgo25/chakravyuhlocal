@@ -80,7 +80,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Origin location is not valid")
 
     def validate_destination_location(self):
-        destination_location = maps.list_locations({'filters':{'filters' : {'id': str(self.destination_location_id)}}})['list']
+        destination_location = maps.list_locations({'filters' : {'id': str(self.destination_location_id)}})['list']
         if destination_location:
             destination_location = destination_location[0]
             if destination_location.get('type') in LOCATION_TYPES:

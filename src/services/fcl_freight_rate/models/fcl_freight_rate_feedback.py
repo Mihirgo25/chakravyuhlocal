@@ -8,7 +8,7 @@ from configs.defintions import FCL_FREIGHT_CURRENCIES
 from fastapi import HTTPException
 import datetime
 from database.rails_db import *
-from micro_services.client import *
+from micro_services.client import partner, common, maps
 
 
 class UnknownField(object):
@@ -46,7 +46,6 @@ class FclFreightRateFeedback(BaseModel):
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedbacks_serial_id_seq'::regclass)")])
     service_provider = BinaryJSONField(null=True)
-    shipping_line = BinaryJSONField(null=True)
     origin_trade = BinaryJSONField(null=True)
     destination_trade = BinaryJSONField(null=True)
     source = CharField(index=True, null=True)
@@ -62,6 +61,7 @@ class FclFreightRateFeedback(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_feedbacks'
+
 
     def validate_source(self):
         if self.source and self.source in FEEDBACK_SOURCES:
@@ -85,7 +85,6 @@ class FclFreightRateFeedback(BaseModel):
         if fcl_freight_rate_data:
             return True
         return False    
-
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_service_provider(self.performed_by_org_id)

@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from params import Slab
 from micro_services.client import *
 from database.rails_db import *
+from libs.locations import list_locations
 
 class BaseModel(Model):
     class Meta:
@@ -16,36 +17,36 @@ class BaseModel(Model):
 class FclFreightRateFreeDay(BaseModel):
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
-    continent_id = UUIDField(index=True, null=True)
-    country_id = UUIDField(index=True, null=True)
+    continent_id = UUIDField(null=True)
+    country_id = UUIDField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     free_days_type = CharField(index=True, null=True)
-    free_limit = IntegerField(index=True, null=True)
+    free_limit = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    importer_exporter_id = UUIDField(index=True, null=True)
+    importer_exporter_id = UUIDField(null=True)
     importer_exporter = BinaryJSONField(null=True)
-    is_slabs_missing = BooleanField(index=True, null=True)
+    is_slabs_missing = BooleanField(null=True)
     location_id = UUIDField(index=True, null=True)
     location = BinaryJSONField(null=True)
     location_type = CharField(index=True, null=True)
-    port_id = UUIDField(index=True, null=True)
-    previous_days_applicable = BooleanField(index=True, null=True)
-    rate_not_available_entry = BooleanField(index=True, null=True)
+    port_id = UUIDField(null=True)
+    previous_days_applicable = BooleanField(null=True)
+    rate_not_available_entry = BooleanField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(index=True, null=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     shipping_line = BinaryJSONField(null=True)
-    slabs = BinaryJSONField(index=True, null=True)
+    slabs = BinaryJSONField(null=True)
     specificity_type = CharField(index=True, null=True)
-    trade_id = UUIDField(index=True, null=True)
+    trade_id = UUIDField(null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     # validity_start = DateTimeField(index=True, null=True)
     # validity_end = DateTimeField(index=True, null=True)
-    sourced_by_id = UUIDField(index=True,null=True)
+    sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
-    procured_by_id = UUIDField(index=True,null=True)
+    procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
@@ -57,11 +58,9 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = maps.list_locations({'filters':{'filters' : {'id': str(self.location_id)}}})['list']
-
+        location_data = list_locations({'id': str(self.location_id)})['list']
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]
-
             self.location = location_data
             self.port_id = location_data.get('seaport_id', None)
             self.country_id = location_data.get('country_id', None)
@@ -126,25 +125,6 @@ class FclFreightRateFreeDay(BaseModel):
             return True
         return False
 
-    def validate_uniqueness(self):
-        freight_free_day_cnt = FclFreightRateFreeDay.select().where(
-            FclFreightRateFreeDay.location_id == self.location_id,
-            FclFreightRateFreeDay.trade_type == self.trade_type,
-            FclFreightRateFreeDay.free_days_type == self.free_days_type,
-            FclFreightRateFreeDay.container_size == self.container_size,
-            FclFreightRateFreeDay.container_type == self.container_type,
-            FclFreightRateFreeDay.shipping_line_id == self.shipping_line_id,
-            FclFreightRateFreeDay.service_provider_id == self.service_provider_id,
-            FclFreightRateFreeDay.importer_exporter_id == self.importer_exporter_id,
-            FclFreightRateFreeDay.specificity_type == self.specificity_type,
-            FclFreightRateFreeDay.free_limit == self.free_limit
-        ).count()
-
-        if freight_free_day_cnt <= 1:
-            return True
-
-        return False
-
     def validate_before_save(self):
         if self.slabs:
             for slab in self.slabs:
@@ -152,40 +132,37 @@ class FclFreightRateFreeDay(BaseModel):
                 try:
                     Slab.validate(slab)
                 except:
-                    raise HTTPException(status_code=499, detail=f"Incorrect Slab: {slab}")
+                    raise HTTPException(status_code=422, detail=f"Incorrect Slab: {slab}")
 
         if not self.validate_location_ids():
-            raise HTTPException(status_code=499, detail="Invalid location")
+            raise HTTPException(status_code=422, detail="Invalid location")
 
         if not self.validate_specificity_type():
-            raise HTTPException(status_code=499, detail="Invalid specificity type")
+            raise HTTPException(status_code=422, detail="Invalid specificity type")
 
         if not self.validate_shipping_line():
-            raise HTTPException(status_code=499, detail="Invalid shipping line")
+            raise HTTPException(status_code=422, detail="Invalid shipping line")
 
         if not self.validate_service_provider():
-            raise HTTPException(status_code=499, detail="Invalid service provider")
+            raise HTTPException(status_code=422, detail="Invalid service provider")
 
         if not self.validate_importer_exporter():
-            raise HTTPException(status_code=499, detail="Invalid importer-exporter")
+            raise HTTPException(status_code=422, detail="Invalid importer-exporter")
 
         if not self.validate_free_days_type():
-            raise HTTPException(status_code=499, detail="Invalid free day type")
+            raise HTTPException(status_code=422, detail="Invalid free day type")
 
         if not self.validate_trade_type():
-            raise HTTPException(status_code=499, detail="Invalid trade type")
+            raise HTTPException(status_code=422, detail="Invalid trade type")
 
         if not self.validate_container_size():
-            raise HTTPException(status_code=499, detail="incorrect container size")
+            raise HTTPException(status_code=422, detail="incorrect container size")
 
         if not self.validate_container_type():
-            raise HTTPException(status_code=499, detail="Invalid container type")
+            raise HTTPException(status_code=422, detail="Invalid container type")
 
         if not self.validate_free_limit():
-            raise HTTPException(status_code=499, detail="Empty free limit")
-
-        if not self.validate_uniqueness():
-            raise HTTPException(status_code=499, detail='violates uniqueness validation')
+            raise HTTPException(status_code=422, detail="Empty free limit")
 
     def update_special_attributes(self):
         self.is_slabs_missing = False if self.slabs and len(self.slabs) != 0 else True
@@ -205,17 +182,16 @@ class FclFreightRateFreeDay(BaseModel):
     
     def validate_validity_object(validity_start, validity_end):
         if not validity_start:
-            raise HTTPException(status_code=499, detail=validity_start + ' is invalid')
+            raise HTTPException(status_code=400, detail=validity_start + ' is invalid')
 
         if not validity_end:
-            raise HTTPException(status_code=499, detail=validity_end + ' is invalid')
+            raise HTTPException(status_code=400, detail=validity_end + ' is invalid')
 
         if validity_end > (datetime.date.today() + datetime.timedelta(days = 60)):
-            raise HTTPException(status_code=499, detail=validity_end + ' can not be greater than 60 days from current date')
+            raise HTTPException(status_code=400, detail=validity_end + ' can not be greater than 60 days from current date')
 
         if validity_start < (datetime.date.today() - datetime.timedelta(days = 15)):
-            raise HTTPException(status_code=499, detail=validity_start + ' can not be less than 15 days from current date')
+            raise HTTPException(status_code=400, detail=validity_start + ' can not be less than 15 days from current date')
 
         if validity_end < validity_start:
-            raise HTTPException(status_code=499, detail=validity_end + ' can not be lesser than start validity')
-
+            raise HTTPException(status_code=400, detail=validity_end + ' can not be lesser than start validity')

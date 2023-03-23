@@ -3,7 +3,7 @@ from database.db_session import db
 from micro_services.client import *
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from celery_worker import create_communication_background
+from celery_worker import create_communication_background, update_multiple_service_objects
 
 
 def create_fcl_freight_rate_request(request):
@@ -49,6 +49,8 @@ def execute_transaction_code(request):
         request_object.save()
 
         create_audit(request, request_object.id)
+
+        update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
 
         send_notifications_to_supply_agents(request)
 

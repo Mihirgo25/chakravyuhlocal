@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from configs.fcl_freight_rate_constants import RATE_CONSTANT_MAPPING
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from micro_services.client import common
@@ -25,16 +25,18 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
         query = apply_indirect_filters(query, filters)
         
     query = get_join_query(query)
-    stats = get_stats(query, filters, is_stats_required, performed_by_id) or {}
+    query = query.select(FclFreightRateFeedback, FclFreightRate.origin_port, FclFreightRate.destination_port, FclFreightRate.shipping_line)
+    print(query)
+    stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     query = get_page(query, page, page_limit)
     data = get_data(query)
-    print(query)
+
     pagination_data = get_pagination_data(query, page, page_limit)
     return {'list': data } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
-    query = query.order_by(FclFreightRateFeedback.created_at.desc()).paginate(page, page_limit)
+    query = query.order_by(FclFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
     return query
 
 def get_join_query(query):
@@ -81,8 +83,11 @@ def apply_supply_agent_id_filter(query, filters):
 def apply_cogo_entity_id_filter(query, filters):
     filter_entity_id = filters['cogo_entity_id']
 
-    cogo_entity_ids = [t["cogo_entity_id"] for t in RATE_CONSTANT_MAPPING if filter_entity_id in t["allowed_entity_ids"] if t["cogo_entity_id"]]
-    query = query.where(FclFreightRate.cogo_entity_id == cogo_entity_ids)
+    cogo_entity_ids = None
+    if filter_entity_id in RATE_ENTITY_MAPPING:
+        cogo_entity_ids = RATE_ENTITY_MAPPING[filter_entity_id]
+
+    query = query.where(FclFreightRate.cogo_entity_id << cogo_entity_ids)
 
     return query
 
@@ -131,7 +136,7 @@ def apply_similar_id_filter(query, filters):
          .select(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity)
          .join(FclFreightRate, on=(FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id))
          .where(FclFreightRateFeedback.id == filters['similar_id'])
-         .first())
+         .limit(1))
 
     query = query.where(FclFreightRateFeedback.id != filters.get('similar_id'))
     query = query.where(FclFreightRate.origin_port_id == feedback_data.origin_port_id, FclFreightRate.destination_port_id == feedback_data.destination_port_id, FclFreightRate.container_size == feedback_data.container_size, FclFreightRate.container_type == feedback_data.container_type, FclFreightRate.commodity == feedback_data.commodity)
@@ -143,16 +148,8 @@ def get_data(query):
     fcl_freight_rate_ids = [row['fcl_freight_rate_id'] for row in data]
     fcl_freight_rates = list(FclFreightRate.select().where(FclFreightRate.id.in_(fcl_freight_rate_ids)).dicts())
     fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}
-    # service_provider_id_hash = {}
-    # organisation_ids = []
-    # for obj in data:
-    #     if obj.get('booking_params') and obj['booking_params'].get('rate_card') and obj['booking_params']['rate_card'].get('service_rates'):
-    #         for key, value in obj['booking_params']['rate_card']['service_rates'].items():
-    #             service_provider_id_hash[key] = value['service_provider_id']
-    #             organisation_ids.append(value['service_provider_id'])
-    #             organisation_ids.append(obj['performed_by_org_id'])
 
-    # organisation_ids = list(set(organisation_ids))
+    new_data = []
     for object in data:
         rate = fcl_freight_rate_mappings[object.get('fcl_freight_rate_id', None)] or {}
         object['container_size'] = rate.get('container_size')
@@ -172,9 +169,10 @@ def get_data(query):
         if object['booking_params'].get('rate_card', {}).get('service_rates', {}):
             for key, value in object['booking_params']['rate_card']['service_rates'].items():
                 service_provider = object.get('service_provider_id', None)
-        if service_provider:
-            object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
-    return data
+                if service_provider:
+                    object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
+        new_data.append(object)
+    return new_data
 
 # def add_service_objects(data):
 
@@ -249,7 +247,7 @@ def get_pagination_data(query, page, page_limit):
     }
     return params
 
-def get_stats(query, filters, is_stats_required, performed_by_id):
+def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
     
@@ -275,8 +273,8 @@ def get_stats(query, filters, is_stats_required, performed_by_id):
       'total': method_responses['get_total'],
       'total_closed_by_user': method_responses['get_total_closed_by_user'],
       'total_opened_by_user': method_responses['get_total_opened_by_user'],
-      'total_open': method_responses['get_status_count']['active'] if method_responses['get_status_count'] else 0,
-      'total_closed': method_responses['get_status_count']['inactive'] if method_responses['get_status_count'] else 0
+      'total_open': method_responses['get_status_count'].get('active') if method_responses['get_status_count'] else 0,
+      'total_closed': method_responses['get_status_count'].get('inactive') if method_responses['get_status_count'] else 0
     }
     return { 'stats': stats }
 
@@ -284,20 +282,20 @@ def get_total(query, performed_by_id):
     try:
         return {'get_total':query.count()}
     except:
-        return {'get_total' : None}
+        return {'get_total' : 0}
 
 def get_total_closed_by_user(query, performed_by_id):
     try:
         return {'get_total_closed_by_user':query.where(FclFreightRateFeedback.status == 'inactive', FclFreightRateFeedback.closed_by_id == performed_by_id).count() }
     except:
-        return {'get_total_closed_by_user':None}
+        return {'get_total_closed_by_user':0}
 
 
 def get_total_opened_by_user(query, performed_by_id):
     try:
         return {'get_total_opened_by_user' : query.where(FclFreightRateFeedback.status == 'active', FclFreightRateFeedback.closed_by_id == performed_by_id).count() }
     except:
-        return {'get_total_opened_by_user' : None}
+        return {'get_total_opened_by_user' : 0}
 
 def get_status_count(query, performed_by_id):
     try:
@@ -307,5 +305,5 @@ def get_status_count(query, performed_by_id):
             result[row.status] = row.count_all
         return {'get_status_count' : result}
     except:
-        return {'get_status_count' : None}
+        return {'get_status_count' : 0}
 

@@ -15,7 +15,6 @@ def list_fcl_freight_rate_seasonal_surcharges(filters = {}, page_limit = 10, pag
         filters = json.loads(filters)
 
       query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateSeasonalSurcharge)
-      query = apply_indirect_filters(query, filters)
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
@@ -52,7 +51,7 @@ def get_data(query, page, page_limit, pagination_data_required):
             FclFreightRateSeasonalSurcharge.destination_location,
             FclFreightRateSeasonalSurcharge.service_provider
     )
-    data = [model_to_dict(item) for item in data.execute() if item.validity_end < datetime.now()]
+    data = [model_to_dict(item) for item in data.execute() if item.validity_end < datetime.now().date()]
     return {'get_data' : data}
 
      

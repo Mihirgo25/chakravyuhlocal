@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from micro_services.client import *
-from database.rails_db import *
+from database.rails_db import get_shipping_line
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -46,8 +46,6 @@ class FclFreightRateLocal(BaseModel):
     plugin_id = UUIDField(index=True, null=True)
     port_id = UUIDField(index=True, null=True)
     port = BinaryJSONField(null=True)
-    priority_score = IntegerField(null=True)
-    priority_score_updated_at = DateTimeField(null=True)
     procured_by_id = UUIDField(index=True, null=True)
     procured_by = BinaryJSONField(null=True)
     rate_not_available_entry = BooleanField(null=True)
@@ -134,8 +132,7 @@ class FclFreightRateLocal(BaseModel):
     def update_line_item_messages(self):
 
         response = {}
-
-        response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line_id, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
+        response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
 
         self.line_items_error_messages = response['line_items_error_messages'],
         self.is_line_items_error_messages_present = response['is_line_items_error_messages_present'],
@@ -159,13 +156,13 @@ class FclFreightRateLocal(BaseModel):
             location_ids.append(str(self.main_port_id))
         ports = maps.list_locations({'filters':{'id': location_ids}})['list']
         for port in ports:
-            if port.get('id') == self.port_id:
+            if str(port.get('id')) == str(self.port_id):
                 self.country_id = port.get('country_id', None)
                 self.trade_id = port.get('trade_id', None) 
                 self.continent_id = port.get('continent_id', None)
                 self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
                 self.port = port
-            elif self.main_port_id and port.get('id') == self.main_port_id:
+            elif self.main_port_id and str(port.get('id')) == str(self.main_port_id):
                 self.main_port = port
 
 

@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from configs.organization_constants import CATEGORY_TYPES
 from configs.global_constants import CONTAINER_SIZES
 from micro_services.client import *
+import datetime
 from database.rails_db import *
 
 class BaseModel(Model):
@@ -15,28 +16,28 @@ class BaseModel(Model):
 class FclWeightSlabsConfiguration(BaseModel):
     commodity = CharField(index=True, null=True)
     container_size = CharField(index=True, null=True)
-    created_at = DateTimeField()
-    currency = CharField()
+    created_at = DateTimeField(default=datetime.datetime.now)
+    currency = CharField(null = True)
     destination_location_id = UUIDField(index=True, null=True)
     destination_location_type = CharField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporter_id = UUIDField(index=True, null=True)
-    is_cogo_assured = BooleanField(index=True, null=True)
+    is_cogo_assured = BooleanField(null=True)
     max_weight = DoubleField(index=True)
     organization_category = CharField(index=True, null=True)
     origin_location_id = UUIDField(index=True, null=True)
     origin_location_type = CharField(index=True, null=True)
-    price = DoubleField()
+    price = DoubleField(null =True)
     service_provider_id = UUIDField(index=True, null=True)
     shipping_line_id = UUIDField(index=True, null=True)
     slabs = BinaryJSONField(null = True)
     status = CharField(index=True)
     trade_type = CharField(index=True, null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        table_name = 'fcl_weight_slabs_configurations'
-    
+        table_name = 'fcl_weight_slabs_configurations'        
+
     def validate_origin_location_id(self):
         if not self.origin_location_id:
             pass
