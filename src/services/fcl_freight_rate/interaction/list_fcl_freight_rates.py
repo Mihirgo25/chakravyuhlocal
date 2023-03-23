@@ -233,12 +233,12 @@ def apply_is_destination_plugin_missing_filter(query,filters):
 
 
 def apply_is_rate_about_to_expire_filter(query, filters):
-  query = query.where(not (FclFreightRate.last_rate_available_date == None)).where(FclFreightRate.last_rate_available_date >= datetime.now().date()).where(FclFreightRate.last_rate_available_date < (datetime.now().date() + timedelta(days = SEARCH_START_DATE_OFFSET)))
+  query = query.where(FclFreightRate.last_rate_available_date != None).where(FclFreightRate.last_rate_available_date >= datetime.now().date()).where(FclFreightRate.last_rate_available_date < (datetime.now().date() + timedelta(days = SEARCH_START_DATE_OFFSET)))
   return query
 
 
 def apply_is_rate_not_available_filter(query,filters):
-  query = query.where((FclFreightRate.last_rate_available_date == None) or (FclFreightRate.last_rate_available_date < datetime.now().date()))
+  query = query.where((FclFreightRate.last_rate_available_date == None) | (FclFreightRate.last_rate_available_date < datetime.now().date()))
   return query
 
 
@@ -249,13 +249,13 @@ def apply_is_rate_available_filter(query, filters):
 
 def apply_origin_location_ids_filter(query, filters):
   locations_ids = filters['origin_location_ids']
-  query = query.where(FclFreightRate.origin_location_ids.in_(locations_ids))
+  query = query.where(FclFreightRate.origin_location_ids.contains(locations_ids))
   return query
 
 
 def apply_destination_location_ids_filter(query,filters):
   locations_ids = filters['destination_location_ids']
-  query = query.where(FclFreightRate.destination_location_ids.in_(locations_ids))
+  query = query.where(FclFreightRate.destination_location_ids.contains(locations_ids))
   return query 
 
 
@@ -282,6 +282,6 @@ def apply_validity_end_less_than_filter(query,filters):
   return query
 
 def apply_procured_by_id_filter(query, filters):
-    query = query.where(FclFreightRate.procured_by_id == filters['procured_by_id'])
-    return query
+  query = query.where(FclFreightRate.procured_by_id == filters['procured_by_id'])
+  return query
 

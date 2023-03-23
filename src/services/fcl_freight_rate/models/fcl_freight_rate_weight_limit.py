@@ -2,10 +2,9 @@ from peewee import *
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
-from configs.fcl_freight_rate_constants import  LOCATION_PAIR_HIERARCHY
 from fastapi import HTTPException
 from params import Slab
-from micro_services.client import *
+from micro_services.client import maps
 
 class BaseModel(Model):
     class Meta:
@@ -41,9 +40,9 @@ class FclFreightRateWeightLimit(BaseModel):
     shipping_line = BinaryJSONField(null=True)
     slabs = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    sourced_by_id = UUIDField(index=True,null=True)
+    sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
-    procured_by_id = UUIDField(index=True,null=True)
+    procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
     
     def save(self, *args, **kwargs):
@@ -86,27 +85,27 @@ class FclFreightRateWeightLimit(BaseModel):
                     self.origin_destination_location_type = str(self.origin_location_type) + ':' + str(self.destination_location_type)
                     count += 1
             if count != 2:
-                raise HTTPException(status_code=499, detail="Invalid location")
+                raise HTTPException(status_code=404, detail="Invalid location")
 
-    def valid_uniqueness(self):
-        freight_weight_limit_cnt = FclFreightRateWeightLimit.select().where(
-            FclFreightRateWeightLimit.origin_location_id == self.origin_location_id,
-            FclFreightRateWeightLimit.destination_location_id == self.destination_location_id,
-            FclFreightRateWeightLimit.container_size == self.container_size,
-            FclFreightRateWeightLimit.container_type == self.container_type,
-            FclFreightRateWeightLimit.shipping_line_id == self.shipping_line_id,
-            FclFreightRateWeightLimit.service_provider_id == self.service_provider_id
-        ).count()
+    # def valid_uniqueness(self):
+    #     freight_weight_limit_cnt = FclFreightRateWeightLimit.select().where(
+    #         FclFreightRateWeightLimit.origin_location_id == self.origin_location_id,
+    #         FclFreightRateWeightLimit.destination_location_id == self.destination_location_id,
+    #         FclFreightRateWeightLimit.container_size == self.container_size,
+    #         FclFreightRateWeightLimit.container_type == self.container_type,
+    #         FclFreightRateWeightLimit.shipping_line_id == self.shipping_line_id,
+    #         FclFreightRateWeightLimit.service_provider_id == self.service_provider_id
+    #     ).count()
 
-        if self.id and freight_weight_limit_cnt == 1:
-            return True
-        if not self.id and freight_weight_limit_cnt == 0:
-            return True
-        return False
+    #     if self.id and freight_weight_limit_cnt == 1:
+    #         return True
+    #     if not self.id and freight_weight_limit_cnt == 0:
+    #         return True
+    #     return False
 
     def validate_free_limit(self):
       if not self.free_limit:
-        raise HTTPException(status_code=499, detail="free limit required")
+        raise HTTPException(status_code=404, detail="free limit required")
 
     def validate_slabs(self):
         if self.slabs:

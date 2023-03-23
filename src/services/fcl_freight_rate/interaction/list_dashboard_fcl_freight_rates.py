@@ -9,7 +9,7 @@ def list_dashboard_fcl_freight_rates():
     port_pairs = get_port_pairs()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = len(port_pairs)) as executor:
-        futures = [executor.submit(get_rate, port_pair, fcl_service_provider_ids, air_service_provider_ids) for port_pair in port_pairs]
+        futures = [executor.submit(get_rate, port_pair, fcl_service_provider_ids, air_service_provider_ids) for port_pair in port_pairs if port_pair['service'] == 'fcl_freight']
         lists = {}
         for future in futures:
             result = future.result()
