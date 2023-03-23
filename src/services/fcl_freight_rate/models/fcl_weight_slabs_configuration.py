@@ -33,6 +33,7 @@ class FclWeightSlabsConfiguration(BaseModel):
     status = CharField(index=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField()
+    container_type = CharField(index=True, null=True)
 
     class Meta:
         table_name = 'fcl_weight_slabs_configurations'

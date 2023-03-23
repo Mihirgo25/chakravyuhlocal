@@ -250,7 +250,32 @@ def get_fcl_freight_local_rate_cards_data(trade_type: str, port_id: str, country
     return data
 
 @app.post("/get_fcl_freight_rate_cards")
-def get_fcl_freight_rate_cards_data(origin_port_id: str, origin_country_id: str, destination_port_id: str, destination_country_id: str,  trade_type: str, importer_exporter_id: str, include_origin_local: bool, include_destination_local: bool, container_size: str, container_type: str, containers_count: int,  bls_count: int, validity_start: str, validity_end: str, commodity: str = None, shipping_line_id: str = None, service_provider_id: str = None, include_confirmed_inventory_rates: bool =False, additional_services: str = None, ignore_omp_dmp_sl_sps: str = None, include_destination_dpd: bool = False, cargo_weight_per_container: int = None, cogo_entity_id: str = None):
+def get_fcl_freight_rate_cards_data(
+    origin_port_id: str, 
+    origin_country_id: str, 
+    destination_port_id: str, 
+    destination_country_id: str,    
+    container_size: str, 
+    container_type: str, 
+    containers_count: int,  
+    validity_start: str, 
+    validity_end: str, 
+    trade_type: str = None,
+    include_destination_local: bool = True, 
+    include_origin_local: bool = True, 
+    cogo_entity_id: str = None,
+    importer_exporter_id: str = None,
+    bls_count: int = 1,
+    commodity: str = None, 
+    shipping_line_id: str = None, 
+    service_provider_id: str = None, 
+    include_confirmed_inventory_rates: bool =False, 
+    additional_services: str = None, 
+    ignore_omp_dmp_sl_sps: str = None, 
+    include_destination_dpd: bool = False, 
+    cargo_weight_per_container: int = None, 
+ 
+):
     if additional_services:
         additional_services = json.loads(additional_services)
     else:
@@ -597,7 +622,7 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
 
 @app.post("/create_fcl_freight_rate_extension_rule_set")
 def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet):
-    return create_fcl_freight_rate_extension_rule_set_data(request)
+    return create_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
 
 @app.post("/extend_create_fcl_freight_rate")
 def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
@@ -605,7 +630,7 @@ def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
 
 @app.post("/update_fcl_freight_rate_extension_rule_set")
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet):
-    return update_fcl_freight_rate_extension_rule_set_data(request)
+    return update_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
 
 @app.get("/list_fcl_freight_rate_extension_rule_set")
 def list_fcl_freight_rate_extension_rule_set(
