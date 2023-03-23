@@ -708,7 +708,7 @@ def update_fcl_freight_rate_weight_limit_data(request: UpdateFclFreightRateWeigh
 @app.post("/create_fcl_freight_rate_free_day")
 def create_fcl_freight_rate_free_day_data(request: CreateFclFreightRateFreeDay):
     data = create_fcl_freight_rate_free_day(request.dict(exclude_none=False))
-    return data
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
 
 @app.get("/get_fcl_freight_rate_free_day")
 def get_fcl_freight_rate_free_day_data(
