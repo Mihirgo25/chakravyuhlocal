@@ -597,7 +597,7 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, response: Response):
 
 @app.post("/create_fcl_freight_rate_extension_rule_set")
 def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet):
-    return create_fcl_freight_rate_extension_rule_set_data(request)
+    return create_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
 
 @app.post("/extend_create_fcl_freight_rate")
 def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
@@ -605,7 +605,7 @@ def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
 
 @app.post("/update_fcl_freight_rate_extension_rule_set")
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet):
-    return update_fcl_freight_rate_extension_rule_set_data(request)
+    return update_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
 
 @app.get("/list_fcl_freight_rate_extension_rule_set")
 def list_fcl_freight_rate_extension_rule_set(
