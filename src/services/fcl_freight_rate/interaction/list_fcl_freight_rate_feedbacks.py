@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from configs.fcl_freight_rate_constants import RATE_CONSTANT_MAPPING
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING
 from playhouse.shortcuts import model_to_dict
 from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from micro_services.client import common
@@ -83,8 +83,11 @@ def apply_supply_agent_id_filter(query, filters):
 def apply_cogo_entity_id_filter(query, filters):
     filter_entity_id = filters['cogo_entity_id']
 
-    cogo_entity_ids = [t["cogo_entity_id"] for t in RATE_CONSTANT_MAPPING if filter_entity_id in t["allowed_entity_ids"] if t["cogo_entity_id"]]
-    query = query.where(FclFreightRate.cogo_entity_id == cogo_entity_ids)
+    cogo_entity_ids = None
+    if filter_entity_id in RATE_ENTITY_MAPPING:
+        cogo_entity_ids = RATE_ENTITY_MAPPING[filter_entity_id]
+
+    query = query.where(FclFreightRate.cogo_entity_id << cogo_entity_ids)
 
     return query
 
