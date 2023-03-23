@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 
-def create_audit(request, fcl_freight_rate_commodity_surcharge_id):
+def create_audit(request):
     audit_data = {}
     audit_data['price'] = request['price']
     audit_data['currency'] = request['currency']
@@ -14,7 +14,9 @@ def create_audit(request, fcl_freight_rate_commodity_surcharge_id):
     FclServiceAudit.create(
         action_name = 'update',
         performed_by_id = request['performed_by_id'],
-        data = audit_data
+        data = audit_data,
+        object_id = request['id'],
+        object_type='FclFreightRateCommoditySurcharge'
     )
 
 def update_fcl_freight_rate_commodity_surcharge(request):
@@ -38,4 +40,6 @@ def execute_transaction_code(request):
     if not fcl_freight_rate_commodity_surcharge.save():
         raise HTTPException(status_code=422, detail="Commodity Surcharge not updated")
 
-    create_audit(request, fcl_freight_rate_commodity_surcharge.id)
+    create_audit(request)
+
+    return {'id':str(fcl_freight_rate_commodity_surcharge.id)}

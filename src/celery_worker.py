@@ -1,6 +1,5 @@
 from celery import Celery
 import os
-import time
 from configs.env import *
 from micro_services.client import organization, common
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
@@ -9,6 +8,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from libs.locations import list_locations
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -126,6 +126,11 @@ def send_closed_notifications_to_sales_agent_feedback(object):
 def bulk_operation_perform_action_functions(action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
     eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id={cogo_entity_id})")
 
+
+@celery.task()
+def update_freight_objects_for_commodity_surcharge(surcharge_object):
+
+    surcharge_object.update_freight_objects()
 
 
 

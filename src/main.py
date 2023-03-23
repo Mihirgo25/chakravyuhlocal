@@ -604,8 +604,8 @@ def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalA
     data = jsonable_encoder(data)
     return data
 
-@app.put("/update_fcl_freight_slabs_configuration")
-def update_fcl_freight_slabs_configuration_data(request: UpdateFclWeightSlabsConfiguration):
+@app.put("/update_fcl_weight_slabs_configuration")
+def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConfiguration):
     data = update_fcl_weight_slabs_configuration(request.dict(exclude_none=True))
     data = jsonable_encoder(data)
     return data
@@ -861,12 +861,11 @@ def update_fcl_freight_commodity_cluster_data(request:UpdateFclFreightCommodityC
 
 @app.put('/update_fcl_freight_commodity_surcharge')
 def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateCommoditySurcharge):
-    # try:
-    data = update_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
-    data = jsonable_encoder(data)
-    #     return JSONResponse(status_code=200, content = data)
-    # except:
-    #     return JSONResponse(status_code=500, content = {'success':False})
+    try:
+        data = update_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content = data)
+    except:
+        return JSONResponse(status_code=500, content = {'success':False})
 
 
 @app.post("/create_fcl_freight_rate_seasonal_surcharge")
