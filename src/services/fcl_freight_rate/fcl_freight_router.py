@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
-from typing import Union
+from typing import Union, List
 import json
 from fastapi.encoders import jsonable_encoder
+from params import *
+from database.create_tables import create_table
+from datetime import datetime
 
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
@@ -74,10 +77,6 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_pric
 from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster import update_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
-from typing import Union, List
-from params import *
-from database.create_tables import create_table
-from datetime import datetime
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
 from configs.defintions import yml_obj
