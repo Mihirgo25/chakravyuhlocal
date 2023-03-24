@@ -421,7 +421,6 @@ def create_fcl_freight_local_rate(
             object['data']['line_items'][-1]['slabs'].append(slab)
 
     request_params = object
-    print(request_params, "sak final")
     object["rate_sheet_id"] = params['rate_sheet_id']
     object["performed_by_id"] = created_by_id
     object["service_provider_id"] = params['service_provider_id']
@@ -457,7 +456,7 @@ def write_fcl_freight_local_object(rows, csv, params, converted_file, row):
 
 def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
-    print('-------------------------------------------------------------Done-------------------------------', object_validity, rows)
+    print('-------------------------------------------------------------Done-------------------------------', object_validity)
     if object_validity.get("valid"):
             list_opt = list(row.values())
             csv.writerow(list_opt)
@@ -582,11 +581,9 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     object['procured_by_id'] = procured_by_id
     object['sourced_by_id'] = sourced_by_id
     request_params = object
-    print(request_params, 'sak final')
     validation = write_fcl_freight_free_day_object(request_params, csv_writer, params,  converted_file, row)
     if validation.get('valid'):
         create_fcl_freight_rate_free_day(request_params)
-        print('done')
     else:
         print('error')
     return
@@ -663,9 +660,6 @@ def create_fcl_freight_rate_commodity_surcharge(params, converted_file, rows, cr
     create_fcl_freight_rate_commodity_surcharge(object)
     return
 
-
-# def validate_fcl_freight_seasonal_surcharge(params):
-#     return
 
 
 def write_fcl_freight_seasonal_surcharge_object(rows, csv, params, converted_file, row):
@@ -1133,7 +1127,6 @@ def process_fcl_freight_freight(params, converted_file):
         return
     set_last_line(total_lines, params)
     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * total_lines )* 100
-    print('final_percent', percent)
     upload_file_to_s3(get_file_path(params))
     set_processed_percent(percent, params)
 
@@ -1212,14 +1205,12 @@ def create_fcl_freight_freight_rate(
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
-    print(request_params, "sak final")
     validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, row)
     if validation.get('valid'):
         create_fcl_freight_rate_data(request_params)
         if rows[0].get('extend_rates'):
             request_params['extend_rates'] = True
             extend_create_fcl_freight_rate_data(request_params)
-        print('done')
     else:
         print('error')
 
@@ -1233,9 +1224,7 @@ def validate_and_process_rate_sheet_converted_file(params):
             params,converted_file
         )
         final_time = time.time() -initial_time
-        print(get_processed_percent(params))
         print(final_time, "final_time")
-        print("done")
     params['status'] = 'complete'
     for _ in params['converted_files']:
         delete_temp_data

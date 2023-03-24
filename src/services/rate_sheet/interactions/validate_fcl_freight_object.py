@@ -31,50 +31,49 @@ def validate_fcl_freight_object(module, object):
 def get_freight_object(object):
     errors = {}
     rate_object = {}
-    # try:
-    print(object)
-    for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
-        object[f'{port}_id'] = get_port_id(object.get(port))
-        # del object[port]
-    object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-    # del object['shipping_line_id']
-    object['validity_start'] = object['validity_start']
-    object['validity_start'] = object.get('validity_start')
-    object['validity_end'] = object.get('validity_end')
-    keys_to_extract = ['origin_port_id',
-    'origin_main_port_id',
-    'destination_port_id',
-    'destination_main_port_id',
-    'container_size',
-    'container_type',
-    'commodity',
-    'shipping_line_id',
-    'service_provider_id',
-    'importer_exporter_id',
-    'cogo_entity_id']
-    res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-    res['rate_not_available_entry'] = False
-    rate_object = FclFreightRate.select()
-    for key ,val in res.items():
-        rate_object = rate_object.where(attrgetter(key)(FclFreightRate) == val)
-    if rate_object.count()==0:
-        rate_object = FclFreightRate(**res)
-        rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
-    for line_item in object['line_items']:
-        if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
-            return "line_item_price is invalid"
-        if line_item['unit'] not in VALID_UNITS:
-            return "unit is_invalid"
-    if 'schedule_type' in object and object['schedule_type'] not in SCHEDULE_TYPES:
-        return f"is invalid, valid schedule types are {SCHEDULE_TYPES}"
-    if 'payment_term' in object and object['payment_term'] not in PAYMENT_TERM:
-        return f"is invalid, valid payment terms are {PAYMENT_TERM}"
-    rate_object.validate_line_items(object['line_items'])
-    rate_object.weight_limit = object.get('weight_limit')
-    for key, val in object['destination_local']:
-        rate_object.destination_local[key] = val
-    # except Exception as e:
-    #         errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
+    try:
+        for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
+            object[f'{port}_id'] = get_port_id(object.get(port))
+            # del object[port]
+        object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
+        # del object['shipping_line_id']
+        object['validity_start'] = object['validity_start']
+        object['validity_start'] = object.get('validity_start')
+        object['validity_end'] = object.get('validity_end')
+        keys_to_extract = ['origin_port_id',
+        'origin_main_port_id',
+        'destination_port_id',
+        'destination_main_port_id',
+        'container_size',
+        'container_type',
+        'commodity',
+        'shipping_line_id',
+        'service_provider_id',
+        'importer_exporter_id',
+        'cogo_entity_id']
+        res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
+        res['rate_not_available_entry'] = False
+        rate_object = FclFreightRate.select()
+        for key ,val in res.items():
+            rate_object = rate_object.where(attrgetter(key)(FclFreightRate) == val)
+        if rate_object.count()==0:
+            rate_object = FclFreightRate(**res)
+            rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
+        for line_item in object['line_items']:
+            if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
+                return "line_item_price is invalid"
+            if line_item['unit'] not in VALID_UNITS:
+                return "unit is_invalid"
+        if 'schedule_type' in object and object['schedule_type'] not in SCHEDULE_TYPES:
+            return f"is invalid, valid schedule types are {SCHEDULE_TYPES}"
+        if 'payment_term' in object and object['payment_term'] not in PAYMENT_TERM:
+            return f"is invalid, valid payment terms are {PAYMENT_TERM}"
+        rate_object.validate_line_items(object['line_items'])
+        rate_object.weight_limit = object.get('weight_limit')
+        for key, val in object['destination_local']:
+            rate_object.destination_local[key] = val
+    except Exception as e:
+            errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
     if 'errors' in errors:
         if isinstance(rate_object, dict):
             rate_object['error'] = errors['errors']
@@ -127,40 +126,44 @@ def get_local_object(object):
 
 def get_free_day_object(object):
     print(object)
-    location = get_location(object.get('location'), object.get('location_type'))[0]
-    object['location_id'] = location.get('id')
-    object['port_id'] = location.get('seaport_id')
-    object['country_id'] = location.get('country_id')
-    object['trade_id'] = location.get('trade_id')
-    object['continent_id'] = location.get('continent_id')
-    # del object['location']
-    object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line'))
-    # del object['shipping_line']
-    object['importer_exporter_id'] = get_importer_exporter_id(object.get('importer_exporter'))
-    # del object['importer_exporter']
-    keys_to_extract = ['location_id',
-      'trade_type',
-      'container_size',
-      'container_type',
-      'shipping_line_id',
-      'specificity_type',
-      'free_days_type',
-      'shipping_line_id',
-      'service_provider_id',
-      'importer_exporter_id']
+    errors = {}
+    try:
+        location = get_location(object.get('location'), object.get('location_type'))[0]
+        object['location_id'] = location.get('id')
+        object['port_id'] = location.get('seaport_id')
+        object['country_id'] = location.get('country_id')
+        object['trade_id'] = location.get('trade_id')
+        object['continent_id'] = location.get('continent_id')
+        # del object['location']
+        object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line'))
+        # del object['shipping_line']
+        object['importer_exporter_id'] = get_importer_exporter_id(object.get('importer_exporter'))
+        # del object['importer_exporter']
+        keys_to_extract = ['location_id',
+        'trade_type',
+        'container_size',
+        'container_type',
+        'shipping_line_id',
+        'specificity_type',
+        'free_days_type',
+        'shipping_line_id',
+        'service_provider_id',
+        'importer_exporter_id']
 
-    res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-    free_day = FclFreightRateFreeDay.select()
-    for key ,val in res.items():
-        free_day = free_day.where(attrgetter(key)(FclFreightRateFreeDay) == val)
-    if free_day.count()==0:
-        free_day = FclFreightRateFreeDay(**res)
-    for key, val in object.items():
-        if isinstance(free_day,dict):
-            free_day[key] = val
-        else:
-            free_day.key = val
-            free_day = free_day.__dict__
+        res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
+        free_day = FclFreightRateFreeDay.select()
+        for key ,val in res.items():
+            free_day = free_day.where(attrgetter(key)(FclFreightRateFreeDay) == val)
+        if free_day.count()==0:
+            free_day = FclFreightRateFreeDay(**res)
+        for key, val in object.items():
+            if isinstance(free_day,dict):
+                free_day[key] = val
+            else:
+                free_day.key = val
+                free_day = free_day.__dict__
+    except Exception as e:
+            errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
     # if object.get('location_id'):
     # will have to figure out how ot add error here
     return free_day
