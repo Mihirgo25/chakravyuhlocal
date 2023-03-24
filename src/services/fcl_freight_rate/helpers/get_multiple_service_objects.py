@@ -6,7 +6,6 @@ from database.rails_db import get_service_provider,get_shipping_line,get_user
 def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'shipping_line_id'):  
         shipping_line = get_shipping_line(freight_object.shipping_line_id)
-        shipping_line[0]['id'] = str(shipping_line[0]['id'])
         freight_object.shipping_line = shipping_line[0]  
     user_list =[]
     if hasattr(freight_object,'procured_by_id'):
@@ -21,7 +20,6 @@ def get_multiple_service_objects(freight_object):
     if user_list:
         user_data = get_user(user_list)
         for user in user_data:
-            user['id'] = str(user['id'])
             if hasattr(freight_object,'procured_by_id') and user['id']==str(freight_object.procured_by_id):
                 freight_object.procured_by= user        
             elif hasattr(freight_object,'sourced_by_id') and user['id']== str(freight_object.sourced_by_id):
@@ -42,7 +40,6 @@ def get_multiple_service_objects(freight_object):
     if organization_list:
         organization_data = get_service_provider(organization_list)
         for organization in organization_data:
-            organization['id']= str(organization['id'])
             if hasattr(freight_object,'service_provider_id') and organization['id']==str(freight_object.service_provider_id):
                 freight_object.service_provider = organization       
             if hasattr(freight_object,'importer_exporter_id') and organization['id']==str(freight_object.importer_exporter_id):

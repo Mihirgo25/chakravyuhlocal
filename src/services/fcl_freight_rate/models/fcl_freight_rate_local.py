@@ -132,7 +132,7 @@ class FclFreightRateLocal(BaseModel):
     def update_line_item_messages(self):
 
         response = {}
-        response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
+        response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line_id, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
 
         self.line_items_error_messages = response['line_items_error_messages'],
         self.is_line_items_error_messages_present = response['is_line_items_error_messages_present'],
