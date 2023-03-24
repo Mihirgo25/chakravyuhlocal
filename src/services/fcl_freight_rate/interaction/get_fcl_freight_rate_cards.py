@@ -8,8 +8,7 @@ from configs.defintions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
-from micro_services.client import organization
-from database.rails_db import get_shipping_line
+from database.rails_db import get_shipping_line, get_eligible_orgs
 
 def initialize_freight_query(requirements):
     freight_query = FclFreightRate.select(
@@ -564,7 +563,7 @@ def build_response_list(freight_rates, request):
 
 
 def discard_noneligible_lsps(freight_rates, requirements):
-    ids = organization.get_eligible_service_organizations({"service": "fcl_freight"})["list"]
+    ids = get_eligible_orgs('fcl_freight')
     
     freight_rates = [rate for rate in freight_rates if rate["service_provider_id"] in ids]
     return freight_rates

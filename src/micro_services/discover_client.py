@@ -12,13 +12,10 @@ def get_instance_url(service_name=None):
         if service_name in ["organization", "partner"]:
             url = url + "/{}".format(service_name)
         return url
-    port = COMMON_SERVICE_PORT
     service = COMMON_SERVICE_NAME   
     if service_name in ['organization', 'user', 'lead', 'partner']:
-        port = AUTH_SERVICE_PORT
         service = AUTH_SERVICE_NAME
     if service_name == 'location':
-        port = COGOMAPS_SERVICE_PORT
         service = COGOMAPS_SERVICE_NAME
     
     if service_name == 'location':
@@ -32,7 +29,7 @@ def get_instance_url(service_name=None):
         HealthStatus='HEALTHY',
         )
     service_ip_address = None
-    service_port = port
+    service_port = None
     try:
         attributes = response['Instances'][0]['Attributes']
         service_ip_address = attributes['AWS_INSTANCE_IPV4']

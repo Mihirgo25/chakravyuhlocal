@@ -1,6 +1,5 @@
 import psycopg2
 from configs.env import *
-from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 conn = psycopg2.connect(
     database=RAILS_DATABASE_NAME,
     host=RAILS_DATABASE_HOST,
@@ -86,5 +85,14 @@ def get_user(id):
     cur.close()
     return all_result
 
-    
+def get_eligible_orgs(service):
+    cur = conn.cursor()
+    sql = 'select organization_services.organization_id from organization_services where status = %s and service = %s'
+    cur.execute(sql, ('active', service,))
+    result = cur.fetchall()
+    all_result = []
+    for res in result:
+        all_result.append(str(res[0]))
+    cur.close()
+    return all_result
     
