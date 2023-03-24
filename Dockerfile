@@ -33,4 +33,4 @@ FROM base as rms
 CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8110"]
 
 From base as celery
-CMD ["celery", "-A", "celery_worker.celery", "flower", "--port=5555"]
+CMD ["celery", "-A", "celery_worker.celery", "flower", "--port=8111"]
