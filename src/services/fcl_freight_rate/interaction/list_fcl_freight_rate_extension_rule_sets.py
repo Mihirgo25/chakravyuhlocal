@@ -48,18 +48,26 @@ def apply_q_filter(query, filters):
 
 def get_data(query):
     data = []
-    for item in query.dicts():
-        cluster_data = maps.list_location_cluster({'filters':{'id':item['cluster_id']}})
-        if cluster_data['list']:
-            item['location_cluster'] = {'id':cluster_data['list'][0]['id'], 'cluster_name' : cluster_data['list'][0]['cluster_name'], 'cluster_type':cluster_data['list'][0]['cluster_type'], 'location_type':cluster_data['list'][0]['location_type']}
+    data = [x for x in query.dicts()]
+    param = {'id':[x['cluster_id'] for x in data]}
+    cluster_data_all = maps.list_location_cluster({'filters': param})['list']
+    commodity_cluster_data_all = list_fcl_freight_commodity_clusters(filters = param)['list']
+    cluster_dict={}
+    commodity_cluster_dict ={}
+    for cluster in cluster_data_all:
+        cluster_dict[str(cluster['id'])] = {'id':cluster['id'], 'cluster_name' : cluster['cluster_name'], 'cluster_type':cluster['cluster_type'], 'location_type':cluster['location_type']}
+    for commodity_cluster in commodity_cluster_data_all:
+        commodity_cluster_dict[str(commodity_cluster['id'])]={'id':commodity_cluster['id'], 'name' : commodity_cluster['name']}
+        
+    for each  in range(0,len(data)):
+        if cluster_dict.get(str(data[each]['cluster_id'])):
+            data[each]['location_cluster'] = cluster_dict[str(data[each]['cluster_id'])]
         else:
-            item['location_cluster'] = {}
-        commodity_cluster_data = list_fcl_freight_commodity_clusters(filters = {'id':item['cluster_id']})
-        if commodity_cluster_data['list']:
-            item['fcl_freight_commodity_cluster'] = {'id':commodity_cluster_data['list'][0]['id'], 'name' : commodity_cluster_data['list'][0]['name']}
+            data[each]['location_cluster'] = {}
+        if commodity_cluster_dict.get(str(data[each]['cluster_id'])):
+            data[each]['fcl_freight_commodity_cluster'] = commodity_cluster_dict[str(data[each]['cluster_id'])]
         else:
-            item['fcl_freight_commodity_cluster'] = {}
-        data.append(item)
+            data[each]['fcl_freight_commodity_cluster'] = {}
     return data
         
 def get_pagination_data(query, page, page_limit):

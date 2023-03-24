@@ -10,15 +10,15 @@ from celery_worker import create_fcl_freight_rate_delay
 
 def extend_create_fcl_freight_rate_data(request):
 
-    if type(request) != 'dict':
+    if not isinstance(request,dict):
         request = request.dict(exclude_none=True)
 
-    if request['extend_rates_for_lens']:
+    if request.get('extend_rates_for_lens'):
         request['mode']= 'cogo_lens'
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':request},queue='fcl_freight_rate')
         return {"message":"Creating rates in delay"}
 
-    if request['extend_rates']:
+    if request.get('extend_rates'):
         rate_objects = get_fcl_freight_cluster_objects(request)
         if rate_objects:
             create_extended_rate_objects(rate_objects)
@@ -112,7 +112,7 @@ def get_fcl_freight_cluster_objects(request):
 
                         for cluster in ['origin_location_cluster', 'destination_location_cluster', 'commodity_cluster', 'container_cluster']:
                             if data.get(cluster) and data[cluster]['line_item_charge_code'] and (data[cluster]['gri_rate'] or data[cluster]['gri_rate'] == 0) and data[cluster]['gri_currency']:
-                                if (cluster == 'origin_location_cluster' and updated_param.get('origin_port_id') and updated_param['origin_location_port'] == request['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param['destination_port_id'] and updated_param['destination_port_id'] == request['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == request[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == request['container_size']) or (updated_param['origin_port_id'] and updated_param['destination_port_id'] and updated_param['origin_port_id'] == updated_param['destination_port_id']):
+                                if (cluster == 'origin_location_cluster' and updated_param.get('origin_port_id') and updated_param['origin_location_port'] == request['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param.get('destination_port_id') and updated_param['destination_port_id'] == request['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == request[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == request['container_size']) or (updated_param.get('origin_port_id') and updated_param.get('destination_port_id') and updated_param['origin_port_id'] == updated_param['destination_port_id']):
                                     continue
                                 line_item = [t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']]
 
@@ -123,7 +123,7 @@ def get_fcl_freight_cluster_objects(request):
                                 line_item['price'] = float(line_item['price']) + get_money_exchange(data[cluster]['gri_currency'], line_item['currency'], data[cluster]['gri_rate'])
                                 updated_param['line_items'].append(line_item)
 
-                        if request['extend_rates_for_existing_system_rates'] or not check_rate_existence(updated_param):
+                        if request.get('extend_rates_for_existing_system_rates') or not check_rate_existence(updated_param):
                             if updated_param.get('origin_port_id') and updated_param.get('destination_port_id') and updated_param['origin_port_id'] != updated_param['destination_port_id']:
                                 fcl_freight_cluster_objects.append(updated_param)
     for object in fcl_freight_cluster_objects:
@@ -142,7 +142,7 @@ def get_money_exchange(from_currency, to_currency, gri_rate):
     return 0
 
 def add_mandatory_line_items(param,request):
-    if not request['mandatory_charges']:
+    if not request.get('mandatory_charges'):
         return param
     commodity_mandatory_charges = [t for t in request['mandatory_charges']['required_mandatory_codes'] if t['cluster_type'] == param['commodity']]
     container_size_mandatory_charges = [t for t in request['mandatory_charges']['required_mandatory_codes'] if t['cluster_type'] == param['container_size']]
