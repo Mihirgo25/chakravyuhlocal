@@ -16,7 +16,7 @@ def get_cluster_objects(rate_object):
     param = {}
     for data in port_codes:
         param[data['id']] = data['port_code']
-    
+
     port_codes = param
 
     cluster_data_q = FclFreightRateExtensionRuleSets.select().where(
@@ -33,7 +33,7 @@ def get_cluster_objects(rate_object):
     ).execute()
 
     cluster_data = [model_to_dict(item) for item in cluster_data_q]
-    
+
     for data in cluster_data:
         if data['cluster_reference_name'] == port_codes.get(rate_object['origin_port_id']) and (data['trade_type'] == 'export' or not data['trade_type']):
             if not 'origin_location_cluster' in clusters.keys():
@@ -48,10 +48,10 @@ def get_cluster_objects(rate_object):
             if not 'container_cluster' in clusters.keys():
                 clusters['container_cluster'] = data
 
-    
+
     if 'origin_location_cluster' in clusters and clusters['origin_location_cluster']:
-        clusters['origin_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations'] 
-        
+        clusters['origin_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations']
+
     if 'destination_location_cluster' in clusters and clusters['destination_location_cluster']:
         clusters['destination_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['destination_location_cluster']['cluster_id']})['locations']
 
@@ -102,7 +102,7 @@ def get_required_mandatory_codes(cluster_objects):
 
         if mandatory_codes:
             mandatory_code = { 'cluster_type': cluster_item, 'mandatory_codes': mandatory_codes }
-        
+
         if mandatory_code:
             required_mandatory_codes.append(mandatory_code)
     return required_mandatory_codes

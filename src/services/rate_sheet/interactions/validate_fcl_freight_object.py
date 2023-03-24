@@ -18,14 +18,14 @@ PAYMENT_TERM = []
 def validate_fcl_freight_object(module, object):
     response = {}
     response['valid'] = False
-    # try:
-    rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
-    if 'error' in rate_object:
-        response['error'] = rate_object['error']
-    else:
-        response['valid'] = True
-    # except Exception as e:
-    #     response['errors'] = e
+    try:
+        rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
+        if 'error' in rate_object:
+            response['error'] = rate_object['error']
+        else:
+            response['valid'] = True
+    except Exception as e:
+        response['errors'] = e
     return response
 
 def get_freight_object(object):
@@ -121,7 +121,8 @@ def get_local_object(object):
             local['error'] = errors['error']
         else:
             local.error = errors['error']
-
+            local = local.__dict__
+    print(local.__dict__)
     return local
 
 def get_free_day_object(object):
@@ -159,6 +160,7 @@ def get_free_day_object(object):
             free_day[key] = val
         else:
             free_day.key = val
+            free_day = free_day.__dict__
     # if object.get('location_id'):
     # will have to figure out how ot add error here
     return free_day

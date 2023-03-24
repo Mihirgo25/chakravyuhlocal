@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 from fastapi.responses import JSONResponse
 from typing import Union
 import json
@@ -84,6 +84,10 @@ from configs.defintions import yml_obj
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 
+from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
+from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
+from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
+
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
@@ -156,14 +160,14 @@ def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConf
 @fcl_freight_router.get("/get_fcl_freight_rate_data")
 def get_fcl_freight_rate_data(
     origin_port_id: str = None,
-    origin_main_port_id: str = None, 
-    destination_port_id: str = None, 
-    destination_main_port_id: str = None, 
-    container_size: str = None, 
-    container_type: str = None, 
-    commodity: str = None, 
-    shipping_line_id: str = None, 
-    service_provider_id: str = None, 
+    origin_main_port_id: str = None,
+    destination_port_id: str = None,
+    destination_main_port_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None,
     importer_exporter_id: str = None
 ):
     request = {
@@ -171,11 +175,11 @@ def get_fcl_freight_rate_data(
         'origin_main_port_id':origin_main_port_id,
         'destination_port_id':destination_port_id,
         'destination_main_port_id' : destination_main_port_id,
-        'container_size' : container_size, 
-        'container_type' : container_type, 
+        'container_size' : container_size,
+        'container_type' : container_type,
         'commodity' : commodity,
         'shipping_line_id' : shipping_line_id,
-        'service_provider_id': service_provider_id, 
+        'service_provider_id': service_provider_id,
         'importer_exporter_id': importer_exporter_id
     }
     data = get_fcl_freight_rate(request)
@@ -184,21 +188,21 @@ def get_fcl_freight_rate_data(
 
 @fcl_freight_router.get("/get_fcl_freight_rate_local")
 def get_fcl_freight_local_data(
-    port_id: str = None, 
-    main_port_id: str = None, 
-    trade_type: str = None, 
-    container_size: str = None, 
-    container_type: str = None, 
-    commodity: str = None, 
-    shipping_line_id: str = None, 
+    port_id: str = None,
+    main_port_id: str = None,
+    trade_type: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
     service_provider_id: str = None
 ):
     request = {
         'port_id':port_id,
         'main_port_id':main_port_id,
         'trade_type':trade_type,
-        'container_size' : container_size, 
-        'container_type' : container_type, 
+        'container_size' : container_size,
+        'container_type' : container_type,
         'commodity' : commodity,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id
@@ -212,33 +216,33 @@ def get_fcl_freight_local_data(
 
 @fcl_freight_router.post("/get_fcl_freight_local_rate_cards")
 def get_fcl_freight_local_rate_cards_data(
-    trade_type: str, 
-    port_id: str, 
-    country_id: str, 
-    container_size: str, 
-    container_type: str, 
-    containers_count: int,  
-    bls_count: int, 
-    commodity: str = None, 
-    shipping_line_id: str = None, 
-    service_provider_id: str = None, 
-    rates: list[str] = [], 
-    include_confirmed_inventory_rates: bool =False, 
-    additional_services: list[str] = [], 
-    include_destination_dpd: bool = False, 
+    trade_type: str,
+    port_id: str,
+    country_id: str,
+    container_size: str,
+    container_type: str,
+    containers_count: int,
+    bls_count: int,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None,
+    rates: list[str] = [],
+    include_confirmed_inventory_rates: bool =False,
+    additional_services: list[str] = [],
+    include_destination_dpd: bool = False,
     cargo_weight_per_container: int = None
 ):
     request = {
         'trade_type':trade_type,
         'port_id':port_id,
         'country_id':country_id,
-        'container_size' : container_size, 
-        'container_type' : container_type, 
+        'container_size' : container_size,
+        'container_type' : container_type,
         'containers_count' : containers_count,
         'bls_count' : bls_count,
         'commodity' : commodity,
         'shipping_line_id' : shipping_line_id,
-        'service_provider_id': service_provider_id, 
+        'service_provider_id': service_provider_id,
         'rates':rates,
         'cargo_weight_per_container': cargo_weight_per_container,
         'include_destination_dpd' : include_destination_dpd,
@@ -251,30 +255,30 @@ def get_fcl_freight_local_rate_cards_data(
 
 @fcl_freight_router.post("/get_fcl_freight_rate_cards")
 def get_fcl_freight_rate_cards_data(
-    origin_port_id: str, 
-    origin_country_id: str, 
-    destination_port_id: str, 
-    destination_country_id: str,    
-    container_size: str, 
-    container_type: str, 
-    containers_count: int,  
-    validity_start: str, 
-    validity_end: str, 
+    origin_port_id: str,
+    origin_country_id: str,
+    destination_port_id: str,
+    destination_country_id: str,
+    container_size: str,
+    container_type: str,
+    containers_count: int,
+    validity_start: str,
+    validity_end: str,
     trade_type: str = None,
-    include_destination_local: bool = True, 
-    include_origin_local: bool = True, 
+    include_destination_local: bool = True,
+    include_origin_local: bool = True,
     cogo_entity_id: str = None,
     importer_exporter_id: str = None,
     bls_count: int = 1,
-    commodity: str = None, 
-    shipping_line_id: str = None, 
-    service_provider_id: str = None, 
-    include_confirmed_inventory_rates: bool =False, 
-    additional_services: str = None, 
-    ignore_omp_dmp_sl_sps: str = None, 
-    include_destination_dpd: bool = False, 
-    cargo_weight_per_container: int = None, 
- 
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None,
+    include_confirmed_inventory_rates: bool =False,
+    additional_services: str = None,
+    ignore_omp_dmp_sl_sps: str = None,
+    include_destination_dpd: bool = False,
+    cargo_weight_per_container: int = None,
+
 ):
     if additional_services:
         additional_services = json.loads(additional_services)
@@ -291,15 +295,15 @@ def get_fcl_freight_rate_cards_data(
         'origin_country_id' : origin_country_id,
         'destination_port_id': destination_port_id,
         'destination_country_id': destination_country_id,
-        'container_size' : container_size, 
-        'container_type' : container_type, 
+        'container_size' : container_size,
+        'container_type' : container_type,
         'containers_count' : containers_count,
         'bls_count' : bls_count,
         'commodity' : commodity,
         'importer_exporter_id' : importer_exporter_id,
         'trade_type' : trade_type,
         'shipping_line_id' : shipping_line_id,
-        'service_provider_id': service_provider_id, 
+        'service_provider_id': service_provider_id,
         'validity_start' : validity_start,
         'validity_end' : validity_end,
         'include_origin_local' : include_origin_local,
@@ -350,7 +354,7 @@ def get_fcl_freight_rate_visibility_data(
     container_size: str = None,
     container_type: str = None,
     commodity: str = None):
-    
+
     request = {
         'service_provider_id' : service_provider_id,
         'origin_port_id': origin_port_id,
@@ -378,7 +382,7 @@ def get_fcl_weight_slabs_configuration_data(filters: str = None):
 @fcl_freight_router.get("/list_dashboard_fcl_freight_rates")
 def list_dashboard_fcl_freight_rates_data():
     data = list_dashboard_fcl_freight_rates()
-    return data 
+    return data
 
 @fcl_freight_router.get("/list_fcl_freight_rate_audits")
 def list_fcl_freight_audits_data(
@@ -400,7 +404,7 @@ def list_fcl_freight_rate_bulk_operations_data(
     page: int = 1
     ):
     data = list_fcl_freight_rate_bulk_operations(filters, page_limit, page)
-    return data 
+    return data
 
 @fcl_freight_router.get("/list_fcl_freight_rate_free_day_requests")
 def list_fcl_freight_rate_free_day_requests_data(
@@ -713,7 +717,7 @@ def get_fcl_freight_rate_weight_limit_data(
     container_type: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None
-): 
+):
     request = {
         'origin_location_id':origin_location_id,
         'destination_location_id':destination_location_id,
@@ -890,3 +894,34 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
 # def test_fcl():
 #     query = query.where(attrgetter(key)(Model).contains_any(filters[key]))
 
+
+
+@fcl_freight_router.post("/create_rate_sheet")
+def create_rate_sheets(request: CreateRateSheet, response: Response):
+    rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=rate_sheet)
+
+
+
+@fcl_freight_router.post("/update_rate_sheet")
+def update_rate_sheets(request: UpdateRateSheet, response: Response):
+    rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=rate_sheet)
+
+
+@fcl_freight_router.get("/list_rate_sheets")
+def list_rates_sheets(
+    filters: str = None,
+    stats_required: bool = True,
+    page: int = 1,
+    page_limit: int = 10,
+    sort_by: str = 'created_at',
+    sort_type: str = 'desc',
+    pagination_data_required:  bool = True,
+
+
+):
+    response = list_rate_sheets(
+        filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
+    )
+    return JSONResponse(status_code=200, content=response)

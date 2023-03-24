@@ -64,8 +64,8 @@ def create_fcl_freight_rate(request):
         for key in list(row.keys()):
             setattr(freight, key, row[key])
         freight.set_locations()
-        # freight.set_origin_location_ids()
-        # freight.set_destination_location_ids()
+        freight.set_origin_location_ids()
+        freight.set_destination_location_ids()
 
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
@@ -107,7 +107,7 @@ def create_fcl_freight_rate(request):
     freight.set_platform_prices()
     freight.set_is_best_price()
     freight.set_last_rate_available_date()
-    # freight.validate_before_save()
+    freight.validate_before_save()
 
     try:
         freight.save()
@@ -121,7 +121,7 @@ def create_fcl_freight_rate(request):
     create_audit(request, freight.id)
 
 
-    # delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+    delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
     return {"id": freight.id}
 

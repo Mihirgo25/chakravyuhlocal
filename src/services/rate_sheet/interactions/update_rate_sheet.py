@@ -3,6 +3,7 @@ from services.rate_sheet.models.rate_sheet import RateSheet
 from params import UpdateRateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
+from celery_worker import validate_and_process_rate_sheet_converted_file_delay
 from playhouse.postgres_ext import *
 from peewee import *
 from fastapi.encoders import jsonable_encoder
@@ -26,7 +27,7 @@ def get_audit_params(parameters):
 
 
 
-def update_rate_sheet(params: UpdateRateSheet):
+def  update_rate_sheet(params: UpdateRateSheet):
     print(params)
     rate_sheet = RateSheet.get(RateSheet.id == params['id'])
     if rate_sheet.status != 'uploaded':
@@ -50,7 +51,8 @@ def update_rate_sheet(params: UpdateRateSheet):
     for key in params.keys():
         if key not in ['id', 'performed_by_id', 'procured_by_id','sourced_by_id']:
             rate_sheet[key] = params[key]
-    validate_and_process_rate_sheet_converted_file(rate_sheet)
+    validate_and_process_rate_sheet_converted_file_delay.apply_async(kwargs={'object':rate_sheet},queue='low')
+    # validate_and_process_rate_sheet_converted_file(rate_sheet)
     return {
       "id": rate_sheet['id']
     }

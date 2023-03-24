@@ -263,8 +263,8 @@ class FclFreightRate(BaseModel):
       if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
         raise HTTPException(status_code=499, detail="validity_end can not be greater than 60 days from current date")
 
-      # if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
-      #   raise HTTPException(status_code=499, detail="validity_start can not be less than 15 days from current date")
+      if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
+        raise HTTPException(status_code=499, detail="validity_start can not be less than 15 days from current date")
 
       if validity_end < validity_start:
         raise HTTPException(status_code=499, detail="validity_end can not be lesser than validity_start")

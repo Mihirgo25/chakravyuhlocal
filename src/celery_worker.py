@@ -8,6 +8,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
+
 from libs.locations import list_locations
 
 CELERY_CONFIG = {
@@ -40,10 +42,10 @@ def delay_fcl_functions(fcl_object,request):
 
     if request.get("fcl_freight_rate_request_id"):
         delete_fcl_freight_rate_request(request)
-    
+
     # fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
 
-    
+
     get_multiple_service_objects(fcl_object)
 
 
@@ -69,14 +71,14 @@ def create_freight_trend_port_pair(request):
         'destination_port_id': request["destination_port_id"]
     }
 
-  
+
   # common.create_freight_trend_port_pair(port_pair_data) expose
 
 @celery.task()
 def fcl_freight_local_data_updation(local_object,request):
   from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
 
-    
+
   update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
 
   local_updations(local_object,request)
@@ -118,6 +120,11 @@ def send_closed_notifications_to_sales_agent_free_day_request(object):
 @celery.task()
 def send_closed_notifications_to_sales_agent_feedback(object):
     object.send_closed_notifications_to_sales_agent()
+
+
+@celery.task()
+def validate_and_process_rate_sheet_converted_file_delay(object):
+    object.validate_and_process_rate_sheet_converted_file()
 
 
 
