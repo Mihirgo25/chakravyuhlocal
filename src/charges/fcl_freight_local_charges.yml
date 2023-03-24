@@ -1,0 +1,2124 @@
+#check for HAZ
+BL:
+  name: "B/L Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['mandatory']
+THC:
+  name: "Terminal Handling Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['mandatory']
+SC:
+  name: "Seal Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "(shipping_line_id not in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
+  tags: []
+MUC:
+  name: "Mandatory User Charge"
+  units: ['per_container', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: "(port['country_code'] == 'IN')"
+  tags: []
+EXP:
+  name: "Export Service"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SEF:
+  name: "Special Equipment Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "(container_type in ['open_top', 'flat_rack', 'iso_tank'] or container_size == '45HC')"
+  tags: ['mandatory']
+TOC:
+  name: "Toll Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "(port['port_code'] == 'INNSA' or (main_port!=None and main_port['port_code'] == 'INNSA'))"
+  tags: []
+CRS:
+  name: "Container Restoration Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "shipping_line_id == 'b2f92d49-6180-43bd-93a5-4d64f5819a9b'"
+  tags: []
+VGM:
+  name: "Verified Gross Mass"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+ENS:
+  name: "Entry Summmary Declaration"
+  units: ["per_bl"]
+  trade_types: ['import', 'export']
+  condition: "(port['country_code'] in ['RU', 'DK', 'CZ', 'NL', 'EE', 'AT', 'LI', 'NI', 'PL', 'MC', 'BY', 'SE', 'CH', 'DE', 'LU', 'SK', 'LT', 'FR', 'LV', 'HU', 'FI', 'RS', 'FO', 'IE', 'AM', 'MD', 'AD', 'PT', 'NO', 'GB', 'IS', 'MK', 'BE'])"
+  tags: []
+DO:
+  name: "Delivery Order Fee"
+  units: ['per_bl', 'per_shipment']
+  trade_types: ['import']
+  condition: true
+  tags: ['mandatory']
+DOC:
+  name: "Documentation Charges"
+  units: ['per_bl']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+DPS:
+  name: "Dry port Surcharge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "port['is_icd']"
+  tags: []
+TCS:
+  name: "Transportation Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+EDT:
+  name: "Export Detention Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+LCC:
+  name: "Lashing & Choking Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+IMP:
+  name: "Import Service"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+OCR:
+  name: "Operation Cost Recovery"
+  units: ["per_container"]
+  trade_types: ['import','export']
+  condition: true
+  tags: []
+HDF:
+  name: "Hazardous Documentation Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "commodity in HAZ_CLASSES"
+  tags: ['mandatory']
+ADMIN:
+  name: "Administration Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+AGC:
+  name: "Agency Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+VTS:
+  name: "Vessel Traffic System fees"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+SMDF:
+  name: "Security Manifest Document Fee"
+  units: ["per_bl"]
+  trade_types: ['import', 'export']
+  condition: true
+  tags: []
+CEFC:
+  name: "Cess Infrastructure Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "container_type == 'refer'"
+  tags: []
+ACD:
+  name: "Advanced Cargo Declaration"
+  units: ["per_bl"]
+  trade_types: ['export']
+  condition: true
+  locations: []
+  tags: []
+CRFC:
+  name: "Container Release Facility Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+HF:
+  name: "Handling Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+ERC:
+  name: "Repositioning Cost"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+DCG:
+  name: "Destination Certificate Charge"
+  units: ["per_bl"]
+  trade_types: ['import','export']
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b', 'be57f277-0c81-47b4-9322-bf06ccc5314c'])"
+  tags: ['additional_service']
+CCI:
+  name: "Container Cleaning Fees"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PMTC:
+  name: "Placement Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SPS:
+  name: "Ship & Port Security"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+BLCC:
+  name: "BL Co-ordination Charge"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+MCC:
+  name: "Manifest Charge"
+  units: ['per_bl','per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: []
+TEMP:
+  name: "Temperature Variation Charge"
+  units: ["per_container"]
+  trade_types: ['export']
+  condition: "container_type == 'refer'"
+  tags: ['additional_service']
+SFF:
+  name: "Security Facilitation Fees"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+AMD:
+  name: "BL Amendment Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+FEC:
+  name: "Feeder Documentation Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+HBL:
+  name: "House BL"
+  units: ["per_bl"]
+  trade_types: ['import','export']
+  condition: true
+  tags: ['additional_service']
+OCG:
+  name: "Origin Certificate Charge"
+  units: ["per_bl"]
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+AMS:
+  name: "Automated/Aquired Manifest System"
+  units: ["per_bl"]
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CSF:
+  name: "Carrier Security Fee."
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EDS:
+  name: "Export Declaration Surcharge"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+BL SURRENDER:
+  name: "BL Surrender Charges"
+  units: ['per_bl']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+EDF:
+  name: "Export Doc Fees"
+  units: ['per_bl', 'per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CFD:
+  name: "Congestion Fee Destination"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EDC:
+  name: "Endorsement Do Charge"
+  units: ['per_bl']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+ULE:
+  name: "Logistics Fee Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CIFE:
+  name: "Container Inspection Fees"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+CMC:
+  name: "Container Monitoring Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+VESS:
+  name: "Vessel Age Certificate charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+SCT:
+  name: "Shipping Certificate"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+SOB:
+  name: "Shipped On Board Certificate charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "shipping_line_id == 'e6da6a42-cc37-4df2-880a-525d81251547'"
+  tags: ['additional_service']
+POCH:
+  name: "Port Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EFORM:
+  name: "E Form 13 Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CHC:
+  name: "Container Handling Charge Of Dicsharging Port"
+  units: ['per_container', 'per_shipment']
+  trade_types: ['import']
+  condition: true
+  tags: []
+SSR:
+  name: "Special Service Request"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+LBLC:
+  name: "Late Bill Of Lading Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+STO:
+  name: "Port Storage Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+PAI:
+  name: "Port Additionals / Port Dues Import"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
+  locations: []
+  tags: []
+PSE:
+  name: "Port Security Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SBL:
+  name: "Seaway Bill"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+IDF:
+  name: "Import Doc Fees"
+  units: ['per_bl']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DTC:
+  name: "Destination Charges"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+HMF:
+  name: "HBL Manifestation Fee"
+  units: ['per_bl']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CRF:
+  name: "Cargo Release Fee"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+LDC:
+  name: "Landing Certificate Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CC:
+  name: "Courier Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+ISC:
+  name: "Import Survey Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+IDC:
+  name: "Port Infrastrucure Development Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+RSC:
+  name: "Re Seal Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+OCE:
+  name: "On carriage"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EUVGM:
+  name: "VGM registration"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+PAE:
+  name: "Port Additionals / Port Dues Export"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'] and port['country_code'] in ['SN', 'VC'])"
+  tags: []
+IGM:
+  name: "Import General Manifest"
+  units: ['per_bl']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ODOS:
+  name: "One Door Open Surcharge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CF:
+  name: "CARGO FEE"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ADF:
+  name: "Admin Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DET:
+  name: "Import Detention fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+ICDHC:
+  name: "ICD Handling Charges"
+  units: ["per_container"]
+  trade_types: ['import','export']
+  condition: "port['is_icd']"
+  tags: []
+LSF:
+  name: "Late Si Filing"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+SBC:
+  name: "Switch Bl Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CSD:
+  name: "Container Security Deposit"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+ISS:
+  name: "Import Security Surcharge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CIC:
+  name: "Container Imbalance Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ESS:
+  name: "Equipment Surplus Surcharge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DPD:
+  name: "Direct Port Delivery"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: "(port['country_code'] == 'IN')"
+  tags: ['additional_service', 'dpd']
+PU:
+  name: "Pick Up"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+AES:
+  name: "Automated Export System"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+RHE:
+  name: "Recovery for Handling - Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
+  tags: ['additional_service']
+ASO:
+  name: "Algerian Stamp"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+EFS:
+  name: "Export Intermodal Fuel Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+FRI:
+  name: "Free In Service"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DSE:
+  name: "Document Stamp Tax Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+EME:
+  name: "Equipment Management Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+FTE:
+  name: "Freight Tax Service Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+GTE:
+  name: "Governemnt and Port Tax Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "shipping_line_id == '4664abea-8964-48e1-b79c-bf8da010d01b'"
+  tags: []
+PHE:
+  name: "Inspection Fee Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SOC:
+  name: "Shipper-Owned/Leased Equipment Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+BF:
+  name: "Booking Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  locations: ['DZ']
+  tags: ['additional_service']
+FPS:
+  name: "Processing Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DMF:
+  name: "Device Management Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+BS:
+  name: "Booking Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EIR:
+  name: "Equipment Interchange Receipt"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+EEIR:
+  name: "Electronic Packing List"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+OC:
+  name: "Operating Costs"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+FIF:
+  name: "Frontier Inspection Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+IF:
+  name: "Information Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ECSF:
+  name: "Empty Container Sterilization Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+ISPS:
+  name: "International Ship and Port Facility Security Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+MO:
+  name: "Monitoring Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "container_type == 'refer'"
+  tags: []
+FCG:
+  name: "Facilitation Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+IPS:
+  name: "Icd Pendency Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "port['is_icd']"
+  tags: []
+ADSF:
+  name: "Additional Domestic Security Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PIC:
+  name: "Plugging Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "container_type == 'refer'"
+  tags: []
+MISC:
+  name: "Miscellaneous Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+MTF:
+  name: "MTF Fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: "shipping_line_id == 'bfd2a958-b70c-4f2e-ae9b-f66f5a211535'"
+  tags: []
+REPO:
+  name: "Container Reposition Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+PTE:
+  name: "Port Entry Pass"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+FCT:
+  name: "Factory Stuffing Fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+HT:
+  name: "Haulage & Trailer Fee"
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+SUR:
+  name: "Export Survey Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+WEH:
+  name: "Weighbridge Fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+TSF:
+  name: "Terminal Security Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+OCI:
+  name: "Ocean Carrier Intnl Ship Surcharge"
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ENF:
+  name: "Endorsement Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+RRC:
+  name: "Rail Recovery Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "port['is_icd']"
+  tags: []
+CSC:
+  name: "Cargo Service Centre"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+VC:
+  name: "Via Charges"
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+CMF:
+  name: "Container Maintenance Fee"
+  units: ['per_shipment', 'per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EDOF:
+  name: "Examination Delivery Order Fee"
+  units: ['per_bl']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+PRC:
+  name: "Pre Carriage"
+  units: ['per_container', 'per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+GIC:
+  name: "Gate In Charge"
+  units: ['per_container', 'per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: []
+EXPSTR:
+  name: "Export Storage"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+SHTC:
+  name: "Shutout Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CTC:
+  name: "Container Tracking Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+WHA:
+  name: "Wharfage"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CUI:
+  name: "Client Scanning Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+RPT:
+  name: "River Plate Toll Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CTO:
+  name: "Container Turn over Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+REC:
+  name: "Reefer Electricity Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "container_type == 'refer'"
+  tags: []
+BAMN:
+  name: "Booking Amendment"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+BRF:
+  name: "Box Realization Facilitation"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ITTC:
+  name: "Inter Terminal Transfer Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+RCS:
+  name: "Reefer Consumption Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "container_type == 'refer'"
+  tags: []
+NOC:
+  name: "Noc Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+GPS:
+  name: "GPS Tracking"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+SUD:
+  name: "Surplus demand Fees"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+MNR:
+  name: "MNR charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+TAX:
+  name: "Tri Axle Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+OPF:
+  name: "ODC Processing Fees"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CRO:
+  name: "Container Release Order Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+IFE:
+  name: "ISF filling fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  locations: ['US']
+  tags: []
+MF:
+  name: "Messenger Fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+CEF:
+  name: "Custom Entry Fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CTSC:
+  name: "Carbon Tax Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ECD:
+  name: "Empty Container Discharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+PCC:
+  name: "Port Construction Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PLC:
+  name: "Port Landing Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PAC:
+  name: "Port Automation Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+WBC:
+  name: "Port Weighbridge Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ACR:
+  name: "Agent Cost Recovery"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CS:
+  name: "Container Supervision"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PCR:
+  name: "Port Cost Recovery"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+DTS:
+  name: "Digital Transport Service Charge - Port"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+BCC:
+  name: "Barge Congestion Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CCF:
+  name: "Container Control Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CPS:
+  name: "Carrier Processing"
+  units: ['per_bl']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+INS:
+  name: "Insurance"
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+SGS:
+  name: "Special Gear Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ISRC:
+  name: "ISRC"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+OLC:
+  name: "Offloading Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CSV:
+  name: "Container Seal Verification"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+SSO:
+  name: "Ship Security Surcharge - Origin"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CPA:
+  name: "WELFARE CHARGE"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+FS:
+  name: "Flexi Surcharge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+RIC:
+  name: "Reefer Inspection Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "container_type == 'refer'"
+  tags: []
+SCC:
+  name: "sensitive cargo charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+LPC:
+  name: "Load Port Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SPC:
+  name: "Supplementary Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+OMC:
+  name: "Out Movement Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DL:
+  name: "DIRECT LOADING"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+TCFB:
+  name: "Tanzania central fed bureau"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+FOMC:
+  name: "Fac Out Movement Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+HCC:
+  name: "haz co-ordination charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "(commodity in HAZ_CLASSES)"
+  tags: []
+CLS:
+  name: "container loading supervision"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+GFS:
+  name: "GREEN FUEL SURCHARGE"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+NAV:
+  name: "NAVIS FEE"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+POC:
+  name: "Postage Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CDCF:
+  name: "Container delivery & control Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ASC:
+  name: "Additional Seal Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+SHC:
+  name: "Shifting Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+HOC:
+  name: "Holding Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+MFT:
+  name: "Multimodal Freight Transport"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+HOBL:
+  name: "House Bill of Lading"
+  units: ['per_bl']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+GRR:
+  name: "Ground Rent"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CFC:
+  name: "Cargo Facility Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+AOA:
+  name: "Angola operations additional"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CRLO:
+  name: "Carrier Lift on Lift off prepaid"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+NOS:
+  name: "Nhava Sheva Operational Surchrage"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: "port['port_code'] == 'INNSA'"
+  tags: []
+LNC:
+  name: "Line number charge"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+PBC:
+  name: "Probe Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+NSC:
+  name: "No Show Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+TNS:
+  name: "TNS"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CVD:
+  name: "Change of Vessel"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+PFE:
+  name: "3rd Party Fine Export"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
+  tags: ['additional_service']
+DEF:
+  name: "Discharge Expense Full"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EMR:
+  name: "Empty reload"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+DPT:
+  name: "Decree 800 port tax"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+VAS:
+  name: "Value Added Surcharge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+RBC:
+  name: "Rubber Stamp Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+MCS:
+  name: "Miscellaneous Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+RDCS:
+  name: "Reefer documentation charges"
+  units: ['per_bl', 'per_container']
+  trade_types: ['export', 'import']
+  condition: "container_type == 'refer'"
+  tags: []
+ICTN:
+  name: "International Cargo Tracking Note"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+DEA:
+  name: "Import Demurrage Charges"
+  units: ['per_container', 'per_shipment']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+EDE:
+  name: "Export Demurrage Charges"
+  units: ['per_container', 'per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+ETC:
+  name: "Equipment Transfer Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+HCAS:
+  name: "High Cube Additional Sea"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+CCSO:
+  name: "Origin Courier Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CRSC:
+  name: "CRSC"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+ADP:
+  name: "Additional Documents Processing fees"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+OSS:
+  name: "Operational Shipping Surcharge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+IIF:
+  name: "Inland Inspection Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
+  tags: []
+VCF:
+  name: "Vessel Certificate fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+COMC:
+  name: "Container out movement chrges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+ALS:
+  name: "Antwerp Left Bank Surcharge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CTS:
+  name: "Service Fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PHD:
+  name: "Port and Harbor dues"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CAS:
+  name: "CUSTOM ADVANCE SURCHARGE"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DAC:
+  name: "Damage Container"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+BRK:
+  name: "Brokerage Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CPE:
+  name: "Check Package Expense"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+FDCF:
+  name: "Free Days Certificate Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CTN:
+  name: "Cargo/Container Tracking Note"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+BLRF:
+  name: "BL reissue Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+ENVF:
+  name: "Environment Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+SBCF:
+  name: "Spot Booking Cancellation Fees"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: "(shipping_line_id in ['c3649537-0c4b-4614-b313-98540cffcf40', '4664abea-8964-48e1-b79c-bf8da010d01b'])"
+  tags: ['additional_service']
+LCH:
+  name: "Liner Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+PORC:
+  name: "Port Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CMSF:
+  name: "Commission Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+OCS:
+  name: "Outstation Charges"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+EXWORKS:
+  name: "Ex Works Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ROVC:
+  name: "Roll Over Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CRC:
+  name: "CRANE CHARGES"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+EPL:
+  name: "ELECTRONIC PACKING LIST"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+EXTRNL:
+  name: "EXTERNAL TRANSIT"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+FYCO:
+  name: "FYCO Scan Charge"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+GAS:
+  name: "Gas Measuring"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PHY:
+  name: "Physical Control"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+WAIT:
+  name: "Waiting Hours"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+MSTP:
+  name: "Multistop"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+LF:
+  name: "LAND FREIGHT"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+DOLN:
+  name: "Delivery Order Line Nominated Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+FBS:
+  name: "Fixing Broken Seal"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+BRC:
+  name: "Bagging And Rebagging"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+SPCC:
+  name: "Spillage Of Cargo Cleaning"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+ODF:
+  name: "Origin Documentation Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+EDD:
+  name: "Submission of Cargo Declaration"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+IFS:
+  name: "Import Intermodal Fuel Fee"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+FDH:
+  name: "Discharge Fee Destination"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: "shipping_line_id == '4664abea-8964-48e1-b79c-bf8da010d01b'"
+  tags: []
+FRO:
+  name: "Free Out Service"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+GTI:
+  name: "Government and Port Tax Import"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+RHI:
+  name: "Recovery for Handling Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DSI:
+  name: "Document Stamp Tax Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PSI:
+  name: "Port Security Service - Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CSI:
+  name: "Container Service Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PHI:
+  name: "Inspection Fee- Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+EMI:
+  name: "Equipment Management Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ULI:
+  name: "Logistic Fee Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+FTI:
+  name: "Freight Tax Service Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DCSD:
+  name: "Deconsolidation"
+  units: ['per_bl']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DSCD:
+  name: "DSCD"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+LOC:
+  name: "LOC Surcharge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DDC:
+  name: "Door Delivery Charges"
+  units: ['per_container']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: []
+GOC:
+  name: "Gate Out Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+OFDK:
+  name: "OFF Dock Charges"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+SPD:
+  name: "Ship Pays Dues"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+EIF:
+  name: "Equipment Inspection Fee"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+EMF:
+  name: "Equipment Maintenance Fee"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+REQ:
+  name: "Reception on Quay"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+FED:
+  name: "Add Feeder Fee - Dest."
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DRO:
+  name: "Drop off Surcharge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ICD:
+  name: "Inlands Campaign Destination"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+AFD:
+  name: "AFD"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+FEE85:
+  name: "Container Inspection FEE85"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+TAF:
+  name: "Temperature Acceptance Fee"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+USC:
+  name: "Unseal Cargo"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+GRD:
+  name: "Gate Reserve Destination"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PIM:
+  name: "Port Improvement Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+IHF:
+  name: "Import Handling Fees"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+QDF:
+  name: "Quarantine And Disinfection Fee"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DCI:
+  name: "DCI"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+TDIS:
+  name: "Transport Document Issuance Service"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SPL:
+  name: "Splitting"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+APRS:
+  name: "Automatic Packet Reporting System"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PMC:
+  name: "PORT MONITORING CHARGE"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ITW:
+  name: "IT CHARGE"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CMU:
+  name: "COMMUNICATION FEES"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+DRP:
+  name: "Drop Off Charge Imports"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CLTY:
+  name: "CLTY fee"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CQS:
+  name: "CQS"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+EHS:
+  name: "EHS"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ORS:
+  name: "ORS"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PPC:
+  name: "Port Pendency Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CONTINGENCY:
+  name: "Contingency charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+FLS:
+  name: "FEEDER LUM SUM"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+FER:
+  name: "FEEDER Vessel Fee"
+  units: ['per_bl', 'per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DIC:
+  name: "DATA INPUT CHARGE"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CEIW:
+  name: "Ceiw charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DC:
+  name: "Diversion Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+PHC:
+  name: "PORT HANDLING"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+PLS:
+  name: "Phillipines Local Surcharges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  locations: ['PH']
+  tags: ['additional_service']
+ICC:
+  name: "Import Courier Charges"
+  units: ['per_bl']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+IHDF:
+  name: "IMPORT HANDLING FEE"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+TAFD:
+  name: "Temporary Acceptance Fee Dest."
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CTSD:
+  name: "Carbon Tax Surcharge Dest."
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PEP:
+  name: "Port Exit permit"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SIM:
+  name: "Scan Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+GUD:
+  name: "Generator unit at destination"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+DDCC:
+  name: "Destination Dangerous Charges"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ESD:
+  name: "ELECTROSTATIC DISCHARGE"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+PSCD:
+  name: "Port Storage Charges dest"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+PSIM:
+  name: "Port Security - Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CMCI:
+  name: "Container Movement Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+IMC:
+  name: "Import Survey Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+TQC:
+  name: "Tasmania Quarantine Charges (SUR57)"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+ELCRS:
+  name: "ELECTRONIC CARGO RELEASE SERVICE"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+T1:
+  name: "T1 Document"
+  units: ['per_bl']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: []
+LTR:
+  name: "Local Terminal Recovery"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+RC:
+  name: "Release Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+CNC:
+  name: "CARGO UNLOADING CHARGES"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: []
+IDOR:
+  name: "Import DO Revalidation"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+DDF:
+  name: "Destination Documentation Fee"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+IAI:
+  name: "Inland Additional Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: []
+CARC:
+  name: "Container All Risk cover"
+  units: ["per_container"]
+  trade_types: ['import','export']
+  condition: true
+  tags: []
+ADFS:
+  name: "Admin Fee Per Shipment"
+  units: ["per_shipment"]
+  trade_types: ['import','export']
+  condition: true
+  tags: []
+RVC:
+  name: "Regional Value Content "
+  units: ["per_container"]
+  trade_types: ['import','export']
+  condition: true
+  tags: []
+CUS:
+  name: "Customs Entry charge"
+  units: ["per_container"]
+  trade_types: ['import', 'export']
+  condition: true
+  tags: []
+AMSF:
+  name: "AMSF"
+  units: ["per_bl"]
+  trade_types: ['import', 'export']
+  condition: true
+  tags: []
+PCG:
+  name: "Plugin Charges"
+  units: ["per_container"]
+  trade_types: ['import', 'export']
+  condition: "container_type == 'refer'"
+  tags: ['additional_service']
+CFSCLO:
+  name: "CFS Lift On/Off Charges"
+  units: ["per_container"]
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+LOLO:
+  name: "Lift on/Lift off charge"
+  units: ['per_container']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: []
+COD:
+  name: "Change of Destination"
+  units: ['per_bl']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+SIAM:
+  name: "SI Amendment"
+  units: ['per_bl']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CFO:
+  name: "Congestion Fee Origin"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+SLCFS:
+  name: "Shipping Line and CFS Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+GSLC:
+  name: "Shipping line All-in charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PSHARE:
+  name: "Profit Sharing"
+  units: ['per_container', 'per_bl']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+ECRC:
+  name: "Empty Yard Reciept Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: []
+CCFEES:
+  name: "Collect Fees"
+  units: ['per_container', 'per_shipment']
+  trade_types: ['export' , 'import']
+  condition: true
+  tags: []
+WAITC:
+  name: "WAITING TIME LT"
+  units: ['per_container', 'per_bl']
+  trade_types: ['import']
+  condition: true
+  tags: []
+NOTC:
+  name: "Notification charge"
+  units: ['per_container', 'per_bl']
+  trade_types: ['import']
+  condition: true
+  tags: []
+AHFR:
+  name: "Agent Handling Fees - Rebate"
+  units: ['per_shipment']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
