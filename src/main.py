@@ -1,12 +1,20 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,  Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
-from database.db_session import db
-from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
-from celery_worker import create_task
 
-app = FastAPI(debug=True)
+from database.db_session import db
+from fastapi import FastAPI, Request
+from configs.env import APP_ENV
+from params import *
+from fastapi.responses import JSONResponse
+
+from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
+
+docs_url = None if APP_ENV == "production" else "/docs"
+
+app = FastAPI(docs_url=docs_url,debug=True)
+
+
+app.include_router(prefix = "/fcl_freight_rate_v2", router=fcl_freight_router)
 
 
 app.add_middleware(
@@ -16,10 +24,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_request_response_time(request: Request, call_next):
+    from time import time
+    start_time = time()
+    response = await call_next(request)
+    process_time = time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
 @app.on_event("startup")
 def startup():
-    db.connect()
-    print("connected")
+    if db.is_closed():
+        db.connect()
+    # create_table() 
+    # initialize_client()
     
 @app.on_event("shutdown")
 def shutdown():
@@ -30,17 +49,6 @@ def shutdown():
 def read_root():
     return "WELCOME TO OCEAN RMS"
 
-@app.post("/ex1")
-def run_task(data={"amount": 150, "x": 6, "y": 9}):
-    amount = int(data["amount"])
-    x = data["x"]
-    y = data["y"]
-    task = create_task.delay(amount, x, y)
-    return JSONResponse(status_code=200, content={"success": True})
-
-@app.get("/get_fcl_freight_rate_data")
-def get_fcl_freight_rate_data():
-    data = get_fcl_freight_rate()
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code=200, content=data)
-
+@app.get('/fcl_freight_rate_v2/health_check')
+def get_health_check():
+    return JSONResponse(status_code=200, content={ "status": 'healthy' })
