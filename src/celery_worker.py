@@ -17,9 +17,10 @@ CELERY_CONFIG = {
     "result_serializer": "json",
     "accept_content": ['application/json', 'application/x-python-serialize']
 }
+
 celery = Celery(__name__)
-celery.conf.broker_url = os.getenv("CELERY_BROKER_URL")
-celery.conf.result_backend = os.getenv("CELERY_RESULT_BACKEND")
+celery.conf.broker_url = CELERY_REDIS_URL
+celery.conf.result_backend = CELERY_REDIS_URL
 celery.conf.update(**CELERY_CONFIG)
 
 
