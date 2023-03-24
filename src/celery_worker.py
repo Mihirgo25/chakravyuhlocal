@@ -8,7 +8,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from libs.locations import list_locations
+
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -75,7 +75,6 @@ def create_freight_trend_port_pair(request):
 @celery.task()
 def fcl_freight_local_data_updation(local_object,request):
 
-    
     update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
 
     params = {
