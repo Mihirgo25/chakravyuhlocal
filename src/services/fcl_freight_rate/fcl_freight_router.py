@@ -88,7 +88,11 @@ fcl_freight_router = APIRouter()
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
 def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodityCluster):
     data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
-    return data
+    try:
+        data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False})
 
 @fcl_freight_router.post("/create_fcl_freight_rate_commodity_surcharge")
 def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRateCommoditySurcharge):
