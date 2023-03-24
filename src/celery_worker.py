@@ -124,7 +124,7 @@ def send_closed_notifications_to_sales_agent_feedback(object):
 
 @celery.task()
 def bulk_operation_perform_action_functions(action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
-    eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id={cogo_entity_id})")
+    eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')")
 
 
 @celery.task()
