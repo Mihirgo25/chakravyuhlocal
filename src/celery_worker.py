@@ -74,12 +74,17 @@ def create_freight_trend_port_pair(request):
 
 @celery.task()
 def fcl_freight_local_data_updation(local_object,request):
-  from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
 
     
-  update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
+    update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
 
-  local_updations(local_object,request)
+    params = {
+      'performed_by_id': request['performed_by_id'],
+      'organization_id': request['service_provider_id'],
+      'port_id': request['port_id'],
+      'trade_type': request['trade_type']
+    }
+    organization.create_organization_serviceable_port(params)
 
 
 @celery.task()
