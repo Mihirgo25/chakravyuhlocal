@@ -24,8 +24,10 @@ If you are a Windows platform, you would activate the virtualenv like this:
 Once the virtualenv is activated, you can install the required dependencies.
 
 ```
-$ pip install -r requirements.txt
+$ python3 -m pip install --upgrade -r requirements.txt
 ```
+
+pip3 freeze > requirements.txt
 
 At this point you can now synthesize the CloudFormation template for this code.
 

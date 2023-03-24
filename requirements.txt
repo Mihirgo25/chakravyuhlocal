@@ -48,8 +48,8 @@ peewee-migrate==1.6.5
 Pillow==9.4.0
 prometheus-client==0.15.0
 prompt-toolkit==3.0.36
-psycopg-binary==3.1.8
 psycopg2==2.9.5
+psycopg2-binary==2.9.5
 publication==0.0.3
 pydantic==1.10.4
 PyMeeus==0.5.12
