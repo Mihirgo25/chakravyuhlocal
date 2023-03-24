@@ -56,7 +56,7 @@ jobs:
           target: rms
           tags: |
             ${{ env.OCEAN_RMS_REPO_URL }}:latest
-            ${{ env.OCEAN_RMS_REPO_URL }}:$IMAGE_TAG
+            ${{ env.OCEAN_RMS_REPO_URL }}:${{ IMAGE_TAG }}
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
             
@@ -68,7 +68,7 @@ jobs:
           target: celery
           tags: |
             ${{ env.OCEAN_CELERY_REPO_URL }}:latest
-            ${{ env.OCEAN_CELERY_REPO_URL }}:$IMAGE_TAG
+            ${{ env.OCEAN_CELERY_REPO_URL }}:${{ IMAGE_TAG }}
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
           
@@ -91,7 +91,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.OCEAN_RMS_CONTAINER_NAME }}
-          image: ${{ env.OCEAN_RMS_REPO_URL }}:$IMAGE_TAG
+          image: ${{ env.OCEAN_RMS_REPO_URL }}:${{ IMAGE_TAG }}
 
       - name: Deploying Ocean Rms ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -113,7 +113,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.OCEAN_CELERY_CONTAINER_NAME }}
-          image: ${{ env.OCEAN_CELERY_REPO_URL }}:$IMAGE_TAG
+          image: ${{ env.OCEAN_CELERY_REPO_URL }}:${{ IMAGE_TAG }}
 
       - name: Deploying Ocean Celery ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
