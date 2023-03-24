@@ -47,8 +47,6 @@ jobs:
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and push Ocean Rms image
-        env:
-          IMAGE_TAG: ${{ steps.image_name.outputs.sha_short }}
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -56,7 +54,7 @@ jobs:
           target: rms
           tags: |
             ${{ env.OCEAN_RMS_REPO_URL }}:latest
-            ${{ env.OCEAN_RMS_REPO_URL }}:${{ IMAGE_TAG }}
+            ${{ env.OCEAN_RMS_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
             
@@ -68,7 +66,7 @@ jobs:
           target: celery
           tags: |
             ${{ env.OCEAN_CELERY_REPO_URL }}:latest
-            ${{ env.OCEAN_CELERY_REPO_URL }}:${{ IMAGE_TAG }}
+            ${{ env.OCEAN_CELERY_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
           
@@ -91,7 +89,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.OCEAN_RMS_CONTAINER_NAME }}
-          image: ${{ env.OCEAN_RMS_REPO_URL }}:${{ IMAGE_TAG }}
+          image: ${{ env.OCEAN_RMS_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
 
       - name: Deploying Ocean Rms ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -113,7 +111,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.OCEAN_CELERY_CONTAINER_NAME }}
-          image: ${{ env.OCEAN_CELERY_REPO_URL }}:${{ IMAGE_TAG }}
+          image: ${{ env.OCEAN_CELERY_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
 
       - name: Deploying Ocean Celery ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
