@@ -11,11 +11,8 @@ from libs.logger import logger
 
 def upload_file_to_s3(url):
     file_name = url.rsplit("/", 1)[-1]
-    file_to_write_in = os.path.join("/tmp", "{}".format(file_name))
-    s = sharepy.connect(
-        SHARE_POINT_SITE, username=SHARE_POINT_USER, password=SHARE_POINT_PASSWORD
-    )
-    s.getfile(url, filename=file_to_write_in)
+
+    file_to_write_in = url
     file = open(file_to_write_in, "rb").read()
     s3_client = boto3.client(
         "s3",
@@ -27,7 +24,7 @@ def upload_file_to_s3(url):
     bucket_name = AWS_S3_BUCKET_NAME
     now = datetime.utcnow()
     dt_string = now.strftime("%Y_%m_%d_%H_%M_%S_%f")
-    key = dt_string + "_" + file_name.rsplit("/", 1)[-1]
+    key = dt_string
     try:
         file_content_type = mimetypes.guess_type(file_name)[0]
         conf = boto3.s3.transfer.TransferConfig(
@@ -48,5 +45,6 @@ def upload_file_to_s3(url):
         logger.error(e,exc_info=True)
         return None
     file_url = "https://{}.s3.ap-south-1.amazonaws.com/{}".format(bucket_name, key)
+    print(file_url)
     os.remove(file_to_write_in)
     return file_url
