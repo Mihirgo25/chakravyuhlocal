@@ -1,4 +1,4 @@
-FROM python:3-slim
+FROM python:3-slim as BASE
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -26,8 +26,11 @@ WORKDIR /src
 
 COPY ./src /src
 
+EXPOSE 8110
+EXPOSE 8111
 
-EXPOSE 8000
+FROM BASE as rms
+CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8110"]
 
-CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8000"]
-# CMD ["celery", "-A", "celery_worker.celery", "flower", "--port=5555"]
+From BASE as celery
+CMD ["celery", "-A", "celery_worker.celery", "flower", "--port=5555"]
