@@ -35,7 +35,6 @@ class FclFreightRateLocal(BaseModel):
     is_detention_slabs_missing = BooleanField( null=True)
     is_line_items_error_messages_present = BooleanField( null=True)
     is_line_items_info_messages_present = BooleanField( null=True)
-    is_local_agent_rate = BinaryJSONField(index=True, null=True)
     is_plugin_slabs_missing = BooleanField(index=True, null=True)
     line_items = BinaryJSONField(null=True)
     line_items_error_messages = BinaryJSONField( null=True)
