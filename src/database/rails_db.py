@@ -1,6 +1,5 @@
 import psycopg2
 from configs.env import *
-from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 conn = psycopg2.connect(
     database=RAILS_DATABASE_NAME,
     host=RAILS_DATABASE_HOST,
