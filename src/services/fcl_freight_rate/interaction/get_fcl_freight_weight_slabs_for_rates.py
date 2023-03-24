@@ -146,7 +146,7 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
 
     final_result = {}
     for rate in rates:
-        final_result[rate["id"]] = None
+        final_result[rate["id"]] = []
     return final_result
 
         

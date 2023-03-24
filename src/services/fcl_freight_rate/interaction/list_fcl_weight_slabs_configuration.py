@@ -39,7 +39,7 @@ def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1,
             data[i]['destination_location_name'] = locations_hash[str(data[i]['destination_location_id'])]
 
 
-    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+    pagination_data = get_pagination_data(data, page, page_limit, pagination_data_required)
 
     return { 'list': data } | (pagination_data)
 
@@ -49,17 +49,18 @@ def get_query(page, page_limit):
     return query
 
 def get_data(query):
-    data = [model_to_dict(item) for item in query.execute()]
+    data = list(query.dicts())
+    # data = [model_to_dict(item) for item in query.execute()]
     return data
 
-def get_pagination_data(query, page, page_limit, pagination_data_required):
+def get_pagination_data(data, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
 
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return params

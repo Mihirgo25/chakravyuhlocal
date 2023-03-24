@@ -8,6 +8,7 @@ from configs.defintions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
+from database.rails_db import get_shipping_line, get_eligible_orgs
 
 def initialize_freight_query(requirements):
     freight_query = FclFreightRate.select(
@@ -393,21 +394,6 @@ def add_free_days_objects(freight_query_result, response_object, request):
 def add_weight_limit_object(freight_query_result, response_object, request):
     response_object['weight_limit'] = freight_query_result['weight_limit'] | {'unit': 'per_container'}
 
-    if not request['cargo_weight_per_container']:
-        return True
-
-    if not response_object['weight_limit'].get('free_limit'):
-        return False
-
-    if request['cargo_weight_per_container'] <= response_object['weight_limit'].get('free_limit'):
-        return True
-
-    if not response_object['weight_limit'].get('slabs')[-1]:
-        return False
-
-    if request['cargo_weight_per_container'] > response_object['weight_limit']['slabs'][-1]['upper_limit']:
-        return False
-
     return True
 
 def build_additional_weight_line_item_object(additional_weight_rate, additional_weight_rate_currency, request):
@@ -577,19 +563,35 @@ def build_response_list(freight_rates, request):
 
 
 def discard_noneligible_lsps(freight_rates, requirements):
+    ids = get_eligible_orgs('fcl_freight')
+
+    freight_rates = [rate for rate in freight_rates if rate["service_provider_id"] in ids]
     return freight_rates
 
 def discard_noneligible_shipping_lines(freight_rates, requirements):
-    return freight_rates
-
-def discard_no_local_rates(freight_rates, requirements):
+    shipping_line_ids = [rate["shipping_line_id"] for rate in freight_rates]
+    shipping_lines = get_shipping_line(shipping_line_ids)
+    active_shipping_lines_ids = [sl["id"] for sl in shipping_lines if sl["status"] == "active"]
+    freight_rates = [rate for rate in freight_rates if rate["shipping_line_id"] in active_shipping_lines_ids]
     return freight_rates
 
 def discard_no_free_day_rates(freight_rates, requirements):
+    freight_rates = [rate for rate in freight_rates if rate.get("destination_detention") and rate["destination_detention"].get("free_limit")]
     return freight_rates
 
 def discard_no_weight_limit_rates(freight_rates, requirements):
-    return freight_rates
+    if "cargo_weight_per_container" not in requirements:
+        return freight_rates
+
+
+    new_freight_rates = []
+    for rate in freight_rates:
+        if "weight_limit" not in rate or "free_limit" not in rate["weight_limit"] or (rate["weight_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or rate["weight_limit"]["slabs"][-1]["upper_limit"] < requirements["cargo_weight_per_container"])):
+            continue
+
+        new_freight_rates.append(rate)
+
+    return new_freight_rates
 
 def pre_discard_noneligible_rates(freight_rates, requirements):
     freight_rates = discard_noneligible_lsps(freight_rates, requirements)
@@ -597,7 +599,6 @@ def pre_discard_noneligible_rates(freight_rates, requirements):
     return freight_rates
 
 def post_discard_noneligible_rates(freight_rates, requirements):
-    freight_rates = discard_no_local_rates(freight_rates, requirements)
     freight_rates = discard_no_free_day_rates(freight_rates, requirements)
     freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates

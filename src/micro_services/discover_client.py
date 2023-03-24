@@ -8,7 +8,10 @@ client = boto3.client(
 
 def get_instance_url(service_name=None):
     if APP_ENV == 'development':
-        return RUBY_ADDRESS_URL
+        url = RUBY_ADDRESS_URL
+        if service_name in ["organization", "partner"]:
+            url = url + "/{}".format(service_name)
+        return url
     port = COMMON_SERVICE_PORT
     service = COMMON_SERVICE_NAME
     if service_name in ['organization', 'user', 'lead', 'partner']:

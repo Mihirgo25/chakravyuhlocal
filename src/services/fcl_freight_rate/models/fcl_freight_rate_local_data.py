@@ -29,8 +29,7 @@ class FclFreightRateLocalData(BaseModel):
             # self.parent.errors.add('line_items', f"{', '.join(invalid_line_items)} are invalid")
 
 
-    def get_line_item_messages(self, port, main_port, shipping_line, container_size, container_type, commodity, trade_type, possible_charge_codes):
-        shipping_line_id = shipping_line['id'] if shipping_line else None
+    def get_line_item_messages(self, port, main_port, shipping_line_id, container_size, container_type, commodity, trade_type, possible_charge_codes):
         fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
         location_ids = list(set([item.location_id for item in self.line_items if item.location_id is not None]))

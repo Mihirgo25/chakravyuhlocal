@@ -74,6 +74,7 @@ def execute_transaction_code(request):
       fcl_freight_local.save()
     except Exception as e:
       raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
+    create_audit(request, fcl_freight_local.id)
 
 
     fcl_freight_local_data_updation.apply_async(kwargs={"local_object":fcl_freight_local,"request":request},queue='low')
@@ -136,8 +137,6 @@ def local_updations(fcl_freight_local,request):
     fcl_freight_local.update_special_attributes()
     fcl_freight_local.update_freight_objects()
     fcl_freight_local.save()
-
-    create_audit(request, fcl_freight_local.id)
 
     create_organization_serviceable_port(request)
 

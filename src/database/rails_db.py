@@ -12,20 +12,15 @@ conn = psycopg2.connect(
 print("connection successful")
 
 
-def get_shipping_line(id=None):
+def get_shipping_line(id):
     cur = conn.cursor()
 
-    if not id:
-        sql = "select operators.id, operators.business_name, operators.short_name, operators.logo_url from operators where operator_type = '{}' and status = '{}' limit {}".format('shipping_line','active',MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT)
-        cur.execute(sql)
-
-    elif not isinstance(id, list):
+    if not isinstance(id, list):
         id = (id,)
     else:
         id = tuple(id)
-    if id:
-        sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type from operators where operators.id in %s'
-        cur.execute(sql, (id,))
+    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.id in %s'
+    cur.execute(sql, (id,))
     result = cur.fetchall()
     all_result = []
     for res in result:
@@ -35,7 +30,8 @@ def get_shipping_line(id=None):
                 "business_name": res[1],
                 "short_name": res[2],
                 "logo_url": res[3],
-                "operator_type": res[4]
+                "operator_type": res[4],
+                "status": res[5]
             }
         )
     cur.close()
@@ -81,7 +77,7 @@ def get_user(id):
     for res in result:
         all_result.append(
             {
-                "id": res[0],
+                "id": str(res[0]),
                 "name": res[1],
                 "email": res[2],
                 "mobile_number_eformat":res[3]
@@ -90,5 +86,14 @@ def get_user(id):
     cur.close()
     return all_result
 
-    
+def get_eligible_orgs(service):
+    cur = conn.cursor()
+    sql = 'select organization_services.organization_id from organization_services where status = %s and service = %s'
+    cur.execute(sql, ('active', service,))
+    result = cur.fetchall()
+    all_result = []
+    for res in result:
+        all_result.append(str(res[0]))
+    cur.close()
+    return all_result
     

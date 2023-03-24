@@ -19,10 +19,12 @@ def execute_transaction_code(request):
     updated_configuration = FclWeightSlabsConfiguration.get(**{'id' : request_id})
         
     request['updated_at'] = datetime.now()
+    request['price'] = request.get('slabs')[0].get('price')
+    request['currency'] = request.get('slabs')[0].get('currency')
     
     for attr,value in request.items():
         setattr(updated_configuration, attr, value)
-    
+
     if not updated_configuration.save():
         logger.error(updated_configuration.errors)
         return

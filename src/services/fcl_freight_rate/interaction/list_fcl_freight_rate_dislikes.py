@@ -8,7 +8,7 @@ from peewee import fn
 from datetime import datetime
 import json
 from micro_services.client import *
-
+from libs.locations import list_locations
 possible_direct_filters = ['feedback_type', 'continent', 'status']
 
 possible_indirect_filters = ['relevant_supply_agent', 'trade_lane', 'shipping_line', 'validity_start_greater_than', 'validity_end_less_than', 'service_provider_id']
@@ -22,28 +22,29 @@ def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
         query = apply_indirect_filters(query, filters)
+
     data = get_data(query)
-    
-    pagination_data = get_pagination_data(query, page, page_limit)
-    
+
+
+    pagination_data = get_pagination_data(data, page, page_limit)
+
     return { 'list': data } | (pagination_data)
     
 def get_data(query):
     data = []
-    for item in query.dicts():
-        if item.get('origin_trade_id'):
-            item['origin_trade'] = {key:value for key,value in maps.list_locations({'filters' : {'id':item['origin_trade_id']}})['list'][0].items() if key in ['id', 'name', 'display_name']}
-        else:
-            item['origin_trade'] = None
-        if item.get('destination_trade_id'):
-            item['destination_trade'] = {key:value for key,value in maps.list_locations({'filters' : {'id':item['destination_trade_id']}})['list'][0].items() if key in ['id', 'name', 'display_name']}
-        else:
-            item['destination_trade'] = None
+    result = list(query.dicts())
+    locations=[]
+    for item in result:
+        locations.append(str(item.get('origin_trade_id') or ''))
+        item['origin_trade']=None
+        locations.append(str(item.get('destination_trade_id') or ''))
+        item['destination_trade']=None
         feedbacks_str = ','.join(item['feedbacks']).translate(str.maketrans('', '', '{}"'))
         item['feedbacks'] = feedbacks_str.split(',')
         unsatisfactory_rate_count = 0
         unpreferred_shipping_lines_count = 0
         unsatisfactory_destination_detention_count = 0
+
         for feedback in list(set(item['feedbacks'])):
             if feedback == 'unpreferred_shipping_lines':
                 unpreferred_shipping_lines_count += 1
@@ -51,10 +52,22 @@ def get_data(query):
                 unsatisfactory_destination_detention_count+=1
             if feedback == 'unsatisfactory_rate':
                 unsatisfactory_rate_count += 1
+        
         item['unpreferred_shipping_lines'] = unpreferred_shipping_lines_count
         item['unsatisfactory_destination_detention'] = unsatisfactory_destination_detention_count
         item['unsatisfactory_rate'] = unsatisfactory_rate_count
         data.append(item)
+    locations_data = list_locations({'id':locations,'page_limit':100})['list']
+    location_match = {}
+    for location in locations_data:
+        location_match[location['id']] = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name']}
+    
+    for i in range(0,len(data)):
+        if data[i].get('origin_trade_id'):
+            data[i]['origin_trade'] = location_match[str(data[i]['origin_trade_id'])]
+        if data[i].get('destination_trade_id'):
+             data[i]['destination_trade'] = location_match[str(data[i]['destination_trade_id'])]
+           
     return data 
 
 def get_query(page, page_limit):
@@ -117,11 +130,11 @@ def apply_relevant_supply_agent_filter(query, filters):
     query = query.where((FclFreightRate.destination_port_id << destination_port_id) | (FclFreightRate.destination_country_id << destination_port_id) | (FclFreightRate.destination_continent_id << destination_port_id) | (FclFreightRate.destination_trade_id << destination_port_id))
     return query
 
-def get_pagination_data(query, page, page_limit):
+def get_pagination_data(data, page, page_limit):
   pagination_data = {
     'page': page,
-    'total': ceil(query.count()/page_limit),
-    'total_count': query.count(),
+    'total': ceil(len(data)/page_limit),
+    'total_count': len(data),
     'page_limit': page_limit
     }
   
