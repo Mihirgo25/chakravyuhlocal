@@ -8,7 +8,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 
 from libs.locations import list_locations
 
@@ -123,9 +122,9 @@ def send_closed_notifications_to_sales_agent_feedback(object):
 
 
 @celery.task()
-def validate_and_process_rate_sheet_converted_file_delay(object):
-    object.validate_and_process_rate_sheet_converted_file()
-
+def validate_and_process_rate_sheet_converted_file_delay(request):
+    from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
+    return validate_and_process_rate_sheet_converted_file(request)
 
 
 

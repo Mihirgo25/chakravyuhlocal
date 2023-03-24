@@ -51,7 +51,7 @@ def  update_rate_sheet(params: UpdateRateSheet):
     for key in params.keys():
         if key not in ['id', 'performed_by_id', 'procured_by_id','sourced_by_id']:
             rate_sheet[key] = params[key]
-    validate_and_process_rate_sheet_converted_file_delay.apply_async(kwargs={'object':rate_sheet},queue='low')
+    validate_and_process_rate_sheet_converted_file_delay.apply_async(kwargs={'request':rate_sheet},queue='low')
     # validate_and_process_rate_sheet_converted_file(rate_sheet)
     return {
       "id": rate_sheet['id']
