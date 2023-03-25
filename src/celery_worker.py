@@ -9,7 +9,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import F
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
-from libs.locations import list_locations
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -18,9 +17,10 @@ CELERY_CONFIG = {
     "result_serializer": "json",
     "accept_content": ['application/json', 'application/x-python-serialize']
 }
+
 celery = Celery(__name__)
-celery.conf.broker_url = os.getenv("CELERY_BROKER_URL")
-celery.conf.result_backend = os.getenv("CELERY_RESULT_BACKEND")
+celery.conf.broker_url = CELERY_REDIS_URL
+celery.conf.result_backend = CELERY_REDIS_URL
 celery.conf.update(**CELERY_CONFIG)
 
 
@@ -29,12 +29,12 @@ def create_fcl_freight_rate_delay(request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
     return create_fcl_freight_rate(request)
 
-@celery.task()
+@celery.task(max_retries=10)
 def delay_fcl_functions(fcl_object,request):
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
     from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
     from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
-    create_freight_trend_port_pair(request)
+    print(create_freight_trend_port_pair(request))
     create_sailing_schedule_port_pair(request)
     if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
         organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
@@ -75,12 +75,16 @@ def create_freight_trend_port_pair(request):
 
 @celery.task()
 def fcl_freight_local_data_updation(local_object,request):
-  from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import local_updations
 
+    update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
 
-  update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
-
-  local_updations(local_object,request)
+    params = {
+      'performed_by_id': request['performed_by_id'],
+      'organization_id': request['service_provider_id'],
+      'port_id': request['port_id'],
+      'trade_type': request['trade_type']
+    }
+    organization.create_organization_serviceable_port(params)
 
 
 @celery.task()
@@ -130,7 +134,7 @@ def validate_and_process_rate_sheet_converted_file_delay(request):
 
 @celery.task()
 def bulk_operation_perform_action_functions(action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
-    eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id={cogo_entity_id})")
+    eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')")
 
 
 @celery.task()

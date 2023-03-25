@@ -235,7 +235,10 @@ class FclFreightRate(BaseModel):
 
 
     def update_weight_limit_special_attributes(self):
-      self.is_weight_limit_slabs_missing = (len(self.weight_limit.get('slabs',{})) == 0)
+      if self.weight_limit:
+        self.is_weight_limit_slabs_missing = (len(self.weight_limit.get('slabs',[])) == 0)
+      else:
+        self.is_weight_limit_slabs_missing = True
 
     def validate_origin_local(self):
       if 'origin_local' in self.dirty_fields and self.origin_local:

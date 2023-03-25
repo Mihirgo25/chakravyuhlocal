@@ -35,7 +35,6 @@ class FclFreightRateLocal(BaseModel):
     is_detention_slabs_missing = BooleanField( null=True)
     is_line_items_error_messages_present = BooleanField( null=True)
     is_line_items_info_messages_present = BooleanField( null=True)
-    is_local_agent_rate = BinaryJSONField(index=True, null=True)
     is_plugin_slabs_missing = BooleanField(index=True, null=True)
     line_items = BinaryJSONField(null=True)
     line_items_error_messages = BinaryJSONField( null=True)
@@ -134,9 +133,9 @@ class FclFreightRateLocal(BaseModel):
         response = {}
         response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line_id, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
 
-        self.line_items_error_messages = response['line_items_error_messages'],
-        self.is_line_items_error_messages_present = response['is_line_items_error_messages_present'],
-        self.line_items_info_messages = response['line_items_info_messages'],
+        self.line_items_error_messages = response['line_items_error_messages'] if response['line_items_error_messages'] else None
+        self.is_line_items_error_messages_present = response['is_line_items_error_messages_present']
+        self.line_items_info_messages = response['line_items_info_messages'] if response['line_items_info_messages'] else None
         self.is_line_items_info_messages_present = response['is_line_items_info_messages_present']
 
     def update_free_days_special_attributes(self):

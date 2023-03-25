@@ -1,4 +1,4 @@
-FROM python:3-slim
+FROM python:3-slim as base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -20,14 +20,17 @@ COPY requirements.txt .
 
 RUN pip3 install -r requirements.txt
 
-COPY .env ./
+#COPY .env ./
 
 WORKDIR /src
 
 COPY ./src /src
 
+EXPOSE 8110
+EXPOSE 8111
 
-EXPOSE 8000
+FROM base as rms
+CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8110"]
 
-CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8000"]
-# CMD ["celery", "-A", "celery_worker.celery", "flower", "--port=5555"]
+FROM base as celery
+CMD ["celery" ,"-A" ,"celery_worker.celery" , "worker" ,"-B" , "--loglevel=info" , "-Q" , "communication,critical,low,fcl_freight_rate"]
