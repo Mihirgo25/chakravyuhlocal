@@ -82,6 +82,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from configs.defintions import yml_obj
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
+from configs.env import APP_ENV
 
 fcl_freight_router = APIRouter()
 
@@ -89,8 +90,9 @@ fcl_freight_router = APIRouter()
 def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodityCluster, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
     try:
         data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
@@ -102,8 +104,9 @@ def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodity
 def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRateCommoditySurcharge, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
@@ -115,17 +118,22 @@ def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRa
 def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalAgent, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
-    data = create_fcl_freight_rate_local_agent(request.__dict__)
-    return JSONResponse(status_code=200, content={'success':True})
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = create_fcl_freight_rate_local_agent(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
 
 @fcl_freight_router.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
@@ -136,8 +144,9 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_id = create_fcl_freight_rate_feedback(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
@@ -148,8 +157,9 @@ def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback,
 def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotAvailable, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     data = create_fcl_freight_rate_not_available(request)
     if data == True:
         return JSONResponse(status_code = 200, content = {'success': True})
@@ -161,8 +171,9 @@ def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotA
 def create_fcl_freight_rate_local_data(request: PostFclFreightRateLocal, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_local(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -173,8 +184,9 @@ def create_fcl_freight_rate_local_data(request: PostFclFreightRateLocal, resp: d
 def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_task(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -185,8 +197,9 @@ def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: d
 def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_request(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -197,8 +210,9 @@ def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, r
 def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLocalRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_local_request(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -209,8 +223,9 @@ def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLoca
 def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConfiguration, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_weight_slabs_configuration(request.dict(exclude_none = False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -536,12 +551,12 @@ def list_fcl_freight_rate_free_day_requests_data(
     page_limit: int = 10,
     page: int = 1,
     is_stats_required: bool = True,
+    performed_by_id: str = None,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    
-    performed_by_id = resp["setters"]["performed_by_id"]
+
     try:
         data = list_fcl_freight_rate_free_day_requests(filters, page_limit, page, is_stats_required, performed_by_id)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -824,8 +839,9 @@ def list_fcl_weight_slabs_configuration_data(
 def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -837,8 +853,9 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
 def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_local(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -850,8 +867,9 @@ def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalA
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_local_agent(request.__dict__)
         data = jsonable_encoder(data)
@@ -876,8 +894,9 @@ def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConf
 def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePlatformPrices, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_platform_prices(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -888,11 +907,12 @@ def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePl
 def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
     except:
         return JSONResponse(status_code=500, content={"success": False})
 
@@ -900,8 +920,9 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends
 def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -916,8 +937,9 @@ def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -975,11 +997,12 @@ def get_fcl_freight_rate_extension(
 def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
     except:
         return JSONResponse(status_code=500, content={"success": False})
 
@@ -987,19 +1010,25 @@ def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, resp:
 def delete_fcl_freight_rates_feedback(request: DeleteFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
     except:
         return JSONResponse(status_code=500, content={"success": False})
 
 @fcl_freight_router.delete("/delete_fcl_freight_rate_local_request")
 def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalRequest, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_local_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
     except:
         return JSONResponse(status_code=500, content={"success": False})
 
@@ -1007,11 +1036,12 @@ def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalReq
 def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_local(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
     except:
         return JSONResponse(status_code=500, content={"success": False})
 
@@ -1019,11 +1049,12 @@ def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, resp: dic
 def delete_fcl_freight_rates_free_day_request(request: DeleteFclFreightRateFreeDayRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_free_day_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content={"success": True})
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
     except:
         return JSONResponse(status_code=500, content={"success": False})
 
@@ -1032,11 +1063,12 @@ def delete_fcl_freight_rates_free_day_request(request: DeleteFclFreightRateFreeD
 def create_fcl_freight_rate_weight_limit_data(request: CreateFclFreightRateWeightLimit, resp:dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content={"success": False})
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except:
         return JSONResponse(status_code=500, content={"success": False})
     
@@ -1071,8 +1103,9 @@ def get_fcl_freight_rate_weight_limit_data(
 def update_fcl_freight_rate_weight_limit_data(request: UpdateFclFreightRateWeightLimit, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1083,8 +1116,9 @@ def update_fcl_freight_rate_weight_limit_data(request: UpdateFclFreightRateWeigh
 def create_fcl_freight_rate_free_day_data(request: CreateFclFreightRateFreeDay, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_free_day(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1143,8 +1177,9 @@ def get_eligible_fcl_freight_rate_free_day_data(
 def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1251,8 +1286,9 @@ def get_fcl_freight_commodity_cluster_data(
 def update_fcl_freight_commodity_cluster_data(request:UpdateFclFreightCommodityCluster, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_commodity_cluster(request)
         data = jsonable_encoder(data)
@@ -1264,8 +1300,9 @@ def update_fcl_freight_commodity_cluster_data(request:UpdateFclFreightCommodityC
 def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateCommoditySurcharge, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content = jsonable_encoder(data))
@@ -1277,8 +1314,9 @@ def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateComm
 def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSeasonalSurcharge, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
         return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
@@ -1290,8 +1328,9 @@ def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSea
 def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
         return JSONResponse(content=jsonable_encoder(data))
@@ -1304,8 +1343,9 @@ def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation, res
 def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeDayRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request.performed_by_id = resp["setters"]["performed_by_id"]
-    request.performed_by_type = resp["setters"]["performed_by_type"]
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_free_day_request(request.dict(exclude_none=False))
         return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
