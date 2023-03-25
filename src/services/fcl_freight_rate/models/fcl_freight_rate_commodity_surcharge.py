@@ -62,7 +62,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         table_name = 'fcl_freight_rate_commodity_surcharges'
 
     def validate_location_types(self):
-        locations = maps.list_locations({'id': [str(self.origin_location_id), str(self.destination_location_id)]})['list']
+        locations = maps.list_locations({'filters':{'id': [str(self.origin_location_id), str(self.destination_location_id)]}})['list']
         for location in locations:
             if location['id']==str(self.origin_location_id):
                 origin_location = location

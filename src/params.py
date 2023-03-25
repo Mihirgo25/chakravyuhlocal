@@ -30,7 +30,7 @@ class LineItem(BaseModel):
   slabs: list[Slab] = None
 
 class LocalData(BaseModel):
-  line_items: list[LineItem]
+  line_items: list[LineItem]=None
   detention: FreeDay = None
   demurrage: FreeDay = None
   plugin: FreeDay = None

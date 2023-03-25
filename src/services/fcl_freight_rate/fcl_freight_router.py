@@ -156,7 +156,7 @@ def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConf
     data = create_fcl_weight_slabs_configuration(request.dict(exclude_none = False))
     return data
 
-@fcl_freight_router.get("/get_fcl_freight_rate_data")
+@fcl_freight_router.get("/get_fcl_freight_rate")
 def get_fcl_freight_rate_data(
     origin_port_id: str = None,
     origin_main_port_id: str = None, 
@@ -181,6 +181,7 @@ def get_fcl_freight_rate_data(
         'service_provider_id': service_provider_id, 
         'importer_exporter_id': importer_exporter_id
     }
+    print("n")
     data = get_fcl_freight_rate(request)
     data = jsonable_encoder(data)
     return JSONResponse(status_code=200, content=data)
@@ -346,8 +347,8 @@ def get_fcl_freight_rate_visibility_data(
     service_provider_id: str,
     origin_port_id: str = None,
     destination_port_id: str = None,
-    from_date: str = None,
-    to_date: str = None,
+    from_date: datetime = None,
+    to_date: datetime = None,
     rate_id: str = None,
     shipping_line_id: str = None,
     container_size: str = None,
@@ -892,4 +893,9 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
 # @fcl_freight_router.post('/test')
 # def test_fcl():
 #     query = query.where(attrgetter(key)(Model).contains_any(filters[key]))
+
+from services.fcl_freight_rate.helpers.test import update
+@fcl_freight_router.post("/update_data")
+def update_date():
+    update()
 
