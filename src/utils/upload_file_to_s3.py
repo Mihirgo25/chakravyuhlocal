@@ -45,6 +45,5 @@ def upload_file_to_s3(url):
         logger.error(e,exc_info=True)
         return None
     file_url = "https://{}.s3.ap-south-1.amazonaws.com/{}".format(bucket_name, key)
-    print(file_url)
     os.remove(file_to_write_in)
     return file_url
