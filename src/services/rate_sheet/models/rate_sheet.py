@@ -5,7 +5,7 @@ import datetime
 
 
 class BaseModel(Model):
-    # db.execute_sql('CREATE SEQUENCE rate_sheets_serial_id_seq START WITH 1')
+    db.execute_sql('CREATE SEQUENCE rate_sheets_serial_id_seq START WITH 1')
     class Meta:
         database = db
 class RateSheet(BaseModel):
