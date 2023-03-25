@@ -1,6 +1,5 @@
 import os, csv, json
 from csv import writer
-from libs.download_csv import download_file
 from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from micro_services.client import *
