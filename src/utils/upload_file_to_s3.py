@@ -23,7 +23,8 @@ def upload_file_to_s3(url):
     file = io.BytesIO(file)
     bucket_name = AWS_S3_BUCKET_NAME
     now = datetime.utcnow()
-    dt_string = now.strftime("%Y_%m_%d_%H_%M_%S_%f")
+    dt_string = 'rate_sheets/'
+    dt_string = dt_string + file_name
     key = dt_string
     try:
         file_content_type = mimetypes.guess_type(file_name)[0]
