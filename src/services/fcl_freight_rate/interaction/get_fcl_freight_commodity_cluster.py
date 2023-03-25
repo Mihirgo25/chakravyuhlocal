@@ -5,5 +5,8 @@ def get_fcl_freight_commodity_cluster(id):
     return commodity_cluster
 
 def get_commodity_cluster(id):
-    response = FclFreightCommodityCluster.select().where(FclFreightCommodityCluster.id == id).dicts().get()
+    try:
+        response = FclFreightCommodityCluster.select().where(FclFreightCommodityCluster.id == id).dicts().get()
+    except:
+        response = {}
     return response

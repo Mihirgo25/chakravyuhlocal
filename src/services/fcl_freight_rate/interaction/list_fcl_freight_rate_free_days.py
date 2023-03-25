@@ -19,15 +19,15 @@ def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pag
     if return_query: 
         return { 'list': list(query.dicts()) } 
         
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
-        results = {}
-        for future in futures:
-            result = future.result()
-            results.update(result)
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    #     futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
+    #     results = {}
+    #     for future in futures:
+    #         result = future.result()
+    #         results.update(result)
 
-    data = results['get_data']
-    pagination_data = results['get_pagination_data']
+    data = get_data(query)
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
     
     return {'list': data} | (pagination_data)
 
@@ -35,7 +35,7 @@ def get_query(page, page_limit):
     query = FclFreightRateFreeDay.select().order_by(FclFreightRateFreeDay.updated_at.desc(nulls = 'LAST')).paginate(page, page_limit)
     return query
 
-def get_data(query, page, page_limit, pagination_data_required):
+def get_data(query):
     data = query.select(
         FclFreightRateFreeDay.id,
         FclFreightRateFreeDay.location_id,
@@ -66,14 +66,14 @@ def get_data(query, page, page_limit, pagination_data_required):
     return {'get_data' : data}
 
 
-def get_pagination_data(query, page, page_limit, pagination_data_required):
+def get_pagination_data(data, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {'get_pagination_data' : {}}
 
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return {'get_pagination_data' : params}
