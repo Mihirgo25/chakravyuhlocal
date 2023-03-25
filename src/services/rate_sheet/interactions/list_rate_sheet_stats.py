@@ -12,10 +12,7 @@ def list_rate_sheet_stats(filters, service_provider_id):
     }
 
     executors = ['uploaded', 'converted', 'complete']
-    # for key in executors:
-    # figureout
-    # count = ListRateSheets.run!(filters={"service_provider_id": service_provider_id, "status": key})["total_count"]
-    # return {key: count}
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = {executor.submit(list_rate_sheets, key, service_provider_id): key for key in ['uploaded', 'converted', 'complete']}
         results = {}

@@ -117,11 +117,12 @@ def detail(data):
     for d in data:
         d['processed_percent'] = get_processed_percent(d['id'])
         d['converted_files'] = []
-        for converted_file in data.get('converted_file'):
-            for converted_file_json in converted_file:
-                converted_file_json['total_lines'] = get_total_line(converted_file)
-                converted_file_json['last_line'] = get_last_line(converted_file)
-            d['converted_files'].append(converted_file)
+        if d.get('converted_file'):
+            for converted_file in d.get('converted_file'):
+                for converted_file_json in converted_file:
+                    converted_file_json['total_lines'] = get_total_line(converted_file)
+                    converted_file_json['last_line'] = get_last_line(converted_file)
+                d['converted_files'].append(converted_file)
     return data
 
 
@@ -145,7 +146,7 @@ def add_service_objects(data):
             org_id = cluster.get('service_provider_id')
             if org_id:
                 org_ids.append(org_id)
-            user_id = [cluster.get('procured_by_id'), cluster.get('sourced_by_id'), cluster.get('performed_by_id')]
+            user_id = [str(cluster.get('procured_by_id')), str(cluster.get('sourced_by_id')), str(cluster.get('performed_by_id'))]
             if user_id:
                 user_ids+=user_id
         except:
@@ -162,14 +163,14 @@ def add_service_objects(data):
     if len(user_ids):
         objects_user['filters']['id'] = user_ids
         list_user = common.list_users(objects_user)
-        for user_obj in list_user['list']:
-            objects_user_hash[user_obj['id']] =user_obj
+        # for user_obj in list_user['list']:
+        #     objects_user_hash[user_obj['id']] =user_obj
 
     for object in data:
-        object['service_provider'] = objects_organizations_hash.get(data.get('service_provider_id'))
-        object['procured_by'] = objects_organizations_hash.get(data.get('procured_by_id'))
-        object['sourced_by'] = objects_organizations_hash.get(data.get('sourced_by_id'))
-        object['performed_by'] = objects_organizations_hash.get(data.get('performed_by_id'))
+        object['service_provider'] = objects_organizations_hash.get(object.get('service_provider_id'))
+        object['procured_by'] = objects_organizations_hash.get(object.get('procured_by_id'))
+        object['sourced_by'] = objects_organizations_hash.get(object.get('sourced_by_id'))
+        object['performed_by'] = objects_organizations_hash.get(object.get('performed_by_id'))
 
     return data
 
@@ -185,17 +186,17 @@ def get_final_data(query):
     for object in final_data:
         # assumption here
         rates_count_sum=0
-        for obj in object.get('converted_files'):
-            rates_count_sum+=obj.get('rates_count')
         if 'converted_files' in object:
+            if object.get('converted_files'):
+                for obj in object.get('converted_files'):
+                    rates_count_sum+=obj.get('rates_count')
             object['rates_count'] = rates_count_sum
         rate_sheet_audit = rate_sheet_audits.where(RateSheetAudit.object_id == object['id']).order_by(RateSheetAudit.created_at.desc()).limit(1).dicts().get()
         object['sourced_by_id'] = rate_sheet_audit.get('sourced_by_id')
         object['procured_by_id'] = rate_sheet_audit.get('procured_by_id')
         object['performed_by_id'] = rate_sheet_audit.get('performed_by_id')
-
     final_data = add_service_objects(final_data)
-
+    final_data = jsonable_encoder(final_data)
     return final_data
 
 def add_pagination_data(
@@ -226,19 +227,6 @@ def list_rate_sheets(filters, stats_required, page, page_limit, sort_by, sort_ty
         query = apply_indirect_filters(
             query, indirect_filters
         )
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     # submit each method to the executor and store the resulting futures
-    #     final_data = executor.submit(get_final_data, query)
-    #     pagination_data_future = executor.submit(get_pagination_data, query)
-
-    # data = final_data.result()
-    # pagination_data = pagination_data_future.result()
-    # with concurrent.futures.ThreadPoolExecutor(max_workers = len(detention_and_demurrage_free_days)) as executor:
-    #     futures = [executor.submit(get_eligible_fcl_freight_rate_free_day_data, free_day) for free_day in detention_and_demurrage_free_days]
-    #     method_responses = {}
-    #     for i in range(0,len(futures)):
-    #         method_responses[detention_and_demurrage_free_days[i]['interaction']] = futures[i].result()
-    #         # method_responses.update(result)
 
 
     query, total_count = apply_pagination(query, page, page_limit)

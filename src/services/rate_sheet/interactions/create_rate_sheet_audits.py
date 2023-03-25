@@ -1,7 +1,6 @@
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 
 def create_audit(request):
-    print(request.get('object_id'))
     RateSheetAudit.create(
         action_name = request.get('action_name'),
         object_id = request.get('object_id'),
