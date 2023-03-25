@@ -12,11 +12,13 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
+from services.rate_sheet.models.rate_sheet import RateSheet
+from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRate, FclFreightRateLocal, FclFreightRateLocalAgent, FclFreightRateAudit, FclFreightRateMappings, FclFreightRateCommoditySurcharge, FclFreightRateSeasonalSurcharge, FclFreightRateLocalRequest, FclFreightRateFreeDay, FclFreightRateWeightLimit, FclServiceAudit, FclFreightRateRequest])
+        db.create_tables([FclFreightRate, FclFreightRateLocal, FclFreightRateLocalAgent, FclFreightRateAudit, FclFreightRateMappings, FclFreightRateCommoditySurcharge, FclFreightRateSeasonalSurcharge, FclFreightRateLocalRequest, FclFreightRateFreeDay, FclFreightRateWeightLimit, FclServiceAudit, FclFreightRateRequest, RateSheet, RateSheetAudit])
         db.close()
         print("created table")
     except:
