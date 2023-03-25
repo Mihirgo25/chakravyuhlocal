@@ -18,7 +18,7 @@ from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRate, FclFreightRateLocal, FclFreightRateLocalAgent, FclFreightRateAudit, FclFreightRateMappings, FclFreightRateCommoditySurcharge, FclFreightRateSeasonalSurcharge, FclFreightRateLocalRequest, FclFreightRateFreeDay, FclFreightRateWeightLimit, FclServiceAudit, FclFreightRateRequest, RateSheet, RateSheetAudit])
+        db.create_tables([])
         db.close()
         print("created table")
     except:
