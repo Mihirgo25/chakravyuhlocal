@@ -7,7 +7,7 @@ from params import LineItem
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional
-from configs.defintions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
+from configs.definitions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
@@ -201,7 +201,7 @@ class FclFreightRate(BaseModel):
 
       if self.origin_local:
         self.origin_local_data_instance = FclFreightRateLocalData(self.origin_local)
-        # response = self.origin_local_data_instance.get_line_item_messages(self.origin_port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response = self.origin_local_data_instance.get_line_item_messages(self.origin_port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
         response={}
 
       self.origin_local_line_items_error_messages = response.get('line_items_error_messages'),
@@ -213,7 +213,7 @@ class FclFreightRate(BaseModel):
 
       if self.destination_local:
         response = FclFreightRateLocalData(self.destination_local)
-        # response = self.origin_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response = self.origin_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
         response={}
 
       self.destination_local_line_items_error_messages = response.get('line_items_error_messages'),

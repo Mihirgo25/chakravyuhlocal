@@ -23,7 +23,7 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
     data = get_data(query)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
-    pagination_data = get_pagination_data(query, page, page_limit)
+    pagination_data = get_pagination_data(data, page, page_limit)
 
     return { 'list': data } | (pagination_data) | (stats)
 
@@ -47,11 +47,11 @@ def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
     return data
 
-def get_pagination_data(query, page, page_limit):
+def get_pagination_data(data, page, page_limit):
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return params

@@ -19,15 +19,15 @@ def list_fcl_freight_rate_local_suggestions(service_provider_id, filters = {}, p
     query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocal)
     query = apply_indirect_filters(query, filters)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
-        results = {}
-        for future in futures:
-            result = future.result()
-            results.update(result)
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    #     futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
+    #     results = {}
+    #     for future in futures:
+    #         result = future.result()
+    #         results.update(result)
         
-    data = results['get_data']
-    pagination_data = results['get_pagination_data']
+    data = get_data(query)
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
 
     return {'list': data } | (pagination_data)
 
@@ -52,20 +52,20 @@ def apply_location_ids_filter(query, filters):
     locations_ids = filters['location_ids']
     return query.where(FclFreightRateLocal.location_ids.in_(','.join(locations_ids)))
 
-def get_pagination_data(query, page, page_limit, pagination_data_required):
+def get_pagination_data(data, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {'get_pagination_data' : {}}
 
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return {'get_pagination_data' : params}
 
 
-def get_data(query, page, page_limit, pagination_data_required):
+def get_data(query):
     data = []
     
     query = query.select(FclFreightRateLocal.id,FclFreightRateLocal.port_id,FclFreightRateLocal.main_port_id,FclFreightRateLocal.shipping_line_id,FclFreightRateLocal.service_provider_id,FclFreightRateLocal.trade_type,FclFreightRateLocal.container_size,FclFreightRateLocal.container_type,FclFreightRateLocal.commodity,FclFreightRateLocal.data)

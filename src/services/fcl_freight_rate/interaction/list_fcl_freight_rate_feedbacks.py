@@ -32,7 +32,7 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
     query = get_page(query, page, page_limit)
     data = get_data(query)
 
-    pagination_data = get_pagination_data(query, page, page_limit)
+    pagination_data = get_pagination_data(data, page, page_limit)
     return {'list': data } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
@@ -238,11 +238,11 @@ def get_data(query):
     #     if service_provider:
     #         object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
 
-def get_pagination_data(query, page, page_limit):
+def get_pagination_data(data, page, page_limit):
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return params

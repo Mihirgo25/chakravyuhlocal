@@ -4,8 +4,8 @@ from playhouse.postgres_ext import *
 from micro_services.client import *
 # from rails_client import client
 from fastapi import HTTPException
-from datetime import datetime,timedelta,date
-from configs.defintions import FCL_FREIGHT_CHARGES
+from datetime import datetime,timedelta
+from configs.definitions import FCL_FREIGHT_CHARGES
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
