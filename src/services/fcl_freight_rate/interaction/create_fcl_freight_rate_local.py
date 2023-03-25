@@ -4,7 +4,6 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
 from celery_worker import fcl_freight_local_data_updation
-from micro_services.client import *
 
 
 def create_audit(request, fcl_freight_local_id):
@@ -69,28 +68,20 @@ def execute_transaction_code(request):
         fcl_freight_local.data = fcl_freight_local.data | {'line_items': request['data']['line_items']}
 
     fcl_freight_local.validate_before_save()
+    
+    local_updations(fcl_freight_local, request)
 
     try:
       fcl_freight_local.save()
     except Exception as e:
       raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
+    
+
     create_audit(request, fcl_freight_local.id)
-
-
+    
     fcl_freight_local_data_updation.apply_async(kwargs={"local_object":fcl_freight_local,"request":request},queue='low')
 
     return {"id": fcl_freight_local.id}
-
-
-def create_organization_serviceable_port(request):
-    params = {
-      'performed_by_id': request['performed_by_id'],
-      'organization_id': request['service_provider_id'],
-      'port_id': request['port_id'],
-      'trade_type': request['trade_type']
-    }
-    organization.create_organization_serviceable_port(params)
-
 
 def local_updations(fcl_freight_local,request):
     if request['data'].get('detention'):
@@ -136,9 +127,8 @@ def local_updations(fcl_freight_local,request):
 
     fcl_freight_local.update_special_attributes()
     fcl_freight_local.update_freight_objects()
-    fcl_freight_local.save()
+    return True
 
-    create_organization_serviceable_port(request)
 
 
   

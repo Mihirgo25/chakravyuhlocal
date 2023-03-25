@@ -5,7 +5,9 @@ __pycache__
 .venv
 *.egg-info
 .env
+.env.prod
 
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+src/celerybeat-schedule
