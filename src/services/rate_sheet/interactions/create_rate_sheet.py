@@ -6,10 +6,6 @@ from playhouse.postgres_ext import *
 from peewee import *
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
 from services.rate_sheet.interactions.create_rate_sheet_audits import create_audit
-#   validates :service_provider_id, service_object: { object: 'organization', filters: { account_type: 'service_provider' } }
-#   validates :service_name, inclusion: { in: GlobalConstants::LOGISTICS_SERVICES.keys + ['cogo_assured'] }
-#   validates :partner_id, service_object: { object: 'partner' }, allow_blank: true
-# validates :agent_id, service_object: { object: 'user' }, allow_blank: true
 
 
 
