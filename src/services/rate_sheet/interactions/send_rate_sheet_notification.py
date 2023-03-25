@@ -5,9 +5,7 @@ from peewee import *
 from micro_services.client import *
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 
-
-
-PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
+from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
 
 def get_relevant_user_ids(params):
     user_ids = []
