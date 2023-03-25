@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
 from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS
-from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
+from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 
 def get_fcl_freight_local_rate_cards(request):  
     if 'rates' in request and request['rates']:

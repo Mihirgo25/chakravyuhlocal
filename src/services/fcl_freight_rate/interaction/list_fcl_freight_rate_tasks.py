@@ -5,7 +5,7 @@ from configs.fcl_freight_rate_constants import *
 from playhouse.shortcuts import model_to_dict
 from configs.fcl_freight_rate_constants import EXPECTED_TAT
 from math import ceil
-from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
+from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from peewee import fn
 from datetime import datetime, timedelta
 import concurrent.futures, json

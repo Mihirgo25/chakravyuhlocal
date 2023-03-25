@@ -1,6 +1,5 @@
 from params import LineItem,FreeDay
-import yaml
-from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
+from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from pydantic import BaseModel
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
 from micro_services.client import common, maps

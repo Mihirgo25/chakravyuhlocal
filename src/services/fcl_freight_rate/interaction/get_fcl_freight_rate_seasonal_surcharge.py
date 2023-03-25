@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
-from configs.defintions import FCL_FREIGHT_SEASONAL_CHARGES
+from configs.definitions import FCL_FREIGHT_SEASONAL_CHARGES
 from fastapi import HTTPException
 
 

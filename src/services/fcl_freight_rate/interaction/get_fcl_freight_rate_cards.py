@@ -4,7 +4,7 @@ from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCA
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS, DEFAULT_PAYMENT_TERM
-from configs.defintions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
+from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
