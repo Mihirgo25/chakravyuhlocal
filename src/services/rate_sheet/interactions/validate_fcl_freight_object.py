@@ -34,9 +34,7 @@ def get_freight_object(object):
     try:
         for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
             object[f'{port}_id'] = get_port_id(object.get(port))
-            # del object[port]
         object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-        # del object['shipping_line_id']
         object['validity_start'] = object['validity_start']
         object['validity_start'] = object.get('validity_start')
         object['validity_end'] = object.get('validity_end')
@@ -80,6 +78,8 @@ def get_freight_object(object):
         else:
             rate_object.error = errors['errors']
             rate_object = rate_object.__dict__
+    if not isinstance(rate_object, dict):
+        rate_object = rate_object.__dict__['__data__']
     return rate_object
 
 def get_local_object(object):
@@ -90,9 +90,7 @@ def get_local_object(object):
 
         for line_item in object.get('data').get('line_items'):
             line_item['location_id'] = get_location_id(line_item.get('location'))
-            # del line_item['location']
         object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-        # del object['shipping_line_id']
 
         keys_to_extract = ['port_id',
         'trade_type',
@@ -120,8 +118,9 @@ def get_local_object(object):
             local['error'] = errors['error']
         else:
             local.error = errors['error']
-            local = local.__dict__
-    print(local.__dict__)
+            local = local.__dict__['__data__']
+    if not isinstance(local, dict):
+        local = local.__dict__['__data__']
     return local
 
 def get_free_day_object(object):
@@ -134,11 +133,8 @@ def get_free_day_object(object):
         object['country_id'] = location.get('country_id')
         object['trade_id'] = location.get('trade_id')
         object['continent_id'] = location.get('continent_id')
-        # del object['location']
         object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line'))
-        # del object['shipping_line']
         object['importer_exporter_id'] = get_importer_exporter_id(object.get('importer_exporter'))
-        # del object['importer_exporter']
         keys_to_extract = ['location_id',
         'trade_type',
         'container_size',
@@ -164,8 +160,8 @@ def get_free_day_object(object):
                 free_day = free_day.__dict__
     except Exception as e:
             errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
-    # if object.get('location_id'):
-    # will have to figure out how ot add error here
+    if not isinstance(free_day, dict):
+        free_day = free_day.__dict__['__data__']
     return free_day
 
 
@@ -173,11 +169,11 @@ def get_free_day_object(object):
 
 def get_location(location, type):
     if type == 'port':
-        filters =  {"type": "seaport", "port_code": location, "status": "active"}
-        location =  list_locations(filters)['list']
+        filters =  {'filters': {"type": "seaport", "port_code": location, "status": "active"}}
+        location =  maps.list_locations({filters})['list']
     else:
-        filters =  {"type": "seaport", "name": location, "status": "active"}
-        location =  list_locations(filters)['list']
+        filters =  {'filters': {"type": "seaport", "name": location, "status": "active"}}
+        location =  maps.list_locations(filters)['list']
     if location:
         return location
     else:
@@ -185,9 +181,9 @@ def get_location(location, type):
 
 
 def get_port_id(port_code):
-    filters =  {"type": "seaport", "port_code": port_code, "status": "active"}
+    filters =  {'filters':{"type": "seaport", "port_code": port_code, "status": "active"}}
     try:
-        port_id =  list_locations({'filters': str(filters)})['list'][0]["id"]
+        port_id =  maps.list_locations(filters)['list'][0]["id"]
     except:
         port_id = None
     return port_id
@@ -209,16 +205,16 @@ def get_shipping_line_id(shipping_line_name):
 
 def get_location_id(query):
     filters =  {"type": "seaport", "port_code": query, "status": "active"}
-    port_id =  list_locations({'filters': str(filters)})['list']
+    port_id = maps.list_locations({'filters': filters})['list']
     if not port_id:
         filters =  {"type": "country", "country_code": query, "status": "active"}
-        port_id =  list_locations({'filters': str(filters)})['list']
+        port_id =  maps.list_locations({'filters': filters})['list']
     if not port_id:
         filters =  {"type": "seaport", "port_code": query, "status": "active"}
-        port_id =  list_locations({'filters': str(filters)})['list']
+        port_id =  maps.list_locations({'filters': filters})['list']
     if not port_id:
         filters =  {"name": query}
-        port_id =  list_locations({'filters': str(filters)})['list']
+        port_id =  maps.list_locations({'filters': filters})['list']
     if port_id:
         return port_id[0]['id']
     else:
