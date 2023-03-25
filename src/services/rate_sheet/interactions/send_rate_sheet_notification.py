@@ -23,7 +23,6 @@ def send_rate_sheet_notifications(params):
         serial_id = params.get('serial_id')
     else:
         serial_id = RateSheet.select(fn.MAX(RateSheet.serial_id)).scalar()
-    print(params)
     try:
         variables = {'file_name': params.get('converted_files')[0].get('file_url').split('/').pop(), 'serial_id': serial_id}
     except:

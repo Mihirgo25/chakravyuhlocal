@@ -124,7 +124,6 @@ def get_local_object(object):
     return local
 
 def get_free_day_object(object):
-    print(object)
     errors = {}
     try:
         location = get_location(object.get('location'), object.get('location_type'))[0]

@@ -25,6 +25,5 @@ def list_rate_sheet_stats(filters, service_provider_id):
             else:
                 results.update(result)
 
-    print(results)
     return results
 

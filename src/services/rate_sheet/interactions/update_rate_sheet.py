@@ -15,7 +15,6 @@ from services.rate_sheet.interactions.create_rate_sheet_audits import create_aud
 def get_audit_params(parameters):
     keys_to_extract = ['converted_files']
     audit_data = dict(filter(lambda item: item[0] in keys_to_extract, parameters.items()))
-    print(parameters)
     return {
         'action_name': 'update',
         'performed_by_id': parameters.get('performed_by_id'),
@@ -28,7 +27,6 @@ def get_audit_params(parameters):
 
 
 def  update_rate_sheet(params: UpdateRateSheet):
-    print(params)
     rate_sheet = RateSheet.get(RateSheet.id == params['id'])
     if rate_sheet.status != 'uploaded':
         return
