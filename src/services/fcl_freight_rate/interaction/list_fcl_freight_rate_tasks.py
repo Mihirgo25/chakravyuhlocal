@@ -5,7 +5,7 @@ from configs.fcl_freight_rate_constants import *
 from playhouse.shortcuts import model_to_dict
 from configs.fcl_freight_rate_constants import EXPECTED_TAT
 from math import ceil
-from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
+from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from peewee import fn
 from datetime import datetime, timedelta
 import concurrent.futures, json
@@ -24,15 +24,15 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
         query = apply_indirect_filters(query, filters)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(eval(method_name), query, filters, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
-        results = {}
-        for future in futures:
-            result = future.result()
-            results.update(result)
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    #     futures = [executor.submit(eval(method_name), query, filters, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
+    #     results = {}
+    #     for future in futures:
+    #         result = future.result()
+    #         results.update(result)
         
-    data = results['get_data']
-    pagination_data = results['get_pagination_data']
+    data = get_data(query, filters)
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
 
     stats = get_stats(filters, stats_required)
 
@@ -43,7 +43,7 @@ def get_query(page, page_limit, sort_by, sort_type):
     query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type))).paginate(page, page_limit)
     return query
   
-def get_pagination_data(query, filters, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {'get_pagination_data': {}}
 
@@ -55,7 +55,7 @@ def get_pagination_data(query, filters, page, page_limit, pagination_data_requir
     }
     return {'get_pagination_data' : params}
 
-def get_data(query, filters, page, page_limit, pagination_data_required):
+def get_data(query, filters):
     new_data = []
     port_ids, main_port_ids, container_sizes, container_types, commodities, trade_types, shipping_line_ids = [],[], [],[], [],[], []
     for object in query.dicts():

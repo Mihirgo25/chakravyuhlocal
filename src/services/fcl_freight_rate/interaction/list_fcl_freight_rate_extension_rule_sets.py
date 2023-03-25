@@ -20,7 +20,7 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
         query = apply_indirect_filters(query, filters)
 
     data = get_data(query)
-    pagination_data = get_pagination_data(query, page, page_limit)
+    pagination_data = get_pagination_data(data, page, page_limit)
 
     data = {'list':data} | (pagination_data)
     return data
@@ -47,7 +47,6 @@ def apply_q_filter(query, filters):
     return query.where(FclFreightRateExtensionRuleSets.extension_name.contains(filters['q']))
 
 def get_data(query):
-    data = []
     data = [x for x in query.dicts()]
     param = {'id':[x['cluster_id'] for x in data]}
     cluster_data_all = maps.list_location_cluster({'filters': param})['list']
@@ -59,7 +58,7 @@ def get_data(query):
     for commodity_cluster in commodity_cluster_data_all:
         commodity_cluster_dict[str(commodity_cluster['id'])]={'id':commodity_cluster['id'], 'name' : commodity_cluster['name']}
         
-    for each  in range(0,len(data)):
+    for each in range(0,len(data)):
         if cluster_dict.get(str(data[each]['cluster_id'])):
             data[each]['location_cluster'] = cluster_dict[str(data[each]['cluster_id'])]
         else:
@@ -70,10 +69,10 @@ def get_data(query):
             data[each]['fcl_freight_commodity_cluster'] = {}
     return data
         
-def get_pagination_data(query, page, page_limit):
+def get_pagination_data(data, page, page_limit):
     return {
         'page': page,
-        'total': ceil(query.count()/page_limit),
-        'total_count': query.count(),
+        'total': ceil(len(data)/page_limit),
+        'total_count': len(data),
         'page_limit': page_limit
     }

@@ -6,7 +6,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import *
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
-from configs.defintions import FCL_FREIGHT_CURRENCIES ,FCL_FREIGHT_SEASONAL_CHARGES
+from configs.definitions import FCL_FREIGHT_CURRENCIES ,FCL_FREIGHT_SEASONAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 from micro_services.client import *
 
