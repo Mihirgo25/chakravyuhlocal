@@ -17,7 +17,7 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateBulkOperation)
 
     data = [model_to_dict(item) for item in query.execute()]
-    pagination_data = get_pagination_data(query, page, page_limit)
+    pagination_data = get_pagination_data(data, page, page_limit)
 
     return {'list': data } | (pagination_data)
 
@@ -25,11 +25,11 @@ def get_query(page, page_limit):
     query = FclFreightRateBulkOperation.select().order_by(FclFreightRateBulkOperation.updated_at.desc()).paginate(page, page_limit)
     return query
 
-def get_pagination_data(query, page, page_limit):
+def get_pagination_data(data, page, page_limit):
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return params

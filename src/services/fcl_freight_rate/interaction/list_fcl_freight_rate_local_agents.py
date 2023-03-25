@@ -18,15 +18,15 @@ def list_fcl_freight_rate_local_agents(filters = {}, page_limit = 10, page = 1, 
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocalAgent)
         query = apply_indirect_filters(query, filters)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
-        results = {}
-        for future in futures:
-            result = future.result()
-            results.update(result)
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    #     futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
+    #     results = {}
+    #     for future in futures:
+    #         result = future.result()
+    #         results.update(result)
 
-    data = results['get_data']
-    pagination_data = results['get_pagination_data']
+    data = get_data(query)
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
 
     return {'list': data } | (pagination_data)
 
@@ -34,7 +34,7 @@ def get_query(sort_by, sort_type, page, page_limit):
     query = FclFreightRateLocalAgent.select().order_by(eval('FclFreightRateLocalAgent.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
     return query
 
-def get_data(query, page, page_limit, pagination_data_required):
+def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
 
     return {'get_data':data}
@@ -63,14 +63,14 @@ def get_data(query, page, page_limit, pagination_data_required):
     
 #     return new_data
 
-def get_pagination_data(query, page, page_limit, pagination_data_required):
+def get_pagination_data(data, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {'get_pagination_data':{}} 
 
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return {'get_pagination_data':params}
