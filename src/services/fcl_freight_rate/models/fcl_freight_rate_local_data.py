@@ -11,7 +11,11 @@ class FclFreightRateLocalData(BaseModel):
     plugin: FreeDay = None
     def __init__(self,data):
         if data:
-            super().__init__(line_items = data.get('line_items'),detention =data.get('detention'),demurrage = data.get('demurrage'),plugin = data.get("plugin") )
+            new_data = {}
+            for key in data.keys():
+                if data[key]:
+                    new_data[key] = data[key]
+            super().__init__(**new_data)
         else:
             super().__init__()
 
