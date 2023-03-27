@@ -31,7 +31,10 @@ def create_fcl_freight_rate_data(request):
     query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
     db.execute_sql(query)
     with db.atomic():
-      return create_fcl_freight_rate(request)
+      try:
+        return create_fcl_freight_rate(request)
+      except Exception as e:
+        return e
   
 def create_fcl_freight_rate(request):
     row = {
