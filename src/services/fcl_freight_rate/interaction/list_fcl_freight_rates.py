@@ -171,8 +171,8 @@ def get_data(query, expired_rates_required):
       
         result['is_rate_not_available'] = (validities.count == 0)
 
-        del result['origin_local']
-        del result['destination_local']
+      del result['origin_local']
+      del result['destination_local']
 
     data.append(result)
   return data
