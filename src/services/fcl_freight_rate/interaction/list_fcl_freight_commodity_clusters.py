@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_commodity_cluster import FclFreightCommodityCluster
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from math import ceil
 from playhouse.shortcuts import model_to_dict
 from peewee import fn
@@ -17,7 +17,7 @@ def list_fcl_freight_commodity_clusters(filters = {}, page_limit = 10, page = 1,
         query = apply_indirect_filters(query, filters)
 
     data = [model_to_dict(item) for item in query.execute()]
-    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+    pagination_data = get_pagination_data(data, page, page_limit, pagination_data_required)
 
     return {'list': data } | (pagination_data)
     
@@ -36,14 +36,14 @@ def apply_q_filter(query, filters):
     query = query.where(fn.Lower(FclFreightCommodityCluster.name).contains(filters['q'].lower()))
     return query
 
-def get_pagination_data(query, page, page_limit, pagination_data_required):
+def get_pagination_data(data, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {} 
 
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(len(data)/page_limit),
+      'total_count': len(data),
       'page_limit': page_limit
     }
     return params

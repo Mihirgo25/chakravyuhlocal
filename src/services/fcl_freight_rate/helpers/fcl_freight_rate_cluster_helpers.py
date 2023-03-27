@@ -1,6 +1,5 @@
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
-import yaml
-from configs.defintions import FCL_FREIGHT_CHARGES
+from configs.definitions import FCL_FREIGHT_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
 from peewee import *
 from micro_services.client import maps

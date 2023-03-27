@@ -19,7 +19,7 @@ class FclServiceAudit(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     object_id = UUIDField(index=True)
     object_type = CharField(null=True)
-    performed_by_id = UUIDField(index=True)
+    performed_by_id = UUIDField(index=True,null=True)
     rate_sheet_id = UUIDField(index=True, null=True)
     source = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)

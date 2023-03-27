@@ -5,7 +5,7 @@ import datetime
 from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS
 from configs.global_constants import HAZ_CLASSES
 from fastapi import HTTPException
-from configs.defintions import FCL_FREIGHT_LOCAL_CHARGES
+from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from micro_services.client import *
 from database.rails_db import get_shipping_line

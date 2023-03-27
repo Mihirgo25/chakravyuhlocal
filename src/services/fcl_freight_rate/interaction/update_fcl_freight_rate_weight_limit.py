@@ -5,6 +5,9 @@ from datetime import datetime
 from database.db_session import db
 
 def update_fcl_freight_rate_weight_limit(request):
+  object_type = 'Fcl_Freight_Rate_Weight_Limit' 
+  query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
+  db.execute_sql(query)
   with db.atomic() as transaction:
         try:
           return execute_transaction_code(request)
