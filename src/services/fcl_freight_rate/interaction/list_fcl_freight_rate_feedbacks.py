@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING
 from playhouse.shortcuts import model_to_dict
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from micro_services.client import common
 from datetime import datetime
 import concurrent.futures, json
