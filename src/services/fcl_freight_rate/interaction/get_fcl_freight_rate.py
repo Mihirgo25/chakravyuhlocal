@@ -11,6 +11,8 @@ def get_fcl_freight_rate(request):
     object, fcl_object = find_object(request)
     if object:
       details = object.detail()
+  else:
+    fcl_object=None
 
   origin_local_object_params = {
     'port_id': request['origin_port_id'],

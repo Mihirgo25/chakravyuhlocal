@@ -2,8 +2,24 @@ from database.db_session import db
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
 from libs.logger import logger 
 from datetime import datetime
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+
+def create_audit(request):
+
+    data = {key:str(value) for key, value in request.items() if key not in ['performed_by_id','id'] and not value == None}
+
+    FclServiceAudit.create(
+        action_name = 'update',
+        performed_by_id = request['performed_by_id'],
+        data = data,
+        object_id = request['id'],
+        object_type = 'FclWeightSlabsConfiguration'
+    )
 
 def update_fcl_weight_slabs_configuration(request):
+    object_type = 'Fcl_Weight_Slabs_Configuration'
+    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
+    db.execute_sql(query)
     with db.atomic() as transaction:
         try:
             data = execute_transaction_code(request)
@@ -28,7 +44,7 @@ def execute_transaction_code(request):
     if not updated_configuration.save():
         logger.error(updated_configuration.errors)
         return
- 
+    create_audit(request)
     return {
     'id': request_id
     }
