@@ -1,7 +1,7 @@
 import concurrent.futures
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from playhouse.shortcuts import model_to_dict
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from math import ceil
 import json
 from micro_services.client import common
