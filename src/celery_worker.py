@@ -2,10 +2,10 @@ from celery import Celery
 import os
 from configs.env import *
 from micro_services.client import organization, common
-from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
-from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
-from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
-from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
+from datetime import datetime
+from database.db_session import db_cogo_lens
+from currency_converter import CurrencyConverter
+from services.fcl_freight_rate.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
@@ -131,7 +131,45 @@ def update_freight_objects_for_commodity_surcharge(surcharge_object):
     surcharge_object.update_freight_objects()
 
 
+@celery.task()
+def create_fcl_freight_rate_feedback_for_prediction(result):
+    with db_cogo_lens.atomic() as transaction:
+        try:
+            for feedback in result:
+                if "origin_country_id" not in feedback:
+                    feedback["origin_country_id"] = None
+                if "destination_country_id" not in feedback:
+                    feedback["destination_country_id"] = None
+                record = {
+                    "origin_port_id": feedback["origin_port_id"],
+                    "destination_port_id": feedback["destination_port_id"],
+                    "origin_country_id": feedback["origin_country_id"],
+                    "destination_country_id": feedback["destination_country_id"],
+                    "shipping_line_id": feedback["shipping_line_id"],
+                    "container_size": feedback["container_size"],
+                    "container_type": feedback["container_type"],
+                    "commodity": feedback["commodity"],
+                    "validity_start": feedback['validities'][0]["validity_start"],
+                    "validity_end": feedback['validities'][0]["validity_end"],
+                    "predicted_price_currency": "USD",
+                    "predicted_price": feedback["validities"][0]['line_items'][0]['price'] if ("validities" in feedback) and (feedback['validities']) else None,
+                    "actual_price": feedback["actual_price"] if "actual_price" in feedback else None,
+                    "actual_price_currency": feedback["actual_price_currency"] if "actual_price_currency" in feedback else None,
+                    "source" : "predicted_for_rate_cards",
+                    "creation_id" : feedback["id"],
+                    "importer_exporter_id" : feedback['importer_exporter_id']
+                }
 
+                new_rate = FclRatePredictionFeedback.create(**record)
+                feedback['id'] = new_rate.id
 
+            c = CurrencyConverter(fallback_on_missing_rate=True, fallback_on_wrong_date=True)
 
+            for val in result:
+                if ("predicted_price" in val) and val['predicted_price']:
+                    val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.now()))
+            return result
 
+        except Exception as e:
+            transaction.rollback()
+            return e

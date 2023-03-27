@@ -58,7 +58,6 @@ def get_data(query):
                 FclFreightRateLocal.port,
                 FclFreightRateLocal.main_port,
                 FclFreightRateLocal.service_provider,
-                FclFreightRateLocal.is_local_agent_rate,
                 FclFreightRateLocal.procured_by,
                 FclFreightRateLocal.sourced_by,
                 )

@@ -9,3 +9,12 @@ db = PostgresqlDatabase(
     host = DATABASE_HOST,
     port = DATABASE_PORT
     )
+
+db_cogo_lens = PostgresqlDatabase(
+    COGO_LENS_DATABASE_NAME,
+    autorollback = True,
+    user = COGO_LENS_DATABASE_USER,
+    password = COGO_LENS_DATABASE_PASSWORD,
+    host = COGO_LENS_DATABASE_HOST,
+    port = COGO_LENS_DATABASE_PORT
+    )

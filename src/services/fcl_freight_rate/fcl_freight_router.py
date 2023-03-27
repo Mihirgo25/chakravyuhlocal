@@ -346,7 +346,7 @@ def get_fcl_freight_local_rate_cards_data(
     except:
         return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.post("/get_fcl_freight_rate_cards")
+@fcl_freight_router.get("/get_fcl_freight_rate_cards")
 def get_fcl_freight_rate_cards_data(
     origin_port_id: str, 
     origin_country_id: str, 
