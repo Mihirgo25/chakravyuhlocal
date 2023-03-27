@@ -8,15 +8,16 @@ class GlobalClient:
         self.url = url
         self.headers = headers
 
-    def request(self, method, action, data={}):
+    def request(self, method, action, data={}, params={}):
         kwargs = {
             "headers": self.headers,
             "url": self.normalize_url(action),
             "data": json.dumps(data),
+            "params": params
         }
 
         request = httpx.Request(method, **kwargs)
-        
+
 
         response = self.client.send(request)
 
