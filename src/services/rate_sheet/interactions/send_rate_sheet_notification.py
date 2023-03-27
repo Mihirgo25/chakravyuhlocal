@@ -51,4 +51,4 @@ def send_rate_sheet_notifications(params):
             'template_name': template_name,
             'variables': variables
         }
-        common.create_communication(data)
+        # common.create_communication(data)

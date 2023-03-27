@@ -4,7 +4,6 @@ from configs.env import *
 from datetime import datetime
 import io
 import mimetypes
-import sharepy
 import os
 from libs.logger import logger
 
@@ -17,8 +16,6 @@ def upload_file_to_s3(url):
     s3_client = boto3.client(
         "s3",
         region_name=AWS_S3_REGION_NAME,
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
     file = io.BytesIO(file)
     bucket_name = AWS_S3_BUCKET_NAME

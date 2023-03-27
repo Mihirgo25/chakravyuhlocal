@@ -11,5 +11,5 @@ db = PostgresqlDatabase(
     port = DATABASE_PORT
     )
 
-rd = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+rd = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, username=REDIS_USERNAME, password=REDIS_PASSWORD)
 

@@ -863,6 +863,7 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, row):
 def process_fcl_freight_freight(params, converted_file):
     total_lines = 0
     original_path = get_original_file_path(params)
+    upload_file_to_s3(original_path)
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
