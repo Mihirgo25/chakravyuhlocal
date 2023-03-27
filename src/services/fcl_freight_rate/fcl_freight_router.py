@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Response, Depends
+from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import Union, List
 import json
@@ -471,7 +471,6 @@ def get_fcl_freight_rate_visibility_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-
     request = {
         'service_provider_id' : service_provider_id,
         'origin_port_id': origin_port_id,
@@ -506,7 +505,6 @@ def get_fcl_weight_slabs_configuration_data(filters: str = None, resp: dict = De
 def list_dashboard_fcl_freight_rates_data(resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-
     try:
         data = list_dashboard_fcl_freight_rates()
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -539,10 +537,9 @@ def list_fcl_freight_rate_bulk_operations_data(
     page_limit: int = 10,
     page: int = 1,
     resp: dict = Depends(authorize_token)
-):
+    ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-
     try:
         data = list_fcl_freight_rate_bulk_operations(filters, page_limit, page)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1088,7 +1085,6 @@ def get_fcl_freight_rate_weight_limit_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-
     request = {
         'origin_location_id':origin_location_id,
         'destination_location_id':destination_location_id,
@@ -1355,21 +1351,34 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
         return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
     except:
         return JSONResponse(status_code=500, content={"success": False})
-
-
-
-
 @fcl_freight_router.post("/create_rate_sheet")
-def create_rate_sheets(request: CreateRateSheet, response: Response):
-    rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=rate_sheet)
+def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
 
 
 
 @fcl_freight_router.post("/update_rate_sheet")
-def update_rate_sheets(request: UpdateRateSheet, response: Response):
-    rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=rate_sheet)
+def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if APP_ENV == "production":
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    try:
+        rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
 
 
 @fcl_freight_router.get("/list_rate_sheets")
@@ -1381,10 +1390,17 @@ def list_rates_sheets(
     sort_by: str = 'created_at',
     sort_type: str = 'desc',
     pagination_data_required:  bool = True,
-
-
+    resp: dict = Depends(authorize_token)
 ):
-    response = list_rate_sheets(
-        filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
-    )
-    return JSONResponse(status_code=200, content=response)
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheets(
+            filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
+
+
