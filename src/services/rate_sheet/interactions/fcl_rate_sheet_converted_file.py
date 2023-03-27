@@ -1242,7 +1242,6 @@ def validate_and_process_rate_sheet_converted_file(params):
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
             params,converted_file
         )
-    print(params)
     for _ in params['converted_files']:
         delete_temp_data
     send_rate_sheet_notifications(params)
