@@ -40,9 +40,9 @@ def execute_transaction_code(request):
 
     create_params = get_create_params(request)
 
-    for attr, value in create_params.items(): 
-        setattr(request_object, attr, value) 
-        
+    for attr, value in create_params.items():
+        setattr(request_object, attr, value)
+
     request_object.set_location()
 
     if request_object.validate():
@@ -98,11 +98,11 @@ def send_notifications_to_supply_agents(request):
     }
     for user_id in request_info['user_ids']:
         data['user_id'] = user_id
-        create_communication_background.apply_async(args=data,queue='communication')
+        # create_communication_background.apply_async(args=data,queue='communication')
 
 
 
-def create_audit(request, request_object_id):     
+def create_audit(request, request_object_id):
     performed_by_id = request['performed_by_id']
     del request['performed_by_id']
     request['cargo_readiness_date'] = request['cargo_readiness_date'].isoformat()

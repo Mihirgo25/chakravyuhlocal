@@ -6,13 +6,13 @@ def get_instance_url(service_name=None):
         if service_name in ["organization", "partner"]:
             url = url + "/{}".format(service_name)
         return url
-    service_port = COMMON_SERVICE_PORT   
+    service_port = COMMON_SERVICE_PORT
     if service_name in ['organization', 'user', 'lead', 'partner']:
         service_port = AUTH_SERVICE_PORT
     if service_name == 'location':
-        service_port = COGOMAPS_SERVICE_PORT 
+        service_port = COGOMAPS_SERVICE_PORT
 
-    
+
     if service_name == 'common':
         instance_url = "http://{}:{}".format(INTERNAL_NLB, service_port)
     else:

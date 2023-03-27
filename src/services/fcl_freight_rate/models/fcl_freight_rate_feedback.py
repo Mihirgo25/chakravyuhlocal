@@ -54,7 +54,7 @@ class FclFreightRateFeedback(BaseModel):
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(index=True, null=True)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateFeedback, self).save(*args, **kwargs)
@@ -84,7 +84,7 @@ class FclFreightRateFeedback(BaseModel):
         fcl_freight_rate_data = FclFreightRate.get(**{'id' : self.fcl_freight_rate_id})
         if fcl_freight_rate_data:
             return True
-        return False    
+        return False
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_service_provider(self.performed_by_org_id)
@@ -98,7 +98,7 @@ class FclFreightRateFeedback(BaseModel):
             if feedback in POSSIBLE_FEEDBACKS:
                 return True
             return False
-        
+
 
     def validate_preferred_freight_rate_currency(self):
         if not self.preferred_freight_rate_currency:
@@ -117,7 +117,7 @@ class FclFreightRateFeedback(BaseModel):
 
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
-            pass 
+            pass
 
         if self.preferred_shipping_line_ids:
             preferred_shipping_lines = []
@@ -139,7 +139,7 @@ class FclFreightRateFeedback(BaseModel):
 
         if not self.validate_source_id():
             raise HTTPException(status_code=404, detail="incorrect source id")
-        
+
         if not self.validate_fcl_freight_rate_id():
             raise HTTPException(status_code=404, detail="incorrect fcl freight rate id")
 
@@ -149,14 +149,14 @@ class FclFreightRateFeedback(BaseModel):
         if len(self.feedbacks) != 0:
             if not self.validate_feedbacks():
                 raise HTTPException(status_code=404, detail="incorrect feedbacks")
-        
+
         if not self.validate_preferred_freight_rate_currency():
             raise HTTPException(status_code=404, detail='invalid currency')
 
         if self.preferred_detention_free_days:
             if not self.validate_preferred_detention_free_days():
                 raise HTTPException(status_code=404, detail="incorrect preferred detention free days")
-        
+
         if self.preferred_shipping_line_ids:
             if not self.validate_preferred_shipping_line_ids():
                 raise HTTPException(status_code=404, detail="incorrect preferred shipping line ids")
@@ -200,7 +200,7 @@ class FclFreightRateFeedback(BaseModel):
             destination_locations = [t for t in destination_locations if t is not None]
         else:
             destination_locations = []
-        
+
         supply_agents_list = partner.list_partner_user_expertises({
             'filters': {'service_type': 'fcl_freight','status': 'active','origin_location_id': origin_locations,'destination_location_id': destination_locations},
             'pagination_data_required': False,
@@ -245,7 +245,7 @@ class FclFreightRateFeedback(BaseModel):
 
         for user_id in feedback_info['user_ids']:
             data['user_id'] = user_id
-            common.create_communication(data)
+            # common.create_communication(data)
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(
@@ -258,14 +258,14 @@ class FclFreightRateFeedback(BaseModel):
             FclFreightRate.destination_continent_id,
             FclFreightRate.destination_trade_id
             ).where(FclFreightRate.id == self.fcl_freight_rate_id).first()#.limit(1)
-        
+
         # for item in loc_data:
         #     locations_data = model_to_dict(item)
         location_pair_name = maps.list_locations({'filters':{'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]}})['list']
         location_pair_name = {t['id']:t['display_name'] for t in location_pair_name}
 
         try:
-            importer_exporter_id = common.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id'] 
+            importer_exporter_id = common.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
 
@@ -285,4 +285,4 @@ class FclFreightRateFeedback(BaseModel):
                 'importer_exporter_id': importer_exporter_id
             }
         }
-        common.create_communication(data)
+        # common.create_communication(data)

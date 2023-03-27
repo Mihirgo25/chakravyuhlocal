@@ -7,6 +7,7 @@ from configs.env import APP_ENV
 from params import *
 from fastapi.responses import JSONResponse
 
+
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 
 docs_url = None if APP_ENV == "production" else "/docs"
@@ -37,9 +38,9 @@ async def log_request_response_time(request: Request, call_next):
 def startup():
     if db.is_closed():
         db.connect()
-    # create_table() 
+    # create_table()
     # initialize_client()
-    
+
 @app.on_event("shutdown")
 def shutdown():
     if not db.is_closed():
