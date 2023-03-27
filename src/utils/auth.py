@@ -2,7 +2,7 @@ import json
 from fastapi import Request, Header
 import httpx
 import json
-from configs.env import APP_ENV
+from configs.env import APP_ENV, RUBY_ADDRESS_URL
 from micro_services.discover_client import get_instance_url
 
 
@@ -15,7 +15,7 @@ def authorize_token(
     if APP_ENV == "development" or "is_authorization_required" in request.query_params:
         return {"status_code": 200}
 
-    url = get_instance_url('user') + "/verify_request"
+    url = "https://api-nirvana1.dev.cogoport.io" + "/verify_request" #get_instance_url('user')
 
     if (
         authorization_token is None
