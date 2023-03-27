@@ -304,7 +304,7 @@ def get_fcl_freight_local_data(
     # except:
     #     return JSONResponse(status_code=500, content = {'success':False})
 
-@fcl_freight_router.post("/get_fcl_freight_local_rate_cards")
+@fcl_freight_router.get("/get_fcl_freight_local_rate_cards")
 def get_fcl_freight_local_rate_cards_data(
     trade_type: str,
     port_id: str,
@@ -350,7 +350,7 @@ def get_fcl_freight_local_rate_cards_data(
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.post("/get_fcl_freight_rate_cards")
+@fcl_freight_router.get("/get_fcl_freight_rate_cards")
 def get_fcl_freight_rate_cards_data(
     origin_port_id: str,
     origin_country_id: str,
@@ -869,7 +869,7 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
 def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalAgent, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    
+
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
