@@ -34,6 +34,7 @@ def delay_fcl_functions(fcl_object,request):
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
     from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
     from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
+    print('kl')
     create_freight_trend_port_pair(request)
     create_sailing_schedule_port_pair(request)
     if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
@@ -43,7 +44,6 @@ def delay_fcl_functions(fcl_object,request):
         delete_fcl_freight_rate_request(request)
 
     # fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
-
 
     get_multiple_service_objects(fcl_object)
 

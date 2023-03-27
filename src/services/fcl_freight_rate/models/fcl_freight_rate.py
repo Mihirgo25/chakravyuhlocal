@@ -573,17 +573,30 @@ class FclFreightRate(BaseModel):
         locations = maps.list_locations(obj)['list']
 
       return locations
+    
+    
 
     def update_local_references(self):
+      commodity = self.commodity if self.commodity in HAZ_CLASSES else None
       local_objects = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id << (self.origin_port_id, self.destination_port_id),
-        FclFreightRateLocal.main_port_id << (self.origin_main_port_id, self.destination_main_port_id) if self.origin_port_id !=self.origin_main_port_id or self.destination_port_id !=self.destination_main_port_id else FclFreightRateLocal.id.is_null(False),
         FclFreightRateLocal.container_size == self.container_size,
         FclFreightRateLocal.container_type == self.container_type,
-        FclFreightRateLocal.commodity == self.commodity if self.commodity in HAZ_CLASSES else FclFreightRateLocal.id.is_null(False),
+        FclFreightRateLocal.commodity == commodity,
         FclFreightRateLocal.service_provider_id == self.service_provider_id,
         FclFreightRateLocal.shipping_line_id == self.shipping_line_id
       ).execute()
+
+      main_port_ids = []
+      if self.origin_main_port_id:
+        main_port_ids.append(str(self.origin_main_port_id))
+      if self.destination_main_port_id:
+        main_port_ids.append(str(self.destination_main_port_id))
+
+      if len(main_port_ids) == 2:
+        local_objects = local_objects.where(FclFreightRateLocal.main_port_id << main_port_ids)
+      elif len(main_port_ids) == 1:
+        local_objects = local_objects.where((FclFreightRateLocal.main_port_id.is_null(True) | FclFreightRateLocal.main_port_id << main_port_ids))
 
       filtered_objects = [t for t in local_objects if str(t.port_id) == str(self.origin_port_id) and str(t.main_port_id or '') == str(self.origin_main_port_id or '') and t.trade_type == 'export']
 
