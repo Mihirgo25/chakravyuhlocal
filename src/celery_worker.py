@@ -24,7 +24,7 @@ celery.conf.result_backend = CELERY_REDIS_URL
 celery.conf.update(**CELERY_CONFIG)
 
 
-@celery.task()
+@celery.task(max_retries=10)
 def create_fcl_freight_rate_delay(request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate
     return create_fcl_freight_rate(request)
@@ -49,7 +49,7 @@ def delay_fcl_functions(fcl_object,request):
 
 
 
-@celery.task()
+@celery.task(max_retries=10)
 def create_sailing_schedule_port_pair(request):
     port_pair_coverage_data = {
     'origin_port_id': request["origin_main_port_id"] if request.get("origin_main_port_id") else request["origin_port_id"],
@@ -67,7 +67,7 @@ def create_freight_trend_port_pair(request):
 
   # common.create_freight_trend_port_pair(port_pair_data) expose
 
-@celery.task()
+@celery.task(max_retries=10)
 def fcl_freight_local_data_updation(local_object,request):
 
     update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
@@ -81,57 +81,57 @@ def fcl_freight_local_data_updation(local_object,request):
     organization.create_organization_serviceable_port(params)
 
 
-@celery.task()
+@celery.task(max_retries=10)
 def update_multiple_service_objects(object):
   get_multiple_service_objects(object)
 
-@celery.task()
+@celery.task(max_retries=10)
 def send_closed_notifications_to_sales_agent_function(object):
     object.send_closed_notifications_to_sales_agent()
 
-@celery.task()
+@celery.task(max_retries=10)
 def send_create_notifications_to_supply_agents_function(object):
     object.send_create_notifications_to_supply_agents()
 
-@celery.task()
+@celery.task(max_retries=10)
 def send_notifications_to_supply_agents_local_request(object):
     object.send_notifications_to_supply_agents()
 
-@celery.task()
+@celery.task(max_retries=10)
 def create_communication_background(data):
     common.create_communication(data)
 
-@celery.task()
-def send_fcl_freight_rate_task_notification(task_id):
+@celery.task(max_retries=10)
+def send_fcl_freight_rate_task_notifications(task_id):
     send_fcl_freight_rate_task_notification(task_id)
 
 
-@celery.task()
+@celery.task(max_retries=10)
 def send_closed_notifications_to_sales_agent_local_request(object):
     object.send_closed_notifications_to_sales_agent()
 
-@celery.task()
+@celery.task(max_retries=10)
 def send_closed_notifications_to_sales_agent_free_day_request(object):
     object.send_closed_notifications_to_sales_agent()
 
-@celery.task()
+@celery.task(max_retries=10)
 def send_closed_notifications_to_sales_agent_feedback(object):
     object.send_closed_notifications_to_sales_agent()
 
 
-@celery.task()
+@celery.task(max_retries=10)
 def validate_and_process_rate_sheet_converted_file_delay(request):
     from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
     return validate_and_process_rate_sheet_converted_file(request)
 
 
 
-@celery.task()
+@celery.task(max_retries=10)
 def bulk_operation_perform_action_functions(action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
     eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')")
 
 
-@celery.task()
+@celery.task(max_retries=10)
 def update_freight_objects_for_commodity_surcharge(surcharge_object):
 
     surcharge_object.update_freight_objects()
