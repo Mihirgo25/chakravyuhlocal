@@ -1,4 +1,5 @@
-from configs.defintions import FCL_FREIGHT_CHARGES
+from configs.definitions import FCL_FREIGHT_CHARGES
+
 
 def list_rates_charge_codes(service_name, service_names):
     if not service_names:
