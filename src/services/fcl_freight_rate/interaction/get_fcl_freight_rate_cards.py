@@ -204,9 +204,9 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
     for rate in freight_rates:
         shipping_line_ids.append(rate["shipping_line_id"])
         service_provider_ids.append(rate["service_provider_id"])
-        if 'service_provider_id' in rate["origin_local"]:
+        if rate["origin_local"] and 'service_provider_id' in rate["origin_local"]:
             origin_local_service_providers.append(rate["origin_local"]["service_provider_id"])
-        if 'service_provider_id' in rate["destination_local"]:
+        if rate["destination_local"] and 'service_provider_id' in rate["destination_local"]:
             destination_local_service_providers.append(rate["destination_local"]["service_provider_id"])
 
     common_filters = {
