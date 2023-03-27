@@ -1354,7 +1354,7 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.post("/create_rate_sheet")
+@fcl_freight_router.post("/create_fcl_rate_sheet")
 def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1369,7 +1369,7 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
 
 
 
-@fcl_freight_router.post("/update_rate_sheet")
+@fcl_freight_router.post("/update_fcl_rate_sheet")
 def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1384,7 +1384,7 @@ def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_
     #     return JSONResponse(status_code=500, content={"success": False})
 
 
-@fcl_freight_router.get("/list_rate_sheets")
+@fcl_freight_router.get("/list_fcl_rate_sheets")
 def list_rates_sheets(
     filters: str = None,
     stats_required: bool = True,
