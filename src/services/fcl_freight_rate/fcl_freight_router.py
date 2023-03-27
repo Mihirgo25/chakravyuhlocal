@@ -466,8 +466,6 @@ def get_fcl_freight_rate_visibility_data(
     shipping_line_id: str = None,
     container_size: str = None,
     container_type: str = None,
-    commodity: str = None):
-
     commodity: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -505,9 +503,14 @@ def get_fcl_weight_slabs_configuration_data(filters: str = None, resp: dict = De
         return JSONResponse(status_code = 500, content = {'success' : False})
 
 @fcl_freight_router.get("/list_dashboard_fcl_freight_rates")
-def list_dashboard_fcl_freight_rates_data():
-    data = list_dashboard_fcl_freight_rates()
-    return data
+def list_dashboard_fcl_freight_rates_data(resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_dashboard_fcl_freight_rates()
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
 
 @fcl_freight_router.get("/list_fcl_freight_rate_audits")
 def list_fcl_freight_audits_data(
@@ -533,10 +536,16 @@ def list_fcl_freight_audits_data(
 def list_fcl_freight_rate_bulk_operations_data(
     filters: str = None,
     page_limit: int = 10,
-    page: int = 1
+    page: int = 1,
+    resp: dict = Depends(authorize_token)
     ):
-    data = list_fcl_freight_rate_bulk_operations(filters, page_limit, page)
-    return data
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_fcl_freight_rate_bulk_operations(filters, page_limit, page)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
 
 @fcl_freight_router.get("/list_fcl_freight_rate_free_day_requests")
 def list_fcl_freight_rate_free_day_requests_data(
