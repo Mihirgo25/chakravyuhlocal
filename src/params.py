@@ -379,7 +379,7 @@ class UpdateRateSheet(BaseModel):
     sourced_by_id: str = None
     cogo_entity_id: str = None
     id: str
-    converted_files: list[ConvertedFile] | None = None
+    converted_files: list[ConvertedFile] = []
 
 class CreateFclFreightRateTask(BaseModel):
   service: str
