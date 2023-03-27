@@ -106,8 +106,17 @@ class FclFreightRate(BaseModel):
 
     def set_locations(self):
 
-      obj = {'filters':{"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)],"type":'seaport'}}
-      locations = maps.list_locations(obj)['list']
+      ids = [str(self.origin_port_id), str(self.destination_port_id)]
+      if self.origin_main_port_id:
+        ids.append(str(self.origin_main_port_id))
+      if self.destination_main_port_id:
+        ids.append(str(self.destination_main_port_id))
+
+      obj = {'filters':{"id": ids, "type":'seaport'}}
+      locations_response = maps.list_locations(obj)
+      locations = []
+      if 'list' in locations_response:
+        locations = locations_response["list"]
 
 
       for location in locations:
@@ -119,7 +128,6 @@ class FclFreightRate(BaseModel):
           self.origin_main_port = self.get_required_location_data(location)
         if str(self.destination_main_port_id) == str(location['id']):
           self.destination_main_port = self.get_required_location_data(location)
-
     def get_required_location_data(self, location):
         loc_data = {
           "id": location["id"],
@@ -202,7 +210,7 @@ class FclFreightRate(BaseModel):
       if self.origin_local:
         self.origin_local_data_instance = FclFreightRateLocalData(self.origin_local)
         response = self.origin_local_data_instance.get_line_item_messages(self.origin_port,self.origin_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
-        
+
       self.origin_local_line_items_error_messages = response.get('line_items_error_messages'),
       self.is_origin_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
       self.origin_local_line_items_info_messages = response.get('line_items_info_messages'),
@@ -213,7 +221,7 @@ class FclFreightRate(BaseModel):
       if self.destination_local:
         response = FclFreightRateLocalData(self.destination_local)
         response = self.origin_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
-        
+
       self.destination_local_line_items_error_messages = response.get('line_items_error_messages'),
       self.is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present'),
       self.destination_local_line_items_info_messages = response.get('line_items_info_messages'),

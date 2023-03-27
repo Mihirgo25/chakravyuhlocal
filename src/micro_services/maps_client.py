@@ -17,10 +17,13 @@ class MapsApiClient:
         if APP_ENV == "production":
             if 'filters' in data:
                 data['filters'] = json.dumps(data['filters'])
-        return self.client.request('GET', 'list_locations', data)
+        return self.client.request('GET', 'list_locations', {}, data)
 
     def list_location_cluster(self,data={}):
-        return self.client.request('GET','list_location_clusters',data)
+        if APP_ENV == "production":
+            if 'filters' in data:
+                data['filters'] = json.dumps(data['filters'])
+        return self.client.request('GET','list_location_clusters',{}, data)
 
     def get_location_cluster(self,data={}):
-        return self.client.request('GET','get_location_cluster',data)
+        return self.client.request('GET','get_location_cluster',{}, data)
