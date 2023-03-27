@@ -1,4 +1,3 @@
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from peewee import fn
 from micro_services.client import *
 from database.rails_db import get_service_provider,get_shipping_line,get_user

@@ -76,3 +76,4 @@ urllib3==1.26.14
 uvicorn==0.20.0
 vine==5.0.0
 wcwidth==0.2.6
+CurrencyConverter==0.17.6

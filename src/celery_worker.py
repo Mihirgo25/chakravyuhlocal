@@ -8,7 +8,7 @@ from currency_converter import CurrencyConverter
 from services.fcl_freight_rate.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-
+from celery.schedules import crontab
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -173,3 +173,26 @@ def create_fcl_freight_rate_feedback_for_prediction(result):
         except Exception as e:
             transaction.rollback()
             return e
+
+# @celery.task()
+# def update_expired_fcl_freight_rate_price():
+#     ides = get_expired_fcl_freight_rates()
+#     print("This is ids we got from expired",ides)
+#     for req in ides:
+#         req['procured_by_id'] = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+#         req['sourced_by_id'] = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+#         req['performed_by_id'] = "039a0141-e6f3-43b0-9c51-144b22b9fc84"
+#         req['schedule_type'] = "transhipment"
+#         req['payment_term'] = "prepaid"
+#         try:
+#             update_expired_fcl_freight_rate_platform_prices(req)
+#             return 'sucess'
+#         except:
+#             return 'failure'
+# celery.conf.beat_schedule = {
+#     'update_expired_fcl_freight_rate_price': {
+#         'task': 'celery_worker.update_expired_fcl_freight_rate_price',
+#         'schedule': crontab(minute=5,hour=19)
+#     }
+# }
+# celery.start

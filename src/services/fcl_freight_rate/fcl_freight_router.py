@@ -79,10 +79,12 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_sur
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 # from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
+from services.fcl_freight_rate.helpers.get_expired_rows import get_expired_fcl_freight_rates
 from configs.definitions import yml_obj
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from configs.env import APP_ENV
+from services.fcl_freight_rate.interaction.update_expired_fcl_freight_rates import update_expired_fcl_freight_rate_platform_prices
 
 fcl_freight_router = APIRouter()
 
@@ -1352,4 +1354,15 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
     except:
         return JSONResponse(status_code=500, content={"success": False})
         
-
+@fcl_freight_router.get('/check_prediction')
+def check_prediction():
+    ides = get_expired_fcl_freight_rates()
+    print("This is ids we got from expired",ides)
+    for req in ides:
+        req['procured_by_id'] = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+        req['sourced_by_id'] = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+        req['performed_by_id'] = "039a0141-e6f3-43b0-9c51-144b22b9fc84"
+        req['schedule_type'] = "transhipment"
+        req['payment_term'] = "prepaid"
+        data = update_expired_fcl_freight_rate_platform_prices(req)
+        return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
