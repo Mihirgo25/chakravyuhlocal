@@ -72,7 +72,7 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
             if trade_type == 'export':
                 local = rate["origin_local"]
             for free_day_row in data:
-                if (free_day_row['service_provider_id'] ==  sp_id and free_day_row['shipping_line_id'] == rate["shipping_line_id"]) or (free_day_row['service_provider_id'] ==  local["service_provider_id"] and free_day_row['shipping_line_id'] == local["shipping_line_id"]): 
+                if (free_day_row['service_provider_id'] ==  sp_id and free_day_row['shipping_line_id'] == rate["shipping_line_id"]) or (free_day_row['service_provider_id'] ==  (local or {}).get("service_provider_id") and free_day_row['shipping_line_id'] == (local or {}).get("shipping_line_id")): 
                     all_rates.append(free_day_row)
             eligible_free_days = get_most_eligible_free_days(all_rates, filters)
             group_by_rate[key] = eligible_free_days
