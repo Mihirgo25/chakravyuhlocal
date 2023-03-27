@@ -39,7 +39,8 @@ def startup():
     if db.is_closed():
         db.connect()
     # create_table()
-    
+
+
 @app.on_event("shutdown")
 def shutdown():
     if not db.is_closed():
