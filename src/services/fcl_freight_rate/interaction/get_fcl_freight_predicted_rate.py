@@ -39,7 +39,7 @@ def get_fcl_freight_predicted_rate(request, key):
         validity_end = datetime.now() + timedelta(days = 14)
         df = pd.DataFrame()
         df['container_size'] = [container_size]
-        df['shipping_line_rank'] = [shipping_line_dict[str(shipping_line_id)]]
+        df['shipping_line_rank'] = shipping_line_dict[str(request['shipping_line_id'])]
 
         df['Distance'] = [ports_distance]
         df['Country_Distance'] = [countries_distance]

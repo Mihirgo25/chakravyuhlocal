@@ -71,14 +71,15 @@ def execute_transaction_code(request):
         freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), validity_obj['line_items'], request.get('schedule_type'), False, request.get('payment_term'))
         freight_object.set_last_rate_available_date()
         freight_object.set_platform_prices()
-    freight_object.validate_before_save()
+    # freight_object.validate_before_save()
     freight_object.mode_to_predicted()
-    # try:
-    freight_object.save()
-    # except Exception as e:
-    #     raise HTTPException(status_code=499, detail='rate did not save')
-    # create_audit(request)
-    # return {
-    #   'id': freight_object.id
-    # }
+    try:
+      freight_object.save()
+      print("jhasdfjksdhfjkas")
+    except Exception as e:
+        raise HTTPException(status_code=499, detail='rate did not save')
+    create_audit(request)
+    return {
+      'id': freight_object.id
+    }
 

@@ -371,78 +371,77 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = None
 
     def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term):
-        new_validities = []
+      new_validities = []
+      print('askjfas')
+      if not deleted:
+          currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
+          currency = currency_lists[0]
+          if len(set(currency_lists)) != 1:
+              price = float(sum(common.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
+          else:
+              price = float(sum(item["price"] for item in line_items))
+          new_validity_object = {
+              "validity_start": validity_start,
+              "validity_end": validity_end,
+              "line_items": line_items,
+              "price": price,
+              "currency": currency,
+              "schedule_type": schedule_type,
+              "payment_term": payment_term,
+              "id": str(uuid.uuid4()),
+              "likes_count": 0,
+              "dislikes_count": 0
+          }
+          new_validities = [FclFreightRateValidity(**new_validity_object)]
+      for validity_object in self.validities:
+          validity_object_validity_start = datetime.datetime.strptime(str(validity_object['validity_start']), "%Y-%m-%d").date()
+          validity_object_validity_end = datetime.datetime.strptime(str(validity_object['validity_end']), "%Y-%m-%d").date()
+          validity_start = validity_start
+          validity_end = validity_end
+          if (validity_object['schedule_type'] not in [None, schedule_type] and not deleted):
+              new_validities.append(FclFreightRateValidity(**validity_object))
+              continue
+          if (validity_object['payment_term'] not in [None, payment_term] and not deleted):
+              new_validities.append(FclFreightRateValidity(**validity_object))
+              continue
+          if validity_object_validity_start > validity_end:
+              new_validities.append(FclFreightRateValidity(**validity_object))
+              continue
+          if validity_object_validity_end < validity_start:
+              new_validities.append(FclFreightRateValidity(**validity_object))
+              continue
+          if (validity_object_validity_start >= validity_start) and (validity_object_validity_end <= validity_end):
+            continue
+          if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
+              validity_object_validity_end = validity_start - datetime.timedelta(days=1)
+              new_validities.append(FclFreightRateValidity(**validity_object))
+              continue
+          if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
+              validity_object_validity_start = validity_end + datetime.timedelta(days=1)
+              new_validities.append(FclFreightRateValidity(**validity_object))
+              continue
+          
+          if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
+              new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
+              
+              new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
+              continue
+      new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end), '%Y-%m-%d').date() >= datetime.datetime.now().date()]
+      new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start), '%Y-%m-%d').date())
+      main_validities=[]
+      for new_validity in new_validities:          
+        new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
+        new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start), '%Y-%m-%d').date().isoformat()
+        new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end), '%Y-%m-%d').date().isoformat()
+        new_validity = vars(new_validity)
+        new_validity['id'] = new_validity['__data__']['id']
+        new_validity.pop('__data__')
+        new_validity.pop('__rel__')
+        new_validity.pop('_dirty')
+        main_validities.append(new_validity)
+      
+      self.validities = main_validities
 
-        if not deleted:
-            currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
-            currency = currency_lists[0]
-            if len(set(currency_lists)) != 1:
-                price = float(sum(common.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
-            else:
-                price = float(sum(item["price"] for item in line_items))
-            new_validity_object = {
-                "validity_start": validity_start,
-                "validity_end": validity_end,
-                "line_items": line_items,
-                "price": price,
-                "currency": currency,
-                "schedule_type": schedule_type,
-                "payment_term": payment_term,
-                "id": str(uuid.uuid4()),
-                "likes_count": 0,
-                "dislikes_count": 0
-            }
-            new_validities = [FclFreightRateValidity(**new_validity_object)]
-
-        for validity_object in self.validities:
-            
-            validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
-            validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
-            validity_start = validity_start
-            validity_end = validity_end
-            if (validity_object['schedule_type'] not in [None, schedule_type] and not deleted):
-                new_validities.append(FclFreightRateValidity(**validity_object))
-                continue
-            if (validity_object['payment_term'] not in [None, payment_term] and not deleted):
-                new_validities.append(FclFreightRateValidity(**validity_object))
-                continue
-            if validity_object_validity_start > validity_end:
-                new_validities.append(FclFreightRateValidity(**validity_object))
-                continue
-            if validity_object_validity_end < validity_start:
-                new_validities.append(FclFreightRateValidity(**validity_object))
-                continue
-            if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end:
-                continue
-            if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
-                validity_object_validity_end = validity_start - datetime.timedelta(days=1)
-                new_validities.append(FclFreightRateValidity(**validity_object))
-                continue
-            if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
-                validity_object_validity_start = validity_end + datetime.timedelta(days=1)
-                new_validities.append(FclFreightRateValidity(**validity_object))
-                continue
-            if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
-                new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
-                new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
-                continue
-
-        new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end), '%Y-%m-%d').date() >= datetime.datetime.now().date()]
-        new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start), '%Y-%m-%d').date())
-
-        main_validities=[]
-        for new_validity in new_validities:          
-          new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
-          new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start), '%Y-%m-%d').date().isoformat()
-          new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end), '%Y-%m-%d').date().isoformat()
-          new_validity = vars(new_validity)
-          new_validity['id'] = new_validity['__data__']['id']
-          new_validity.pop('__data__')
-          new_validity.pop('__rel__')
-          new_validity.pop('_dirty')
-          main_validities.append(new_validity)
-        
-        self.validities = main_validities
 
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
@@ -458,9 +457,9 @@ class FclFreightRate(BaseModel):
     def validate_before_save(self):
 
       schema_weight_limit = Schema({'free_limit': float, Optional('slabs'): list, Optional('remarks'): list})
-     
       if self.weight_limit:
         schema_weight_limit.validate(self.weight_limit)
+        
 
         self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
 
@@ -472,7 +471,6 @@ class FclFreightRate(BaseModel):
             raise HTTPException(status_code=499, detail="slabs are not valid")
 
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
-
       self.destination_local_instance = FclFreightRateLocalData(self.destination_local)
 
       if not self.validate_container_size():
@@ -491,7 +489,16 @@ class FclFreightRate(BaseModel):
       
       if not self.validate_destination_main_port_id():
         raise HTTPException(status_code=499, detail="destination main port id is required")
-
+    def mode_to_predicted(self):
+      self.mode = "predicted"
+    def get_line_items(self):
+      return self.validities[0]['line_items']
+    def get_weight_limit(self):
+      return self.weight_limit
+    def get_origin_local(self):
+      return self.origin_local
+    def get_destination_local(self):
+      return self.destination_local
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
       fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
@@ -563,14 +570,17 @@ class FclFreightRate(BaseModel):
       model_result = get_fcl_freight_predicted_rate(data[0],'expired_objects')
       price = model_result['validities'][0]['price']
       threshold = round(price/10)
-      if (model_result['predicted_price'] >= price + threshold) and (model_result['predicted_price'] <= price - threshold):
-          model_result['predicted_price'] = model_result['price']
+ 
+      if (model_result['predicted_price'] >= price + threshold) or (model_result['predicted_price'] <= price - threshold):
+        model_result['predicted_price'] = model_result['validities'][0]['price']
+      
       for validity_object in self.validities:
         validity_object['platform_price']= model_result['predicted_price']
         validity_object['price'] = model_result['predicted_price']
         validity_object['line_items'][0]['price']  = model_result['predicted_price']
         validity_object['validity_start']  = model_result['validity_start']
         validity_object['validity_end']  = model_result['validity_end']
+      print(self.validities)
 
     def local_data_get_line_item_messages(self):
 
