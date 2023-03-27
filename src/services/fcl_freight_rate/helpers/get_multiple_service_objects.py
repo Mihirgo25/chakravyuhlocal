@@ -5,7 +5,7 @@ from database.rails_db import get_service_provider,get_shipping_line,get_user
 
 def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'shipping_line_id'):  
-        shipping_line = get_shipping_line(freight_object.shipping_line_id)
+        shipping_line = get_shipping_line(str(freight_object.shipping_line_id))
         freight_object.shipping_line = shipping_line[0]  
     user_list =[]
     if hasattr(freight_object,'procured_by_id'):

@@ -64,7 +64,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         table_name = 'fcl_freight_rate_seasonal_surcharges'
 
     def validate_origin_location(self):
-        origin_location = maps.list_locations({'filters':{'filters' : {'id': str(self.origin_location_id)}}})['list']
+        origin_location = maps.list_locations({'filters' : {'id': str(self.origin_location_id)}})['list']
         if origin_location:
             origin_location = origin_location[0]
             if origin_location.get('type') in LOCATION_TYPES:
