@@ -16,7 +16,7 @@ class MapsApiClient:
     def list_locations(self, data):
         if APP_ENV == "production":
             if 'filters' in data:
-                data['filters'] = json.loads(data['filters'])
+                data['filters'] = json.loads(str(data['filters']))
         return self.client.request('GET', 'list_locations', data)
 
     def list_location_cluster(self,data={}):
