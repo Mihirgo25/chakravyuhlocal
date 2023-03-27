@@ -34,23 +34,21 @@ def get_fcl_freight_predicted_rate(request, key):
         countries_distance = port_distance(location_dict[origin_country_id],location_dict[destination_country_id])
     container_size = int(request['container_size'][:2])
     model = joblib.load(open(MODEL_PATH, "rb"))
-    
-    if key != 'rate_cards':
-        validity_start = datetime.now().isoformat(())
-        validity_end = (datetime.now() + timedelta(days = 14)).isoformat()
+    if key == 'expired_objects':
+        validity_start = datetime.now()
+        validity_end = datetime.now() + timedelta(days = 14)
         df = pd.DataFrame()
         df['container_size'] = [container_size]
-        df['shipping_line_rank'] = [shipping_line_dict[shipping_line_rank]]
+        df['shipping_line_rank'] = [shipping_line_dict[str(shipping_line_id)]]
+
         df['Distance'] = [ports_distance]
         df['Country_Distance'] = [countries_distance]
         df['ds'] = validity_start
-        
         model_result = model.predict(df)['yhat']
         request["predicted_price"] = round(np.exp(model_result[0]),1)
         request["validity_start"] = validity_start.date()
         request["validity_end"] = validity_end.date()
         return request
-        
     
     else:
         validity_start = datetime.now().date().isoformat()

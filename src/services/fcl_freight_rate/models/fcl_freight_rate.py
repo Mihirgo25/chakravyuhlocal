@@ -560,7 +560,7 @@ class FclFreightRate(BaseModel):
     def update_fcl_freight_rate_platform_price_of_validity_expired(self,objectid):
       data = list(FclFreightRate.select(FclFreightRate.shipping_line_id,FclFreightRate.origin_port_id,FclFreightRate.destination_port_id,FclFreightRate.container_size,FclFreightRate.last_rate_available_date,FclFreightRate.commodity,FclFreightRate.validities,FclFreightRate.destination_country_id,FclFreightRate.origin_country_id,FclFreightRate.id,FclFreightRate.mode).where((FclFreightRate.last_rate_available_date <= datetime.datetime.now()),(FclFreightRate.id == objectid)).dicts())
       # print("This is data",data)
-      model_result = get_fcl_freight_predicted_rate(data[0], 'expired_objects')
+      model_result = get_fcl_freight_predicted_rate(data[0],'expired_objects')
       price = model_result['validities'][0]['price']
       threshold = round(price/10)
       if (model_result['predicted_price'] >= price + threshold) and (model_result['predicted_price'] <= price - threshold):
