@@ -15,7 +15,7 @@ def authorize_token(
     if APP_ENV == "development":
         return {"status_code": 200}
 
-    url = RUBY_ADDRESS_URL + "/verify_request" #get_instance_url('user')
+    url = "https://api-nirvana1.dev.cogoport.io" + "/verify_request" #get_instance_url('user')
 
     if (
         authorization_token is None
