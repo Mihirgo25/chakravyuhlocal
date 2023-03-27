@@ -29,7 +29,7 @@ def execute_transaction_code(request):
         free_day.save()
     except:
         raise HTTPException(status_code=403, detail='fcl freight rate free day did not save')
-    
+
     # if 'shipment_id' in request:
     #     free_day.update_sell_quotation()
 

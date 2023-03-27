@@ -9,4 +9,8 @@ def get_commodity_cluster(id):
         response = FclFreightCommodityCluster.select().where(FclFreightCommodityCluster.id == id).dicts().get()
     except:
         response = {}
+    try:
+        response = FclFreightCommodityCluster.select().where(FclFreightCommodityCluster.id == id).dicts().get()
+    except:
+        response = {}
     return response
