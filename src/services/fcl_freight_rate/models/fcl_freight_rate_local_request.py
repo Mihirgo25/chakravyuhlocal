@@ -53,14 +53,14 @@ class FclFreightRateLocalRequest(BaseModel):
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateLocalRequest, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_local_requests'
-    
+
     def set_ports(self):
         location_data = maps.list_locations({'filters':{'id':self.port_id}})
         if location_data:
@@ -70,7 +70,7 @@ class FclFreightRateLocalRequest(BaseModel):
         if self.source and self.source in REQUEST_SOURCES:
             return True
         return False
-    
+
     def validate_source_id(self):
         if self.source == 'spot_search':
             spot_search_data = common.list_spot_searches({'filters': {'id': str(self.source_id)}})['list']
@@ -82,7 +82,7 @@ class FclFreightRateLocalRequest(BaseModel):
     def validate_performed_by_id(self):
         data =  get_user(self.performed_by_id)
         if data:
-            return True  
+            return True
         else:
             return False
 
@@ -95,16 +95,16 @@ class FclFreightRateLocalRequest(BaseModel):
     def validate_closed_by_id(self):
         if not self.closed_by_id:
             return True
-            
+
         data = get_user(self.closed_by_id)
         if data:
             return True
         else:
             return False
-        
+
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
-            pass 
+            pass
 
         if self.preferred_shipping_line_ids:
             preferred_shipping_lines = []
@@ -122,10 +122,10 @@ class FclFreightRateLocalRequest(BaseModel):
 
         if not self.validate_source_id():
             raise HTTPException(status_code=404, detail="invalid source id")
-        
+
         if not self.validate_performed_by_id():
             raise HTTPException(status_code=404, detail='Invalid Performed by ID')
-    
+
         if not self.validate_performed_by_org_id():
             raise HTTPException(status_code=404, detail="incorrect performed by id")
 
@@ -155,8 +155,8 @@ class FclFreightRateLocalRequest(BaseModel):
                     'importer_exporter_id': importer_exporter_id }
 
         }
-        common.create_communication(data)
-    
+        # common.create_communication(data)
+
 
     def send_notifications_to_supply_agents(self):
         port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
@@ -168,7 +168,7 @@ class FclFreightRateLocalRequest(BaseModel):
             })['list']
         except:
             user_ids = None
-       
+
         data = {
         'type': 'platform_notification',
         'service': 'spot_search',
@@ -180,4 +180,4 @@ class FclFreightRateLocalRequest(BaseModel):
         }
         for user_id in user_ids:
             data['user_id'] = user_id
-            common.create_communication(data)
+            # common.create_communication(data)

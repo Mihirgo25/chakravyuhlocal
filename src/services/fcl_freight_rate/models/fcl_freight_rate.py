@@ -22,7 +22,7 @@ class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
-       
+
 class FclFreightRate(BaseModel):
     commodity = CharField(null=True, index=True)
     container_size = CharField(null=True, index=True)
@@ -96,7 +96,7 @@ class FclFreightRate(BaseModel):
     init_key = TextField(index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRate, self).save(*args, **kwargs)
@@ -108,7 +108,7 @@ class FclFreightRate(BaseModel):
 
       obj = {'filters':{"id": [str(self.origin_port_id), str(self.destination_port_id), str(self.origin_main_port_id), str(self.destination_main_port_id)],"type":'seaport'}}
       locations = maps.list_locations(obj)['list']
-      
+
 
       for location in locations:
         if str(self.origin_port_id) == str(location['id']):
@@ -132,7 +132,7 @@ class FclFreightRate(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
-      
+
     def set_origin_location_ids(self):
       self.origin_country_id = self.origin_port.get('country_id')
       self.origin_continent_id = self.origin_port.get('continent_id')
@@ -276,11 +276,11 @@ class FclFreightRate(BaseModel):
       if len(set(codes)) != len(codes):
         raise HTTPException(status_code=499, detail="line_items contains duplicates")
 
-      
+
       fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
       invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict.keys()]
-      
+
       if invalid_line_items:
           raise HTTPException(status_code=499, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
 
@@ -343,9 +343,9 @@ class FclFreightRate(BaseModel):
             price.append(new_price)
             freight_rate_min_price = min(price)
 
-          if freight_rate_min_price < result  and freight_rate_min_price is not None:      
-            result = freight_rate_min_price    
-      
+          if freight_rate_min_price < result  and freight_rate_min_price is not None:
+            result = freight_rate_min_price
+
       return result
 
     def set_platform_prices(self):
@@ -360,7 +360,7 @@ class FclFreightRate(BaseModel):
         for t in self.validities:
           if(t['platform_price'] < t['price']):
             temp.append(t)
-        
+
         self.is_best_price = len(temp)<=0
 
     def set_last_rate_available_date(self):
@@ -394,7 +394,7 @@ class FclFreightRate(BaseModel):
             new_validities = [FclFreightRateValidity(**new_validity_object)]
 
         for validity_object in self.validities:
-            
+
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
             validity_start = validity_start
@@ -430,7 +430,7 @@ class FclFreightRate(BaseModel):
         new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start), '%Y-%m-%d').date())
 
         main_validities=[]
-        for new_validity in new_validities:          
+        for new_validity in new_validities:
           new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
           new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start), '%Y-%m-%d').date().isoformat()
           new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end), '%Y-%m-%d').date().isoformat()
@@ -440,7 +440,7 @@ class FclFreightRate(BaseModel):
           new_validity.pop('__rel__')
           new_validity.pop('_dirty')
           main_validities.append(new_validity)
-        
+
         self.validities = main_validities
 
     def delete_rate_not_available_entry(self):
@@ -457,7 +457,7 @@ class FclFreightRate(BaseModel):
     def validate_before_save(self):
 
       schema_weight_limit = Schema({'free_limit': float, Optional('slabs'): list, Optional('remarks'): list})
-     
+
       if self.weight_limit:
         schema_weight_limit.validate(self.weight_limit)
 
@@ -484,10 +484,10 @@ class FclFreightRate(BaseModel):
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()
       self.validate_destination_local()
-      
+
       if not self.validate_origin_main_port_id():
         raise HTTPException(status_code=499, detail="origin main port id is required")
-      
+
       if not self.validate_destination_main_port_id():
         raise HTTPException(status_code=499, detail="destination main port id is required")
 
@@ -524,7 +524,7 @@ class FclFreightRate(BaseModel):
               charge_codes[k] = v
       return charge_codes
 
-    def possible_charge_codes(self):  
+    def possible_charge_codes(self):
       fcl_freight_charges = FCL_FREIGHT_CHARGES
 
       charge_codes = {}
@@ -563,7 +563,7 @@ class FclFreightRate(BaseModel):
       if location_ids:
         obj = {'filters':{"id": location_ids}}
         locations = maps.list_locations(obj)['list']
-        
+
       return locations
 
     def update_local_references(self):
@@ -599,7 +599,7 @@ class FclFreightRate(BaseModel):
               'is_rate_not_available': self.is_rate_not_available()
           },
           'weight_limit': dict(self.weight_limit)}
-      
+
       data = {k: v for k, v in data.items()}
 
       origin_local = {}
@@ -645,7 +645,7 @@ class FclFreightRate(BaseModel):
 
         if 'plugin' in self.origin_local and self.origin_local.get('plugin'):
           if self.origin_local['plugin'].get('free_limit'):
-            origin_local['plugin'] = self.origin_local['plugin'] | ({'is_slabs_missing': self.is_origin_plugin_slabs_missing })    
+            origin_local['plugin'] = self.origin_local['plugin'] | ({'is_slabs_missing': self.is_origin_plugin_slabs_missing })
 
         if not origin_local['plugin']:
           origin_local['plugin'] = self.origin_local_id.data['plugin'] | ({'is_slabs_missing': self.origin_local_id.is_plugin_slabs_missing})
@@ -715,7 +715,7 @@ class FclFreightRate(BaseModel):
             destination_local['plugin'] = self.destination_local_id.data['plugin'] | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
           else:
             destination_local['plugin'] = {'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing}
-          
+
       # if destination_detention.get('free_limit'):
       #   destination_local['detention'] = self.destination_detention.update(
       #     {'is_slabs_missing': self.is_destination_detention_slabs_missing})
@@ -764,7 +764,7 @@ class FclFreightRate(BaseModel):
 
 
 
-    def update_platform_prices_for_other_service_providers(self):  
+    def update_platform_prices_for_other_service_providers(self):
       data = {
         "origin_port_id":self.origin_port_id,
         "origin_main_port_id":self.origin_main_port_id,
@@ -831,7 +831,7 @@ class FclFreightRate(BaseModel):
 
       result = common.get_money_exchange_for_fcl({"price":validity['price'], "from_currency":validity['currency'], "to_currency":'INR'})
       return result.get('price')
-    
+
     def create_fcl_freight_free_days(self, origin_local, destination_local, performed_by_id, sourced_by_id, procured_by_id):
       obj = {}
       obj['specificity_type'] = 'rate_specific'

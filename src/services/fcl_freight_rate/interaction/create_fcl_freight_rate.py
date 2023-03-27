@@ -32,7 +32,7 @@ def create_fcl_freight_rate_data(request):
     db.execute_sql(query)
     with db.atomic():
       return create_fcl_freight_rate(request)
-  
+
 def create_fcl_freight_rate(request):
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
@@ -69,7 +69,7 @@ def create_fcl_freight_rate(request):
 
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
-    
+
 
     freight.weight_limit = request.get("weight_limit")
 
