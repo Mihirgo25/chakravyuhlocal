@@ -586,7 +586,7 @@ def discard_no_weight_limit_rates(freight_rates, requirements):
 
     new_freight_rates = []
     for rate in freight_rates:
-        if "weight_limit" not in rate or "free_limit" not in rate["weight_limit"] or (rate["weight_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or rate["weight_limit"]["slabs"][-1]["upper_limit"] < requirements["cargo_weight_per_container"])):
+        if "weight_limit" not in rate or "free_limit" not in rate["weight_limit"] or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or rate["weight_limit"]["slabs"][-1]["upper_limit"] < requirements["cargo_weight_per_container"])):
             continue
 
         new_freight_rates.append(rate)
