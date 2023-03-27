@@ -126,7 +126,7 @@ def get_local_object(object):
 def get_free_day_object(object):
     errors = {}
     try:
-        location = get_location(object.get('location'), object.get('location_type'))[0]
+        location = get_location(object.get('location').get('port_code'), object.get('location_type'))[0]
         object['location_id'] = location.get('id')
         object['port_id'] = location.get('seaport_id')
         object['country_id'] = location.get('country_id')
@@ -169,7 +169,7 @@ def get_free_day_object(object):
 def get_location(location, type):
     if type == 'port':
         filters =  {'filters': {"type": "seaport", "port_code": location, "status": "active"}}
-        location =  maps.list_locations({filters})['list']
+        location =  maps.list_locations(filters)['list']
     else:
         filters =  {'filters': {"type": "seaport", "name": location, "status": "active"}}
         location =  maps.list_locations(filters)['list']
