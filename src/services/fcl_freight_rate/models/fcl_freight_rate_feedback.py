@@ -4,7 +4,7 @@ from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBACKS, FEEDBACK_TYPES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from configs.defintions import FCL_FREIGHT_CURRENCIES
+from configs.definitions import FCL_FREIGHT_CURRENCIES
 from fastapi import HTTPException
 import datetime
 from database.rails_db import *

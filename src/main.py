@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from configs.env import APP_ENV
 from params import *
 from fastapi.responses import JSONResponse
-
+from database.create_tables import create_table
 
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 
@@ -39,8 +39,7 @@ def startup():
     if db.is_closed():
         db.connect()
     # create_table()
-    # initialize_client()
-
+    
 @app.on_event("shutdown")
 def shutdown():
     if not db.is_closed():

@@ -30,7 +30,7 @@ class LineItem(BaseModel):
   slabs: list[Slab] = None
 
 class LocalData(BaseModel):
-  line_items: list[LineItem]
+  line_items: list[LineItem]=None
   detention: FreeDay = None
   demurrage: FreeDay = None
   plugin: FreeDay = None
@@ -379,7 +379,7 @@ class UpdateRateSheet(BaseModel):
     sourced_by_id: str = None
     cogo_entity_id: str = None
     id: str
-    converted_files: list[ConvertedFile] | None = None
+    converted_files: list[ConvertedFile] = []
 
 class CreateFclFreightRateTask(BaseModel):
   service: str

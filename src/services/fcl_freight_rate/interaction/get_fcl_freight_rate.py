@@ -3,12 +3,15 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.global_constants import HAZ_CLASSES
 from peewee import JOIN
 from operator import attrgetter
-
+from fastapi import HTTPException
 def get_fcl_freight_rate(request):
   details = {}
 
   if all_fields_present(request):
     object, fcl_object = find_object(request)
+
+    if not fcl_object:
+      raise HTTPException(status_code=404,detail='Rate Not Found')
     if object:
       details = object.detail()
 

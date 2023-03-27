@@ -1,7 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_local_agents import list_fcl_freight_rate_local_agents
-from operator import itemgetter
 import json
 from datetime import datetime
 from micro_services.client import *

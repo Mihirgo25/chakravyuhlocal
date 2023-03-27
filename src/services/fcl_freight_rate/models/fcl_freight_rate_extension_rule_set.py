@@ -1,7 +1,7 @@
 from peewee import * 
 from database.db_session import db
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
-from configs.defintions import FCL_FREIGHT_CHARGES
+from configs.definitions import FCL_FREIGHT_CHARGES
 import datetime
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters

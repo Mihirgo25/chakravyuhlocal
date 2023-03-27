@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from micro_services.client import *
 from math import ceil
 from peewee import fn, SQL
@@ -25,7 +25,7 @@ def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
     query = get_page(query, page, page_limit)
     data = get_data(query)
 
-    pagination_data = get_pagination_data(query, page, page_limit)
+    pagination_data = get_pagination_data(data, page, page_limit)
 
     return {'list': data } | (pagination_data) | (stats)
 
@@ -72,11 +72,11 @@ def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
     return data
 
-def get_pagination_data(query, page, page_limit):
+def get_pagination_data(data, page, page_limit):
   pagination_data = {
     'page': page,
-    'total': ceil(query.count()/page_limit),
-    'total_count': query.count(),
+    'total': ceil(len(data)/page_limit),
+    'total_count': len(data),
     'page_limit': page_limit
     }
   
