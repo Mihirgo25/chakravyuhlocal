@@ -102,7 +102,7 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
     )
 
     if 'importer_exporter_id' in requirements:
-        query = query.where(((FclWeightSlabsConfiguration.importer_exporter_id == requirements["importer_exporter_id"]) | (FclWeightSlabsConfiguration.importer_exporter_id == None)))
+        weight_slabs_query = weight_slabs_query.where(((FclWeightSlabsConfiguration.importer_exporter_id == requirements["importer_exporter_id"]) | (FclWeightSlabsConfiguration.importer_exporter_id == None)))
 
     weight_slabs = jsonable_encoder(list(weight_slabs_query.dicts()))
 
