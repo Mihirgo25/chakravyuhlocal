@@ -94,13 +94,15 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
         FclWeightSlabsConfiguration.destination_location_type << ['seaport', 'country', None],
         FclWeightSlabsConfiguration.shipping_line_id << shipping_line_ids,
         FclWeightSlabsConfiguration.service_provider_id << service_provider_ids,
-        FclWeightSlabsConfiguration.importer_exporter_id << [requirements["importer_exporter_id"], None],
         FclWeightSlabsConfiguration.is_cogo_assured == False,
         FclWeightSlabsConfiguration.container_size << [requirements['container_size'], None],
         FclWeightSlabsConfiguration.commodity << [requirements['commodity'], None],
         # FclWeightSlabsConfiguration.container_type << [requirements['container_type'], None],
         FclWeightSlabsConfiguration.organization_category << all_categories,
     )
+
+    if 'importer_exporter_id' in requirements:
+        query = query.where(((FclWeightSlabsConfiguration.importer_exporter_id == requirements["importer_exporter_id"]) | (FclWeightSlabsConfiguration.importer_exporter_id == None)))
 
     weight_slabs = jsonable_encoder(list(weight_slabs_query.dicts()))
 
