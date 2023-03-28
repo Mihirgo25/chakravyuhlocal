@@ -8,12 +8,8 @@ from celery_worker import update_multiple_service_objects
 
 def create_fcl_freight_rate_free_day(request):
     with db.atomic() as transaction:
-          try:
-            return execute_transaction_code(request)
-          except Exception as e:
-              print(e)
-              transaction.rollback()
-              return e
+        return execute_transaction_code(request)
+
 
 def execute_transaction_code(request): 
     request["validity_start"] = (request.get('validity_start') or datetime.now().date())
