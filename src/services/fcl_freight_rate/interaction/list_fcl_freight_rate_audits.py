@@ -7,8 +7,7 @@ from operator import attrgetter
 from math import ceil
 from datetime import datetime
 import json
-from playhouse.shortcuts import model_to_dict
-from peewee import Case, SQL, fn, JOIN
+from peewee import Case, fn, JOIN
 
 possible_direct_filters = ['object_type']
 possible_indirect_filters = ['created_at_greater_than']
@@ -73,17 +72,6 @@ def get_data(query, page, page_limit, pagination_data_required, user_data_requir
         data.append(item)
     return {'get_data' : data}
 
-#     service_objects = common.get_multiple_service_objects_data_for_fcl({'objects': objects})
-
-#     new_data = []
-#     for object in data:
-#         object['sourced_by']   = service_objects['user'][object['sourced_by_id']] if 'user' in service_objects and object.get('sourced_by_id') in service_objects['user'] else None
-#         object['procured_by']  = service_objects['user'][object['procured_by_id']] if 'user' in service_objects and object.get('procured_by_id') in service_objects['user'] else None
-#         object['performed_by'] = service_objects['user'][object['performed_by_id']] if 'user' in service_objects and object.get('performed_by_id') in service_objects['user'] else None
-#         object['rate_sheet'] = service_objects['rate_sheet'][object['rate_sheet_id']] if 'rate_sheet' in service_objects and object.get('rate_sheet_id') in service_objects['rate_sheet'] else None
-#         new_data.append(object)
-#     return new_data
-
 def apply_indirect_filters(query, filters):
     for key in filters:
         if key in possible_indirect_filters:
@@ -110,7 +98,7 @@ def apply_hash_indirect_filters(query, filter, filters):
         return query
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateAudit.created_at > datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateAudit.created_at > filters['created_at_greater_than'])
     return query
 
 def apply_fcl_freight_rate_filter(query, filters):
@@ -164,9 +152,9 @@ def apply_fcl_freight_rate_validity_end_greater_than_equal_to_filter(query, filt
 
 
 def apply_fcl_freight_rate_seasonal_surcharge_validity_start_less_than_equal_to_filter(query, filters):
-    query = query.where(FclFreightRateSeasonalSurcharge.validity_start <= datetime.strptime(filters['fcl_freight_rate_seasonal_surcharge']['validity_start_less_than_equal_to'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateSeasonalSurcharge.validity_start <= filters['fcl_freight_rate_seasonal_surcharge']['validity_start_less_than_equal_to'])
     return query
 
 def apply_fcl_freight_rate_seasonal_surcharge_validity_end_greater_than_equal_to_filter(query, filters):
-    query = query.where(FclFreightRateSeasonalSurcharge.validity_end >= datetime.strptime(filters['fcl_freight_rate_seasonal_surcharge']['validity_end_greater_than_equal_to'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateSeasonalSurcharge.validity_end >= filters['fcl_freight_rate_seasonal_surcharge']['validity_end_greater_than_equal_to'])
     return query

@@ -53,7 +53,7 @@ def execute_transaction_code(request):
     fcl_freight_local = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id == request.get('port_id'),
         FclFreightRateLocal.trade_type ==request.get('trade_type'),
-        ((FclFreightRateLocal.main_port_id == request.get('main_port_id')) if request.get('main_port_id') else (FclFreightRateLocal.id.is_null(False))),
+        FclFreightRateLocal.main_port_id == request.get('main_port_id'),
         FclFreightRateLocal.container_size==request.get('container_size'),
         FclFreightRateLocal.container_type==request.get('container_type'),
         FclFreightRateLocal.commodity == request.get('commodity'),

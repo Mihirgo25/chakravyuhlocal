@@ -58,7 +58,7 @@ def execute_transaction_code(request):
   try:
       rule_set.save()
   except:
-      raise HTTPException(status_code=499, detail='fcl freight rate exclusive rule set did not save')
+      raise HTTPException(status_code=500, detail='fcl freight rate exclusive rule set did not save')
 
   update_multiple_service_objects.apply_async(kwargs={'object':rule_set},queue='low')
   create_audit(data, request['performed_by_id'], rule_set.id)

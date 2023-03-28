@@ -34,7 +34,7 @@ def update_fcl_freight_rate_task_data(request):
           return data
         except Exception as e:
             transaction.rollback()
-            return "Updation Failed"
+            return e
 
 def validate_closing_remarks(request):
     if request['closing_remarks'] and request['closing_remarks'] not in TECHOPS_TASK_ABORT_REASONS:

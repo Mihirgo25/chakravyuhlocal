@@ -14,9 +14,8 @@ def update_fcl_freight_rate_local_agent(request):
       data = execute_transaction_code(request)
       return data
     except Exception as e:
-      # logger.error(e, exc_info = True)
       transaction.rollback()
-      return 'Updation Failed'
+      return e
 
 def execute_transaction_code(request):
   # local_agent_object = get_local_agent_object(**{'id':request['id']})
@@ -35,7 +34,7 @@ def execute_transaction_code(request):
       
 
   else:
-    raise HTTPException(status_code = '', detail = '{} is invalid'.format(request['id']))
+    raise HTTPException(status_code = 500, detail = '{} is invalid'.format(request['id']))
 
  
   # try:

@@ -569,10 +569,10 @@ class FclFreightRate(BaseModel):
     def update_local_references(self):
       local_objects = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id << (self.origin_port_id, self.destination_port_id),
-        FclFreightRateLocal.main_port_id << (self.origin_main_port_id, self.destination_main_port_id) if self.origin_port_id !=self.origin_main_port_id or self.destination_port_id !=self.destination_main_port_id else FclFreightRateLocal.id.is_null(False),
+        FclFreightRateLocal.main_port_id << (self.origin_main_port_id, self.destination_main_port_id),
         FclFreightRateLocal.container_size == self.container_size,
         FclFreightRateLocal.container_type == self.container_type,
-        FclFreightRateLocal.commodity == self.commodity if self.commodity in HAZ_CLASSES else FclFreightRateLocal.id.is_null(False),
+        FclFreightRateLocal.commodity == self.commodity if self.commodity in HAZ_CLASSES else None,
         FclFreightRateLocal.service_provider_id == self.service_provider_id,
         FclFreightRateLocal.shipping_line_id == self.shipping_line_id
       ).execute()

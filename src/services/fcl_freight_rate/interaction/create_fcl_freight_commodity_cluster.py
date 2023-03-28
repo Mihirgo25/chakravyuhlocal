@@ -41,7 +41,7 @@ def execute_transaction_code(request):
     fcl_freight_commodity_cluster.validate_commodity_cluster()
 
     if not fcl_freight_commodity_cluster.save():
-        raise HTTPException(status_code=422, detail="Commodity Cluster not saved")
+        raise HTTPException(status_code=500, detail="Commodity Cluster not saved")
     create_audit(request,fcl_freight_commodity_cluster.id)
 
     return {'id' : fcl_freight_commodity_cluster.id}

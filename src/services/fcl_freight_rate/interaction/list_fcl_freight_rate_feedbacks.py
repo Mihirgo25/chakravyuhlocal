@@ -26,7 +26,6 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
         
     query = get_join_query(query)
     query = query.select(FclFreightRateFeedback, FclFreightRate.origin_port, FclFreightRate.destination_port, FclFreightRate.shipping_line)
-    print(query)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     query = get_page(query, page, page_limit)
@@ -96,11 +95,11 @@ def apply_service_provider_id_filter(query, filters):
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at >= datetime.strptime(filters['validity_start_greater_than'],'%Y-%m-%d'))
+    query = query.where(FclFreightRateFeedback.created_at >= filters['validity_start_greater_than'])
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclFreightRate.created_at <= datetime.strptime(filters['validity_end_less_than'],'%Y-%m-%d'))
+    query = query.where(FclFreightRate.created_at <= filters['validity_end_less_than'])
     return query
 
 def apply_origin_port_id_filter(query, filters):

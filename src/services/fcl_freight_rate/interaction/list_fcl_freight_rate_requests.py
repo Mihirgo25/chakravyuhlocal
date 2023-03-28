@@ -4,7 +4,6 @@ from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filter
 from micro_services.client import *
 from math import ceil
 from peewee import fn, SQL
-from datetime import datetime
 import concurrent.futures, json
 from playhouse.shortcuts import model_to_dict
 
@@ -40,10 +39,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclFreightRateRequest.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d'))
+    return query.where(FclFreightRateRequest.created_at >= filters['validity_start_greater_than'])
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclFreightRateRequest.created_at <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d'))
+    return query.where(FclFreightRateRequest.created_at <= filters['validity_end_less_than'])
 
 def apply_relevant_supply_agent_filter(query, filters):
     page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT

@@ -37,7 +37,7 @@ def execute_transaction_code(request):
     fcl_freight_commodity_cluster = FclFreightCommodityCluster.update(update_params).where(FclFreightCommodityCluster.id == request['id'])
 
     if fcl_freight_commodity_cluster.execute() == 0:
-        raise HTTPException(status_code=422, detail="Commodity Cluster not updated")
+        raise HTTPException(status_code=500, detail="Commodity Cluster not updated")
     create_audit(request)
 
     return {'id' : request['id']}

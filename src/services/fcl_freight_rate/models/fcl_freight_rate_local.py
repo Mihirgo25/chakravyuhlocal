@@ -110,19 +110,19 @@ class FclFreightRateLocal(BaseModel):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
         if not self.validate_main_port_id():
-            raise HTTPException(status_code=499, detail='main_port_id is not valid')
+            raise HTTPException(status_code=422, detail='main_port_id is not valid')
 
         if not self.validate_trade_type():
-            raise HTTPException(status_code=499, detail='trade_type is not valid')
+            raise HTTPException(status_code=422, detail='trade_type is not valid')
 
         if not self.validate_container_size():
-            raise HTTPException(status_code=499, detail='container_size is not valid')
+            raise HTTPException(status_code=422, detail='container_size is not valid')
 
         if not self.validate_container_type():
-            raise HTTPException(status_code=499, detail='container_type is not valid')
+            raise HTTPException(status_code=422, detail='container_type is not valid')
 
         if not self.validate_data():
-            raise HTTPException(status_code=499, detail='data is not valid')
+            raise HTTPException(status_code=422, detail='data is not valid')
 
     def update_special_attributes(self):
         self.update_line_item_messages()
@@ -213,7 +213,7 @@ class FclFreightRateLocal(BaseModel):
             FclFreightRate.service_provider_id == self.service_provider_id,
             (eval("FclFreightRate.{}_port_id".format(location_key)) == self.port_id),
             (eval("FclFreightRate.{}_main_port_id".format(location_key)) == self.main_port_id),
-            (FclFreightRate.commodity == self.commodity) if self.commodity else (FclFreightRate.id.is_null(False)),
+            FclFreightRate.commodity == self.commodity,
             (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
             )
         t.execute()
