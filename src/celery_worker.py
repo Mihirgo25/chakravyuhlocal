@@ -41,7 +41,6 @@ def delay_fcl_functions(fcl_object,request):
     # create_sailing_schedule_port_pair(request)
     rates = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False)
     rates = jsonable_encoder(list(rates.dicts()))
-    print(rates)
     # if len(rates) > 0:
     #     organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
