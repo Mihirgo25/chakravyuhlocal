@@ -94,8 +94,6 @@ class FclFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True)
-    sourced_by = BinaryJSONField(null=True)
-    procured_by = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -128,6 +126,7 @@ class FclFreightRate(BaseModel):
           self.origin_main_port = self.get_required_location_data(location)
         if str(self.destination_main_port_id) == str(location['id']):
           self.destination_main_port = self.get_required_location_data(location)
+
     def get_required_location_data(self, location):
         loc_data = {
           "id": location["id"],
@@ -154,27 +153,26 @@ class FclFreightRate(BaseModel):
       self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
 
     def validate_origin_main_port_id(self):
-      if self.origin_port and self.origin_port['is_icd'] == False:
+      if self.origin_port and not self.origin_port['is_icd']:
         if not self.origin_main_port_id or self.origin_main_port_id==self.origin_port_id:
           return True
         return False
-      elif self.origin_port and self.origin_port['is_icd']==True and not self.rate_not_available_entry:
-
+      elif self.origin_port and self.origin_port['is_icd'] and not self.rate_not_available_entry:
         if self.origin_main_port_id:
-          if not self.origin_main_port or self.origin_main_port['is_icd']==True:
+          if not self.origin_main_port or self.origin_main_port['is_icd']:
             return False
         else:
           return False
       return True
 
     def validate_destination_main_port_id(self):
-      if self.destination_port and self.destination_port['is_icd'] == False:
+      if self.destination_port and not self.destination_port['is_icd']:
         if not self.destination_main_port_id or self.destination_main_port_id==self.destination_port_id:
           return True
         return False
-      elif self.destination_port and self.destination_port['is_icd']==True and not self.rate_not_available_entry:
+      elif self.destination_port and self.destination_port['is_icd'] and not self.rate_not_available_entry:
         if self.destination_main_port_id:
-          if not self.destination_main_port or self.destination_main_port['is_icd']==True:
+          if not self.destination_main_port or self.destination_main_port['is_icd']:
             return False
         else:
           return False
