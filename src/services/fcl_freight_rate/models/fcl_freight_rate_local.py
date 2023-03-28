@@ -218,7 +218,6 @@ class FclFreightRateLocal(BaseModel):
             (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
             )
         t.execute()
-        print(t)
 
     def detail(self):
         fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
