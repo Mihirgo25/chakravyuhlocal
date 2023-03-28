@@ -39,7 +39,7 @@ def initialize_freight_query(requirements):
     FclFreightRate.container_type == requirements['container_type'],
     FclFreightRate.commodity == requirements['commodity'],
     ~FclFreightRate.rate_not_available_entry,
-    (FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None)
+    ((FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
     )
 
     rate_constant_mapping_key = requirements['cogo_entity_id']
