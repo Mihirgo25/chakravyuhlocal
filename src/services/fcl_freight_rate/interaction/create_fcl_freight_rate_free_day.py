@@ -11,13 +11,13 @@ def create_fcl_freight_rate_free_day(request):
           try:
             return execute_transaction_code(request)
           except Exception as e:
+              print(e)
               transaction.rollback()
               return e
 
-def execute_transaction_code(request):
-    request["validity_start"] = (request.get('validity_start') or datetime.now()).date()
-    request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90))).date()
-
+def execute_transaction_code(request): 
+    request["validity_start"] = (request.get('validity_start') or datetime.now().date())
+    request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)).date())
     free_day = get_free_day_object(request)
 
     free_day.validate_validity_object(request['validity_start'], request['validity_end'])
@@ -30,11 +30,14 @@ def execute_transaction_code(request):
         free_day.save()
     except:
         raise HTTPException(status_code=403, detail='fcl freight rate free day did not save')
+    
 
     # if 'shipment_id' in request:
     #     free_day.update_sell_quotation()
     create_audit(request, free_day.id)
+
     update_multiple_service_objects.apply_async(kwargs={'object':free_day},queue='low')
+
     return {"id": free_day.id}
 
 def get_free_day_object(request):
