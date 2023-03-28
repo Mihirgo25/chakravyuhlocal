@@ -852,6 +852,7 @@ class FclFreightRate(BaseModel):
       return result.get('price')
 
     def create_fcl_freight_free_days(self, origin_local, destination_local, performed_by_id, sourced_by_id, procured_by_id):
+      from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
       obj = {}
       obj['specificity_type'] = 'rate_specific'
       obj['previous_days_applicable'] = False
@@ -870,28 +871,32 @@ class FclFreightRate(BaseModel):
           obj['free_days_type'] = 'detention'
           obj['trade_type'] = 'export'
           obj.update(origin_local['detention'])
-          origin_detention_id = FclFreightRateFreeDay.create(**obj).id
+          origin_detention_obj = create_fcl_freight_rate_free_day(obj)
+          origin_detention_id = origin_detention_obj["id"]
 
       if 'demurrage' in origin_local and origin_local['demurrage']:
           obj['location_id'] = self.origin_port_id
           obj['free_days_type'] = 'demurrage'
           obj['trade_type'] = 'export'
           obj.update(origin_local['demurrage'])
-          origin_demurrage_id = FclFreightRateFreeDay.create(**obj).id
+          origin_demurrage_obj = create_fcl_freight_rate_free_day(obj)
+          origin_demurrage_id = origin_demurrage_obj["id"]
 
       if 'detention' in destination_local and destination_local['detention']:
           obj['location_id'] = self.destination_port_id
           obj['free_days_type'] = 'detention'
           obj['trade_type'] = 'import'
           obj.update(destination_local['detention'])
-          destination_detention_id = FclFreightRateFreeDay.create(**obj).id
+          destination_detention_obj = create_fcl_freight_rate_free_day(obj)
+          destination_detention_id = destination_detention_obj["id"]
 
       if 'demurrage' in destination_local and destination_local['demurrage']:
           obj['location_id'] = self.destination_port_id
           obj['free_days_type'] = 'demurrage'
           obj['trade_type'] = 'import'
           obj.update(destination_local['demurrage'])
-          destination_demurrage_id = FclFreightRateFreeDay.create(**obj).id
+          destination_demurrage_obj = create_fcl_freight_rate_free_day(obj)
+          destination_demurrage_id = destination_demurrage_obj["id"]
 
       self.origin_detention_id = origin_detention_id
       self.origin_demurrage_id = origin_demurrage_id

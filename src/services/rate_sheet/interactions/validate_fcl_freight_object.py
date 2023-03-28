@@ -165,7 +165,7 @@ def get_free_day_object(object):
                 free_day = free_day.__dict__
     except Exception as e:
             errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
-    if not (isinstance(rate_object, dict) or isinstance(rate_object, list)):
+    if not (isinstance(free_day, dict) or isinstance(free_day, list)):
         free_day = free_day.__dict__['__data__']
     return free_day
 
