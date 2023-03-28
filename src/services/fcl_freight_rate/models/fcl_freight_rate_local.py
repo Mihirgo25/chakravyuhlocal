@@ -206,7 +206,7 @@ class FclFreightRateLocal(BaseModel):
             kwargs = {
                 'destination_local_id':self.id
             }
-
+        commodity = self.commodity if self.commodity in HAZ_CLASSES else "general"
         t=FclFreightRate.update(**kwargs).where(
             FclFreightRate.container_size == self.container_size,
             FclFreightRate.container_type == self.container_type,
@@ -214,10 +214,11 @@ class FclFreightRateLocal(BaseModel):
             FclFreightRate.service_provider_id == self.service_provider_id,
             (eval("FclFreightRate.{}_port_id".format(location_key)) == self.port_id),
             (eval("FclFreightRate.{}_main_port_id".format(location_key)) == self.main_port_id),
-            (FclFreightRate.commodity == self.commodity) if self.commodity else (FclFreightRate.id.is_null(False)),
+            FclFreightRate.commodity == commodity,
             (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
             )
         t.execute()
+        print(t)
 
     def detail(self):
         fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
