@@ -1,6 +1,8 @@
 from celery import Celery
 import os
+from kombu.serialization import registry
 from configs.env import *
+from fastapi.encoders import jsonable_encoder
 from micro_services.client import organization, common
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
@@ -19,6 +21,7 @@ CELERY_CONFIG = {
 }
 
 celery = Celery(__name__)
+registry.enable("pickle")
 celery.conf.broker_url = CELERY_REDIS_URL
 celery.conf.result_backend = CELERY_REDIS_URL
 celery.conf.update(**CELERY_CONFIG)
@@ -34,14 +37,15 @@ def delay_fcl_functions(fcl_object,request):
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
     from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
     from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
-    print('kl')
-    create_freight_trend_port_pair(request)
-    create_sailing_schedule_port_pair(request)
-    if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
-        organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+    # create_freight_trend_port_pair(request)
+    # create_sailing_schedule_port_pair(request)
+    rates = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False)
+    rates = jsonable_encoder(list(rates.dicts()))
+    # if len(rates) > 0:
+    #     organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
-    if request.get("fcl_freight_rate_request_id"):
-        delete_fcl_freight_rate_request(request)
+    # if request.get("fcl_freight_rate_request_id"):
+    #     delete_fcl_freight_rate_request(request)
 
     # fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
 
