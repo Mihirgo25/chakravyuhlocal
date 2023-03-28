@@ -6,7 +6,7 @@ import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
 from micro_services.client import *
-from database.rails_db import get_service_provider ,get_user
+from database.rails_db import get_organization ,get_user
 
 from peewee import *
 from database.db_session import rd
@@ -155,7 +155,7 @@ def add_service_objects(data):
 
     if len(org_ids):
         objects_organizations['filters']['id'] = org_ids
-        list_organizations = get_service_provider(org_ids)
+        list_organizations = get_organization(id=org_ids)
         for org in list_organizations:
             objects_organizations_hash[org['id']] =org
 

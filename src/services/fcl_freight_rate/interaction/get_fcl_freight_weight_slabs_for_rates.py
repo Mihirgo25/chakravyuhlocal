@@ -1,20 +1,20 @@
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
-from database.rails_db import get_service_provider
-from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY_FOR_WEIGHT 
+from database.rails_db import get_organization
+from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY_FOR_WEIGHT
 from fastapi.encoders import jsonable_encoder
 
 possible_direct_filters = [
-    'origin_location_id', 
-    'destination_location_id', 
-    'origin_location_type', 
-    'destination_location_type', 
-    'organization_category', 
-    'shipping_line_id', 
-    'service_provider_id', 
-    'importer_exporter_id', 
-    'is_cogo_assured', 
-    'container_size', 
-    'commodity', 
+    'origin_location_id',
+    'destination_location_id',
+    'origin_location_type',
+    'destination_location_type',
+    'organization_category',
+    'shipping_line_id',
+    'service_provider_id',
+    'importer_exporter_id',
+    'is_cogo_assured',
+    'container_size',
+    'commodity',
     'trade_type'
 ]
 
@@ -25,7 +25,7 @@ def get_most_relevant_slabs(data, direct_filters):
         for key, value in object.items():
             if key in direct_filters:
                 if value and direct_filters[key]:
-                    filters_count += 1 
+                    filters_count += 1
         object['filters_count'] = filters_count
 
     data = sorted(data, key=lambda t: (
@@ -55,11 +55,11 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
     for rate in rates:
         service_provider_ids.append(rate["service_provider_id"])
         shipping_line_ids.append(rate["shipping_line_id"])
-    
+
     service_provider_ids.append(None)
     shipping_line_ids.append(None)
 
-    service_providers = get_service_provider(service_provider_ids)
+    service_providers = get_organization(id=service_provider_ids)
 
     service_providers_to_category = {}
 
@@ -69,8 +69,8 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
         service_providers_to_category[sp["id"]] = sp
         ctypes = sp["category_types"] or []
         all_categories = all_categories + ctypes
-    
-    
+
+
     weight_slabs_query = FclWeightSlabsConfiguration.select(
         FclWeightSlabsConfiguration.origin_location_id,
         FclWeightSlabsConfiguration.destination_location_id,
@@ -149,6 +149,5 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
         final_result[rate["id"]] = []
     return final_result
 
-        
 
-    
+

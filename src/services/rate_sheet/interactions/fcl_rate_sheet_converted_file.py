@@ -25,8 +25,8 @@ from libs.locations import list_locations
 from datetime import datetime
 import dateutil.parser as parser
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
-
-
+from celery_worker import celery_create_fcl_freight_rate_free_day, celery_create_fcl_freight_rate_freight, celery_create_fcl_freight_rate_local, celery_extend_create_fcl_freight_rate_data
+from database.rails_db import get_shipping_line, get_organization
 
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -122,11 +122,11 @@ def mark_processing(params):
     return params
 
 
-def reset_counters(params):
+def reset_counters(params, converted_file):
     total_lines = get_total_line(params)
     if total_lines == 0:
         delete_temp_data(params)
-    set_original_file_path(params)
+    set_original_file_path(params, converted_file)
 
 
 def delete_temp_data(params):
@@ -150,11 +150,11 @@ def delete_original_file_path(params):
         pass
 
 
-def set_original_file_path(params):
+def set_original_file_path(params, converted_file):
     os.makedirs('tmp/rate_sheets', exist_ok=True)
     file_path = os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv")
     with open(file_path, 'wb') as f:
-        response = requests.get(params["file_url"])
+        response = requests.get(converted_file["file_url"])
         f.write(response.content)
 
 
@@ -212,15 +212,7 @@ def get_airport_id(port_code, country_code):
 
 def get_shipping_line_id(shipping_line_name):
     try:
-        shipping_line_id = common.list_operators(
-            {
-                "filters": {
-                    "operator_type": "shipping_line",
-                    "short_name": shipping_line_name,
-                    "status": "active",
-                }
-            }
-        )["list"][0]['id']
+        shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
     except:
         shipping_line_id = None
     return shipping_line_id
@@ -300,15 +292,7 @@ def get_location(location, type):
 
 def get_importer_exporter_id(importer_exporter_name):
     try:
-        importer_exporter_id = organization.list_organizations(
-            {
-                "filters": {
-                    "account_type": "importer_exporter",
-                    "short_name": importer_exporter_name,
-                    "status": "active",
-                }
-            }
-        )["list"][0]
+        importer_exporter_id = get_organization(short_name=importer_exporter_name)[0]['id']
     except:
         importer_exporter_id = None
     return importer_exporter_id
@@ -433,7 +417,7 @@ def create_fcl_freight_local_rate(
     object["sourced_by_id"] = sourced_by_id
     validation = write_fcl_freight_local_object(request_params, writer, params, converted_file, row)
     if validation.get('valid'):
-        create_fcl_freight_rate_local(request_params)
+        celery_create_fcl_freight_rate_local(request_params)
     else:
         print('error')
     return validation
@@ -592,9 +576,9 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     object['procured_by_id'] = procured_by_id
     object['sourced_by_id'] = sourced_by_id
     request_params = object
-    validation = write_fcl_freight_free_day_object(request_params, csv_writer, params,  converted_file, row)
+    validation = write_fcl_freight_free_day_object(request_params.copy(), csv_writer, params,  converted_file, row)
     if validation.get('valid'):
-        create_fcl_freight_rate_free_day(request_params)
+        celery_create_fcl_freight_rate_free_day(request_params)
     else:
         print('error')
     return
@@ -1225,12 +1209,12 @@ def create_fcl_freight_freight_rate(
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
-    validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, row)
+    validation = write_fcl_freight_freight_object(request_params.copy(), csv_writer, params, converted_file, row)
     if validation.get('valid'):
-        create_fcl_freight_rate_data(request_params)
+        celery_create_fcl_freight_rate_freight(request_params)
         if rows[0].get('extend_rates'):
             request_params['extend_rates'] = True
-            extend_create_fcl_freight_rate_data(request_params)
+            celery_extend_create_fcl_freight_rate_data(request_params)
     else:
         print('error')
 
@@ -1238,7 +1222,7 @@ def create_fcl_freight_freight_rate(
 def validate_and_process_rate_sheet_converted_file(params):
     params['status'] = 'processing'
     for converted_file in params['converted_files']:
-        reset_counters(params)
+        reset_counters(params, converted_file)
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
             params,converted_file
         )

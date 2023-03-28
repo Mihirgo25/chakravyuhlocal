@@ -168,7 +168,7 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = get_shipping_line(self.shipping_line_id)
+        shipping_line = get_shipping_line(id=self.shipping_line_id)
         if len(shipping_line) != 0:
             shipping_line[0]['id']=str(shipping_line[0]['id'])
             self.shipping_line = {key:value for key,value in shipping_line[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}

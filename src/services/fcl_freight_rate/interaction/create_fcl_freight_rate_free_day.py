@@ -6,8 +6,8 @@ from celery_worker import update_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day(request):
-    object_type = 'Fcl_Freight_Rate_Free_Day' 
-    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
+    object_type = 'Fcl_Freight_Rate_Free_Day'
+    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
     with db.atomic() as transaction:
           try:
@@ -61,10 +61,10 @@ def get_free_day_object(request):
         FclFreightRateFreeDay.shipping_line_id == request['shipping_line_id'],
         FclFreightRateFreeDay.service_provider_id == request['service_provider_id'],
         FclFreightRateFreeDay.specificity_type == request['specificity_type'],
-        FclFreightRateFreeDay.importer_exporter_id == request.get('importer_exporter_id') if request.get('importer_exporter_id') else FclFreightRateFreeDay.id.is_null(False)).first()
+        FclFreightRateFreeDay.importer_exporter_id == request.get('importer_exporter_id'))
         # FclFreightRateFreeDay.validity_start == request.get('validity_start')
         # FclFreightRateFreeDay.validity_end == request.get('validity_end'))
-
+    free_day = free_day.first()
     if not free_day:
         free_day = FclFreightRateFreeDay(**row)
 

@@ -78,14 +78,14 @@ class FclFreightRateFreeDay(BaseModel):
         return False
 
     def validate_shipping_line(self):
-        shipping_line_data = get_shipping_line(str(self.shipping_line_id))
+        shipping_line_data = get_shipping_line(id=self.shipping_line_id)
         if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
             self.shipping_line = shipping_line_data[0]
             return True
         return False
 
     def validate_service_provider(self):
-        service_provider_data = get_service_provider(str(self.service_provider_id))
+        service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
@@ -93,7 +93,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_importer_exporter(self):
         if self.importer_exporter_id:
-            importer_exporter_data = get_service_provider(str(self.importer_exporter_id))
+            importer_exporter_data = get_organization(id=str(self.importer_exporter_id))
             if (len(importer_exporter_data) != 0) and importer_exporter_data[0].get('account_type') == 'importer_exporter':
                 self.importer_exporter = importer_exporter_data[0]
                 return True
@@ -179,7 +179,7 @@ class FclFreightRateFreeDay(BaseModel):
                 "is_slabs_missing": self.is_slabs_missing
             }
         }
-    
+
     def validate_validity_object(validity_start, validity_end):
         if not validity_start:
             raise HTTPException(status_code=400, detail=validity_start + ' is invalid')
