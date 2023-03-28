@@ -5,7 +5,7 @@ import json
 from fastapi.encoders import jsonable_encoder
 from params import *
 from datetime import datetime
-from utils.auth import authorize_token
+from rms_utils.auth import authorize_token
 
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
