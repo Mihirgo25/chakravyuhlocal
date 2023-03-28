@@ -5,19 +5,23 @@ from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPOR
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from fastapi.encoders import jsonable_encoder
 
-def get_fcl_freight_local_rate_cards(request):  
-    if 'rates' in request and request['rates']:
-        rate_list = build_response_list(request['rates'], request)
+def get_fcl_freight_local_rate_cards(request): 
+    try: 
+        if 'rates' in request and request['rates']:
+            rate_list = build_response_list(request['rates'], request)
 
-        return {'list': rate_list }
+            return {'list': rate_list }
 
-    local_query = initialize_local_query(request)
+        local_query = initialize_local_query(request)
 
-    local_query_results = jsonable_encoder(list(local_query.dicts()))
+        local_query_results = jsonable_encoder(list(local_query.dicts()))
 
-    rate_list = build_response_list(local_query_results, request)
+        rate_list = build_response_list(local_query_results, request)
 
-    return {'list' : rate_list }
+        return {'list' : rate_list }
+    except Exception as e:
+        print(e)
+        return { "list": [] }
 
 
 def initialize_local_query(request):
