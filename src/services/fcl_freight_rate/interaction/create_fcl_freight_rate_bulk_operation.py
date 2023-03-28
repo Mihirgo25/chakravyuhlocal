@@ -5,7 +5,7 @@ def create_fcl_freight_rate_bulk_operation(request):
     action_name = [key for key in request if key not in ['performed_by_id', 'service_provider_id', 'procured_by_id', 'sourced_by_id', 'cogo_entity_id']][0]
     data = request[action_name]
     
-    params = {'action_name':action_name, 'data':data, 'performed_by_id':request['performed_by_id'], 'service_provider_id':request['service_provider_id'],'sourced_by_id':request['sourced_by_id'],'procured_by_id':request['procured_by_id']}
+    params = {'action_name':action_name, 'data':data, 'performed_by_id':request.get('performed_by_id'), 'service_provider_id':request['service_provider_id'],'sourced_by_id':request['sourced_by_id'],'procured_by_id':request['procured_by_id']}
     bulk_operation = FclFreightRateBulkOperation(**params)
     eval(f"bulk_operation.validate_{action_name}_data()")
 
