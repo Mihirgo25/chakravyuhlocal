@@ -15,6 +15,8 @@ def get_instance_url(service_name=None):
 
     if service_name == 'common':
         instance_url = "http://{}:{}".format(INTERNAL_NLB, service_port)
+    elif service_name == "location":
+        instance_url = "https://api.cogoport.com/location"
     else:
         instance_url = "http://{}:{}/{}".format(INTERNAL_NLB, service_port, service_name)
     return instance_url

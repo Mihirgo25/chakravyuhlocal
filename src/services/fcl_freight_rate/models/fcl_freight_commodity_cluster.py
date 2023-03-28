@@ -5,9 +5,6 @@ from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import FREIGHT_CONTAINER_COMMODITY_MAPPINGS
 from fastapi import HTTPException
 
-class UnknownField(object):
-    def __init__(self, *_, **__): pass
-
 class BaseModel(Model):
     class Meta:
         database = db

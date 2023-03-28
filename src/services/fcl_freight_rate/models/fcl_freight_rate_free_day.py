@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from params import Slab
 from micro_services.client import *
 from database.rails_db import *
-from libs.locations import list_locations
+from micro_services.client import maps
 
 class BaseModel(Model):
     class Meta:
@@ -41,9 +41,9 @@ class FclFreightRateFreeDay(BaseModel):
     specificity_type = CharField(index=True, null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(index=True, null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
-    # validity_start = DateTimeField(index=True, null=True)
-    # validity_end = DateTimeField(index=True, null=True)
+    updated_at = DateTimeField(default=datetime.datetime.now())
+    validity_start = DateTimeField(index=True, null=True, default=datetime.datetime.now())
+    validity_end = DateTimeField(index=True, null=True, default=datetime.datetime.now() + datetime.timedelta(days=90))
     sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
@@ -58,9 +58,9 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = list_locations({'id': str(self.location_id)})['list']
-        if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
-            location_data = location_data[0]
+        location_list = maps.list_locations({"filters": {'id': str(self.location_id)}})['list']
+        if (len(location_list) > 0) and location_list[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
+            location_data = location_list[0]
             self.location = location_data
             self.port_id = location_data.get('seaport_id', None)
             self.country_id = location_data.get('country_id', None)
@@ -133,36 +133,41 @@ class FclFreightRateFreeDay(BaseModel):
                     Slab.validate(slab)
                 except:
                     raise HTTPException(status_code=422, detail=f"Incorrect Slab: {slab}")
-
         if not self.validate_location_ids():
-            raise HTTPException(status_code=422, detail="Invalid location")
+            raise HTTPException(status_code=422, detail="Invalid location")   
 
         if not self.validate_specificity_type():
             raise HTTPException(status_code=422, detail="Invalid specificity type")
 
         if not self.validate_shipping_line():
             raise HTTPException(status_code=422, detail="Invalid shipping line")
+        
 
-        if not self.validate_service_provider():
-            raise HTTPException(status_code=422, detail="Invalid service provider")
+        # if not self.validate_service_provider():
+        #     raise HTTPException(status_code=422, detail="Invalid service provider")
 
-        if not self.validate_importer_exporter():
-            raise HTTPException(status_code=422, detail="Invalid importer-exporter")
+        # if not self.validate_importer_exporter():
+        #     raise HTTPException(status_code=422, detail="Invalid importer-exporter")
 
         if not self.validate_free_days_type():
             raise HTTPException(status_code=422, detail="Invalid free day type")
+        
 
         if not self.validate_trade_type():
             raise HTTPException(status_code=422, detail="Invalid trade type")
+        
 
         if not self.validate_container_size():
             raise HTTPException(status_code=422, detail="incorrect container size")
+        
 
         if not self.validate_container_type():
             raise HTTPException(status_code=422, detail="Invalid container type")
+        
 
         if not self.validate_free_limit():
             raise HTTPException(status_code=422, detail="Empty free limit")
+
 
     def update_special_attributes(self):
         self.is_slabs_missing = False if self.slabs and len(self.slabs) != 0 else True
@@ -180,14 +185,14 @@ class FclFreightRateFreeDay(BaseModel):
             }
         }
     
-    def validate_validity_object(validity_start, validity_end):
+    def validate_validity_object(self, validity_start, validity_end):
         if not validity_start:
             raise HTTPException(status_code=400, detail=validity_start + ' is invalid')
 
         if not validity_end:
             raise HTTPException(status_code=400, detail=validity_end + ' is invalid')
 
-        if validity_end > (datetime.date.today() + datetime.timedelta(days = 60)):
+        if validity_end > (datetime.date.today() + datetime.timedelta(days = 180)):
             raise HTTPException(status_code=400, detail=validity_end + ' can not be greater than 60 days from current date')
 
         if validity_start < (datetime.date.today() - datetime.timedelta(days = 15)):

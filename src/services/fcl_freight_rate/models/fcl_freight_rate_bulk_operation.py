@@ -2,7 +2,6 @@ from database.db_session import db
 from peewee import * 
 from playhouse.postgres_ext import *
 from micro_services.client import *
-# from rails_client import client
 from fastapi import HTTPException
 from datetime import datetime,timedelta
 from configs.definitions import FCL_FREIGHT_CHARGES

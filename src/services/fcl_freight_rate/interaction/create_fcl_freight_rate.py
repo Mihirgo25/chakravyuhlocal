@@ -26,6 +26,7 @@ def create_audit(request, freight_id):
         object_type="FclFreightRate",
         source=request.get("source"),
     )
+    return id
 def create_fcl_freight_rate_data(request):
     origin_port_id = str(request.get("origin_port_id"))
     query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
@@ -67,30 +68,33 @@ def create_fcl_freight_rate(request):
         freight.set_origin_location_ids()
         freight.set_destination_location_ids()
 
+
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
 
 
     freight.weight_limit = request.get("weight_limit")
 
-    if request.get("origin_local"):
-        freight.origin_local = request.get("origin_local")
-    else:
-        freight.origin_local = {"line_items": [], "plugin": None}
+    new_free_days = {}
 
-    if request.get("destination_local"):
-        freight.destination_local = request.get("destination_local")
-    else:
-        freight.destination_local = {"line_items": [], "plugin": None}
+    new_free_days['origin_detention'] = request.get("origin_local", {}).get("detention", {})
+    new_free_days['origin_demurrage'] = request.get("origin_local", {}).get("demurrage", {})
+    new_free_days['destination_detention'] = request.get("destination_local", {}).get("detention", {})
+    new_free_days['destination_demurrage'] = request.get("destination_local", {}).get("demurrage", {})
 
-    freight.origin_detention = request.get("origin_local", {}).get("detention", {})
-    freight.origin_demurrage = request.get("origin_local", {}).get("demurrage", {})
-    freight.destination_detention = request.get("destination_local", {}).get(
-        "detention", {}
-    )
-    freight.destination_demurrage = request.get("destination_local", {}).get(
-        "demurrage", {}
-    )
+    if request.get("origin_local") and "line_items" in request["origin_local"]:
+        freight.origin_local = {
+            "line_items": request["origin_local"]["line_items"]
+        }
+    else:
+        freight.origin_local = { "line_items": [] }
+
+    if request.get("destination_local") and "line_items" in request["destination_local"]:
+        freight.destination_local = {
+            "line_items": request["destination_local"]["line_items"]
+        }
+    else:
+        freight.destination_local = { "line_items": [] }
 
     freight.validate_validity_object(request["validity_start"], request["validity_end"])
     freight.validate_line_items(request.get("line_items"))
@@ -113,7 +117,8 @@ def create_fcl_freight_rate(request):
         freight.save()
     except Exception as e:
         raise HTTPException(status_code=499, detail="rate did not save")
-    # freight.create_fcl_freight_free_days(freight.origin_local, freight.destination_local, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
+
+    freight.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
     if not request.get('importer_exporter_id'):
       freight.delete_rate_not_available_entry()
@@ -124,6 +129,8 @@ def create_fcl_freight_rate(request):
     freight.update_local_references()
 
     freight.update_platform_prices_for_other_service_providers()
+
+    freight.save()
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 

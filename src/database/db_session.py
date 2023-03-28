@@ -11,5 +11,8 @@ db = PostgresqlDatabase(
     port = DATABASE_PORT
     )
 
-rd = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, username=REDIS_USERNAME, password=REDIS_PASSWORD)
+rd = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, username=REDIS_USERNAME, password=REDIS_PASSWORD, ssl=True, ssl_cert_reqs=None)
+
+
+# print(rd, rd.keys())
 

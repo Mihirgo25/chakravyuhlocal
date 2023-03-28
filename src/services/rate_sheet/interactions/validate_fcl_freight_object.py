@@ -57,6 +57,8 @@ def get_freight_object(object):
         if rate_object.count()==0:
             rate_object = FclFreightRate(**res)
             rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
+        else:
+            rate_object = list(rate_object.dicts())
         for line_item in object['line_items']:
             if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
                 return "line_item_price is invalid"
@@ -78,7 +80,7 @@ def get_freight_object(object):
         else:
             rate_object.error = errors['errors']
             rate_object = rate_object.__dict__
-    if not isinstance(rate_object, dict):
+    if not (isinstance(rate_object, dict) or isinstance(rate_object, list)):
         rate_object = rate_object.__dict__['__data__']
     return rate_object
 
@@ -106,6 +108,8 @@ def get_local_object(object):
             local = local.where(attrgetter(key)(FclFreightRateLocal) == val)
         if local.count()==0:
             local = FclFreightRateLocal(**res)
+        else:
+            local = list(local.dicts())
         for line_item in object.get('data').get('line_items'):
             if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
                 return "line_item_price is invalid"
@@ -119,14 +123,14 @@ def get_local_object(object):
         else:
             local.error = errors['error']
             local = local.__dict__['__data__']
-    if not isinstance(local, dict):
+    if not (isinstance(local, dict) or isinstance(local, list)):
         local = local.__dict__['__data__']
     return local
 
 def get_free_day_object(object):
     errors = {}
     try:
-        location = get_location(object.get('location'), object.get('location_type'))[0]
+        location = get_location(object.get('location').get('port_code'), object.get('location_type'))[0]
         object['location_id'] = location.get('id')
         object['port_id'] = location.get('seaport_id')
         object['country_id'] = location.get('country_id')
@@ -151,6 +155,8 @@ def get_free_day_object(object):
             free_day = free_day.where(attrgetter(key)(FclFreightRateFreeDay) == val)
         if free_day.count()==0:
             free_day = FclFreightRateFreeDay(**res)
+        else:
+            rate_object = list(rate_object.dicts())
         for key, val in object.items():
             if isinstance(free_day,dict):
                 free_day[key] = val
@@ -159,7 +165,7 @@ def get_free_day_object(object):
                 free_day = free_day.__dict__
     except Exception as e:
             errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
-    if not isinstance(free_day, dict):
+    if not (isinstance(free_day, dict) or isinstance(free_day, list)):
         free_day = free_day.__dict__['__data__']
     return free_day
 
@@ -169,7 +175,7 @@ def get_free_day_object(object):
 def get_location(location, type):
     if type == 'port':
         filters =  {'filters': {"type": "seaport", "port_code": location, "status": "active"}}
-        location =  maps.list_locations({filters})['list']
+        location =  maps.list_locations(filters)['list']
     else:
         filters =  {'filters': {"type": "seaport", "name": location, "status": "active"}}
         location =  maps.list_locations(filters)['list']
