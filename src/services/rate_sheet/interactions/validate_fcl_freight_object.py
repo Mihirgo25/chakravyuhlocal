@@ -2,6 +2,8 @@ import services.rate_sheet.interactions.validate_fcl_freight_object as validate_
 from libs.locations import list_locations
 from micro_services.client import *
 from operator import attrgetter
+import uuid
+from fastapi import HTTPException
 
 # from services.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
@@ -9,10 +11,9 @@ import datetime
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
-# from services.fcl_freight_rate.models.fcl_freight_rate import
-VALID_UNITS = ['per_bl', 'per_container', 'per_shipment']
-SCHEDULE_TYPES = ['direct', 'transhipment']
-PAYMENT_TERM = []
+from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, SPECIFICITY_TYPE
+
+from database.rails_db import get_shipping_line, get_organization
 
 # validate_validity_object
 def validate_fcl_freight_object(module, object):
@@ -20,102 +21,103 @@ def validate_fcl_freight_object(module, object):
     response['valid'] = False
     try:
         rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
-        if 'error' in rate_object:
+        if rate_object['error'].strip() != '':
             response['error'] = rate_object['error']
         else:
             response['valid'] = True
     except Exception as e:
-        response['errors'] = e
+        response['error'] = e
     return response
 
 def get_freight_object(object):
-    errors = {}
+    validation = {}
     rate_object = {}
+    validation['error'] = ''
+    keys_to_extract = ['origin_port_id',
+    'origin_main_port_id',
+    'destination_port_id',
+    'destination_main_port_id',
+    'container_size',
+    'container_type',
+    'commodity',
+    'shipping_line_id',
+    'service_provider_id',
+    'importer_exporter_id',
+    'cogo_entity_id',
+    'destination_local',
+    'is_extended'
+    ]
+    res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
+    res['rate_not_available_entry'] = False
+    rate_object = FclFreightRate(**res)
+    if not rate_object.validate_origin_main_port_id():
+        validation['error']+='Invalid origin main port'
+    if not rate_object.validate_destination_main_port_id():
+        validation['error']+='Invalid destination main port'
+    if not rate_object.validate_container_size():
+        validation['error']+='Invalid container '
+    if not rate_object.validate_container_type():
+        validation['error']+='Invalid container type'
+    if not rate_object.validate_commodity():
+        validation['error']+='Invalid commodity '
     try:
-        for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
-            object[f'{port}_id'] = get_port_id(object.get(port))
-        object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-        object['validity_start'] = object.get('validity_start')
-        object['validity_end'] = object.get('validity_end')
-        keys_to_extract = ['origin_port_id',
-        'origin_main_port_id',
-        'destination_port_id',
-        'destination_main_port_id',
-        'container_size',
-        'container_type',
-        'commodity',
-        'shipping_line_id',
-        'service_provider_id',
-        'importer_exporter_id',
-        'cogo_entity_id']
-        res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-        res['rate_not_available_entry'] = False
-        rate_object = FclFreightRate(**res)
+        rate_object.validate_before_save()
+    except HTTPException as e:
+        validation['error'] += str(e.detail)
+    try:
         rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
-        for line_item in object['line_items']:
-            if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
-                return "line_item_price is invalid"
-            if line_item['unit'] not in VALID_UNITS:
-                return "unit is_invalid"
-        if 'schedule_type' in object and object['schedule_type'] not in SCHEDULE_TYPES:
-            return f"is invalid, valid schedule types are {SCHEDULE_TYPES}"
-        if 'payment_term' in object and object['payment_term'] not in PAYMENT_TERM:
-            return f"is invalid, valid payment terms are {PAYMENT_TERM}"
-        rate_object.validate_line_items(object['line_items'])
-        rate_object.weight_limit = object.get('weight_limit')
-        for key, val in object['destination_local']:
-            rate_object.destination_local[key] = val
-    except Exception as e:
-            errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
-    if 'errors' in errors:
-        if isinstance(rate_object, dict):
-            rate_object['error'] = errors['errors']
-        else:
-            rate_object.error = errors['errors']
-            rate_object = rate_object.__dict__
-    if not (isinstance(rate_object, dict) or isinstance(rate_object, list)):
-        rate_object = rate_object.__dict__['__data__']
-    return rate_object
+    except HTTPException as e:
+        validation['error'] += str(e.detail)
+    for line_item in object['line_items']:
+        if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
+            validation['error']+= "line_item_price is invalid"
+        if line_item['unit'] not in VALID_UNITS:
+            validation['error']+=  "unit is_invalid"
+    if object['schedule_type'] and object['schedule_type'] not in SCHEDULE_TYPES:
+        validation['error'] += f"is invalid, valid schedule types are {SCHEDULE_TYPES}"
+    if object['payment_term'] and object['payment_term'] not in PAYMENT_TERM:
+        validation['error']+=  f"is invalid, valid payment terms are {PAYMENT_TERM}"
+        validation['error']+=str(rate_object.validate_line_items(object['line_items']))
+    return validation
 
 def get_local_object(object):
-    errors = {}
+    validation = {}
+    keys_to_extract = ['port_id',
+    'trade_type',
+    'main_port_id',
+    'container_size',
+    'container_type',
+    'commodity',
+    'shipping_line_id',
+    'service_provider_id']
+    res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
+    local = FclFreightRateLocal(**res)
+    if not local.validate_trade_type():
+        validation['error']+='Invalid trade type'
+    if not local.validate_main_port_id():
+        validation['error']+='Invalid origin main port'
+    if not local.validate_data():
+        validation['error']+='Invalid data'
+    if not local.validate_container_size():
+        validation['error']+='Invalid container '
+    if not local.validate_container_type():
+        validation['error']+='Invalid container type'
+    if not local.validate_commodity():
+        validation['error']+='Invalid commodity '
     try:
-        for port in ['port', 'main_port']:
-            object[f'{port}_id'] = get_port_id(object.get(port))
+        local.validate_before_save()
+    except HTTPException as e:
+        validation['error'] += str(e.detail)
+    for line_item in object.get('data').get('line_items'):
+        if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
+            validation['error']+="line_item_price is invalid"
+        if line_item['unit'] not in VALID_UNITS:
+            validation['error']+= "unit is_invalid"
 
-        for line_item in object.get('data').get('line_items'):
-            line_item['location_id'] = get_location_id(line_item.get('location'))
-        object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-
-        keys_to_extract = ['port_id',
-        'trade_type',
-        'main_port_id',
-        'container_size',
-        'container_type',
-        'commodity',
-        'shipping_line_id',
-        'service_provider_id']
-        res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-        local = FclFreightRateLocal(**res)
-        for line_item in object.get('data').get('line_items'):
-            if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
-                return "line_item_price is invalid"
-            if line_item['unit'] not in VALID_UNITS:
-                return "unit is_invalid"
-    except Exception as e:
-            errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
-    if 'error' in errors:
-        if isinstance(local, dict):
-            local['error'] = errors['error']
-        else:
-            local.error = errors['error']
-            local = local.__dict__['__data__']
-    if not (isinstance(local, dict) or isinstance(local, list)):
-        local = local.__dict__['__data__']
-    return local
+    return validation
 
 def get_free_day_object(object):
-    errors = {}
+    error = {}
     try:
         location = get_location(object.get('location').get('port_code'), object.get('location_type'))[0]
         del object['location']
@@ -139,13 +141,17 @@ def get_free_day_object(object):
 
         res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
         free_day = FclFreightRateFreeDay(**res)
-        for key, val in object.items():
-            free_day.key = val
-        if not (isinstance(free_day, dict) or isinstance(free_day, list)):
-            free_day = free_day.__dict__['__data__']
+        if not is_valid_uuid(free_day.location_id):
+            error['error'] = 'location is invalid'
+        if not is_valid_uuid(free_day.shipping_line_id):
+            error['error'] = 'shipping is invalid'
+        # if free_day.specificity_type in SPECIFICITY_TYPE:
+        #     error['error'] = 'specificity_type is invalid'
+        free_day = free_day.__dict__['__data__']
     except Exception as e:
-            errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
-
+            error['error'] = e if 'error' not in error else error['error'] + e
+    if 'error' in error:
+        free_day['error'] = error['error']
     return free_day
 
 
@@ -174,15 +180,7 @@ def get_port_id(port_code):
 
 def get_shipping_line_id(shipping_line_name):
     try:
-        shipping_line_id = common.list_operators(
-            {
-                "filters": {
-                    "operator_type": "shipping_line",
-                    "short_name": shipping_line_name,
-                    "status": "active",
-                }
-            }
-        )["list"][0]['id']
+        shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
     except:
         shipping_line_id = None
     return shipping_line_id
@@ -206,14 +204,15 @@ def get_location_id(query):
 
 
 def get_importer_exporter_id(importer_exporter_name):
-    importer_exporter_id = organization.list_organizations(
-        {
-            "filters": {
-                "account_type": "importer_exporter",
-                "short_name": importer_exporter_name,
-                "status": "active",
-            }
-        }
-    )["list"][0]['id']
+    try:
+        importer_exporter_id = get_organization(short_name=importer_exporter_name)[0]['id']
+    except:
+        importer_exporter_id = None
     return importer_exporter_id
 
+def is_valid_uuid(val):
+    try:
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
