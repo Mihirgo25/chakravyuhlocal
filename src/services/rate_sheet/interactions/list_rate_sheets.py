@@ -6,6 +6,7 @@ import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
 from micro_services.client import *
+from database.rails_db import get_service_provider ,get_user
 
 from peewee import *
 from database.db_session import rd
@@ -154,24 +155,24 @@ def add_service_objects(data):
 
     if len(org_ids):
         objects_organizations['filters']['id'] = org_ids
-        list_organizations = organization.list_organizations(
-            objects_organizations
-        )
-        for org in list_organizations['list']:
+        list_organizations = get_service_provider(org_ids)
+        for org in list_organizations:
             objects_organizations_hash[org['id']] =org
 
     if len(user_ids):
-        objects_user['filters']['id'] = user_ids
-        list_user = common.list_users(objects_user)
-        # for user_obj in list_user['list']:
-        #     objects_user_hash[user_obj['id']] =user_obj
+        objects_user = []
+        for id in user_ids:
+            if is_valid_uuid(id):
+                objects_user.append(id)
+        list_user = get_user(objects_user)
+        for user_obj in list_user:
+            objects_user_hash[user_obj['id']] =user_obj
 
     for object in data:
         object['service_provider'] = objects_organizations_hash.get(object.get('service_provider_id'))
-        object['procured_by'] = objects_organizations_hash.get(object.get('procured_by_id'))
-        object['sourced_by'] = objects_organizations_hash.get(object.get('sourced_by_id'))
-        object['performed_by'] = objects_organizations_hash.get(object.get('performed_by_id'))
-
+        object['procured_by'] = objects_user_hash.get(object.get('procured_by_id'))
+        object['sourced_by'] = objects_user_hash.get(object.get('sourced_by_id'))
+        object['performed_by'] = objects_user_hash.get(object.get('performed_by_id'))
     return data
 
 
