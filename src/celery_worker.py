@@ -1,5 +1,6 @@
 from celery import Celery
 import os
+from kombu.serialization import registry
 from configs.env import *
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import organization, common
@@ -13,10 +14,14 @@ from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_m
 
 CELERY_CONFIG = {
     "enable_utc": True,
-    "result_serializer": "json"
+    "task_serializer": "pickle",
+    "event_serializer": "pickle",
+    "result_serializer": "json",
+    "accept_content": ['application/json', 'application/x-python-serialize']
 }
 
 celery = Celery(__name__)
+registry.enable("pickle")
 celery.conf.broker_url = CELERY_REDIS_URL
 celery.conf.result_backend = CELERY_REDIS_URL
 celery.conf.update(**CELERY_CONFIG)
