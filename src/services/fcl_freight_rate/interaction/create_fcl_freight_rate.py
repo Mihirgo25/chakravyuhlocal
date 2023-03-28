@@ -125,7 +125,8 @@ def create_fcl_freight_rate(request):
 
     freight.update_platform_prices_for_other_service_providers()
 
-    delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+
+    # delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
     return {"id": freight.id}
 
