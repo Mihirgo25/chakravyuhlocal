@@ -34,9 +34,7 @@ def get_freight_object(object):
     try:
         for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
             object[f'{port}_id'] = get_port_id(object.get(port))
-            del object[port]
         object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-        del object['shipping_line_id']
         object['validity_start'] = object.get('validity_start')
         object['validity_end'] = object.get('validity_end')
         keys_to_extract = ['origin_port_id',
@@ -132,12 +130,13 @@ def get_free_day_object(object):
     errors = {}
     try:
         location = get_location(object.get('location').get('port_code'), object.get('location_type'))[0]
+        del object['location']
         object['location_id'] = location.get('id')
         object['port_id'] = location.get('seaport_id')
         object['country_id'] = location.get('country_id')
         object['trade_id'] = location.get('trade_id')
         object['continent_id'] = location.get('continent_id')
-        object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line'))
+        object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
         object['importer_exporter_id'] = get_importer_exporter_id(object.get('importer_exporter'))
         keys_to_extract = ['location_id',
         'trade_type',
