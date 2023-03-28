@@ -15,7 +15,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surc
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_weight_limit import create_fcl_freight_rate_weight_limit
 
-
+from utils.upload_file_to_s3 import upload_file_to_s3
 from services.rate_sheet.interactions.validate_fcl_freight_object import validate_fcl_freight_object
 from database.db_session import rd
 import time, requests
@@ -25,7 +25,7 @@ from libs.locations import list_locations
 from datetime import datetime
 import dateutil.parser as parser
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
-from utils.upload_file_to_s3 import upload_file_to_s3
+
 
 
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
