@@ -1,5 +1,4 @@
 from celery import Celery
-import os
 from kombu.serialization import registry
 from configs.env import *
 from fastapi.encoders import jsonable_encoder
