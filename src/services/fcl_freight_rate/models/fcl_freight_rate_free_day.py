@@ -7,7 +7,6 @@ from fastapi import HTTPException
 from params import Slab
 from micro_services.client import *
 from database.rails_db import *
-from libs.locations import list_locations
 
 class BaseModel(Model):
     class Meta:
@@ -58,7 +57,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_data = list_locations({'id': str(self.location_id)})['list']
+        location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})['list']
         if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
             location_data = location_data[0]
             self.location = location_data

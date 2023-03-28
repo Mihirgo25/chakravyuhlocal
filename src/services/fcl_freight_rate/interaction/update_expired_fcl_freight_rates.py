@@ -75,7 +75,6 @@ def execute_transaction_code(request):
     freight_object.mode_to_predicted()
     try:
       freight_object.save()
-      print("jhasdfjksdhfjkas")
     except Exception as e:
         raise HTTPException(status_code=499, detail='rate did not save')
     create_audit(request)

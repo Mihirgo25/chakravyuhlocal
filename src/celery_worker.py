@@ -9,6 +9,7 @@ from services.fcl_freight_rate.models.fcl_rate_prediction_feedback import FclRat
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from celery.schedules import crontab
+from params import LineItem
 CELERY_CONFIG = {
     "enable_utc": False,
     "task_serializer": "pickle",
@@ -179,7 +180,6 @@ def update_expired_fcl_freight_rate_price():
     from services.fcl_freight_rate.helpers.get_expired_rows import get_expired_fcl_freight_rates
     from services.fcl_freight_rate.interaction.update_expired_fcl_freight_rates import update_expired_fcl_freight_rate_platform_prices
     ides = get_expired_fcl_freight_rates()
-    print("This is ids we got from expired",ides)
     for req in ides:
         req['procured_by_id'] = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
         req['sourced_by_id'] = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
@@ -190,7 +190,7 @@ def update_expired_fcl_freight_rate_price():
 celery.conf.beat_schedule = {
     'update_expired_fcl_freight_rate_price': {
         'task': 'celery_worker.update_expired_fcl_freight_rate_price',
-        'schedule': crontab(minute=56,hour=20)
+        'schedule': crontab(minute=0,hour=0)
     }
 }
 celery.start
