@@ -18,14 +18,14 @@ PAYMENT_TERM = []
 def validate_fcl_freight_object(module, object):
     response = {}
     response['valid'] = False
-    try:
-        rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
-        if 'error' in rate_object:
-            response['error'] = rate_object['error']
-        else:
-            response['valid'] = True
-    except Exception as e:
-        response['errors'] = e
+    # try:
+    rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
+    if 'error' in rate_object:
+        response['error'] = rate_object['error']
+    else:
+        response['valid'] = True
+    # except Exception as e:
+    #     response['errors'] = e
     return response
 
 def get_freight_object(object):
@@ -34,8 +34,9 @@ def get_freight_object(object):
     try:
         for port in ['origin_port', 'origin_main_port', 'destination_port', 'destination_main_port']:
             object[f'{port}_id'] = get_port_id(object.get(port))
+            del object[port]
         object['shipping_line_id'] = get_shipping_line_id(object.get('shipping_line_id'))
-        object['validity_start'] = object['validity_start']
+        del object['shipping_line_id']
         object['validity_start'] = object.get('validity_start')
         object['validity_end'] = object.get('validity_end')
         keys_to_extract = ['origin_port_id',
@@ -150,23 +151,14 @@ def get_free_day_object(object):
         'importer_exporter_id']
 
         res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-        free_day = FclFreightRateFreeDay.select()
-        for key ,val in res.items():
-            free_day = free_day.where(attrgetter(key)(FclFreightRateFreeDay) == val)
-        if free_day.count()==0:
-            free_day = FclFreightRateFreeDay(**res)
-        else:
-            rate_object = list(rate_object.dicts())
+        free_day = FclFreightRateFreeDay(**res)
         for key, val in object.items():
-            if isinstance(free_day,dict):
-                free_day[key] = val
-            else:
-                free_day.key = val
-                free_day = free_day.__dict__
+            free_day.key = val
+        if not (isinstance(free_day, dict) or isinstance(free_day, list)):
+            free_day = free_day.__dict__['__data__']
     except Exception as e:
             errors['errors'] = e if 'errors' not in errors else errors['errors'] + e
-    if not (isinstance(free_day, dict) or isinstance(free_day, list)):
-        free_day = free_day.__dict__['__data__']
+
     return free_day
 
 
