@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 from peewee import *
 from typing import List
 class Slab(BaseModel):
@@ -497,6 +497,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   free_limit: int
   remarks: list[str] = None
   slabs: list[Slab] = None
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = datetime.now() + timedelta(days=90)
 
 class DeleteFclFreightRateFreeDayRequest(BaseModel):
   fcl_freight_rate_free_day_request_id: str
