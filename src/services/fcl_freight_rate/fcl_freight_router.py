@@ -78,7 +78,6 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster 
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
-# from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
 from configs.definitions import yml_obj
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
@@ -316,16 +315,15 @@ def get_fcl_freight_local_rate_cards_data(
     commodity: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None,
-    rates: list[str] = [],
+    rates: Union[List[str],None]= Query(None),
     include_confirmed_inventory_rates: bool =False,
-    additional_services: list[str] = [],
+    additional_services: Union[List[str],None]= Query(None),
     include_destination_dpd: bool = False,
     cargo_weight_per_container: int = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-
     request = {
         'trade_type':trade_type,
         'port_id':port_id,
@@ -337,18 +335,18 @@ def get_fcl_freight_local_rate_cards_data(
         'commodity' : commodity,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
-        'rates':rates,
+        'rates':rates or [],
         'cargo_weight_per_container': cargo_weight_per_container,
         'include_destination_dpd' : include_destination_dpd,
-        'additional_services':additional_services,
+        'additional_services': additional_services or [],
         'include_confirmed_inventory_rates':include_confirmed_inventory_rates,
     }
 
-    # try:
-    data = get_fcl_freight_local_rate_cards(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_local_rate_cards(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except Exception as e:
+        raise e
 
 @fcl_freight_router.get("/get_fcl_freight_rate_cards")
 def get_fcl_freight_rate_cards_data(
