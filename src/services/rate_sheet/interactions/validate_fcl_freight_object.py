@@ -18,14 +18,14 @@ PAYMENT_TERM = []
 def validate_fcl_freight_object(module, object):
     response = {}
     response['valid'] = False
-    # try:
-    rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
-    if 'error' in rate_object:
-        response['error'] = rate_object['error']
-    else:
-        response['valid'] = True
-    # except Exception as e:
-    #     response['errors'] = e
+    try:
+        rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
+        if 'error' in rate_object:
+            response['error'] = rate_object['error']
+        else:
+            response['valid'] = True
+    except Exception as e:
+        response['errors'] = e
     return response
 
 def get_freight_object(object):
@@ -50,14 +50,8 @@ def get_freight_object(object):
         'cogo_entity_id']
         res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
         res['rate_not_available_entry'] = False
-        rate_object = FclFreightRate.select()
-        for key ,val in res.items():
-            rate_object = rate_object.where(attrgetter(key)(FclFreightRate) == val)
-        if rate_object.count()==0:
-            rate_object = FclFreightRate(**res)
-            rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
-        else:
-            rate_object = list(rate_object.dicts())
+        rate_object = FclFreightRate(**res)
+        rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
         for line_item in object['line_items']:
             if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
                 return "line_item_price is invalid"
@@ -102,13 +96,7 @@ def get_local_object(object):
         'shipping_line_id',
         'service_provider_id']
         res = dict(filter(lambda item: item[0] in keys_to_extract, object.items()))
-        local = FclFreightRateLocal.select()
-        for key ,val in res.items():
-            local = local.where(attrgetter(key)(FclFreightRateLocal) == val)
-        if local.count()==0:
-            local = FclFreightRateLocal(**res)
-        else:
-            local = list(local.dicts())
+        local = FclFreightRateLocal(**res)
         for line_item in object.get('data').get('line_items'):
             if not ( str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
                 return "line_item_price is invalid"
