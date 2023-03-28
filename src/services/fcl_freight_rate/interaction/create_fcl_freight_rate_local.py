@@ -27,11 +27,7 @@ def create_fcl_freight_rate_local(request):
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
     db.execute_sql(query)
     with db.atomic() as transaction:
-        try:
-          return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     if not request.get('source'):
@@ -53,7 +49,7 @@ def execute_transaction_code(request):
     fcl_freight_local = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id == request.get('port_id'),
         FclFreightRateLocal.trade_type ==request.get('trade_type'),
-        ((FclFreightRateLocal.main_port_id == request.get('main_port_id')) if request.get('main_port_id') else (FclFreightRateLocal.id.is_null(False))),
+        FclFreightRateLocal.main_port_id == request.get('main_port_id'),
         FclFreightRateLocal.container_size==request.get('container_size'),
         FclFreightRateLocal.container_type==request.get('container_type'),
         FclFreightRateLocal.commodity == request.get('commodity'),
@@ -69,15 +65,15 @@ def execute_transaction_code(request):
 
     if request['data'].get('line_items'):
         fcl_freight_local.data = fcl_freight_local.data | {'line_items': request['data']['line_items']}
-
-    fcl_freight_local.validate_before_save()
     
-    local_updations(fcl_freight_local, request)
+    fcl_freight_local.validate_before_save()
 
+    local_updations(fcl_freight_local, request)
+    
     try:
       fcl_freight_local.save()
     except Exception as e:
-      raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
+      raise HTTPException(status_code=403, detail=str(e))
     
 
     create_audit(request, fcl_freight_local.id)

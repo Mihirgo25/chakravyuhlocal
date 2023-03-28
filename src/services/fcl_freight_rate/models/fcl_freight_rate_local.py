@@ -102,10 +102,6 @@ class FclFreightRateLocal(BaseModel):
             return False
         return True
 
-
-    def validate_data(self):
-        return self.local_data_instance.validate_duplicate_charge_codes() and self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
-
     def validate_before_save(self):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
@@ -121,8 +117,13 @@ class FclFreightRateLocal(BaseModel):
         if not self.validate_container_type():
             raise HTTPException(status_code=499, detail='container_type is not valid')
 
-        if not self.validate_data():
-            raise HTTPException(status_code=499, detail='data is not valid')
+        if not self.local_data_instance.validate_duplicate_charge_codes():
+            raise HTTPException(status_code=499, detail='duplicate line items present')
+        
+        invalid_charge_codes = self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
+        
+        if invalid_charge_codes:
+            raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
 
     def update_special_attributes(self):
         self.update_line_item_messages()
