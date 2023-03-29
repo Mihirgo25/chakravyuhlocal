@@ -734,16 +734,16 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
   validity_end: datetime = None
 
 class ExtendValidty(BaseModel):
-  filters:dict={}
-  source_date:str
-  validity_end:str
+  filters:dict={} 
+  source_date:datetime
+  validity_end:datetime
   sourced_by_ids:dict=None
   procured_by_ids:dict=None
 
 class DeleteFreightRate(BaseModel):
   filters:dict={}
-  validity_start:str
-  validity_end:str
+  validity_start: datetime
+  validity_end: datetime
 
 class AddFreightRateMarkup(BaseModel):
   filters:dict={}
@@ -751,8 +751,8 @@ class AddFreightRateMarkup(BaseModel):
   markup_type:str
   markup_currency:str=None
   line_item_code:str='BAS'
-  validity_start:str
-  validity_end:str
+  validity_start:datetime
+  validity_end:datetime
 
 class AddLocalRateMarkup(BaseModel):
   filters:dict={}
@@ -765,20 +765,20 @@ class ExtendFreightRateToIcds(BaseModel):
   filters: dict={}
   markup_type : str
   markup : float
-  markup_currency:str
-  line_item_code : str
-  origin_port_ids : List[str]
-  destination_port_ids : List[str]
+  markup_currency:str = None
+  line_item_code : str = 'BAS'
+  origin_port_ids : List[str] = []
+  destination_port_ids : List[str] = []
 
 class ExtendFreightRate(BaseModel):
-  filters: dict={}
-  commodities : List[str]
-  container_sizes : List[str]
-  container_types:List[str]
+  filters: dict = {}
+  commodities : List[str] = []
+  container_sizes : List[str] = []
+  container_types:List[str] = []
   markup_type : str
   markup : float
-  markup_currency:str
-  line_item_code : str
+  markup_currency : str = None
+  line_item_code : str = 'BAS '
 class UpdateWeightLimit(BaseModel):
   filters: dict={}
   free_limit : int
@@ -789,22 +789,19 @@ class UpdateFreeDays(BaseModel):
   free_limit : int
   slabs : List[Slab] = None
 
-class AddFreightLineItem(BaseModel):
-  filters : dict={}
+class AddFreightLineItem(BaseModel): 
+  filters : dict = {}
   code : str
-  units : str
+  unit : str
   price : float
   currency : str
-  validity_start : str
-  validity_end : str
+  validity_start : datetime
+  validity_end : datetime
 class UpdateFreeDaysLimit(BaseModel):
   filters: dict={}
   free_limit : int
   slabs : List[Slab] = None
-  lower_limit : int
-  upper_limit : int
-  price : float
-  currency : str
+
 class DeleteLocalRate(BaseModel):
   filters : dict={}
 
