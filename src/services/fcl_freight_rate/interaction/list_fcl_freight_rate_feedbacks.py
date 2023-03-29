@@ -1,15 +1,14 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING
 from playhouse.shortcuts import model_to_dict
-from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
-from micro_services.client import common
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
+from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL
 from math import ceil
-from micro_services.client import *
 
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'shipping_line_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
@@ -21,12 +20,13 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
         if type(filters) != dict:
             filters = json.loads(filters)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateFeedback)
+        query = apply_indirect_filters(query, indirect_filters)
         
     query = get_join_query(query)
     query = query.select(FclFreightRateFeedback, FclFreightRate.origin_port, FclFreightRate.destination_port, FclFreightRate.shipping_line)
-    print(query)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     query = get_page(query, page, page_limit)
@@ -51,8 +51,7 @@ def apply_indirect_filters(query, filters):
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):
-    page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-    expertises = partner.list_partner_user_expertises({ 'filters': { 'service_type': 'fcl_freight', 'partner_user_id': filters['relevant_supply_agent'] }, page_limit: page_limit })['list']
+    expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id = [t['destination_location_id'] for t in expertises]
     query = query.where((FclFreightRate.origin_port_id << origin_port_id) |
@@ -66,8 +65,7 @@ def apply_relevant_supply_agent_filter(query, filters):
     return query
 
 def apply_supply_agent_id_filter(query, filters):
-    page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-    expertises = organization.list_organization_service_expertises({ 'filters': { 'service_type': 'fcl_freight', 'supply_agent_id': filters['supply_agent_id'] }, page_limit: page_limit })['list']
+    expertises = get_organization_service_experties('fcl_freight', filters['supply_agent_id'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id = [t['destination_location_id'] for t in expertises]
     query = query.where((FclFreightRate.origin_port_id << origin_port_id) |
@@ -174,70 +172,6 @@ def get_data(query):
         new_data.append(object)
     return new_data
 
-# def add_service_objects(data):
-
-
-    # objects = [    
-    #     { 
-    #         'name': 'user',
-    #         'filters': {'id': list(set(data[i]['performed_by_id'] for i in range(len(data))) | set(data[i]['closed_by_id'] for i in range(len(data))))},
-    #         'fields': ['id', 'name', 'email', 'mobile_country_code', 'mobile_number']
-    #     },
-    #     {
-    #         'name': 'location',
-    #         'filters': {'id': list(set([fcl_freight_rates[i]['origin_port_id'] for i in range(len(fcl_freight_rates))]) | set([fcl_freight_rates[i]['destination_port_id'] for i in range(len(fcl_freight_rates))]))},
-    #         'fields': ['id', 'name', 'display_name', 'port_code', 'type']
-    #     },
-    #     {
-    #         'name': 'operator',
-    #         'filters': {'id': shipping_line_ids},
-    #         'fields': ['id', 'business_name', 'short_name', 'logo_url']
-    #     },
-    #     {
-    #         'name': 'organization',
-    #         'filters': {'id': list(set(organisation_ids))},
-    #         'fields': ['id', 'business_name', 'short_name'],
-    #         'extra_params': {'add_service_objects_required': False}
-    #     }
-    # ]
-    # if spot_search_details_required:
-    #     objects.append({
-    #         'name': 'spot_search',
-    #         'filters': {'id': list(set([d.get('source_id') for d in data]))},
-    #         'fields': ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']
-    #     })
-
-    # service_objects = common.get_multiple_service_objects_data_for_fcl({"objects": objects})
-    # for object in data:
-    #     rate = fcl_freight_rate_mappings[object.get('fcl_freight_rate_id', None)] or {}
-    #     object['performed_by'] = service_objects['user'].get(object.get('performed_by_id'), None)
-    #     object['closed_by'] = service_objects['user'].get(object.get('closed_by_id'), None)
-    #     object['origin_port'] = service_objects['location'].get(rate.get('origin_port_id'), None)
-    #     object['destination_port'] = service_objects['location'].get(rate.get('destination_port_id'), None)
-    #     object['preferred_detention_free_days'] = object.get('preferred_detention_free_days')
-    #     object['closing_remarks'] = object.get('closing_remarks')
-    #     object['container_size'] = rate.get('container_size')
-    #     object['container_type'] = rate.get('container_type')
-    #     object['commodity'] = rate.get('commodity')
-    #     object['shipping_line'] = service_objects['operator'].get(rate.get('shipping_line_id'), None)
-    #     object['organization'] = service_objects['organization'].get(object.get('performed_by_org_id'), None)
-    #     object['containers_count'] = object['booking_params'].get('containers_count', None)
-    #     object['bls_count'] = object['booking_params'].get('bls_count', None)
-    #     object['inco_term'] = object['booking_params'].get('inco_term', None)
-    #     object['price'] = next((t['price'] for t in rate['validities'] if t['id'] == object.get('validity_id')), None)
-    #     object['currency'] = next((t['currency'] for t in rate['validities'] if t['id'] == object.get('validity_id')), None)
-    #     object['preferred_shipping_lines'] = []
-    #     for id in object.get('preferred_shipping_line_ids', []):
-    #         shipping_line = service_objects['operator'].get(id, None)
-    #     if shipping_line:
-    #         object['preferred_shipping_lines'].append(shipping_line)
-    #         object['spot_search'] = service_objects['spot_search'].get(object.get('source_id'), None)
-    #     if object['booking_params'].get('rate_card', {}).get('service_rates', {}):
-    #         for key, value in object['booking_params']['rate_card']['service_rates'].items():
-    #             service_provider = service_objects['organization'].get(value.get('service_provider_id'), None)
-    #     if service_provider:
-    #         object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
-
 def get_pagination_data(data, page, page_limit):
     params = {
       'page': page,
@@ -257,8 +191,10 @@ def get_stats(filters, is_stats_required, performed_by_id):
         if 'status' in filters:
             del filters['status']
         
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateFeedback)
+        query = apply_indirect_filters(query, indirect_filters)
 
     query = get_join_query(query)
 
@@ -306,4 +242,3 @@ def get_status_count(query, performed_by_id):
         return {'get_status_count' : result}
     except:
         return {'get_status_count' : 0}
-
