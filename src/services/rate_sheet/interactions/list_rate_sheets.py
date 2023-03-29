@@ -29,7 +29,7 @@ def is_valid_uuid(val):
 
 
 def apply_direct_filters(query, filters):
-    query = get_filters(filters, query, RateSheet, "")
+    query = get_filters(filters, query, RateSheet)
     return query
 
 
