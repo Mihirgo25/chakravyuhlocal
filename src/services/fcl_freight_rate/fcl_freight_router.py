@@ -601,11 +601,11 @@ def list_fcl_freight_rate_locals_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.get("/list_fcl_freight_rate_local_agents")
 def list_fcl_freight_rate_local_agent_data(
