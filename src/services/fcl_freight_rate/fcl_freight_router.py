@@ -582,11 +582,11 @@ def list_fcl_freight_rates_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        raise
 
 
 @fcl_freight_router.get("/list_fcl_freight_rate_locals")
