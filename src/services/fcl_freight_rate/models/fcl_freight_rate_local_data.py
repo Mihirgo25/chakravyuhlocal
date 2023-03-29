@@ -26,9 +26,7 @@ class FclFreightRateLocalData(BaseModel):
     
     def validate_invalid_charge_codes(self, possible_charge_codes):
         invalid_line_items = [str(t.code) for t in self.line_items if str(t.code) not in possible_charge_codes]
-        if invalid_line_items:
-            return False
-        return True
+        return invalid_line_items
 
 
     def get_line_item_messages(self, port, main_port, shipping_line_id, container_size, container_type, commodity, trade_type, possible_charge_codes):
