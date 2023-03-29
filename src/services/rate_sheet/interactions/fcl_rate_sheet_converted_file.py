@@ -327,9 +327,13 @@ def process_fcl_freight_local(params, converted_file):
         input_file = csv.DictReader(open(file_path))
         for row in input_file:
             index += 1
+            for k, v in row.items():
+                if v == '':
+                    row[k] = None
             if index in [-1,0]:
                 headers = list(row.keys())
                 csv_writer.writerow(headers)
+            append_in_final_csv(csv_writer,row)
             present_field = ['trade_type', 'port', 'container_type', 'container_size', 'shipping_line', 'code', 'unit', 'price', 'currency']
             blank_field = ['lower_limit', 'upper_limit']
             if valid_hash(row, present_field, blank_field):
@@ -354,7 +358,6 @@ def process_fcl_freight_local(params, converted_file):
                         )
                     )):
                 rows.append(row)
-                append_in_final_csv(csv_writer,row)
             else:
                 if rows:
                     create_fcl_freight_local_rate(
@@ -431,9 +434,8 @@ def write_fcl_freight_local_object(rows, csv, params, converted_file, row):
             csv.writerow(list_opt)
     else:
         try:
-            error = ["".join(str(object_validity.get("errors")))]
-            list_opt = list(row.values())
-            list_opt += error
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
             csv.writerow(list_opt)
         except:
             print('no csv')
@@ -444,14 +446,14 @@ def write_fcl_freight_local_object(rows, csv, params, converted_file, row):
 
 def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
+
     if object_validity.get("valid"):
             list_opt = list(row.values())
             csv.writerow(list_opt)
     else:
         try:
-            error = ["".join(str(object_validity.get("errors")))]
-            list_opt = list(row.values())
-            list_opt += error
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
             csv.writerow(list_opt)
         except:
             print('no csv')
@@ -487,9 +489,13 @@ def process_fcl_freight_free_day(params, converted_file):
         input_file = csv.DictReader(open(file_path))
         for row in input_file:
             index += 1
+            for k, v in row.items():
+                if v == '':
+                    row[k] = None
             if index in [-1,0]:
                 headers = list(row.keys())
                 csv_writer.writerow(headers)
+            append_in_final_csv(csv_writer,row)
             row = row
             last_line = get_last_line(params)
             present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable']
@@ -522,7 +528,6 @@ def process_fcl_freight_free_day(params, converted_file):
                 )
             ):
                 rows.append(row)
-                append_in_final_csv(csv_writer,row)
             else:
                 if rows:
                     create_fcl_freight_rate_free_days(
@@ -592,9 +597,8 @@ def write_fcl_freight_commodity_surcharge_object(rows, csv, params, converted_fi
             csv.writerow(list_opt)
     else:
         try:
-            error = ["".join(str(object_validity.get("errors")))]
-            list_opt = list(row.values())
-            list_opt += error
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
             csv.writerow(list_opt)
         except:
             print('no csv')
@@ -629,6 +633,9 @@ def process_fcl_freight_commodity_surcharge(params, converted_file):
         input_file = csv.DictReader(open(file_path))
         for row in input_file:
             index += 1
+            for k, v in row.items():
+                if v == '':
+                    row[k] = None
             row = row
             last_line = get_last_line(params)
             present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'code', 'price', 'currency']
@@ -663,9 +670,8 @@ def write_fcl_freight_seasonal_surcharge_object(rows, csv, params, converted_fil
             csv.writerow(list_opt)
     else:
         try:
-            error = ["".join(str(object_validity.get("errors")))]
-            list_opt = list(row.values())
-            list_opt += error
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
             csv.writerow(list_opt)
         except:
             print('no csv')
@@ -700,6 +706,9 @@ def process_fcl_freight_seasonal_surcharge(params, converted_file):
         input_file = csv.DictReader(open(file_path))
         for row in input_file:
             index += 1
+            for k, v in row.items():
+                if v == '':
+                    row[k] = None
             row = row
             last_line = get_last_line(params)
             present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'code', 'price', 'currency', 'validity_start', 'validity_end']
@@ -736,9 +745,8 @@ def write_fcl_freight_weight_limit_object(rows, csv, params,  converted_file, ro
             csv.writerow(list_opt)
     else:
         try:
-            error = ["".join(str(object_validity.get("errors")))]
-            list_opt = list(row.values())
-            list_opt += error
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
             csv.writerow(list_opt)
         except:
             print('no csv')
@@ -774,7 +782,9 @@ def process_fcl_freight_weight_limit(params, converted_file):
         input_file = csv.DictReader(open(file_path))
         for row in input_file:
             index += 1
-            row = row
+            for k, v in row.items():
+                if v == '':
+                    row[k] = None
             last_line = get_last_line(params)
             present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'free_limit']
             blank_field = ['lower_limit','upper_limit', 'price', 'currency']
@@ -842,14 +852,13 @@ def create_fcl_freight_rate_weight_limit(params, converted_file, rows, created_b
 
 def write_fcl_freight_freight_object(rows, csv, params,  converted_file, row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
-    if object_validity.get("valid"):
+    if object_validity["valid"]:
             list_opt = list(row.values())
             csv.writerow(list_opt)
     else:
         try:
-            error = ["".join(str(object_validity.get("errors")))]
-            list_opt = list(row.values())
-            list_opt += error
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
             csv.writerow(list_opt)
         except:
             print('no csv')
@@ -883,9 +892,13 @@ def process_fcl_freight_freight(params, converted_file):
         input_file = csv.DictReader(open(file_path))
         for row in input_file:
             index += 1
+            for k, v in row.items():
+                if v == '':
+                    row[k] = None
             if index in [-1,0]:
                 headers = list(row.keys())
                 csv_writer.writerow(headers)
+            append_in_final_csv(csv_writer, row)
             present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
             blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
             if valid_hash(row, present_field, blank_field):
@@ -1108,7 +1121,6 @@ def process_fcl_freight_freight(params, converted_file):
                 )
             ):
                 rows.append(row)
-                append_in_final_csv(csv_writer, row)
             else:
                 if rows:
                     create_fcl_freight_freight_rate(
@@ -1148,9 +1160,10 @@ def create_fcl_freight_freight_rate(
         "destination_port",
         "destination_main_port",
     ]:
-        object[f"{str(port)}_id"] = get_port_id(rows[0][port])
-
-    object["shipping_line_id"] = get_shipping_line_id(rows[0]["shipping_line"])
+        if rows[0][port]:
+            object[f"{str(port)}_id"] = get_port_id(rows[0][port])
+    if rows[0]["shipping_line"]:
+        object["shipping_line_id"] = get_shipping_line_id(rows[0]["shipping_line"])
     object["line_items"] = []
     for t in rows:
         if t['code']:
@@ -1197,7 +1210,8 @@ def create_fcl_freight_freight_rate(
                 object['destination_local']['detention']['slabs'].append(slab)
     object["rate_sheet_id"] = params['rate_sheet_id']
     object["performed_by_id"] = created_by_id
-    object["service_provider_id"] = params['service_provider_id']
+    if params['service_provider_id']:
+        object["service_provider_id"] = params['service_provider_id']
     object["procured_by_id"] = procured_by_id
     object["sourced_by_id"] = sourced_by_id
     object["cogo_entity_id"] = params['cogo_entity_id']
@@ -1209,12 +1223,13 @@ def create_fcl_freight_freight_rate(
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
-    validation = write_fcl_freight_freight_object(request_params.copy(), csv_writer, params, converted_file, row)
+    validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, row)
     if validation.get('valid'):
-        celery_create_fcl_freight_rate_freight(request_params)
+        celery_create_fcl_freight_rate_freight(object)
         if rows[0].get('extend_rates'):
             request_params['extend_rates'] = True
-            celery_extend_create_fcl_freight_rate_data(request_params)
+            print('extended---------------')
+            celery_extend_create_fcl_freight_rate_data(object)
     else:
         print('error')
 

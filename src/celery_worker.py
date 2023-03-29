@@ -127,6 +127,25 @@ def validate_and_process_rate_sheet_converted_file_delay(request):
     from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
     return validate_and_process_rate_sheet_converted_file(request)
 
+@celery.task(max_retries=10)
+def celery_create_fcl_freight_rate_free_day(request):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
+    return create_fcl_freight_rate_free_day(request)
+
+@celery.task(max_retries=10)
+def celery_create_fcl_freight_rate_freight(request):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+    return create_fcl_freight_rate_data(request)
+
+@celery.task(max_retries=10)
+def celery_extend_create_fcl_freight_rate_data(request):
+    from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
+    return extend_create_fcl_freight_rate_data(request)
+
+@celery.task(max_retries=10)
+def celery_create_fcl_freight_rate_local(request):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+    return create_fcl_freight_rate_local(request)
 
 
 @celery.task(max_retries=10)

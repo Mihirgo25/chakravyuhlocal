@@ -212,7 +212,7 @@ class FclFreightRate(BaseModel):
         free_days_query = free_days_query.where(FclFreightRateFreeDay.importer_exporter_id == self.importer_exporter_id)
       else:
         free_days_query = free_days_query.where(FclFreightRateFreeDay.importer_exporter_id == None)
-      
+
       free_days = jsonable_encoder(list(free_days_query.dicts()))
 
       self.update_origin_free_days_special_attributes(free_days)
@@ -258,7 +258,7 @@ class FclFreightRate(BaseModel):
       self.is_origin_detention_slabs_missing = False
       self.is_origin_demurrage_slabs_missing = False
       self.is_origin_plugin_slabs_missing = False
-      
+
       if not 'slabs' in origin_detention or len(origin_detention['slabs'] or []) == 0:
         self.is_origin_detention_slabs_missing = True
       if not 'slabs' in origin_demurrage or len(origin_demurrage['slabs'] or []) == 0:
@@ -490,14 +490,14 @@ class FclFreightRate(BaseModel):
                 new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
                 continue
 
-        new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end), '%Y-%m-%d').date() >= datetime.datetime.now().date()]
-        new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start), '%Y-%m-%d').date())
+        new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).split(' ')[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
+        new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).split(' ')[0], '%Y-%m-%d').date())
 
         main_validities=[]
         for new_validity in new_validities:
           new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
-          new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start), '%Y-%m-%d').date().isoformat()
-          new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end), '%Y-%m-%d').date().isoformat()
+          new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).split(' ')[0], '%Y-%m-%d').date().isoformat()
+          new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).split(' ')[0], '%Y-%m-%d').date().isoformat()
           new_validity = vars(new_validity)
           new_validity['id'] = new_validity['__data__']['id']
           new_validity.pop('__data__')
@@ -629,8 +629,8 @@ class FclFreightRate(BaseModel):
         locations = maps.list_locations(obj)['list']
 
       return locations
-    
-    
+
+
 
     def update_local_references(self):
       commodity = self.commodity if self.commodity in HAZ_CLASSES else None

@@ -40,6 +40,9 @@ def  update_rate_sheet(params: UpdateRateSheet):
                 converted_file['rate_sheet_id'] = str(rate_sheet.id)
                 converted_file['file_index'] = index+1
     params['status'] = 'converted'
+    rate_sheet.converted_file = params.get('converted_files')
+    rate_sheet.status = params['status']
+    rate_sheet.save()
     if not rate_sheet.save():
         return
     create_audit(get_audit_params(params))
