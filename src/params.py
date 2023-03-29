@@ -193,9 +193,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   line_item_charge_code: str = None
   service_provider_id: str = None
   shipping_line_id: str = None
-  status: str
   trade_type: str = None
-  updated_at: datetime
   performed_by_id: str = None
   performed_by_type: str = None
 

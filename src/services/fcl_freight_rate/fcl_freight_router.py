@@ -713,7 +713,7 @@ def list_fcl_freight_rate_feedbacks_data(
     #     return JSONResponse(status_code=500, content={"success": False})
 
 
-@fcl_freight_router.get("/list_fcl_freight_rate_commodity_clusters")
+@fcl_freight_router.get("/list_fcl_freight_commodity_clusters")
 def list_fcl_freight_rate_commodity_clusters_data(
     filters: str = None,
     page_limit: int = 10,
@@ -950,7 +950,7 @@ def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExte
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.get("/list_fcl_freight_rate_extension_rule_set")
+@fcl_freight_router.get("/list_fcl_freight_rate_extension_rule_sets")
 def list_fcl_freight_rate_extension_rule_set(
     filters: str = None,
     page_limit: int = 10,

@@ -45,7 +45,6 @@ def create_fcl_freight_rate_extension_rule_set_data(request):
       return data
     except Exception as e:
       transaction.rollback()
-      print(e)
       return e
 
 def execute_transaction_code(request):
