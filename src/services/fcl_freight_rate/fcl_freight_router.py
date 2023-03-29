@@ -911,7 +911,7 @@ def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePl
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.delete("/delete_fcl_freight_rate")
+@fcl_freight_router.post("/delete_fcl_freight_rate")
 def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -948,6 +948,7 @@ def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExte
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
+
     # try:
     data = update_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1001,7 +1002,7 @@ def get_fcl_freight_rate_extension(
 #     return update_fcl_freight_rate_task_data(request)
 
 
-@fcl_freight_router.delete("/delete_fcl_freight_rate_request")
+@fcl_freight_router.post("/delete_fcl_freight_rate_request")
 def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1014,7 +1015,7 @@ def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, resp:
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.delete("/delete_fcl_freight_rate_feedback")
+@fcl_freight_router.post("/delete_fcl_freight_rate_feedback")
 def delete_fcl_freight_rates_feedback(request: DeleteFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1027,7 +1028,7 @@ def delete_fcl_freight_rates_feedback(request: DeleteFclFreightRateFeedback, res
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.delete("/delete_fcl_freight_rate_local_request")
+@fcl_freight_router.post("/delete_fcl_freight_rate_local_request")
 def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1040,7 +1041,7 @@ def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalReq
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.delete("/delete_fcl_freight_rate_local")
+@fcl_freight_router.post("/delete_fcl_freight_rate_local")
 def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1053,7 +1054,7 @@ def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, resp: dic
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.delete("/delete_fcl_freight_rate_free_day_request")
+@fcl_freight_router.post("/delete_fcl_freight_rate_free_day_request")
 def delete_fcl_freight_rates_free_day_request(request: DeleteFclFreightRateFreeDayRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
