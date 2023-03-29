@@ -1,7 +1,7 @@
 from operator import attrgetter
 
 
-def get_filters(filters: dict, query, model, ilike_string: str):
+def get_filters(filters: dict, query, model):
     filter_keys = list(filters.keys())
 
     for filter_key in filter_keys:
