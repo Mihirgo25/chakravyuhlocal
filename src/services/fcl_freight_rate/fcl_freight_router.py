@@ -78,7 +78,6 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_commodity_cluster 
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_commodity_surcharge import update_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_request import create_fcl_freight_rate_free_day_request
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
-# from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
 from configs.definitions import yml_obj
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
@@ -316,15 +315,20 @@ def get_fcl_freight_local_rate_cards_data(
     commodity: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None,
-    rates: list[str] = [],
+    rates: List[str] | None= Query(None),
     include_confirmed_inventory_rates: bool =False,
-    additional_services: list[str] = [],
+    additional_services: List[str] | None= Query(None),
     include_destination_dpd: bool = False,
     cargo_weight_per_container: int = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    if additional_services and len(additional_services) == 1 and not additional_services[0]:
+        additional_services = []
+    if rates and len(rates) == 1 and not rates[0]:
+        rates = []
 
     request = {
         'trade_type':trade_type,
@@ -335,20 +339,20 @@ def get_fcl_freight_local_rate_cards_data(
         'containers_count' : containers_count,
         'bls_count' : bls_count,
         'commodity' : commodity,
-        'shipping_line_id' : shipping_line_id,
-        'service_provider_id': service_provider_id,
-        'rates':rates,
+        'shipping_line_id' : shipping_line_id or None,
+        'service_provider_id': service_provider_id or None,
+        'rates':rates or [],
         'cargo_weight_per_container': cargo_weight_per_container,
         'include_destination_dpd' : include_destination_dpd,
-        'additional_services':additional_services,
+        'additional_services': additional_services or [],
         'include_confirmed_inventory_rates':include_confirmed_inventory_rates,
     }
 
-    # try:
-    data = get_fcl_freight_local_rate_cards(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_local_rate_cards(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except Exception as e:
+        raise e
 
 @fcl_freight_router.get("/get_fcl_freight_rate_cards")
 def get_fcl_freight_rate_cards_data(
@@ -578,11 +582,11 @@ def list_fcl_freight_rates_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        raise
 
 
 @fcl_freight_router.get("/list_fcl_freight_rate_locals")
@@ -597,11 +601,11 @@ def list_fcl_freight_rate_locals_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.get("/list_fcl_freight_rate_local_agents")
 def list_fcl_freight_rate_local_agent_data(
@@ -653,11 +657,11 @@ def list_fcl_freight_rate_requests_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.get("/list_fcl_freight_rate_local_requests")
 def list_fcl_freight_rate_local_requests_data(
@@ -670,11 +674,11 @@ def list_fcl_freight_rate_local_requests_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_fcl_freight_rate_local_requests(filters, page_limit, page, is_stats_required, performed_by_id)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rate_local_requests(filters, page_limit, page, is_stats_required, performed_by_id)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.get("/list_fcl_freight_rate_seasonal_surcharges")
 def list_fcl_freight_rate_seasonal_surcharges_data(
@@ -706,11 +710,11 @@ def list_fcl_freight_rate_feedbacks_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 
 @fcl_freight_router.get("/list_fcl_freight_commodity_clusters")
@@ -798,11 +802,11 @@ def list_fcl_freight_rate_free_days_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.get("/list_fcl_freight_rate_weight_limits")
 def list_fcl_freight_rate_weight_limits_data(
@@ -832,11 +836,11 @@ def list_fcl_weight_slabs_configuration_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    data = list_fcl_weight_slabs_configuration(filters, page_limit, page, pagination_data_required)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_weight_slabs_configuration(filters, page_limit, page, pagination_data_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.post("/update_fcl_freight_rate")
 def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(authorize_token)):
