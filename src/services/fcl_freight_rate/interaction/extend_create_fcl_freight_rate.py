@@ -13,7 +13,7 @@ def extend_create_fcl_freight_rate_data(request):
         request = request.dict(exclude_none=True)
 
     if request.get('extend_rates_for_lens'):
-        request['mode']= 'cogo_lens'
+        request['source']= 'cogo_lens'
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':request},queue='fcl_freight_rate')
         return {"message":"Creating rates in delay"}
 
@@ -26,7 +26,7 @@ def extend_create_fcl_freight_rate_data(request):
 
 def create_extended_rate_objects(rate_objects):
     for rate_object in rate_objects:
-        rate_object['mode']='rate_extension'
+        rate_object['source']='rate_extension'
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':rate_object},queue='fcl_freight_rate')
 
 def get_fcl_freight_cluster_objects(request):
