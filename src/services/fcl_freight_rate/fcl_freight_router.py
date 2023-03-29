@@ -852,7 +852,7 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
     #     return JSONResponse(status_code=500, content={"success": False})
 
 
-@fcl_freight_router.put("/update_fcl_freight_rate_local")
+@fcl_freight_router.post("/update_fcl_freight_rate_local")
 def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -865,7 +865,7 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.put("/update_fcl_freight_rate_local_agent")
+@fcl_freight_router.post("/update_fcl_freight_rate_local_agent")
 def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalAgent, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -880,7 +880,7 @@ def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalA
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.put("/update_fcl_weight_slabs_configuration")
+@fcl_freight_router.post("/update_fcl_weight_slabs_configuration")
 def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConfiguration, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -894,7 +894,7 @@ def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConf
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.put("/update_fcl_freight_rate_platform_prices")
+@fcl_freight_router.post("/update_fcl_freight_rate_platform_prices")
 def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePlatformPrices, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1102,7 +1102,7 @@ def get_fcl_freight_rate_weight_limit_data(
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
 
-@fcl_freight_router.put("/update_fcl_freight_rate_weight_limit")
+@fcl_freight_router.post("/update_fcl_freight_rate_weight_limit")
 def update_fcl_freight_rate_weight_limit_data(request: UpdateFclFreightRateWeightLimit, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
