@@ -117,8 +117,8 @@ def delete_total_line(params):
 
 
 
-def mark_processing(params):
-    params.status = "processing"
+def mark_processing(params, Update):
+    Update.status = "processing"
     return params
 
 
@@ -152,7 +152,7 @@ def delete_original_file_path(params):
 
 def set_original_file_path(params, converted_file):
     os.makedirs('tmp/rate_sheets', exist_ok=True)
-    file_path = os.path.join('tmp', 'rate_sheets', f"{params['id']}_original.csv")
+    file_path = os.path.join('tmp', 'rate_sheets', f"{converted_file['id']}_original.csv")
     with open(file_path, 'wb') as f:
         response = requests.get(converted_file["file_url"])
         f.write(response.content)
@@ -271,9 +271,9 @@ def get_location_id(q, country_code = None, service_provider_id = None):
     display_name_filters = {"display_name": q, "status": "active"}
     if country_code is not None:
         display_name_filters = maps.list_locations({"filters": display_name_filters})
-    if not locations:
-        locations = common.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
-        return locations[0] if locations else None
+    # if not locations:
+    #     locations = common.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
+    #     return locations[0] if locations else None
     return locations[0]["id"] if locations else None
 
 
@@ -298,9 +298,9 @@ def get_importer_exporter_id(importer_exporter_name):
     return importer_exporter_id
 
 
-def process_fcl_freight_local(params, converted_file):
+def process_fcl_freight_local(params, converted_file, Update):
     total_lines = 0
-    original_path = get_original_file_path(params)
+    original_path = get_original_file_path(converted_file)
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
@@ -317,9 +317,9 @@ def process_fcl_freight_local(params, converted_file):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(params)
+    file_path = get_original_file_path(converted_file)
     with open(file_path, encoding='iso-8859-1') as file:
-        f = open(get_file_path(params), 'w',newline="")
+        f = open(get_file_path(converted_file), 'w',newline="")
         csv_writer = csv.writer(f)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         if last_line == 0:
@@ -330,10 +330,11 @@ def process_fcl_freight_local(params, converted_file):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            if index in [-1,0]:
+            if index == -1:
                 headers = list(row.keys())
                 csv_writer.writerow(headers)
-            append_in_final_csv(csv_writer,row)
+            list_opt = list(row.values())
+            csv_writer.writerow(list_opt)
             present_field = ['trade_type', 'port', 'container_type', 'container_size', 'shipping_line', 'code', 'unit', 'price', 'currency']
             blank_field = ['lower_limit', 'upper_limit']
             if valid_hash(row, present_field, blank_field):
@@ -369,10 +370,10 @@ def process_fcl_freight_local(params, converted_file):
 
     if not rows:
         return
-    params['file_url'] = upload_file_to_s3(get_file_path(params))
+    converted_file['file_url'] = upload_file_to_s3(get_file_path(converted_file))
     try:
-        os.remove(get_original_file_path(params))
-        os.remove(get_file_path(params))
+        os.remove(get_original_file_path(converted_file))
+        os.remove(get_file_path(converted_file))
     except:
         return
     # create_fcl_freight_local_rate(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id, '', '')
@@ -380,9 +381,11 @@ def process_fcl_freight_local(params, converted_file):
     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * total_lines )* 100
     set_processed_percent(percent, params)
     if math.ceil(percent)!=100:
-        params['status'] = 'partially_complete'
+        Update.status = 'partially_complete'
+        converted_file['status'] = 'partially_complete'
     else:
-        params['status'] = 'complete'
+        Update.status = 'complete'
+        converted_file['status'] = 'complete'
 
 def create_fcl_freight_local_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, row, writer
@@ -431,7 +434,6 @@ def write_fcl_freight_local_object(rows, csv, params, converted_file, row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity.get("valid"):
             list_opt = list(row.values())
-            csv.writerow(list_opt)
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
@@ -439,6 +441,7 @@ def write_fcl_freight_local_object(rows, csv, params, converted_file, row):
             csv.writerow(list_opt)
         except:
             print('no csv')
+    converted_file['rates_count'] = int(converted_file['rates_count'])+1
     return object_validity
 
 
@@ -449,7 +452,6 @@ def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, row):
 
     if object_validity.get("valid"):
             list_opt = list(row.values())
-            csv.writerow(list_opt)
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
@@ -457,12 +459,13 @@ def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, row):
             csv.writerow(list_opt)
         except:
             print('no csv')
+    converted_file['rates_count'] = int(converted_file['rates_count'])+1
     return object_validity
 
 
-def process_fcl_freight_free_day(params, converted_file):
+def process_fcl_freight_free_day(params, converted_file, Update):
     total_lines = 0
-    original_path = get_original_file_path(params)
+    original_path = get_original_file_path(converted_file)
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
@@ -479,9 +482,9 @@ def process_fcl_freight_free_day(params, converted_file):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(params)
+    file_path = get_original_file_path(converted_file)
     with open(file_path, encoding='iso-8859-1') as file:
-        f = open(get_file_path(params), 'w',newline="")
+        f = open(get_file_path(converted_file), 'w',newline="")
         csv_writer = csv.writer(f)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         if last_line == 0:
@@ -492,10 +495,11 @@ def process_fcl_freight_free_day(params, converted_file):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            if index in [-1,0]:
+            if index == -1:
                 headers = list(row.keys())
                 csv_writer.writerow(headers)
-            append_in_final_csv(csv_writer,row)
+            list_opt = list(row.values())
+            csv_writer.writerow(list_opt)
             row = row
             last_line = get_last_line(params)
             present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable']
@@ -540,16 +544,18 @@ def process_fcl_freight_free_day(params, converted_file):
     if not rows:
         return
     set_last_line(total_lines, params)
-    params['file_url'] = upload_file_to_s3(get_file_path(params))
+    converted_file['file_url'] = upload_file_to_s3(get_file_path(converted_file))
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     set_processed_percent(percent, params)
     if math.ceil(percent)!=100:
-        params['status'] = 'partially_complete'
+        Update.status = 'partially_complete'
+        converted_file['status'] = 'partially_complete'
     else:
-        params['status'] = 'complete'
+        Update.status = 'complete'
+        converted_file['status'] = 'complete'
     try:
-        os.remove(get_original_file_path(params))
-        os.remove(get_file_path(params))
+        os.remove(get_original_file_path(converted_file))
+        os.remove(get_file_path(converted_file))
     except:
         return
 
@@ -594,7 +600,6 @@ def write_fcl_freight_commodity_surcharge_object(rows, csv, params, converted_fi
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity.get("valid"):
             list_opt = list(row.values())
-            csv.writerow(list_opt)
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
@@ -602,12 +607,13 @@ def write_fcl_freight_commodity_surcharge_object(rows, csv, params, converted_fi
             csv.writerow(list_opt)
         except:
             print('no csv')
+    converted_file['rates_count'] = int(converted_file['rates_count'])+1
     return object_validity
 
 
-def process_fcl_freight_commodity_surcharge(params, converted_file):
+def process_fcl_freight_commodity_surcharge(params, converted_file, Update):
     total_lines = 0
-    original_path = get_original_file_path(params)
+    original_path = get_original_file_path(converted_file)
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
@@ -624,7 +630,7 @@ def process_fcl_freight_commodity_surcharge(params, converted_file):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(params)
+    file_path = get_original_file_path(converted_file)
     with open(file_path, encoding='iso-8859-1') as file:
         csv_writer = csv.writer(file)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
@@ -667,7 +673,6 @@ def write_fcl_freight_seasonal_surcharge_object(rows, csv, params, converted_fil
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity.get("valid"):
             list_opt = list(row.values())
-            csv.writerow(list_opt)
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
@@ -675,12 +680,13 @@ def write_fcl_freight_seasonal_surcharge_object(rows, csv, params, converted_fil
             csv.writerow(list_opt)
         except:
             print('no csv')
+    converted_file['rates_count'] = int(converted_file['rates_count'])+1
     return object_validity
 
 
-def process_fcl_freight_seasonal_surcharge(params, converted_file):
+def process_fcl_freight_seasonal_surcharge(params, converted_file, Update):
     total_lines = 0
-    original_path = get_original_file_path(params)
+    original_path = get_original_file_path(converted_file)
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
@@ -697,7 +703,7 @@ def process_fcl_freight_seasonal_surcharge(params, converted_file):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(params)
+    file_path = get_original_file_path(converted_file)
     with open(file_path, encoding='iso-8859-1') as file:
         csv_writer = csv.writer(file)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
@@ -742,7 +748,6 @@ def write_fcl_freight_weight_limit_object(rows, csv, params,  converted_file, ro
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity.get("valid"):
             list_opt = list(row.values())
-            csv.writerow(list_opt)
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
@@ -750,13 +755,14 @@ def write_fcl_freight_weight_limit_object(rows, csv, params,  converted_file, ro
             csv.writerow(list_opt)
         except:
             print('no csv')
+    converted_file['rates_count'] = int(converted_file['rates_count'])+1
     return object_validity
 
 
 
-def process_fcl_freight_weight_limit(params, converted_file):
+def process_fcl_freight_weight_limit(params, converted_file, Update):
     total_lines = 0
-    original_path = get_original_file_path(params)
+    original_path = get_original_file_path(converted_file)
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
@@ -773,7 +779,7 @@ def process_fcl_freight_weight_limit(params, converted_file):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(params)
+    file_path = get_original_file_path(converted_file)
     with open(file_path, encoding='iso-8859-1') as file:
         csv_writer = csv.writer(file)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
@@ -815,10 +821,10 @@ def process_fcl_freight_weight_limit(params, converted_file):
 
     if not rows:
         return
-    params['file_url'] = upload_file_to_s3(get_file_path(params))
+    converted_file['file_url'] = upload_file_to_s3(get_file_path(params))
     try:
-        os.remove(get_original_file_path(params))
-        os.remove(get_file_path(params))
+        os.remove(get_original_file_path(converted_file))
+        os.remove(get_file_path(converted_file))
     except:
         return
     create_fcl_freight_rate_weight_limit(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
@@ -826,9 +832,11 @@ def process_fcl_freight_weight_limit(params, converted_file):
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     set_processed_percent(percent, params)
     if math.ceil(percent)!=100:
-        params['status'] = 'partially_complete'
+        Update.status = 'partially_complete'
+        converted_file['status'] = 'partially_complete'
     else:
-        params['status'] = 'complete'
+        Update.status = 'complete'
+        converted_file['status'] = 'complete'
 
 
 def create_fcl_freight_rate_weight_limit(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
@@ -854,7 +862,6 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity["valid"]:
             list_opt = list(row.values())
-            csv.writerow(list_opt)
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
@@ -862,11 +869,12 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, row):
             csv.writerow(list_opt)
         except:
             print('no csv')
+    converted_file['rates_count'] = int(converted_file['rates_count'])+1
     return object_validity
 
-def process_fcl_freight_freight(params, converted_file):
+def process_fcl_freight_freight(params, converted_file, Update):
     total_lines = 0
-    original_path = get_original_file_path(params)
+    original_path = get_original_file_path(converted_file)
     with open(original_path, encoding='iso-8859-1') as file:
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         headers = next(reader)
@@ -882,9 +890,9 @@ def process_fcl_freight_freight(params, converted_file):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(params)
+    file_path = get_original_file_path(converted_file)
     with open(file_path, encoding='iso-8859-1') as file:
-        f = open(get_file_path(params), 'w',newline="")
+        f = open(get_file_path(converted_file), 'w',newline="")
         csv_writer = csv.writer(f)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
         if last_line == 0:
@@ -895,10 +903,12 @@ def process_fcl_freight_freight(params, converted_file):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            if index in [-1,0]:
+            if index == -1:
                 headers = list(row.keys())
                 csv_writer.writerow(headers)
-            append_in_final_csv(csv_writer, row)
+            else:
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
             present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
             blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
             if valid_hash(row, present_field, blank_field):
@@ -1133,15 +1143,17 @@ def process_fcl_freight_freight(params, converted_file):
         return
     set_last_line(total_lines, params)
     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * total_lines )* 100
-    params['file_url'] = upload_file_to_s3(get_file_path(params))
+    converted_file['file_url'] = upload_file_to_s3(get_file_path(converted_file))
     if math.ceil(percent)!=100:
-        params['status'] = 'partially_complete'
+        Update.status = 'partially_complete'
+        converted_file['status'] = 'partially_complete'
     else:
-        params['status'] = 'complete'
+        Update.status = 'complete'
+        converted_file['status'] = 'complete'
 
     try:
-        os.remove(get_original_file_path(params))
-        os.remove(get_file_path(params))
+        os.remove(get_original_file_path(converted_file))
+        os.remove(get_file_path(converted_file))
     except:
         return
     set_processed_percent(percent, params)
@@ -1170,7 +1182,7 @@ def create_fcl_freight_freight_rate(
             line_item = {
             'code': t['code'],
             'unit': t['unit'],
-            'price': t['price'],
+            'price': float(t['price']),
             'currency': t['currency'],
             'remarks': [t['remark1'], t['remark2'], t['remark3']] if any([t['remark1'], t['remark2'], t['remark3']]) else None,
             'slabs': []
@@ -1228,20 +1240,22 @@ def create_fcl_freight_freight_rate(
         celery_create_fcl_freight_rate_freight(object)
         if rows[0].get('extend_rates'):
             request_params['extend_rates'] = True
-            print('extended---------------')
             celery_extend_create_fcl_freight_rate_data(object)
     else:
         print('error')
 
 
 def validate_and_process_rate_sheet_converted_file(params):
-    params['status'] = 'processing'
+    Update = RateSheet.get(RateSheet.id == params['id'])
+    Update.status = 'processing'
     for converted_file in params['converted_files']:
         reset_counters(params, converted_file)
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
-            params,converted_file
+            params, converted_file, Update
         )
-    for _ in params['converted_files']:
-        delete_temp_data
+    Update.converted_files = params.get('converted_files')
+    Update.save()
+    for converted_file in params['converted_files']:
+        delete_temp_data(converted_file)
     send_rate_sheet_notifications(params)
     return params
