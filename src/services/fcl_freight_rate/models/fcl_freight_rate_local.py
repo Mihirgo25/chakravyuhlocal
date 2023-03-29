@@ -1,4 +1,4 @@
-from peewee import * 
+from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
@@ -69,7 +69,7 @@ class FclFreightRateLocal(BaseModel):
 
     def validate_main_port_id(self):
         if self.port and self.port['is_icd']==False:
-            if not self.main_port_id or self.main_port_id != self.port_id:
+            if not self.main_port_id or self.main_port_id == self.port_id:
                 return True
             return False
         elif self.port and self.port['is_icd']==True:
@@ -96,15 +96,11 @@ class FclFreightRateLocal(BaseModel):
         if self.container_type not in CONTAINER_TYPES:
             return False
         return True
-    
+
     def validate_commodity(self):
         if self.container_type and self.commodity not in LOCAL_CONTAINER_COMMODITY_MAPPINGS:
             return False
         return True
-
-    
-    def validate_data(self):
-        return self.local_data_instance.validate_duplicate_charge_codes() and self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
     def validate_before_save(self):
         self.local_data_instance = FclFreightRateLocalData(self.data)
@@ -121,8 +117,13 @@ class FclFreightRateLocal(BaseModel):
         if not self.validate_container_type():
             raise HTTPException(status_code=499, detail='container_type is not valid')
 
-        if not self.validate_data():
-            raise HTTPException(status_code=499, detail='data is not valid')
+        if not self.local_data_instance.validate_duplicate_charge_codes():
+            raise HTTPException(status_code=499, detail='duplicate line items present')
+        
+        invalid_charge_codes = self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
+        
+        if invalid_charge_codes:
+            raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
 
     def update_special_attributes(self):
         self.update_line_item_messages()
@@ -146,10 +147,10 @@ class FclFreightRateLocal(BaseModel):
     def set_port(self):
         if self.port:
             return
-        
+
         if not self.port_id:
             return
-        
+
         location_ids = [str(self.port_id)]
         if self.main_port_id:
             location_ids.append(str(self.main_port_id))
@@ -157,7 +158,7 @@ class FclFreightRateLocal(BaseModel):
         for port in ports:
             if str(port.get('id')) == str(self.port_id):
                 self.country_id = port.get('country_id', None)
-                self.trade_id = port.get('trade_id', None) 
+                self.trade_id = port.get('trade_id', None)
                 self.continent_id = port.get('continent_id', None)
                 self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
                 self.port = port
@@ -176,7 +177,7 @@ class FclFreightRateLocal(BaseModel):
     def possible_charge_codes(self):
         self.set_port()
         self.set_shipping_line()
-        
+
         # setting variables for conditions in charges.yml
         port = self.port
         main_port = self.main_port
@@ -184,7 +185,7 @@ class FclFreightRateLocal(BaseModel):
         container_size = self.container_size
         container_type = self.container_type
         commodity = self.commodity
-        
+
         fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
         charge_codes = {}
@@ -205,7 +206,7 @@ class FclFreightRateLocal(BaseModel):
             kwargs = {
                 'destination_local_id':self.id
             }
-
+        commodity = self.commodity if self.commodity in HAZ_CLASSES else "general"
         t=FclFreightRate.update(**kwargs).where(
             FclFreightRate.container_size == self.container_size,
             FclFreightRate.container_type == self.container_type,
@@ -213,7 +214,7 @@ class FclFreightRateLocal(BaseModel):
             FclFreightRate.service_provider_id == self.service_provider_id,
             (eval("FclFreightRate.{}_port_id".format(location_key)) == self.port_id),
             (eval("FclFreightRate.{}_main_port_id".format(location_key)) == self.main_port_id),
-            (FclFreightRate.commodity == self.commodity) if self.commodity else (FclFreightRate.id.is_null(False)),
+            FclFreightRate.commodity == commodity,
             (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
             )
         t.execute()

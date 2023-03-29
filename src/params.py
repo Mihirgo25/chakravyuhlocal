@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 from peewee import *
 from typing import List
 class Slab(BaseModel):
@@ -65,17 +65,19 @@ class PostFclFreightRate(BaseModel):
   destination_local: LocalData = None
   bulk_operation_id: str = None
   rate_sheet_id: str = None
-  performed_by_id: str
-  procured_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
+  procured_by_id: str = None
   sourced_by_id: str
   cogo_entity_id: str = None
   mode: str = None
   source: str = 'rms_upload'
   is_extended: bool = None
 
-class CreateFclFreightRateCommoditySurcharge(BaseModel): 
+class CreateFclFreightRateCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   sourced_by_id: str
   procured_by_id: str
   origin_location_id: str
@@ -85,28 +87,35 @@ class CreateFclFreightRateCommoditySurcharge(BaseModel):
   commodity: str
   shipping_line_id: str
   service_provider_id: str
-  price: int 
+  price: int
   currency: str
   remarks: list[str] = []
-  
+
 class CreateFclFreightCommodityCluster(BaseModel):
+  performed_by_id: str = None
+  performed_by_type: str = None
   name: str
-  commodities: dict 
+  commodities: dict
 
 class UpdateFclFreightCommodityCluster(BaseModel):
   id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   name: str = None
   status: str = None
   commodities: dict = {}
 
 class CreateFclFreightRateLocalAgent(BaseModel):
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   service_provider_id: str
   status: str = 'active'
   location_id: str
   trade_type: str
 
 class CreateFclWeightSlabsConfiguration(BaseModel):
+  performed_by_id: str = None
+  performed_by_type: str = None
   origin_location_id: str = None
   destination_location_id: str = None
   origin_location_type: str = None
@@ -124,9 +133,10 @@ class CreateFclWeightSlabsConfiguration(BaseModel):
 
 class UpdateFclFreightRate(BaseModel):
   id: str
-  procured_by_id: str = None #not null
-  sourced_by_id: str = None #not null
-  performed_by_id: str = None #not null
+  procured_by_id: str = None
+  sourced_by_id: str = None 
+  performed_by_id: str = None
+  performed_by_type: str = None
   bulk_operation_id: str = None
   validity_start: datetime = None
   validity_end: datetime = None
@@ -148,6 +158,7 @@ class Data(BaseModel):
 class PostFclFreightRateLocal(BaseModel):
     rate_sheet_id: str = None
     performed_by_id: str = None
+    performed_by_type: str = None
     procured_by_id: str = None
     sourced_by_id: str = None
     trade_type: str
@@ -164,7 +175,8 @@ class PostFclFreightRateLocal(BaseModel):
 
 class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
-    performed_by_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
     procured_by_id: str
     sourced_by_id: str
     bulk_operation_id: str = None
@@ -172,7 +184,7 @@ class UpdateFclFreightRateLocal(BaseModel):
     data: Data
 
 class PostFclFreightRateExtensionRuleSet(BaseModel):
-  cluster_id: str 
+  cluster_id: str
   cluster_reference_name: str
   cluster_type: str
   extension_name: str
@@ -181,17 +193,19 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   line_item_charge_code: str = None
   service_provider_id: str = None
   shipping_line_id: str = None
-  status: str 
+  status: str
   trade_type: str = None
   updated_at: datetime
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
 
 class MandatoryCharges(BaseModel):
   line_items: list[StandardLineItem] = []
   required_mandatory_codes: list[dict] = []
 
 class ExtendCreateFclFreightRate(BaseModel):
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   procured_by_id: str
   sourced_by_id: str
   bulk_operation_id: str = None
@@ -223,7 +237,8 @@ class ExtendCreateFclFreightRate(BaseModel):
 
 class UpdateFclFreightRateExtensionRuleSet(BaseModel):
   id: str
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   extension_name: str = None
   service_provider_id: str = None
   shipping_line_id: str = None
@@ -237,7 +252,7 @@ class UpdateFclFreightRateExtensionRuleSet(BaseModel):
   trade_type: str = None
 
 
-  
+
 class GetFclFreightRateLocal(BaseModel):
     port_id: str = None
     main_port_id: str = None
@@ -279,7 +294,7 @@ class GetFclFreightLocalRateCards(BaseModel):
     container_size: str
     container_type: str
     commodity: str = None
-    containers_count: int 
+    containers_count: int
     bls_count: int
     cargo_weight_per_container: int = None
     include_destination_dpd: bool = False
@@ -290,25 +305,27 @@ class GetFclFreightLocalRateCards(BaseModel):
 
 class DeleteFclFreightRate(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
     validity_start: datetime
     validity_end: datetime
     bulk_operation_id: str = None
-    sourced_by_id: str 
+    sourced_by_id: str
     procured_by_id: str
     payment_term: str = 'prepaid'
 
 class DeleteFclFreightRateFeedback(BaseModel):
     fcl_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
-    performed_by_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
 
 class CreateFclFreightRateFeedback(BaseModel):
   source: str
   source_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_org_id: str
-  performed_by_type: str
+  performed_by_type: str = None
   rate_id: str
   validity_id: str
   likes_count: int
@@ -332,10 +349,13 @@ class CreateFclFreightRateNotAvailable(BaseModel):
     container_size: str
     container_type: str
     commodity: str
+    performed_by_id: str = None
+    performed_by_type: str = None
 
 class UpdateFclFreightRateLocalAgent(BaseModel):
-  id: str 
-  performed_by_id: str
+  id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   status: str = None
   service_provider_id: str = None
 
@@ -346,12 +366,47 @@ class rate(BaseModel):
   demurrage: FreeDay = None
   plugin: FreeDay = None
 
+class CreateRateSheet(BaseModel):
+    service_provider_id: str
+    service_name: str
+    partner_id: str = None
+    cogo_entity_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    procured_by_id: str = None
+    sourced_by_id: str = None
+    comment: str = None
+    file_url: str
 
-class CreateFclFreightRateTask(BaseModel):  
+class ConvertedFile(BaseModel):
+    service_name: str = None
+    module: str = None
+    file_url: str = None
+    rate_sheet_id: str = None
+    service_provider_id: str = None
+    cogo_entity_id: str = None
+    file_index: int = None
+    id: str = None
+    status: str = None
+    rates_count: int = None
+    total_lines: int = None
+    last_line: int = None
+
+
+class UpdateRateSheet(BaseModel):
+    performed_by_id: str = None
+    performed_by_type: str = None
+    procured_by_id: str = None
+    sourced_by_id: str = None
+    cogo_entity_id: str = None
+    id: str
+    converted_files: list[ConvertedFile] = []
+
+class CreateFclFreightRateTask(BaseModel):
   service: str
   port_id: str
   main_port_id: str = None
-  container_size: str 
+  container_size: str
   container_type: str
   commodity: str
   trade_type: str
@@ -359,7 +414,8 @@ class CreateFclFreightRateTask(BaseModel):
   source: str
   task_type: str
   shipment_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   rate: LocalData = None
 
 class CreateFclFreightRateTask(BaseModel):
@@ -374,17 +430,20 @@ class CreateFclFreightRateTask(BaseModel):
   source: str
   task_type: str
   shipment_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   rate: LocalData = {}
 
 class DeleteFclFreightRateRequest(BaseModel):
   fcl_freight_rate_request_ids: List[str]
   closing_remarks: List[str] = []
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
 
 class CreateFclFreightRateWeightLimit(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   sourced_by_id: str
   procured_by_id: str
   origin_location_id: str
@@ -400,25 +459,29 @@ class CreateFclFreightRateWeightLimit(BaseModel):
 class DeleteFclFreightRateLocalRequest(BaseModel):
   fcl_freight_rate_local_request_ids: List[str]
   closing_remarks: List[str] = []
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
 class UpdateFclFreightRateWeightLimit(BaseModel):
-  performed_by_id: str 
-  procured_by_id: str 
-  sourced_by_id: str 
-  id: str 
-  free_limit: int = None 
-  remarks: list[str] = None 
+  performed_by_id: str = None
+  performed_by_type: str = None
+  procured_by_id: str
+  sourced_by_id: str
+  id: str
+  free_limit: int = None
+  remarks: list[str] = None
   slabs: list[Slab] = None
 
 class DeleteFclFreightRateLocal(BaseModel):
   id: str
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   bulk_operation_id: str = None
   sourced_by_id: str
   procured_by_id: str
 class CreateFclFreightRateFreeDay(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   sourced_by_id: str
   procured_by_id: str
   trade_type: str
@@ -434,13 +497,17 @@ class CreateFclFreightRateFreeDay(BaseModel):
   free_limit: int
   remarks: list[str] = None
   slabs: list[Slab] = None
+  validity_start: datetime = datetime.now().date()
+  validity_end: datetime = (datetime.now() + timedelta(days=90)).date()
 
 class DeleteFclFreightRateFreeDayRequest(BaseModel):
   fcl_freight_rate_free_day_request_id: str
   closing_remarks: List[str] = []
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
 class UpdateFclFreightRateFreeDay(BaseModel):
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   bulk_operation_id: str = None
   procured_by_id: str
   sourced_by_id: str
@@ -454,10 +521,10 @@ class CreateFclFreightRateRequest(BaseModel):
   source: str
   source_id: str
   cogo_entity_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_org_id: str
-  performed_by_type: str
-  preferred_freight_rate: float = None  
+  performed_by_type: str = None
+  preferred_freight_rate: float = None
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
   preferred_storage_free_days: int = None
@@ -476,16 +543,16 @@ class CreateFclFreightRateRequest(BaseModel):
   destination_trade_id: str = None
   origin_continent_id: str = None
   origin_country_id: str = None
-  origin_port_id: str 
+  origin_port_id: str
   origin_trade_id: str = None
   container_type: str = None
 
 class CreateFclFreightRateLocalRequest(BaseModel):
   source: str
   source_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_org_id: str
-  performed_by_type: str
+  performed_by_type: str = None
   preferred_rate: float = None
   preferred_rate_currency: str = None
   country_id: str = None
@@ -501,16 +568,16 @@ class CreateFclFreightRateLocalRequest(BaseModel):
   cargo_weight_per_container: int = None
   container_type: str = None
   port_id: str = None
-  main_port_id: str = None  
+  main_port_id: str = None
   trade_id: str = None
   trade_type: str = None
 
 class CreateFclFreightRateFreeDayRequest(BaseModel):
   source: str
   source_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_org_id: str
-  performed_by_type: str
+  performed_by_type: str = None
   trade_type: str
   location_id: str
   free_days_type: str
@@ -553,6 +620,8 @@ class UpdateFclWeightSlabsConfiguration(BaseModel):
   importer_exporter_id: str = None
   is_cogo_assured: bool =False
   slabs: list[Slab] = None
+  performed_by_id: str = None
+  performed_by_type: str = None
 
 class UpdateFclFreightRatePlatformPrices(BaseModel):
   origin_port_id: str
@@ -564,10 +633,12 @@ class UpdateFclFreightRatePlatformPrices(BaseModel):
   commodity: str
   shipping_line_id: str
   importer_exporter_id: str = None
+  performed_by_id: str = None
+  performed_by_type: str = None
 
 class CreateFclFreightRateWeightLimit(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
   sourced_by_id: str
   procured_by_id: str
   origin_location_id: str
@@ -579,19 +650,23 @@ class CreateFclFreightRateWeightLimit(BaseModel):
   free_limit: float
   remarks: list[str] = None
   slabs: list[Slab] = None
+  performed_by_id: str = None
+  performed_by_type: str = None
 
 class UpdateFclFreightRateCommoditySurcharge(BaseModel):
-  performed_by_id: str
+  performed_by_id: str = None
   procured_by_id: str
   sourced_by_id: str
   id: str
   price: int
   currency: str
-  remarks: list[str] = [] 
+  remarks: list[str] = []
+  performed_by_type: str = None
 
 class CreateFclFreightCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   sourced_by_id: str
   procured_by_id: str
   origin_location_id: str
@@ -607,7 +682,8 @@ class CreateFclFreightCommoditySurcharge(BaseModel):
 
 class CreateFclFreightSeasonalSurcharge(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   sourced_by_id: str
   procured_by_id: str
   origin_location_id: str
@@ -625,7 +701,8 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
 
 class CreateFclFreightCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   sourced_by_id: str
   procured_by_id: str
   origin_location_id: str
@@ -641,7 +718,8 @@ class CreateFclFreightCommoditySurcharge(BaseModel):
 
 class CreateFclFreightSeasonalSurcharge(BaseModel):
   rate_sheet_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   sourced_by_id: str
   procured_by_id: str
   origin_location_id: str
@@ -712,7 +790,7 @@ class UpdateFreeDays(BaseModel):
   free_days_type:str
   free_limit : int
   slabs : List[Slab] = None
- 
+
 class AddFreightLineItem(BaseModel):
   filters : dict={}
   code : str
@@ -733,7 +811,8 @@ class DeleteLocalRate(BaseModel):
   filters : dict={}
 
 class CreateBulkOperation(BaseModel):
-  performed_by_id:str
+  performed_by_id: str = None
+  performed_by_type: str = None
   service_provider_id:str
   procured_by_id:str
   sourced_by_id:str

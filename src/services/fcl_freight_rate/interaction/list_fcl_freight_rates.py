@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from datetime import datetime, timedelta
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 import json
 from peewee import JOIN 
 from playhouse.shortcuts import model_to_dict

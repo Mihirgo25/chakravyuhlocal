@@ -1,5 +1,5 @@
 from params import *
-from peewee import * 
+from peewee import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 import copy
 from micro_services.client import *
@@ -9,8 +9,7 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from celery_worker import create_fcl_freight_rate_delay
 
 def extend_create_fcl_freight_rate_data(request):
-
-    if not isinstance(request,dict):
+    if not isinstance(request, dict):
         request = request.dict(exclude_none=True)
 
     if request.get('extend_rates_for_lens'):
@@ -71,8 +70,8 @@ def get_fcl_freight_cluster_objects(request):
     else:
         commodities = { request['container_type'] : [request['commodity']] }
 
-    try:    
-        containers = data['container_cluster']['cluster_items'] 
+    try:
+        containers = data['container_cluster']['cluster_items']
     except:
         containers = [request['container_size']]
 
@@ -81,7 +80,7 @@ def get_fcl_freight_cluster_objects(request):
     new_data = {}
     for t in icd_data:
         new_data[t['id']]=t['is_icd']
-    
+
     icd_data = new_data
 
     for origin_location in set(origin_locations):
@@ -90,7 +89,7 @@ def get_fcl_freight_cluster_objects(request):
                 for commodity in commodities[container_type]:
                     for container in containers:
                         param = copy.deepcopy(request)
-                    
+
                         if icd_data.get(origin_location) and not param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = param['origin_port_id']
                         elif not icd_data.get(origin_location) and param.get('origin_main_port_id'):

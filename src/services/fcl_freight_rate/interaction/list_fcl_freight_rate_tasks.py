@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from configs.fcl_freight_rate_constants import *
 from playhouse.shortcuts import model_to_dict
 from configs.fcl_freight_rate_constants import EXPECTED_TAT

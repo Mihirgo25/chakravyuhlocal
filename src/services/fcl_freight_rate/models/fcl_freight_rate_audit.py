@@ -3,9 +3,6 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 
-class UnknownField(object):
-    def __init__(self, *_, **__): pass
-
 class BaseModel(Model):
     class Meta:
         database = db
