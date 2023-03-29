@@ -325,9 +325,9 @@ def get_fcl_freight_local_rate_cards_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    if len(additional_services) == 1 and not additional_services[0]:
+    if additional_services and len(additional_services) == 1 and not additional_services[0]:
         additional_services = []
-    if len(rates) == 1 and not rates[0]:
+    if rates and len(rates) == 1 and not rates[0]:
         rates = []
 
     request = {
