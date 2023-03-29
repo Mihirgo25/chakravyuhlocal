@@ -392,9 +392,11 @@ def add_free_days_objects(freight_query_result, response_object, request):
 
     for free_days_type in free_days_types:
         if freight_query_result[free_days_type]:
+            if not freight_query_result[free_days_type]['slabs']:
+                freight_query_result[free_days_type]['slabs'] = []
             response_object[free_days_type] = freight_query_result[free_days_type] | {'unit': 'per_container'}
         else:
-            response_object[free_days_type] = {'unit': 'per_container'}
+            response_object[free_days_type] = {'unit': 'per_container', "slabs": [] }
 
     return True
 
