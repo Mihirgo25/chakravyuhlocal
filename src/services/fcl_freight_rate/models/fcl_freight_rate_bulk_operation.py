@@ -1,5 +1,6 @@
 from database.db_session import db
 from peewee import * 
+import json
 from playhouse.postgres_ext import *
 from micro_services.client import *
 from fastapi import HTTPException
@@ -49,19 +50,24 @@ class FclFreightRateBulkOperation(BaseModel):
     
     def validate_extend_validity_data(self):
         data = self.data
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.strptime(data['source_date'], '%Y-%m-%d'):
+        if data['validity_end'] < data['source_date']:
             raise HTTPException(status_code=499, detail='validity_end cannot be less than source date')
         
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.now():
+        if data['validity_end'] < datetime.now():
             raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
         
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') > (datetime.now() +timedelta(days=60)):
+        if data['validity_end'] > (datetime.now() +timedelta(days=60)):
             raise HTTPException(status_code=499, detail='validity_end cannot be greater than 60 days')
+        data['source_date'] = data['source_date'].strftime('%Y-%m-%d')
+        data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
 
     def validate_delete_freight_rate_data(self):
         data = self.data
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.strptime(data['validity_start'], '%Y-%m-%d'):
+        if data['validity_end'] < data['validity_start']:
             raise HTTPException(status_code=499, detail='validity_end cannot be less than validity start')
+        data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
+        data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
+
         
     def validate_delete_local_rate_data(self):
         return True
@@ -77,10 +83,10 @@ class FclFreightRateBulkOperation(BaseModel):
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
         
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.now():
+        if data['validity_end'] < datetime.now():
             raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
         
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.strptime(data['validity_start'], '%Y-%m-%d'):
+        if data['validity_end'] < data['validity_start']:
             raise HTTPException(status_code=499, detail='validity_end cannot be less than validity start')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
@@ -97,6 +103,9 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=499, detail='markup_currency is invalid')
+        data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
+        data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
+        
         
     def validate_add_local_rate_markup_data(self):
         data = self.data
@@ -123,7 +132,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=499, detail='markup_currency is invalid')
-
+        
     def validate_update_free_days_limit_data(self):
         data = self.data
 
@@ -163,11 +172,13 @@ class FclFreightRateBulkOperation(BaseModel):
         # if data['currency'] not in valid_currencies:
         #     raise HTTPException(status_code=499, detail='currency is invalid')
         
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.now():
+        if data['validity_end'] < datetime.now():
             raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
         
-        if datetime.strptime(data['validity_end'], '%Y-%m-%d') < datetime.strptime(data['validity_start'], '%Y-%m-%d'):
+        if data['validity_end'] < data['validity_start']:
             raise HTTPException(status_code=499, detail='validity_end cannot be less than validity start')
+        data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
+        data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
         
     def validate_update_free_days_data(self):
         data = self.data
@@ -288,10 +299,10 @@ class FclFreightRateBulkOperation(BaseModel):
                 actual_procured_by_id = procured_by_ids[freight['id']]
             except:
                 actual_procured_by_id = None
-
+ 
             validity_object = None
             for t in freight["validities"]:
-                if datetime.strptime(t['validity_start'], '%Y-%m-%d') <= datetime.strptime(data['source_date'], '%Y-%m-%d') and datetime.strptime(t['validity_end'], '%Y-%m-%d') >= datetime.strptime(data['source_date'], '%Y-%m-%d') and datetime.strptime(t['validity_end'], '%Y-%m-%d')< datetime.strptime(data['validity_end'], '%Y-%m-%d'):
+                if datetime.strptime(t['validity_start'], '%Y-%m-%d') <= data['source_date'] and datetime.strptime(t['validity_end'], '%Y-%m-%d') >= data['source_date'] and datetime.strptime(t['validity_end'],'%Y-%m-%d') < data['validity_end']:
                     validity_object = t
 
             if not validity_object:
@@ -304,8 +315,8 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
 
-            validity_start = max(datetime.strptime(validity_object["validity_start"], '%Y-%m-%d'), datetime.now())
-            validity_end = min(datetime.strptime(data['validity_end'], '%Y-%m-%d'), (datetime.now() + timedelta(days=60)))
+            validity_start = max(validity_object["validity_start"], datetime.now())
+            validity_end = min(data['validity_end'], (datetime.now() + timedelta(days=60)))
 
             if actual_sourced_by_id:
                 sourced_by_id_data = actual_sourced_by_id 
@@ -351,7 +362,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         total_count = len(fcl_freight_rates)
         count = 0
-
+  
         for freight in fcl_freight_rates:
             count += 1
 
@@ -363,7 +374,7 @@ class FclFreightRateBulkOperation(BaseModel):
             delete_fcl_freight_rate({
                 'id': str(freight["id"]),
                 'performed_by_id': self.performed_by_id,
-                'validity_start': data['validity_start'],
+                'validity_start': data['validity_start'].strptime('%Y-%m-%d'),
                 'validity_end': data['validity_end'],
                 'bulk_operation_id': self.id,
                 'sourced_by_id': sourced_by_id,
@@ -406,7 +417,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.progress = int((count * 100.0) / total_count)
             self.save()
 
-    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id ):
+    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
         if cogo_entity_id == 'None':
             cogo_entity_id = None
@@ -431,10 +442,10 @@ class FclFreightRateBulkOperation(BaseModel):
 
             validities = [k for k in freight["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d') >= datetime.now()]
             for validity_object in validities:
-                if datetime.strptime(validity_object['validity_start'], '%Y-%m-%d') > datetime.strptime(data['validity_end'], '%Y-%m-%d') or datetime.strptime(validity_object['validity_end'], '%Y-%m-%d') < datetime.strptime(data['validity_start'], '%Y-%m-%d'):
+                if validity_object['validity_start'] > data['validity_end'] or validity_object['validity_end'] < data['validity_start']:
                     continue
-                validity_object['validity_start'] = max(datetime.strptime(validity_object['validity_start'], '%Y-%m-%d'), datetime.strptime(data['validity_start'],'%Y-%m-%d'))
-                validity_object['validity_end'] = min(datetime.strptime(validity_object['validity_end'],'%Y-%m-%d'), datetime.strptime(data['validity_end'],'%Y-%m-%d'))
+                validity_object['validity_start'] = max(validity_object['validity_start'], data['validity_start'])
+                validity_object['validity_end'] = min(validity_object['validity_end'], data['validity_end'])
 
                 line_item = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']][0]
                 if not line_item:
@@ -604,8 +615,8 @@ class FclFreightRateBulkOperation(BaseModel):
         count = 0
 
         new_line_item = {key: value for key, value in data.items() if key in ['code', 'units', 'price', 'currency']}
-        data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
-        data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
+        # data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
+        # data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
         for freight in fcl_freight_rates:
             count += 1
 
@@ -616,7 +627,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             new_validities = []
 
-            validities = [k for k in freight["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
+            validities = [k for k in freight["validities"] if k['validity_end'].date() >= datetime.now().date()]
 
             for validity_object in validities:
                 validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
@@ -784,8 +795,8 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
                 continue
-
-            validities = [k for k in freight.validities if datetime.strptime(k['validity_end'], '%Y-%m-%d') >= datetime.now().date()]
+                
+            validities = [k for k in freight['validities'] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
 
             if not validities:
                 self.progress = int((count * 100.0) / total_count)
@@ -816,7 +827,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
 
                 if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl(data['markup_currency'], line_item['currency'], markup)
+                    markup = common.get_money_exchange_for_fcl({'from_currency':data['markup_currency'], 'to_currency':line_item['currency'], 'price':markup})['price']
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -825,16 +836,16 @@ class FclFreightRateBulkOperation(BaseModel):
 
                 validity_object['line_items'].append(line_item)
 
-                create_params['validity_start'] = max(datetime.strptime(validity_object["validity_start"], '%Y-%m-%d'), datetime.now().date())
-
+                create_params['validity_start'] = max(datetime.strptime(validity_object["validity_start"], '%Y-%m-%d'), datetime.now())
+                create_params['validity_end'] = datetime.strptime(validity_object["validity_end"], '%Y-%m-%d')
                 for commodity in data['commodities']:
-                    create_fcl_freight_rate_data(create_params.update({ 'commodity': commodity, 'source': 'rms_upload' }))
+                    create_fcl_freight_rate_data(create_params | ({ 'commodity': commodity, 'source': 'rms_upload' }))
 
                 for container_size in data['container_sizes']:
-                    create_fcl_freight_rate_data(create_params.update({ 'container_size': container_size, 'source': 'rms_upload' }))
+                    create_fcl_freight_rate_data(create_params | ({ 'container_size': container_size, 'source': 'rms_upload' }))
 
                 for container_type in data['container_types']:
-                    create_fcl_freight_rate_data(create_params.update({ 'container_type': container_type, 'source': 'rms_upload' }))
+                    create_fcl_freight_rate_data(create_params | ({ 'container_type': container_type, 'source': 'rms_upload' }))
 
                 create_audit(self,self.id)
 
@@ -885,7 +896,7 @@ class FclFreightRateBulkOperation(BaseModel):
             create_params['validity_end'] = validity_object['validity_end']
             create_params['line_items'] = validity_object['line_items']
 
-            create_params['validity_start'] = max(datetime.strptime(validity_object["validity_start"], '%Y-%m-%d'), datetime.now().date())
+            create_params['validity_start'] = max(validity_object["validity_start"], datetime.now().date())
 
             line_item = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']][0]
 

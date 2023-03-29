@@ -30,7 +30,6 @@ def create_fcl_freight_rate_delay(self, request):
 
 @celery.task(bind = True, max_retries=10, retry_backoff = True)
 def delay_fcl_functions(self,fcl_object,request):
-    count = 0
     try:
         from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
         from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
