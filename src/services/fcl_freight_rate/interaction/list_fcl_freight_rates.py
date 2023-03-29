@@ -48,16 +48,16 @@ def get_data(query, expired_rates_required):
 
   for item in query.execute():
     result = {
-    'id': str(item.id), 
-    'origin_port_id': str(item.origin_port_id), 
-    'origin_main_port_id': str(item.origin_main_port_id), 
-    'destination_port_id': str(item.destination_port_id), 
-    'destination_main_port_id': str(item.destination_main_port_id), 
-    'shipping_line_id': str(item.shipping_line_id), 
-    'service_provider_id': str(item.service_provider_id), 
-    'destination_trade_id': str(item.destination_trade_id), 
-    'origin_trade_id': str(item.origin_trade_id), 
-    'importer_exporter_id': str(item.importer_exporter_id), 
+    'id': item.id, 
+    'origin_port_id': item.origin_port_id, 
+    'origin_main_port_id': item.origin_main_port_id,
+    'destination_port_id': item.destination_port_id, 
+    'destination_main_port_id': item.destination_main_port_id, 
+    'shipping_line_id': item.shipping_line_id, 
+    'service_provider_id': item.service_provider_id, 
+    'destination_trade_id': item.destination_trade_id, 
+    'origin_trade_id': item.origin_trade_id,
+    'importer_exporter_id': item.importer_exporter_id, 
     'container_size' : item.container_size, 
     'container_type' : item.container_type, 
     'commodity' : item.commodity, 
@@ -96,11 +96,11 @@ def get_data(query, expired_rates_required):
     'procured_by' : item.procured_by, 
     'sourced_by' : item.sourced_by
     }
-
-    if item.origin_local_id:
-      result = result | {'port_origin_local': {'data': item.origin_local_id.data, 'is_line_items_error_messages_present' :  item.origin_local_id.is_line_items_error_messages_present, 'line_items_error_messages' : item.origin_local_id.line_items_error_messages, 'is_line_items_info_messages_present' : item.origin_local_id.is_line_items_info_messages_present, 'line_items_info_messages' : item.origin_local_id.line_items_info_messages, 'is_detention_slabs_missing' : item.origin_local_id.is_detention_slabs_missing, 'is_demurrage_slabs_missing' : item.origin_local_id.is_demurrage_slabs_missing, 'is_plugin_slabs_missing' :  item.origin_local_id.is_plugin_slabs_missing}}
-    if item.destination_local_id:
-      result = result | {'port_destination_local': {'data': item.destination_local_id.data,'is_line_items_error_messages_present' :  item.destination_local_id.is_line_items_error_messages_present,'line_items_error_messages' : item.destination_local_id.line_items_error_messages,'is_line_items_info_messages_present' : item.destination_local_id.is_line_items_info_messages_present,'line_items_info_messages' : item.destination_local_id.line_items_info_messages,'is_detention_slabs_missing' : item.destination_local_id.is_detention_slabs_missing,'is_demurrage_slabs_missing' : item.destination_local_id.is_demurrage_slabs_missing,'is_plugin_slabs_missing' :  item.destination_local_id.is_plugin_slabs_missing}}
+    # print("Hiuo",item.origin_local_id)
+    # if item.origin_local_id:
+    #   result = result | {'port_origin_local': {'data': item.origin_local_id.data, 'is_line_items_error_messages_present' :  item.origin_local_id.is_line_items_error_messages_present, 'line_items_error_messages' : item.origin_local_id.line_items_error_messages, 'is_line_items_info_messages_present' : item.origin_local_id.is_line_items_info_messages_present, 'line_items_info_messages' : item.origin_local_id.line_items_info_messages, 'is_detention_slabs_missing' : item.origin_local_id.is_detention_slabs_missing, 'is_demurrage_slabs_missing' : item.origin_local_id.is_demurrage_slabs_missing, 'is_plugin_slabs_missing' :  item.origin_local_id.is_plugin_slabs_missing}}
+    # if item.destination_local_id:
+    #   result = result | {'port_destination_local': {'data': item.destination_local_id.data,'is_line_items_error_messages_present' :  item.destination_local_id.is_line_items_error_messages_present,'line_items_error_messages' : item.destination_local_id.line_items_error_messages,'is_line_items_info_messages_present' : item.destination_local_id.is_line_items_info_messages_present,'line_items_info_messages' : item.destination_local_id.line_items_info_messages,'is_detention_slabs_missing' : item.destination_local_id.is_detention_slabs_missing,'is_demurrage_slabs_missing' : item.destination_local_id.is_demurrage_slabs_missing,'is_plugin_slabs_missing' :  item.destination_local_id.is_plugin_slabs_missing}}
 
     if result['weight_limit']:
       if 'free_limit' in result['weight_limit']:
