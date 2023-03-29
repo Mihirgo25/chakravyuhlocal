@@ -103,7 +103,7 @@ def get_data(query):
                     if 'price' in conversion:
                         total_price += conversion['price']
                 else:
-                    total_price += line_item['price']
+                    total_price += int(line_item['price'])
             result['total_price'] = total_price
         result['is_local_agent_rate'] = True if local_agent_mappings.get(':'.join([str(result['service_provider_id'] or ''), str((result.get('port') or {}).get('id') or ''), result['trade_type']])) else False
         data.append(result)

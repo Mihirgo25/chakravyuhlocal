@@ -374,8 +374,8 @@ class FclFreightRateBulkOperation(BaseModel):
             delete_fcl_freight_rate({
                 'id': str(freight["id"]),
                 'performed_by_id': self.performed_by_id,
-                'validity_start': data['validity_start'].strptime('%Y-%m-%d'),
-                'validity_end': data['validity_end'],
+                'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
+                'validity_end': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
                 'bulk_operation_id': self.id,
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
@@ -861,9 +861,10 @@ class FclFreightRateBulkOperation(BaseModel):
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
-        fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list'][0]
+        print(fcl_freight_rate)
         if fcl_freight_rate:
-            validities = [k for k in fcl_freight_rate["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d') >= datetime.now().date()]
+            validities = [k for k in fcl_freight_rate["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
         else:
             validities = None
 
@@ -895,7 +896,8 @@ class FclFreightRateBulkOperation(BaseModel):
             create_params['validity_start'] = validity_object['validity_start']
             create_params['validity_end'] = validity_object['validity_end']
             create_params['line_items'] = validity_object['line_items']
-
+            validity_object["validity_start"]=datetime.strptime(validity_object['validity_start'], '%Y-%m-%d').date()
+            validity_object["validity_end"]=datetime.strptime(validity_object['validity_end'], '%Y-%m-%d').date()
             create_params['validity_start'] = max(validity_object["validity_start"], datetime.now().date())
 
             line_item = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']][0]
