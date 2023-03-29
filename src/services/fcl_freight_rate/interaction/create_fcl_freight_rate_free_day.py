@@ -11,7 +11,7 @@ def create_fcl_freight_rate_free_day(request):
         return execute_transaction_code(request)
 
 
-def execute_transaction_code(request): 
+def execute_transaction_code(request):
     request["validity_start"] = (request.get('validity_start') or datetime.now().date())
     request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)).date())
     free_day = get_free_day_object(request)
@@ -26,7 +26,7 @@ def execute_transaction_code(request):
         free_day.save()
     except:
         raise HTTPException(status_code=403, detail='fcl freight rate free day did not save')
-    
+
 
     # if 'shipment_id' in request:
     #     free_day.update_sell_quotation()
@@ -81,8 +81,8 @@ def get_free_day_object(request):
     return free_day
 
 def create_audit(request, free_day_id):
-    object_type = 'Fcl_Freight_Rate_Free_Day' 
-    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
+    object_type = 'Fcl_Freight_Rate_Free_Day'
+    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
     audit_data = {'free_limit' : request.get('free_limit'), 'remarks' : request.get('remarks'), 'slabs' : request.get('slabs')}
 

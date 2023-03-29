@@ -55,7 +55,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateSeasonalSurcharge, self).save(*args, **kwargs)
@@ -96,7 +96,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Destination location is not valid")
 
     def validate_shipping_line(self):
-        shipping_line = get_shipping_line(str(self.shipping_line_id))
+        shipping_line = get_shipping_line(id=str(self.shipping_line_id))
         if shipping_line:
             shipping_line = shipping_line[0]
             shipping_line['id'] = str(shipping_line['id'])
@@ -107,7 +107,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Shipping line is not valid")
 
     def validate_service_provider(self):
-        service_provider = get_service_provider(str(self.service_provider_id))
+        service_provider = get_organization(id=str(self.service_provider_id))
         if service_provider:
             service_provider = service_provider[0]
             service_provider['id'] = str(service_provider['id'])
@@ -126,14 +126,14 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         if self.container_type and self.container_type in CONTAINER_TYPES:
             return True
         return False
-    
+
     def validate_code(self):
         fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES
 
         if self.code and self.code in fcl_freight_seasonal_charges:
             return True
         return False
-    
+
     def validate_validity(self):
         if self.validity_start and self.validity_end:
             if self.validity_start > self.validity_end:
@@ -169,7 +169,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
                 "remarks": self.remarks
             }
         }
-    
+
     def validate(self):
         self.validate_origin_location()
         self.validate_destination_location()

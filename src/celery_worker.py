@@ -84,9 +84,12 @@ def fcl_freight_local_data_updation(local_object,request):
     organization.create_organization_serviceable_port(params)
 
 
-@celery.task(max_retries=10)
-def update_multiple_service_objects(object):
-  get_multiple_service_objects(object)
+@celery.task(bind = True, retry_backoff=True, max_retries=10)
+def update_multiple_service_objects(self, object):
+  try:
+    get_multiple_service_objects(object)
+  except Exception as e:
+    raise self.retry(exc=e)
 
 @celery.task(max_retries=10)
 def send_closed_notifications_to_sales_agent_function(object):
@@ -122,11 +125,46 @@ def send_closed_notifications_to_sales_agent_feedback(object):
     object.send_closed_notifications_to_sales_agent()
 
 
-@celery.task(max_retries=10)
-def validate_and_process_rate_sheet_converted_file_delay(request):
-    from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
-    return validate_and_process_rate_sheet_converted_file(request)
+@celery.task(bind = True, retry_backoff=True, max_retries=10)
+def validate_and_process_rate_sheet_converted_file_delay(self, request):
+    try:
+        from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
+        return validate_and_process_rate_sheet_converted_file(request)
+    except Exception as e:
+        raise self.retry(exc=e)
 
+@celery.task(bind = True, retry_backoff=True, max_retries=10)
+def celery_create_fcl_freight_rate_free_day(self, request):
+    try:
+        from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
+        return create_fcl_freight_rate_free_day(request)
+    except Exception as e:
+        raise self.retry(exc=e)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=10)
+def celery_create_fcl_freight_rate_freight(self, request):
+    try:
+        from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+        return create_fcl_freight_rate_data(request)
+    except Exception as e:
+        raise self.retry(exc=e)
+
+
+@celery.task(bind = True, retry_backoff=True, max_retries=10)
+def celery_extend_create_fcl_freight_rate_data(self, request):
+    try:
+        from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
+        return extend_create_fcl_freight_rate_data(request)
+    except Exception as e:
+        raise self.retry(exc=e)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=10)
+def celery_create_fcl_freight_rate_local(self, request):
+    try:
+        from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+        return create_fcl_freight_rate_local(request)
+    except Exception as e:
+        raise self.retry(exc=e)
 
 
 @celery.task(max_retries=10)
