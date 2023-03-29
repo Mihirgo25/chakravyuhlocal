@@ -103,3 +103,53 @@ def get_eligible_orgs(service):
         all_result.append(str(res[0]))
     cur.close()
     return all_result
+
+def get_partner_user_experties(service, partner_user_id):
+    cur = conn.cursor()
+    sql = 'select partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user.trade_type from partner_user_expertises where status = %s and service = %s and partner_user_id = %s'
+    cur.execute(sql, ('active', service, partner_user_id,))
+    result = cur.fetchall()
+    all_result = []
+    for res in result:
+        new_obj = {
+            "origin_location_id": str(res[0]),
+            "destination_location_id": str(res[1]),
+            "location_id": str(res[2]),
+            "trade_type": str(res[3]),
+        }
+        all_result.append(new_obj)
+    cur.close()
+    return all_result
+
+def get_organization_stakeholders(stakeholder_type, stakeholder_id):
+    cur = conn.cursor()
+    sql = 'select organization_stakeholders.organization_id from organization_stakeholders where status = %s and stakeholder_type = %s and stakeholder_id = %s'
+    cur.execute(sql, ('active', stakeholder_type, stakeholder_id,))
+    result = cur.fetchall()
+    org_ids = []
+    for res in result:
+        org_ids.append(str(res[0]))
+    cur.close()
+    return org_ids
+
+def get_organization_service_experties(service, supply_agent_id):
+    cur = conn.cursor()
+    org_ids = get_organization_stakeholders('supply_agent', supply_agent_id)
+    if len(org_ids) == 0:
+        return []
+    org_ids_tuple = tuple(org_ids)
+    sql = 'select organization_service_expertises.origin_location_id, organization_service_expertises.destination_location_id, organization_service_expertises.location_id, organization_service_expertises.trade_type, organization_service_expertises.organization_id from organization_service_expertises where status = %s and service = %s and organization_id IN %s'
+    cur.execute(sql, ('active', service, org_ids_tuple,))
+    result = cur.fetchall()
+    all_result = []
+    for res in result:
+        new_obj = {
+            "origin_location_id": str(res[0]),
+            "destination_location_id": str(res[1]),
+            "location_id": str(res[2]),
+            "trade_type": str(res[3]),
+            "organization_id": str(res[4])
+        }
+        all_result.append(new_obj)
+    cur.close()
+    return all_result
