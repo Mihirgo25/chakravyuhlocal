@@ -15,13 +15,13 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surc
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_weight_limit import create_fcl_freight_rate_weight_limit
 
-from libs.upload_file_to_s3 import upload_file_to_s3
+from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.rate_sheet.interactions.validate_fcl_freight_object import validate_fcl_freight_object
 from database.db_session import rd
 import time, requests
 import services.rate_sheet.interactions.fcl_rate_sheet_converted_file as process_rate_sheet
 from fastapi.encoders import jsonable_encoder
-from libs.locations import list_locations
+
 from datetime import datetime
 import dateutil.parser as parser
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
@@ -370,7 +370,7 @@ def process_fcl_freight_local(params, converted_file, Update):
 
     if not rows:
         return
-    converted_file['file_url'] = upload_file_to_s3(get_file_path(converted_file))
+    converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     try:
         os.remove(get_original_file_path(converted_file))
         os.remove(get_file_path(converted_file))
@@ -544,7 +544,7 @@ def process_fcl_freight_free_day(params, converted_file, Update):
     if not rows:
         return
     set_last_line(total_lines, params)
-    converted_file['file_url'] = upload_file_to_s3(get_file_path(converted_file))
+    converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     set_processed_percent(percent, params)
     if math.ceil(percent)!=100:
@@ -821,7 +821,7 @@ def process_fcl_freight_weight_limit(params, converted_file, Update):
 
     if not rows:
         return
-    converted_file['file_url'] = upload_file_to_s3(get_file_path(params))
+    converted_file['file_url'] = upload_media_file(get_file_path(params))
     try:
         os.remove(get_original_file_path(converted_file))
         os.remove(get_file_path(converted_file))
@@ -1143,7 +1143,7 @@ def process_fcl_freight_freight(params, converted_file, Update):
         return
     set_last_line(total_lines, params)
     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * total_lines )* 100
-    converted_file['file_url'] = upload_file_to_s3(get_file_path(converted_file))
+    converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     if math.ceil(percent)!=100:
         Update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'

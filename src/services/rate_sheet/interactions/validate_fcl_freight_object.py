@@ -1,5 +1,4 @@
 import services.rate_sheet.interactions.validate_fcl_freight_object as validate_rate_sheet
-from libs.locations import list_locations
 from micro_services.client import *
 from operator import attrgetter
 import uuid

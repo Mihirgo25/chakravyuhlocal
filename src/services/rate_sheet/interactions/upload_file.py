@@ -5,10 +5,10 @@ from datetime import datetime
 import io
 import mimetypes
 import os
-from libs.logger import logger
+# from libs.logger import logger
 
 
-def upload_file_to_s3(url):
+def upload_media_file(url):
     file_name = url.rsplit("/", 1)[-1]
 
     file_to_write_in = url
@@ -40,8 +40,9 @@ def upload_file_to_s3(url):
             },
         )
     except ClientError as e:
-        logger.error(e,exc_info=True)
+        # logger.error(e,exc_info=True)
         return None
     file_url = "https://{}.s3.ap-south-1.amazonaws.com/{}".format(bucket_name, key)
+    print(file_url)
     os.remove(file_to_write_in)
     return file_url
