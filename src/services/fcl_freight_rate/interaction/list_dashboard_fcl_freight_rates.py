@@ -1,10 +1,12 @@
 from micro_services.client import organization
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 import concurrent.futures
+from database.rails_db import get_eligible_orgs
 
 def list_dashboard_fcl_freight_rates():
-    fcl_service_provider_ids = list(set([item['organization_id'] for item in organization.list_organization_services({'filters':{'service':'fcl_freight', 'status':'active'}})['list']]))
-    air_service_provider_ids = list(set([item['organization_id'] for item in organization.list_organization_services({'filters':{'service':'air_freight', 'status':'active'}})['list']]))
+
+    fcl_service_provider_ids = get_eligible_orgs('fcl_freight')
+    air_service_provider_ids = get_eligible_orgs('air_freight')
     
     port_pairs = get_port_pairs()
 

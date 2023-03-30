@@ -1,5 +1,4 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from datetime import datetime
 from database.rails_db import get_organization
 from micro_services.client import organization
 from datetime import datetime
@@ -33,17 +32,6 @@ def get_fcl_freight_rate_visibility(request):
     if weight_limit_status:
         response_object['reason'] += weight_limit_status
 
-    if fcl_freight_rate_data.origin_local or fcl_freight_rate_data.destination_local:
-        detention_status = is_detention_verified(fcl_freight_rate_data)
-        if detention_status:
-            response_object['reason'] += detention_status
-
-        demurrage_status = is_demurrage_verified(fcl_freight_rate_data)
-        if demurrage_status:
-            response_object['reason'] += demurrage_status
-    else:
-        response_object['reason'] += ' origin local and destination local not present,'
-
     response_object['is_visible'] = not response_object['reason']
     response_object['is_rate_available'] = True if fcl_freight_rate_data else False
     return response_object
@@ -76,43 +64,8 @@ def get_fcl_freight_rate_data(request):
             FclFreightRate.commodity  ==  request['commodity'],
             FclFreightRate.service_provider_id  ==  request['service_provider_id'],
             FclFreightRate.shipping_line_id  ==  request['shipping_line_id'],
-            FclFreightRate.rate_not_available_entry == False).first()
+            ~FclFreightRate.rate_not_available_entry).first()
     return fcl_freight_rate_data
-
-
-def is_detention_verified(fcl_freight_rate_data):
-    detention_reason = ''
-
-    if fcl_freight_rate_data.origin_local:
-        origin_detention_data = fcl_freight_rate_data.origin_local.get('detention')
-
-    if fcl_freight_rate_data.destination_local:
-        destination_detention_data = fcl_freight_rate_data.destination_local.get('detention')
-
-    if origin_detention_data and (not origin_detention_data['free_limit']):
-        detention_reason += ' origin detention does not exist,'
-
-    if destination_detention_data and (not destination_detention_data['free_limit']):
-        detention_reason += ' destination detention does not exist,'
-    return detention_reason
-
-
-def is_demurrage_verified(fcl_freight_rate_data):
-    demurrage_reason = ''
-
-    if fcl_freight_rate_data.origin_local:
-        origin_demurrage_data = fcl_freight_rate_data.origin_local.get('demurrage')
-
-    if fcl_freight_rate_data.destination_local:
-        destination_demurrage_data = fcl_freight_rate_data.destination_local.get('demurrage')
-
-    if origin_demurrage_data and (not origin_demurrage_data['free_limit']):
-        demurrage_reason += ' origin demurrage does not exist,'
-
-    if destination_demurrage_data and (not destination_demurrage_data['free_limit']):
-        demurrage_reason += ' destination demurrage does not exist,'
-
-    return demurrage_reason
 
 
 def is_weight_limit_verified(fcl_freight_rate_data):
