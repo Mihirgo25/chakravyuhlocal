@@ -58,7 +58,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code = 500, detail = 'Error in update params')
     
     if request['status']:
-        return {'id': task.id}
+        return {'id': str(task.id)}
     
     result = create_fcl_freight_local_rate(task,request) 
     
@@ -70,7 +70,7 @@ def execute_transaction_code(request):
     # if task['source'] == 'contract':
         # UpdateContractServiceTask.delay(queue: 'low').run!({ task_id: task.id, service_type: 'fcl_freight', rate: self.rate }) if task.source == 'contract'
  
-    return {'id': task.id}
+    return {'id': str(task.id)}
 
 def get_update_params(request):
     update_params = {

@@ -811,8 +811,8 @@ class CreateBulkOperation(BaseModel):
 
 class UpdateFclFreightRateTask(BaseModel):
   id: str
-  performed_by_id: str
-  performed_by_type: str
+  performed_by_id: str=None
+  performed_by_type: str=None
   rate: LocalData = None
   status: str = None
   closing_remarks: str = None

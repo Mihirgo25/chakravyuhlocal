@@ -5,10 +5,10 @@ from database.db_session import db
 
 def create_audit(request, freight_id):
     audit_data = {}
-    audit_data['validity_start'] = request['validity_start'].isoformat()
-    audit_data['validity_end'] = request['validity_end'].isoformat()
-    audit_data['line_items'] = request['line_items']
-    audit_data['weight_limit'] = request['weight_limit']
+    audit_data['validity_start'] = request.get('validity_start').isoformat()
+    audit_data['validity_end'] = request.get('validity_end').isoformat()
+    audit_data['line_items'] = request.get('line_items')
+    audit_data['weight_limit'] = request.get('weight_limit')
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
     audit_data['is_extended'] = request.get("is_extended")
@@ -41,7 +41,12 @@ def validate_freight_params(request):
 def execute_transaction_code(request):
   validate_freight_params(request)
 
-  freight_object = FclFreightRate.get_by_id(request['id'])
+  freight_object = FclFreightRate.select().where(FclFreightRate.id == request["id"]).first()
+
+  if not freight_object:
+    raise HTTPException(status_code=499, detail="rate does not exist")
+  
+  freight_object.set_locations()
 
   for k,v in request.items():
     if k in ['weight_limit']:
