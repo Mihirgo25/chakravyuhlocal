@@ -43,7 +43,7 @@ class FclFreightRateLocalRequest(BaseModel):
     preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
     preferred_shipping_lines = BinaryJSONField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('ocean_rms_serial_id_seq'::regclass)")])
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_local_request_serial_id_seq'::regclass)")])
     shipping_line_id = UUIDField(null=True)
     shipping_line_detail = BinaryJSONField(null=True)
     source = CharField(null=True)

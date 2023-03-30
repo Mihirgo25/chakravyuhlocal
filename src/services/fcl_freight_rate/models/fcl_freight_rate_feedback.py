@@ -42,7 +42,7 @@ class FclFreightRateFeedback(BaseModel):
     preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
     preferred_shipping_lines = BinaryJSONField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('ocean_rms_serial_id_seq'::regclass)")])
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedback_serial_id_seq'::regclass)")])
     service_provider = BinaryJSONField(null=True)
     source = CharField(index=True, null=True)
     source_id = UUIDField(index=True, null=True)
