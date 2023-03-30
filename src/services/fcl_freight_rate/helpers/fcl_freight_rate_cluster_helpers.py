@@ -80,28 +80,28 @@ def get_required_mandatory_codes(cluster_objects):
     all_cluster_items = commodity_cluster_items + container_size_cluster_items + cluster_container_type
 
     for cluster_item in all_cluster_items:
-        # if cluster_item in commodity_cluster_items:
-        #     commodity = cluster_item
-        # if cluster_item in container_size_cluster_items:
-        #     container_size = cluster_item
-        # if cluster_item in cluster_container_type:
-        #     container_type = cluster_item
+        if cluster_item in commodity_cluster_items:
+            commodity = cluster_item
+        if cluster_item in container_size_cluster_items:
+            container_size = cluster_item
+        if cluster_item in cluster_container_type:
+            container_type = cluster_item
         mandatory_codes = []
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
-        for code in fcl_freight_charges_dict.keys():
-            config = fcl_freight_charges_dict[code]
-            # try:
-            #     condition_value = config['condition']
-            # except:
-            #     condition_value = False
-
-            if 'mandatory' in config['tags']:
-                mandatory_codes.append(code)
+        for code, config in fcl_freight_charges_dict.items():
+            try:
+                print(str(config['condition']))
+                condition_value = eval(str(config['condition']))
+                if 'mandatory' in config['tags']:
+                    mandatory_codes.append(code)
+            except:
+                continue
 
         if mandatory_codes:
             mandatory_code = { 'cluster_type': cluster_item, 'mandatory_codes': mandatory_codes }
 
         if mandatory_code:
             required_mandatory_codes.append(mandatory_code)
+    print(required_mandatory_codes, "required onece")
     return required_mandatory_codes
