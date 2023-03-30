@@ -146,7 +146,7 @@ def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback,
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
-        rate_id = create_fcl_freight_rate_feedback(request)
+        rate_id = create_fcl_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
     except:
         raise
