@@ -1,5 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_commodity_surcharge import FclFreightRateCommoditySurcharge
-from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
+from fastapi.encoders import jsonable_encoder
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
 import json
 
@@ -12,20 +14,18 @@ def list_fcl_freight_rate_commodity_surcharges(filters = {}, page_limit =10, pag
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
+        
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateCommoditySurcharge)
+        query = apply_indirect_filters(query, indirect_filters)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateCommoditySurcharge)
-        query = apply_indirect_filters(query, filters)
-
-    data = get_data(query)
+    data = jsonable_encoder(list(query.dicts()))
     pagination_data = get_pagination_data(data,page, page_limit, pagination_data_required)
     return { 'list': data } | (pagination_data)
 
 def get_query(page, page_limit):
-    query = FclFreightRateCommoditySurcharge.select().order_by(FclFreightRateCommoditySurcharge.updated_at.desc()).paginate(page, page_limit)
-    return query
-
-def get_data(query):
-    query = query.select(
+    query = FclFreightRateCommoditySurcharge.select(
             FclFreightRateCommoditySurcharge.id,
             FclFreightRateCommoditySurcharge.origin_location_id,
             FclFreightRateCommoditySurcharge.destination_location_id,
@@ -41,11 +41,8 @@ def get_data(query):
             FclFreightRateCommoditySurcharge.origin_location,
             FclFreightRateCommoditySurcharge.destination_location,
             FclFreightRateCommoditySurcharge.service_provider
-
-    )
-    data = list(query.dicts())
-    return data
-
+    ).order_by(FclFreightRateCommoditySurcharge.updated_at.desc()).paginate(page, page_limit)
+    return query
 
 def get_pagination_data(data, page, page_limit, pagination_data_required):
     if not pagination_data_required:
