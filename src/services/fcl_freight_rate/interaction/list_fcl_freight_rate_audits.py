@@ -1,7 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
-from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 import concurrent.futures
 from operator import attrgetter
 from math import ceil
@@ -28,8 +29,11 @@ def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_b
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateAudit)
-        query = apply_indirect_filters(query, filters)
+
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateAudit)
+        query = apply_indirect_filters(query, indirect_filters)
         query = apply_hash_filters(query, filters)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:

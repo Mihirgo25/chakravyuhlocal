@@ -706,18 +706,18 @@ class FclFreightRate(BaseModel):
       free_day_ids = []
 
       if self.origin_detention_id:
-        free_day_ids.append(self.origin_detention_id)
+        free_day_ids.append(str(self.origin_detention_id))
       if self.origin_demurrage_id:
-        free_day_ids.append(self.origin_demurrage_id)
+        free_day_ids.append(str(self.origin_demurrage_id))
       if self.origin_plugin_id:
-        free_day_ids.append(self.origin_plugin_id)
+        free_day_ids.append(str(self.origin_plugin_id))
       
       if self.destination_detention_id:
-        free_day_ids.append(self.destination_detention_id)
+        free_day_ids.append(str(self.destination_detention_id))
       if self.destination_demurrage_id:
-        free_day_ids.append(self.destination_demurrage_id)
+        free_day_ids.append(str(self.destination_demurrage_id))
       if self.destination_plugin_id:
-        free_day_ids.append(self.destination_plugin_id)
+        free_day_ids.append(str(self.destination_plugin_id))
 
       local_charges = {}
 

@@ -11,7 +11,7 @@ from libs.migration import fcl_freight_migration, create_partition_table, fcl_lo
 
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 
-docs_url = '/docs' if APP_ENV == "production" else "/docs"
+docs_url = None if APP_ENV == "production" else "/docs"
 
 app = FastAPI(docs_url=docs_url,debug=True)
 
