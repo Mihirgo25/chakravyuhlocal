@@ -40,7 +40,7 @@ def  update_rate_sheet(params: UpdateRateSheet):
                 converted_file['rate_sheet_id'] = str(rate_sheet.id)
                 converted_file['file_index'] = index+1
                 converted_file['rates_count'] = 0
-    params['status'] = 'converted'
+    params['status'] = 'processing'
     rate_sheet.converted_files = params.get('converted_files')
     rate_sheet.status = params['status']
     rate_sheet.save()
