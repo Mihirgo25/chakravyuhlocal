@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-
+from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 def get_fcl_freight_rate_local(request):
     details = {}
 
@@ -7,7 +7,9 @@ def get_fcl_freight_rate_local(request):
         object = find_object(request)
         if object:
           details = object.detail()
-    return details | ({'local_charge_codes': FclFreightRateLocal(**request).possible_charge_codes()})
+    else:
+      object=None
+    return details | ({'local_charge_codes': object.possible_charge_codes() if object else FCL_FREIGHT_LOCAL_CHARGES})
 
 
 def find_object(request):

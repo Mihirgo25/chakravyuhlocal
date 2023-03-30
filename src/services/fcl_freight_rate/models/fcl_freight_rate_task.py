@@ -19,6 +19,7 @@ class FclFreightRateTask(BaseModel):
     commodity = CharField(index=True, null=True)
     completed_at = CharField(null=True)
     completed_by_id = CharField(null=True)
+    completed_by = BinaryJSONField(null=True)
     completion_data = JSONField(null=True)
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
@@ -42,18 +43,18 @@ class FclFreightRateTask(BaseModel):
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateTask, self).save(*args, **kwargs)
 
     class Meta:
-        table_name = 'fcl_freight_rate_tasks' 
+        table_name = 'fcl_freight_rate_tasks'
 
     def validate_service(self):
         if self.service not in ['fcl_freight_local','subsidiary']:
             raise HTTPException(status_code=400, detail="Invalid service")
-        
+
     def validate_port_id(self):
         obj = {"filters":{"id": [(self.port_id)],'type':'seaport'}}
         port = maps.list_locations(obj)['list']
@@ -61,17 +62,17 @@ class FclFreightRateTask(BaseModel):
             port =port[0]
             self.port = {key:value for key,value in port.items() if key in ['id', 'name','display_name', 'port_code', 'type']}
             self.country_id = port.get('country_id', None)
-            self.trade_id = port.get('trade_id', None) 
+            self.trade_id = port.get('trade_id', None)
             self.continent_id = port.get('continent_id', None)
             self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
         else:
             raise HTTPException(status_code=500,detail='Invalid port')
 
     def validate_main_port_id(self):
-        if self.port and self.port['is_icd']==False:
+        if self.port and self.port.get('is_icd')==False:
             if self.main_port_id and self.main_port_id!=self.port_id:
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
-        elif self.port and self.port['is_icd']==True:
+        elif self.port and self.port.get('is_icd')==True:
             main_port_data = maps.list_locations({"filters":{"id": [str(self.main_port_id)],'type':'seaport','is_icd':False}})['list']
             if main_port_data:
                 self.main_port = {key:value for key,value in main_port_data[0].items() if key in ['id', 'name','display_name', 'port_code', 'type']}
@@ -79,44 +80,44 @@ class FclFreightRateTask(BaseModel):
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
 
     def validate_shipping_line_id(self):
-        shipping_line_data = get_shipping_line(str(self.shipping_line_id))
+        shipping_line_data = get_shipping_line(id=str(self.shipping_line_id))
         if shipping_line_data:
             self.shipping_line = shipping_line_data[0]
         else:
             raise HTTPException(status_code=500,detail='invalid shipping line')
-        
+
     def validate_task_type(self):
         if self.task_type not in ['locals_at_actuals', 'locals_purchase_invoice_review']:
             raise HTTPException(status_code=400, detail="Invalid task type")
-        
+
     def validate_trade_type(self):
         if self.trade_type not in ['import', 'export', 'domestic']:
             raise HTTPException(status_code=400, detail="Invalid trade type")
-        
+
     def validate_container_type(self):
         if self.container_type not in ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']:
             raise HTTPException(status_code=400, detail="Invalid container type")
-        
+
     def validate_container_size(self):
         if self.container_size not in ['20', '40', '40HC', '45HC']:
             raise HTTPException(status_code=400, detail="Invalid container size")
-        
+
     def validate_commodity(self):
-      if not (self.container_type and self.commodity in FREIGHT_CONTAINER_COMMODITY_MAPPINGS[f"{self.container_type}"]):
+      if not self.container_type and (self.commodity in FREIGHT_CONTAINER_COMMODITY_MAPPINGS.get(self.container_type)):
         raise HTTPException(status_code=400, detail="Invalid commodity")
-    
+
     def validate_source(self):
         if self.source not in ['shipment', 'purchase_invoice', 'contract']:
             raise HTTPException(status_code=400, detail="Invalid source")
-    
+
     def validate_status(self):
         if self.status not in ['pending', 'completed', 'aborted']:
             raise HTTPException(status_code=400, detail="Invalid status")
-    
+
     def validate_job_data(self):
         if self.task_type == 'locals_purchase_invoice_review' and self.job_data is None:
             raise ValueError("job_data cannot be Empty for locals_purchase_invoice_review tasks")
-    
+
     def validate_uniqueness(self):
         if self.status == 'pending' and FclFreightRateTask.select().where(
             (FclFreightRateTask.port_id == self.port_id) &
@@ -131,7 +132,7 @@ class FclFreightRateTask(BaseModel):
             (FclFreightRateTask.service == self.service) &
             (FclFreightRateTask.status == self.status)).count()!=0:
             raise ValueError("Record already exists with the given attributes")
-        
+
     def validate(self):
         self.validate_service()
         self.validate_task_type()
@@ -148,4 +149,4 @@ class FclFreightRateTask(BaseModel):
         self.validate_shipping_line_id()
         return True
 
-    
+

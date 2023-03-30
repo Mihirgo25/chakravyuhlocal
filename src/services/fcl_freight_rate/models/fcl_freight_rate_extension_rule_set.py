@@ -14,8 +14,6 @@ class BaseModel(Model):
 
 class FclFreightRateExtensionRuleSet(BaseModel):
     cluster_id = CharField(index=True, null=True)
-    location_cluster = BinaryJSONField(null=True)
-    fcl_freight_commodity_cluster = BinaryJSONField(null=True)
     cluster_reference_name = CharField(index=True, null=True)
     cluster_type = CharField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)

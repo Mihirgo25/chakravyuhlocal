@@ -11,12 +11,14 @@ def get_instance_url(service_name=None):
         service_port = AUTH_SERVICE_PORT
     if service_name == 'location':
         service_port = COGOMAPS_SERVICE_PORT
+    if service_name == 'spot_search':
+        service_port = SPOT_SEARCH_PORT
+    if service_name == 'checkout':
+        service_port = CHECKOUT_PORT
 
 
     if service_name == 'common':
         instance_url = "http://{}:{}".format(INTERNAL_NLB, service_port)
-    elif service_name == "location":
-        instance_url = "https://api.cogoport.com/location"
     else:
         instance_url = "http://{}:{}/{}".format(INTERNAL_NLB, service_port, service_name)
     return instance_url

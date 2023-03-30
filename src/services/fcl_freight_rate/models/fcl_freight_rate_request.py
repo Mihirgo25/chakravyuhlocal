@@ -46,6 +46,7 @@ class FclFreightRateRequest(BaseModel):
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
+    preferred_shipping_lines = BinaryJSONField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(CharField, null=True, constraints=[SQL("DEFAULT '{}'::character varying[]")])
     request_type = CharField(null=True)
@@ -70,7 +71,7 @@ class FclFreightRateRequest(BaseModel):
 
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = common.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
             if len(spot_search_data) == 0:
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
 
@@ -83,7 +84,7 @@ class FclFreightRateRequest(BaseModel):
             raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = get_service_provider(str(self.performed_by_org_id))
+        performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
         if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
             raise HTTPException(status_code=400, detail='Invalid Account Type')
 
@@ -94,7 +95,7 @@ class FclFreightRateRequest(BaseModel):
         if self.preferred_shipping_line_ids:
             preferred_shipping_lines = []
             for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(shipping_line_id)
+                shipping_line_data = get_shipping_line(id=shipping_line_id)
                 if len(shipping_line_data) == 0:
                     raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
                 preferred_shipping_lines.append(shipping_line_data[0])

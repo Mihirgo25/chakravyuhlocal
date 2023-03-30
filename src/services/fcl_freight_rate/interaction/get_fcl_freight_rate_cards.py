@@ -392,9 +392,11 @@ def add_free_days_objects(freight_query_result, response_object, request):
 
     for free_days_type in free_days_types:
         if freight_query_result[free_days_type]:
+            if not freight_query_result[free_days_type]['slabs']:
+                freight_query_result[free_days_type]['slabs'] = []
             response_object[free_days_type] = freight_query_result[free_days_type] | {'unit': 'per_container'}
         else:
-            response_object[free_days_type] = {'unit': 'per_container'}
+            response_object[free_days_type] = {'unit': 'per_container', "slabs": [] }
 
     return True
 
@@ -583,7 +585,7 @@ def discard_noneligible_lsps(freight_rates, requirements):
 
 def discard_noneligible_shipping_lines(freight_rates, requirements):
     shipping_line_ids = [rate["shipping_line_id"] for rate in freight_rates]
-    shipping_lines = get_shipping_line(shipping_line_ids)
+    shipping_lines = get_shipping_line(id=shipping_line_ids)
     active_shipping_lines_ids = [sl["id"] for sl in shipping_lines if sl["status"] == "active"]
     freight_rates = [rate for rate in freight_rates if rate["shipping_line_id"] in active_shipping_lines_ids]
     return freight_rates
