@@ -71,6 +71,7 @@ def get_required_mandatory_codes(cluster_objects):
     if commodity_cluster_object:
         commodity_cluster_items = list(commodity_cluster_object[0]['cluster_items'].values())
         cluster_container_type = list(commodity_cluster_object[0]['cluster_items'].keys())
+    commodity_cluster_items = [item for cluster in commodity_cluster_items for item in cluster]
 
     container_cluster_object = [i for i in cluster_objects if i['cluster_type']== 'container_cluster']
 
@@ -90,12 +91,19 @@ def get_required_mandatory_codes(cluster_objects):
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         for code, config in fcl_freight_charges_dict.items():
+            condition_value = True
+            condition = str(config['condition'])
             try:
-                condition_value = eval(str(config['condition']))
-                if 'mandatory' in config['tags']:
-                    mandatory_codes.append(code)
+                if condition != 'True':
+                    condition_value = eval(condition)
             except:
                 continue
+
+            if not condition_value:
+                continue
+            if 'mandatory' in config['tags']:
+                    mandatory_codes.append(code)
+
 
         if mandatory_codes:
             mandatory_code = { 'cluster_type': cluster_item, 'mandatory_codes': mandatory_codes }
