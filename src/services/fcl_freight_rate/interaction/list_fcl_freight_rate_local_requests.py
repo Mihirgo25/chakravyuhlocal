@@ -42,10 +42,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclFreightRateLocalRequest.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d'))
+    return query.where(FclFreightRateLocalRequest.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclFreightRateLocalRequest.created_at <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d'))
+    return query.where(FclFreightRateLocalRequest.created_at <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
 
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id, FclFreightRateLocalRequest.trade_type, FclFreightRateLocalRequest.container_size, FclFreightRateLocalRequest.container_type).where(FclFreightRateLocalRequest.id == filters['similar_id']).dicts().get()

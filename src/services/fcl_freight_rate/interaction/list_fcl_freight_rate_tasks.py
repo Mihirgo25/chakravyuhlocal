@@ -91,7 +91,7 @@ def get_data(query, filters):
         shipping_line_ids.append(object['shipping_line_id'])
         new_data.append(object)
 
-    if 'status' in filters and filters['status'] == 'completed':
+    if filters and 'status' in filters and filters['status'] == 'completed':
         fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
 
         for object in new_data:
@@ -168,11 +168,11 @@ def apply_indirect_filters(query, filters):
     return query  
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
     return query
 
 def apply_created_at_less_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
     return query
 
 def get_stats(filters, stats_required):

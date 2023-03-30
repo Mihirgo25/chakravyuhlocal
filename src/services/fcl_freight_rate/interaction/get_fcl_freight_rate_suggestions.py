@@ -29,7 +29,7 @@ def get_fcl_freight_rates(filters, searched_origin_port_id, searched_destination
             query = query.where(attrgetter(key)(FclFreightRate) == filters[key])
 
     fcl_freight_query = query.where(FclFreightRate.rate_not_available_entry == False, FclFreightRate.origin_port_id != searched_origin_port_id, FclFreightRate.destination_port_id != searched_destination_port_id, FclFreightRate.last_rate_available_date >= max([validity_start, datetime.now()]))
-    fcl_freight_rates = [model_to_dict(item) for item in fcl_freight_query.execute()]
+    fcl_freight_rates = list(fcl_freight_query.dicts())#[model_to_dict(item) for item in fcl_freight_query.execute()]
     return fcl_freight_rates
 
 def get_grouped_rates(fcl_freight_rates, validity_start, validity_end):

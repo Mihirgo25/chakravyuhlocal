@@ -106,16 +106,16 @@ class FclFreightRateLocal(BaseModel):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
         if not self.validate_main_port_id():
-            raise HTTPException(status_code=499, detail='main_port_id is not valid')
+            raise HTTPException(status_code=422, detail='main_port_id is not valid')
 
         if not self.validate_trade_type():
-            raise HTTPException(status_code=499, detail='trade_type is not valid')
+            raise HTTPException(status_code=422, detail='trade_type is not valid')
 
         if not self.validate_container_size():
-            raise HTTPException(status_code=499, detail='container_size is not valid')
+            raise HTTPException(status_code=422, detail='container_size is not valid')
 
         if not self.validate_container_type():
-            raise HTTPException(status_code=499, detail='container_type is not valid')
+            raise HTTPException(status_code=422, detail='container_type is not valid')
 
         if not self.local_data_instance.validate_duplicate_charge_codes():
             raise HTTPException(status_code=499, detail='duplicate line items present')

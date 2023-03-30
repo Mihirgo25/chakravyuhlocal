@@ -83,7 +83,7 @@ def get_data(query):
                     if 'price' in conversion:
                         total_price += conversion['price']
                 else:
-                    total_price += line_item['price']
+                    total_price += int(line_item['price'])
             result['total_price'] = total_price
         result['is_local_agent_rate'] = False
         data.append(result)

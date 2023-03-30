@@ -25,8 +25,7 @@ def execute_transaction_code(request):
     try:
         free_day.save()
     except:
-        raise HTTPException(status_code=403, detail='fcl freight rate free day did not save')
-
+        raise HTTPException(status_code=500, detail='fcl freight rate free day did not save')
 
     # if 'shipment_id' in request:
     #     free_day.update_sell_quotation()
@@ -96,4 +95,4 @@ def create_audit(request, free_day_id):
             object_type = 'FclFreightRateFreeDay'
         )
     except:
-        raise HTTPException(status_code=403, detail='Fcl Freight Audit did not save')
+        raise HTTPException(status_code=500, detail='Fcl Freight Audit did not save')

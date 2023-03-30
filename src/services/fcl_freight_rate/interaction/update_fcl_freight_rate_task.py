@@ -6,7 +6,18 @@ from configs.global_constants import HAZ_CLASSES
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+def create_audit(request):
+    data = {key:str(value) for key, value in request.items() if key not in ['performed_by_id','id'] and not value == None}
 
+    FclServiceAudit.create(
+        action_name = 'update',
+        performed_by_id = request['performed_by_id'],
+        data = data,
+        object_id = request['id'],
+        object_type = 'FclFreightRateTask'
+
+    )
 def update_fcl_freight_rate_task_data(request):
     if type(request) != dict:
         request = request.__dict__
@@ -15,12 +26,15 @@ def update_fcl_freight_rate_task_data(request):
         return {request['closing_remarks'], 'is not valid'}
     
     with db.atomic() as transaction:
+        object_type = 'Fcl_Freight_Rate_Task'
+        query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
+        db.execute_sql(query)
         try:
           data = execute_transaction_code(request)
           return data
         except Exception as e:
             transaction.rollback()
-            return "Updation Failed"
+            return e
 
 def validate_closing_remarks(request):
     if request['closing_remarks'] and request['closing_remarks'] not in TECHOPS_TASK_ABORT_REASONS:
@@ -49,7 +63,7 @@ def execute_transaction_code(request):
 
     update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
 
-
+    create_audit(request)
     # if task['source'] == 'contract':
         # UpdateContractServiceTask.delay(queue: 'low').run!({ task_id: task.id, service_type: 'fcl_freight', rate: self.rate }) if task.source == 'contract'
  
