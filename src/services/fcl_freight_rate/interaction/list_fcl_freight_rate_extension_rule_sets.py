@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
+from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSet
 from services.fcl_freight_rate.models.fcl_freight_rate import *
 from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 import peewee, json
@@ -16,7 +16,7 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
         if type(filters) != dict:
             filters = json.loads(filters)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateExtensionRuleSets)
+        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateExtensionRuleSet)
         query = apply_indirect_filters(query, filters)
 
     data = get_data(query)
@@ -27,11 +27,11 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
 
 
 def get_query(page, page_limit, sort_by, sort_type):
-    query = (FclFreightRateExtensionRuleSets
+    query = (FclFreightRateExtensionRuleSet
         .select()
         .paginate(page, page_limit)
         .order_by(peewee.SQL("t1.{} {}".format(sort_by, sort_type)))
-        .from_(FclFreightRateExtensionRuleSets.alias('t1')))
+        .from_(FclFreightRateExtensionRuleSet.alias('t1')))
     return query
 
 
@@ -44,7 +44,7 @@ def apply_indirect_filters(query, filters):
 
 
 def apply_q_filter(query, filters):
-    return query.where(FclFreightRateExtensionRuleSets.extension_name.contains(filters['q']))
+    return query.where(FclFreightRateExtensionRuleSet.extension_name.contains(filters['q']))
 
 def get_data(query):
     data = [x for x in query.dicts()]
