@@ -171,7 +171,7 @@ class PostFclFreightRateLocal(BaseModel):
     service_provider_id: str
     selected_suggested_rate_id: str = None
     source: str = None
-    data: Data
+    data: Data = {}
 
 class UpdateFclFreightRateLocal(BaseModel):
     id: str = None

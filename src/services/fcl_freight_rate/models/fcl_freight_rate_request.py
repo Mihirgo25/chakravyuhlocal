@@ -71,7 +71,7 @@ class FclFreightRateRequest(BaseModel):
 
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = common.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
             if len(spot_search_data) == 0:
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
 
