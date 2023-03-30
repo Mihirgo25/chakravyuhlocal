@@ -1,8 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from configs.global_constants import INTERNAL_BOOKING
-from playhouse.shortcuts import model_to_dict
-import concurrent.futures, json
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 from operator import attrgetter
 from math import ceil
 from micro_services.client import *
@@ -14,8 +13,10 @@ possible_indirect_filters = ['location_ids']
 def list_fcl_freight_rate_local_suggestions(service_provider_id, filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True):
     query = get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit)
     if filters:
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateLocal)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateLocal)
+        query = apply_indirect_filters(query, indirect_filters)
     data = get_data(query)
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
 

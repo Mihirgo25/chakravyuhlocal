@@ -1,9 +1,10 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSet
 from services.fcl_freight_rate.models.fcl_freight_rate import *
-from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 import peewee, json
 from math import ceil
 from micro_services.client import maps
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 from services.fcl_freight_rate.interaction.list_fcl_freight_commodity_clusters import list_fcl_freight_commodity_clusters
 
 possible_direct_filters = ['id', 'extension_name', 'service_provider_id', 'shipping_line_id', 'cluster_id', 'cluster_type', 'cluster_reference_name', 'status', 'trade_type']
@@ -15,9 +16,10 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateExtensionRuleSet)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateExtensionRuleSet)
+        query = apply_indirect_filters(query, indirect_filters)
 
     data = get_data(query)
     pagination_data = get_pagination_data(data, page, page_limit)
