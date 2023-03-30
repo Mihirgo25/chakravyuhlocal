@@ -12,7 +12,7 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class FclFreightRateExtensionRuleSets(BaseModel):
+class FclFreightRateExtensionRuleSet(BaseModel):
     cluster_id = CharField(index=True, null=True)
     cluster_reference_name = CharField(index=True, null=True)
     cluster_type = CharField(index=True, null=True)
@@ -32,7 +32,7 @@ class FclFreightRateExtensionRuleSets(BaseModel):
     
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
-      return super(FclFreightRateExtensionRuleSets, self).save(*args, **kwargs)
+      return super(FclFreightRateExtensionRuleSet, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rate_extension_rule_sets'

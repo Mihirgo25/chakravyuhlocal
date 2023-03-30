@@ -50,7 +50,7 @@ class FclFreightRateRequest(BaseModel):
     preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(CharField, null=True, constraints=[SQL("DEFAULT '{}'::character varying[]")])
     request_type = CharField(null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_requests_serial_id_seq'::regclass)")])
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_request_serial_id_seq'::regclass)")])
     spot_search = BinaryJSONField(null=True)
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)

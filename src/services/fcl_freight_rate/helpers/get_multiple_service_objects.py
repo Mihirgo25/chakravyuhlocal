@@ -1,10 +1,8 @@
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from peewee import fn
 from micro_services.client import *
 from database.rails_db import get_organization,get_shipping_line,get_user
 
 def get_multiple_service_objects(freight_object):
-    if hasattr(freight_object,'shipping_line_id'):
+    if hasattr(freight_object,'shipping_line_id') and freight_object.shipping_line_id:
         shipping_line = get_shipping_line(id=str(freight_object.shipping_line_id))
         try:
             freight_object.shipping_line = shipping_line[0]
@@ -12,13 +10,13 @@ def get_multiple_service_objects(freight_object):
             freight_object.shipping_line_detail = shipping_line[0]
             
     user_list =[]
-    if hasattr(freight_object,'procured_by_id'):
+    if hasattr(freight_object,'procured_by_id') and freight_object.procured_by_id:
         user_list.append(freight_object.procured_by_id)
-    if hasattr(freight_object,'sourced_by_id'):
+    if hasattr(freight_object,'sourced_by_id') and freight_object.sourced_by_id:
         user_list.append(freight_object.sourced_by_id)
-    if hasattr(freight_object,'performed_by_id'):
+    if hasattr(freight_object,'performed_by_id') and freight_object.performed_by_id:
         user_list.append(freight_object.performed_by_id)
-    if hasattr(freight_object,'closed_by_id'):
+    if hasattr(freight_object,'closed_by_id') and freight_object.closed_by_id:
         user_list.append(freight_object.closed_by_id)
     if hasattr(freight_object,'completed_by_id'):
         user_list.append(freight_object.completed_by_id)
@@ -37,11 +35,11 @@ def get_multiple_service_objects(freight_object):
             elif hasattr(freight_object,'completed_by_id') and user['id']==str(freight_object.completed_by_id):
                 freight_object.completed_by = user
     organization_list=[]
-    if hasattr(freight_object,'importer_exporter_id'):
+    if hasattr(freight_object,'importer_exporter_id') and freight_object.importer_exporter_id:
         organization_list.append(freight_object.importer_exporter_id)
-    if hasattr(freight_object,'service_provider_id'):
+    if hasattr(freight_object,'service_provider_id') and freight_object.service_provider_id:
         organization_list.append(freight_object.service_provider_id)
-    if hasattr(freight_object,'performed_by_org_id'):
+    if hasattr(freight_object,'performed_by_org_id') and freight_object.performed_by_org_id:
         user_list.append(freight_object.performed_by_org_id)
     if organization_list:
         organization_data = get_organization(id=organization_list)
@@ -51,7 +49,7 @@ def get_multiple_service_objects(freight_object):
             if hasattr(freight_object,'importer_exporter_id') and organization['id']==str(freight_object.importer_exporter_id):
                 freight_object.importer_exporter= organization
             if hasattr(freight_object,'performed_by_org_id') and organization['id']==str(freight_object.performed_by_org_id):
-                freight_object.organization = organization
+                freight_object.performed_by_org = organization
 
     # if hasattr(freight_object,'rate_sheet_id'):
     #     rate_sheet_data = RateSheet.select(RateSheet.serial_id,RateSheet.file_name,RateSheet.created_at,RateSheet.updated_at).dicts().get()
