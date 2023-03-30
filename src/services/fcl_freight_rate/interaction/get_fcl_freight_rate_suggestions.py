@@ -3,7 +3,6 @@ from operator import attrgetter
 from micro_services.client import *
 from datetime import datetime
 from itertools import groupby
-from playhouse.shortcuts import model_to_dict
 import json
 
 def get_fcl_freight_rate_suggestions(validity_start, validity_end, searched_origin_port_id, searched_destination_port_id, filters = {}):
@@ -28,7 +27,7 @@ def get_fcl_freight_rates(filters, searched_origin_port_id, searched_destination
         for key in filters:
             query = query.where(attrgetter(key)(FclFreightRate) == filters[key])
 
-    fcl_freight_query = query.where(FclFreightRate.rate_not_available_entry == False, FclFreightRate.origin_port_id != searched_origin_port_id, FclFreightRate.destination_port_id != searched_destination_port_id, FclFreightRate.last_rate_available_date >= max([validity_start, datetime.now()]))
+    fcl_freight_query = query.where(~FclFreightRate.rate_not_available_entry, FclFreightRate.origin_port_id != searched_origin_port_id, FclFreightRate.destination_port_id != searched_destination_port_id, FclFreightRate.last_rate_available_date >= max([validity_start, datetime.now()]))
     fcl_freight_rates = list(fcl_freight_query.dicts())#[model_to_dict(item) for item in fcl_freight_query.execute()]
     return fcl_freight_rates
 

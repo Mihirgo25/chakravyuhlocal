@@ -5,8 +5,10 @@ import datetime
 from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS
 from configs.global_constants import HAZ_CLASSES
 from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
+from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from micro_services.client import *
 from database.rails_db import get_shipping_line
 
@@ -222,20 +224,42 @@ class FclFreightRateLocal(BaseModel):
     def detail(self):
         fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
-        from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
-
-        if self.detention_id or self.demurrage_id:
-            free_days = list_fcl_freight_rate_free_days({'filters': {'id': [str(self.detention_id), str(self.demurrage_id)]}})['list']
-
-        if self.detention_id:
-            t = next((t for t in free_days if t['id'] == self.detention_id), None)
-            if t:
-                self.data['detention'] = {'free_limit':t['free_limit'], 'slabs':t['slabs'], 'remarks':t['remarks']}
+        free_day_ids = []
 
         if self.demurrage_id:
-            t = next((t for t in free_days if t['id'] == self.demurrage_id), None)
-            if t:
-                self.data['demurrage'] = {'free_limit':t['free_limit'], 'slabs':t['slabs'], 'remarks':t['remarks']}
+            free_day_ids.append(str(self.demurrage_id))
+        if self.detention_id:
+            free_day_ids.append(str(self.demurrage_id))
+        if self.plugin_id:
+            free_day_ids.append(str(self.plugin_id))
+
+        free_days_charges = {}
+
+      
+        if len(free_day_ids):
+            free_days_query = FclFreightRateFreeDay.select(
+              FclFreightRateFreeDay.location_id,
+              FclFreightRateFreeDay.id,
+              FclFreightRateFreeDay.slabs,
+              FclFreightRateFreeDay.free_days_type,
+              FclFreightRateFreeDay.specificity_type,
+              FclFreightRateFreeDay.is_slabs_missing
+            ).where(FclFreightRateFreeDay.id << free_day_ids, (~FclFreightRateFreeDay.rate_not_available_entry | FclFreightRateFreeDay.rate_not_available_entry.is_null(True)))
+
+            free_days_new = jsonable_encoder(list(free_days_query.dicts()))
+
+        for free_day_charge in free_days_new:
+          free_day_charge[free_day_charge["id"]] = free_day_charge
+
+        
+        if self.detention_id and self.detention_id in free_day_charge:
+            self.data["detention"] = free_day_charge[self.detention_id]
+
+        if self.demurrage_id and self.demurrage_id in free_day_charge:
+            self.data["demurrage"] = free_day_charge[self.demurrage_id]
+        
+        if self.plugin_id and self.plugin_id in free_day_charge:
+            self.data["plugin"] = free_day_charge[self.plugin_id]
 
         detail = self.data | {
             'id': self.id,
