@@ -68,12 +68,17 @@ def get_freight_object(object):
         validation['error'] += str(e.detail)
     for line_item in object['line_items']:
         if line_item['unit'] not in VALID_UNITS:
-            validation['error']+=  "unit is_invalid"
+            validation['error'] =  "unit is_invalid"
     if object['schedule_type'] and object['schedule_type'] not in SCHEDULE_TYPES:
         validation['error'] += f"is invalid, valid schedule types are {SCHEDULE_TYPES}"
+
     if object['payment_term'] and object['payment_term'] not in PAYMENT_TERM:
         validation['error']+=  f"is invalid, valid payment terms are {PAYMENT_TERM}"
-        validation['error']+=str(rate_object.validate_line_items(object['line_items']))
+    try:
+        rate_object.validate_line_items(object['line_items'])
+    except HTTPException as e:
+        validation['error']+=str(e.detail)
+
     return validation
 
 def get_local_object(object):

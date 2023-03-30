@@ -117,13 +117,10 @@ def delete_processed_percent(id):
 def detail(data):
     for d in data:
         d['processed_percent'] = get_processed_percent(d['id'])
-        d['converted_files'] = []
-        if d.get('converted_file'):
-            for converted_file in d.get('converted_file'):
-                for converted_file_json in converted_file:
-                    converted_file_json['total_lines'] = get_total_line(converted_file)
-                    converted_file_json['last_line'] = get_last_line(converted_file)
-                d['converted_files'].append(converted_file)
+        if d['converted_files']:
+            for converted_file in d['converted_files']:
+                converted_file['total_lines'] = get_total_line(converted_file)
+                converted_file['last_line'] = get_last_line(converted_file)
     return data
 
 

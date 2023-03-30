@@ -369,7 +369,7 @@ def process_fcl_freight_local(params, converted_file, Update):
         return
     # create_fcl_freight_local_rate(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id, '', '')
     set_last_line(total_lines, params)
-    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * total_lines )* 100
+    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
     set_processed_percent(percent, params)
     if math.ceil(percent)!=100:
         Update.status = 'partially_complete'
@@ -1133,7 +1133,7 @@ def process_fcl_freight_freight(params, converted_file, Update):
     if not rows:
         return
     set_last_line(total_lines, params)
-    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * total_lines )* 100
+    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     if math.ceil(percent)!=100:
         Update.status = 'partially_complete'
@@ -1238,7 +1238,6 @@ def create_fcl_freight_freight_rate(
 
 def validate_and_process_rate_sheet_converted_file(params):
     Update = RateSheet.get(RateSheet.id == params['id'])
-    Update.status = 'processing'
     for converted_file in params['converted_files']:
         reset_counters(params, converted_file)
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
