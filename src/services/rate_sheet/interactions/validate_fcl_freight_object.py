@@ -102,7 +102,6 @@ def get_local_object(object):
         validation['error'] += str(e.detail)
     for line_item in object.get('data').get('line_items'):
         if line_item['unit'] not in VALID_UNITS:
-            print(line_item['unit'], "here, ")
             validation['error']+= "unit is_invalid"
 
     return validation
