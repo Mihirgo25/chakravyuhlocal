@@ -854,7 +854,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 for container_type in data['container_types']:
                     create_fcl_freight_rate_data(create_params | ({ 'container_type': container_type, 'source': 'rms_upload' }))
 
-                create_audit(self,self.id)
+                create_audit(self.id)
 
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
@@ -947,15 +947,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         create_params['destination_main_port_id'] = fcl_freight_rate["destination_port_id"]
                     create_params['source'] = 'rms_upload'
                     create_fcl_freight_rate_data(create_params)
-def create_audit(self,id):
-    audit_data = {key: value for key,value in self if key not in ['id']}
-
+def create_audit(id):
     FclFreightRateAudit.create(
-        bulk_operation_id = self.get('bulk_operation_id'),
-        rate_sheet_id = self.get('rate_sheet_id'),
-        action_name = 'create',
-        performed_by_id = self['performed_by_id'],
-        data = audit_data,
-        object_id = id,
-        object_type = 'FclFreightRate'
+        bulk_operation_id = id
     )
