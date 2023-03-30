@@ -5,7 +5,6 @@ import datetime
 
 
 class BaseModel(Model):
-    # db.execute_sql('CREATE SEQUENCE rate_sheets_serial_id_seq START WITH 1')
     class Meta:
         database = db
 class RateSheet(BaseModel):
@@ -24,7 +23,7 @@ class RateSheet(BaseModel):
     agent_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    serial_id = BigIntegerField(constraints=[SQL(" DEFAULT nextval('rate_sheets_serial_id_seq')")],)
+    serial_id = BigIntegerField(constraints=[SQL(" DEFAULT nextval('ocean_rms_serial_id_seq')")],)
     cogo_entity_id = UUIDField(index=True, null=True)
 
     class Meta:

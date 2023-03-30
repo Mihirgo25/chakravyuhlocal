@@ -1,6 +1,6 @@
 from configs.fcl_freight_rate_constants import CONTAINER_CLUSTERS
 from configs.definitions import FCL_FREIGHT_CHARGES
-from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
+from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSet
 from peewee import *
 from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
@@ -18,17 +18,17 @@ def get_cluster_objects(rate_object):
 
     port_codes = param
 
-    cluster_data_q = FclFreightRateExtensionRuleSets.select().where(
-        FclFreightRateExtensionRuleSets.cluster_reference_name << (
+    cluster_data_q = FclFreightRateExtensionRuleSet.select().where(
+        FclFreightRateExtensionRuleSet.cluster_reference_name << (
             port_codes.get(rate_object['origin_port_id']),
             port_codes.get(rate_object['destination_port_id']),
             rate_object['commodity'],
             rate_object['container_size']
         ) ,
-        ((FclFreightRateExtensionRuleSets.service_provider_id == rate_object.get('service_provider_id')) | (FclFreightRateExtensionRuleSets.service_provider_id.is_null(True))),
-        ((FclFreightRateExtensionRuleSets.shipping_line_id == rate_object.get('shipping_line_id'))  | (FclFreightRateExtensionRuleSets.shipping_line_id.is_null(True))),
-        FclFreightRateExtensionRuleSets.status == 'active',
-        (FclFreightRateExtensionRuleSets.trade_type <<  ('import', 'export') | FclFreightRateExtensionRuleSets.trade_type.is_null(True))
+        ((FclFreightRateExtensionRuleSet.service_provider_id == rate_object.get('service_provider_id')) | (FclFreightRateExtensionRuleSet.service_provider_id.is_null(True))),
+        ((FclFreightRateExtensionRuleSet.shipping_line_id == rate_object.get('shipping_line_id'))  | (FclFreightRateExtensionRuleSet.shipping_line_id.is_null(True))),
+        FclFreightRateExtensionRuleSet.status == 'active',
+        (FclFreightRateExtensionRuleSet.trade_type <<  ('import', 'export') | FclFreightRateExtensionRuleSet.trade_type.is_null(True))
     ).execute()
 
     cluster_data = [model_to_dict(item) for item in cluster_data_q]

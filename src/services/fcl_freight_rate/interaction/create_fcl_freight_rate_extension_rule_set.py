@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSets
+from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import FclFreightRateExtensionRuleSet
 from fastapi import HTTPException
 from database.db_session import db
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
@@ -14,17 +14,17 @@ def get_extension_rule_set_object(request):
       'trade_type' : request.get('trade_type')
     }
   
-  extension_rule_set = FclFreightRateExtensionRuleSets.select().where(
-      FclFreightRateExtensionRuleSets.extension_name == request['extension_name'],
-      FclFreightRateExtensionRuleSets.service_provider_id == request.get('service_provider_id'),
-      FclFreightRateExtensionRuleSets.shipping_line_id == request.get('shipping_line_id'),
-      FclFreightRateExtensionRuleSets.cluster_type == request['cluster_type'],
-      FclFreightRateExtensionRuleSets.cluster_reference_name == request['cluster_reference_name'],
-      FclFreightRateExtensionRuleSets.line_item_charge_code == request.get('line_item_charge_code'),
-      FclFreightRateExtensionRuleSets.trade_type == request.get('trade_type')).first()
+  extension_rule_set = FclFreightRateExtensionRuleSet.select().where(
+      FclFreightRateExtensionRuleSet.extension_name == request['extension_name'],
+      FclFreightRateExtensionRuleSet.service_provider_id == request.get('service_provider_id'),
+      FclFreightRateExtensionRuleSet.shipping_line_id == request.get('shipping_line_id'),
+      FclFreightRateExtensionRuleSet.cluster_type == request['cluster_type'],
+      FclFreightRateExtensionRuleSet.cluster_reference_name == request['cluster_reference_name'],
+      FclFreightRateExtensionRuleSet.line_item_charge_code == request.get('line_item_charge_code'),
+      FclFreightRateExtensionRuleSet.trade_type == request.get('trade_type')).first()
 
   if not extension_rule_set:
-    extension_rule_set = FclFreightRateExtensionRuleSets(**row)
+    extension_rule_set = FclFreightRateExtensionRuleSet(**row)
 
   extra_fields = ['cluster_id','gri_rate','gri_currency']
   for field in extra_fields:
@@ -71,5 +71,5 @@ def create_audit(data, performed_by_id, rule_set_id):
     performed_by_id = performed_by_id,
     data = data,
     object_id = rule_set_id,
-    object_type = 'FclFreightRateExtensionRuleSets'
+    object_type = 'FclFreightRateExtensionRuleSet'
     )

@@ -30,13 +30,15 @@ class FclFreightRateBulkOperation(BaseModel):
     created_at = DateTimeField(default=datetime.now())
     data = BinaryJSONField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    performed_by_id = UUIDField(null=True)
+    performed_by_id = UUIDField(null=True, index=True)
+    performed_by = BinaryJSONField(null=True)
     sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
     service_provider_id = UUIDField(index=True, null=True)
+    service_provider = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.now())
 
     class Meta:

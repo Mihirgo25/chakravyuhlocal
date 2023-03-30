@@ -16,7 +16,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     location_id = UUIDField(index=True, null=True)
     location = BinaryJSONField(null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_free_day_requests_serial_id_seq'::regclass)")])
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('ocean_rms_serial_id_seq'::regclass)")])
     country_id = UUIDField(index=True, null = True)
     trade_id = UUIDField(null=True)
     continent_id = UUIDField(null = True)
