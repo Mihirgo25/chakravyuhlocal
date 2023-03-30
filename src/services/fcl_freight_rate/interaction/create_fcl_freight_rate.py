@@ -64,9 +64,9 @@ def create_fcl_freight_rate(request):
         freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
-        freight.set_locations()
-        freight.set_origin_location_ids()
-        freight.set_destination_location_ids()
+    freight.set_locations()
+    freight.set_origin_location_ids()
+    freight.set_destination_location_ids()
 
 
     freight.sourced_by_id = request.get("sourced_by_id")

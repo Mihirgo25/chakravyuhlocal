@@ -191,7 +191,7 @@ def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: d
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     # try:
-    data = create_fcl_freight_rate_task(request)
+    data = create_fcl_freight_rate_task(request.dict(exclude_none = False))
     return JSONResponse(status_code=200, content=jsonable_encoder(data))
     # except:
     #     return JSONResponse(status_code=500, content={"success": False})
@@ -997,9 +997,16 @@ def get_fcl_freight_rate_extension(
     #     return JSONResponse(status_code=500, content={'success':False})
 
 
-# @fcl_freight_router.post("/update_fcl_freight_rate_task")
-# def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
-#     return update_fcl_freight_rate_task_data(request)
+@fcl_freight_router.post("/update_fcl_freight_rate_task")
+def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    return JSONResponse(status_code=200, content=update_fcl_freight_rate_task_data(request.dict(exclude_none=False)))
+
 
 
 @fcl_freight_router.post("/delete_fcl_freight_rate_request")

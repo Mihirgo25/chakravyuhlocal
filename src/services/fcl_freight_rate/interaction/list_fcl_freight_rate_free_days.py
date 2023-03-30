@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'is_slabs_missing', 'location_id', 'specificity_type', 'previous_days_applicable', 'rate_not_available_entry']
-possible_indirect_filters = ['importer_exporter_present']#, 'active', 'inactive']
+possible_indirect_filters = ['importer_exporter_present', 'active', 'inactive']
 
 def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pagination_data_required = True, return_query = False):
     query = get_query(page, page_limit)
