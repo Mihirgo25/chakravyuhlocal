@@ -6,7 +6,11 @@ from database.rails_db import get_organization,get_shipping_line,get_user
 def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'shipping_line_id'):
         shipping_line = get_shipping_line(id=str(freight_object.shipping_line_id))
-        freight_object.shipping_line = shipping_line[0]
+        try:
+            freight_object.shipping_line = shipping_line[0]
+        except:
+            freight_object.shipping_line_detail = shipping_line[0]
+            
     user_list =[]
     if hasattr(freight_object,'procured_by_id'):
         user_list.append(freight_object.procured_by_id)
@@ -16,6 +20,8 @@ def get_multiple_service_objects(freight_object):
         user_list.append(freight_object.performed_by_id)
     if hasattr(freight_object,'closed_by_id'):
         user_list.append(freight_object.closed_by_id)
+    if hasattr(freight_object,'completed_by_id'):
+        user_list.append(freight_object.completed_by_id)
 
     if user_list:
         user_data = get_user(user_list)

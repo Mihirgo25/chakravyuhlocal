@@ -13,7 +13,7 @@ class MapsApiClient:
             "Accept": "application/json",
         })
 
-    def list_locations(self, data):
+    def list_locations(self, data={}):
         if APP_ENV == "production":
             if 'filters' in data:
                 data['filters'] = json.dumps(data['filters'])

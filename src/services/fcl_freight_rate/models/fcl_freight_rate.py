@@ -680,101 +680,117 @@ class FclFreightRate(BaseModel):
               'is_best_price': self.is_best_price,
               'is_rate_expired': self.is_rate_expired(),
               'is_rate_about_to_expire': self.is_rate_about_to_expire(),
-              'is_rate_not_available': self.is_rate_not_available()
+              'is_rate_not_available': self.is_rate_not_available(),
+              # 'origin_port_id': self.origin_port_id,
+              # 'origin_main_port_id': self.origin_main_port_id,
+              # 'destination_port_id': self.destination_port_id,
+              # 'destination_main_port_id': self.destination_main_port_id,
+              # 'service_provider_id': self.service_provider_id,
+              # 'shipping_line_id': self.shipping_line_id,
+
           },
-          'weight_limit': dict(self.weight_limit)}
+          'weight_limit': dict(self.weight_limit)
+        }
 
       data = {k: v for k, v in data.items()}
 
-      origin_local = {}
-      destination_local = {}
+      origin_local = self.origin_local
+      destination_local = self.destination_local
 
+      local_ids = []
       if self.origin_local_id:
-        if self.origin_local_id.is_line_items_error_messages_present == False:
-          origin_local['line_items'] = self.origin_local_id.data['line_items']
-          origin_local['is_line_items_error_messages_present'] = self.origin_local_id.is_line_items_error_messages_present
-          origin_local['line_items_error_messages'] = self.origin_local_id.line_items_error_messages
-          origin_local['is_line_items_info_messages_present'] = self.origin_local_id.is_line_items_info_messages_present
-          origin_local['line_items_info_messages'] = self.origin_local_id.line_items_info_messages
-
-        if not origin_local.get('line_items') or not self.is_origin_local_line_items_error_messages_present:
-            origin_local['line_items'] = self.origin_local['line_items']
-            origin_local['is_line_items_error_messages_present'] = self.is_origin_local_line_items_error_messages_present
-            origin_local['line_items_error_messages'] = self.origin_local_line_items_error_messages
-            origin_local['is_line_items_info_messages_present'] = self.is_origin_local_line_items_info_messages_present
-            origin_local['line_items_info_messages'] = self.origin_local_line_items_info_messages
-
-        if 'detention' in self.origin_local and self.origin_local.get('detention'):
-          if self.origin_local['detention'].get('free_limit'):
-            origin_local['detention'] = self.origin_local['detention'] | ({'is_slabs_missing': self.is_origin_detention_slabs_missing })
-          else:
-            origin_local['detention'] = origin_local['detention'] | ({ 'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION })
-
-        if not origin_local.get('detention'):
-          origin_local['detention'] = self.origin_local_id.data['detention'] | ({'is_slabs_missing': self.origin_local_id.is_detention_slabs_missing})
-
-        if 'demurrage' in self.origin_local and self.origin_local.get('demurrage'):
-          if self.origin_local['demurrage'].get('free_limit'):
-            origin_local['demurrage'] = self.origin_local['demurrage'] | ({'is_slabs_missing': self.is_origin_demurrage_slabs_missing })
-
-        if not origin_local.get('demurrage'):
-          origin_local['demurrage'] = self.origin_local_id.data['demurrage'] | ({'is_slabs_missing': self.origin_local_id.is_demurrage_slabs_missing})
-
-        if 'plugin' in self.origin_local and self.origin_local.get('plugin'):
-          if self.origin_local['plugin'].get('free_limit'):
-            origin_local['plugin'] = self.origin_local['plugin'] | ({'is_slabs_missing': self.is_origin_plugin_slabs_missing })
-
-        if not origin_local['plugin']:
-          origin_local['plugin'] = self.origin_local_id.data['plugin'] | ({'is_slabs_missing': self.origin_local_id.is_plugin_slabs_missing})
-
+        local_ids.append(str(self.origin_local_id))
       if self.destination_local_id:
-        if not self.destination_local_id.is_line_items_error_messages_present:
-            destination_local['line_items'] = self.destination_local_id.data['line_items']
-            destination_local['is_line_items_error_messages_present'] = self.destination_local_id.is_line_items_error_messages_present
-            destination_local['line_items_error_messages'] = self.destination_local_id.line_items_error_messages
-            destination_local['is_line_items_info_messages_present'] = self.destination_local_id.is_line_items_info_messages_present
-            destination_local['line_items_info_messages'] = self.destination_local_id.line_items_info_messages
+        local_ids.append(str(self.destination_local_id))
+      
+      free_day_ids = []
 
-        if not destination_local.get('line_items') or not self.is_destination_local_line_items_error_messages_present:
-            destination_local['line_items'] = self.destination_local['line_items']
-            destination_local['is_line_items_error_messages_present'] = self.is_destination_local_line_items_error_messages_present
-            destination_local['line_items_error_messages'] = self.destination_local_line_items_error_messages
-            destination_local['is_line_items_info_messages_present'] = self.is_destination_local_line_items_info_messages_present
-            destination_local['line_items_info_messages'] = self.destination_local_line_items_info_messages
+      if self.origin_detention_id:
+        free_day_ids.append(self.origin_detention_id)
+      if self.origin_demurrage_id:
+        free_day_ids.append(self.origin_demurrage_id)
+      if self.origin_plugin_id:
+        free_day_ids.append(self.origin_plugin_id)
+      
+      if self.destination_detention_id:
+        free_day_ids.append(self.destination_detention_id)
+      if self.destination_demurrage_id:
+        free_day_ids.append(self.destination_demurrage_id)
+      if self.destination_plugin_id:
+        free_day_ids.append(self.destination_plugin_id)
 
-        if 'detention' in self.destination_local and self.destination_local.get('detention'):
-          if self.destination_local['detention'].get('free_limit'):
-            destination_local['detention'] = self.destination_local['detention'] | ({'is_slabs_missing': self.is_destination_detention_slabs_missing })
-          else:
-            destination_local['detention'] = destination_local['detention'] | ({'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION })
+      local_charges = {}
 
-        if not destination_local.get('detention'):
-          if self.destination_local_id.data.get('detention'):
-            destination_local['detention'] = self.destination_local_id.data['detention'] | ({'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing})
-          else:
-            destination_local['detention'] = {'is_slabs_missing': self.destination_local_id.is_detention_slabs_missing}
+      if len(local_ids):
+        local_charges_query = FclFreightRateLocal.select(
+          FclFreightRateLocal.id,
+          FclFreightRateLocal.port_id,
+          FclFreightRateLocal.line_items,
+          FclFreightRateLocal.data,
+          FclFreightRateLocal.is_line_items_error_messages_present,
+          FclFreightRateLocal.line_items_error_messages,
+          FclFreightRateLocal.is_line_items_info_messages_present,
+          FclFreightRateLocal.line_items_info_messages,
+          FclFreightRateLocal.trade_type
+        ).where(FclFreightRateLocal.id << local_ids, (~FclFreightRateLocal.rate_not_available_entry | FclFreightRateLocal.rate_not_available_entry.is_null(True)))
 
-        if 'demurrage' in self.destination_local and self.destination_local.get('demurrage'):
-          if self.destination_local['demurrage'].get('free_limit'):
-            destination_local['demurrage'] = self.destination_local['demurrage'] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
+        local_charges_new = jsonable_encoder(list(local_charges_query.dicts()))
 
-        if not destination_local.get('demurrage'):
-          if self.destination_local_id.data.get('demurrage'):
-            destination_local['demurrage'] = self.destination_local_id.data['demurrage'] | ({'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing})
-          else:
-            destination_local['demurrage'] = {'is_slabs_missing': self.destination_local_id.is_demurrage_slabs_missing}
+        for local_charge in local_charges_new:
+          local_charges[local_charge["id"]] = local_charge
+      
+      free_days_charges = {}
+      
+      if len(free_day_ids):
+        free_days_query = FclFreightRateFreeDay.select(
+          FclFreightRateFreeDay.location_id,
+          FclFreightRateFreeDay.id,
+          FclFreightRateFreeDay.slabs,
+          FclFreightRateFreeDay.free_days_type,
+          FclFreightRateFreeDay.specificity_type,
+          FclFreightRateFreeDay.is_slabs_missing
+        ).where(FclFreightRateFreeDay.id << free_day_ids, (~FclFreightRateFreeDay.rate_not_available_entry | FclFreightRateFreeDay.rate_not_available_entry.is_null(True)))
+        free_days_new = jsonable_encoder(list(free_days_query.dicts()))
+
+        for free_day_charge in free_days_new:
+          free_day_charge[free_day_charge["id"]] = free_day_charge
 
 
-        if 'plugin' in self.destination_local and self.destination_local.get('plugin'):
-          if self.destination_local['plugin'].get('free_limit'):
-            destination_local['plugin'] = self.destination_local['plugin'] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
+      if self.origin_local_id in local_charges and (not origin_local or not 'line_items' in origin_local or len(origin_local['line_items'] == 0)):
+        origin_local = local_charges[self.origin_local_id]
 
-        if not destination_local.get('plugin'):
-          if self.destination_local_id.data.get('plugin'):
-            destination_local['plugin'] = self.destination_local_id.data['plugin'] | ({'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing})
-          else:
-            destination_local['plugin'] = {'is_slabs_missing': self.destination_local_id.is_plugin_slabs_missing}
+      if self.origin_detention_id in free_days_charges:
+        origin_local['detention'] = free_days_charges[self.origin_detention_id] | ({'is_slabs_missing': self.is_origin_detention_slabs_missing })
+      else:
+        origin_local['detention'] = { 'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION, 'is_slabs_missing': True, 'slabs': [] }
+      
+      if self.origin_demurrage_id in free_days_charges:
+        origin_local['demurrage'] = free_days_charges[self.origin_demurrage_id] | ({'is_slabs_missing': self.is_origin_demurrage_slabs_missing })
+      else:
+        origin_local['demurrage'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
+      
+      if self.origin_plugin_id in free_days_charges:
+        origin_local['plugin'] = free_days_charges[self.origin_plugin_id] | ({'is_slabs_missing': self.is_origin_plugin_slabs_missing })
+      else:
+        origin_local['plugin'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
 
+      if self.destination_local_id in local_charges and (not destination_local or not 'line_items' in destination_local or len(destination_local['line_items'] == 0)):
+        destination_local = local_charges[self.destination_local_id]
+
+      if self.destination_detention_id in free_days_charges:
+        destination_local['detention'] = free_days_charges[self.destination_detention_id] | ({'is_slabs_missing': self.is_destination_detention_slabs_missing })
+      else:
+        destination_local['detention'] = { 'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION, 'is_slabs_missing': True, 'slabs': [] }
+      
+      if self.destination_demurrage_id in free_days_charges:
+        destination_local['demurrage'] = free_days_charges[self.destination_demurrage_id] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
+      else:
+        destination_local['demurrage'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
+      
+      if self.destination_plugin_id in free_days_charges:
+        destination_local['plugin'] = free_days_charges[self.destination_plugin_id] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
+      else:
+        destination_local['plugin'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
       return {**data, 'origin_local': origin_local, 'destination_local': destination_local}
 
 
