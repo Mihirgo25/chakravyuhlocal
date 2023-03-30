@@ -1,9 +1,9 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
 from database.db_session import db
 from micro_services.client import *
-from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from celery_worker import create_communication_background, update_multiple_service_objects
+from database.rails_db import get_partner_users_by_expertise, get_partner_users
 
 
 def create_fcl_freight_rate_request(request):
@@ -70,10 +70,10 @@ def supply_agents_to_notify(request):
     origin_locations = list(filter(None,[str(value) for key,value in locations_data.items() if key in ['origin_port_id', 'origin_country_id', 'origin_continent_id', 'origin_trade_id']]))
     destination_locations =   list(filter(None,[str(value) for key,value in locations_data.items() if key in ['destination_port_id', 'destination_country_id', 'destination_continent_id', 'destination_trade_id']]))
 
-    supply_agents_data= organization.list_partner_user_expertises({ 'filters': { 'service_type': 'fcl_freight', 'status': 'active', 'origin_location_id': origin_locations, 'destination_location_id':destination_locations }, 'pagination_data_required': False, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT })['list']
+    supply_agents_data = get_partner_users_by_expertise('fcl_freight', origin_locations, destination_locations)
     supply_agents_list = list(set([item['partner_user_id'] for item in supply_agents_data]))
 
-    supply_agents_user_data = organization.list_partner_users({ 'filters': { 'id': supply_agents_list }, 'pagination_data_required': False, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT })['list']
+    supply_agents_user_data = get_partner_users(supply_agents_list)
     supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data]))
     try:
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_port_id']),str(locations_data['destination_port_id'])]}})['list']

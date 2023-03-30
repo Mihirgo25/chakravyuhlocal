@@ -13,7 +13,7 @@ class UpdateLineItem(BaseModel):
   unit: str
   price: float
   currency: str
-  remarks: list[str] = []
+  remarks: list[str] = None
 
 class FreeDay(BaseModel):
   free_limit: float
@@ -171,7 +171,7 @@ class PostFclFreightRateLocal(BaseModel):
     service_provider_id: str
     selected_suggested_rate_id: str = None
     source: str = None
-    data: Data
+    data: Data = {}
 
 class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
@@ -415,22 +415,6 @@ class CreateFclFreightRateTask(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   rate: LocalData = None
-
-class CreateFclFreightRateTask(BaseModel):
-  service: str
-  port_id: str
-  main_port_id: str = None
-  container_size: str
-  container_type: str
-  commodity: str
-  trade_type: str
-  shipping_line_id: str
-  source: str
-  task_type: str
-  shipment_id: str = None
-  performed_by_id: str = None
-  performed_by_type: str = None
-  rate: LocalData = {}
 
 class DeleteFclFreightRateRequest(BaseModel):
   fcl_freight_rate_request_ids: List[str]
@@ -824,9 +808,11 @@ class CreateBulkOperation(BaseModel):
   extend_freight_rate:ExtendFreightRate=None
   extend_freight_rate_to_icds:ExtendFreightRateToIcds=None
 
-
-
-
-
-
-
+class UpdateFclFreightRateTask(BaseModel):
+  id: str
+  performed_by_id: str
+  performed_by_type: str
+  rate: LocalData = None
+  status: str = None
+  closing_remarks: str = None
+  validate_closing_remarks: str = None

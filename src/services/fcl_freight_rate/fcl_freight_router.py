@@ -96,12 +96,11 @@ def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodity
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
-    # try:
-    data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except Exception as e:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.post("/create_fcl_freight_rate_commodity_surcharge")
 def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRateCommoditySurcharge, resp: dict = Depends(authorize_token)):
@@ -110,11 +109,11 @@ def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRa
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    # except Exception as e:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except Exception:
+        raise
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local_agent")
@@ -124,11 +123,11 @@ def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalA
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_local_agent(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_local_agent(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depends(authorize_token)):
@@ -140,8 +139,8 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    except Exception as e:
-        raise e
+    except:
+        raise
 
 @fcl_freight_router.post("/create_fcl_freight_rate_feedback")
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
@@ -150,11 +149,11 @@ def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback,
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    rate_id = create_fcl_freight_rate_feedback(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        rate_id = create_fcl_freight_rate_feedback(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
+    except:
+        raise
 
 @fcl_freight_router.post("/create_fcl_freight_rate_not_available")
 def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotAvailable, resp: dict = Depends(authorize_token)):
@@ -164,10 +163,10 @@ def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotA
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     data = create_fcl_freight_rate_not_available(request)
-    if data == True:
+    if data:
         return JSONResponse(status_code = 200, content = {'success': True})
     else:
-        return JSONResponse(status_code = 500, content = {'success' :  False})
+        raise
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local")
@@ -177,11 +176,11 @@ def create_fcl_freight_rate_local_data(request: PostFclFreightRateLocal, resp: d
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_local(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_local(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.post("/create_fcl_freight_rate_task")
 def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: dict = Depends(authorize_token)):
@@ -190,11 +189,11 @@ def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: d
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_task(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_task(request.dict(exclude_none = False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.post("/create_fcl_freight_rate_request")
 def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, resp: dict = Depends(authorize_token)):
@@ -203,11 +202,11 @@ def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, r
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_request(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_request(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local_request")
 def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLocalRequest, resp: dict = Depends(authorize_token)):
@@ -216,11 +215,11 @@ def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLoca
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_local_request(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_local_request(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.post("/create_fcl_weight_slabs_configuration")
 def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConfiguration, resp: dict = Depends(authorize_token)):
@@ -997,9 +996,16 @@ def get_fcl_freight_rate_extension(
     #     return JSONResponse(status_code=500, content={'success':False})
 
 
-# @fcl_freight_router.post("/update_fcl_freight_rate_task")
-# def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask):
-#     return update_fcl_freight_rate_task_data(request)
+@fcl_freight_router.post("/update_fcl_freight_rate_task")
+def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    return JSONResponse(status_code=200, content=update_fcl_freight_rate_task_data(request.dict(exclude_none=False)))
+
 
 
 @fcl_freight_router.post("/delete_fcl_freight_rate_request")
@@ -1196,16 +1202,15 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay, 
 
 @fcl_freight_router.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
-    validity_start: str,
-    validity_end: str,
+    validity_start: datetime,
+    validity_end: datetime,
     stats_types: Union[List[str],None]= Query(None),
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    validity_start = datetime.strptime(validity_start, '%Y-%m-%d').date().isoformat()
-    validity_end = datetime.strptime(validity_end, '%Y-%m-%d').date().isoformat()
+
     request = {
         'validity_start':validity_start,
         'validity_end':validity_end,

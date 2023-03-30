@@ -68,10 +68,10 @@ class FclFreightRateTask(BaseModel):
             raise HTTPException(status_code=500,detail='Invalid port')
 
     def validate_main_port_id(self):
-        if self.port and self.port['is_icd']==False:
+        if self.port and self.port.get('is_icd')==False:
             if self.main_port_id and self.main_port_id!=self.port_id:
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
-        elif self.port and self.port['is_icd']==True:
+        elif self.port and self.port.get('is_icd')==True:
             main_port_data = maps.list_locations({"filters":{"id": [str(self.main_port_id)],'type':'seaport','is_icd':False}})['list']
             if main_port_data:
                 self.main_port = {key:value for key,value in main_port_data[0].items() if key in ['id', 'name','display_name', 'port_code', 'type']}
@@ -102,7 +102,7 @@ class FclFreightRateTask(BaseModel):
             raise HTTPException(status_code=400, detail="Invalid container size")
 
     def validate_commodity(self):
-      if not (self.container_type and self.commodity in FREIGHT_CONTAINER_COMMODITY_MAPPINGS[f"{self.container_type}"]):
+      if not self.container_type and (self.commodity in FREIGHT_CONTAINER_COMMODITY_MAPPINGS.get(self.container_type)):
         raise HTTPException(status_code=400, detail="Invalid commodity")
 
     def validate_source(self):

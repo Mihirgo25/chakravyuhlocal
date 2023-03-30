@@ -7,6 +7,8 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from celery_worker import update_multiple_service_objects
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+from fastapi import HTTPException
+
 def create_audit(request):
     data = {key:str(value) for key, value in request.items() if key not in ['performed_by_id','id'] and not value == None}
 
@@ -19,9 +21,6 @@ def create_audit(request):
 
     )
 def update_fcl_freight_rate_task_data(request):
-    if type(request) != dict:
-        request = request.__dict__
-
     if not validate_closing_remarks(request):
         return {request['closing_remarks'], 'is not valid'}
     
@@ -30,8 +29,8 @@ def update_fcl_freight_rate_task_data(request):
         query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
         db.execute_sql(query)
         try:
-          data = execute_transaction_code(request)
-          return data
+            data = execute_transaction_code(request)
+            return data
         except Exception as e:
             transaction.rollback()
             return e
@@ -46,13 +45,17 @@ def execute_transaction_code(request):
     request['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
     request['procured_by_id'] = DEFAULT_PROCURED_BY_ID
 
-    task = FclFreightRateTask.select().where('id' == request['id']).limit(1).dicts().get()
+    task = FclFreightRateTask.select().where(FclFreightRateTask.id == request['id']).first()
 
     if not task:
-        return {request['id'],'is invalid'}
+        raise HTTPException(status_code = 422, detail = f"{request['id']} is invalid")
     
-    if not task.update(get_update_params(request)):
-        return {'error in update params'}
+    update_params = get_update_params(request)
+    for attr, value in update_params.items():
+        setattr(task, attr, value)
+
+    if not task.save():
+        raise HTTPException(status_code = 500, detail = 'Error in update params')
     
     if request['status']:
         return {'id': task.id}

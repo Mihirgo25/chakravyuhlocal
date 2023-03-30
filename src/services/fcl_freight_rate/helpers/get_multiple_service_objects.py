@@ -53,7 +53,7 @@ def get_multiple_service_objects(freight_object):
     #     freight_object.rate_sheet = rate_sheet_data
 
     if hasattr(freight_object,'source_id'):
-        spot_search_data = common.list_spot_searches({'filters':{'id':str(freight_object.source_id)}})
+        spot_search_data = spot_search.list_spot_searches({'filters':{'id':str(freight_object.source_id)}})
         if spot_search_data:
             spot_search_data = spot_search_data['list'][0]
             freight_object.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id','importer_exporter_id','importer_exporter','service_details']}
