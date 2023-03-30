@@ -83,7 +83,6 @@ def get_fcl_freight_cluster_objects(request):
         new_data[t['id']]=t['is_icd']
 
     icd_data = new_data
-    print(icd_data, "Saad")
     for origin_location in set(origin_locations):
         for destination_location in set(destination_locations):
             for container_type in commodities:
