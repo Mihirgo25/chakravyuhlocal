@@ -246,6 +246,7 @@ def get_fcl_freight_rate_data(
     shipping_line_id: str = None,
     service_provider_id: str = None,
     importer_exporter_id: str = None,
+    cogo_entity_id: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -260,7 +261,8 @@ def get_fcl_freight_rate_data(
         'commodity' : commodity,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
-        'importer_exporter_id': importer_exporter_id
+        'importer_exporter_id': importer_exporter_id,
+        'cogo_entity_id': cogo_entity_id
     }
 
     try:
