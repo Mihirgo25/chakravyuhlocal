@@ -63,7 +63,7 @@ def execute_transaction_code(request):
     commodity_surcharge.procured_by_id = request.get('procured_by_id')
 
     if not commodity_surcharge.save():
-        raise HTTPException(status_code=422, detail="Commodity Surcharge not saved")
+        raise HTTPException(status_code=500, detail="Commodity Surcharge not saved")
  
     update_freight_objects_for_commodity_surcharge.apply_async(kwargs={'surcharge_object':commodity_surcharge},queue='low')
 

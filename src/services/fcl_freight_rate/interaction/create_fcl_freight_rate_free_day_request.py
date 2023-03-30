@@ -13,7 +13,6 @@ def create_fcl_freight_rate_free_day_request(request):
         try:
             return execute_transaction_code(request)
         except Exception as e:
-            logger.error(e, exc_info = True)
             transaction.rollback()
             return e
 

@@ -141,7 +141,7 @@ def execute_transaction_code(request):
   try:
     fcl_freight_local.save()
   except:
-    raise HTTPException(status_code=499, detail='fcl freight rate local did not save')
+    raise HTTPException(status_code=500, detail='fcl freight rate local did not save')
 
   fcl_freight_local.update_special_attributes()
 

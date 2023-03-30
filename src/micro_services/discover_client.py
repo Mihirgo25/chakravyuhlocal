@@ -11,6 +11,10 @@ def get_instance_url(service_name=None):
         service_port = AUTH_SERVICE_PORT
     if service_name == 'location':
         service_port = COGOMAPS_SERVICE_PORT
+    if service_name == 'spot_search':
+        service_port = SPOT_SEARCH_PORT
+    if service_name == 'checkout':
+        service_port = CHECKOUT_PORT
 
 
     if service_name == 'common':

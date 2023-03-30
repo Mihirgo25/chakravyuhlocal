@@ -33,6 +33,7 @@ humanize==4.4.0
 idna==3.4
 imutils==0.5.4
 jmespath==1.0.1
+joblib==1.2.0
 jsii==1.73.0
 kiwisolver==1.4.4
 kombu==5.2.4

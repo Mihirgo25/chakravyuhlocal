@@ -45,13 +45,18 @@ def execute_transaction_code(request):
         'status': 'pending'
     }
 
+    commodity = None
+    if 'commodity' in request and request["commodity"] in HAZ_CLASSES:
+        commodity = request["commodity"]
+
+
     task = FclFreightRateTask.select().where(
         FclFreightRateTask.service == request.get("service"),
         FclFreightRateTask.port_id == request.get("port_id"),
         FclFreightRateTask.main_port_id == request.get("main_port_id"),
         FclFreightRateTask.container_size == request.get("container_size"),
         FclFreightRateTask.container_type == request.get("container_type"),
-        FclFreightRateTask.commodity == request.get("commodity") if request["commodity"] in HAZ_CLASSES else FclFreightRateTask.commodity.is_null(True),
+        FclFreightRateTask.commodity == commodity,
         FclFreightRateTask.trade_type == request.get("trade_type"),
         FclFreightRateTask.shipping_line_id == request.get("shipping_line_id"),
         FclFreightRateTask.source == request.get("source"),

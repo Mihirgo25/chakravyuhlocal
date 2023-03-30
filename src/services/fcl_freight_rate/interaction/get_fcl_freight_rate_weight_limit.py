@@ -29,7 +29,16 @@ def find_object(request):
     }
 
     try:
-        objects = FclFreightRateWeightLimit.get(**row)
+        # objects = FclFreightRateWeightLimit.get(**row)
+        objects = FclFreightRateWeightLimit.select().where(
+            FclFreightRateWeightLimit.origin_location_id == request['origin_location_id'],
+            FclFreightRateWeightLimit.destination_location_id == request['destination_location_id'],
+            FclFreightRateWeightLimit.container_type == request['container_type'],
+            FclFreightRateWeightLimit.container_size == request['container_size'],
+            FclFreightRateWeightLimit.shipping_line_id == request['shipping_line_id'],
+            FclFreightRateWeightLimit.service_provider_id == request['service_provider_id']
+        ).first()
+
     except:
-        raise HTTPException(status_code=403, detail="no weight limit entry with the given id exists")
+        raise HTTPException(status_code=404, detail="no weight limit entry with the given id exists")
     return objects

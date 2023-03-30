@@ -12,3 +12,5 @@ __pycache__
 cdk.out
 src/celerybeat-schedule
 src/.DS_Store
+.DS_Store
+celerybeat-schedule.db
