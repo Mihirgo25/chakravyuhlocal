@@ -228,11 +228,11 @@ def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConf
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_weight_slabs_configuration(request.dict(exclude_none = False))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_weight_slabs_configuration(request.dict(exclude_none = False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
 
 @fcl_freight_router.get("/get_fcl_freight_rate")
 def get_fcl_freight_rate_data(
@@ -246,6 +246,7 @@ def get_fcl_freight_rate_data(
     shipping_line_id: str = None,
     service_provider_id: str = None,
     importer_exporter_id: str = None,
+    cogo_entity_id: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -260,15 +261,16 @@ def get_fcl_freight_rate_data(
         'commodity' : commodity,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
-        'importer_exporter_id': importer_exporter_id
+        'importer_exporter_id': importer_exporter_id,
+        'cogo_entity_id': cogo_entity_id
     }
 
-    # try:
-    data = get_fcl_freight_rate(request)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code=200, content=data)
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_rate(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except:
+        raise
 
 @fcl_freight_router.get("/get_fcl_freight_rate_local")
 def get_fcl_freight_local_data(
