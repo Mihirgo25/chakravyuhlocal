@@ -121,6 +121,32 @@ def get_partner_user_experties(service, partner_user_id):
     cur.close()
     return all_result
 
+def get_partner_users_by_expertise(service, origin_location_ids = None, destination_location_ids = None, location_ids = None, trade_type = None):
+    cur = conn.cursor()
+    if origin_location_ids and destination_location_ids: 
+        origin_location_ids = tuple(origin_location_ids)   
+        destination_location_ids = tuple(destination_location_ids)
+        sql = 'select partner_user_expertises.partner_user_id, partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user.trade_type from partner_user_expertises where status = %s and service = %s and origin_location_id IN %s and destination_location_id IN %s'
+        cur.execute(sql, ('active', service, origin_location_ids, destination_location_ids,))
+    else:
+        location_ids = tuple(location_ids)
+        sql = 'select partner_user_expertises.partner_user_id, partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user.trade_type from partner_user_expertises where status = %s and service = %s and partner_user_id = %s and location_id IN %s and trade_type = %s'
+        cur.execute(sql, ('active', service, location_ids, trade_type,))
+    
+    result = cur.fetchall()
+    all_result = []
+    for res in result:
+        new_obj = {
+            "partner_user_id": str(res[0]),
+            "origin_location_id": str(res[1]),
+            "destination_location_id": str(res[2]),
+            "location_id": str(res[3]),
+            "trade_type": str(res[4]),
+        }
+        all_result.append(new_obj)
+    cur.close()
+    return all_result
+
 def get_organization_stakeholders(stakeholder_type, stakeholder_id):
     cur = conn.cursor()
     sql = 'select organization_stakeholders.organization_id from organization_stakeholders where status = %s and stakeholder_type = %s and stakeholder_id = %s'
@@ -131,6 +157,22 @@ def get_organization_stakeholders(stakeholder_type, stakeholder_id):
         org_ids.append(str(res[0]))
     cur.close()
     return org_ids
+
+def get_partner_users(ids, status = 'active'):
+    cur = conn.cursor()
+    ids = tuple(ids)
+    sql = 'select partner_users.user_id, partner_users.id from partner_users where status = %s and id IN %s'
+    cur.execute(sql, ( status, ids,))
+    result = cur.fetchall()
+    all_result = []
+    for res in result:
+        new_obj = {
+            "user_id": str(res[0]),
+            "id": str(res[1]),
+        }
+        all_result.append(new_obj)
+    cur.close()
+    return all_result
 
 def get_organization_service_experties(service, supply_agent_id):
     cur = conn.cursor()

@@ -1,18 +1,8 @@
 import os, csv, json, math
-from csv import writer
 from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from micro_services.client import *
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate import (
-    create_fcl_freight_rate_data, create_fcl_freight_rate
-)
-from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import (
-    extend_create_fcl_freight_rate_data,
-)
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
-from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_weight_limit import create_fcl_freight_rate_weight_limit
 
 from services.rate_sheet.interactions.upload_file import upload_media_file
@@ -311,7 +301,7 @@ def process_fcl_freight_local(params, converted_file, Update):
     last_line = get_last_line(params)
     rows = []
     params["rate_sheet_id"] = params["id"]
-    rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) )
+    rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
     rate_sheet = jsonable_encoder(rate_sheet)['__data__']
     created_by_id = rate_sheet['performed_by_id']
     procured_by_id = rate_sheet['procured_by_id']
@@ -365,6 +355,7 @@ def process_fcl_freight_local(params, converted_file, Update):
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, row, csv_writer
                     )
                     set_last_line(index-1, params)
+
                     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
                     set_processed_percent(percent, params)
 

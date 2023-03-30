@@ -6,7 +6,11 @@ from database.rails_db import get_organization,get_shipping_line,get_user
 def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'shipping_line_id'):
         shipping_line = get_shipping_line(id=str(freight_object.shipping_line_id))
-        freight_object.shipping_line = shipping_line[0]
+        try:
+            freight_object.shipping_line = shipping_line[0]
+        except:
+            freight_object.shipping_line_detail = shipping_line[0]
+            
     user_list =[]
     if hasattr(freight_object,'procured_by_id'):
         user_list.append(freight_object.procured_by_id)
@@ -16,6 +20,8 @@ def get_multiple_service_objects(freight_object):
         user_list.append(freight_object.performed_by_id)
     if hasattr(freight_object,'closed_by_id'):
         user_list.append(freight_object.closed_by_id)
+    if hasattr(freight_object,'completed_by_id'):
+        user_list.append(freight_object.completed_by_id)
 
     if user_list:
         user_data = get_user(user_list)
@@ -53,7 +59,7 @@ def get_multiple_service_objects(freight_object):
     #     freight_object.rate_sheet = rate_sheet_data
 
     if hasattr(freight_object,'source_id'):
-        spot_search_data = common.list_spot_searches({'filters':{'id':str(freight_object.source_id)}})
+        spot_search_data = spot_search.list_spot_searches({'filters':{'id':str(freight_object.source_id)}})
         if spot_search_data:
             spot_search_data = spot_search_data['list'][0]
             freight_object.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id','importer_exporter_id','importer_exporter','service_details']}

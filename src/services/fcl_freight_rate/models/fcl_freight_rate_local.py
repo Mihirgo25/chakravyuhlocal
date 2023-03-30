@@ -125,9 +125,9 @@ class FclFreightRateLocal(BaseModel):
         if invalid_charge_codes:
             raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
 
-    def update_special_attributes(self):
+    def update_special_attributes(self, new_free_days: dict = {}):
         self.update_line_item_messages()
-        self.update_free_days_special_attributes()
+        self.update_free_days_special_attributes(new_free_days)
 
     def update_line_item_messages(self):
 
@@ -139,10 +139,10 @@ class FclFreightRateLocal(BaseModel):
         self.line_items_info_messages = response['line_items_info_messages'] if response['line_items_info_messages'] else None
         self.is_line_items_info_messages_present = response['is_line_items_info_messages_present']
 
-    def update_free_days_special_attributes(self):
-        self.is_detention_slabs_missing = len(self.data['detention']['slabs']) == 0 if self.data and self.data.get('detention') else True
-        self.is_demurrage_slabs_missing = len(self.data['demurrage']['slabs']) == 0 if self.data and self.data.get('demurrage') else True
-        self.is_plugin_slabs_missing = len(self.data['plugin']['slabs']) == 0 if self.data and self.data.get('plugin') else True
+    def update_free_days_special_attributes(self, new_free_days: dict = {}):
+        self.is_detention_slabs_missing = len(new_free_days['detention']['slabs']) == 0 if new_free_days and new_free_days.get('detention') else True
+        self.is_demurrage_slabs_missing = len(new_free_days['demurrage']['slabs']) == 0 if new_free_days and new_free_days.get('demurrage') else True
+        self.is_plugin_slabs_missing = len(new_free_days['plugin']['slabs']) == 0 if new_free_days and new_free_days.get('plugin') else True
 
     def set_port(self):
         if self.port:

@@ -19,6 +19,7 @@ class FclFreightRateTask(BaseModel):
     commodity = CharField(index=True, null=True)
     completed_at = CharField(null=True)
     completed_by_id = CharField(null=True)
+    completed_by = BinaryJSONField(null=True)
     completion_data = JSONField(null=True)
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
