@@ -6,7 +6,7 @@ import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
 from micro_services.client import *
-from database.rails_db import get_service_provider ,get_user
+from database.rails_db import get_organization ,get_user
 
 from peewee import *
 from database.db_session import rd
@@ -29,7 +29,7 @@ def is_valid_uuid(val):
 
 
 def apply_direct_filters(query, filters):
-    query = get_filters(filters, query, RateSheet, "")
+    query = get_filters(filters, query, RateSheet)
     return query
 
 
@@ -155,7 +155,7 @@ def add_service_objects(data):
 
     if len(org_ids):
         objects_organizations['filters']['id'] = org_ids
-        list_organizations = get_service_provider(org_ids)
+        list_organizations = get_organization(id=org_ids)
         for org in list_organizations:
             objects_organizations_hash[org['id']] =org
 
@@ -167,12 +167,15 @@ def add_service_objects(data):
         list_user = get_user(objects_user)
         for user_obj in list_user:
             objects_user_hash[user_obj['id']] =user_obj
-
     for object in data:
-        object['service_provider'] = objects_organizations_hash.get(object.get('service_provider_id'))
-        object['procured_by'] = objects_user_hash.get(object.get('procured_by_id'))
-        object['sourced_by'] = objects_user_hash.get(object.get('sourced_by_id'))
-        object['performed_by'] = objects_user_hash.get(object.get('performed_by_id'))
+        service_provider = {}
+        for key, val in objects_organizations_hash.get(object.get('service_provider_id')).items():
+            if key in ['id', 'business_name', 'short_name', 'logo_url']:
+                service_provider[key] = val
+        object['service_provider'] = service_provider
+        object['procured_by'] = objects_user_hash.get(str(object.get('procured_by_id')))
+        object['sourced_by'] = objects_user_hash.get(str(object.get('sourced_by_id')))
+        object['performed_by'] = objects_user_hash.get(str(object.get('performed_by_id')))
     return data
 
 
@@ -213,12 +216,11 @@ def add_pagination_data(
     return response
 
 
-def list_rate_sheets(filters, stats_required, page, page_limit, sort_by, sort_type, pagination_data_required):
+def list_rate_sheets(filters, stats_required= None, page=1, page_limit=10, sort_by=None, sort_type=None, pagination_data_required=True):
     response = {"success": False, "status_code": 200}
-
     if filters is None:
         filters = {}
-    else:
+    if isinstance(filters, str):
         filters = json.loads(filters)
 
     query = RateSheet.select()
@@ -229,14 +231,15 @@ def list_rate_sheets(filters, stats_required, page, page_limit, sort_by, sort_ty
             query, indirect_filters
         )
 
-
-    query, total_count = apply_pagination(query, page, page_limit)
+    if pagination_data_required:
+        query, total_count = apply_pagination(query, page, page_limit)
 
     final_data = get_final_data(query)
 
-    response = add_pagination_data(
-        response, page, total_count, page_limit, final_data, pagination_data_required
-    )
+    if pagination_data_required:
+        response = add_pagination_data(
+            response, page, total_count, page_limit, final_data, pagination_data_required
+        )
 
     return response
 

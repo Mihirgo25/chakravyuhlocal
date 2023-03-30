@@ -39,9 +39,11 @@ def  update_rate_sheet(params: UpdateRateSheet):
                 converted_file['cogo_entity_id'] = str(rate_sheet.cogo_entity_id)
                 converted_file['rate_sheet_id'] = str(rate_sheet.id)
                 converted_file['file_index'] = index+1
+                converted_file['rates_count'] = 0
     params['status'] = 'converted'
-    if not rate_sheet.save():
-        return
+    rate_sheet.converted_files = params.get('converted_files')
+    rate_sheet.status = params['status']
+    rate_sheet.save()
     create_audit(get_audit_params(params))
     send_rate_sheet_notifications(params)
     rate_sheet = jsonable_encoder(rate_sheet)['__data__']
@@ -49,8 +51,8 @@ def  update_rate_sheet(params: UpdateRateSheet):
     for key in params.keys():
         if key not in ['id', 'performed_by_id', 'procured_by_id','sourced_by_id']:
             rate_sheet[key] = params[key]
-    # validate_and_process_rate_sheet_converted_file_delay(rate_sheet)
-    validate_and_process_rate_sheet_converted_file(rate_sheet)
+    validate_and_process_rate_sheet_converted_file_delay.apply_async(kwargs={'request':rate_sheet},queue='low')
+    # validate_and_process_rate_sheet_converted_file(rate_sheet)
     return {
       "id": rate_sheet['id']
     }

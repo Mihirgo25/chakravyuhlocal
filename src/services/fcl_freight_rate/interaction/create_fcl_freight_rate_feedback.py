@@ -4,7 +4,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from datetime import datetime
 from celery_worker import send_create_notifications_to_supply_agents_function
-from libs.logger import logger
 from celery_worker import update_multiple_service_objects
 
 
@@ -60,9 +59,7 @@ def execute_transaction_code(request):
     try:
         if feedback.validate_before_save():
             feedback.save()
-
     except Exception as e:
-        logger.error(e, exc_info=True)
         return e
 
     create_audit(request, feedback)

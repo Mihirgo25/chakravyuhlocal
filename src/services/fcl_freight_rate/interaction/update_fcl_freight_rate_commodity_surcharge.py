@@ -41,7 +41,7 @@ def execute_transaction_code(request):
             setattr(fcl_freight_rate_commodity_surcharge, k, v)
 
     if not fcl_freight_rate_commodity_surcharge.save():
-        raise HTTPException(status_code=422, detail="Commodity Surcharge not updated")
+        raise HTTPException(status_code=500, detail="Commodity Surcharge not updated")
 
     create_audit(request)
 

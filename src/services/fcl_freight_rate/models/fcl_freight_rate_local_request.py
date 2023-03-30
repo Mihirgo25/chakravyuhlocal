@@ -27,7 +27,6 @@ class FclFreightRateLocalRequest(BaseModel):
     continent_id = UUIDField(null=True)
     country_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(index=True, default=datetime.datetime.now)
-    destination_port = BinaryJSONField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     main_port_id = UUIDField(null=True)
     performed_by_id = UUIDField(index=True, null=True)
@@ -44,7 +43,6 @@ class FclFreightRateLocalRequest(BaseModel):
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_local_requests_serial_id_seq'::regclass)")])
     shipping_line_id = UUIDField(null=True)
-    shipping_line = BinaryJSONField(null=True)
     shipping_line_detail = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(index=True, null=True)
@@ -73,7 +71,7 @@ class FclFreightRateLocalRequest(BaseModel):
 
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = common.list_spot_searches({'filters': {'id': str(self.source_id)}})['list']
+            spot_search_data = spot_search.list_spot_searches({'filters': {'id': str(self.source_id)}})['list']
             if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
                 self.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
                 return True
@@ -87,7 +85,7 @@ class FclFreightRateLocalRequest(BaseModel):
             return False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = get_service_provider(self.performed_by_id)
+        performed_by_org_data = get_organization(id=self.performed_by_id)
         if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
             return True
         return False
@@ -109,7 +107,7 @@ class FclFreightRateLocalRequest(BaseModel):
         if self.preferred_shipping_line_ids:
             preferred_shipping_lines = []
             for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(shipping_line_id)
+                shipping_line_data = get_shipping_line(id=shipping_line_id)
                 if len(shipping_line_data) == 0:
                     raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
                 preferred_shipping_lines.append(shipping_line_data[0])
@@ -138,7 +136,7 @@ class FclFreightRateLocalRequest(BaseModel):
         location_pair_data = maps.list_locations({'filters':{ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] }})['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
-            importer_exporter_id = common.list_spot_searches({'filters': {'id': str(self.source_id)}})['list'][0]['detail']['importer_exporter_id']
+            importer_exporter_id = spot_search.list_spot_searches({'filters': {'id': str(self.source_id)}})['list'][0]['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
         data = {

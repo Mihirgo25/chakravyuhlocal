@@ -8,7 +8,7 @@ from math import ceil
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from peewee import fn
 from datetime import datetime, timedelta
-import concurrent.futures, json
+import json
 from peewee import SQL 
 
 possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
@@ -24,13 +24,6 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
         query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
         query = apply_indirect_filters(query, filters)
 
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-    #     futures = [executor.submit(eval(method_name), query, filters, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
-    #     results = {}
-    #     for future in futures:
-    #         result = future.result()
-    #         results.update(result)
-        
     data = get_data(query, filters)
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
 
@@ -45,7 +38,7 @@ def get_query(page, page_limit, sort_by, sort_type):
   
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
-        return {'get_pagination_data': {}}
+        return {}
 
     params = {
       'page': page,
@@ -53,7 +46,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
       'total_count': query.count(),
       'page_limit': page_limit
     }
-    return {'get_pagination_data' : params}
+    return params
 
 def get_data(query, filters):
     new_data = []
@@ -91,7 +84,7 @@ def get_data(query, filters):
         shipping_line_ids.append(object['shipping_line_id'])
         new_data.append(object)
 
-    if 'status' in filters and filters['status'] == 'completed':
+    if filters and 'status' in filters and filters['status'] == 'completed':
         fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
 
         for object in new_data:
@@ -157,7 +150,7 @@ def get_data(query, filters):
             new_data[i]['existing_system_rate'] = {}
             new_data[i]['existing_system_rate']['updated_at'] = None
             
-    return {'get_data': new_data }
+    return new_data
 
 
 def apply_indirect_filters(query, filters):
@@ -168,11 +161,11 @@ def apply_indirect_filters(query, filters):
     return query  
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
     return query
 
 def apply_created_at_less_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
     return query
 
 def get_stats(filters, stats_required):

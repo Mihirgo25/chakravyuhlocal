@@ -31,7 +31,7 @@ def create_fcl_freight_rate_local(request):
           return execute_transaction_code(request)
         except Exception as e:
             transaction.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+            return e
 
 def execute_transaction_code(request):
     if not request.get('source'):
@@ -53,8 +53,8 @@ def execute_transaction_code(request):
     fcl_freight_local = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id == request.get('port_id'),
         FclFreightRateLocal.trade_type ==request.get('trade_type'),
-        ((FclFreightRateLocal.main_port_id == request.get('main_port_id')) if request.get('main_port_id') else (FclFreightRateLocal.id.is_null(False))),
-        FclFreightRateLocal.container_size==request.get('container_size'),
+        FclFreightRateLocal.main_port_id == request.get('main_port_id'),
+        FclFreightRateLocal.container_size== request.get('container_size'),
         FclFreightRateLocal.container_type==request.get('container_type'),
         FclFreightRateLocal.commodity == request.get('commodity'),
         FclFreightRateLocal.shipping_line_id==request.get('shipping_line_id'),
@@ -65,28 +65,41 @@ def execute_transaction_code(request):
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
-    fcl_freight_local.data = request.get('data')
+
+    new_free_days = {}
+    
+    if 'detention' in request['data']:
+        new_free_days['detention'] = {'slabs': [] } | (request['data']['detention'] or {})
+    
+    if 'demurrage' in request['data']:
+        new_free_days['demurrage'] = {'slabs': [] } | (request['data']['demurrage'] or {})
+    
+    if 'plugin' in request['data']:
+        new_free_days['plugin'] = {'slabs': [] } | (request['data']['demurrage'] or {})
 
     if request['data'].get('line_items'):
-        fcl_freight_local.data = fcl_freight_local.data | {'line_items': request['data']['line_items']}
-
+        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data']['line_items'] }
+    
     fcl_freight_local.validate_before_save()
     
-    local_updations(fcl_freight_local, request)
+    fcl_freight_local.update_special_attributes(new_free_days)
+    fcl_freight_local.rate_not_available_entry = False
+    # fcl_freight_local.update_freight_objects()
 
     try:
       fcl_freight_local.save()
     except Exception as e:
-      raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
+      raise HTTPException(status_code=403, detail=str(e))
     
-
+    create_free_days(fcl_freight_local, request)
+    
     create_audit(request, fcl_freight_local.id)
     
     fcl_freight_local_data_updation.apply_async(kwargs={"local_object":fcl_freight_local,"request":request},queue='low')
 
-    return {"id": fcl_freight_local.id}
+    return {"id": fcl_freight_local.id }
 
-def local_updations(fcl_freight_local,request):
+def create_free_days(fcl_freight_local,request):
     if request['data'].get('detention'):
         detention_obj = {}
         detention_obj['location_id'] = request['port_id']
@@ -127,9 +140,6 @@ def local_updations(fcl_freight_local,request):
         plugin = create_fcl_freight_rate_free_day(plugin_obj)
         fcl_freight_local.plugin_id = plugin['id']
 
-
-    fcl_freight_local.update_special_attributes()
-    fcl_freight_local.update_freight_objects()
     return True
 
 

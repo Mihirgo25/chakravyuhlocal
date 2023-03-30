@@ -74,7 +74,7 @@ def execute_transaction_code(request):
   try:
     freight_object.save()
   except:
-      raise HTTPException(status_code=499, detail='rate did not update')
+      raise HTTPException(status_code=500, detail='rate did not update')
 
   freight_object.update_special_attributes()
 
