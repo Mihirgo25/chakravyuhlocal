@@ -46,20 +46,26 @@ def execute_transaction_code(request):
   for k,v in request.items():
     if k in ['weight_limit']:
       setattr(freight_object, k, v)
+  
+  new_free_days = {}
 
-  origin_local = {k:v for k, v in request.get("origin_local", {}).items() if k not in ["detention", "demurrage"]}
-  destination_local = {k:v for k, v in request.get("destination_local", {}).items() if k not in ["detention", "demurrage"]}
+  new_free_days['origin_detention'] = request.get("origin_local", {}).get("detention", {})
+  new_free_days['origin_demurrage'] = request.get("origin_local", {}).get("demurrage", {})
+  new_free_days['destination_detention'] = request.get("destination_local", {}).get("detention", {})
+  new_free_days['destination_demurrage'] = request.get("destination_local", {}).get("demurrage", {})
 
-  if request.get("origin_local"):
-    freight_object.origin_local = origin_local
-
-  if request.get("destination_local"):
-    freight_object.destination_local = destination_local
-
-  freight_object.origin_detention = request.get("origin_local", {}).get("detention",{})
-  freight_object.origin_demurrage = request.get("origin_local", {}).get("demurrage",{})
-  freight_object.destination_detention = request.get("destination_local", {}).get("detention",{})
-  freight_object.destination_demurrage = request.get("destination_local", {}).get("demurrage",{})
+  if request.get("origin_local") and "line_items" in request["origin_local"]:
+    freight_object.origin_local = {
+        "line_items": request["origin_local"]["line_items"]
+    }
+  else:
+    freight_object.origin_local = { "line_items": [] }
+  if request.get("destination_local") and "line_items" in request["destination_local"]:
+    freight_object.destination_local = {
+        "line_items": request["destination_local"]["line_items"]
+    }
+  else:
+    freight_object.destination_local = { "line_items": [] }
 
   if request.get('validity_start'):
     freight_object.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
@@ -75,6 +81,8 @@ def execute_transaction_code(request):
     freight_object.save()
   except:
       raise HTTPException(status_code=500, detail='rate did not update')
+  
+  freight_object.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
   freight_object.update_special_attributes()
 

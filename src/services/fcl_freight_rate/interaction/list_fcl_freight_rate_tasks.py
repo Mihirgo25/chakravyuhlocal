@@ -1,6 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
+from fastapi.encoders import jsonable_encoder
 from configs.fcl_freight_rate_constants import *
 from playhouse.shortcuts import model_to_dict
 from configs.fcl_freight_rate_constants import EXPECTED_TAT
@@ -21,8 +23,10 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
         if type(filters) != dict:
             filters = json.loads(filters)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateTask)
+        query = apply_indirect_filters(query, indirect_filters)
 
     data = get_data(query, filters)
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
@@ -51,7 +55,8 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
 def get_data(query, filters):
     new_data = []
     port_ids, main_port_ids, container_sizes, container_types, commodities, trade_types, shipping_line_ids = [],[], [],[], [],[], []
-    for object in query.dicts():
+    data_list = list(query.dicts())
+    for object in jsonable_encoder(data_list):
         created_at_date = object['created_at']
         next_date = object['created_at'] + timedelta(days = 1)
 
@@ -76,7 +81,8 @@ def get_data(query, filters):
         del object['job_data']
 
         port_ids.append(object['port_id'])
-        main_port_ids.append(object['main_port_id']), 
+        if object['main_port_id']:
+            main_port_ids.append(object['main_port_id']), 
         container_sizes.append(object['container_size']), 
         container_types.append(object['container_type']), 
         commodities.append(object['commodity']),
@@ -115,7 +121,7 @@ def get_data(query, filters):
     
     existing_system_query = FclFreightRateLocal.select().where(
       FclFreightRateLocal.port_id.in_(list(set(port_ids))),
-      FclFreightRateLocal.main_port_id.in_(list(set(main_port_ids))),
+      (FclFreightRateLocal.main_port_id.in_(list(set(main_port_ids))) | FclFreightRateLocal.main_port_id.is_null(True)),
       FclFreightRateLocal.container_size.in_(list(set(container_sizes))),
       FclFreightRateLocal.container_type.in_(list(set(container_types))),
       FclFreightRateLocal.commodity.in_(list(set(commodities))),
@@ -180,8 +186,10 @@ def get_stats(filters, stats_required):
         if 'status' in filters:
             del filters['status']
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateTask)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateTask)
+        query = apply_indirect_filters(query, indirect_filters)
     
     query = query.select(fn.COUNT(SQL('*')).alias('count_all'), FclFreightRateTask.status.alias('fcl_freight_task_status'), FclFreightRateTask.trade_type.alias('fcl_freight_task_trade_type')).group_by(FclFreightRateTask.status, FclFreightRateTask.trade_type)
     query_result = {}
