@@ -3,6 +3,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.global_constants import HAZ_CLASSES
 from operator import attrgetter
 from configs.definitions import FCL_FREIGHT_CHARGES
+
+
 def get_fcl_freight_rate(request):
   details = {}
 
@@ -41,9 +43,14 @@ def get_fcl_freight_rate(request):
     origin_local_object_params['commodity'] = None
     destination_local_object_params['commodity'] = None
 
-
+  if not fcl_object:
+    fcl_object = FclFreightRate()
+    for key in list(request.keys()):
+      setattr(fcl_object, key, request[key])
+    fcl_object.set_locations()
+  
   return details | ({
-    'freight_charge_codes': (fcl_object.possible_charge_codes()) if fcl_object else FCL_FREIGHT_CHARGES,
+    'freight_charge_codes': (fcl_object.possible_charge_codes()),
     'origin_local_charge_codes': (FclFreightRateLocal(**origin_local_object_params).possible_charge_codes()),
     'destination_local_charge_codes': (FclFreightRateLocal(**destination_local_object_params).possible_charge_codes())
   })
