@@ -2,7 +2,7 @@ from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filter
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
 from datetime import datetime
 from math import ceil
-import concurrent.futures, json
+import json
 from playhouse.shortcuts import model_to_dict
 
 possible_direct_filters = ['origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'container_size', 'container_type', 'code', 'origin_location_id', 'destination_location_id']
@@ -15,13 +15,6 @@ def list_fcl_freight_rate_seasonal_surcharges(filters = {}, page_limit = 10, pag
         filters = json.loads(filters)
 
       query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateSeasonalSurcharge)
-    
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-    #     futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
-    #     results = {}
-    #     for future in futures:
-    #         result = future.result()
-    #         results.update(result)
     
     data = get_data(query)
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
@@ -52,12 +45,12 @@ def get_data(query):
             FclFreightRateSeasonalSurcharge.service_provider
     )
     data = [model_to_dict(item) for item in data.execute() if item.validity_end < datetime.now().date()]
-    return {'get_data' : data}
+    return data
 
      
 def get_pagination_data(data, page, page_limit, pagination_data_required):
   if not pagination_data_required:
-    return {'get_pagination_data' : {}}
+    return {}
 
   pagination_data = {
     'page': page,
@@ -66,7 +59,7 @@ def get_pagination_data(data, page, page_limit, pagination_data_required):
     'page_limit': page_limit
     }
   
-  return {'get_pagination_data' : pagination_data}
+  return pagination_data
 
 def apply_indirect_filters(query, filters):
   for key in filters:

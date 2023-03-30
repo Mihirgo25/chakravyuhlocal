@@ -58,9 +58,9 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_location_ids(self):
 
-        location_list = maps.list_locations({"filters": {'id': str(self.location_id)}})['list']
-        if (len(location_list) > 0) and location_list[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
-            location_data = location_list[0]
+        location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})['list']
+        if (len(location_data) != 0) and location_data[0].get('type') in ['seaport', 'country', 'trade', 'continent']:
+            location_data = location_data[0]
             self.location = location_data
             self.port_id = location_data.get('seaport_id', None)
             self.country_id = location_data.get('country_id', None)

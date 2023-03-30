@@ -5,12 +5,6 @@ from micro_services.client import organization
 from datetime import datetime
 
 def get_fcl_freight_rate_visibility(request):
-    if request['from_date']:
-        request['from_date'] = datetime.strptime(request['from_date'], '%Y-%m-%d')
-
-    if request['to_date']:
-        request['to_date'] = datetime.strptime(request['to_date'], '%Y-%m-%d')
-
     response_object = {'reason': '', 'is_rate_available': False, 'is_visible': False }
 
     org_details = get_organization(id=request['service_provider_id'])[0]

@@ -94,11 +94,11 @@ def apply_service_provider_id_filter(query, filters):
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at >= datetime.strptime(filters['validity_start_greater_than'],'%Y-%m-%d'))
+    query = query.where(FclFreightRateFeedback.created_at >= filters['validity_start_greater_than'])
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclFreightRate.created_at <= datetime.strptime(filters['validity_end_less_than'],'%Y-%m-%d'))
+    query = query.where(FclFreightRate.created_at <= filters['validity_end_less_than'])
     return query
 
 def apply_origin_port_id_filter(query, filters):

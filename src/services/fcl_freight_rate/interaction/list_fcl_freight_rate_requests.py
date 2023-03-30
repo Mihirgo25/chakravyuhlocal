@@ -3,7 +3,6 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import *
 from math import ceil
 from peewee import fn, SQL
-from datetime import datetime
 import concurrent.futures, json
 from fastapi.encoders import jsonable_encoder
 from libs.get_filters import get_filters
@@ -44,10 +43,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclFreightRateRequest.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d'))
+    return query.where(FclFreightRateRequest.created_at >= filters['validity_start_greater_than'])
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclFreightRateRequest.created_at <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d'))
+    return query.where(FclFreightRateRequest.created_at <= filters['validity_end_less_than'])
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])

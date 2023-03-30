@@ -26,7 +26,7 @@ def execute_transaction_code(request):
 
         try:
             obj.save()
-        except Exception as e:
+        except:
             raise HTTPException(status_code=500, detail="Freight rate request deletion failed")
 
         create_audit(request, obj.id)

@@ -16,7 +16,7 @@ def execute_transaction_code(request):
     object = find_objects(request)
 
     if not object:
-      raise HTTPException(status_code=499, detail="Freight rate free day request id not found")
+      raise HTTPException(status_code=404, detail="Freight rate free day request id not found")
 
     object.status = 'inactive'
     object.closed_by_id = request['performed_by_id']
@@ -25,8 +25,8 @@ def execute_transaction_code(request):
 
     try:
         object.save()
-    except Exception as e:
-        raise HTTPException(status_code=499, detail="Freight rate free day request deletion failed")
+    except:
+        raise HTTPException(status_code=500, detail="Freight rate free day request deletion failed")
 
     create_audit(request, object.id)
     send_closed_notifications_to_sales_agent_free_day_request.apply_async(kwargs={'object':object},queue='low')
@@ -36,7 +36,7 @@ def execute_transaction_code(request):
 
 def find_objects(request):
     try:
-        return FclFreightRateFreeDayRequest.select().where(FclFreightRateFreeDayRequest.id << request['fcl_freight_rate_free_day_request_id'] & (FclFreightRateFreeDayRequest.status == 'active'))
+        return FclFreightRateFreeDayRequest.select().where(FclFreightRateFreeDayRequest.id << request['fcl_freight_rate_free_day_request_id'], FclFreightRateFreeDayRequest.status == 'active').execute()
     except:
         return None
 

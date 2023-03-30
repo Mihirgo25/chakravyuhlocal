@@ -8,17 +8,17 @@ def update_fcl_freight_rate_extension_rule_set_data(request):
     db.execute_sql(query)
     with db.atomic() as transaction:
         try:
-            execute_transaction_code(request)
+            return execute_transaction_code(request)
         except Exception as e:
             transaction.rollback()
             raise e
 
 def execute_transaction_code(request):
-    
     fcl_rule_set = FclFreightRateExtensionRuleSets.get_by_id(request['id'])
     get_update_params = {key:value for key,value in request.items() if key not in ['id','performed_by_id']}
     FclFreightRateExtensionRuleSets.update(get_update_params).where(FclFreightRateExtensionRuleSets.id == fcl_rule_set).execute()
     create_audit(get_update_params, request['id'], request['performed_by_id'])
+    return {'id' : fcl_rule_set.id}
 
 def create_audit(get_update_params, fcl_freight_rate_extension_id, performed_by_id):
     FclServiceAudit.create(

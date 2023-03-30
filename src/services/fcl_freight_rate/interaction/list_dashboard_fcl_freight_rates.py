@@ -10,13 +10,14 @@ def list_dashboard_fcl_freight_rates():
 
     with concurrent.futures.ThreadPoolExecutor(max_workers = len(port_pairs)) as executor:
         futures = [executor.submit(get_rate, port_pair, fcl_service_provider_ids, air_service_provider_ids) for port_pair in port_pairs if port_pair['service'] == 'fcl_freight']
-        lists = {}
+        lists = []
         for future in futures:
             result = future.result()
-            lists = lists | (result)
-        
+            lists.append(result)
     
-    for rate in list(filter(None,lists)):
+    lists = list(filter(None, lists))
+        
+    for rate in lists:
         for validity in rate['validities']:
             try:
                 validity['price'] = validity['price'] * 1.2 
@@ -87,5 +88,9 @@ def get_rate(port_pair, fcl_service_provider_ids, air_service_provider_ids):
     }
 
     data = data['filters'] | (port_pair)
-    response = eval("list_{}_rates(data)".format(port_pair['service']))['list'][0]
+    response = eval("list_{}_rates(filters = data)".format(port_pair['service']))['list']
+    if response:
+        response = response[0]
+    else:
+        response = None
     return response

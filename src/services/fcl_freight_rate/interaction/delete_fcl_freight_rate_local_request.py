@@ -16,7 +16,7 @@ def execute_transaction_code(request):
     objects = find_objects(request)
 
     if not objects:
-      raise HTTPException(status_code=499, detail="Freight rate local request id not found")
+      raise HTTPException(status_code=404, detail="Freight rate local request id not found")
 
     for obj in objects:
         obj.status = 'inactive'
@@ -26,8 +26,8 @@ def execute_transaction_code(request):
 
         try:
             obj.save()
-        except Exception as e:
-            raise HTTPException(status_code=499, detail="Freight rate local deletion failed")
+        except:
+            raise HTTPException(status_code=500, detail="Freight rate local deletion failed")
 
         create_audit(request, obj.id)
         send_closed_notifications_to_sales_agent_local_request.apply_async(kwargs={'object':obj},queue='low')
@@ -38,7 +38,7 @@ def execute_transaction_code(request):
 
 def find_objects(request):
     try:
-        return FclFreightRateLocalRequest.select().where(FclFreightRateLocalRequest.id << request['fcl_freight_rate_local_request_ids'] & (FclFreightRateLocalRequest.status == 'active'))
+        return FclFreightRateLocalRequest.select().where(FclFreightRateLocalRequest.id << request['fcl_freight_rate_local_request_ids'], FclFreightRateLocalRequest.status == 'active').execute()
     except:
         return None
 
