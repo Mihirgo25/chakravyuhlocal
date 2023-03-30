@@ -98,7 +98,7 @@ class FclFreightRateLocal(BaseModel):
         return True
 
     def validate_commodity(self):
-        if self.container_type and self.commodity not in LOCAL_CONTAINER_COMMODITY_MAPPINGS:
+        if self.container_type and self.commodity not in LOCAL_CONTAINER_COMMODITY_MAPPINGS[self.container_type]:
             return False
         return True
 
@@ -119,9 +119,9 @@ class FclFreightRateLocal(BaseModel):
 
         if not self.local_data_instance.validate_duplicate_charge_codes():
             raise HTTPException(status_code=499, detail='duplicate line items present')
-        
+
         invalid_charge_codes = self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
-        
+
         if invalid_charge_codes:
             raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
 
@@ -169,7 +169,7 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = get_shipping_line(self.shipping_line_id)
+        shipping_line = get_shipping_line(id=self.shipping_line_id)
         if len(shipping_line) != 0:
             shipping_line[0]['id']=str(shipping_line[0]['id'])
             self.shipping_line = {key:value for key,value in shipping_line[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}

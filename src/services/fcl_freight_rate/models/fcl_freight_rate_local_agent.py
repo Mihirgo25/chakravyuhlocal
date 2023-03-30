@@ -27,7 +27,7 @@ class FclFreightRateLocalAgent(BaseModel):
     status = CharField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateLocalAgent, self).save(*args, **kwargs)
@@ -36,7 +36,7 @@ class FclFreightRateLocalAgent(BaseModel):
         table_name = 'fcl_freight_rate_local_agents'
 
     def validate_service_provider(self):
-        service_provider_data = get_service_provider(str(self.service_provider_id))
+        service_provider_data = get_organization(id=str(self.service_provider_id))
         if len(service_provider_data) > 0 :
             service_provider_data = service_provider_data[0]
             service_provider_data['id'] = str(service_provider_data['id'])
@@ -46,7 +46,7 @@ class FclFreightRateLocalAgent(BaseModel):
         else:
             raise HTTPException(status_code=422, detail="Service Provider Id Invalid")
         return True
-    
+
     def set_location_ids_and_type(self):
         location_data = maps.list_locations({'filters':{'id': str(self.location_id)}})
         if 'list' in location_data and len(location_data['list']) > 0:
@@ -61,12 +61,12 @@ class FclFreightRateLocalAgent(BaseModel):
         else:
             raise HTTPException(status_code=422, detail="location Id Invalid")
 
-    
+
     def validate_trade_type(self):
       if not (self.trade_type and self.trade_type in TRADE_TYPES):
             raise HTTPException(status_code=422, detail="Invalid trade_type")
 
-    
+
     def validate_status(self):
 
         if self.status not in STATUSES:
@@ -74,7 +74,7 @@ class FclFreightRateLocalAgent(BaseModel):
         return True
 
 
-    
+
     def validate_uniqueness(self):
         freight_weight_limit_cnt = FclFreightRateLocalAgent.select().where(
             FclFreightRateLocalAgent.location_id == self.location_id,
@@ -89,7 +89,7 @@ class FclFreightRateLocalAgent(BaseModel):
         if freight_weight_limit_cnt != 0:
             raise HTTPException(status_code=422, detail="Location_id and trade_type are not unique")
 
-    
+
     def validate(self):
         self.validate_service_provider()
         self.validate_trade_type()

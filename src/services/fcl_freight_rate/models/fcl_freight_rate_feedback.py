@@ -87,7 +87,7 @@ class FclFreightRateFeedback(BaseModel):
         return False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = get_service_provider(self.performed_by_org_id)
+        performed_by_org_data = get_organization(id=self.performed_by_org_id)
         if len(performed_by_org_data) > 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
             return True
         else:
@@ -122,7 +122,7 @@ class FclFreightRateFeedback(BaseModel):
         if self.preferred_shipping_line_ids:
             preferred_shipping_lines = []
             for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(shipping_line_id)
+                shipping_line_data = get_shipping_line(id=shipping_line_id)
                 if len(shipping_line_data) == 0:
                     return False
                 preferred_shipping_lines.append(shipping_line_data[0])
