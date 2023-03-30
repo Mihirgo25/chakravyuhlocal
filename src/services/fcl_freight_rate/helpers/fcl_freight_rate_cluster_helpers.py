@@ -91,7 +91,6 @@ def get_required_mandatory_codes(cluster_objects):
 
         for code, config in fcl_freight_charges_dict.items():
             try:
-                print(str(config['condition']))
                 condition_value = eval(str(config['condition']))
                 if 'mandatory' in config['tags']:
                     mandatory_codes.append(code)
