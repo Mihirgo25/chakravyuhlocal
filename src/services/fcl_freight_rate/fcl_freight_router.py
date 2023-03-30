@@ -1196,16 +1196,15 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay, 
 
 @fcl_freight_router.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
-    validity_start: str,
-    validity_end: str,
+    validity_start: datetime,
+    validity_end: datetime,
     stats_types: Union[List[str],None]= Query(None),
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    validity_start = datetime.strptime(validity_start, '%Y-%m-%d').date().isoformat()
-    validity_end = datetime.strptime(validity_end, '%Y-%m-%d').date().isoformat()
+
     request = {
         'validity_start':validity_start,
         'validity_end':validity_end,

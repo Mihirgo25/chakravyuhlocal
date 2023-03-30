@@ -45,7 +45,7 @@ def get_query(page, page_limit, sort_by, sort_type):
   
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
-        return {'get_pagination_data': {}}
+        return {}
 
     params = {
       'page': page,
@@ -53,7 +53,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
       'total_count': query.count(),
       'page_limit': page_limit
     }
-    return {'get_pagination_data' : params}
+    return params
 
 def get_data(query, filters):
     new_data = []
@@ -157,7 +157,7 @@ def get_data(query, filters):
             new_data[i]['existing_system_rate'] = {}
             new_data[i]['existing_system_rate']['updated_at'] = None
             
-    return {'get_data': new_data }
+    return new_data 
 
 
 def apply_indirect_filters(query, filters):

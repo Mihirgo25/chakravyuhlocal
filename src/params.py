@@ -13,7 +13,7 @@ class UpdateLineItem(BaseModel):
   unit: str
   price: float
   currency: str
-  remarks: list[str] = []
+  remarks: list[str] = None
 
 class FreeDay(BaseModel):
   free_limit: float
