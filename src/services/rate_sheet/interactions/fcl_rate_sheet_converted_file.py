@@ -223,6 +223,7 @@ def process_fcl_freight_local(params, converted_file, update):
     index = -1
     file_path = get_original_file_path(converted_file)
     edit_file = open(get_file_path(converted_file), 'w',newline="")
+    last_row = []
     with open(file_path, encoding='iso-8859-1') as file:
         csv_writer = csv.writer(edit_file)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
@@ -234,19 +235,20 @@ def process_fcl_freight_local(params, converted_file, update):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            list_opt = list(row.values())
-            csv_writer.writerow(list_opt)
-            edit_file.flush()
             present_field = ['trade_type', 'port', 'container_type', 'container_size', 'shipping_line', 'code', 'unit', 'price', 'currency']
             blank_field = ['lower_limit', 'upper_limit']
             if valid_hash(row, present_field, blank_field):
                 if rows:
+                    last_row = list(row.values())
                     create_fcl_freight_local_rate(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
                     set_last_line(index, params)
                     # percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
                     # set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
                 rows = [row]
             elif rows and (
                         (valid_hash(
@@ -261,19 +263,25 @@ def process_fcl_freight_local(params, converted_file, update):
                         )
                     )):
                 rows.append(row)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
             else:
                 if rows:
+                    last_row = list(row.values())
                     create_fcl_freight_local_rate(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
                     set_last_line(index-1, params)
-
                     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
                     set_processed_percent(percent, params)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
+                rows = []
+            edit_file.flush()
 
     if not rows:
         return
-    create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer)
+    create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     set_last_line(total_lines, params)
     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
@@ -293,7 +301,7 @@ def process_fcl_freight_local(params, converted_file, update):
         return
 
 def create_fcl_freight_local_rate(
-    params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, writer
+    params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, writer, last_row
 ):
     from celery_worker import celery_create_fcl_freight_rate_local
     keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity']
@@ -327,7 +335,7 @@ def create_fcl_freight_local_rate(
     object["service_provider_id"] = params['service_provider_id']
     object["procured_by_id"] = procured_by_id
     object["sourced_by_id"] = sourced_by_id
-    validation = write_fcl_freight_local_object(request_params, writer, params, converted_file)
+    validation = write_fcl_freight_local_object(request_params, writer, params, converted_file, last_row)
     if validation.get('valid'):
         celery_create_fcl_freight_rate_local.apply_async(kwargs={'request':request_params},queue='low')
     else:
@@ -336,15 +344,19 @@ def create_fcl_freight_local_rate(
 
 
 
-def write_fcl_freight_local_object(rows, csv, params, converted_file):
+def write_fcl_freight_local_object(rows, csv, params, converted_file, last_row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity.get("valid"):
+            csv.writerow(last_row)
             converted_file['valid_rates_count'] = int(converted_file['valid_rates_count'])+1
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
             list_opt = error
             csv.writerow(list_opt)
+            csv.writerow([])
+            csv.writerow(last_row)
+
         except:
             print('no csv')
     converted_file['rates_count'] = int(converted_file['rates_count'])+1
@@ -768,15 +780,18 @@ def create_fcl_freight_rate_weight_limits(params, converted_file, rows, created_
     object['sourced_by_id'] = sourced_by_id
     create_fcl_freight_rate_weight_limit(object)
 
-def write_fcl_freight_freight_object(rows, csv, params,  converted_file):
+def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity["valid"]:
+        csv.writerow(last_row)
         converted_file['valid_rates_count'] = int(converted_file['valid_rates_count'])+1
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
             list_opt = error
             csv.writerow(list_opt)
+            csv.writerow([])
+            csv.writerow(last_row)
         except:
             print('no csv')
     converted_file['rates_count'] = int(converted_file['rates_count'])+1
@@ -801,7 +816,8 @@ def process_fcl_freight_freight(params, converted_file, update):
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
     file_path = get_original_file_path(converted_file)
-    edit_file = open(get_file_path(converted_file), 'w',newline="")
+    edit_file = open(get_file_path(converted_file), 'w')
+    last_row = []
     with open(file_path, encoding='iso-8859-1') as file:
         csv_writer = csv.writer(edit_file)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
@@ -813,19 +829,20 @@ def process_fcl_freight_freight(params, converted_file, update):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            list_opt = list(row.values())
-            csv_writer.writerow(list_opt)
-            edit_file.flush()
             present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
             blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
             if valid_hash(row, present_field, blank_field):
                 if rows:
+                    last_row = list(row.values())
                     create_fcl_freight_freight_rate(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
                     set_last_line(index-1, params)
                     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
                     set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
                 rows = [row]
             elif (
                 valid_hash(
@@ -1038,18 +1055,24 @@ def process_fcl_freight_freight(params, converted_file, update):
                 )
             ):
                 rows.append(row)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
             else:
                 if rows:
+                    last_row = list(row.values())
                     create_fcl_freight_freight_rate(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
                     set_last_line(index-1, params)
                     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
                     set_processed_percent(percent, params)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
                 rows = []
+            edit_file.flush()
     if not rows:
         return
-    create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer)
+    create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
     set_last_line(total_lines, params)
     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
     converted_file['percent'] = percent
@@ -1070,7 +1093,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         return
 
 def create_fcl_freight_freight_rate(
-    params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, csv_writer
+    params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
 ):
     from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']
@@ -1147,7 +1170,7 @@ def create_fcl_freight_freight_rate(
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
-    validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file)
+    validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, last_row)
     if validation.get('valid'):
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':object},queue='low')
         if rows[0].get('extend_rates'):
