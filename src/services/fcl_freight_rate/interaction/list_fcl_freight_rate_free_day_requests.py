@@ -1,7 +1,9 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from playhouse.shortcuts import model_to_dict
 from math import ceil
+from fastapi.encoders import jsonable_encoder
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 import concurrent.futures, json
 from datetime import datetime
 from peewee import fn, SQL
@@ -17,10 +19,12 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
         if type(filters) != dict:
             filters = json.loads(filters)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFreeDayRequest)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateFreeDayRequest)
+        query = apply_indirect_filters(query, indirect_filters)
 
-    data = get_data(query)
+    data = jsonable_encoder(list(query.dicts()))
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     pagination_data = get_pagination_data(data, page, page_limit)
@@ -67,8 +71,10 @@ def get_stats(filters, is_stats_required, performed_by_id):
         if 'status' in filters:
             del filters['status']
     
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFreeDayRequest)
-        query = apply_indirect_filters(query, filters)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateFreeDayRequest)
+        query = apply_indirect_filters(query, indirect_filters)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]

@@ -1,19 +1,20 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.global_constants import HAZ_CLASSES
-from peewee import JOIN
 from operator import attrgetter
-from fastapi import HTTPException
+from configs.definitions import FCL_FREIGHT_CHARGES
+
+
 def get_fcl_freight_rate(request):
   details = {}
 
   if all_fields_present(request):
-    object, fcl_object = find_object(request)
-
-    if not fcl_object:
-      raise HTTPException(status_code=404,detail='Rate Not Found')
+    object = find_object(request)
+    fcl_object = object
     if object:
       details = object.detail()
+  else:
+    fcl_object=None
 
   origin_local_object_params = {
     'port_id': request['origin_port_id'],
@@ -42,7 +43,12 @@ def get_fcl_freight_rate(request):
     origin_local_object_params['commodity'] = None
     destination_local_object_params['commodity'] = None
 
-
+  if not fcl_object:
+    fcl_object = FclFreightRate()
+    for key in list(request.keys()):
+      setattr(fcl_object, key, request[key])
+    fcl_object.set_locations()
+  
   return details | ({
     'freight_charge_codes': (fcl_object.possible_charge_codes()),
     'origin_local_charge_codes': (FclFreightRateLocal(**origin_local_object_params).possible_charge_codes()),
@@ -52,15 +58,12 @@ def get_fcl_freight_rate(request):
 
 def find_object(object_params):
   query = FclFreightRate.select()
-  port_origin_local = FclFreightRateLocal.select().alias('port_origin_local')
-  port_destination_local = FclFreightRateLocal.select().alias('port_destination_local')
   for key in object_params:
     query = query.where(attrgetter(key)(FclFreightRate) == object_params[key])
   
-  object = query.join(port_origin_local, JOIN.LEFT_OUTER, on = (FclFreightRate.origin_local_id == port_origin_local.c.id)).switch(
-    FclFreightRate).join(port_destination_local, JOIN.LEFT_OUTER, on = (FclFreightRate.destination_local_id == port_destination_local.c.id)).first()
+  object = query.first()
   
-  return object, query.first()
+  return object
 
 def all_fields_present(object_params):
   if (object_params['origin_port_id'] is not None) and (object_params['destination_port_id'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None):

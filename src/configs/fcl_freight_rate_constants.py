@@ -156,7 +156,7 @@ PAYMENT_TERM = ['prepaid', 'collect']
 
 DEFAULT_PAYMENT_TERM = 'prepaid'
 
-SPECIFICITY_TYPE = ['cogoport', 'shipping_line']
+SPECIFICITY_TYPE = ['cogoport', 'shipping_line', 'rate_specific']
 
 DEFAULT_SPECIFICITY_TYPE = 'shipping_line'
 

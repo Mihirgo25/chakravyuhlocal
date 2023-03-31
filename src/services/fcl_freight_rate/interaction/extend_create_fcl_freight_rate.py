@@ -1,5 +1,5 @@
 from params import *
-from peewee import * 
+from peewee import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 import copy
 from micro_services.client import *
@@ -9,12 +9,11 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from celery_worker import create_fcl_freight_rate_delay
 
 def extend_create_fcl_freight_rate_data(request):
-
-    if not isinstance(request,dict):
+    if not isinstance(request, dict):
         request = request.dict(exclude_none=True)
 
     if request.get('extend_rates_for_lens'):
-        request['mode']= 'cogo_lens'
+        request['source']= 'cogo_lens'
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':request},queue='fcl_freight_rate')
         return {"message":"Creating rates in delay"}
 
@@ -27,7 +26,7 @@ def extend_create_fcl_freight_rate_data(request):
 
 def create_extended_rate_objects(rate_objects):
     for rate_object in rate_objects:
-        rate_object['mode']='rate_extension'
+        rate_object['source']='rate_extension'
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':rate_object},queue='fcl_freight_rate')
 
 def get_fcl_freight_cluster_objects(request):
@@ -49,8 +48,9 @@ def get_fcl_freight_cluster_objects(request):
             for mandatory_code in required_mandatory_code['mandatory_codes']:
                 mandatory_codes.append(mandatory_code)
         common_line_items = list(set([i['code'] for i in request['line_items'] if i is not None]).intersection(set(mandatory_codes)))
-        if len(common_line_items) != len(set(mandatory_codes)):
-            return
+        mandatory_codes = list(set(mandatory_codes))
+        # if len(common_line_items) != len(set(mandatory_codes)):
+        #     return
 
     try:
         origin_locations = [t['id'] for t in data['origin_location_cluster']['cluster_items']]
@@ -71,8 +71,8 @@ def get_fcl_freight_cluster_objects(request):
     else:
         commodities = { request['container_type'] : [request['commodity']] }
 
-    try:    
-        containers = data['container_cluster']['cluster_items'] 
+    try:
+        containers = data['container_cluster']['cluster_items']
     except:
         containers = [request['container_size']]
 
@@ -81,16 +81,15 @@ def get_fcl_freight_cluster_objects(request):
     new_data = {}
     for t in icd_data:
         new_data[t['id']]=t['is_icd']
-    
-    icd_data = new_data
 
+    icd_data = new_data
     for origin_location in set(origin_locations):
         for destination_location in set(destination_locations):
             for container_type in commodities:
                 for commodity in commodities[container_type]:
                     for container in containers:
                         param = copy.deepcopy(request)
-                    
+
                         if icd_data.get(origin_location) and not param.get('origin_main_port_id'):
                             param['origin_main_port_id'] = param['origin_port_id']
                         elif not icd_data.get(origin_location) and param.get('origin_main_port_id'):

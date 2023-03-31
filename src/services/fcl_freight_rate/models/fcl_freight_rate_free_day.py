@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from params import Slab
 from micro_services.client import *
 from database.rails_db import *
+from micro_services.client import maps
 
 class BaseModel(Model):
     class Meta:
@@ -40,9 +41,9 @@ class FclFreightRateFreeDay(BaseModel):
     specificity_type = CharField(index=True, null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(index=True, null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
-    # validity_start = DateTimeField(index=True, null=True)
-    # validity_end = DateTimeField(index=True, null=True)
+    updated_at = DateTimeField(default=datetime.datetime.now())
+    validity_start = DateTimeField(index=True, null=True, default=datetime.datetime.now())
+    validity_end = DateTimeField(index=True, null=True, default=datetime.datetime.now() + datetime.timedelta(days=90))
     sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
@@ -77,14 +78,14 @@ class FclFreightRateFreeDay(BaseModel):
         return False
 
     def validate_shipping_line(self):
-        shipping_line_data = get_shipping_line(str(self.shipping_line_id))
+        shipping_line_data = get_shipping_line(id=self.shipping_line_id)
         if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
             self.shipping_line = shipping_line_data[0]
             return True
         return False
 
     def validate_service_provider(self):
-        service_provider_data = get_service_provider(str(self.service_provider_id))
+        service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
@@ -92,7 +93,7 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_importer_exporter(self):
         if self.importer_exporter_id:
-            importer_exporter_data = get_service_provider(str(self.importer_exporter_id))
+            importer_exporter_data = get_organization(id=str(self.importer_exporter_id))
             if (len(importer_exporter_data) != 0) and importer_exporter_data[0].get('account_type') == 'importer_exporter':
                 self.importer_exporter = importer_exporter_data[0]
                 return True
@@ -132,7 +133,6 @@ class FclFreightRateFreeDay(BaseModel):
                     Slab.validate(slab)
                 except:
                     raise HTTPException(status_code=422, detail=f"Incorrect Slab: {slab}")
-
         if not self.validate_location_ids():
             raise HTTPException(status_code=422, detail="Invalid location")
 
@@ -142,26 +142,32 @@ class FclFreightRateFreeDay(BaseModel):
         if not self.validate_shipping_line():
             raise HTTPException(status_code=422, detail="Invalid shipping line")
 
-        if not self.validate_service_provider():
-            raise HTTPException(status_code=422, detail="Invalid service provider")
 
-        if not self.validate_importer_exporter():
-            raise HTTPException(status_code=422, detail="Invalid importer-exporter")
+        # if not self.validate_service_provider():
+        #     raise HTTPException(status_code=422, detail="Invalid service provider")
+
+        # if not self.validate_importer_exporter():
+        #     raise HTTPException(status_code=422, detail="Invalid importer-exporter")
 
         if not self.validate_free_days_type():
             raise HTTPException(status_code=422, detail="Invalid free day type")
 
+
         if not self.validate_trade_type():
             raise HTTPException(status_code=422, detail="Invalid trade type")
+
 
         if not self.validate_container_size():
             raise HTTPException(status_code=422, detail="incorrect container size")
 
+
         if not self.validate_container_type():
             raise HTTPException(status_code=422, detail="Invalid container type")
 
+
         if not self.validate_free_limit():
             raise HTTPException(status_code=422, detail="Empty free limit")
+
 
     def update_special_attributes(self):
         self.is_slabs_missing = False if self.slabs and len(self.slabs) != 0 else True
@@ -178,15 +184,15 @@ class FclFreightRateFreeDay(BaseModel):
                 "is_slabs_missing": self.is_slabs_missing
             }
         }
-    
-    def validate_validity_object(validity_start, validity_end):
+
+    def validate_validity_object(self, validity_start, validity_end):
         if not validity_start:
             raise HTTPException(status_code=400, detail=validity_start + ' is invalid')
 
         if not validity_end:
             raise HTTPException(status_code=400, detail=validity_end + ' is invalid')
 
-        if validity_end > (datetime.date.today() + datetime.timedelta(days = 60)):
+        if validity_end > (datetime.date.today() + datetime.timedelta(days = 180)):
             raise HTTPException(status_code=400, detail=validity_end + ' can not be greater than 60 days from current date')
 
         if validity_start < (datetime.date.today() - datetime.timedelta(days = 15)):

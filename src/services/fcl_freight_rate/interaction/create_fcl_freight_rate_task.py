@@ -4,7 +4,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRat
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import common
 from database.db_session import db
-from celery_worker import send_fcl_freight_rate_task_notification,update_multiple_service_objects
+from celery_worker import send_fcl_freight_rate_task_notifications,update_multiple_service_objects
 
 def create_audit(request, task_id):
     performed_by_id = request['performed_by_id']
@@ -45,13 +45,18 @@ def execute_transaction_code(request):
         'status': 'pending'
     }
 
+    commodity = None
+    if 'commodity' in request and request["commodity"] in HAZ_CLASSES:
+        commodity = request["commodity"]
+
+
     task = FclFreightRateTask.select().where(
         FclFreightRateTask.service == request.get("service"),
         FclFreightRateTask.port_id == request.get("port_id"),
         FclFreightRateTask.main_port_id == request.get("main_port_id"),
         FclFreightRateTask.container_size == request.get("container_size"),
         FclFreightRateTask.container_type == request.get("container_type"),
-        FclFreightRateTask.commodity == request.get("commodity") if request["commodity"] in HAZ_CLASSES else FclFreightRateTask.commodity.is_null(True),
+        FclFreightRateTask.commodity == commodity,
         FclFreightRateTask.trade_type == request.get("trade_type"),
         FclFreightRateTask.shipping_line_id == request.get("shipping_line_id"),
         FclFreightRateTask.source == request.get("source"),
@@ -85,7 +90,7 @@ def execute_transaction_code(request):
     
     create_audit(request, task.id)
     update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-    send_fcl_freight_rate_task_notification.apply_async(kwargs={'task_id':task.id},queue='low')
+    send_fcl_freight_rate_task_notifications.apply_async(kwargs={'task_id':task.id},queue='low')
 
     return {
       "id": task.id

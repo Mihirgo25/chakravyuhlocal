@@ -74,7 +74,7 @@ class FclFreightRateCommoditySurcharge(BaseModel):
                     self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
                     self.origin_location = {key:value for key,value in origin_location.items() if key in ['id','name','display_name','port_code','type']}
                 else:
-                    raise HTTPException(status_code=404, detail="Origin Location type not valid")
+                    raise HTTPException(status_code=422, detail="Origin Location type not valid")
             elif location['id']==str(self.destination_location_id):
                 destination_location = location
                 if destination_location.get('type') in LOCATION_TYPES:
@@ -85,9 +85,9 @@ class FclFreightRateCommoditySurcharge(BaseModel):
                     self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
                     self.destination_location = {key:value for key,value in destination_location.items() if key in ['id','name','display_name','port_code','type']}
                 else:
-                    raise HTTPException(status_code=404, detail="Destination Location type not valid")
+                    raise HTTPException(status_code=422, detail="Destination Location type not valid")
             else:
-                raise HTTPException(status_code=404,detail='Invalid Location')
+                raise HTTPException(status_code=422,detail='Invalid Location')
     
     def set_origin_destination_location_type(self):
         try:

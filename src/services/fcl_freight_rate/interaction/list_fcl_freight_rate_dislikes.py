@@ -1,14 +1,14 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
-from operator import attrgetter
 from peewee import fn
 from datetime import datetime
 import json
 from micro_services.client import *
-from libs.locations import list_locations
+
 possible_direct_filters = ['feedback_type', 'continent', 'status']
 
 possible_indirect_filters = ['relevant_supply_agent', 'trade_lane', 'shipping_line', 'validity_start_greater_than', 'validity_end_less_than', 'service_provider_id']
@@ -19,9 +19,11 @@ def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
-        query = apply_indirect_filters(query, filters)
+        
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateFeedback)
+        query = apply_indirect_filters(query, indirect_filters)
 
     data = get_data(query)
 
@@ -57,7 +59,7 @@ def get_data(query):
         item['unsatisfactory_destination_detention'] = unsatisfactory_destination_detention_count
         item['unsatisfactory_rate'] = unsatisfactory_rate_count
         data.append(item)
-    locations_data = list_locations({'id':locations,'page_limit':100})['list']
+    locations_data = maps.list_locations({'filters':{'id':locations,'page_limit':100}})['list']
     location_match = {}
     for location in locations_data:
         location_match[location['id']] = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name']}

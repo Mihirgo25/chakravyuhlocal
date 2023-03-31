@@ -46,17 +46,17 @@ class FclFreightRateRequest(BaseModel):
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
+    preferred_shipping_lines = BinaryJSONField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
-    # remarks = ArrayField(field_class=CharField, null=True)
     remarks = ArrayField(CharField, null=True, constraints=[SQL("DEFAULT '{}'::character varying[]")])
     request_type = CharField(null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_requests_serial_id_seq'::regclass)")])
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_request_serial_id_seq'::regclass)")])
     spot_search = BinaryJSONField(null=True)
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default = datetime.datetime.now)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateRequest, self).save(*args, **kwargs)
@@ -68,10 +68,10 @@ class FclFreightRateRequest(BaseModel):
         if self.source and self.source not in REQUEST_SOURCES:
             raise HTTPException(status_code=400, detail="Invalid source")
 
-    
+
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = common.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
             if len(spot_search_data) == 0:
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
 
@@ -84,18 +84,18 @@ class FclFreightRateRequest(BaseModel):
             raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = get_service_provider(str(self.performed_by_org_id))
+        performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
         if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
             raise HTTPException(status_code=400, detail='Invalid Account Type')
 
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
-            pass 
+            pass
 
         if self.preferred_shipping_line_ids:
             preferred_shipping_lines = []
             for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(shipping_line_id)
+                shipping_line_data = get_shipping_line(id=shipping_line_id)
                 if len(shipping_line_data) == 0:
                     raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
                 preferred_shipping_lines.append(shipping_line_data[0])
@@ -115,7 +115,7 @@ class FclFreightRateRequest(BaseModel):
         self.validate_preferred_shipping_line_ids()
         return True
 
-    
+
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.destination_port_id).where(source_id = self.source_id).limit(1).dicts().get()
         location_pair_data = maps.list_locations({ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']]})['list']
@@ -139,4 +139,4 @@ class FclFreightRateRequest(BaseModel):
                     'importer_exporter_id': importer_exporter_id }
 
         }
-        common.create_communication(data)
+        # common.create_communication(data)

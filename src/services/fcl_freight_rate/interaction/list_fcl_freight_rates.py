@@ -2,29 +2,32 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from datetime import datetime, timedelta
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 import json
-from peewee import JOIN 
+from fastapi.encoders import jsonable_encoder
 from playhouse.shortcuts import model_to_dict
 
-possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id']
-possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than', 'validity_start_greater_than', 'validity_end_less_than', 'procured_by_id', 'partner_id']
+possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id', 'procured_by_id']
+possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id']
 
 def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, expired_rates_required = False, all_rates_for_cogo_assured = False):
   query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit)
   if filters:
     if type(filters) != dict:
       filters = json.loads(filters)
+
+    direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   
-    query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRate)
-    query = apply_indirect_filters(query, filters)
+    query = get_filters(direct_filters, query, FclFreightRate)
+    query = apply_indirect_filters(query, indirect_filters)
 
   if return_query:
     return {'list': [model_to_dict(item) for item in query.execute()]} 
     
   data = get_data(query,expired_rates_required)
   
-  return {'list': data} 
+  return { 'list': data } 
 
 def get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit):
   if all_rates_for_cogo_assured:
@@ -32,13 +35,7 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit):
             ).where(FclFreightRate.updated_at > datetime.now() + timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size in ['20', '40'])
     return query
 
-  post_origin_locals = FclFreightRateLocal.select().alias('post_origin_locals')
-  post_destination_locals = FclFreightRateLocal.select().alias('post_destination_locals')
-  query = FclFreightRate.select(
-    ).join(post_origin_locals, JOIN.LEFT_OUTER, on=(post_origin_locals.c.id == FclFreightRate.origin_local_id) 
-      ).switch(FclFreightRate
-        ).join(post_destination_locals, JOIN.LEFT_OUTER, on = (post_destination_locals.c.id == FclFreightRate.destination_local_id)
-          ).order_by(eval('FclFreightRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
+  query = FclFreightRate.select().order_by(eval('FclFreightRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
 
   return query
 
@@ -46,107 +43,15 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit):
 def get_data(query, expired_rates_required):
   data = []
 
-  for item in query.execute():
-    result = {
-    'id': str(item.id), 
-    'origin_port_id': str(item.origin_port_id), 
-    'origin_main_port_id': str(item.origin_main_port_id), 
-    'destination_port_id': str(item.destination_port_id), 
-    'destination_main_port_id': str(item.destination_main_port_id), 
-    'shipping_line_id': str(item.shipping_line_id), 
-    'service_provider_id': str(item.service_provider_id), 
-    'destination_trade_id': str(item.destination_trade_id), 
-    'origin_trade_id': str(item.origin_trade_id), 
-    'importer_exporter_id': str(item.importer_exporter_id), 
-    'container_size' : item.container_size, 
-    'container_type' : item.container_type, 
-    'commodity' : item.commodity, 
-    'validities' : item.validities, 
-    'is_best_price' : item.is_best_price, 
-    'last_rate_available_date' : item.last_rate_available_date, 
-    'containers_count' : item.containers_count, 
-    'importer_exporters_count' : item.importer_exporters_count, 
-    'weight_limit' : item.weight_limit, 
-    'origin_local' : item.origin_local, 
-    'destination_local' : item.destination_local, 
-    'is_origin_local_line_items_error_messages_present' : item.is_origin_local_line_items_error_messages_present, 
-    'origin_local_line_items_error_messages' : item.origin_local_line_items_error_messages, 
-    'is_origin_local_line_items_info_messages_present' : item.is_origin_local_line_items_info_messages_present, 
-    'origin_local_line_items_info_messages' : item.origin_local_line_items_info_messages,
-    'is_destination_local_line_items_error_messages_present' : item.is_destination_local_line_items_error_messages_present, 
-    'destination_local_line_items_error_messages' : item.destination_local_line_items_error_messages, 
-    'is_destination_local_line_items_info_messages_present' : item.destination_local_line_items_error_messages, 
-    'destination_local_line_items_info_messages' : item.destination_local_line_items_info_messages, 
-    'is_origin_detention_slabs_missing' : item.is_origin_detention_slabs_missing, 
-    'is_origin_demurrage_slabs_missing' : item.is_origin_demurrage_slabs_missing, 
-    'is_origin_plugin_slabs_missing' : item.is_origin_plugin_slabs_missing, 
-    'is_destination_detention_slabs_missing' : item.is_destination_detention_slabs_missing, 
-    'is_destination_demurrage_slabs_missing' : item.is_destination_demurrage_slabs_missing, 
-    'is_destination_plugin_slabs_missing' : item.is_destination_plugin_slabs_missing, 
-    'procured_by_id' : item.procured_by_id,
-    'sourced_by_id' : item.sourced_by_id,
-    'cogo_entity_id': str(item.cogo_entity_id or ''),
-    'shipping_line' : item.shipping_line,
-    'origin_port' : item.origin_port, 
-    'origin_main_port' : item.origin_main_port, 
-    'destination_port' : item.destination_port, 
-    'destination_main_port' : item.destination_main_port,
-    'service_provider' : item.service_provider, 
-    'importer_exporter' : item.importer_exporter, 
-    'procured_by' : item.procured_by, 
-    'sourced_by' : item.sourced_by
-    }
+  raw_data = jsonable_encoder(list(query.dicts()))
 
-    if item.origin_local_id:
-      result = result | {'port_origin_local': {'data': item.origin_local_id.data, 'is_line_items_error_messages_present' :  item.origin_local_id.is_line_items_error_messages_present, 'line_items_error_messages' : item.origin_local_id.line_items_error_messages, 'is_line_items_info_messages_present' : item.origin_local_id.is_line_items_info_messages_present, 'line_items_info_messages' : item.origin_local_id.line_items_info_messages, 'is_detention_slabs_missing' : item.origin_local_id.is_detention_slabs_missing, 'is_demurrage_slabs_missing' : item.origin_local_id.is_demurrage_slabs_missing, 'is_plugin_slabs_missing' :  item.origin_local_id.is_plugin_slabs_missing}}
-    if item.destination_local_id:
-      result = result | {'port_destination_local': {'data': item.destination_local_id.data,'is_line_items_error_messages_present' :  item.destination_local_id.is_line_items_error_messages_present,'line_items_error_messages' : item.destination_local_id.line_items_error_messages,'is_line_items_info_messages_present' : item.destination_local_id.is_line_items_info_messages_present,'line_items_info_messages' : item.destination_local_id.line_items_info_messages,'is_detention_slabs_missing' : item.destination_local_id.is_detention_slabs_missing,'is_demurrage_slabs_missing' : item.destination_local_id.is_demurrage_slabs_missing,'is_plugin_slabs_missing' :  item.destination_local_id.is_plugin_slabs_missing}}
+  for result in raw_data:
 
-    if result['weight_limit']:
-      if 'free_limit' in result['weight_limit']:
-        result['is_weight_limit_missing'] = (result['weight_limit']['free_limit'] is None) 
-    else:
+    result['is_weight_limit_missing'] = False
+
+    if not result['weight_limit'] or 'free_limit' not in result['weight_limit']:
       result['is_weight_limit_missing'] = True
     
-    if 'port_origin_local' in result:
-      result['is_origin_local_missing'] = (result['is_origin_local_line_items_error_messages_present'] != False) & (result['port_origin_local']['is_line_items_error_messages_present'] != False)
-      if result['origin_local']:
-        if result['origin_local'].get('detention') and result['port_origin_local']['data'].get('detention'):
-          result['is_origin_detention_missing'] = (result['origin_local']['detention'].get('free_limit') is None) and ((result['port_origin_local']['data']['detention'].get('free_limit') is None))
-        else:
-          result['is_origin_detention_missing'] = True
-          
-        if result['origin_local'].get('plugin') and result['port_origin_local']['data'].get('plugin'):
-          result['is_origin_plugin_missing'] = (result['origin_local']['plugin'].get('free_limit') is None and result['port_origin_local']['data'].get('plugin').get('free_limit') is None) if result['container_type'] == 'refer' else None
-        else:
-          result['is_origin_plugin_missing'] = True
-
-      else:
-        result['is_origin_detention_missing'] = True
-        result['is_origin_plugin_missing'] = True
-
-      del result['port_origin_local']
-
-    if 'port_destination_local' in result:
-        result['is_destination_local_missing'] = (result['is_destination_local_line_items_error_messages_present'] != False) & (result['port_destination_local']['is_line_items_error_messages_present'] != False)
-        if result['destination_local']:
-          if result['destination_local'].get('detention') and result['port_destination_local']['data'].get('detention'):
-            result['is_destination_detention_missing'] = (result['destination_local']['detention'].get('free_limit') is None) and ((result['port_destination_local']['data'].get('detention').get('free_limit') is None))
-          else:
-            result['is_destination_detention_missing'] = True
-          
-          if result['destination_local'].get('plugin') and result['port_destination_local']['data'].get('plugin'):
-            result['is_destination_plugin_missing'] = (result['destination_local']['plugin'].get('free_limit') is None and result['port_destination_local']['data']['plugin'].get('free_limit') is None) if result['container_type'] == 'refer' else None
-          else:
-            result['is_destination_plugin_missing'] = True
-          
-          result['is_destination_plugin_missing'] = (result['destination_local']['plugin'].get('free_limit') is None and result['port_destination_local']['data'].get('plugin').get('free_limit') is None) if result['container_type'] == 'refer' else None
-          if result['destination_local'].get('demurrage') and result['port_destination_local']['data'].get('demurrage'):
-            result['is_destination_demurrage_missing'] = (result['destination_local']['demurrage'].get('free_limit') is None) and ((result['port_destination_local']['data'].get('demurrage').get('free_limit') is None)) 
-          else:
-            result['is_destination_demurrage_missing'] = True
-        del result['port_destination_local']
-
     validities = []
     
     if result['validities']:
@@ -179,9 +84,8 @@ def get_data(query, expired_rates_required):
 
 def apply_indirect_filters(query, filters):
   for key in filters:
-    if key in possible_indirect_filters:
-      apply_filter_function = f'apply_{key}_filter'
-      query = eval(f'{apply_filter_function}(query, filters)')
+    apply_filter_function = f'apply_{key}_filter'
+    query = eval(f'{apply_filter_function}(query, filters)')
   return query
 
 def apply_partner_id_filter(query, filters):
@@ -193,42 +97,94 @@ def apply_partner_id_filter(query, filters):
   return query
 
 def apply_is_origin_local_missing_filter(query, filters):
-  query = query.where((FclFreightRate.is_origin_local_line_items_error_messages_present == None) | (FclFreightRate.is_origin_local_line_items_error_messages_present == True)).where((FclFreightRateLocal.is_line_items_error_messages_present == None) | (FclFreightRateLocal.is_line_items_error_messages_present == True))
+  is_messages = False
+  if filters['is_origin_local_line_items_error_messages_present'] == True or filters['is_origin_local_line_items_error_messages_present'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_origin_local_line_items_error_messages_present)
+  else:
+    query =  query.where((FclFreightRate.is_origin_local_line_items_error_messages_present == None | ~FclFreightRate.is_origin_local_line_items_error_messages_present))
   return query
 
 
 def apply_is_destination_local_missing_filter(query, filters):
-  query = query.where((FclFreightRate.is_destination_local_line_items_error_messages_present == None) | (FclFreightRate.is_destination_local_line_items_error_messages_present == True)).where((FclFreightRateLocal.is_line_items_error_messages_present == None) | (FclFreightRateLocal.is_line_items_error_messages_present == True))
+  is_messages = False
+  if filters['is_destination_local_line_items_error_messages_present'] == True or filters['is_destination_local_line_items_error_messages_present'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_destination_local_line_items_error_messages_present)
+  else:
+    query =  query.where((FclFreightRate.is_destination_local_line_items_error_messages_present == None | ~FclFreightRate.is_destination_local_line_items_error_messages_present))
   return query
 
-
 def apply_is_weight_limit_missing_filter(query, filters):
-  query = query.where((FclFreightRate.is_weight_limit_slabs_missing == None) | (FclFreightRate.is_weight_limit_slabs_missing == True))
+  is_messages = False
+  if filters['is_weight_limit_slabs_missing'] == True or filters['is_weight_limit_slabs_missing'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_weight_limit_slabs_missing)
+  else:
+    query =  query.where((FclFreightRate.is_weight_limit_slabs_missing == None | ~FclFreightRate.is_weight_limit_slabs_missing))
+
   return query
 
 
 def apply_is_origin_detention_missing_filter(query, filters):
-  query = query.where((FclFreightRate.is_origin_detention_slabs_missing == None) | (FclFreightRate.is_origin_detention_slabs_missing == True)).where((FclFreightRateLocal.is_detention_slabs_missing == None) | (FclFreightRateLocal.is_detention_slabs_missing == True))
+  is_messages = False
+  if filters['is_origin_detention_slabs_missing'] == True or filters['is_origin_detention_slabs_missing'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_origin_detention_slabs_missing)
+  else:
+    query =  query.where((FclFreightRate.is_origin_detention_slabs_missing == None | ~FclFreightRate.is_origin_detention_slabs_missing))
   return query
 
 
 def apply_is_origin_plugin_missing_filter(query,filters):
-  query = query.where(FclFreightRate.container_type == 'refer').where((FclFreightRate.is_origin_plugin_slabs_missing == None) | (FclFreightRate.is_origin_plugin_slabs_missing == True)).where((FclFreightRateLocal.is_plugin_slabs_missing == None) | (FclFreightRateLocal.is_plugin_slabs_missing == True))
+  is_messages = False
+  if filters['is_origin_plugin_slabs_missing'] == True or filters['is_origin_plugin_slabs_missing'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_origin_plugin_slabs_missing)
+  else:
+    query =  query.where((FclFreightRate.is_origin_plugin_slabs_missing == None | ~FclFreightRate.is_origin_plugin_slabs_missing))
+
   return query
 
 
 def apply_is_destination_detention_missing_filter(query,filters):
-  query = query.where((FclFreightRate.is_destination_detention_slabs_missing == None) | (FclFreightRate.is_destination_detention_slabs_missing == True)).where((FclFreightRateLocal.is_detention_slabs_missing == None) | (FclFreightRateLocal.is_detention_slabs_missing == True))
+  is_messages = False
+  if filters['is_destination_detention_slabs_missing'] == True or filters['is_destination_detention_slabs_missing'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_destination_detention_slabs_missing)
+  else:
+    query =  query.where((FclFreightRate.is_destination_detention_slabs_missing == None | ~FclFreightRate.is_destination_detention_slabs_missing))
+
   return query
 
 
 def apply_is_destination_demurrage_missing_filter(query,filters):
-  query = query.where((FclFreightRate.is_destination_demurrage_slabs_missing == None) | (FclFreightRate.is_destination_demurrage_slabs_missing == True)).where((FclFreightRateLocal.is_demurrage_slabs_missing == None) | (FclFreightRateLocal.is_demurrage_slabs_missing == True))
+  is_messages = False
+  if filters['is_destination_demurrage_slabs_missing'] == True or filters['is_destination_demurrage_slabs_missing'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_destination_demurrage_slabs_missing)
+  else:
+    query =  query.where((FclFreightRate.is_destination_demurrage_slabs_missing == None | ~FclFreightRate.is_destination_demurrage_slabs_missing))
+
   return query
 
 
 def apply_is_destination_plugin_missing_filter(query,filters):
-  query = query.where((FclFreightRate.is_destination_plugin_slabs_missing == None) | (FclFreightRate.is_destination_plugin_slabs_missing == True)).where((FclFreightRateLocal.is_plugin_slabs_missing == None) | (FclFreightRateLocal.is_plugin_slabs_missing == None))
+  is_messages = False
+  if filters['is_destination_plugin_slabs_missing'] == True or filters['is_destination_plugin_slabs_missing'] == 'True':
+    is_messages = True
+  if is_messages:
+    query =  query.where(FclFreightRate.is_destination_plugin_slabs_missing)
+  else:
+    query =  query.where((FclFreightRate.is_destination_plugin_slabs_missing == None | ~FclFreightRate.is_destination_plugin_slabs_missing))
+
   return query
 
 

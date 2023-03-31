@@ -1,7 +1,8 @@
 from services.fcl_freight_rate.models.fcl_freight_commodity_cluster import FclFreightCommodityCluster
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from math import ceil
-from playhouse.shortcuts import model_to_dict
+from fastapi.encoders import jsonable_encoder
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 from peewee import fn
 import json
 
@@ -13,10 +14,13 @@ def list_fcl_freight_commodity_clusters(filters = {}, page_limit = 10, page = 1,
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightCommodityCluster)           
-        query = apply_indirect_filters(query, filters)
 
-    data = [model_to_dict(item) for item in query.execute()]
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightCommodityCluster)
+        query = apply_indirect_filters(query, indirect_filters)
+
+    data = jsonable_encoder(list(query.dicts()))
     pagination_data = get_pagination_data(data, page, page_limit, pagination_data_required)
 
     return {'list': data } | (pagination_data)

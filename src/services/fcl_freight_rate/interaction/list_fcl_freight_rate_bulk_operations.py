@@ -1,7 +1,9 @@
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
+from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from services.fcl_freight_rate.models.fcl_freight_rate_bulk_operation import FclFreightRateBulkOperation
 from math import ceil 
-from playhouse.shortcuts import model_to_dict
+from fastapi.encoders import jsonable_encoder
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 import json
 
 possible_direct_filters = ['action_name', 'service_provider_id']
@@ -14,9 +16,12 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
         if type(filters) != dict:
             filters = json.loads(filters)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateBulkOperation)
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateBulkOperation)
 
-    data = [model_to_dict(item) for item in query.execute()]
+
+    data = jsonable_encoder(list(query.dicts()))
     pagination_data = get_pagination_data(data, page, page_limit)
 
     return {'list': data } | (pagination_data)

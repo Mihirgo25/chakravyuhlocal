@@ -1,8 +1,9 @@
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
-from services.fcl_freight_rate.helpers.find_or_initialize import apply_direct_filters
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import maps
-from playhouse.shortcuts import model_to_dict
+from fastapi.encoders import jsonable_encoder
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
 import json
 
@@ -13,10 +14,12 @@ def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1,
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-    
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclWeightSlabsConfiguration)
+        
+        direct_filters = get_applicable_filters(filters, possible_direct_filters, [])
+  
+        query = get_filters(direct_filters[0], query, FclWeightSlabsConfiguration)
 
-    data = get_data(query)
+    data = jsonable_encoder(list(query.dicts()))
     location_ids = []
     for row in data:
         location_ids.extend([str(row['origin_location_id']), str(row['destination_location_id'])])
@@ -41,17 +44,12 @@ def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1,
 
     pagination_data = get_pagination_data(data, page, page_limit, pagination_data_required)
 
-    return { 'list': data } | (pagination_data)
+    return { 'list': data } | pagination_data
 
 
 def get_query(page, page_limit):
     query = FclWeightSlabsConfiguration.select().where(FclWeightSlabsConfiguration.status == 'active').order_by(FclWeightSlabsConfiguration.updated_at.desc()).paginate(page, page_limit)
     return query
-
-def get_data(query):
-    data = list(query.dicts())
-    # data = [model_to_dict(item) for item in query.execute()]
-    return data
 
 def get_pagination_data(data, page, page_limit, pagination_data_required):
     if not pagination_data_required:
