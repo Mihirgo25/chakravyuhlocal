@@ -93,7 +93,7 @@ def delayed_func(obj, is_init_key=False, is_set_location=False, is_audit_data=Fa
         obj.init_key = init
         
     if is_set_location:
-        set_locations.apply_async(kwargs={"rate":obj}, queue="critical")
+        set_locations(obj)
     
     if is_audit_data:
         audit_data = list(TempAudit.select(TempAudit.sourced_by_id, TempAudit.procured_by_id).where(TempAudit.object_id == obj.id).dicts())
@@ -107,7 +107,6 @@ def delayed_func(obj, is_init_key=False, is_set_location=False, is_audit_data=Fa
     print("Running")
     return True
 
-@celery.task(max_retries=10)
 def set_locations(rate):
     from micro_services.client import maps
     ids = []
