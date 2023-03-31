@@ -362,12 +362,6 @@ def process_fcl_freight_local(params, converted_file, Update):
     if not rows:
         return
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
-    try:
-        os.remove(get_original_file_path(converted_file))
-        os.remove(get_file_path(converted_file))
-    except:
-        return
-    # create_fcl_freight_local_rate(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id, '', '')
     set_last_line(total_lines, params)
     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
     set_processed_percent(percent, params)
@@ -377,6 +371,11 @@ def process_fcl_freight_local(params, converted_file, Update):
     else:
         Update.status = 'complete'
         converted_file['status'] = 'complete'
+    try:
+        os.remove(get_original_file_path(converted_file))
+        os.remove(get_file_path(converted_file))
+    except:
+        return
 
 def create_fcl_freight_local_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, row, writer
@@ -1142,12 +1141,12 @@ def process_fcl_freight_freight(params, converted_file, Update):
         Update.status = 'complete'
         converted_file['status'] = 'complete'
 
+    set_processed_percent(percent, params)
     try:
         os.remove(get_original_file_path(converted_file))
         os.remove(get_file_path(converted_file))
     except:
         return
-    set_processed_percent(percent, params)
 
 def create_fcl_freight_freight_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, row, csv_writer
