@@ -5,12 +5,8 @@ from database.db_session import db
 from celery_worker import send_closed_notifications_to_sales_agent_free_day_request
 
 def delete_fcl_freight_rate_free_day_request(request):
-    with db.atomic() as transaction:
-        try:
-            return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     object = find_objects(request)

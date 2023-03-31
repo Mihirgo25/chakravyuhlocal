@@ -20,13 +20,8 @@ def update_fcl_weight_slabs_configuration(request):
     object_type = 'Fcl_Weight_Slabs_Configuration'
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    with db.atomic() as transaction:
-        try:
-            data = execute_transaction_code(request)
-            return data
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     request_id = request['id']

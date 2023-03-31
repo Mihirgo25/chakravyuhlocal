@@ -24,7 +24,7 @@ def create_audit(request, freight_id):
     )
 
 def update_fcl_freight_rate_data(request):
-    with db.atomic() as transaction:
+    with db.atomic():
         return execute_transaction_code(request)
 
 

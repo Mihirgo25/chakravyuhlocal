@@ -7,7 +7,7 @@ from celery_worker import update_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day(request):
-    with db.atomic() as transaction:
+    with db.atomic():
         return execute_transaction_code(request)
 
 

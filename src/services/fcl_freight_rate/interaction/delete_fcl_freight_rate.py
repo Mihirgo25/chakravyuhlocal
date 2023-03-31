@@ -4,12 +4,8 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 
 def delete_fcl_freight_rate(request):
-    with db.atomic() as transaction:
-        try:
-            return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     object = find_object(request)
