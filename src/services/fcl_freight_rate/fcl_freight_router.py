@@ -199,7 +199,7 @@ def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, r
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
-        data = create_fcl_freight_rate_request(request)
+        data = create_fcl_freight_rate_request(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except:
         raise
