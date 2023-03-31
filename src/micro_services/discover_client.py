@@ -18,8 +18,7 @@ def get_instance_url(service_name=None):
 
 
     if service_name == 'common':
-        # instance_url = "http://{}:{}".format(INTERNAL_NLB, service_port)
-        instance_url = RUBY_ADDRESS_URL
+        instance_url = "http://{}:{}".format(INTERNAL_NLB, service_port)
     else:
         instance_url = "http://{}:{}/{}".format(INTERNAL_NLB, service_port, service_name)
     return instance_url
