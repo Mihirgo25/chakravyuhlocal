@@ -10,7 +10,7 @@ import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import organization
 from services.fcl_freight_rate.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
-from database.rails_db import get_shipping_line
+from database.rails_db import get_shipping_line, get_eligible_orgs
 
 def initialize_freight_query(requirements):
     freight_query = FclFreightRate.select(
@@ -332,7 +332,8 @@ def add_local_objects(freight_query_result, response_object, request):
         'service_provider_id': freight_query_result['origin_local']['service_provider_id'] if (freight_query_result.get('origin_local') or {}).get('service_provider_id') else response_object['service_provider_id'],
         'source': freight_query_result['origin_local']['source'] if (freight_query_result.get('origin_local') or {}).get('source') else 'spot_rates',
         'line_items': []
-    } if 'origin_local' in freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
+    } if 'origin_local' in freight_query_result else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
+    
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
         if freight_query_result['destination_local'].get('service_provider_id'):
@@ -508,12 +509,11 @@ def add_freight_objects(freight_query_result, response_object, request):
 
     additional_weight_rate = 0
     additional_weight_rate_currency = 'USD'
-
     if request['cargo_weight_per_container'] and (request['cargo_weight_per_container'] - (response_object['weight_limit'].get('free_limit') or 0) > 0):
         for slab in (response_object['weight_limit'].get('slabs',[]) or []):
             if slab['upper_limit'] < request['cargo_weight_per_container']:
                 continue
-
+            
             additional_weight_rate = slab['price']
             additional_weight_rate_currency = slab['currency']
             break
@@ -750,12 +750,12 @@ def get_fcl_freight_rate_cards(requirements):
     try:
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
-        if len(# freight_rates) == 0:
+        if len(freight_rates) == 0:
             get_fcl_freight_predicted_rate(requirements, 'rate_cards')
             initial_query = initialize_freight_query(requirements)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
-        freight_rates = pre_discard_noneligible_rates(freight_rates)
+        # freight_rates = pre_discard_noneligible_rates(freight_rates)
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
         rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
@@ -771,7 +771,7 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates
-        }
+    }
     except Exception as e:
         print(e, 'Error In Fcl Freight Rate Cards')
         return {
