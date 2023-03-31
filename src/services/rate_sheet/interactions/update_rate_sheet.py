@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 import uuid
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
 from services.rate_sheet.interactions.create_rate_sheet_audits import create_audit
-
+from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 
 def get_audit_params(parameters):
     keys_to_extract = ['converted_files']
@@ -39,6 +39,7 @@ def  update_rate_sheet(params: UpdateRateSheet):
                 converted_file['rate_sheet_id'] = str(rate_sheet.id)
                 converted_file['file_index'] = index+1
                 converted_file['rates_count'] = 0
+                converted_file['valid_rates_count'] = 0
     params['status'] = 'processing'
     rate_sheet.converted_files = params.get('converted_files')
     rate_sheet.status = params['status']
