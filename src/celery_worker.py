@@ -34,7 +34,6 @@ def delay_fcl_functions(self,fcl_object,request):
         from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
         from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
         from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
-        create_freight_trend_port_pair(request)
         create_sailing_schedule_port_pair(request)
         if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
@@ -56,20 +55,9 @@ def create_sailing_schedule_port_pair(self,request):
         'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
         'shipping_line_id': request["shipping_line_id"]
         }
-        common.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
     except Exception as exc:
         self.retry(exc = exc)
-
-def create_freight_trend_port_pair(self, request):
-    try:
-        port_pair_data = {
-            'origin_port_id': request["origin_port_id"],
-            'destination_port_id': request["destination_port_id"]
-        }
-    # common.create_freight_trend_port_pair(port_pair_data) expose
-    except Exception as exc:
-        raise exc
-
+        
 @celery.task(bind = True, max_retries=10, retry_backoff = True)
 def fcl_freight_local_data_updation(self, local_object,request):
     try:
