@@ -29,11 +29,12 @@ def update_fcl_weight_slabs_configuration(request):
             return e
 
 def execute_transaction_code(request):
-    request_id = request['id']
-    del request['id']
+
     
-    updated_configuration = FclWeightSlabsConfiguration.get(**{'id' : request_id})
-        
+    updated_configuration = FclWeightSlabsConfiguration.get(**{'id' : request['id']})
+    
+    if not updated_configuration:
+        raise HTTPException(status_code=499,detail='Weight Slab Not Found')
     request['updated_at'] = datetime.now()
     request['price'] = request.get('slabs')[0].get('price')
     request['currency'] = request.get('slabs')[0].get('currency')
@@ -46,5 +47,5 @@ def execute_transaction_code(request):
 
     create_audit(request)
     return {
-    'id': request_id
+    'id': request['id']
     }

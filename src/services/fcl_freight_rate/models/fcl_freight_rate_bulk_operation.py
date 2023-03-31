@@ -871,7 +871,6 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list'][0]
-        print(fcl_freight_rate)
         if fcl_freight_rate:
             validities = [k for k in fcl_freight_rate["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
         else:

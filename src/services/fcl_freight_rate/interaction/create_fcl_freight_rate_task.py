@@ -61,13 +61,14 @@ def execute_transaction_code(request):
 
     if not task:
         task = FclFreightRateTask(**object_unique_params)
+        task.shipment_serial_ids=[]
 
     if request.get('shipment_id') is not None:
         try:
-            sid = shipment.get_shipment(request['shipment_id'])['summary']['serial_id']
+            sid = shipment.get_shipment({'id':request['shipment_id']})['summary']['serial_id']
+            task.shipment_serial_ids.append(sid)
         except:
             sid = None
-        task.shipment_serial_ids.append(sid)
 
     if task.source_count:
         task.source_count = int(task.source_count) + 1

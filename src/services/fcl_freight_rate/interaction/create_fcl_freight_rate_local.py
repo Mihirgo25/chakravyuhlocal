@@ -19,6 +19,7 @@ def create_audit(request, fcl_freight_local_id):
         sourced_by_id = request.get('sourced_by_id'),
         procured_by_id = request.get('procured_by_id'),
         object_id = fcl_freight_local_id,
+        source = request.get('source'),
         object_type = 'FclFreightRateLocal'
     )
 
