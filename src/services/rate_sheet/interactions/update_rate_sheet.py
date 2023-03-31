@@ -2,7 +2,6 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from params import UpdateRateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 from celery_worker import validate_and_process_rate_sheet_converted_file_delay
 from playhouse.postgres_ext import *
 from peewee import *
@@ -52,7 +51,6 @@ def  update_rate_sheet(params: UpdateRateSheet):
         if key not in ['id', 'performed_by_id', 'procured_by_id','sourced_by_id']:
             rate_sheet[key] = params[key]
     validate_and_process_rate_sheet_converted_file_delay.apply_async(kwargs={'request':rate_sheet},queue='low')
-    # validate_and_process_rate_sheet_converted_file(rate_sheet)
     return {
       "id": rate_sheet['id']
     }

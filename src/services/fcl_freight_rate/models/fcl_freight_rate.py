@@ -520,7 +520,7 @@ class FclFreightRate(BaseModel):
 
     def validate_before_save(self):
 
-      schema_weight_limit = Schema({'free_limit': int or float, Optional('slabs'): list, Optional('remarks'): list})
+      schema_weight_limit = Schema({'free_limit': float, Optional('slabs'): list, Optional('remarks'): list})
 
       if self.weight_limit:
         schema_weight_limit.validate(self.weight_limit)

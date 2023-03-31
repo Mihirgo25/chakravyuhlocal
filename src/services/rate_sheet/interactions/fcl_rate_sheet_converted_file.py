@@ -1,5 +1,4 @@
 import os, csv, json, math
-from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from micro_services.client import *
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
@@ -8,15 +7,13 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_weight_limit 
 from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.rate_sheet.interactions.validate_fcl_freight_object import validate_fcl_freight_object
 from database.db_session import rd
-import time, requests
-import services.rate_sheet.interactions.fcl_rate_sheet_converted_file as process_rate_sheet
+
 from fastapi.encoders import jsonable_encoder
 
 from datetime import datetime
 import dateutil.parser as parser
-from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
-from celery_worker import celery_create_fcl_freight_rate_free_day, celery_create_fcl_freight_rate_freight, celery_create_fcl_freight_rate_local, celery_extend_create_fcl_freight_rate_data
 from database.rails_db import get_shipping_line, get_organization
+from services.rate_sheet.helpers import *
 
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -74,93 +71,10 @@ def get_last_line(params):
 #     if rd:
 #         rd.delete(last_line_hash, last_line_key)
 
-def errors_present_key(params):
-    return  f"rate_sheet_converted_file_errors_present_{params['id']}"
-
-def delete_errors_present(params):
-    if rd:
-        rd.delete(last_line_hash, errors_present_key(params))
-
-
-
-def total_line_keys(params):
-    return f"rate_sheet_converted_file_total_lines_{params['id']}"
-
-
-def set_total_line(params, total_line):
-    if rd:
-        rd.hset(total_line_hash, total_line_keys(params), total_line)
-
-
-def get_total_line(params):
-    if rd:
-        try:
-            cached_response = rd.hget(total_line_hash, total_line_keys(params))
-            return int(cached_response)
-        except:
-            return 0
-
-
-def delete_total_line(params):
-    if rd:
-        rd.delete(total_line_hash, total_line_keys(params))
-
-
-
 def mark_processing(params, Update):
     Update.status = "processing"
     return params
 
-
-def reset_counters(params, converted_file):
-    total_lines = get_total_line(params)
-    if total_lines == 0:
-        delete_temp_data(params)
-    set_original_file_path(params, converted_file)
-
-
-def delete_temp_data(params):
-    delete_original_file_path(params)
-    delete_file_path(params)
-    delete_errors_present(params)
-    # delete_last_line(params)
-    delete_total_line(params)
-
-
-def get_original_file_path(params):
-    os.makedirs("tmp/rate_sheets", exist_ok=True)
-    path = os.path.join("tmp", "rate_sheets", f"{params['id']}_original.csv")
-    return path
-
-
-def delete_original_file_path(params):
-    try:
-        os.remove(get_file_path(params))
-    except FileNotFoundError:
-        pass
-
-
-def set_original_file_path(params, converted_file):
-    os.makedirs('tmp/rate_sheets', exist_ok=True)
-    file_path = os.path.join('tmp', 'rate_sheets', f"{converted_file['id']}_original.csv")
-    with open(file_path, 'wb') as f:
-        response = requests.get(converted_file["file_url"])
-        f.write(response.content)
-
-
-def get_file_path(params):
-    os.makedirs("tmp/rate_sheets", exist_ok=True)
-    return os.path.join("tmp", "rate_sheets", f"{params['id']}.csv")
-
-
-def delete_file_path(params):
-    try:
-        os.remove(get_file_path(params))
-    except FileNotFoundError:
-        pass
-
-def errors_present_key(params):
-    return f"rate_sheet_converted_file_errors_present_{params['id']}"
 
 def set_errors_present(errors_present, params):
     if rd:
@@ -380,6 +294,7 @@ def process_fcl_freight_local(params, converted_file, Update):
 def create_fcl_freight_local_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, row, writer
 ):
+    from celery_worker import celery_create_fcl_freight_rate_local
     keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['main_port_id'] = get_port_id(rows[0].get('main_port'))
@@ -553,6 +468,7 @@ def process_fcl_freight_free_day(params, converted_file, Update):
 
 
 def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id,  row, csv_writer):
+    from celery_worker import celery_create_fcl_freight_rate_free_day
     keys_to_extract = ['location_type', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'specificity_type', 'previous_days_applicable']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     location = get_location(rows[0]['location'], rows[0]['location_type'])
@@ -709,14 +625,15 @@ def process_fcl_freight_seasonal_surcharge(params, converted_file, Update):
             last_line = get_last_line(params)
             present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'code', 'price', 'currency', 'validity_start', 'validity_end']
             if valid_hash(row, present_field, None):
-                create_fcl_freight_rate_seasonal_surcharge(
+                create_fcl_freight_rate_seasonal_surcharges(
                     params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
                 )
                 set_last_line(index, params)
 
 
 
-def create_fcl_freight_rate_seasonal_surcharge(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
+
+def create_fcl_freight_rate_seasonal_surcharges(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
     keys_to_extract = ['container_size', 'container_type', 'free_limit', 'code', 'price', 'currency', 'validity_start', 'validity_end']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['validity_start'] = convert_date_format(object['validity_start'])
@@ -786,7 +703,7 @@ def process_fcl_freight_weight_limit(params, converted_file, Update):
             blank_field = ['lower_limit','upper_limit', 'price', 'currency']
             if valid_hash(row, present_field, blank_field) or valid_hash(row, ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'lower_limit', 'upper_limit', 'price', 'currency']):
                 if rows:
-                    create_fcl_freight_rate_weight_limit(
+                    create_fcl_freight_rate_weight_limits(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
                     )
                     set_last_line(index, params)
@@ -817,7 +734,7 @@ def process_fcl_freight_weight_limit(params, converted_file, Update):
         os.remove(get_file_path(converted_file))
     except:
         return
-    create_fcl_freight_rate_weight_limit(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
+    create_fcl_freight_rate_weight_limits(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
     set_last_line(total_lines, params)
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     set_processed_percent(percent, params)
@@ -829,7 +746,7 @@ def process_fcl_freight_weight_limit(params, converted_file, Update):
         converted_file['status'] = 'complete'
 
 
-def create_fcl_freight_rate_weight_limit(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
+def create_fcl_freight_rate_weight_limits(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id):
     keys_to_extract = ['container_size', 'container_type', 'free_limit']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['origin_location_id'] = get_location_id(rows[0]['origin_location'])
@@ -1151,6 +1068,7 @@ def process_fcl_freight_freight(params, converted_file, Update):
 def create_fcl_freight_freight_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, row, csv_writer
 ):
+    from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
 
@@ -1227,24 +1145,9 @@ def create_fcl_freight_freight_rate(
         request_params["is_extended"] = True
     validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, row)
     if validation.get('valid'):
-        celery_create_fcl_freight_rate_freight.apply_async(kwargs={'request':object},queue='low')
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':object},queue='low')
         if rows[0].get('extend_rates'):
             request_params['extend_rates'] = True
             celery_extend_create_fcl_freight_rate_data.apply_async(kwargs={'request':object},queue='low')
     else:
         print('error')
-
-
-def validate_and_process_rate_sheet_converted_file(params):
-    Update = RateSheet.get(RateSheet.id == params['id'])
-    for converted_file in params['converted_files']:
-        reset_counters(params, converted_file)
-        getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
-            params, converted_file, Update
-        )
-    Update.converted_files = params.get('converted_files')
-    Update.save()
-    for converted_file in params['converted_files']:
-        delete_temp_data(converted_file)
-    send_rate_sheet_notifications(params)
-    return params
