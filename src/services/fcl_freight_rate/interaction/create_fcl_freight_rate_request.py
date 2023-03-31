@@ -15,23 +15,21 @@ def create_fcl_freight_rate_request(request):
 
 
 def execute_transaction_code(request):
-    if type(request) != dict:
-        request = request.__dict__
-
+    
     unique_object_params = {
-        'source': request['source'],
-        'source_id': request['source_id'],
-        'performed_by_id': request['performed_by_id'],
-        'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id']
+        'source': request.get('source'),
+        'source_id': request.get('source_id'),
+        'performed_by_id': request.get('performed_by_id'),
+        'performed_by_type': request.get('performed_by_type'),
+        'performed_by_org_id': request.get('performed_by_org_id')
     }
 
     request_object = FclFreightRateRequest.select().where(
-        FclFreightRateRequest.source == request['source'],
-        FclFreightRateRequest.source_id == request['source_id'],
-        FclFreightRateRequest.performed_by_id == request['performed_by_id'],
-        FclFreightRateRequest.performed_by_type == request['performed_by_type'],
-        FclFreightRateRequest.performed_by_org_id == request['performed_by_org_id']
+        FclFreightRateRequest.source == request.get('source'),
+        FclFreightRateRequest.source_id == request.get('source_id'),
+        FclFreightRateRequest.performed_by_id == request.get('performed_by_id'),
+        FclFreightRateRequest.performed_by_type == request.get('performed_by_type'),
+        FclFreightRateRequest.performed_by_org_id == request.get('performed_by_org_id')
     ).first()
 
     if not request_object:

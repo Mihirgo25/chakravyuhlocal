@@ -188,10 +188,11 @@ def get_missing_weight_limit(requirements, missing_free_weight_limit):
 def fill_missing_weight_limit_in_rates(freight_rates, weight_limits, requirements):
     new_freight_rates = []
     for rate in freight_rates:
-        weight_limit = weight_limits[rate["id"]]
-        if (not rate['weight_limit'] or not 'free_limit' in rate['weight_limit'] or rate['weight_limit']['free_limit'] < requirements['cargo_weight_per_container']) and weight_limit:
-            rate['weight_limit'] = weight_limit
-        new_freight_rates.append(rate)
+        if rate['id'] in weight_limits:
+            weight_limit = weight_limits[rate["id"]]
+            if (not rate['weight_limit'] or not 'free_limit' in rate['weight_limit'] or rate['weight_limit']['free_limit'] < requirements['cargo_weight_per_container']) and weight_limit:
+                rate['weight_limit'] = weight_limit
+            new_freight_rates.append(rate)
     return new_freight_rates
 
 
@@ -761,7 +762,7 @@ def get_fcl_freight_rate_cards(requirements):
         free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
         freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
     freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
-    # freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
+    freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
     freight_rates = build_response_list(freight_rates, requirements)
     return {
         "list" : freight_rates

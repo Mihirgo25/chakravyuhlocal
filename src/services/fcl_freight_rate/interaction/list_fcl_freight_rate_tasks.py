@@ -56,7 +56,8 @@ def get_data(query, filters):
     new_data = []
     port_ids, main_port_ids, container_sizes, container_types, commodities, trade_types, shipping_line_ids = [],[], [],[], [],[], []
     data_list = list(query.dicts())
-    for object in jsonable_encoder(data_list):
+
+    for object in data_list:
         created_at_date = object['created_at']
         next_date = object['created_at'] + timedelta(days = 1)
 
@@ -70,9 +71,8 @@ def get_data(query, filters):
         else:
             skipped_time = int((object['created_at'] + timedelta(seconds = EXPECTED_TAT * 60 * 60)).timestamp()) - int(datetime.strptime("{} 18:30:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S').timestamp())
             skipped_time = max([0, skipped_time])
-        
-        if skipped_time > 0:
-            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time) 
+            if skipped_time > 0:
+                object['expiration_time'] = datetime.strptime("{} 09:30:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time) 
         
         if object['job_data']:
             object['purchase_invoice_rate'] = object['job_data'].get('rate')
@@ -167,11 +167,11 @@ def apply_indirect_filters(query, filters):
     return query  
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
+    query = query.where(FclFreightRateTask.updated_at.cast('date') >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
     return query
 
 def apply_created_at_less_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
+    query = query.where(FclFreightRateTask.updated_at.cast('date') <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
     return query
 
 def get_stats(filters, stats_required):

@@ -224,17 +224,17 @@ def apply_importer_exporter_present_filter(query, filters):
 
 
 def apply_last_rate_available_date_greater_than_filter(query, filters):
-  query = query.where(FclFreightRate.last_rate_available_date >= datetime.strptime(filters['last_rate_available_date_greater_than'],'%Y-%m-%d'))
+  query = query.where(FclFreightRate.last_rate_available_date >= datetime.strptime(filters['last_rate_available_date_greater_than'],'%Y-%m-%d').date())
   return query
 
 
 def apply_validity_start_greater_than_filter(query, filters):
-  query = query.where(FclFreightRate.created_at >= datetime.strptime(filters['validity_start_greater_than'],'%Y-%m-%d'))
+  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'],'%Y-%m-%d').date())
   return query
 
 
 def apply_validity_end_less_than_filter(query,filters):
-  query = query.where(FclFreightRate.created_at >= datetime.strptime(filters['validity_end_less_than'],'%Y-%m-%d'))
+  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.strptime(filters['validity_end_less_than'],'%Y-%m-%d').date())
   return query
 
 def apply_procured_by_id_filter(query, filters):

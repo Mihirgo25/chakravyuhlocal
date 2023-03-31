@@ -199,7 +199,7 @@ def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, r
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
-        data = create_fcl_freight_rate_request(request)
+        data = create_fcl_freight_rate_request(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except Exception as e:
         raise e
@@ -1175,7 +1175,7 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay, 
 def get_fcl_freight_rate_stats_data(
     validity_start: datetime,
     validity_end: datetime,
-    stats_types: Union[List[str],None]= Query(None),
+    stats_types: str =None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -1185,7 +1185,7 @@ def get_fcl_freight_rate_stats_data(
     request = {
         'validity_start':validity_start,
         'validity_end':validity_end,
-        'stats_types':stats_types
+        'stats_types':json.loads(stats_types)
     }
     try:
         data = get_fcl_freight_rate_stats(request)

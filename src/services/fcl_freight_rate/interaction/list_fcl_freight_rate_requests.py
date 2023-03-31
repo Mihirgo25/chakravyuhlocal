@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
-
+from datetime import datetime
 possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
@@ -43,10 +43,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclFreightRateRequest.created_at >= filters['validity_start_greater_than'])
+    return query.where(FclFreightRateRequest.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'],'%Y-%m-%dT%H:%M:%S.%fz').date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclFreightRateRequest.created_at <= filters['validity_end_less_than'])
+    return query.where(FclFreightRateRequest.created_at.cast('date') <= datetime.strptime(filters['validity_end_less_than'],'%Y-%m-%dT%H:%M:%S.%fz').date())
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])

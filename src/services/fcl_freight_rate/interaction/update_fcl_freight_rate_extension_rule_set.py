@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 
 def update_fcl_freight_rate_extension_rule_set_data(request):
-    object_type = 'Fcl_Freight_Rate_Extension_Rule_Sets' 
+    object_type = 'Fcl_Freight_Rate_Extension_Rule_Set' 
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
     db.execute_sql(query)
     with db.atomic():

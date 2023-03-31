@@ -94,11 +94,13 @@ def apply_service_provider_id_filter(query, filters):
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at >= filters['validity_start_greater_than'])
+    query = query.where(FclFreightRateFeedback.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'],'%Y-%m-%dT%H:%M:%S.%fz').date())
+
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclFreightRate.created_at <= filters['validity_end_less_than'])
+    query = query.where(FclFreightRate.created_at.cast('date') <= datetime.strptime(filters['validity_end_less_than'],'%Y-%m-%dT%H:%M:%S.%fz').date())
+
     return query
 
 def apply_origin_port_id_filter(query, filters):
@@ -142,7 +144,7 @@ def apply_similar_id_filter(query, filters):
     return query
 
 def get_data(query):
-    data = [model_to_dict(row, recurse=False) for row in query.execute()]
+    data = list(query.dicts())
     fcl_freight_rate_ids = [row['fcl_freight_rate_id'] for row in data]
     fcl_freight_rates = list(FclFreightRate.select().where(FclFreightRate.id.in_(fcl_freight_rate_ids)).dicts())
     fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}

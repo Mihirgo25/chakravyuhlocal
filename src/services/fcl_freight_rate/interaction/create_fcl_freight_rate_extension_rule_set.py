@@ -36,7 +36,7 @@ def get_extension_rule_set_object(request):
   return extension_rule_set
 
 def create_fcl_freight_rate_extension_rule_set_data(request):
-  object_type = 'Fcl_Freight_Rate_Extension_Rule_Sets'
+  object_type = 'Fcl_Freight_Rate_Extension_Rule_Set'
   query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
   db.execute_sql(query)
   with db.atomic():
@@ -61,10 +61,10 @@ def execute_transaction_code(request):
   return {"id": rule_set.id}
 
 def create_audit(data, performed_by_id, rule_set_id):
-    FclServiceAudit.create(
-    action_name = 'create',
-    performed_by_id = performed_by_id,
-    data = data,
-    object_id = rule_set_id,
-    object_type = 'FclFreightRateExtensionRuleSet'
-    )
+  FclServiceAudit.create(
+  action_name = 'create',
+  performed_by_id = performed_by_id,
+  data = data,
+  object_id = rule_set_id,
+  object_type = 'FclFreightRateExtensionRuleSet'
+  )
