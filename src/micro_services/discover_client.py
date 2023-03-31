@@ -15,6 +15,8 @@ def get_instance_url(service_name=None):
         service_port = SPOT_SEARCH_PORT
     if service_name == 'checkout':
         service_port = CHECKOUT_PORT
+    if service_name == 'shipment':
+        service_port = SHIPMENT_PORT
 
 
     if service_name == 'common':
