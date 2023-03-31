@@ -1,15 +1,12 @@
 import services.rate_sheet.interactions.validate_fcl_freight_object as validate_rate_sheet
 from micro_services.client import *
-from operator import attrgetter
 import uuid
 from fastapi import HTTPException
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import get_free_day_object as get_free_day_objects
-# from services.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, SPECIFICITY_TYPE
 
 from database.rails_db import get_shipping_line, get_organization
@@ -37,11 +34,6 @@ def get_freight_object(object):
     rate_object = FclFreightRate(**res)
     try:
         rate_object.set_locations()
-        rate_object.set_origin_location_ids()
-        rate_object.set_destination_location_ids()
-        rate_object.set_platform_prices()
-        rate_object.set_is_best_price()
-        rate_object.set_last_rate_available_date()
         rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], '', object['payment_term'])
     except:
         validation['error']+='Invalid location'

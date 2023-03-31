@@ -2,7 +2,6 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from params import UpdateRateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
-from celery_worker import validate_and_process_rate_sheet_converted_file_delay
 from playhouse.postgres_ext import *
 from peewee import *
 from fastapi.encoders import jsonable_encoder
@@ -26,6 +25,7 @@ def get_audit_params(parameters):
 
 
 def  update_rate_sheet(params: UpdateRateSheet):
+    from celery_worker import validate_and_process_rate_sheet_converted_file_delay
     rate_sheet = RateSheet.get(RateSheet.id == params['id'])
     if rate_sheet.status != 'uploaded':
         return
