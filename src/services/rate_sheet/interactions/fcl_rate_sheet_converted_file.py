@@ -317,12 +317,12 @@ def create_fcl_freight_local_rate(
             line_item = {
             'code': t['code'],
             'unit': t['unit'],
-            'price': t['price'],
+            'price': float(t['price']),
             'currency': t['currency'],
             'remarks': [t['remark1'], t['remark2'], t['remark3']] if any([t['remark1'], t['remark2'], t['remark3']]) else None,
             'slabs': []
             }
-            line_item['location_id'] = get_location_id(t.get('location'), )
+            line_item['location_id'] = get_location_id(t.get('location'))
             object['data']["line_items"].append(line_item)
         else:
             keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']

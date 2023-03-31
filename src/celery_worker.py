@@ -19,7 +19,7 @@ CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
     "event_serializer": "pickle",
-    "result_serializer": "json",
+    "result_serializer": "pickle",
     "accept_content": ['application/json', 'application/x-python-serialize']
 }
 
