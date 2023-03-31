@@ -234,6 +234,7 @@ class FclFreightRateLocal(BaseModel):
             free_day_ids.append(str(self.plugin_id))
 
         free_days_charges = {}
+        free_days_new = []
 
       
         if len(free_day_ids):
@@ -249,17 +250,17 @@ class FclFreightRateLocal(BaseModel):
             free_days_new = jsonable_encoder(list(free_days_query.dicts()))
 
         for free_day_charge in free_days_new:
-          free_day_charge[free_day_charge["id"]] = free_day_charge
+          free_days_charges[free_day_charge["id"]] = free_day_charge
 
         
-        if self.detention_id and self.detention_id in free_day_charge:
-            self.data["detention"] = free_day_charge[self.detention_id]
+        if self.detention_id and self.detention_id in free_days_charges:
+            self.data["detention"] = free_days_charges[self.detention_id]
 
-        if self.demurrage_id and self.demurrage_id in free_day_charge:
-            self.data["demurrage"] = free_day_charge[self.demurrage_id]
+        if self.demurrage_id and self.demurrage_id in free_days_charges:
+            self.data["demurrage"] = free_days_charges[self.demurrage_id]
         
-        if self.plugin_id and self.plugin_id in free_day_charge:
-            self.data["plugin"] = free_day_charge[self.plugin_id]
+        if self.plugin_id and self.plugin_id in free_days_charges:
+            self.data["plugin"] = free_days_charges[self.plugin_id]
 
         detail = self.data | {
             'id': self.id,
