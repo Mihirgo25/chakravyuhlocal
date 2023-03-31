@@ -1,6 +1,9 @@
 import os
-import time, requests
+import httpx
 from database.db_session import rd
+
+client = httpx.Client()
+
 
 last_line_hash = "last_line"
 total_line_hash = "total_line"
@@ -24,7 +27,7 @@ def set_original_file_path(params, converted_file):
     os.makedirs('tmp/rate_sheets', exist_ok=True)
     file_path = os.path.join('tmp', 'rate_sheets', f"{converted_file['id']}_original.csv")
     with open(file_path, 'wb') as f:
-        response = requests.get(converted_file["file_url"])
+        response = client.get(converted_file["file_url"])
         f.write(response.content)
 
 
