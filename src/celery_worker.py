@@ -22,7 +22,6 @@ CELERY_CONFIG = {
     "result_serializer": "json",
     "accept_content": ['application/json', 'application/x-python-serialize']
 }
-CELERY_REDIS_URL = 'redis://localhost:6379/0'
 
 celery = Celery(__name__)
 registry.enable("pickle")
