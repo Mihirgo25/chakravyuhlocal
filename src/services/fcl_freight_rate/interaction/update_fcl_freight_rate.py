@@ -25,11 +25,8 @@ def create_audit(request, freight_id):
 
 def update_fcl_freight_rate_data(request):
     with db.atomic() as transaction:
-          try:
-              return execute_transaction_code(request)
-          except Exception as e:
-              transaction.rollback()
-              return e
+        return execute_transaction_code(request)
+
 
 def validate_freight_params(request):
   if request.get('validity_start') or request.get('validity_end') or request.get('line_items'):
