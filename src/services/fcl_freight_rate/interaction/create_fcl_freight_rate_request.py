@@ -67,14 +67,17 @@ def get_create_params(request):
 def supply_agents_to_notify(request):
 
     locations_data = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.origin_country_id, FclFreightRateRequest.origin_continent_id, FclFreightRateRequest.origin_trade_id, FclFreightRateRequest.destination_port_id, FclFreightRateRequest.destination_country_id, FclFreightRateRequest.destination_continent_id, FclFreightRateRequest.destination_trade_id).where(FclFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
-    origin_locations = list(filter(None,[str(value) for key,value in locations_data.items() if key in ['origin_port_id', 'origin_country_id', 'origin_continent_id', 'origin_trade_id']]))
-    destination_locations =   list(filter(None,[str(value) for key,value in locations_data.items() if key in ['destination_port_id', 'destination_country_id', 'destination_continent_id', 'destination_trade_id']]))
+    origin_locations = list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['origin_port_id', 'origin_country_id', 'origin_continent_id', 'origin_trade_id']]))
+    destination_locations =   list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['destination_port_id', 'destination_country_id', 'destination_continent_id', 'destination_trade_id']]))
 
     supply_agents_data = get_partner_users_by_expertise('fcl_freight', origin_locations, destination_locations)
     supply_agents_list = list(set([item['partner_user_id'] for item in supply_agents_data]))
 
     supply_agents_user_data = get_partner_users(supply_agents_list)
-    supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data]))
+    if supply_agents_user_data:
+        supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data]))
+    else:
+        supply_agents_user_ids=[]
     try:
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_port_id']),str(locations_data['destination_port_id'])]}})['list']
     except Exception as e:
@@ -90,25 +93,27 @@ def supply_agents_to_notify(request):
 def send_notifications_to_supply_agents(request):
 
     request_info = supply_agents_to_notify(request)
-    data = {
-    'type': 'platform_notification',
-    'service': 'spot_search',
-    'service_id': request['source_id'],
-    'template_name': 'missing_freight_rate_request_notification',
-    'variables': { 'service_type': 'fcl freight',
-                'origin_location': request_info['origin_location'],
-                'destination_location': request_info['destination_location'] }
-    }
-    for user_id in request_info['user_ids']:
-        data['user_id'] = user_id
-        # create_communication_background.apply_async(args=data,queue='communication')
+    if request_info['user_ids']:
+        data = {
+        'type': 'platform_notification',
+        'service': 'spot_search',
+        'service_id': request['source_id'],
+        'template_name': 'missing_freight_rate_request_notification',
+        'variables': { 'service_type': 'fcl freight',
+                    'origin_location': request_info['origin_location'],
+                    'destination_location': request_info['destination_location'] }
+        }
+        for user_id in request_info['user_ids']:
+            data['user_id'] = user_id
+            # create_communication_background.apply_async(args=data,queue='communication')
 
 
 
 def create_audit(request, request_object_id):
-    performed_by_id = request['performed_by_id']
+    performed_by_id = request.get('performed_by_id')
     del request['performed_by_id']
-    request['cargo_readiness_date'] = request['cargo_readiness_date'].isoformat()
+    if request.get('cargo_readiness_date'):
+        request['cargo_readiness_date'] = request.get('cargo_readiness_date').isoformat()
 
     FclFreightRateAudit.create(
         action_name = 'create',

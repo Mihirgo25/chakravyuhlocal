@@ -331,7 +331,7 @@ def add_local_objects(freight_query_result, response_object, request):
         'service_provider_id': freight_query_result['origin_local']['service_provider_id'] if freight_query_result['origin_local'].get('service_provider_id') else response_object['service_provider_id'],
         'source': freight_query_result['origin_local']['source'] if freight_query_result['origin_local'].get('source') else response_object['source'],
         'line_items': []
-    } if 'origin_local' in freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
+    } if freight_query_result['origin_local'] and 'origin_local' in freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
         if freight_query_result['destination_local'].get('service_provider_id'):
@@ -466,7 +466,7 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
     freight_validity['validity_start'] = datetime.strptime(freight_validity['validity_start'],'%Y-%m-%d')
     freight_validity['validity_end'] = datetime.strptime(freight_validity['validity_end'],'%Y-%m-%d')
 
-    if (freight_validity['validity_start'] > request['validity_end']) or (freight_validity['validity_end'] < request['validity_start']):
+    if (freight_validity['validity_start'].date() > request['validity_end']) or (freight_validity['validity_end'].date() < request['validity_start']):
         return None
 
     freight_object = {
@@ -480,10 +480,10 @@ def build_freight_object(freight_validity, additional_weight_rate, additional_we
         'line_items': []
     }
 
-    if freight_object['validity_start'] < request['validity_start']:
+    if freight_object['validity_start'].date() < request['validity_start']:
         freight_object['validity_start'] = request['validity_start']
 
-    if freight_object['validity_end'] > request['validity_end']:
+    if freight_object['validity_end'].date() > request['validity_end']:
         freight_object['validity_end'] = request['validity_end']
 
     for line_item in freight_validity['line_items']:
@@ -744,32 +744,32 @@ def get_fcl_freight_rate_cards(requirements):
             }]
         }]
     """
-    try:
-        initial_query = initialize_freight_query(requirements)
-        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+    # try:
+    initial_query = initialize_freight_query(requirements)
+    freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
-        # freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+    # freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
-        missing_local_rates = get_rates_which_need_locals(freight_rates)
-        rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
-        rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
-        local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
-        freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
-        missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
-        
-        if len(missing_free_weight_limit) > 0:
-            free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
-            freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
-        freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
-        freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
-        freight_rates = build_response_list(freight_rates, requirements)
-        return {
-            "list" : freight_rates
-        }
-    except Exception as e:
-        print(e, 'Error In Fcl Freight Rate Cards')
-        return {
-            "list": []
-        }
+    missing_local_rates = get_rates_which_need_locals(freight_rates)
+    rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
+    rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
+    local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
+    freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
+    missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
+    
+    if len(missing_free_weight_limit) > 0:
+        free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
+        freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
+    freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
+    # freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
+    freight_rates = build_response_list(freight_rates, requirements)
+    return {
+        "list" : freight_rates
+    }
+    # except Exception as e:
+    #     print(e, 'Error In Fcl Freight Rate Cards')
+    #     return {
+    #         "list": []
+    #     }
 
 

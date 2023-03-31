@@ -360,8 +360,8 @@ def get_fcl_freight_rate_cards_data(
     container_size: str,
     container_type: str,
     containers_count: int,
-    validity_start: str,
-    validity_end: str,
+    validity_start: date,
+    validity_end: date,
     trade_type: str = None,
     include_destination_local: bool = True,
     include_origin_local: bool = True,
@@ -389,8 +389,8 @@ def get_fcl_freight_rate_cards_data(
         ignore_omp_dmp_sl_sps = json.loads(ignore_omp_dmp_sl_sps)
     else:
         ignore_omp_dmp_sl_sps = []
-    validity_start = datetime.strptime(validity_start,'%Y-%m-%d')
-    validity_end = datetime.strptime(validity_end,'%Y-%m-%d')
+    # validity_start = datetime.strptime(validity_start,'%Y-%m-%d')
+    # validity_end = datetime.strptime(validity_end,'%Y-%m-%d')
     request = {
         'origin_port_id' : origin_port_id,
         'origin_country_id' : origin_country_id,
@@ -417,11 +417,11 @@ def get_fcl_freight_rate_cards_data(
         'cogo_entity_id' : cogo_entity_id
     }
 
-    try:
-        data = get_fcl_freight_rate_cards(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
-        raise
+    # try:
+    data = get_fcl_freight_rate_cards(request)
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    # except:
+    #     raise
 
 @fcl_freight_router.get("/get_fcl_freight_rate_addition_frequency")
 def get_fcl_freight_rate_addition_frequency_data(
