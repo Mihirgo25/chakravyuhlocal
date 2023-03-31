@@ -1,11 +1,11 @@
 from configs.definitions import ROOT_DIR
-from configs.fcl_freight_rate_constants import SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION
+from configs.fcl_freight_rate_constants import SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS
+from configs.fcl_freight_rate_constants import HAZ_CLASSES
 import pickle, joblib, os, geopy.distance
 from datetime import datetime, timedelta
-from celery_worker import create_fcl_freight_rate_feedback_for_prediction
+from fastapi.encoders import jsonable_encoder
 import pandas as pd
 import numpy as np
-
 
 def port_distance(cord1, cord2):
     coords_1 = cord1
@@ -13,6 +13,7 @@ def port_distance(cord1, cord2):
     return geopy.distance.geodesic(coords_1, coords_2).km
 
 def get_fcl_freight_predicted_rate(request, key):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
     if type(request) == dict:
         request = request
     else:
@@ -59,8 +60,8 @@ def get_fcl_freight_predicted_rate(request, key):
         if request['shipping_line_id']:
             SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION[request['shipping_line_id']] = request['service_provider_id']
 
-        freight_rates = []
-        for shipping_line_id in SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION.keys():
+        rate_card_ids = []
+        for shipping_line_id in list(SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION.keys())[:2]:
             df = pd.DataFrame()
             df['container_size'] = [container_size]
             df['shipping_line_rank'] = [shipping_line_dict[shipping_line_id]] 
@@ -69,54 +70,97 @@ def get_fcl_freight_predicted_rate(request, key):
             df['ds'] = validity_start
 
             model_request = model.predict(df)['yhat']
-            response = {
-                'id' : str(datetime.now().timestamp()).replace('.',''),
-                'validities' : [{
-                    'id' : None,
-                    'price':round(np.exp(model_request[0])),
-                    'line_items': 
-                    [{'code': 'BAS',
-                    'unit': 'per_container',
-                    'price': round(np.exp(model_request[0])),
-                    'slabs': [],
-                    'remarks': [],
-                    'currency': 'USD'
-                    }],
-                'likes_count': 0,
-                'payment_term': 'prepaid',
-                'validity_end': validity_end,
-                'schedule_type': 'transhipment',
-                'dislikes_count': 0,
-                'platform_price': round(np.exp(model_request[0])),
-                'validity_start': validity_start
-                }],
+
+            request = {
+                'origin_port_id': request['origin_port_id'],
+                'origin_main_port_id': request['origin_main_port_id'],
+                'destination_port_id': request['destination_port_id'],
+                'destination_main_port_id': request['destination_main_port_id'],
                 'container_size': request['container_size'],
                 'container_type': request['container_type'],
-                'commodity': request['commodity'],
-                'origin_port_id': request['origin_port_id'],
-                'destination_port_id': request['destination_port_id'],
-                'origin_country_id': request['origin_country_id'],
-                'destination_country_id': request['destination_country_id'],
-                'origin_main_port_id': request['origin_main_port_id'],
-                'destination_main_port_id': request['destination_main_port_id'],
+                'commodity': request['commodity'] if request['commodity'] else 'general',
                 'importer_exporter_id': request['importer_exporter_id'],
                 'shipping_line_id' : shipping_line_id,
                 'service_provider_id' : SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION[shipping_line_id],
-                'weight_limit': {
-                },
+                'validity_start': datetime.strptime(validity_start,'%Y-%m-%d'),
+                'validity_end': datetime.strptime(validity_end,'%Y-%m-%d'),
+                'line_items': [
+                {
+                    "code": "BAS",
+                    "unit": "per_container",
+                    "price": round(np.exp(model_request[0])),
+                    "currency": "USD",
+                    "remarks": [
+                        "predicted price"
+                    ],
+                    "slabs": []
+                }
+                ],
+                'weight_limit': DEFAULT_WEIGHT_LIMITS[request['container_size']],
                 'origin_local': {
                         'plugin': None,
                         'line_items': []
-                    },
-                'destination_local': {
+                },
+                'destination_local':
+                {
                         'plugin': None,
                         'line_items': []
-                    },
-                'is_origin_local_line_items_error_messages_present': True,
-                'is_destination_local_line_items_error_messages_present': True,
-                'cogo_entity_id': request['cogo_entity_id']
+                },
+                'performed_by_id': 'dd87a6be-7334-4190-834d-6018a1560b2a',
+                'procured_by_id': 'dd87a6be-7334-4190-834d-6018a1560b2a',#WHAT SHOULD I TAKE?
+                'sourced_by_id': 'dd87a6be-7334-4190-834d-6018a1560b2a',
+                'cogo_entity_id': request['cogo_entity_id'],
+                'source':'predicted'
             }
+            if request['container_type'] in ['open_top', 'flat_rack', 'iso_tank'] or request['container_size'] == '45HC':
+                request['line_items'].append({
+                    "code": "SPE",
+                    "unit": "per_container",
+                    "price": 0,
+                    "currency": "USD",
+                    "remarks": [
+                    ],
+                    "slabs": []
+                })
+            
+            if request['commodity'] in HAZ_CLASSES:
+                request['line_items'].append({
+                    "code": "HSC",
+                    "unit": "per_container",
+                    "price": 0,
+                    "currency": "USD",
+                    "remarks": [
+                    ],
+                    "slabs": []
+                })
+            rate_card_id = create_fcl_freight_rate_data(request)['id']
+            rate_card_ids.append(rate_card_id)
 
-            freight_rates.append(response)
-        create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs = {'result':freight_rates}, queue = 'low')
-        return freight_rates
+        # rate_cards = jsonable_encoder(list(FclFreightRate.select(
+        #     FclFreightRate.id,
+        #     FclFreightRate.validities,
+        #     FclFreightRate.container_size,
+        #     FclFreightRate.container_type,
+        #     FclFreightRate.commodity,
+        #     FclFreightRate.origin_port_id,
+        #     FclFreightRate.destination_port_id,
+        #     FclFreightRate.origin_country_id,
+        #     FclFreightRate.destination_country_id,
+        #     FclFreightRate.origin_main_port_id,
+        #     FclFreightRate.destination_main_port_id,
+        #     FclFreightRate.importer_exporter_id,
+        #     FclFreightRate.service_provider_id,
+        #     FclFreightRate.shipping_line_id,
+        #     FclFreightRate.weight_limit,
+        #     FclFreightRate.origin_local,
+        #     FclFreightRate.destination_local,
+        #     FclFreightRate.is_origin_local_line_items_error_messages_present,
+        #     FclFreightRate.is_destination_local_line_items_error_messages_present,
+        #     FclFreightRate.cogo_entity_id
+        #     ).where(
+        #     FclFreightRate.id << rate_card_ids,
+        #     ).dicts()))
+    
+        # return rate_cards
+
+        # create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs = {'result':freight_rates}, queue = 'low')

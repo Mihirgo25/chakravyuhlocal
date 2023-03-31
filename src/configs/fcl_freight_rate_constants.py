@@ -91,7 +91,7 @@ FEEDBACK_TYPES = ['liked', 'disliked']
 
 DEFAULT_WEIGHT_LIMITS = {
   '20' : {
-    'free_limit': 18,
+    'free_limit': 18.0,
     'slabs': [
       {
         'lower_limit': 19,
@@ -102,7 +102,7 @@ DEFAULT_WEIGHT_LIMITS = {
     ]
   },
   '40' : {
-    'free_limit': 26,
+    'free_limit': 26.0,
     'slabs': [
       {
         'lower_limit': 27,
@@ -113,7 +113,7 @@ DEFAULT_WEIGHT_LIMITS = {
     ]
   },
   '40HC' : {
-    'free_limit': 26,
+    'free_limit': 26.0,
     'slabs': [
       {
         'lower_limit': 27,
@@ -124,7 +124,7 @@ DEFAULT_WEIGHT_LIMITS = {
     ]
   },
   '45HC' : {
-    'free_limit': 26,
+    'free_limit': 26.0,
     'slabs': [
       {
         'lower_limit': 27,
