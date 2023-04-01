@@ -82,6 +82,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surc
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
+from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 
 fcl_freight_router = APIRouter()
 
@@ -1382,6 +1383,24 @@ def list_rates_sheets(
     try:
         response = list_rate_sheets(
             filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except:
+        return JSONResponse(status_code=500, content={"success": False})
+
+
+@fcl_freight_router.get("/list_fcl_freight_rate_sheet_stats")
+def list_rates_sheet_stat(
+    filters: str = None,
+    service_provider_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheet_stats(
+            filters, service_provider_id
         )
         return JSONResponse(status_code=200, content=response)
     except:
