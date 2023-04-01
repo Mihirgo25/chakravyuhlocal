@@ -132,7 +132,7 @@ def get_airline_id(params):
 def convert_date_format(date):
     if not date:
         return date
-    parsed_date = parser.parse(date)
+    parsed_date = parser.parse(date, dayfirst=True)
     return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
 
 
@@ -277,7 +277,7 @@ def process_fcl_freight_local(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
                 rows = []
-            edit_file.flush()
+    edit_file.flush()
 
     if not rows:
         return
@@ -327,6 +327,10 @@ def create_fcl_freight_local_rate(
         else:
             keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']
             slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
+            keys_to_float = ['lower_limit', 'upper_limit', 'price']
+            for key, val in slab.items():
+                if key in keys_to_float:
+                    slab[key] = float(val)
             object['data']['line_items'][-1]['slabs'].append(slab)
 
     request_params = object
@@ -417,7 +421,6 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     row[k] = None
             list_opt = list(row.values())
             csv_writer.writerow(list_opt)
-            edit_file.flush()
             last_line = get_last_line(params)
             present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable']
             blank_field = ['lower_limit','upper_limit', 'price', 'currency']
@@ -457,7 +460,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     set_last_line(index-1, params)
                     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
                     set_processed_percent(percent, params)
-
+    edit_file.flush()
     if not rows:
         return
     create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer)
@@ -486,6 +489,10 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     from celery_worker import celery_create_fcl_freight_rate_free_day
     keys_to_extract = ['location_type', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'specificity_type', 'previous_days_applicable']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    keys_to_float = ['lower_limit', 'upper_limit', 'price']
+    for key, val in object.items():
+        if key in keys_to_float:
+            object[key] = float(val)
     location = get_location(rows[0]['location'], rows[0]['location_type'])
     object['location'] = location
     object['location_id'] = location['id']
@@ -500,6 +507,10 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     for t in rows:
         keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']
         slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
+        keys_to_float = ['lower_limit', 'upper_limit', 'price']
+        for key, val in slab.items():
+            if key in keys_to_float:
+                slab[key] = float(val)
         if object['slabs']:
             object['slabs'].append(slab)
     object['rate_sheet_id'] = params['rate_sheet_id']
@@ -1069,23 +1080,26 @@ def process_fcl_freight_freight(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
                 rows = []
-            edit_file.flush()
+    edit_file.flush()
     if not rows:
         return
     create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
     set_last_line(total_lines, params)
-    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
-    converted_file['percent'] = percent
+    valid = converted_file.get('valid_rates_count')
+    total = converted_file.get('rates_count')
+    percent_completed = (valid / total) * 100
+    # percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
+    converted_file['percent'] = percent_completed
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     edit_file.close()
-    if math.ceil(percent)!=100:
+    if math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     else:
         update.status = 'complete'
-        converted_file['status'] = 'complete'
+    converted_file['status'] = 'complete'
 
-    set_processed_percent(percent, params)
+    set_processed_percent(percent_completed, params)
     try:
         os.remove(get_original_file_path(converted_file))
         os.remove(get_file_path(converted_file))

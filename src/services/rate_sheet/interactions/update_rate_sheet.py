@@ -8,8 +8,7 @@ from fastapi.encoders import jsonable_encoder
 import uuid
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
 from services.rate_sheet.interactions.create_rate_sheet_audits import create_audit
-from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
-
+from fastapi import HTTPException
 def get_audit_params(parameters):
     keys_to_extract = ['converted_files']
     audit_data = dict(filter(lambda item: item[0] in keys_to_extract, parameters.items()))
@@ -28,7 +27,7 @@ def  update_rate_sheet(params: UpdateRateSheet):
     from celery_worker import validate_and_process_rate_sheet_converted_file_delay
     rate_sheet = RateSheet.get(RateSheet.id == params['id'])
     if rate_sheet.status != 'uploaded':
-        return
+        raise HTTPException(status_code=403, detail= "File already uploaded")
     if 'converted_files' in params:
         index = 0
         for converted_file in params.get('converted_files'):
