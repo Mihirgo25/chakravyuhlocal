@@ -79,8 +79,8 @@ def execute_transaction_code(request):
 
     if request['data'].get('line_items'):
         fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data']['line_items'] }
-
-    fcl_freight_local.validate_before_save()
+    if 'rate_sheet_validation' not in request:
+        fcl_freight_local.validate_before_save()
 
     fcl_freight_local.update_special_attributes(new_free_days)
     fcl_freight_local.rate_not_available_entry = False

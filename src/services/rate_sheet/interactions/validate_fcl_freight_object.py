@@ -66,16 +66,6 @@ def get_local_object(object):
     validation['error'] = ''
     res = object
     local = FclFreightRateLocal(**res)
-    if not local.validate_trade_type():
-        validation['error']+='Invalid trade type'
-    if not local.validate_main_port_id():
-        validation['error']+='Invalid origin main port'
-    if not local.validate_container_size():
-        validation['error']+='duplicate line items present '
-    if not local.validate_container_type():
-        validation['error']+='Invalid container type'
-    if not local.validate_commodity():
-        validation['error']+='Invalid commodity '
     try:
         local.validate_before_save()
     except HTTPException as e:
