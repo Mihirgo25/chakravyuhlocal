@@ -341,9 +341,9 @@ def create_fcl_freight_local_rate(
     object["sourced_by_id"] = sourced_by_id
     validation = write_fcl_freight_local_object(request_params, writer, params, converted_file, last_row)
     if validation.get('valid'):
-        celery_create_fcl_freight_rate_local.apply_async(kwargs={'request':request_params},queue='low')
+        celery_create_fcl_freight_rate_local.apply_async(kwargs={'request':request_params},queue='fcl_freight_rate')
     else:
-        print('error')
+        print(validation.get('error'))
     return validation
 
 
@@ -521,9 +521,9 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     request_params = object
     validation = write_fcl_freight_free_day_object(request_params.copy(), csv_writer, params,  converted_file)
     if validation.get('valid'):
-        celery_create_fcl_freight_rate_free_day.apply_async(kwargs={'request':request_params},queue='low')
+        celery_create_fcl_freight_rate_free_day.apply_async(kwargs={'request':request_params},queue='fcl_freight_rate')
     else:
-        print('error')
+        print(validation.get('error'))
     return
 
 
@@ -1186,9 +1186,9 @@ def create_fcl_freight_freight_rate(
         request_params["is_extended"] = True
     validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, last_row)
     if validation.get('valid'):
-        create_fcl_freight_rate_delay.apply_async(kwargs={'request':object},queue='low')
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':object},queue='fcl_freight_rate')
         if rows[0].get('extend_rates'):
             request_params['extend_rates'] = True
-            celery_extend_create_fcl_freight_rate_data.apply_async(kwargs={'request':object},queue='low')
+            celery_extend_create_fcl_freight_rate_data.apply_async(kwargs={'request':object},queue='fcl_freight_rate')
     else:
-        print('error')
+        print(validation.get('error'))
