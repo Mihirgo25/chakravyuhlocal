@@ -1343,6 +1343,8 @@ def create_rate_sheets(request: CreateRateSheet):
         # request.performed_by_id = resp["setters"]["performed_by_id"]
         # request.performed_by_type = resp["setters"]["performed_by_type"]
     # try:
+    request.performed_by_id  = 'b22829c4-7dea-4fa9-aa85-847072bcc5f6'
+    request.performed_by_type = 'rate_sheet'
     rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
     # except:
@@ -1359,6 +1361,8 @@ def update_rate_sheets(request: UpdateRateSheet):
     #     request.performed_by_type = resp["setters"]["performed_by_type"]
 
     # try:
+    request.performed_by_id  = 'b22829c4-7dea-4fa9-aa85-847072bcc5f6'
+    request.performed_by_type = 'rate_sheet'
     rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
     # except:
