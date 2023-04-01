@@ -33,9 +33,9 @@ class FclFreightRate(BaseModel):
     destination_continent_id = UUIDField(null=True)
     destination_country_id = UUIDField(null=True)
     destination_local = BinaryJSONField(null=True)
-    destination_local_id = ForeignKeyField(FclFreightRateLocal, index=True, null=True)
-    destination_detention_id = ForeignKeyField(FclFreightRateFreeDay, index=True, null=True)
-    destination_demurrage_id = ForeignKeyField(FclFreightRateFreeDay, index=True, null=True)
+    destination_local_id = UUIDField(index=True, null=True)
+    destination_detention_id = UUIDField(index=True, null=True)
+    destination_demurrage_id = UUIDField(index=True, null=True)
     destination_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     destination_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
@@ -66,9 +66,9 @@ class FclFreightRate(BaseModel):
     origin_continent_id = UUIDField(null=True)
     origin_country_id = UUIDField(null=True)
     origin_local = BinaryJSONField(null=True)
-    origin_local_id = ForeignKeyField(FclFreightRateLocal, index=True, null=True)
-    origin_detention_id = ForeignKeyField(FclFreightRateFreeDay, index=True, null=True)
-    origin_demurrage_id = ForeignKeyField(FclFreightRateFreeDay, index=True, null=True)
+    origin_local_id = UUIDField(index=True, null=True)
+    origin_detention_id = UUIDField(index=True, null=True)
+    origin_demurrage_id = UUIDField(index=True, null=True)
     origin_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
@@ -94,7 +94,7 @@ class FclFreightRate(BaseModel):
     procured_by_id = UUIDField(null=True, index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
-    init_key = TextField(index=True)
+    init_key = TextField(index=True, null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -702,22 +702,22 @@ class FclFreightRate(BaseModel):
         local_ids.append(str(self.origin_local_id))
       if self.destination_local_id:
         local_ids.append(str(self.destination_local_id))
-      
+
       free_day_ids = []
 
       if self.origin_detention_id:
-        free_day_ids.append(self.origin_detention_id)
+        free_day_ids.append(str(self.origin_detention_id))
       if self.origin_demurrage_id:
-        free_day_ids.append(self.origin_demurrage_id)
+        free_day_ids.append(str(self.origin_demurrage_id))
       if self.origin_plugin_id:
-        free_day_ids.append(self.origin_plugin_id)
-      
+        free_day_ids.append(str(self.origin_plugin_id))
+
       if self.destination_detention_id:
-        free_day_ids.append(self.destination_detention_id)
+        free_day_ids.append(str(self.destination_detention_id))
       if self.destination_demurrage_id:
-        free_day_ids.append(self.destination_demurrage_id)
+        free_day_ids.append(str(self.destination_demurrage_id))
       if self.destination_plugin_id:
-        free_day_ids.append(self.destination_plugin_id)
+        free_day_ids.append(str(self.destination_plugin_id))
 
       local_charges = {}
 
@@ -738,9 +738,9 @@ class FclFreightRate(BaseModel):
 
         for local_charge in local_charges_new:
           local_charges[local_charge["id"]] = local_charge
-      
+
       free_days_charges = {}
-      
+
       if len(free_day_ids):
         free_days_query = FclFreightRateFreeDay.select(
           FclFreightRateFreeDay.location_id,
@@ -763,12 +763,12 @@ class FclFreightRate(BaseModel):
         origin_local['detention'] = free_days_charges[self.origin_detention_id] | ({'is_slabs_missing': self.is_origin_detention_slabs_missing })
       else:
         origin_local['detention'] = { 'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.origin_demurrage_id in free_days_charges:
         origin_local['demurrage'] = free_days_charges[self.origin_demurrage_id] | ({'is_slabs_missing': self.is_origin_demurrage_slabs_missing })
       else:
         origin_local['demurrage'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.origin_plugin_id in free_days_charges:
         origin_local['plugin'] = free_days_charges[self.origin_plugin_id] | ({'is_slabs_missing': self.is_origin_plugin_slabs_missing })
       else:
@@ -781,12 +781,12 @@ class FclFreightRate(BaseModel):
         destination_local['detention'] = free_days_charges[self.destination_detention_id] | ({'is_slabs_missing': self.is_destination_detention_slabs_missing })
       else:
         destination_local['detention'] = { 'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.destination_demurrage_id in free_days_charges:
         destination_local['demurrage'] = free_days_charges[self.destination_demurrage_id] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
       else:
         destination_local['demurrage'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.destination_plugin_id in free_days_charges:
         destination_local['plugin'] = free_days_charges[self.destination_plugin_id] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
       else:

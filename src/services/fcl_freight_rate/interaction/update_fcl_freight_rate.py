@@ -5,10 +5,10 @@ from database.db_session import db
 
 def create_audit(request, freight_id):
     audit_data = {}
-    audit_data['validity_start'] = request['validity_start'].isoformat()
-    audit_data['validity_end'] = request['validity_end'].isoformat()
-    audit_data['line_items'] = request['line_items']
-    audit_data['weight_limit'] = request['weight_limit']
+    audit_data['validity_start'] = request.get('validity_start').isoformat()
+    audit_data['validity_end'] = request.get('validity_end').isoformat()
+    audit_data['line_items'] = request.get('line_items')
+    audit_data['weight_limit'] = request.get('weight_limit')
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
     audit_data['is_extended'] = request.get("is_extended")
@@ -25,11 +25,8 @@ def create_audit(request, freight_id):
 
 def update_fcl_freight_rate_data(request):
     with db.atomic() as transaction:
-          try:
-              return execute_transaction_code(request)
-          except Exception as e:
-              transaction.rollback()
-              return e
+        return execute_transaction_code(request)
+
 
 def validate_freight_params(request):
   if request.get('validity_start') or request.get('validity_end') or request.get('line_items'):
@@ -41,25 +38,36 @@ def validate_freight_params(request):
 def execute_transaction_code(request):
   validate_freight_params(request)
 
-  freight_object = FclFreightRate.get_by_id(request['id'])
+  freight_object = FclFreightRate.select().where(FclFreightRate.id == request["id"]).first()
+
+  if not freight_object:
+    raise HTTPException(status_code=499, detail="rate does not exist")
+  
+  freight_object.set_locations()
 
   for k,v in request.items():
     if k in ['weight_limit']:
       setattr(freight_object, k, v)
+  
+  new_free_days = {}
 
-  origin_local = {k:v for k, v in request.get("origin_local", {}).items() if k not in ["detention", "demurrage"]}
-  destination_local = {k:v for k, v in request.get("destination_local", {}).items() if k not in ["detention", "demurrage"]}
+  new_free_days['origin_detention'] = request.get("origin_local", {}).get("detention", {})
+  new_free_days['origin_demurrage'] = request.get("origin_local", {}).get("demurrage", {})
+  new_free_days['destination_detention'] = request.get("destination_local", {}).get("detention", {})
+  new_free_days['destination_demurrage'] = request.get("destination_local", {}).get("demurrage", {})
 
-  if request.get("origin_local"):
-    freight_object.origin_local = origin_local
-
-  if request.get("destination_local"):
-    freight_object.destination_local = destination_local
-
-  freight_object.origin_detention = request.get("origin_local", {}).get("detention",{})
-  freight_object.origin_demurrage = request.get("origin_local", {}).get("demurrage",{})
-  freight_object.destination_detention = request.get("destination_local", {}).get("detention",{})
-  freight_object.destination_demurrage = request.get("destination_local", {}).get("demurrage",{})
+  if request.get("origin_local") and "line_items" in request["origin_local"]:
+    freight_object.origin_local = {
+        "line_items": request["origin_local"]["line_items"]
+    }
+  else:
+    freight_object.origin_local = { "line_items": [] }
+  if request.get("destination_local") and "line_items" in request["destination_local"]:
+    freight_object.destination_local = {
+        "line_items": request["destination_local"]["line_items"]
+    }
+  else:
+    freight_object.destination_local = { "line_items": [] }
 
   if request.get('validity_start'):
     freight_object.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
@@ -75,6 +83,8 @@ def execute_transaction_code(request):
     freight_object.save()
   except:
       raise HTTPException(status_code=500, detail='rate did not update')
+  
+  freight_object.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
   freight_object.update_special_attributes()
 

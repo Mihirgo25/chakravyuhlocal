@@ -134,7 +134,7 @@ class CreateFclWeightSlabsConfiguration(BaseModel):
 class UpdateFclFreightRate(BaseModel):
   id: str
   procured_by_id: str = None
-  sourced_by_id: str = None 
+  sourced_by_id: str = None
   performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
@@ -336,6 +336,7 @@ class CreateFclFreightRateFeedback(BaseModel):
   preferred_shipping_line_ids: list[str] = []
   feedback_type: str
   booking_params: dict = {}
+  cogo_entity_id: str = None
 
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str
@@ -718,7 +719,7 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
   validity_end: datetime = None
 
 class ExtendValidty(BaseModel):
-  filters:dict={} 
+  filters:dict={}
   source_date:datetime
   validity_end:datetime
   sourced_by_ids:dict=None
@@ -773,7 +774,7 @@ class UpdateFreeDays(BaseModel):
   free_limit : int
   slabs : List[Slab] = None
 
-class AddFreightLineItem(BaseModel): 
+class AddFreightLineItem(BaseModel):
   filters : dict = {}
   code : str
   unit : str
@@ -810,8 +811,8 @@ class CreateBulkOperation(BaseModel):
 
 class UpdateFclFreightRateTask(BaseModel):
   id: str
-  performed_by_id: str
-  performed_by_type: str
+  performed_by_id: str=None
+  performed_by_type: str=None
   rate: LocalData = None
   status: str = None
   closing_remarks: str = None

@@ -1,16 +1,24 @@
 from fastapi import FastAPI,  Request
 from fastapi.middleware.cors import CORSMiddleware
-
+# import sentry_sdk
 from database.db_session import db
 from fastapi import FastAPI, Request
-from configs.env import APP_ENV
+from configs.env import APP_ENV, SENTRY_DSN
 from params import *
 from fastapi.responses import JSONResponse
 from database.create_tables import create_table
+from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 
-docs_url = '/docs' if APP_ENV == "production" else "/docs"
+# sentry_sdk.init(
+#     dsn=SENTRY_DSN,
+#     environment="production",
+#     traces_sample_rate=0.5,
+#     attach_stacktrace=True
+# )
+
+docs_url = None if APP_ENV == "production" else "/docs"
 
 app = FastAPI(docs_url=docs_url,debug=True)
 
@@ -39,6 +47,11 @@ def startup():
     if db.is_closed():
         db.connect()
     # create_table()
+    # fcl_freight_migration()
+    # create_partition_table()
+    # fcl_local_migration()
+    # free_day()
+    
 
 
 @app.on_event("shutdown")
