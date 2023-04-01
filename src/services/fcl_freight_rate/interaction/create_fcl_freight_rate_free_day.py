@@ -3,7 +3,6 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from fastapi import HTTPException
 from datetime import datetime, timedelta
-from celery_worker import update_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day(request):
@@ -12,6 +11,7 @@ def create_fcl_freight_rate_free_day(request):
 
 
 def execute_transaction_code(request):
+    from celery_worker import update_multiple_service_objects
     request["validity_start"] = (request.get('validity_start') or datetime.now().date())
     request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)).date())
     free_day = get_free_day_object(request)

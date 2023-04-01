@@ -4,7 +4,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRat
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
 from database.db_session import db
-from celery_worker import send_fcl_freight_rate_task_notifications,update_multiple_service_objects
 
 def create_audit(request, task_id):
     performed_by_id = request['performed_by_id']
@@ -19,14 +18,15 @@ def create_audit(request, task_id):
     )
 
 def create_fcl_freight_rate_task(request):
-    object_type = 'Fcl_Freight_Rate_Task' 
-    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
+    object_type = 'Fcl_Freight_Rate_Task'
+    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
 
 
 def execute_transaction_code(request):
+    from celery_worker import send_fcl_freight_rate_task_notifications, update_multiple_service_objects
     object_unique_params = {
         'service': request.get("service"),
         'port_id': request.get("port_id"),
@@ -84,7 +84,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=500, detail="Unable to create task")
     else:
         task.save()
-    
+
     create_audit(request, task.id)
     update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
     send_fcl_freight_rate_task_notifications.apply_async(kwargs={'task_id':task.id},queue='low')

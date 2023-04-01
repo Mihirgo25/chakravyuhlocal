@@ -139,8 +139,8 @@ class FclFreightRateFreeDay(BaseModel):
         if not self.validate_specificity_type():
             raise HTTPException(status_code=422, detail="Invalid specificity type")
 
-        if not self.validate_shipping_line():
-            raise HTTPException(status_code=422, detail="Invalid shipping line")
+        # if not self.validate_shipping_line():
+        #     raise HTTPException(status_code=422, detail="Invalid shipping line")
 
 
         # if not self.validate_service_provider():
