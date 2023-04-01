@@ -61,6 +61,7 @@ def execute_transaction_code(request):
         fcl_freight_local = FclFreightRateLocal(**row)
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
+        fcl_freight_local.data={}
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
 
     new_free_days = {}
@@ -75,7 +76,7 @@ def execute_transaction_code(request):
         new_free_days['plugin'] = {'slabs': [] } | (request['data']['demurrage'] or {})
 
     if request['data'].get('line_items'):
-        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data']['line_items'] }
+        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data'].get('line_items') }
 
     fcl_freight_local.validate_before_save()
 
