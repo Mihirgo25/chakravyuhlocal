@@ -63,9 +63,10 @@ def create_fcl_freight_rate(request):
         freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
-    freight.set_locations()
-    freight.set_origin_location_ids()
-    freight.set_destination_location_ids()
+    if 'rate_sheet_validation' not in request:
+        freight.set_locations()
+        freight.set_origin_location_ids()
+        freight.set_destination_location_ids()
 
 
     freight.sourced_by_id = request.get("sourced_by_id")
@@ -94,23 +95,24 @@ def create_fcl_freight_rate(request):
         }
     else:
         freight.destination_local = { "line_items": [] }
+    if 'rate_sheet_validation' not in request:
+        freight.validate_validity_object(request["validity_start"], request["validity_end"])
+        freight.validate_line_items(request.get("line_items"))
 
-    freight.validate_validity_object(request["validity_start"], request["validity_end"])
-    freight.validate_line_items(request.get("line_items"))
-
-    freight.set_validities(
-        request["validity_start"].date(),
-        request["validity_end"].date(),
-        request.get("line_items"),
-        request.get("schedule_type"),
-        False,
-        request.get("payment_term"),
-    )
+        freight.set_validities(
+            request["validity_start"].date(),
+            request["validity_end"].date(),
+            request.get("line_items"),
+            request.get("schedule_type"),
+            False,
+            request.get("payment_term"),
+        )
 
     freight.set_platform_prices()
     freight.set_is_best_price()
     freight.set_last_rate_available_date()
-    freight.validate_before_save()
+    if 'rate_sheet_validation' not in request:
+        freight.validate_before_save()
 
     try:
         freight.save()
