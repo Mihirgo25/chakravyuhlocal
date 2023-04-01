@@ -341,9 +341,10 @@ def create_fcl_freight_local_rate(
     object["sourced_by_id"] = sourced_by_id
     validation = write_fcl_freight_local_object(request_params, writer, params, converted_file, last_row)
     if validation.get('valid'):
-        celery_create_fcl_freight_rate_local.apply_async(kwargs={'request':request_params},queue='low')
+        object['rate_sheet_validation'] = True
+        celery_create_fcl_freight_rate_local.apply_async(kwargs={'request':request_params},queue='fcl_freight_rate')
     else:
-        print('error')
+        print(validation.get('error'))
     return validation
 
 
@@ -369,16 +370,19 @@ def write_fcl_freight_local_object(rows, csv, params, converted_file, last_row):
 
 
 
-def write_fcl_freight_free_day_object(rows, csv, params,  converted_file):
+def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, last_row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
 
     if object_validity.get("valid"):
-            converted_file['valid_rates_count'] = int(converted_file['valid_rates_count'])+1
+        csv.writerow(last_row)
+        converted_file['valid_rates_count'] = int(converted_file['valid_rates_count'])+1
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
             list_opt = error
             csv.writerow(list_opt)
+            csv.writerow([])
+            csv.writerow(last_row)
         except:
             print('no csv')
     converted_file['rates_count'] = int(converted_file['rates_count'])+1
@@ -406,11 +410,10 @@ def process_fcl_freight_free_day(params, converted_file, update):
     index = -1
     file_path = get_original_file_path(converted_file)
     edit_file = open(get_file_path(converted_file), 'w',newline="")
+    last_row = []
     with open(file_path, encoding='iso-8859-1') as file:
         csv_writer = csv.writer(edit_file)
         reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        if last_line == 0:
-            csv_writer.writerow(headers)
         input_file = csv.DictReader(open(file_path))
         headers = input_file.fieldnames
         csv_writer.writerow(headers)
@@ -419,19 +422,20 @@ def process_fcl_freight_free_day(params, converted_file, update):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            list_opt = list(row.values())
-            csv_writer.writerow(list_opt)
-            last_line = get_last_line(params)
             present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable']
             blank_field = ['lower_limit','upper_limit', 'price', 'currency']
             if valid_hash(row, present_field, blank_field) or valid_hash(row, ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable', 'lower_limit', 'upper_limit', 'price', 'currency']):
                 if rows:
+                    last_row = list(row.values())
                     create_fcl_freight_rate_free_days(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
                     set_last_line(index, params)
                     percent = (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))* 100
                     set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
                 rows = [row]
             elif (
                 valid_hash(
@@ -452,25 +456,34 @@ def process_fcl_freight_free_day(params, converted_file, update):
                 )
             ):
                 rows.append(row)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
             else:
                 if rows:
+                    last_row = list(row.values())
                     create_fcl_freight_rate_free_days(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer
+                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
                     set_last_line(index-1, params)
                     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
                     set_processed_percent(percent, params)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
+                rows = []
     edit_file.flush()
     if not rows:
         return
-    create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer)
+    create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
     set_last_line(total_lines, params)
+    valid = converted_file.get('valid_rates_count')
+    total = converted_file.get('rates_count')
+    percent_completed = (valid / total) * 100
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
-    converted_file['percent'] = percent
+    converted_file['percent'] = percent_completed
     set_processed_percent(percent, params)
     edit_file.close()
-    if math.ceil(percent)!=100:
+    if math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     else:
@@ -485,7 +498,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
     return
 
 
-def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer):
+def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row):
     from celery_worker import celery_create_fcl_freight_rate_free_day
     keys_to_extract = ['location_type', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'specificity_type', 'previous_days_applicable']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
@@ -496,10 +509,10 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     location = get_location(rows[0]['location'], rows[0]['location_type'])
     object['location'] = location
     object['location_id'] = location['id']
-    object['port_id'] = location['seaport_id']
-    object['country_id'] = location['country_id']
-    object['trade_id'] = location['trade_id']
-    object['continent_id'] = location['continent_id']
+    object['port_id'] = location.get('seaport_id')
+    object['country_id'] = location.get('country_id')
+    object['trade_id'] = location.get('trade_id')
+    object['continent_id'] = location.get('continent_id')
     object['shipping_line_id'] = get_shipping_line_id(rows[0]['shipping_line'])
     object['importer_exporter_id'] = get_importer_exporter_id(rows[0]['importer_exporter'])
     object['remarks'] = [rows[0]['remark1'], rows[0]['remark2'], rows[0]['remark3']]
@@ -519,11 +532,12 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     object['procured_by_id'] = procured_by_id
     object['sourced_by_id'] = sourced_by_id
     request_params = object
-    validation = write_fcl_freight_free_day_object(request_params.copy(), csv_writer, params,  converted_file)
+    validation = write_fcl_freight_free_day_object(request_params.copy(), csv_writer, params,  converted_file, last_row)
     if validation.get('valid'):
-        celery_create_fcl_freight_rate_free_day.apply_async(kwargs={'request':request_params},queue='low')
+        object['rate_sheet_validation'] = True
+        celery_create_fcl_freight_rate_free_day.apply_async(kwargs={'request':request_params},queue='fcl_freight_rate')
     else:
-        print('error')
+        print(validation.get('error'))
     return
 
 
@@ -1186,9 +1200,10 @@ def create_fcl_freight_freight_rate(
         request_params["is_extended"] = True
     validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, last_row)
     if validation.get('valid'):
-        create_fcl_freight_rate_delay.apply_async(kwargs={'request':object},queue='low')
+        object['rate_sheet_validation'] = True
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':object},queue='fcl_freight_rate')
         if rows[0].get('extend_rates'):
             request_params['extend_rates'] = True
-            celery_extend_create_fcl_freight_rate_data.apply_async(kwargs={'request':object},queue='low')
+            celery_extend_create_fcl_freight_rate_data.apply_async(kwargs={'request':object},queue='fcl_freight_rate')
     else:
-        print('error')
+        print(validation.get('error'))
