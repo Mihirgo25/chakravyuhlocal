@@ -773,7 +773,7 @@ def list_fcl_freight_local_suggestions_data(
         data = list_fcl_freight_rate_local_suggestions(service_provider_id, filters, page_limit, page, sort_by, sort_type, pagination_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except:
-        return JSONResponse(status_code=500, content={"success": False})
+        raise
 
 @fcl_freight_router.get("/list_fcl_freight_rate_free_days")
 def list_fcl_freight_rate_free_days_data(
@@ -1346,8 +1346,8 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
     try:
         rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
-    except:
-        return JSONResponse(status_code=500, content={"success": False})
+    except Exception as exc:
+        raise exc
 
 
 
@@ -1362,8 +1362,8 @@ def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_
     try:
         rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
-    except:
-        return JSONResponse(status_code=500, content={"success": False})
+    except Exception as exc:
+        raise exc
 
 
 @fcl_freight_router.get("/list_fcl_freight_rate_sheets")
@@ -1385,8 +1385,8 @@ def list_rates_sheets(
             filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
         )
         return JSONResponse(status_code=200, content=response)
-    except:
-        return JSONResponse(status_code=500, content={"success": False})
+    except Exception as exc:
+        raise exc
 
 
 @fcl_freight_router.get("/list_fcl_freight_rate_sheet_stats")
@@ -1403,7 +1403,7 @@ def list_rates_sheet_stat(
             filters, service_provider_id
         )
         return JSONResponse(status_code=200, content=response)
-    except:
-        return JSONResponse(status_code=500, content={"success": False})
+    except Exception as exc:
+        raise exc
 
 

@@ -98,14 +98,14 @@ def create_fcl_freight_rate(request):
         freight.validate_validity_object(request["validity_start"], request["validity_end"])
         freight.validate_line_items(request.get("line_items"))
 
-        freight.set_validities(
-            request["validity_start"].date(),
-            request["validity_end"].date(),
-            request.get("line_items"),
-            request.get("schedule_type"),
-            False,
-            request.get("payment_term"),
-        )
+    freight.set_validities(
+        request["validity_start"].date(),
+        request["validity_end"].date(),
+        request.get("line_items"),
+        request.get("schedule_type"),
+        False,
+        request.get("payment_term"),
+    )
 
     freight.set_platform_prices()
     freight.set_is_best_price()
