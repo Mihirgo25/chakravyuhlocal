@@ -7,7 +7,7 @@ possible_direct_filters = ['origin_port_id', 'origin_country_id', 'origin_trade_
 possible_indirect_filters = []
 
 def list_fcl_freight_rate_weight_limits(filters = {}, page_limit = 10, page = 1, pagination_data_required = True):
-  query = get_query(page, page_limit)
+  query = FclFreightRateWeightLimit.select().order_by(FclFreightRateWeightLimit.updated_at.desc(nulls = 'LAST'))
 
   if filters:
     if type(filters) != dict:
@@ -15,17 +15,14 @@ def list_fcl_freight_rate_weight_limits(filters = {}, page_limit = 10, page = 1,
 
     query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateWeightLimit)
     query = apply_indirect_filters(query, filters)
-      
+
+  pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+  query = query.paginate(page, page_limit)
   data = get_data(query)
-  pagination_data = get_pagination_data(data, page, page_limit, pagination_data_required)
-
-  return { 'list': data } | (pagination_data)
-
-def get_query(page, page_limit):
-    query = FclFreightRateWeightLimit.select().order_by(FclFreightRateWeightLimit.updated_at.desc(nulls = 'LAST')).paginate(page, page_limit)
-    return query
   
-def get_data(query):#, page, page_limit, pagination_data_required):
+  return { 'list': data } | (pagination_data)
+  
+def get_data(query):
   query = query.select(
         FclFreightRateWeightLimit.id,
         FclFreightRateWeightLimit.origin_location_id,
@@ -48,14 +45,15 @@ def get_data(query):#, page, page_limit, pagination_data_required):
   return data
 
 
-def get_pagination_data(data, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
 
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

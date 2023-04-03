@@ -12,27 +12,27 @@ possible_direct_filters = ['id', 'extension_name', 'service_provider_id', 'shipp
 possible_indirect_filters = ['q']
 
 def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc'):
-    query = get_query(page, page_limit, sort_by, sort_type)
+    query = get_query(sort_by, sort_type)
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, FclFreightRateExtensionRuleSet)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query, page, page_limit)
+    query = query.paginate(page, page_limit)
     data = get_data(query)
-    pagination_data = get_pagination_data(data, page, page_limit)
 
     data = {'list':data} | (pagination_data)
     return data
 
 
-def get_query(page, page_limit, sort_by, sort_type):
+def get_query(sort_by, sort_type):
     query = (FclFreightRateExtensionRuleSet
         .select()
-        .paginate(page, page_limit)
         .order_by(peewee.SQL("t1.{} {}".format(sort_by, sort_type)))
         .from_(FclFreightRateExtensionRuleSet.alias('t1')))
     return query
@@ -41,7 +41,7 @@ def get_query(page, page_limit, sort_by, sort_type):
 def apply_indirect_filters(query, filters):
     for key in filters:
         if key in possible_indirect_filters:
-            apply_filter_function = f'apply_{key}_filter'      
+            apply_filter_function = f'apply_{key}_filter'
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
 
@@ -58,7 +58,7 @@ def get_data(query):
             location_cluster_ids.append(val['cluster_id'])
         elif val['cluster_type'] == 'commodity':
             commodity_cluster_ids.append(val['cluster_id'])
-    
+
     all_location_clusters = maps.list_location_cluster({'filters': {'id': list(set(location_cluster_ids))}})['list']
     location_clusters = {}
     for val in all_location_clusters:
@@ -68,7 +68,7 @@ def get_data(query):
             'cluster_type': val['cluster_type'],
             'location_type': val['location_type']
         }
-    
+
     all_commodity_clusters = list_fcl_freight_commodity_clusters(filters = {'id': list(set(commodity_cluster_ids))})['list']
     commodity_clusters = {}
     for val in all_commodity_clusters:
@@ -80,13 +80,14 @@ def get_data(query):
     for object in data:
         object['location_cluster'] = location_clusters.get(str(object['cluster_id']), {})
         object['fcl_freight_commodity_cluster'] = commodity_clusters.get(str(object['cluster_id']), {})
-        
+
     return data
-    
-def get_pagination_data(data, page, page_limit):
+
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
     return {
         'page': page,
-        'total': ceil(len(data)/page_limit),
-        'total_count': len(data),
+        'total': ceil(total_count/page_limit),
+        'total_count': total_count,
         'page_limit': page_limit
     }

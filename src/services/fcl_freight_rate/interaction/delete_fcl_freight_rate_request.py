@@ -4,12 +4,8 @@ from fastapi import HTTPException
 from database.db_session import db
 
 def delete_fcl_freight_rate_request(request):
-    with db.atomic() as transaction:
-        try:
-            return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     from celery_worker import send_closed_notifications_to_sales_agent_function
