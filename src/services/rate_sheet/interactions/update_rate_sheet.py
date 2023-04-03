@@ -26,7 +26,7 @@ def get_audit_params(parameters):
 def  update_rate_sheet(params: UpdateRateSheet):
     from celery_worker import validate_and_process_rate_sheet_converted_file_delay
     rate_sheet = RateSheet.get(RateSheet.id == params['id'])
-    if rate_sheet.status != 'uploaded':
+    if rate_sheet.status not in ['uploaded', 'partially_complete']:
         raise HTTPException(status_code=403, detail= "File already uploaded")
     if 'converted_files' in params:
         index = 0
