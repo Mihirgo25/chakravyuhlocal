@@ -730,7 +730,7 @@ class FclFreightRate(BaseModel):
         local_ids.append(str(self.origin_local_id))
       if self.destination_local_id:
         local_ids.append(str(self.destination_local_id))
-      
+
       free_day_ids = []
 
       if self.origin_detention_id:
@@ -739,7 +739,7 @@ class FclFreightRate(BaseModel):
         free_day_ids.append(str(self.origin_demurrage_id))
       if self.origin_plugin_id:
         free_day_ids.append(str(self.origin_plugin_id))
-      
+
       if self.destination_detention_id:
         free_day_ids.append(str(self.destination_detention_id))
       if self.destination_demurrage_id:
@@ -766,9 +766,9 @@ class FclFreightRate(BaseModel):
 
         for local_charge in local_charges_new:
           local_charges[local_charge["id"]] = local_charge
-      
+
       free_days_charges = {}
-      
+
       if len(free_day_ids):
         free_days_query = FclFreightRateFreeDay.select(
           FclFreightRateFreeDay.location_id,
@@ -791,12 +791,12 @@ class FclFreightRate(BaseModel):
         origin_local['detention'] = free_days_charges[self.origin_detention_id] | ({'is_slabs_missing': self.is_origin_detention_slabs_missing })
       else:
         origin_local['detention'] = { 'free_limit': DEFAULT_EXPORT_DESTINATION_DETENTION, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.origin_demurrage_id in free_days_charges:
         origin_local['demurrage'] = free_days_charges[self.origin_demurrage_id] | ({'is_slabs_missing': self.is_origin_demurrage_slabs_missing })
       else:
         origin_local['demurrage'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.origin_plugin_id in free_days_charges:
         origin_local['plugin'] = free_days_charges[self.origin_plugin_id] | ({'is_slabs_missing': self.is_origin_plugin_slabs_missing })
       else:
@@ -809,12 +809,12 @@ class FclFreightRate(BaseModel):
         destination_local['detention'] = free_days_charges[self.destination_detention_id] | ({'is_slabs_missing': self.is_destination_detention_slabs_missing })
       else:
         destination_local['detention'] = { 'free_limit': DEFAULT_IMPORT_DESTINATION_DETENTION, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.destination_demurrage_id in free_days_charges:
         destination_local['demurrage'] = free_days_charges[self.destination_demurrage_id] | ({'is_slabs_missing': self.is_destination_demurrage_slabs_missing })
       else:
         destination_local['demurrage'] = { 'free_limit': 0, 'is_slabs_missing': True, 'slabs': [] }
-      
+
       if self.destination_plugin_id in free_days_charges:
         destination_local['plugin'] = free_days_charges[self.destination_plugin_id] | ({'is_slabs_missing': self.is_destination_plugin_slabs_missing })
       else:

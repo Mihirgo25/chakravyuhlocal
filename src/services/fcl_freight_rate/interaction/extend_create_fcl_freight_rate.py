@@ -4,11 +4,10 @@ from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 import copy
 from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from celery_worker import create_fcl_freight_rate_delay
 
 def extend_create_fcl_freight_rate_data(request):
+    from celery_worker import create_fcl_freight_rate_delay
     if not isinstance(request, dict):
         request = request.dict(exclude_none=True)
 
@@ -25,6 +24,7 @@ def extend_create_fcl_freight_rate_data(request):
 
 
 def create_extended_rate_objects(rate_objects):
+    from celery_worker import create_fcl_freight_rate_delay
     for rate_object in rate_objects:
         rate_object['source']='rate_extension'
         create_fcl_freight_rate_delay.apply_async(kwargs={'request':rate_object},queue='fcl_freight_rate')

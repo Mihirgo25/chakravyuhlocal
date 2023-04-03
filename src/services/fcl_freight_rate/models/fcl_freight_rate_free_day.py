@@ -139,8 +139,8 @@ class FclFreightRateFreeDay(BaseModel):
         if not self.validate_specificity_type():
             raise HTTPException(status_code=422, detail="Invalid specificity type")
 
-        if not self.validate_shipping_line():
-            raise HTTPException(status_code=422, detail="Invalid shipping line")
+        # if not self.validate_shipping_line():
+        #     raise HTTPException(status_code=422, detail="Invalid shipping line")
 
 
         # if not self.validate_service_provider():
@@ -187,10 +187,10 @@ class FclFreightRateFreeDay(BaseModel):
 
     def validate_validity_object(self, validity_start, validity_end):
         if not validity_start:
-            raise HTTPException(status_code=400, detail=validity_start + ' is invalid')
+            raise HTTPException(status_code=400, detail=f"{validity_start}  validity_start is invalid")
 
         if not validity_end:
-            raise HTTPException(status_code=400, detail=validity_end + ' is invalid')
+            raise HTTPException(status_code=400, detail=f"{validity_end} validity end is invalid")
 
         if validity_end > (datetime.date.today() + datetime.timedelta(days = 180)):
             raise HTTPException(status_code=400, detail=validity_end + ' can not be greater than 60 days from current date')
