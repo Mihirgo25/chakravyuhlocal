@@ -119,6 +119,9 @@ class FclFreightRateLocal(BaseModel):
         if not self.validate_container_type():
             raise HTTPException(status_code=422, detail='container_type is not valid')
 
+        if not self.validate_commodity():
+            raise HTTPException(status_code=422, detail='commodity is not valid')
+
         if not self.local_data_instance.validate_duplicate_charge_codes():
             raise HTTPException(status_code=499, detail='duplicate line items present')
 
@@ -236,7 +239,7 @@ class FclFreightRateLocal(BaseModel):
         free_days_charges = {}
         free_days_new = []
 
-      
+
         if len(free_day_ids):
             free_days_query = FclFreightRateFreeDay.select(
               FclFreightRateFreeDay.location_id,
@@ -252,13 +255,13 @@ class FclFreightRateLocal(BaseModel):
         for free_day_charge in free_days_new:
           free_days_charges[free_day_charge["id"]] = free_day_charge
 
-        
+
         if self.detention_id and self.detention_id in free_days_charges:
             self.data["detention"] = free_days_charges[self.detention_id]
 
         if self.demurrage_id and self.demurrage_id in free_days_charges:
             self.data["demurrage"] = free_days_charges[self.demurrage_id]
-        
+
         if self.plugin_id and self.plugin_id in free_days_charges:
             self.data["plugin"] = free_days_charges[self.plugin_id]
 
