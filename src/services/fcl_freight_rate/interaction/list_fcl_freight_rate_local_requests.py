@@ -24,11 +24,9 @@ def list_fcl_freight_rate_local_requests(filters = {}, page_limit = 10, page = 1
         query = get_filters(direct_filters, query, FclFreightRateLocalRequest)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query, page, page_limit)
     query = query.paginate(page, page_limit)
-
     data = jsonable_encoder(list(query.dicts()))
-
-    pagination_data = get_pagination_data(data, page, page_limit)
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
@@ -53,11 +51,12 @@ def apply_similar_id_filter(query,filters):
     return query.where(FclFreightRateLocalRequest.port_id == rate_request_obj['port_id'], FclFreightRateLocalRequest.trade_type == rate_request_obj['trade_type'], FclFreightRateLocalRequest.container_size == rate_request_obj['container_size'], FclFreightRateLocalRequest.container_type == rate_request_obj['container_type'])
 
 
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+  total_count = query.count()
   pagination_data = {
     'page': page,
-    'total': ceil(len(data)/page_limit),
-    'total_count': len(data),
+    'total': ceil(total_count/page_limit),
+    'total_count': total_count,
     'page_limit': page_limit
     }
   

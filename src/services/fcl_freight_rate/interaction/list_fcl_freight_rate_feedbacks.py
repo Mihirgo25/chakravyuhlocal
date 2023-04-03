@@ -28,11 +28,11 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
     query = get_join_query(query)
     query = query.select(FclFreightRateFeedback, FclFreightRate.origin_port, FclFreightRate.destination_port, FclFreightRate.shipping_line,FclFreightRate.container_size,FclFreightRate.commodity,FclFreightRate.container_type,FclFreightRate.validities)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
+    pagination_data = get_pagination_data(query, page, page_limit)
 
     query = get_page(query, page, page_limit)
     data = get_data(query)
 
-    pagination_data = get_pagination_data(data, page, page_limit)
     return {'list': data } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
@@ -175,11 +175,12 @@ def get_data(query):
         new_data.append(object)
     return new_data
 
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params
@@ -187,7 +188,7 @@ def get_pagination_data(data, page, page_limit):
 def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
-    
+
     query = FclFreightRateFeedback.select()
 
     if filters:

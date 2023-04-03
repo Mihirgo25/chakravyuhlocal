@@ -13,7 +13,7 @@ possible_direct_filters = ['location_id', 'performed_by_id', 'status', 'closed_b
 possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than']
  
 def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page = 1, is_stats_required = True, performed_by_id = None):
-    query = get_query(page, page_limit)
+    query = FclFreightRateFreeDayRequest.select().order_by(FclFreightRateFreeDayRequest.created_at.desc())
 
     if filters:
         if type(filters) != dict:
@@ -24,15 +24,13 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
         query = get_filters(direct_filters, query, FclFreightRateFreeDayRequest)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query, page, page_limit)
+    query = query.paginate(page, page_limit)
+
     data = jsonable_encoder(list(query.dicts()))
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
-    pagination_data = get_pagination_data(data, page, page_limit)
-
     return { 'list': data } | (pagination_data) | (stats)
-
-def get_query(page, page_limit):
-    return FclFreightRateFreeDayRequest.select().order_by(FclFreightRateFreeDayRequest.created_at.desc()).paginate(page, page_limit)
 
 def apply_indirect_filters(query, filters):
   for key in filters:
@@ -51,11 +49,12 @@ def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
     return data
 
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

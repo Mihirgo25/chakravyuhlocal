@@ -25,10 +25,11 @@ def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
         query = apply_indirect_filters(query, indirect_filters)
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
+
+    pagination_data = get_pagination_data(query, page, page_limit)
     query = get_page(query, page, page_limit)
     data = jsonable_encoder(list(query.dicts()))
 
-    pagination_data = get_pagination_data(data, page, page_limit)
 
     return { 'list': data } | (pagination_data) | (stats)
 
@@ -70,15 +71,16 @@ def apply_similar_id_filter(query,filters):
     return query.where(FclFreightRateRequest.origin_port_id == rate_request_obj['origin_port_id'], FclFreightRateRequest.destination_port_id == rate_request_obj['destination_port_id'], FclFreightRateRequest.container_size == rate_request_obj['container_size'], FclFreightRateRequest.container_type == rate_request_obj['container_type'], FclFreightRateRequest.commodity == rate_request_obj['commodity'], FclFreightRateRequest.inco_term == rate_request_obj['inco_term'])
 
 
-def get_pagination_data(data, page, page_limit):
-  pagination_data = {
-    'page': page,
-    'total': ceil(len(data)/page_limit),
-    'total_count': len(data),
-    'page_limit': page_limit
-    }
-  
-  return pagination_data
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
+    pagination_data = {
+        'page': page,
+        'total': ceil(total_count/page_limit),
+        'total_count': total_count,
+        'page_limit': page_limit
+        }
+    
+    return pagination_data
 
 def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:

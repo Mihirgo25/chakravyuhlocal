@@ -17,7 +17,7 @@ possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commo
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
 
 def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc', stats_required = True, pagination_data_required = True):
-    query = get_query(page, page_limit, sort_by, sort_type)
+    query = get_query(sort_by, sort_type)
 
     if filters:
         if type(filters) != dict:
@@ -27,27 +27,29 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
   
         query = get_filters(direct_filters, query, FclFreightRateTask)
         query = apply_indirect_filters(query, indirect_filters)
-
-    data = get_data(query, filters)
+    
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
-
+    query = query.paginate(page, page_limit)
+    data = get_data(query, filters)
+    
     stats = get_stats(filters, stats_required)
 
     return {'list': data } | (pagination_data) | (stats)
   
 
-def get_query(page, page_limit, sort_by, sort_type):
-    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type))).paginate(page, page_limit)
+def get_query(sort_by, sort_type):
+    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type)))
     return query
   
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
 
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params
