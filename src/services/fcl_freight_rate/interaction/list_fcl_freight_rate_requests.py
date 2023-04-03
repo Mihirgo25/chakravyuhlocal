@@ -111,7 +111,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     result = query.execute()
 
     if len(result)>0:
-
+        result =result[0]
         stats = {
         'total': result.get_total,
         'total_closed_by_user': result.get_total_closed_by_user,
