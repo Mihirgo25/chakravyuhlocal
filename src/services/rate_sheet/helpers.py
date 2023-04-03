@@ -63,6 +63,28 @@ def delete_total_line(params):
     if rd:
         rd.delete(total_line_hash, total_line_keys(params))
 
+
+
+def last_line_key(params):
+    return f"rate_sheet_converted_file_last_line_{params['id']}"
+
+def set_last_line(last_line, params):
+    if rd:
+        rd.hset(last_line_hash, last_line_key(params), last_line)
+
+
+def get_last_line(params):
+    if rd:
+        try:
+            cached_response = rd.hget(last_line_hash, last_line_key(params))
+            return int(cached_response)
+        except:
+            return 0
+
+def delete_last_line(params):
+    if rd:
+        rd.delete(last_line_hash, last_line_key(params))
+
 def reset_counters(params, converted_file):
     total_lines = get_total_line(params)
     if total_lines == 0:
@@ -81,5 +103,5 @@ def delete_temp_data(params):
     delete_original_file_path(params)
     delete_file_path(params)
     delete_errors_present(params)
-    # delete_last_line(params)
+    delete_last_line(params)
     delete_total_line(params)
