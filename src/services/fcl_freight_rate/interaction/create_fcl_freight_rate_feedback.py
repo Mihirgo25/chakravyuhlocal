@@ -88,7 +88,8 @@ def get_create_params(request):
         'preferred_shipping_line_ids': request.get('preferred_shipping_line_ids'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
-        'status': 'active'
+        'status': 'active',
+        'cogo_entity_id':request.get('cogo_entity_id')
     }
     return params
 
