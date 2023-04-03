@@ -21,6 +21,7 @@ class BaseModel(Model):
 
 class FclFreightRateFeedback(BaseModel):
     booking_params = BinaryJSONField(null=True)
+    cogo_entity_id = UUIDField(index=True,null=True)
     closed_by_id = UUIDField(index=True, null=True)
     closed_by = BinaryJSONField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)

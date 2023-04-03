@@ -81,12 +81,7 @@ def apply_supply_agent_id_filter(query, filters):
 def apply_cogo_entity_id_filter(query, filters):
     filter_entity_id = filters['cogo_entity_id']
 
-    cogo_entity_ids = None
-    if filter_entity_id in RATE_ENTITY_MAPPING:
-        cogo_entity_ids = RATE_ENTITY_MAPPING[filter_entity_id]
-
-    query = query.where(FclFreightRate.cogo_entity_id << cogo_entity_ids)
-
+    query = query.where((FclFreightRateFeedback.cogo_entity_id == filter_entity_id) | (FclFreightRateFeedback.cogo_entity_id.is_null(True)))
     return query
 
 def apply_service_provider_id_filter(query, filters):
