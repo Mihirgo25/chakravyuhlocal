@@ -16,7 +16,6 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   
         query = get_filters(direct_filters, query, FclFreightRateExtensionRuleSet)
@@ -51,38 +50,27 @@ def apply_q_filter(query, filters):
 
 def get_data(query):
     data = [x for x in query.dicts()]
-    location_cluster_ids = []
-    commodity_cluster_ids = []
-    for val in data:
-        if val['cluster_type'] == 'location':
-            location_cluster_ids.append(val['cluster_id'])
-        elif val['cluster_type'] == 'commodity':
-            commodity_cluster_ids.append(val['cluster_id'])
-    
-    all_location_clusters = maps.list_location_cluster({'filters': {'id': list(set(location_cluster_ids))}})['list']
-    location_clusters = {}
-    for val in all_location_clusters:
-        location_clusters[str(val['id'])] = {
-            'id': str(val['id']),
-            'cluster_name': val['cluster_name'],
-            'cluster_type': val['cluster_type'],
-            'location_type': val['location_type']
-        }
-    
-    all_commodity_clusters = list_fcl_freight_commodity_clusters(filters = {'id': list(set(commodity_cluster_ids))})['list']
-    commodity_clusters = {}
-    for val in all_commodity_clusters:
-        commodity_clusters[str(val['id'])] = {
-            'id': str(val['id']),
-            'name': val['name']
-        }
-
-    for object in data:
-        object['location_cluster'] = location_clusters.get(str(object['cluster_id']), {})
-        object['fcl_freight_commodity_cluster'] = commodity_clusters.get(str(object['cluster_id']), {})
+    param = {'id':[x['cluster_id'] for x in data]}
+    cluster_data_all = maps.list_location_cluster({'filters': param})['list']
+    commodity_cluster_data_all = list_fcl_freight_commodity_clusters(filters = param)['list']
+    cluster_dict={}
+    commodity_cluster_dict ={}
+    for cluster in cluster_data_all:
+        cluster_dict[str(cluster['id'])] = {'id':cluster['id'], 'cluster_name' : cluster['cluster_name'], 'cluster_type':cluster['cluster_type'], 'location_type':cluster['location_type']}
+    for commodity_cluster in commodity_cluster_data_all:
+        commodity_cluster_dict[str(commodity_cluster['id'])]={'id':commodity_cluster['id'], 'name' : commodity_cluster['name']}
         
+    for each in range(0,len(data)):
+        if cluster_dict.get(str(data[each]['cluster_id'])):
+            data[each]['location_cluster'] = cluster_dict[str(data[each]['cluster_id'])]
+        else:
+            data[each]['location_cluster'] = {}
+        if commodity_cluster_dict.get(str(data[each]['cluster_id'])):
+            data[each]['fcl_freight_commodity_cluster'] = commodity_cluster_dict[str(data[each]['cluster_id'])]
+        else:
+            data[each]['fcl_freight_commodity_cluster'] = {}
     return data
-    
+        
 def get_pagination_data(data, page, page_limit):
     return {
         'page': page,
