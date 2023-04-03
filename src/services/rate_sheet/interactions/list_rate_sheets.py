@@ -101,7 +101,7 @@ def detail(data):
                     total_percentage += converted_file.get('percent')
                 converted_file['total_lines'] = get_total_line(converted_file)
                 converted_file['last_line'] = get_last_line(converted_file)
-            d['processed_percent'] = total_percentage/len(d['converted_files'])
+            d['completed_percent'] = total_percentage/len(d['converted_files'])
     return data
 
 
