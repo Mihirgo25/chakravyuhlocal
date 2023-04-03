@@ -185,11 +185,11 @@ def get_location_id(q, country_code = None, service_provider_id = None):
 def get_location(location, type):
     if type == "port":
         location = maps.list_locations(
-            {"filters": {"type": "seaport", "port_code": location, "status": "active"}}
+            {"filters": {"type": "seaport", "port_code": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )["list"][0]
     else:
         location = maps.list_locations(
-            {"filters": {"type": type, "name": location, "status": "active"}}
+            {"filters": {"type": type, "name": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )["list"][0]
     return location
 

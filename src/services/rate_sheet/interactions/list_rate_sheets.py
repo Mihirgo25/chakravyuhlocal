@@ -11,12 +11,11 @@ from database.rails_db import get_organization ,get_user
 from peewee import *
 from database.db_session import rd
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_last_line
-from datetime import datetime
+from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_processed_percent
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'agent_id', 'service_provider_id', 'status', 'service_name', 'serial_id', 'cogo_entity_id']
 POSSIBLE_INDIRECT_FILTERS = ['performed_by_id', 'partner_id']
 
-processed_percent_hash = "total_line"
 
 
 
@@ -90,33 +89,11 @@ def apply_pagination(query, page, page_limit):
     query = query.offset(offset).limit(page_limit)
     return query, total_count
 
-def processed_percent_key(id):
-  return f"rate_sheet_converted_file_processed_percent_{id}"
-
-def set_processed_percent(processed_percent, id):
-    if rd:
-        rd.hset(processed_percent_hash, processed_percent_key(id), processed_percent)
-        rd.expire(processed_percent_key(id), 864000)
-    return
-
-def get_processed_percent(id):
-    if rd:
-        try:
-            cached_response = rd.hget(processed_percent_hash, processed_percent_key(id))
-            return int(cached_response)
-        except:
-            return 0
-    return
-
-def delete_processed_percent(id):
-    if rd:
-        rd.delete(processed_percent_hash, processed_percent_key(id))
-
 
 
 def detail(data):
     for d in data:
-        d['processed_percent'] = get_processed_percent(d['id'])
+        d['processed_percent'] = get_processed_percent(d)
         total_percentage = 0
         if d['converted_files']:
             for converted_file in d['converted_files']:
@@ -124,7 +101,7 @@ def detail(data):
                     total_percentage += converted_file.get('percent')
                 converted_file['total_lines'] = get_total_line(converted_file)
                 converted_file['last_line'] = get_last_line(converted_file)
-            d['complete_percent'] = total_percentage/len(d['converted_files'])
+            d['processed_percent'] = total_percentage/len(d['converted_files'])
     return data
 
 
