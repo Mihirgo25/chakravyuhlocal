@@ -24,7 +24,7 @@ possible_hash_filters = {
 }
 
 def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True, user_data_required = False):
-    query = get_query(sort_by, sort_type, page, page_limit)
+    query = get_query(sort_by, sort_type)
     
     if filters:
         if type(filters) != dict:
@@ -48,23 +48,25 @@ def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_b
 
     return {'list': data } | (pagination_data)
 
-def get_query(sort_by, sort_type, page, page_limit):
-    query = FclFreightRateAudit.select().order_by(eval("FclFreightRateAudit.{}.{}()".format(sort_by,sort_type))).paginate(page, page_limit)
+def get_query(sort_by, sort_type):
+    query = FclFreightRateAudit.select().order_by(eval("FclFreightRateAudit.{}.{}()".format(sort_by,sort_type)))
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required, user_data_required):
     if not pagination_data_required:
         return {'get_pagination_data':{}} 
 
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return {'get_pagination_data':params}
 
 def get_data(query, page, page_limit, pagination_data_required, user_data_required):
+    query = query.paginate(page, page_limit)
     data = []
     for item in query.dicts():
         try:

@@ -12,7 +12,7 @@ possible_direct_filters = ['id', 'extension_name', 'service_provider_id', 'shipp
 possible_indirect_filters = ['q']
 
 def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc'):
-    query = get_query(page, page_limit, sort_by, sort_type)
+    query = get_query(sort_by, sort_type)
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -21,17 +21,17 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
         query = get_filters(direct_filters, query, FclFreightRateExtensionRuleSet)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query, page, page_limit)
+    query = query.paginate(page, page_limit)
     data = get_data(query)
-    pagination_data = get_pagination_data(data, page, page_limit)
 
     data = {'list':data} | (pagination_data)
     return data
 
 
-def get_query(page, page_limit, sort_by, sort_type):
+def get_query(sort_by, sort_type):
     query = (FclFreightRateExtensionRuleSet
         .select()
-        .paginate(page, page_limit)
         .order_by(peewee.SQL("t1.{} {}".format(sort_by, sort_type)))
         .from_(FclFreightRateExtensionRuleSet.alias('t1')))
     return query
@@ -71,10 +71,11 @@ def get_data(query):
             data[each]['fcl_freight_commodity_cluster'] = {}
     return data
         
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
     return {
         'page': page,
-        'total': ceil(len(data)/page_limit),
-        'total_count': len(data),
+        'total': ceil(total_count/page_limit),
+        'total_count': total_count,
         'page_limit': page_limit
     }

@@ -82,6 +82,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surc
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
+from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 
 fcl_freight_router = APIRouter()
 
@@ -162,7 +163,7 @@ def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotA
     if data:
         return JSONResponse(status_code = 200, content = {'success': True})
     else:
-        raise 
+        raise
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local")
@@ -771,8 +772,8 @@ def list_fcl_freight_local_suggestions_data(
     try:
         data = list_fcl_freight_rate_local_suggestions(service_provider_id, filters, page_limit, page, sort_by, sort_type, pagination_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except Exception as e:
-        raise e
+    except:
+        raise
 
 @fcl_freight_router.get("/list_fcl_freight_rate_free_days")
 def list_fcl_freight_rate_free_days_data(
@@ -1123,7 +1124,7 @@ def create_fcl_freight_rate_free_day_data(request: CreateFclFreightRateFreeDay, 
         data = create_fcl_freight_rate_free_day(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except Exception as e:
-        raise e 
+        raise e
 
 @fcl_freight_router.get("/get_fcl_freight_rate_free_day")
 def get_fcl_freight_rate_free_day_data(
@@ -1169,7 +1170,7 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay, 
         data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except Exception as e:
-        raise e 
+        raise e
 
 @fcl_freight_router.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
@@ -1335,37 +1336,37 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
     except Exception as e:
         raise e
 
-@fcl_freight_router.post("/create_fcl_rate_sheet")
-def create_rate_sheets(request: CreateRateSheet):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-        # request.performed_by_id = resp["setters"]["performed_by_id"]
-        # request.performed_by_type = resp["setters"]["performed_by_type"]
+@fcl_freight_router.post("/create_fcl_freight_rate_sheet")
+def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
-    except Exception as e:
-        raise e
+    except:
+        raise
 
 
 
-@fcl_freight_router.post("/update_fcl_rate_sheet")
-def update_rate_sheets(request: UpdateRateSheet):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-    #     request.performed_by_id = resp["setters"]["performed_by_id"]
-    #     request.performed_by_type = resp["setters"]["performed_by_type"]
+@fcl_freight_router.post("/update_fcl_freight_rate_sheet")
+def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
 
     try:
         rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
-    except Exception as e:
-        raise e
+    except:
+        raise
 
 
-@fcl_freight_router.get("/list_fcl_rate_sheets")
+@fcl_freight_router.get("/list_fcl_freight_rate_sheets")
 def list_rates_sheets(
     filters: str = None,
     stats_required: bool = True,
@@ -1373,16 +1374,36 @@ def list_rates_sheets(
     page_limit: int = 10,
     sort_by: str = 'created_at',
     sort_type: str = 'desc',
-    pagination_data_required:  bool = True
-    # resp: dict = Depends(authorize_token)
+    pagination_data_required:  bool = True,
+    resp: dict = Depends(authorize_token)
 ):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
         response = list_rate_sheets(
             filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
         )
         return JSONResponse(status_code=200, content=response)
-    except Exception as e:
-        raise e
+    except:
+        raise
+
+
+@fcl_freight_router.get("/list_fcl_freight_rate_sheet_stats")
+def list_rates_sheet_stat(
+    filters: str = None,
+    service_provider_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheet_stats(
+            filters, service_provider_id
+        )
+        return JSONResponse(status_code=200, content=response)
+    except:
+        raise
+
+
