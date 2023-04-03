@@ -94,49 +94,62 @@ def get_stats(filters, is_stats_required, performed_by_id):
   
         query = get_filters(direct_filters, query, FclFreightRateRequest)
         query = apply_indirect_filters(query, indirect_filters)
+    
+    query = (
+        query
+        .select(
+            fn.count(FclFreightRateRequest.id).over().alias('get_total'),
+          fn.count(FclFreightRateRequest.id).filter(FclFreightRateRequest.status == 'active').over().alias('get_status_count_active'),
+        fn.count(FclFreightRateRequest.id).filter(FclFreightRateRequest.status == 'inactive').over().alias('get_status_count_inactive'),
+        fn.count(FclFreightRateRequest.id).filter((FclFreightRateRequest.status=='inactive') & (FclFreightRateRequest.closed_by_id==performed_by_id)).over().alias('get_total_closed_by_user'),
+        fn.count(FclFreightRateRequest.id).filter((FclFreightRateRequest.status=='active')  & (FclFreightRateRequest.performed_by_id==performed_by_id)).over().alias('get_total_opened_by_user'),
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
-        results = {}
-        for future in futures:
-            result = future.result()
-            results.update(result)
+         )
+    ).limit(1)
+    result = query.dicts().get()
+
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+    #     futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
+    #     results = {}
+    #     for future in futures:
+    #         result = future.result()
+    #         results.update(result)
 
     stats = {
-        'total': results['get_total'],
-        'total_closed_by_user': results['get_total_closed_by_user'],
-        'total_opened_by_user': results['get_total_opened_by_user'],
-        'total_open':results['get_status_count'].get('active') or 0,
-        'total_closed': results['get_status_count'].get('inactive') or 0
+      'total': result['get_total'],
+      'total_closed_by_user': result['get_total_closed_by_user'],
+      'total_opened_by_user': result['get_total_opened_by_user'],
+      'total_open': result['get_status_count_active'],
+      'total_closed': result['get_status_count_inactive']
     }
     return { 'stats': stats }
 
 
-def get_total(query, performed_by_id):
-    try:
-        return {'get_total':query.count()}
-    except:
-        return {'get_total' : None}
+# def get_total(query, performed_by_id):
+#     try:
+#         return {'get_total':query.count()}
+#     except:
+#         return {'get_total' : None}
 
-def get_total_closed_by_user(query, performed_by_id):
-    try:
-        return {'get_total_closed_by_user':query.where(FclFreightRateRequest.status == 'inactive', FclFreightRateRequest.closed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_closed_by_user':None}
+# def get_total_closed_by_user(query, performed_by_id):
+#     try:
+#         return {'get_total_closed_by_user':query.where(FclFreightRateRequest.status == 'inactive', FclFreightRateRequest.closed_by_id == performed_by_id).count() }
+#     except:
+#         return {'get_total_closed_by_user':None}
 
 
-def get_total_opened_by_user(query, performed_by_id):
-    try:
-        return {'get_total_opened_by_user' : query.where(FclFreightRateRequest.status == 'active', FclFreightRateRequest.closed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_opened_by_user' : None}
+# def get_total_opened_by_user(query, performed_by_id):
+#     try:
+#         return {'get_total_opened_by_user' : query.where(FclFreightRateRequest.status == 'active', FclFreightRateRequest.closed_by_id == performed_by_id).count() }
+#     except:
+#         return {'get_total_opened_by_user' : None}
 
-def get_status_count(query, performed_by_id):
-    try:
-        query = query.select(FclFreightRateRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclFreightRateRequest.status)
-        result = {}
-        for row in query.execute():
-            result[row.status] = row.count_all
-        return {'get_status_count' : result}
-    except:
-        return {'get_status_count' : None}
+# def get_status_count(query, performed_by_id):
+#     try:
+#         query = query.select(FclFreightRateRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclFreightRateRequest.status)
+#         result = {}
+#         for row in query.execute():
+#             result[row.status] = row.count_all
+#         return {'get_status_count' : result}
+#     except:
+#         return {'get_status_count' : None}

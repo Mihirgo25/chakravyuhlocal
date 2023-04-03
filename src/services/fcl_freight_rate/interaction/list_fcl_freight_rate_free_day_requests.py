@@ -76,26 +76,46 @@ def get_stats(filters, is_stats_required, performed_by_id):
         query = get_filters(direct_filters, query, FclFreightRateFreeDayRequest)
         query = apply_indirect_filters(query, indirect_filters)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
-        results = {}
-        for future in futures:
-            result = future.result()
-            results.update(result)
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    #     futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
+    #     results = {}
+    #     for future in futures:
+    #         result = future.result()
+    #         results.update(result)
     
-    if results['get_status_count']:
-        total_open = results['get_status_count'].get('active',0)
-        total_closed = results['get_status_count'].get('inactive',0)
-    else:
-        total_open = 0
-        total_closed = 0
+    # if results['get_status_count']:
+    #     total_open = results['get_status_count'].get('active',0)
+    #     total_closed = results['get_status_count'].get('inactive',0)
+    # else:
+    #     total_open = 0
+    #     total_closed = 0
 
+    # stats = {
+    #     'total': total_open + total_closed,
+    #     'total_closed_by_user': results['get_total_closed_by_user'],
+    #     'total_opened_by_user': results['get_total_opened_by_user'],
+    #     'total_open': total_open,
+    #     'total_closed': total_closed
+    # }
+
+        query = (query.select(
+        fn.count(FclFreightRateFreeDayRequest.id).over().alias('get_total'),
+        fn.count(FclFreightRateFreeDayRequest.id).filter(FclFreightRateFreeDayRequest.status == 'active').over().alias('get_status_count_active'),
+        fn.count(FclFreightRateFreeDayRequest.id).filter(FclFreightRateFreeDayRequest.status == 'inactive').over().alias('get_status_count_inactive'),
+        fn.count(FclFreightRateFreeDayRequest.id).filter((FclFreightRateFreeDayRequest.status=='inactive') & (FclFreightRateFreeDayRequest.closed_by_id==performed_by_id)).over().alias('get_total_closed_by_user'),
+        fn.count(FclFreightRateFreeDayRequest.id).filter((FclFreightRateFreeDayRequest.status=='active')  & (FclFreightRateFreeDayRequest.performed_by_id==performed_by_id)).over().alias('get_total_opened_by_user'),
+
+         )
+    ).limit(1)
+
+    result = query.dicts().get()
+    
     stats = {
-        'total': total_open + total_closed,
-        'total_closed_by_user': results['get_total_closed_by_user'],
-        'total_opened_by_user': results['get_total_opened_by_user'],
-        'total_open': total_open,
-        'total_closed': total_closed
+      'total': result['get_total'],
+      'total_closed_by_user': result['get_total_closed_by_user'],
+      'total_opened_by_user': result['get_total_opened_by_user'],
+      'total_open': result['get_status_count_active'],
+      'total_closed': result['get_status_count_inactive']
     }
     return { 'stats': stats }
 
