@@ -10,7 +10,8 @@ import json
 possible_direct_filters = ['origin_location_id', 'destination_location_id', 'origin_location_type', 'destination_location_type', 'oraganization_category', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'is_cogo_assured', 'container_size', 'commodity', 'max_weight', 'trade_type']
 
 def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1, pagination_data_required = True):
-    query = get_query(page, page_limit)
+    query = FclWeightSlabsConfiguration.select().where(FclWeightSlabsConfiguration.status == 'active').order_by(FclWeightSlabsConfiguration.updated_at.desc())
+    
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -19,7 +20,11 @@ def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1,
   
         query = get_filters(direct_filters[0], query, FclWeightSlabsConfiguration)
 
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+
+    query = query.paginate(page, page_limit)
     data = jsonable_encoder(list(query.dicts()))
+    
     location_ids = []
     for row in data:
         location_ids.extend([str(row['origin_location_id']), str(row['destination_location_id'])])
@@ -41,24 +46,18 @@ def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1,
         if data[i]['destination_location_id']:
             data[i]['destination_location_name'] = locations_hash[str(data[i]['destination_location_id'])]
 
-
-    pagination_data = get_pagination_data(data, page, page_limit, pagination_data_required)
-
     return { 'list': data } | pagination_data
 
 
-def get_query(page, page_limit):
-    query = FclWeightSlabsConfiguration.select().where(FclWeightSlabsConfiguration.status == 'active').order_by(FclWeightSlabsConfiguration.updated_at.desc()).paginate(page, page_limit)
-    return query
-
-def get_pagination_data(data, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
+    total_count = query.count()
 
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

@@ -47,8 +47,7 @@ def get_fcl_freight_rate(request):
     fcl_object = FclFreightRate()
     for key in list(request.keys()):
       setattr(fcl_object, key, request[key])
-    fcl_object.set_locations()
-  
+  fcl_object.set_locations()
   return details | ({
     'freight_charge_codes': (fcl_object.possible_charge_codes()),
     'origin_local_charge_codes': (FclFreightRateLocal(**origin_local_object_params).possible_charge_codes()),

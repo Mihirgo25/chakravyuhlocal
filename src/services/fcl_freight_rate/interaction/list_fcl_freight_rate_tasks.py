@@ -17,7 +17,7 @@ possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commo
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
 
 def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc', stats_required = True, pagination_data_required = True):
-    query = get_query(page, page_limit, sort_by, sort_type)
+    query = get_query(sort_by, sort_type)
 
     if filters:
         if type(filters) != dict:
@@ -27,27 +27,29 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
   
         query = get_filters(direct_filters, query, FclFreightRateTask)
         query = apply_indirect_filters(query, indirect_filters)
-
-    data = get_data(query, filters)
+    
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
-
+    query = query.paginate(page, page_limit)
+    data = get_data(query, filters)
+    
     stats = get_stats(filters, stats_required)
 
     return {'list': data } | (pagination_data) | (stats)
   
 
-def get_query(page, page_limit, sort_by, sort_type):
-    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type))).paginate(page, page_limit)
+def get_query(sort_by, sort_type):
+    query = FclFreightRateTask.select().order_by(eval('FclFreightRateTask.{}.{}()'.format(sort_by, sort_type)))
     return query
   
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
 
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params
@@ -56,7 +58,8 @@ def get_data(query, filters):
     new_data = []
     port_ids, main_port_ids, container_sizes, container_types, commodities, trade_types, shipping_line_ids = [],[], [],[], [],[], []
     data_list = list(query.dicts())
-    for object in jsonable_encoder(data_list):
+
+    for object in data_list:
         created_at_date = object['created_at']
         next_date = object['created_at'] + timedelta(days = 1)
 
@@ -70,9 +73,8 @@ def get_data(query, filters):
         else:
             skipped_time = int((object['created_at'] + timedelta(seconds = EXPECTED_TAT * 60 * 60)).timestamp()) - int(datetime.strptime("{} 18:30:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S').timestamp())
             skipped_time = max([0, skipped_time])
-        
-        if skipped_time > 0:
-            object['expiration_time'] = datetime.strptime("{} 09:30:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time) 
+            if skipped_time > 0:
+                object['expiration_time'] = datetime.strptime("{} 09:30:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time) 
         
         if object['job_data']:
             object['purchase_invoice_rate'] = object['job_data'].get('rate')
@@ -167,11 +169,11 @@ def apply_indirect_filters(query, filters):
     return query  
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
+    query = query.where(FclFreightRateTask.updated_at.cast('date') >= datetime.strptime(filters['created_at_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
     return query
 
 def apply_created_at_less_than_filter(query, filters):
-    query = query.where(FclFreightRateTask.updated_at <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
+    query = query.where(FclFreightRateTask.updated_at.cast('date') <= datetime.strptime(filters['created_at_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
     return query
 
 def get_stats(filters, stats_required):

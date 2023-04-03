@@ -28,9 +28,12 @@ def get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit
         direct_filters = {key:value for key,value in filters.items() if key in possible_direct_filters}
         for key in direct_filters:
             query = query.select().where(attrgetter(key)(FclFreightRateLocal) == filters[key])
-    already_added_rates = [item.selected_suggested_rate_id for item in query.execute()]
- 
-    query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_([INTERNAL_BOOKING['service_provider_id']]), FclFreightRateLocal.is_line_items_error_messages_present == False).where(FclFreightRateLocal.id.not_in(already_added_rates)).order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
+    already_added_rates = [item.selected_suggested_rate_id for item in query.execute() if item.selected_suggested_rate_id]
+    query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_([INTERNAL_BOOKING['service_provider_id']]), FclFreightRateLocal.is_line_items_error_messages_present == False)
+   
+    if already_added_rates:
+        query = query.where(FclFreightRateLocal.id.not_in(already_added_rates))
+    query = query.order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
     return query 
 
 def apply_indirect_filters(query, filters):

@@ -24,16 +24,11 @@ def update_fcl_freight_rate_task_data(request):
     if not validate_closing_remarks(request):
         return {request['closing_remarks'], 'is not valid'}
     
-    with db.atomic() as transaction:
+    with db.atomic():
         object_type = 'Fcl_Freight_Rate_Task'
         query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
         db.execute_sql(query)
-        try:
-            data = execute_transaction_code(request)
-            return data
-        except Exception as e:
-            transaction.rollback()
-            return e
+        return execute_transaction_code(request)
 
 def validate_closing_remarks(request):
     if request['closing_remarks'] and request['closing_remarks'] not in TECHOPS_TASK_ABORT_REASONS:
@@ -117,7 +112,7 @@ def create_fcl_freight_local_rate(task,request):
 def update_shipment_local_charges(task,request):
     rate = task.completion_data['rate']
     try:
-        result = common.bulk_update_shipment_quotations({
+        result = shipment.bulk_update_shipment_quotations({
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
         'service': 'fcl_freight_local',

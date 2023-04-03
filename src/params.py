@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 from peewee import *
 from typing import List
 class Slab(BaseModel):
@@ -511,7 +511,7 @@ class CreateFclFreightRateRequest(BaseModel):
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
   preferred_storage_free_days: int = None
-  cargo_readiness_date: datetime = None
+  cargo_readiness_date: date = None
   preferred_shipping_line_ids: list[str] = []
   remarks: list[str] = []
   booking_params: dict = {}

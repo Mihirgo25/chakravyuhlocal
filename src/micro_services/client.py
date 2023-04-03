@@ -5,6 +5,7 @@ from micro_services.partner_client import PartnerApiClient
 from micro_services.maps_client import MapsApiClient
 from micro_services.spot_search_client import SpotSearchApiClient
 from micro_services.checkout_client import CheckoutApiClient
+from micro_services.shipment_client import ShipmentApiClient
 
 
 common = CommonApiClient()
@@ -13,3 +14,4 @@ partner = PartnerApiClient()
 maps = MapsApiClient()
 spot_search = SpotSearchApiClient()
 checkout = CheckoutApiClient()
+shipment = ShipmentApiClient()
