@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS, DEFAULT_PAYMENT_TERM
@@ -270,7 +270,7 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
         rate["destination_detention"] = destination_detention_free_days[rate["id"]]
         rate["origin_demurrage"] = origin_demurrage_free_days[rate["id"]]
         rate["destination_demurrage"] = destination_demurrage_free_days[rate["id"]]
-        rate["origin_plugin"] = None,
+        rate["origin_plugin"] = None
         rate["destination_plugin"] = None
         new_freight_rates.append(rate)
 
@@ -597,7 +597,7 @@ def discard_no_free_day_rates(freight_rates, requirements):
         if rate.get("destination_detention") and rate["destination_detention"].get("free_limit"):
             rates.append(rate)
         else:
-            rate['destination_detention'] = {'free_limit':14, 'slabs':[]}
+            rate['destination_detention'] = {'free_limit':DEFAULT_FREE_DAY_LIMIT, 'slabs':[]}
             rates.append(rate)
     # freight_rates = [rate for rate in freight_rates if rate.get("destination_detention") and rate["destination_detention"].get("free_limit")]
     return rates
@@ -609,7 +609,7 @@ def discard_no_weight_limit_rates(freight_rates, requirements):
 
     new_freight_rates = []
     for rate in freight_rates:
-        if "weight_limit" not in rate or "free_limit" not in (rate["weight_limit"] or {}) or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or rate["weight_limit"]["slabs"][-1]["upper_limit"] < requirements["cargo_weight_per_container"])):
+        if ("weight_limit" not in rate) or ("free_limit" not in (rate.get("weight_limit") or {})) or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or (rate["weight_limit"]["slabs"][-1] or {}).get("upper_limit") < requirements["cargo_weight_per_container"])):
             continue
 
         new_freight_rates.append(rate)
@@ -764,7 +764,7 @@ def get_fcl_freight_rate_cards(requirements):
         local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
         freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
         missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
-        
+
         if len(missing_free_weight_limit) > 0:
             free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
             freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)

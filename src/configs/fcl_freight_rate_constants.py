@@ -67,6 +67,8 @@ DEFAULT_WEIGHT_FREE_LIMIT = {
   "others" : 20
 }
 
+DEFAULT_FREE_DAY_LIMIT = 3
+
 DEFAULT_LOCAL_AGENT_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36" #cogo freight
 
 DEFAULT_SOURCED_BY_ID = '7f6f97fd-c17b-4760-a09f-d70b6ad963e8' # rishi agarwal
