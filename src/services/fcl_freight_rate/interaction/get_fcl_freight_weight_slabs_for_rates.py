@@ -131,7 +131,7 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
             "container_type": [requirements["container_type"], None],
             "is_cogo_assured": [False, None],
         }
-        category = service_providers_to_category[sp_id] or []
+        category = service_providers_to_category[sp_id]['category_types'] or []
         final_result = {}
         for rate in rates:
             direct_filters = {

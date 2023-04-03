@@ -822,8 +822,8 @@ class FclFreightRate(BaseModel):
               "last_rate_available_date": datetime.datetime.strptime(str(self.last_rate_available_date), '%Y-%m-%d').date().isoformat(),
               "price": self.get_price_for_trade_requirement(),
               "price_currency": "INR",
-              "is_origin_local_missing": self.is_origin_local_missing,
-              "is_destination_local_missing": self.is_destination_local_missing,
+              "is_origin_local_missing": self.is_origin_local_missing(),
+              "is_destination_local_missing": self.is_destination_local_missing(),
               "rate_params": {
                   "origin_location_id": self.origin_port_id,
                   "destination_location_id": self.destination_port_id,
@@ -840,7 +840,7 @@ class FclFreightRate(BaseModel):
     def is_origin_local_missing(self):
       query = (FclFreightRate.select()
               .where(FclFreightRate.id == self.id,FclFreightRate.is_origin_local_line_items_error_messages_present << [None, True])
-              .join(FclFreightRate.port_origin_local, JOIN.LEFT_OUTER)
+              .join(FclFreightRateLocal,on=(FclFreightRateLocal.id == FclFreightRate.origin_local_id), join_type=JOIN.LEFT_OUTER)
               .where(FclFreightRateLocal.is_line_items_error_messages_present << [None, True])
               .exists())
       return query
@@ -848,7 +848,7 @@ class FclFreightRate(BaseModel):
     def is_destination_local_missing(self):
       query = (FclFreightRate.select()
               .where(FclFreightRate.id == self.id,FclFreightRate.is_destination_local_line_items_error_messages_present << [None, True])
-              .join(FclFreightRate.port_destination_local, JOIN.LEFT_OUTER)
+              .join(FclFreightRateLocal,on=(FclFreightRateLocal.id == FclFreightRate.destination_local_id), join_type=JOIN.LEFT_OUTER)
               .where(FclFreightRateLocal.is_line_items_error_messages_present << [None, True])
               .exists())
       return query

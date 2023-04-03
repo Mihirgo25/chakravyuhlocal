@@ -28,7 +28,8 @@ def execute_transaction_code(request):
         'source_id': request['source_id'],
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id']
+        'performed_by_org_id': request['performed_by_org_id'],
+        'origin_port_id':request['origin_port_id']
     }
 
     feedback = FclFreightRateFeedback.select().where(
@@ -38,7 +39,8 @@ def execute_transaction_code(request):
         FclFreightRateFeedback.source_id == request['source_id'],
         FclFreightRateFeedback.performed_by_id == request['performed_by_id'],
         FclFreightRateFeedback.performed_by_type == request['performed_by_type'],
-        FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
+        FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id'],
+        FclFreightRateFeedback.origin_port_id==request['origin_port_id']).first()
 
     if not feedback:
         feedback = FclFreightRateFeedback(**row)

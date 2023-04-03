@@ -48,7 +48,7 @@ def delay_fcl_functions(self,fcl_object,request):
         if request.get("fcl_freight_rate_request_id"):
             delete_fcl_freight_rate_request(request)
 
-        # fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
+        fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
         get_multiple_service_objects(fcl_object)
     except Exception as exc:
         raise self.retry(exc=exc)

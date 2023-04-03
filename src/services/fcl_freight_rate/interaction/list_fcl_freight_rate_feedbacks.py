@@ -14,7 +14,7 @@ possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'shipping_line_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
 
 def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
-    query = FclFreightRateFeedback.select()
+    query = FclFreightRateFeedback.select().where(FclFreightRate.origin_port_id==FclFreightRateFeedback.origin_port_id)
 
     if filters:
         if type(filters) != dict:
@@ -40,7 +40,7 @@ def get_page(query, page, page_limit):
     return query
 
 def get_join_query(query):
-    query = query.join(FclFreightRate, on=(FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id))
+    query = query.join(FclFreightRate, on=( FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id))
     return query
 
 def apply_indirect_filters(query, filters):
@@ -184,7 +184,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
 
-    query = FclFreightRateFeedback.select()
+    query = FclFreightRateFeedback.select().where(FclFreightRate.origin_port_id==FclFreightRateFeedback.origin_port_id)
 
     if filters:
         if 'status' in filters:

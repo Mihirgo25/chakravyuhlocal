@@ -82,7 +82,7 @@ def execute_transaction_code(request):
 
     fcl_freight_local.update_special_attributes(new_free_days)
     fcl_freight_local.rate_not_available_entry = False
-    # fcl_freight_local.update_freight_objects()
+    fcl_freight_local.update_freight_objects()
     create_free_days(fcl_freight_local, request)
 
     try:

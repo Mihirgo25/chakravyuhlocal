@@ -592,8 +592,15 @@ def discard_noneligible_shipping_lines(freight_rates, requirements):
     return freight_rates
 
 def discard_no_free_day_rates(freight_rates, requirements):
-    freight_rates = [rate for rate in freight_rates if rate.get("destination_detention") and rate["destination_detention"].get("free_limit")]
-    return freight_rates
+    rates = []
+    for rate in freight_rates:
+        if rate.get("destination_detention") and rate["destination_detention"].get("free_limit"):
+            rates.append(rate)
+        else:
+            rate['destination_detention'] = {'free_limit':14, 'slabs':[]}
+            rates.append(rate)
+    # freight_rates = [rate for rate in freight_rates if rate.get("destination_detention") and rate["destination_detention"].get("free_limit")]
+    return rates
 
 def discard_no_weight_limit_rates(freight_rates, requirements):
     if "cargo_weight_per_container" not in requirements:
@@ -602,7 +609,7 @@ def discard_no_weight_limit_rates(freight_rates, requirements):
 
     new_freight_rates = []
     for rate in freight_rates:
-        if "weight_limit" not in rate or "free_limit" not in rate["weight_limit"] or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or rate["weight_limit"]["slabs"][-1]["upper_limit"] < requirements["cargo_weight_per_container"])):
+        if "weight_limit" not in rate or "free_limit" not in (rate["weight_limit"] or {}) or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or rate["weight_limit"]["slabs"][-1]["upper_limit"] < requirements["cargo_weight_per_container"])):
             continue
 
         new_freight_rates.append(rate)

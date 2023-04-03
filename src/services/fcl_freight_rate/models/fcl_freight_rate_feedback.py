@@ -51,6 +51,7 @@ class FclFreightRateFeedback(BaseModel):
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(index=True, null=True)
+    origin_port_id = UUIDField(index=True,null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
