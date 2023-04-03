@@ -242,22 +242,22 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 #                     val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.now()))
 #             return result
 
-@celery.task()
-def update_expired_fcl_freight_rate_price():
-    from services.fcl_freight_rate.helpers.get_expired_rows import get_expired_fcl_freight_rates
-    from services.fcl_freight_rate.interaction.update_expired_fcl_freight_rates import update_expired_fcl_freight_rate_platform_prices
-    ides = get_expired_fcl_freight_rates()
-    for req in ides:
-        req['procured_by_id'] = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
-        req['sourced_by_id'] = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
-        req['performed_by_id'] = "039a0141-e6f3-43b0-9c51-144b22b9fc84"
-        req['schedule_type'] = "transhipment"
-        req['payment_term'] = "prepaid"
-        update_expired_fcl_freight_rate_platform_prices(req)
-celery.conf.beat_schedule = {
-    'update_expired_fcl_freight_rate_price': {
-        'task': 'celery_worker.update_expired_fcl_freight_rate_price',
-        'schedule': crontab(minute=0,hour=0)
-    }
-}
-celery.start
+# @celery.task()
+# def update_expired_fcl_freight_rate_price():
+#     from services.fcl_freight_rate.helpers.get_expired_rows import get_expired_fcl_freight_rates
+#     from services.fcl_freight_rate.interaction.update_expired_fcl_freight_rates import update_expired_fcl_freight_rate_platform_prices
+#     ides = get_expired_fcl_freight_rates()
+#     for req in ides:
+#         req['procured_by_id'] = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+#         req['sourced_by_id'] = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+#         req['performed_by_id'] = "039a0141-e6f3-43b0-9c51-144b22b9fc84"
+#         req['schedule_type'] = "transhipment"
+#         req['payment_term'] = "prepaid"
+#         update_expired_fcl_freight_rate_platform_prices(req)
+# celery.conf.beat_schedule = {
+#     'update_expired_fcl_freight_rate_price': {
+#         'task': 'celery_worker.update_expired_fcl_freight_rate_price',
+#         'schedule': crontab(minute=0,hour=0)
+#     }
+# }
+# celery.start

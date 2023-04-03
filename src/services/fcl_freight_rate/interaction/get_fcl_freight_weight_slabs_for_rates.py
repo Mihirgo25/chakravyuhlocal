@@ -71,6 +71,7 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
         all_categories = all_categories + ctypes
 
 
+
     weight_slabs_query = FclWeightSlabsConfiguration.select(
         FclWeightSlabsConfiguration.origin_location_id,
         FclWeightSlabsConfiguration.destination_location_id,
@@ -117,7 +118,7 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
                 group_by_rate[key] = []
             sp_id = rate["service_provider_id"]
             for weight_slab in weight_slabs:
-                if ('service_provider_id' not in weight_slab or weight_slab['service_provider_id'] == sp_id) and ('shipping_line_id' not in weight_slab or weight_slab['shipping_line_id'] == rate["shipping_line_id"]) and ('organization_category' not in weight_slab or weight_slab['organization_category'] in service_providers_to_category[sp_id]):
+                if ('service_provider_id' not in weight_slab or weight_slab['service_provider_id'] == sp_id) and ('shipping_line_id' not in weight_slab or weight_slab['shipping_line_id'] == rate["shipping_line_id"]) and ('organization_category' not in weight_slab or weight_slab['organization_category'] in service_providers_to_category[sp_id]['category_types']):
                     group_by_rate[key].append(weight_slab)
 
         common_direct_filters = {
@@ -131,7 +132,7 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
             "container_type": [requirements["container_type"], None],
             "is_cogo_assured": [False, None],
         }
-        category = service_providers_to_category[sp_id] or []
+        category = service_providers_to_category[sp_id]['category_types'] or []
         final_result = {}
         for rate in rates:
             direct_filters = {
