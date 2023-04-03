@@ -468,7 +468,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
                 
                 if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -541,7 +541,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
 
                 if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})
+                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -555,7 +555,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         markup = data['markup']
                     
                     if data['markup_type'].lower() == 'net':
-                        markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})
+                        markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
                     slab['price'] = slab['price'] + markup
                     if slab['price'] < 0:
@@ -871,7 +871,6 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list'][0]
-        print(fcl_freight_rate)
         if fcl_freight_rate:
             validities = [k for k in fcl_freight_rate["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
         else:
@@ -923,7 +922,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 markup = data['markup']
 
             if data['markup_type'].lower() == 'net':
-                markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})
+                markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
             line_item['price'] = line_item['price'] + markup
             

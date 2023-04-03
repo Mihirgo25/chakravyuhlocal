@@ -126,11 +126,11 @@ def get_partner_users_by_expertise(service, origin_location_ids = None, destinat
     if origin_location_ids and destination_location_ids: 
         origin_location_ids = tuple(origin_location_ids)   
         destination_location_ids = tuple(destination_location_ids)
-        sql = 'select partner_user_expertises.partner_user_id, partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user.trade_type from partner_user_expertises where status = %s and service = %s and origin_location_id IN %s and destination_location_id IN %s'
+        sql = 'select partner_user_expertises.partner_user_id, partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user_expertises.trade_type from partner_user_expertises where status = %s and service_type = %s and origin_location_id IN %s and destination_location_id IN %s'
         cur.execute(sql, ('active', service, origin_location_ids, destination_location_ids,))
     else:
         location_ids = tuple(location_ids)
-        sql = 'select partner_user_expertises.partner_user_id, partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user.trade_type from partner_user_expertises where status = %s and service = %s and partner_user_id = %s and location_id IN %s and trade_type = %s'
+        sql = 'select partner_user_expertises.partner_user_id, partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user_expertises.trade_type from partner_user_expertises where status = %s and service_type = %s and partner_user_id = %s and location_id IN %s and trade_type = %s'
         cur.execute(sql, ('active', service, location_ids, trade_type,))
     
     result = cur.fetchall()
@@ -159,6 +159,8 @@ def get_organization_stakeholders(stakeholder_type, stakeholder_id):
     return org_ids
 
 def get_partner_users(ids, status = 'active'):
+    if not ids:
+        return []
     cur = conn.cursor()
     ids = tuple(ids)
     sql = 'select partner_users.user_id, partner_users.id from partner_users where status = %s and id IN %s'

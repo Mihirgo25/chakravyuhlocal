@@ -91,21 +91,23 @@ class FclFreightRateRequest(BaseModel):
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
             pass
-
         if self.preferred_shipping_line_ids:
-            preferred_shipping_lines = []
-            for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(id=shipping_line_id)
-                if len(shipping_line_data) == 0:
-                    raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
-                preferred_shipping_lines.append(shipping_line_data[0])
-            self.preferred_shipping_lines = preferred_shipping_lines
+            # preferred_shipping_lines = []
+            # for shipping_line_id in self.preferred_shipping_line_ids:
+            shipping_line_data = get_shipping_line(id=self.preferred_shipping_line_ids)
+            if len(shipping_line_data) != len(self.preferred_shipping_line_ids):
+                raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
+            self.preferred_shipping_lines = shipping_line_data
+            self.preferred_shipping_line_ids = [uuid.UUID(str(shipping_line_id)) for shipping_line_id in self.preferred_shipping_line_ids]
+            # preferred_shipping_lines.append(shipping_line_data[0])
 
     def set_location(self):
-        origin_location_data = maps.list_locations({'filters':{'id':self.origin_port_id}})['list']
-        self.origin_port = {key:value for key,value in origin_location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-        destination_location_data = maps.list_locations({'filters':{'id':self.destination_port_id}})['list']
-        self.destination_port = {key:value for key,value in destination_location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+        location_data = maps.list_locations({'filters':{'id':[self.origin_port_id,self.destination_port_id]}})['list']
+        for location in location_data:
+            if location['id']==self.origin_port_id:
+                self.origin_port = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+            elif location['id']==self.destination_port_id:
+                self.destination_port = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def validate(self):
         self.validate_source()

@@ -10,7 +10,7 @@ possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent
 possible_indirect_filters = ['importer_exporter_present', 'active', 'inactive']
 
 def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pagination_data_required = True, return_query = False):
-    query = get_query(page, page_limit)
+    query = get_query()
 
     if filters:
         if type(filters) != dict: 
@@ -21,15 +21,17 @@ def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pag
         query = get_filters(direct_filters, query, FclFreightRateFreeDay)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+    query = query.paginate(page, page_limit)
+
     if return_query: 
         return { 'list': str(query) } 
 
     data = jsonable_encoder(list(query.dicts()))
-    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
-    
+
     return { 'list': data } | pagination_data
 
-def get_query(page, page_limit):
+def get_query():
     query = FclFreightRateFreeDay.select(
         FclFreightRateFreeDay.id,
         FclFreightRateFreeDay.location_id,
@@ -53,18 +55,19 @@ def get_query(page, page_limit):
         FclFreightRateFreeDay.importer_exporter,
         FclFreightRateFreeDay.validity_start,
         FclFreightRateFreeDay.validity_end
-    ).order_by(FclFreightRateFreeDay.updated_at.desc(nulls = 'LAST')).paginate(page, page_limit)
+    ).order_by(FclFreightRateFreeDay.updated_at.desc(nulls = 'LAST'))
     return query
 
 
-def get_pagination_data(data, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
-
+        
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

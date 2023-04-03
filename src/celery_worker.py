@@ -62,7 +62,6 @@ def create_sailing_schedule_port_pair(self,request):
         'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
         'shipping_line_id': request["shipping_line_id"]
         }
-        common.create_sailing_schedule_port_pair_coverage(port_pair_coverage_data)
     except Exception as exc:
         self.retry(exc = exc)
 
