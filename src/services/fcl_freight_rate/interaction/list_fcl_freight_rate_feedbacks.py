@@ -208,23 +208,19 @@ def get_stats(filters, is_stats_required, performed_by_id):
          )
     ).limit(1)
 
-    result = query.dicts().get()
 
-    # print(result[0])
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-    #     futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
-    #     method_responses = {}
-    #     for future in futures:
-    #         result = future.result()
-    #         method_responses.update(result)  
-
-    stats = {
-      'total': result['get_total'],
-      'total_closed_by_user': result['get_total_closed_by_user'],
-      'total_opened_by_user': result['get_total_opened_by_user'],
-      'total_open': result['get_status_count_active'],
-      'total_closed': result['get_status_count_inactive']
-    }
+    result = query.execute()
+    if len(result)>0:
+        result = result[0]
+        stats = {
+        'total': result.get_total,
+        'total_closed_by_user': result.get_total_closed_by_user,
+        'total_opened_by_user': result.get_total_opened_by_user,
+        'total_open': result.get_status_count_active,
+        'total_closed': result.get_status_count_inactive
+        }
+    else:
+        stats = {}
     return { 'stats': stats }
 
 # def get_total(query, performed_by_id):
