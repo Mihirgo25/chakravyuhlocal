@@ -9,7 +9,6 @@ import uuid
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications
 from services.rate_sheet.interactions.create_rate_sheet_audits import create_audit
 from fastapi import HTTPException
-from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_file import validate_and_process_rate_sheet_converted_file
 def get_audit_params(parameters):
     keys_to_extract = ['converted_files']
     audit_data = dict(filter(lambda item: item[0] in keys_to_extract, parameters.items()))
@@ -27,8 +26,8 @@ def get_audit_params(parameters):
 def  update_rate_sheet(params: UpdateRateSheet):
     from celery_worker import validate_and_process_rate_sheet_converted_file_delay
     rate_sheet = RateSheet.get(RateSheet.id == params['id'])
-    # if rate_sheet.status not in ['uploaded', 'partially_complete']:
-    #     raise HTTPException(status_code=403, detail= "File already uploaded")
+    if rate_sheet.status not in ['uploaded', 'partially_complete']:
+        raise HTTPException(status_code=403, detail= "File already uploaded")
     if 'converted_files' in params:
         index = 0
         for converted_file in params.get('converted_files'):
@@ -51,8 +50,7 @@ def  update_rate_sheet(params: UpdateRateSheet):
     for key in params.keys():
         if key not in ['id', 'performed_by_id', 'procured_by_id','sourced_by_id']:
             rate_sheet[key] = params[key]
-    validate_and_process_rate_sheet_converted_file(rate_sheet)
-    # validate_and_process_rate_sheet_converted_file_delay.apply_async(kwargs={'request':rate_sheet},queue='critical')
+    validate_and_process_rate_sheet_converted_file_delay.apply_async(kwargs={'request':rate_sheet},queue='critical')
     return {
       "id": rate_sheet['id']
     }
