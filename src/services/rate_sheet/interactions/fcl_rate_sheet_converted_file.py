@@ -287,7 +287,13 @@ def process_fcl_freight_local(params, converted_file, update):
     percent= ((get_last_line(converted_file) / total_lines)* 100)
     converted_file['percent'] = percent
     set_processed_percent(percent, params)
-    if math.ceil(percent)!=100:
+    try:
+        valid = converted_file.get('valid_rates_count')
+        total = converted_file.get('rates_count')
+        percent_completed = (valid / total) * 100
+    except:
+        percent_completed = 0
+    if math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     else:
