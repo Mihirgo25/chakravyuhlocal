@@ -29,7 +29,6 @@ csv_options = {
 
 last_line_hash = "last_line"
 total_line_hash = "total_line"
-error_present_hash = "error_present"
 processed_percent_hash = "process_percent"
 
 def processed_percent_key(params):
@@ -48,41 +47,6 @@ def get_processed_percent(params):
         except:
             return 0
 
-
-def last_line_key(params):
-    return f"rate_sheet_converted_file_last_line_{params['id']}"
-
-
-def set_last_line(last_line, params):
-    if rd:
-        rd.hset(last_line_hash, last_line_key(params), last_line)
-
-
-def get_last_line(params):
-    if rd:
-        try:
-            cached_response = rd.hget(last_line_hash, last_line_key(params))
-            return int(cached_response)
-        except:
-            return 0
-
-
-# def delete_last_line(last_line_hash):
-#     if rd:
-#         rd.delete(last_line_hash, last_line_key)
-
-def mark_processing(params, update):
-    update.status = "processing"
-    return params
-
-
-def set_errors_present(errors_present, params):
-    if rd:
-        rd.hset(error_present_hash, errors_present_key(params), errors_present)
-
-def get_errors_present(params):
-    value = rd.hget(total_line_hash, errors_present_key(params))
-    return str(value.decode('utf-8')) == 'true' if value is not None else False
 
 def valid_hash(hash, present_fields=None, blank_fields=None):
     if present_fields:

@@ -11,7 +11,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
-
+from kombu import Exchange, Queue
 
 
 
@@ -27,6 +27,16 @@ celery = Celery(__name__)
 registry.enable("pickle")
 celery.conf.broker_url = CELERY_REDIS_URL
 celery.conf.result_backend = CELERY_REDIS_URL
+celery.conf.critical_queues = [Queue('critical', Exchange('critical'), routing_key='critical',
+          queue_arguments={'x-max-priority': 9})]
+celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
+          queue_arguments={'x-max-priority': 6})]
+celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
+          queue_arguments={'x-max-priority': 3})]
+celery.conf.critical_default_priority = 9
+celery.conf.fcl_freight_rate_default_priority = 6
+celery.conf.low_default_priority = 3
+
 celery.conf.update(**CELERY_CONFIG)
 
 
