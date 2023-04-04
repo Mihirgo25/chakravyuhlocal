@@ -40,7 +40,7 @@ class FclFreightRateFeedback(BaseModel):
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
-    preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True)
+    preferred_shipping_line_ids = ArrayField(field_class=UUIDField, null=True, constraints=[SQL("DEFAULT '{}'::uuid[]")])
     preferred_shipping_lines = BinaryJSONField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedback_serial_id_seq'::regclass)")])
