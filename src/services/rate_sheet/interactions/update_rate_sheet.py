@@ -32,7 +32,7 @@ def  update_rate_sheet(params: UpdateRateSheet):
         index = 0
         for converted_file in params.get('converted_files'):
                 converted_file['status'] = 'under_validation'
-                converted_file['id'] = str(uuid.uuid1())
+                converted_file['id'] = str(uuid.uuid4())
                 converted_file['service_provider_id'] = str(rate_sheet.service_provider_id)
                 converted_file['cogo_entity_id'] = str(rate_sheet.cogo_entity_id)
                 converted_file['rate_sheet_id'] = str(rate_sheet.id)

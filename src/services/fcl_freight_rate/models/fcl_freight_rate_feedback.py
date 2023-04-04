@@ -26,7 +26,7 @@ class FclFreightRateFeedback(BaseModel):
     closed_by = BinaryJSONField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     created_at = DateTimeField(index=True, default = datetime.datetime.now)
-    fcl_freight_rate_id = UUIDField(null=True)
+    fcl_freight_rate_id = UUIDField(null=True,index=True)
     feedback_type = CharField(index=True, null=True)
     feedbacks = ArrayField(field_class=CharField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
@@ -44,13 +44,13 @@ class FclFreightRateFeedback(BaseModel):
     preferred_shipping_lines = BinaryJSONField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedback_serial_id_seq'::regclass)")])
-    service_provider = BinaryJSONField(null=True)
     source = CharField(index=True, null=True)
     source_id = UUIDField(index=True, null=True)
     spot_search = BinaryJSONField(null=True)
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(index=True, null=True)
+    origin_port_id = UUIDField(index=True,null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -117,13 +117,14 @@ class FclFreightRateFeedback(BaseModel):
             pass
 
         if self.preferred_shipping_line_ids:
-            preferred_shipping_lines = []
+            shipping_lines = get_shipping_line(id=self.preferred_shipping_line_ids)
+            shipping_lines_hash = {}
+            for sl in shipping_lines:
+                shipping_lines_hash[sl["id"]] = sl
             for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(id=shipping_line_id)
-                if len(shipping_line_data) == 0:
+                if not shipping_line_id in shipping_lines_hash:
                     return False
-                preferred_shipping_lines.append(shipping_line_data[0])
-            self.preferred_shipping_lines = preferred_shipping_lines
+            self.preferred_shipping_lines = shipping_lines
 
     def validate_feedback_type(self):
         if self.feedback_type in FEEDBACK_TYPES:
