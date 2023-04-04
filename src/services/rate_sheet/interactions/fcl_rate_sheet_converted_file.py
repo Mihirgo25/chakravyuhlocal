@@ -245,6 +245,7 @@ def process_fcl_freight_local(params, converted_file, update):
     if not rows:
         return
     create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
+    edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     set_last_line(total_lines, params)
     percent= ((get_last_line(converted_file) / total_lines)* 100)
@@ -262,7 +263,6 @@ def process_fcl_freight_local(params, converted_file, update):
     else:
         update.status = 'complete'
         converted_file['status'] = 'complete'
-    edit_file.flush()
     edit_file.close()
     try:
         os.remove(get_original_file_path(converted_file))
@@ -447,11 +447,11 @@ def process_fcl_freight_free_day(params, converted_file, update):
     valid = converted_file.get('valid_rates_count')
     total = converted_file.get('rates_count')
     percent_completed = (valid / total) * 100
+    edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     converted_file['percent'] = percent_completed
     set_processed_percent(percent, params)
-    edit_file.flush()
     edit_file.close()
     if math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
@@ -1076,8 +1076,8 @@ def process_fcl_freight_freight(params, converted_file, update):
         percent_completed = 0
     percent=  ((get_last_line(converted_file) / total_lines)* 100)
     converted_file['percent'] = percent_completed
-    converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     edit_file.flush()
+    converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     edit_file.close()
     if math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
