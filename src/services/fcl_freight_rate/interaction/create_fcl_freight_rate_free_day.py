@@ -70,7 +70,7 @@ def get_free_day_object(request):
     if not free_day:
         free_day = FclFreightRateFreeDay(**row)
 
-    extra_fields = ['previous_days_applicable','free_limit','remarks','slabs']
+    extra_fields = ['previous_days_applicable','free_limit','remarks','slabs','validity_start','validity_end']
     for field in extra_fields:
         if field in request:
             setattr(free_day, field, request[field])
