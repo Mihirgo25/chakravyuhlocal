@@ -32,7 +32,6 @@ class FclFreightRateFreeDayRequest(BaseModel):
     service_provider = BinaryJSONField(null=True)
     source = CharField(index=True, null=True)
     source_id = UUIDField(index=True, null = True)
-    spot_search = BinaryJSONField(null=True)
     performed_by_id = UUIDField(index=True, null = True)
     performed_by = BinaryJSONField(null=True)
     performed_by_type = CharField(index=True, null=True)

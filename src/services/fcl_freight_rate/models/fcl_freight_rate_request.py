@@ -51,7 +51,6 @@ class FclFreightRateRequest(BaseModel):
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     request_type = CharField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_request_serial_id_seq'::regclass)")])
-    spot_search = BinaryJSONField(null=True)
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)

@@ -46,7 +46,6 @@ class FclFreightRateFeedback(BaseModel):
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedback_serial_id_seq'::regclass)")])
     source = CharField(index=True, null=True)
     source_id = UUIDField(index=True, null=True)
-    spot_search = BinaryJSONField(null=True)
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(index=True, null=True)
