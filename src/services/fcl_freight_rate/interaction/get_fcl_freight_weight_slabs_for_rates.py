@@ -41,7 +41,7 @@ def get_most_relevant_slabs(data, direct_filters):
         0 if t['commodity'] else 1)
     )
     try:
-        return {'max_weight': data[0]['max_weight'], 'slabs':data[0]['slabs']}
+        return {'free_limit': data[0]['max_weight'], 'slabs':data[0]['slabs']}
     except:
         return None
 
