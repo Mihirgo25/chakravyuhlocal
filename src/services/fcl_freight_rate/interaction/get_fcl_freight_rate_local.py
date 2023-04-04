@@ -9,7 +9,11 @@ def get_fcl_freight_rate_local(request):
           details = object.detail()
     else:
       object=None
-    return details | ({'local_charge_codes': object.possible_charge_codes() if object else FCL_FREIGHT_LOCAL_CHARGES})
+    if not object:
+      object = FclFreightRateLocal()
+      for key in list(request.keys()):
+        setattr(object, key, request[key])
+    return details | ({'local_charge_codes': object.possible_charge_codes()})
 
 
 def find_object(request):
