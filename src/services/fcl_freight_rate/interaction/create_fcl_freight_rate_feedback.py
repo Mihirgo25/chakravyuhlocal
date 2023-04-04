@@ -29,7 +29,7 @@ def execute_transaction_code(request):
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
         'performed_by_org_id': request['performed_by_org_id'],
-        'origin_port_id':request['origin_port_id']
+        'origin_port_id':request['booking_params']['origin_port_id']
     }
 
     feedback = FclFreightRateFeedback.select().where(

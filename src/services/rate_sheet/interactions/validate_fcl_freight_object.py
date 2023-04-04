@@ -38,27 +38,27 @@ def get_freight_object(object):
         rate_object.set_destination_location_ids()
         rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], False, object['payment_term'])
     except:
-        validation['error']+='Invalid location'
+        validation['error']+=' Invalid location'
     try:
         rate_object.validate_before_save()
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' + str(e.detail)
     try:
         rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' + str(e.detail)
     for line_item in object['line_items']:
         if line_item['unit'] not in VALID_UNITS:
-            validation['error'] =  "unit is_invalid"
+            validation['error'] =  ' ' + "unit is_invalid"
     if object['schedule_type'] and object['schedule_type'] not in SCHEDULE_TYPES:
-        validation['error'] += f"{object['schedule_type']} is invalid, valid schedule types are {SCHEDULE_TYPES}"
+        validation['error'] += ' ' + f"{object['schedule_type']} is invalid, valid schedule types are {SCHEDULE_TYPES}"
 
     if object['payment_term'] and object['payment_term'] not in PAYMENT_TERM:
-        validation['error']+=  f"{object['payment_term']} is invalid, valid payment terms are {PAYMENT_TERM}"
+        validation['error']+=  ' ' + f"{object['payment_term']} is invalid, valid payment terms are {PAYMENT_TERM}"
     try:
         rate_object.validate_line_items(object['line_items'])
     except HTTPException as e:
-        validation['error']+=str(e.detail)
+        validation['error']+=' ' + str(e.detail)
     return validation
 
 def get_local_object(object):
@@ -69,10 +69,10 @@ def get_local_object(object):
     try:
         local.validate_before_save()
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' + str(e.detail)
     for line_item in object.get('data').get('line_items'):
         if line_item['unit'] not in VALID_UNITS:
-            validation['error']+= "unit is_invalid"
+            validation['error']+= ' ' + "unit is_invalid"
 
     return validation
 
@@ -84,15 +84,15 @@ def get_free_day_object(object):
     try:
         free_day.validate_validity_object(object.get('validity_start'), object.get('validity_end'))
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' + str(e.detail)
     try:
         free_day.validate_before_save()
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' +str(e.detail)
     if not is_valid_uuid(free_day.location_id):
-        validation['error'] += 'location is invalid'
+        validation['error'] += ' location is invalid'
     if not is_valid_uuid(free_day.shipping_line_id):
-        validation['error'] += 'shipping is invalid'
+        validation['error'] += ' shipping is invalid'
     # if free_day.specificity_type in SPECIFICITY_TYPE:
     #     validation['error'] += 'specificity_type is invalid'
 
