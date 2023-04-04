@@ -14,7 +14,7 @@ def get_most_eligible_free_days(data, filters):
     free_days = data[0] if data else None
     return free_days
 
-def get_eligible_fcl_freight_rate_free_day(filters, freight_rates,sort_by_specificity_type = False):
+def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_specificity_type = False):
     if not filters:
         return {}
 

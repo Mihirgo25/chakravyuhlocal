@@ -23,7 +23,7 @@ docs_url = None if APP_ENV == "production" else "/docs"
 app = FastAPI(docs_url=docs_url,debug=True)
 
 
-app.include_router(prefix = "/fcl_freight_rate_v2", router=fcl_freight_router)
+app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
 
 
 app.add_middleware(
@@ -63,6 +63,6 @@ def shutdown():
 def read_root():
     return "WELCOME TO OCEAN RMS"
 
-@app.get('/fcl_freight_rate_v2/health_check')
+@app.get('/fcl_freight_rate/health_check')
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'healthy' })
