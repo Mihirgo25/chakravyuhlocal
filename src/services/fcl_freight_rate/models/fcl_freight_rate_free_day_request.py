@@ -32,7 +32,6 @@ class FclFreightRateFreeDayRequest(BaseModel):
     service_provider = BinaryJSONField(null=True)
     source = CharField(index=True, null=True)
     source_id = UUIDField(index=True, null = True)
-    spot_search = BinaryJSONField(null=True)
     performed_by_id = UUIDField(index=True, null = True)
     performed_by = BinaryJSONField(null=True)
     performed_by_type = CharField(index=True, null=True)
@@ -50,6 +49,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     created_at = DateTimeField(index=True, default = datetime.datetime.now)
     updated_at = DateTimeField(default = datetime.datetime.now)
+    code = CharField(null=True)
+    preferred_total_days = IntegerField(null=True)
+    specificity_type = CharField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
