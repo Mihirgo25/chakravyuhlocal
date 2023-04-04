@@ -786,7 +786,7 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_ro
             list_opt = error
             csv.writerow(list_opt)
             csv.writerow([])
-            csv.writerow(last_row)
+            # csv.writerow(last_row)
         except:
             print('no csv')
     converted_file['rates_count'] = int(converted_file['rates_count'])+1
@@ -1064,7 +1064,6 @@ def process_fcl_freight_freight(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
                 rows = []
-    edit_file.flush()
     if not rows:
         return
     create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
@@ -1078,6 +1077,7 @@ def process_fcl_freight_freight(params, converted_file, update):
     percent=  ((get_last_line(converted_file) / total_lines)* 100)
     converted_file['percent'] = percent_completed
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
+    edit_file.flush()
     edit_file.close()
     if math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
