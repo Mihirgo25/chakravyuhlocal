@@ -130,7 +130,9 @@ class FclFreightRateLocal(BaseModel):
         if invalid_charge_codes:
             raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
 
-    def update_special_attributes(self, new_free_days: dict = {}):
+    def update_special_attributes(self, new_free_days: dict = {}, rate_sheet_validation: bool = False):
+        if rate_sheet_validation:
+            self.local_data_instance = FclFreightRateLocalData(self.data)
         self.update_line_item_messages()
         self.update_free_days_special_attributes(new_free_days)
 
