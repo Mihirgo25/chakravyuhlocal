@@ -568,3 +568,23 @@ AHFR:
   units: ['per_shipment']
   condition: true
   tags: ['additional_service']
+EDT:
+  name: "Origin Detention Fee"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+DET:
+  name: "Destination Detention fee"
+  units: ['per_container']
+  condition: true
+  tags: ['additional_service']
+EDE:
+  name: "Origin Demurrage Charges"
+  units: ['per_container', 'per_shipment']
+  condition: true
+  tags: ['additional_service']
+DEA:
+  name: "Destination Demurrage Charges"
+  units: ['per_container', 'per_shipment']
+  condition: true
+  tags: ['additional_service']

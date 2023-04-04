@@ -1,6 +1,6 @@
 from configs.global_constants import *
 
-REQUEST_SOURCES = ['spot_search']
+REQUEST_SOURCES = ['spot_search','shipment']
 LOCATION_HIERARCHY = {
 'port' : 1,
 'country' : 2,
