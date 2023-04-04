@@ -26,7 +26,7 @@ class FclFreightRateFeedback(BaseModel):
     closed_by = BinaryJSONField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     created_at = DateTimeField(index=True, default = datetime.datetime.now)
-    fcl_freight_rate_id = UUIDField(null=True)
+    fcl_freight_rate_id = UUIDField(null=True,index=True)
     feedback_type = CharField(index=True, null=True)
     feedbacks = ArrayField(field_class=CharField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
