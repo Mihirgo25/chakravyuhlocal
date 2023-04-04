@@ -154,7 +154,7 @@ class FclFreightRateLocalRequest(BaseModel):
                     'importer_exporter_id': importer_exporter_id }
 
         }
-        # common.create_communication(data)
+        common.create_communication(data)
 
 
     def send_notifications_to_supply_agents(self):
@@ -179,4 +179,4 @@ class FclFreightRateLocalRequest(BaseModel):
         }
         for user_id in user_ids:
             data['user_id'] = user_id
-            # common.create_communication(data)
+            common.create_communication(data)

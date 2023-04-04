@@ -242,7 +242,7 @@ class FclFreightRateFeedback(BaseModel):
 
         for user_id in feedback_info['user_ids']:
             data['user_id'] = user_id
-            # common.create_communication(data)
+            common.create_communication(data)
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(
@@ -282,4 +282,4 @@ class FclFreightRateFeedback(BaseModel):
                 'importer_exporter_id': importer_exporter_id
             }
         }
-        # common.create_communication(data)
+        common.create_communication(data)
