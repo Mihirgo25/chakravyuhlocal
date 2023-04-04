@@ -141,4 +141,4 @@ class FclFreightRateRequest(BaseModel):
                     'importer_exporter_id': importer_exporter_id }
 
         }
-        # common.create_communication(data)
+        common.create_communication(data)

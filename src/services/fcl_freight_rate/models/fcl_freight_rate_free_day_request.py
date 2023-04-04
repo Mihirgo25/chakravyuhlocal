@@ -76,7 +76,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
           'spot_search_id': self.source_id,
           'importer_exporter_id': importer_exporter_id }
       }
-      # common.create_communication(data)
+      common.create_communication(data)
 
     def validate_source(self):
       if self.source in REQUEST_SOURCES:

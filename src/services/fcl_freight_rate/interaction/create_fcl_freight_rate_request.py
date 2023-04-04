@@ -99,7 +99,7 @@ def send_notifications_to_supply_agents(request):
         }
         for user_id in request_info['user_ids']:
             data['user_id'] = user_id
-            # create_communication_background.apply_async(args=data,queue='communication')
+            create_communication_background.apply_async(kwargs={'data':data},queue='communication')
 
 
 
