@@ -12,7 +12,7 @@ def create_fcl_freight_rate_feedback(request):
     object_type = 'Fcl_Freight_Rate_Feedback'
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    with db.atomic() as transaction:
+    with db.atomic():
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
@@ -28,7 +28,8 @@ def execute_transaction_code(request):
         'source_id': request['source_id'],
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id']
+        'performed_by_org_id': request['performed_by_org_id'],
+        'origin_port_id':request['booking_params']['origin_port_id']
     }
 
     feedback = FclFreightRateFeedback.select().where(
@@ -88,7 +89,8 @@ def get_create_params(request):
         'preferred_shipping_line_ids': request.get('preferred_shipping_line_ids'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
-        'status': 'active'
+        'status': 'active',
+        'cogo_entity_id':request.get('cogo_entity_id')
     }
     return params
 

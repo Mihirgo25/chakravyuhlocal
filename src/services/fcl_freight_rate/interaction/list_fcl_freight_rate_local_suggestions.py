@@ -11,26 +11,31 @@ possible_direct_filters = ['port_id', 'country_id', 'trade_id', 'continent_id', 
 possible_indirect_filters = ['location_ids']
 
 def list_fcl_freight_rate_local_suggestions(service_provider_id, filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True):
-    query = get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit)
+    query = get_query(filters, service_provider_id, sort_by, sort_type)
     if filters:
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   
         query = get_filters(direct_filters, query, FclFreightRateLocal)
         query = apply_indirect_filters(query, indirect_filters)
-    data = get_data(query)
+
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+    query = query.paginate(page, page_limit)
+    data = get_data(query)
 
     return {'list': data } | (pagination_data)
 
-def get_query(filters, service_provider_id, sort_by, sort_type, page, page_limit):
+def get_query(filters, service_provider_id, sort_by, sort_type):
     query = FclFreightRateLocal.select(FclFreightRateLocal.selected_suggested_rate_id).where(FclFreightRateLocal.service_provider_id == service_provider_id)
     if filters:
         direct_filters = {key:value for key,value in filters.items() if key in possible_direct_filters}
         for key in direct_filters:
             query = query.select().where(attrgetter(key)(FclFreightRateLocal) == filters[key])
-    already_added_rates = [item.selected_suggested_rate_id for item in query.execute()]
- 
-    query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_([INTERNAL_BOOKING['service_provider_id']]), FclFreightRateLocal.is_line_items_error_messages_present == False).where(FclFreightRateLocal.id.not_in(already_added_rates)).order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
+    already_added_rates = [item.selected_suggested_rate_id for item in query.execute() if item.selected_suggested_rate_id]
+    query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_([INTERNAL_BOOKING['service_provider_id']]), FclFreightRateLocal.is_line_items_error_messages_present == False)
+   
+    if already_added_rates:
+        query = query.where(FclFreightRateLocal.id.not_in(already_added_rates))
+    query = query.order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type)))
     return query 
 
 def apply_indirect_filters(query, filters):
@@ -44,14 +49,15 @@ def apply_location_ids_filter(query, filters):
     locations_ids = filters['location_ids']
     return query.where(FclFreightRateLocal.location_ids.contains(locations_ids))
 
-def get_pagination_data(data, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
 
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

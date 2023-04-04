@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 from peewee import *
 from typing import List
+from dateutil.relativedelta import relativedelta
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
@@ -496,8 +497,9 @@ class UpdateFclFreightRateFreeDay(BaseModel):
   sourced_by_id: str
   id: str
   free_limit: int = None
-  # validity_start: datetime = datetime.now()
-  # validity_end: datetime = datetime.now() + timedelta(months=3)
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = datetime.now() + relativedelta(months=3)
+  hs_code: str = None
   remarks: list[str] = None
   slabs: list[Slab] = None
 class CreateFclFreightRateRequest(BaseModel):
@@ -511,7 +513,7 @@ class CreateFclFreightRateRequest(BaseModel):
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
   preferred_storage_free_days: int = None
-  cargo_readiness_date: datetime = None
+  cargo_readiness_date: date = None
   preferred_shipping_line_ids: list[str] = []
   remarks: list[str] = []
   booking_params: dict = {}

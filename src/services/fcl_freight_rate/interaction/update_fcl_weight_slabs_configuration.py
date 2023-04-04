@@ -20,20 +20,16 @@ def update_fcl_weight_slabs_configuration(request):
     object_type = 'Fcl_Weight_Slabs_Configuration'
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    with db.atomic() as transaction:
-        try:
-            data = execute_transaction_code(request)
-            return data
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    request_id = request['id']
-    del request['id']
+
     
-    updated_configuration = FclWeightSlabsConfiguration.get(**{'id' : request_id})
-        
+    updated_configuration = FclWeightSlabsConfiguration.get(**{'id' : request['id']})
+    
+    if not updated_configuration:
+        raise HTTPException(status_code=499,detail='Weight Slab Not Found')
     request['updated_at'] = datetime.now()
     request['price'] = request.get('slabs')[0].get('price')
     request['currency'] = request.get('slabs')[0].get('currency')
@@ -46,5 +42,5 @@ def execute_transaction_code(request):
 
     create_audit(request)
     return {
-    'id': request_id
+    'id': request['id']
     }

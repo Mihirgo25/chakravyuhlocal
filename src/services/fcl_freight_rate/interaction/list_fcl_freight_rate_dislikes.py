@@ -14,7 +14,7 @@ possible_direct_filters = ['feedback_type', 'continent', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'trade_lane', 'shipping_line', 'validity_start_greater_than', 'validity_end_less_than', 'service_provider_id']
 
 def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
-    query = get_query(page, page_limit)
+    query = get_query()
 
     if filters:
         if type(filters) != dict:
@@ -25,11 +25,10 @@ def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
         query = get_filters(direct_filters, query, FclFreightRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query, page, page_limit)
+    query = query.paginate(page,page_limit)
+
     data = get_data(query)
-
-
-    pagination_data = get_pagination_data(data, page, page_limit)
-
     return { 'list': data } | (pagination_data)
     
 def get_data(query):
@@ -72,9 +71,9 @@ def get_data(query):
            
     return data 
 
-def get_query(page, page_limit):
+def get_query():
     query = FclFreightRateFeedback.select(FclFreightRateFeedback, FclFreightRate.origin_trade_id, FclFreightRate.destination_trade_id, FclFreightRate.shipping_line).join(FclFreightRate, on = (FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id)
-    ).where(FclFreightRateFeedback.feedback_type == 'disliked').paginate(page,page_limit)
+    ).where(FclFreightRateFeedback.feedback_type == 'disliked')
     return query
 
 def apply_indirect_filters(query, filters):
@@ -116,11 +115,11 @@ def apply_shipping_line_filter(query, filters):
     )
     
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateFeedback.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d').date())
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateFeedback.created_at.cast('date') <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d').date())
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):
@@ -132,11 +131,13 @@ def apply_relevant_supply_agent_filter(query, filters):
     query = query.where((FclFreightRate.destination_port_id << destination_port_id) | (FclFreightRate.destination_country_id << destination_port_id) | (FclFreightRate.destination_continent_id << destination_port_id) | (FclFreightRate.destination_trade_id << destination_port_id))
     return query
 
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+  total_count = query.count()
+  
   pagination_data = {
     'page': page,
-    'total': ceil(len(data)/page_limit),
-    'total_count': len(data),
+    'total': ceil(total_count/page_limit),
+    'total_count': total_count,
     'page_limit': page_limit
     }
   

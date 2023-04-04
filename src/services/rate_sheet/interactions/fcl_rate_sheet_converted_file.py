@@ -29,7 +29,6 @@ csv_options = {
 
 last_line_hash = "last_line"
 total_line_hash = "total_line"
-error_present_hash = "error_present"
 processed_percent_hash = "process_percent"
 
 def processed_percent_key(params):
@@ -44,45 +43,10 @@ def get_processed_percent(params):
     if rd:
         try:
             cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
-            return int(cached_response)
+            return float(cached_response)
         except:
             return 0
 
-
-def last_line_key(params):
-    return f"rate_sheet_converted_file_last_line_{params['id']}"
-
-
-def set_last_line(last_line, params):
-    if rd:
-        rd.hset(last_line_hash, last_line_key(params), last_line)
-
-
-def get_last_line(params):
-    if rd:
-        try:
-            cached_response = rd.hget(last_line_hash, last_line_key(params))
-            return int(cached_response)
-        except:
-            return 0
-
-
-# def delete_last_line(last_line_hash):
-#     if rd:
-#         rd.delete(last_line_hash, last_line_key)
-
-def mark_processing(params, update):
-    update.status = "processing"
-    return params
-
-
-def set_errors_present(errors_present, params):
-    if rd:
-        rd.hset(error_present_hash, errors_present_key(params), errors_present)
-
-def get_errors_present(params):
-    value = rd.hget(total_line_hash, errors_present_key(params))
-    return str(value.decode('utf-8')) == 'true' if value is not None else False
 
 def valid_hash(hash, present_fields=None, blank_fields=None):
     if present_fields:
@@ -185,11 +149,11 @@ def get_location_id(q, country_code = None, service_provider_id = None):
 def get_location(location, type):
     if type == "port":
         location = maps.list_locations(
-            {"filters": {"type": "seaport", "port_code": location, "status": "active"}}
+            {"filters": {"type": "seaport", "port_code": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )["list"][0]
     else:
         location = maps.list_locations(
-            {"filters": {"type": type, "name": location, "status": "active"}}
+            {"filters": {"type": type, "name": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )["list"][0]
     return location
 
@@ -210,9 +174,9 @@ def process_fcl_freight_local(params, converted_file, update):
         headers = next(reader)
         for row in reader:
             total_lines += 1
-    set_total_line(params, total_lines)
+    set_total_line(converted_file, total_lines)
 
-    last_line = get_last_line(params)
+    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -243,9 +207,9 @@ def process_fcl_freight_local(params, converted_file, update):
                     create_fcl_freight_local_rate(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
-                    set_last_line(index, params)
-                    # percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
-                    # set_processed_percent(percent, params)
+                    set_last_line(index, converted_file)
+                    percent= ((get_last_line(converted_file) / total_lines)* 100)
+                    set_processed_percent(percent, params)
                 else:
                     list_opt = list(row.values())
                     csv_writer.writerow(list_opt)
@@ -271,8 +235,8 @@ def process_fcl_freight_local(params, converted_file, update):
                     create_fcl_freight_local_rate(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
-                    set_last_line(index-1, params)
-                    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
+                    set_last_line(index-1, converted_file)
+                    percent= ((get_last_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
@@ -284,10 +248,16 @@ def process_fcl_freight_local(params, converted_file, update):
     create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     set_last_line(total_lines, params)
-    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
+    percent= ((get_last_line(converted_file) / total_lines)* 100)
     converted_file['percent'] = percent
     set_processed_percent(percent, params)
-    if math.ceil(percent)!=100:
+    try:
+        valid = converted_file.get('valid_rates_count')
+        total = converted_file.get('rates_count')
+        percent_completed = (valid / total) * 100
+    except:
+        percent_completed = 0
+    if math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     else:
@@ -397,9 +367,9 @@ def process_fcl_freight_free_day(params, converted_file, update):
         headers = next(reader)
         for row in reader:
             total_lines += 1
-    set_total_line(params, total_lines)
+    set_total_line(converted_file, total_lines)
 
-    last_line = get_last_line(params)
+    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -430,7 +400,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     create_fcl_freight_rate_free_days(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
-                    set_last_line(index, params)
+                    set_last_line(index, converted_file)
                     percent = (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))* 100
                     set_processed_percent(percent, params)
                 else:
@@ -464,8 +434,8 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     create_fcl_freight_rate_free_days(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
-                    set_last_line(index-1, params)
-                    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
+                    set_last_line(index-1, converted_file)
+                    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(converted_file)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(converted_file) )* 100
                     set_processed_percent(percent, params)
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
@@ -474,7 +444,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
     if not rows:
         return
     create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
-    set_last_line(total_lines, params)
+    set_last_line(total_lines, converted_file)
     valid = converted_file.get('valid_rates_count')
     total = converted_file.get('rates_count')
     percent_completed = (valid / total) * 100
@@ -565,9 +535,9 @@ def process_fcl_freight_commodity_surcharge(params, converted_file, update):
         headers = next(reader)
         for row in reader:
             total_lines += 1
-    set_total_line(params, total_lines)
+    set_total_line(converted_file, total_lines)
 
-    last_line = get_last_line(params)
+    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -589,13 +559,13 @@ def process_fcl_freight_commodity_surcharge(params, converted_file, update):
                 if v == '':
                     row[k] = None
             row = row
-            last_line = get_last_line(params)
+            last_line = get_last_line(converted_file)
             present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'code', 'price', 'currency']
             if valid_hash(row, present_field, None):
                 create_fcl_freight_rate_commodity_surcharge(
                     params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
                 )
-                set_last_line(index+1, params)
+                set_last_line(index+1, converted_file)
     return
 
 
@@ -638,9 +608,9 @@ def process_fcl_freight_seasonal_surcharge(params, converted_file, update):
         headers = next(reader)
         for row in reader:
             total_lines += 1
-    set_total_line(params, total_lines)
+    set_total_line(converted_file, total_lines)
 
-    last_line = get_last_line(params)
+    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -662,13 +632,13 @@ def process_fcl_freight_seasonal_surcharge(params, converted_file, update):
                 if v == '':
                     row[k] = None
             row = row
-            last_line = get_last_line(params)
+            last_line = get_last_line(converted_file)
             present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'code', 'price', 'currency', 'validity_start', 'validity_end']
             if valid_hash(row, present_field, None):
                 create_fcl_freight_rate_seasonal_surcharges(
                     params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
                 )
-                set_last_line(index, params)
+                set_last_line(index, converted_file)
 
 
 
@@ -715,9 +685,9 @@ def process_fcl_freight_weight_limit(params, converted_file, update):
         headers = next(reader)
         for row in reader:
             total_lines += 1
-    set_total_line(params, total_lines)
+    set_total_line(converted_file, total_lines)
 
-    last_line = get_last_line(params)
+    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -738,7 +708,7 @@ def process_fcl_freight_weight_limit(params, converted_file, update):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            last_line = get_last_line(params)
+            last_line = get_last_line(converted_file)
             present_field = ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'free_limit']
             blank_field = ['lower_limit','upper_limit', 'price', 'currency']
             if valid_hash(row, present_field, blank_field) or valid_hash(row, ['origin_location', 'destination_location', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'lower_limit', 'upper_limit', 'price', 'currency']):
@@ -746,7 +716,7 @@ def process_fcl_freight_weight_limit(params, converted_file, update):
                     create_fcl_freight_rate_weight_limits(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id
                     )
-                    set_last_line(index, params)
+                    set_last_line(index, converted_file)
                     percent = (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))* 100
                     set_processed_percent(percent, params)
                 rows = [row]
@@ -775,7 +745,7 @@ def process_fcl_freight_weight_limit(params, converted_file, update):
     except:
         return
     create_fcl_freight_rate_weight_limits(params,converted_file, rows, created_by_id, procured_by_id, sourced_by_id)
-    set_last_line(total_lines, params)
+    set_last_line(total_lines, converted_file)
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     set_processed_percent(percent, params)
     if math.ceil(percent)!=100:
@@ -830,8 +800,8 @@ def process_fcl_freight_freight(params, converted_file, update):
         headers = next(reader)
         for row in reader:
             total_lines += 1
-    set_total_line(params, total_lines)
-    last_line = get_last_line(params)
+    set_total_line(converted_file, total_lines)
+    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -862,8 +832,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                     create_fcl_freight_freight_rate(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
-                    set_last_line(index-1, params)
-                    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
+                    set_last_line(index-1, converted_file)
+                    percent=  ((get_last_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
                 else:
                     list_opt = list(row.values())
@@ -1088,8 +1058,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                     create_fcl_freight_freight_rate(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
                     )
-                    set_last_line(index-1, params)
-                    percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(params) )* 100
+                    set_last_line(index-1, converted_file)
+                    percent=  ((get_last_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
@@ -1098,11 +1068,14 @@ def process_fcl_freight_freight(params, converted_file, update):
     if not rows:
         return
     create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
-    set_last_line(total_lines, params)
-    valid = converted_file.get('valid_rates_count')
-    total = converted_file.get('rates_count')
-    percent_completed = (valid / total) * 100
-    # percent= (((converted_file.get('file_index') * 1.0) * get_last_line(params)) // ((len(rate_sheet.get('data').get('converted_files'))) * total_lines))* 100
+    set_last_line(total_lines, converted_file)
+    try:
+        valid = converted_file.get('valid_rates_count')
+        total = converted_file.get('rates_count')
+        percent_completed = (valid / total) * 100
+    except:
+        percent_completed = 0
+    percent=  ((get_last_line(converted_file) / total_lines)* 100)
     converted_file['percent'] = percent_completed
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     edit_file.close()
@@ -1113,7 +1086,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         update.status = 'complete'
     converted_file['status'] = 'complete'
 
-    set_processed_percent(percent_completed, params)
+    set_processed_percent(percent, params)
     try:
         os.remove(get_original_file_path(converted_file))
         os.remove(get_file_path(converted_file))

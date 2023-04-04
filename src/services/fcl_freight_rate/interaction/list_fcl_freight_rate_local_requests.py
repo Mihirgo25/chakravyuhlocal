@@ -24,11 +24,9 @@ def list_fcl_freight_rate_local_requests(filters = {}, page_limit = 10, page = 1
         query = get_filters(direct_filters, query, FclFreightRateLocalRequest)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query, page, page_limit)
     query = query.paginate(page, page_limit)
-
     data = jsonable_encoder(list(query.dicts()))
-
-    pagination_data = get_pagination_data(data, page, page_limit)
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
@@ -42,10 +40,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclFreightRateLocalRequest.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
+    return query.where(FclFreightRateLocalRequest.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclFreightRateLocalRequest.created_at <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z'))
+    return query.where(FclFreightRateLocalRequest.created_at.cast('date') <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
 
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id, FclFreightRateLocalRequest.trade_type, FclFreightRateLocalRequest.container_size, FclFreightRateLocalRequest.container_type).where(FclFreightRateLocalRequest.id == filters['similar_id']).dicts().get()
@@ -53,11 +51,12 @@ def apply_similar_id_filter(query,filters):
     return query.where(FclFreightRateLocalRequest.port_id == rate_request_obj['port_id'], FclFreightRateLocalRequest.trade_type == rate_request_obj['trade_type'], FclFreightRateLocalRequest.container_size == rate_request_obj['container_size'], FclFreightRateLocalRequest.container_type == rate_request_obj['container_type'])
 
 
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+  total_count = query.count()
   pagination_data = {
     'page': page,
-    'total': ceil(len(data)/page_limit),
-    'total_count': len(data),
+    'total': ceil(total_count/page_limit),
+    'total_count': total_count,
     'page_limit': page_limit
     }
   
@@ -79,47 +78,62 @@ def get_stats(filters, is_stats_required, performed_by_id):
         query = get_filters(direct_filters, query, FclFreightRateLocalRequest)
         query = apply_indirect_filters(query, indirect_filters)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(eval(method_name),query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
-        results = {}
-        for future in futures:
-            result = future.result()
-            results.update(result)
-    
-    stats = {
-        'total': results['get_total'],
-        'total_closed_by_user': results['get_total_closed_by_user'],
-        'total_opened_by_user': results['get_total_opened_by_user'],
-        'total_open': results['get_status_count']['active'] if results['get_status_count'].get('active') else 0,
-        'total_closed': results['get_status_count']['inactive'] if results['get_status_count'].get('inactive') else 0
-    }
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+    #     futures = [executor.submit(eval(method_name),query, performed_by_id) for method_name in ['get_total', 'get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
+    #     results = {}
+    #     for future in futures:
+    #         result = future.result()
+    #         results.update(result)
+    query = (query.select(
+        fn.count(FclFreightRateLocalRequest.id).over().alias('get_total'),
+        fn.count(FclFreightRateLocalRequest.id).filter(FclFreightRateLocalRequest.status == 'active').over().alias('get_status_count_active'),
+        fn.count(FclFreightRateLocalRequest.id).filter(FclFreightRateLocalRequest.status == 'inactive').over().alias('get_status_count_inactive'),
+        fn.count(FclFreightRateLocalRequest.id).filter((FclFreightRateLocalRequest.status=='inactive') & (FclFreightRateLocalRequest.closed_by_id==performed_by_id)).over().alias('get_total_closed_by_user'),
+        fn.count(FclFreightRateLocalRequest.id).filter((FclFreightRateLocalRequest.status=='active')  & (FclFreightRateLocalRequest.performed_by_id==performed_by_id)).over().alias('get_total_opened_by_user'),
+
+         )
+    ).limit(1)
+
+    result = query.execute()
+
+    if len(result)>0:
+        result = result[0]
+        stats = {
+        'total': result.get_total,
+        'total_closed_by_user': result.get_total_closed_by_user,
+        'total_opened_by_user': result.get_total_opened_by_user,
+        'total_open': result.get_status_count_active,
+        'total_closed': result.get_status_count_inactive
+        }
+    else:
+        stats ={}
     return { 'stats': stats }
 
-def get_total(query, performed_by_id):
-    try:
-        return {'get_total' : query.count()}
-    except:
-        return {'get_total' : {}}
+# def get_total(query, performed_by_id):
+#     try:
+#         return {'get_total' : query.count()}
+#     except:
+#         return {'get_total' : {}}
 
-def get_total_closed_by_user(query, performed_by_id):
-    try:
-        return {'get_total_closed_by_user' : query.where(FclFreightRateLocalRequest.status == 'inactive', FclFreightRateLocalRequest.closed_by_id == performed_by_id).count()}
-    except:
-        return {'get_total_closed_by_user' : {}}
+# def get_total_closed_by_user(query, performed_by_id):
+#     try:
+#         return {'get_total_closed_by_user' : query.where(FclFreightRateLocalRequest.status == 'inactive', FclFreightRateLocalRequest.closed_by_id == performed_by_id).count()}
+#     except:
+#         return {'get_total_closed_by_user' : {}}
 
 
-def get_total_opened_by_user(query, performed_by_id):
-    try:
-        return {'get_total_opened_by_user' : query.where(FclFreightRateLocalRequest.status == 'active', FclFreightRateLocalRequest.closed_by_id == performed_by_id).count()}
-    except:
-        return {'get_total_opened_by_user' : {}}
+# def get_total_opened_by_user(query, performed_by_id):
+#     try:
+#         return {'get_total_opened_by_user' : query.where(FclFreightRateLocalRequest.status == 'active', FclFreightRateLocalRequest.closed_by_id == performed_by_id).count()}
+#     except:
+#         return {'get_total_opened_by_user' : {}}
 
-def get_status_count(query, performed_by_id):
-    try:
-        query = query.select(FclFreightRateLocalRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclFreightRateLocalRequest.status)
-        result = {}
-        for row in query.execute():
-            result[row.status] = row.count_all
-        return {'get_status_count' : result}
-    except:
-        return {'get_status_count' : None}
+# def get_status_count(query, performed_by_id):
+#     try:
+#         query = query.select(FclFreightRateLocalRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclFreightRateLocalRequest.status)
+#         result = {}
+#         for row in query.execute():
+#             result[row.status] = row.count_all
+#         return {'get_status_count' : result}
+#     except:
+#         return {'get_status_count' : None}

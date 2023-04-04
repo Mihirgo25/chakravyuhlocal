@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 
 def create_fcl_freight_rate_free_day(request):
-    with db.atomic() as transaction:
+    with db.atomic():
         return execute_transaction_code(request)
 
 
@@ -70,7 +70,7 @@ def get_free_day_object(request):
     if not free_day:
         free_day = FclFreightRateFreeDay(**row)
 
-    extra_fields = ['previous_days_applicable','free_limit','remarks','slabs']
+    extra_fields = ['previous_days_applicable','free_limit','remarks','slabs','validity_start','validity_end']
     for field in extra_fields:
         if field in request:
             setattr(free_day, field, request[field])

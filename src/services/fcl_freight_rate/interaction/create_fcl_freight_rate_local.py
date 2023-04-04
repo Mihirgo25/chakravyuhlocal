@@ -18,6 +18,7 @@ def create_audit(request, fcl_freight_local_id):
         sourced_by_id = request.get('sourced_by_id'),
         procured_by_id = request.get('procured_by_id'),
         object_id = fcl_freight_local_id,
+        source = request.get('source'),
         object_type = 'FclFreightRateLocal'
     )
 
@@ -25,12 +26,8 @@ def create_fcl_freight_rate_local(request):
     object_type = 'Fcl_Freight_Rate_Local'
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    with db.atomic() as transaction:
-        try:
-          return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     from celery_worker import fcl_freight_local_data_updation
@@ -64,6 +61,7 @@ def execute_transaction_code(request):
         fcl_freight_local = FclFreightRateLocal(**row)
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
+        fcl_freight_local.data={}
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
 
     new_free_days = {}
@@ -81,10 +79,12 @@ def execute_transaction_code(request):
         fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data']['line_items'] }
     if 'rate_sheet_validation' not in request:
         fcl_freight_local.validate_before_save()
+        fcl_freight_local.update_special_attributes(new_free_days)
+    else:
+        fcl_freight_local.update_special_attributes(new_free_days, True)
 
-    fcl_freight_local.update_special_attributes(new_free_days)
     fcl_freight_local.rate_not_available_entry = False
-    # fcl_freight_local.update_freight_objects()
+    fcl_freight_local.update_freight_objects()
     create_free_days(fcl_freight_local, request)
 
     try:

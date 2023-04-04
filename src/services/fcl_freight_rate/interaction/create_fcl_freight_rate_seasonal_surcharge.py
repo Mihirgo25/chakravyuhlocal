@@ -27,12 +27,8 @@ def create_fcl_freight_rate_seasonal_surcharge(request):
     object_type = 'Fcl_Freight_Rate_Seasonal_Surcharge'
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    with db.atomic() as transaction:
-        try:
-          return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     from celery_worker import update_multiple_service_objects

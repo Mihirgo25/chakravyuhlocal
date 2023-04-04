@@ -9,7 +9,7 @@ possible_direct_filters = ['service_provider_id', 'trade_type', 'status', 'locat
 possible_indirect_filters = ['location_ids']
 
 def list_fcl_freight_rate_local_agents(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True):
-    query = get_query(sort_by, sort_type, page, page_limit)
+    query = get_query(sort_by, sort_type)
 
     if filters:
         if type(filters) != dict:
@@ -20,25 +20,25 @@ def list_fcl_freight_rate_local_agents(filters = {}, page_limit = 10, page = 1, 
         query = get_filters(direct_filters, query, FclFreightRateLocalAgent)
         query = apply_indirect_filters(query, indirect_filters)
 
-
-
-    data = jsonable_encoder(list(query.dicts()))
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+    query = query.paginate(page, page_limit)
+    data = jsonable_encoder(list(query.dicts()))
 
     return {'list': data } | (pagination_data)
 
-def get_query(sort_by, sort_type, page, page_limit):
-    query = FclFreightRateLocalAgent.select().order_by(eval('FclFreightRateLocalAgent.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
+def get_query(sort_by, sort_type):
+    query = FclFreightRateLocalAgent.select().order_by(eval('FclFreightRateLocalAgent.{}.{}()'.format(sort_by,sort_type)))
     return query
 
-def get_pagination_data(data, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {} 
-
+        
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

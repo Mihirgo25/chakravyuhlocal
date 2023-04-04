@@ -34,7 +34,7 @@ SEF:
   units: ['per_container']
   trade_types: ['export', 'import']
   condition: "(container_type in ['open_top', 'flat_rack', 'iso_tank'] or container_size == '45HC')"
-  tags: ['mandatory']
+  tags: []
 TOC:
   name: "Toll Charges"
   units: ['per_container']
@@ -109,10 +109,10 @@ OCR:
   tags: []
 HDF:
   name: "Hazardous Documentation Fee"
-  units: ['per_container']
+  units: ['per_container',"per_bl"]
   trade_types: ['export', 'import']
   condition: "commodity in HAZ_CLASSES"
-  tags: ['mandatory']
+  tags: []
 ADMIN:
   name: "Administration Fee"
   units: ['per_container']
