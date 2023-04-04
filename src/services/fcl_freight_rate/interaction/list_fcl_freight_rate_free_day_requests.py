@@ -50,10 +50,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclFreightRateFreeDayRequest.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d').date())
+    return query.where(FclFreightRateFreeDayRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclFreightRateFreeDayRequest.created_at.cast('date') <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d').date())
+    return query.where(FclFreightRateFreeDayRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
 
 def get_data(query):
     data = [model_to_dict(item) for item in query.execute()]
