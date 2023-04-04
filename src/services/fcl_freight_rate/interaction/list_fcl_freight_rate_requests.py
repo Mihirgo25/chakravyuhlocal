@@ -9,6 +9,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
+from micro_services.client import spot_search
 possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
@@ -28,10 +29,20 @@ def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
 
     pagination_data = get_pagination_data(query, page, page_limit)
     query = get_page(query, page, page_limit)
-    data = jsonable_encoder(list(query.dicts()))
+
+    spot_search_hash = {}
+    data = list(query.dicts())
+    spot_search_ids = list(set([str(row['source_id']) for row in data]))
+    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    for search in spot_search_data:
+        spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
+
+    for index in range(0,len(data)):
+        data[index]['spot_search'] = spot_search_hash[str(data[index]['source_id'])]
 
 
-    return { 'list': data } | (pagination_data) | (stats)
+
+    return { 'list': jsonable_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
     return query.select().order_by(FclFreightRateRequest.created_at.desc()).paginate(page, page_limit)

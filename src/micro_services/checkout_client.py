@@ -13,5 +13,5 @@ class CheckoutApiClient:
         })
     
     def list_checkouts(self, data = {}):
-        return self.client.request('GET', 'list_spot_searches', data)
+        return self.client.request('GET', 'list_checkouts', data)
 
