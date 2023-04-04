@@ -5,23 +5,12 @@ from fastapi.encoders import jsonable_encoder
 
 possible_direct_filters = ['location_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'local_service_provider_ids', 'importer_exporter_id', 'specificity_type','free_limit', 'validity_start', 'validity_end']
 
-def get_most_eligible_free_days(data, filters):  
+def get_most_eligible_free_days(data, filters):
     data = sorted(data, key=lambda t: [
-        LOCATION_HIERARCHY[t['location_type']],
-        0 if filters['service_provider_id'] == t['service_provider_id'] else 1,
-        (lambda x: 
-        0 if x == 'shipping_line' else 
-        1 if x == 'cogoport' else 
-        2
-        )
-        (t['specificity_type']) if t['service_provider_id'] in filters['local_service_provider_ids'] else 
-    (lambda x: 
-        0 if x == 'rate_specific' else 
-        1 if x == 'shipping_line' else 
-        2 if x == 'cogoport' else 
-        3
-    )(t['specificity_type'])])
-
+            LOCATION_HIERARCHY[t['location_type']],
+            0 if t['service_provider_id'] in filters['service_provider_id'] else 1,
+            0 if t['specificity_type'] == 'rate_specific' else 1 if t['specificity_type'] == 'shipping_line' else 2
+    ])
     free_days = data[0] if data else None
     return free_days
 
