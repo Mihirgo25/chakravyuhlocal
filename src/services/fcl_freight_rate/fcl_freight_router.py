@@ -1415,6 +1415,6 @@ def get_eligible_freight_rate_free_day_func(
     try:
         resp = get_eligible_fcl_freight_rate_free_day(filters,sort_by_specificity_type = sort_by_specificity_type)
         return JSONResponse(status_code=200, content=resp)
-    except Exception as e:
-        raise e
+    except:
+        raise
 
