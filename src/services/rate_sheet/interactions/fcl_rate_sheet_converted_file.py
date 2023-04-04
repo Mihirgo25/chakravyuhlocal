@@ -330,7 +330,7 @@ def write_fcl_freight_local_object(rows, csv, params, converted_file, last_row):
             list_opt = error
             csv.writerow(list_opt)
             csv.writerow([])
-            # csv.writerow(last_row)
+            csv.writerow(last_row)
 
         except:
             print('no csv')
@@ -352,7 +352,7 @@ def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, last_r
             list_opt = error
             csv.writerow(list_opt)
             csv.writerow([])
-            # csv.writerow(last_row)
+            csv.writerow(last_row)
         except:
             print('no csv')
     converted_file['rates_count'] = int(converted_file['rates_count'])+1
@@ -786,7 +786,7 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_ro
             list_opt = error
             csv.writerow(list_opt)
             csv.writerow([])
-            # csv.writerow(last_row)
+            csv.writerow(last_row)
         except:
             print('no csv')
     converted_file['rates_count'] = int(converted_file['rates_count'])+1
