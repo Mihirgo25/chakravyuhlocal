@@ -12,6 +12,7 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request impor
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from kombu import Exchange, Queue
+# from currency_converter import CurrencyConverter
 
 
 import crontab

@@ -60,8 +60,7 @@ def get_fcl_freight_predicted_rate(request, key):
         if request['shipping_line_id']:
             SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION[request['shipping_line_id']] = request['service_provider_id']
 
-        rate_card_ids = []
-        for shipping_line_id in list(SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION.keys())[:2]:
+        for shipping_line_id in list(SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION.keys()):
             df = pd.DataFrame()
             df['container_size'] = [container_size]
             df['shipping_line_rank'] = [shipping_line_dict[shipping_line_id]] 
@@ -134,8 +133,8 @@ def get_fcl_freight_predicted_rate(request, key):
                     "slabs": []
                 })
             rate_card_id = create_fcl_freight_rate_data(request)['id']
-            rate_card_ids.append(rate_card_id)
 
+            
         # rate_cards = jsonable_encoder(list(FclFreightRate.select(
         #     FclFreightRate.id,
         #     FclFreightRate.validities,
@@ -162,5 +161,3 @@ def get_fcl_freight_predicted_rate(request, key):
         #     ).dicts()))
     
         # return rate_cards
-
-        # create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs = {'result':freight_rates}, queue = 'low')
