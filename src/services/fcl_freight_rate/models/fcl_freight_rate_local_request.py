@@ -48,7 +48,6 @@ class FclFreightRateLocalRequest(BaseModel):
     shipping_line_detail = BinaryJSONField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(index=True, null=True)
-    spot_search = BinaryJSONField(null=True)
     status = CharField(index=True, null=True)
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)

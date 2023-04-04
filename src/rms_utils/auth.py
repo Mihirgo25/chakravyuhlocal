@@ -12,7 +12,7 @@ def authorize_token(
     authorization_scope: str = Header(default=None, convert_underscores=False),
     authorization_parameters: str = Header(default=None, convert_underscores=False),
 ):
-    if APP_ENV == "development" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
+    if APP_ENV != "production" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
         return {"status_code": 200, "isAuthorized": False}
 
     url = get_instance_url('user') + "/verify_request"
