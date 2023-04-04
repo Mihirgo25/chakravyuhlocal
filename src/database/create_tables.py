@@ -14,11 +14,12 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from database.temp_audit_table import TempAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([TempAudit])
+        db.create_tables([FclFreightRateFreeDayRequest])
         db.close()
         print("created table")
     except:

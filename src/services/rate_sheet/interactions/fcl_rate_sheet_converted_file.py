@@ -238,14 +238,15 @@ def process_fcl_freight_local(params, converted_file, update):
                     set_last_line(index-1, converted_file)
                     percent= ((get_last_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
-                list_opt = list(row.values())
-                csv_writer.writerow(list_opt)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
                 rows = []
-    edit_file.flush()
 
     if not rows:
         return
-    create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
+    create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
+    edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     set_last_line(total_lines, params)
     percent= ((get_last_line(converted_file) / total_lines)* 100)
@@ -322,8 +323,8 @@ def create_fcl_freight_local_rate(
 def write_fcl_freight_local_object(rows, csv, params, converted_file, last_row):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity.get("valid"):
-            csv.writerow(last_row)
-            converted_file['valid_rates_count'] = int(converted_file['valid_rates_count'])+1
+        csv.writerow(last_row)
+        converted_file['valid_rates_count'] = int(converted_file['valid_rates_count'])+1
     else:
         try:
             error = ["".join(str(object_validity.get("error")))]
@@ -437,17 +438,18 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     set_last_line(index-1, converted_file)
                     percent= (((converted_file.get('file_index') * 1.0) * get_last_line(converted_file)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(converted_file) )* 100
                     set_processed_percent(percent, params)
-                list_opt = list(row.values())
-                csv_writer.writerow(list_opt)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
                 rows = []
-    edit_file.flush()
     if not rows:
         return
-    create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
+    create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     set_last_line(total_lines, converted_file)
     valid = converted_file.get('valid_rates_count')
     total = converted_file.get('rates_count')
     percent_completed = (valid / total) * 100
+    edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     converted_file['percent'] = percent_completed
@@ -1061,13 +1063,13 @@ def process_fcl_freight_freight(params, converted_file, update):
                     set_last_line(index-1, converted_file)
                     percent=  ((get_last_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
-                list_opt = list(row.values())
-                csv_writer.writerow(list_opt)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
                 rows = []
-    edit_file.flush()
     if not rows:
         return
-    create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row)
+    create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     set_last_line(total_lines, converted_file)
     try:
         valid = converted_file.get('valid_rates_count')
@@ -1077,6 +1079,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         percent_completed = 0
     percent=  ((get_last_line(converted_file) / total_lines)* 100)
     converted_file['percent'] = percent_completed
+    edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     edit_file.close()
     if math.ceil(percent_completed)!=100:

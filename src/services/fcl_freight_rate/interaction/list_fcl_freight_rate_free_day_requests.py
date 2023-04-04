@@ -7,8 +7,8 @@ from libs.get_applicable_filters import get_applicable_filters
 import concurrent.futures, json
 from datetime import datetime
 from peewee import fn, SQL
-
-possible_direct_filters = ['location_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'free_day_type', 'country_id', 'container_size', 'container_type', 'service_provider_id']
+from micro_services.client import spot_search
+possible_direct_filters = ['location_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'free_day_type', 'country_id', 'container_size', 'container_type', 'service_provider_id','code','source_id']
 
 possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than']
  
@@ -27,10 +27,20 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
     pagination_data = get_pagination_data(query, page, page_limit)
     query = query.paginate(page, page_limit)
 
-    data = jsonable_encoder(list(query.dicts()))
+    spot_search_hash = {}
+    data = list(query.dicts())
+    spot_search_ids = list(set([str(row['source_id']) for row in data]))
+    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    for search in spot_search_data:
+        spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
+
+    for index in range(0,len(data)):
+        data[index]['spot_search'] = spot_search_hash[str(data[index]['source_id'])]
+
+
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
-    return { 'list': data } | (pagination_data) | (stats)
+    return { 'list': jsonable_encoder(data) } | (pagination_data) | (stats)
 
 def apply_indirect_filters(query, filters):
   for key in filters:

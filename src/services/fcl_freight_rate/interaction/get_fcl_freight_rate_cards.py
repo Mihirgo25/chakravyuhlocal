@@ -172,7 +172,6 @@ def fill_missing_locals_in_rates(freight_rates, local_rates):
             freight_rate['destination_local'] = get_matching_local('destination_local', freight_rate, local_rates, local_default_service_provider)
 
         new_freight_rates.append(freight_rate)
-
     return new_freight_rates
 
 def get_rates_which_need_free_limit(requirements, freight_rates):
@@ -192,7 +191,7 @@ def fill_missing_weight_limit_in_rates(freight_rates, weight_limits, requirement
             weight_limit = weight_limits[rate["id"]]
             if (not rate['weight_limit'] or not 'free_limit' in rate['weight_limit'] or rate['weight_limit']['free_limit'] < requirements['cargo_weight_per_container']) and weight_limit:
                 rate['weight_limit'] = weight_limit
-            new_freight_rates.append(rate)
+        new_freight_rates.append(rate)
     return new_freight_rates
 
 

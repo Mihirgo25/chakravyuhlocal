@@ -9,7 +9,7 @@ from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL,Window
 from math import ceil
-
+from micro_services.client import spot_search
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'shipping_line_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
 
@@ -26,7 +26,7 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
         query = apply_indirect_filters(query, indirect_filters)
         
     query = get_join_query(query)
-    query = query.select(FclFreightRateFeedback, FclFreightRate.origin_port, FclFreightRate.destination_port, FclFreightRate.shipping_line,FclFreightRate.container_size,FclFreightRate.commodity,FclFreightRate.container_type,FclFreightRate.validities)
+    query = query.select(FclFreightRateFeedback, FclFreightRate.origin_port, FclFreightRate.destination_port, FclFreightRate.shipping_line,FclFreightRate.container_size,FclFreightRate.commodity,FclFreightRate.container_type,FclFreightRate.validities,FclFreightRate.service_provider)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
     pagination_data = get_pagination_data(query, page, page_limit)
 
@@ -146,6 +146,12 @@ def get_data(query):
     # fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}
 
     new_data = []
+    spot_search_hash = {}
+    spot_search_ids = list(set([str(row['source_id']) for row in data]))
+    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    for search in spot_search_data:
+        spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
+
     for object in data:
         # rate = fcl_freight_rate_mappings[object.get('fcl_freight_rate_id', None)] or {}
         # object['container_size'] = rate.get('container_size')
@@ -167,6 +173,7 @@ def get_data(query):
                 service_provider = object.get('service_provider_id', None)
                 if service_provider:
                     object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
+        object['spot_search'] = spot_search_hash[str(object['source_id'])]
         new_data.append(object)
     return new_data
 
