@@ -15,7 +15,7 @@ def authorize_token(
     if APP_ENV == "development" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
         return {"status_code": 200, "isAuthorized": False}
 
-    url = "https://api-nirvana1.dev.cogoport.io" + "/verify_request" #get_instance_url('user')
+    url = get_instance_url('user') + "/verify_request"
 
     if (
         authorization_token is None
