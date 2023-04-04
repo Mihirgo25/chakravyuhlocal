@@ -8,7 +8,7 @@ import concurrent.futures, json
 from datetime import datetime
 from peewee import fn, SQL
 
-possible_direct_filters = ['location_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'free_day_type', 'country_id', 'container_size', 'container_type', 'service_provider_id']
+possible_direct_filters = ['location_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'free_day_type', 'country_id', 'container_size', 'container_type', 'service_provider_id','code','source_id']
 
 possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than']
  

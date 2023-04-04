@@ -14,7 +14,7 @@ def get_most_eligible_free_days(data, filters):
     free_days = data[0] if data else None
     return free_days
 
-def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
+def get_eligible_fcl_freight_rate_free_day(filters, freight_rates,sort_by_specificity_type = False):
     if not filters:
         return {}
 
@@ -24,7 +24,7 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
     if not all_fields_present(filters):
         return {}
 
-    all_service_provider_ids = filters["service_provider_id"] + filters["local_service_provider_ids"]
+    all_service_provider_ids = list(set(filters["service_provider_id"] + filters["local_service_provider_ids"]))
     
     query = FclFreightRateFreeDay.select(
         FclFreightRateFreeDay.id,
@@ -57,9 +57,15 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
     if 'free_limit' in filters:
         query = query.where(FclFreightRateFreeDay.free_limit == filters['free_limit'])
 
-    # if 'validity_start' in filters and 'validity_end' in filters:
-    #     query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'] and FclFreightRateFreeDay.validity_end >= filters['validity_end'])
+    if 'validity_start' in filters and 'validity_end' in filters:
+        query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'] and FclFreightRateFreeDay.validity_end >= filters['validity_end'])
+        
     data = jsonable_encoder(list(query.dicts()))
+    
+    if sort_by_specificity_type:
+        return sorted(data, key=lambda t: [
+            0 if t['specificity_type'] == 'rate_specific' else 
+            1 if t['specificity_type'] == 'shipping_line' else 2])
 
     if freight_rates:
         group_by_rate = {}
