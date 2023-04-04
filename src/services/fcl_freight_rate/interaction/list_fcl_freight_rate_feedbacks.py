@@ -9,7 +9,7 @@ from datetime import datetime
 import concurrent.futures, json
 from peewee import fn, SQL,Window
 from math import ceil
-
+from micro_services.client import spot_search
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'shipping_line_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
 
@@ -146,6 +146,12 @@ def get_data(query):
     # fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}
 
     new_data = []
+    spot_search_hash = {}
+    spot_search_ids = list(set([str(row['source_id']) for row in data]))
+    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    for search in spot_search_data:
+        spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
+
     for object in data:
         # rate = fcl_freight_rate_mappings[object.get('fcl_freight_rate_id', None)] or {}
         # object['container_size'] = rate.get('container_size')
@@ -167,6 +173,7 @@ def get_data(query):
                 service_provider = object.get('service_provider_id', None)
                 if service_provider:
                     object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
+        object['spot_search'] = spot_search_hash[str(object['source_id'])]
         new_data.append(object)
     return new_data
 
