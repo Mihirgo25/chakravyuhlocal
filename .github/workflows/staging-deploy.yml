@@ -1,0 +1,122 @@
+name: Build-Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+env:
+  REGISTRY: ghcr.io
+  OCEAN_RMS_REPO_URL: ghcr.io/cogoport/ocean-rms
+  OCEAN_CELERY_REPO_URL: ghcr.io/cogoport/ocean-celery
+  GH_CR_USER: cogoport-dev
+  GITHUB_USERNAME: $GH_CR_USER
+  GITHUB_TOKEN: ${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
+  AWS_REGION: ap-south-1
+  ECS_CLUSTER: CogoportEcsCluster
+
+  ######### Ocean Rms Service
+  OCEAN_RMS_ECS_SERVICE: ocean-rms
+  OCEAN_RMS_ECS_TASK_DEFINITION: OceanRmsTaskDefinition
+  OCEAN_RMS_CONTAINER_NAME: ocean-rms
+
+  ######### Celery Worker Service
+  OCEAN_CELERY_ECS_SERVICE: ocean-celery
+  OCEAN_CELERY_ECS_TASK_DEFINITION: OceanCeleryTaskDefinition
+  OCEAN_CELERY_CONTAINER_NAME: ocean-celery
+
+jobs:
+  deploy_prod:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.GH_CR_USER }}
+          password: ${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
+
+      - name: Generate Ocean Rms docker image name
+        id: image_name
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build and push Ocean Rms image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          target: rms
+          tags: |
+            ${{ env.OCEAN_RMS_REPO_URL }}:staging
+            ${{ env.OCEAN_RMS_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
+          secrets: |
+            GIT_AUTH_TOKEN=${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
+            
+      - name: Build and push Ocean Celery image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          target: celery
+          tags: |
+            ${{ env.OCEAN_CELERY_REPO_URL }}:staging
+            ${{ env.OCEAN_CELERY_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
+          secrets: |
+            GIT_AUTH_TOKEN=${{ secrets.RW_PACKAGE_TOKEN_COGOPORT_DEV }}
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.PROD_ECS_DEPLOY_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.PROD_ECS_DEPLOY_AWS_SECRET_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      ###### Ocean Rms ######
+      
+      - name: Downloading Ocean Rms Task Definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.OCEAN_RMS_ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: rms-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.OCEAN_RMS_CONTAINER_NAME }}
+          image: ${{ env.OCEAN_RMS_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
+
+      - name: Deploying Ocean Rms ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.rms-task-def.outputs.task-definition }}
+          service: ${{ env.OCEAN_RMS_ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
+
+      ######  Ocean Celery ######
+      
+      - name: Downloading Ocean Celery Task Definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.OCEAN_CELERY_ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: celery-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.OCEAN_CELERY_CONTAINER_NAME }}
+          image: ${{ env.OCEAN_CELERY_REPO_URL }}:${{ steps.image_name.outputs.sha_short }}
+
+      - name: Deploying Ocean Celery ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.celery-task-def.outputs.task-definition }}
+          service: ${{ env.OCEAN_CELERY_ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
