@@ -222,7 +222,7 @@ def fcl_freight_rates_to_cogo_assured(self):
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
             ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])        
         total_count = query.count()
-        batches = total_count/5000
+        batches = int(total_count/5000)
         last_batch = total_count%5000
         offset =0
         limit =5000
