@@ -227,6 +227,8 @@ class FclFreightRateFeedback(BaseModel):
 
         if 'commodity_type' in feedback_info and feedback_info['commodity_type']:
             commodity = feedback_info['commodity_type'].upper()
+        origin_port = feedback_info['origin_location']
+        destination_port = feedback_info['destination_location']
         data = {
             'type': 'platform_notification',
             'service': 'fcl_freight_rate',
@@ -234,8 +236,8 @@ class FclFreightRateFeedback(BaseModel):
             'template_name': 'freight_rate_disliked',
             'variables': {
                 'service_type': 'fcl freight',
-                'origin_port': feedback_info['origin_location'],
-                'destination_port': feedback_info['destination_location'],
+                'origin_port': origin_port,
+                'destination_port': destination_port,
                 'details': {"commodity" : commodity} if commodity else ''
             }
         }
@@ -265,6 +267,9 @@ class FclFreightRateFeedback(BaseModel):
             importer_exporter_id = spot_search.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
+        
+        origin_location = location_pair_name[str(locations_data.origin_port_id)]
+        destination_location = location_pair_name[str(locations_data.destination_port_id)]
 
         data = {
             'user_id': str(self.performed_by_id),
@@ -274,8 +279,8 @@ class FclFreightRateFeedback(BaseModel):
             'template_name': 'freight_rate_feedback_completed_notification' if ('rate_added' in self.closing_remarks) else 'freight_rate_feedback_closed_notification',
             'variables': {
                 'service_type': 'fcl freight',
-                'origin_location': location_pair_name[str(locations_data.origin_port_id)],
-                'destination_location': location_pair_name[str(locations_data.destination_port_id)],
+                'origin_location': origin_location,
+                'destination_location': destination_location,
                 'remarks': None if ('rate_added' in self.closing_remarks)  else f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}",
                 'request_serial_id': str(self.serial_id),
                 'spot_search_id': str(self.source_id),
