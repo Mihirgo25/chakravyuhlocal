@@ -23,3 +23,6 @@ class CommonApiClient:
 
     def list_money_currencies(self,data={}):
         return self.client.request('GET','list_money_currencies',data)
+
+    def fcl_freight_rates_to_cogo_assured(self,data={}):
+        return self.client.request('POST','update_fcl_rates_to_cogo_assured',data)
