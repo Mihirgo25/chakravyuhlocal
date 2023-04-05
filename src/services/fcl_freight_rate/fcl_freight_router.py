@@ -362,8 +362,8 @@ def get_fcl_freight_rate_cards_data(
     container_size: str,
     container_type: str,
     containers_count: int,
-    validity_start: date,
-    validity_end: date,
+    validity_start: str,
+    validity_end: str,
     trade_type: str = None,
     include_destination_local: bool = True,
     include_origin_local: bool = True,
@@ -377,9 +377,11 @@ def get_fcl_freight_rate_cards_data(
     additional_services: str = None,
     ignore_omp_dmp_sl_sps: str = None,
     include_destination_dpd: bool = False,
-    cargo_weight_per_container: int = None,
+    cargo_weight_per_container: int = 0 ,
     resp: dict = Depends(authorize_token)
 ):
+    validity_start = datetime.fromisoformat(validity_start).date()
+    validity_end = datetime.fromisoformat(validity_end).date()
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
@@ -1406,7 +1408,7 @@ def list_rates_sheet_stat(
         return JSONResponse(status_code=200, content=response)
     except:
         raise
-    
+
 @fcl_freight_router.get('/get_eligible_fcl_freight_rate_free_day')
 def get_eligible_freight_rate_free_day_func(
     filters: str = None,
