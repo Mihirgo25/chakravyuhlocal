@@ -114,7 +114,7 @@ def get_partner_user_experties(service, partner_user_id):
     all_result = []
     with conn:
         with conn.cursor() as cur:
-            sql = 'select partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user_expertises.trade_type from partner_user_expertises where status = %s and service = %s and partner_user_id = %s'
+            sql = 'select partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user_expertises.trade_type from partner_user_expertises where status = %s and service_type = %s and partner_user_id = %s'
             cur.execute(sql, ('active', service, partner_user_id,))
             result = cur.fetchall()
             
