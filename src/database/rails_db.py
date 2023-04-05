@@ -154,7 +154,7 @@ def get_partner_users_by_expertise(service, origin_location_ids = None, destinat
                 }
                 all_result.append(new_obj)
             cur.close()
-            return all_result
+    return all_result
 
 def get_organization_stakeholders(stakeholder_type, stakeholder_id):
     org_ids = []
@@ -210,4 +210,4 @@ def get_organization_service_experties(service, supply_agent_id):
                 }
                 all_result.append(new_obj)
             cur.close()
-            return all_result
+    return all_result
