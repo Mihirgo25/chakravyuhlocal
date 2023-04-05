@@ -12,8 +12,9 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request impor
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from kombu import Exchange, Queue
-
-
+from celery.schedules import crontab
+from datetime import datetime,timedelta
+import concurrent.futures
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -38,7 +39,13 @@ celery.conf.fcl_freight_rate_default_priority = 6
 celery.conf.low_default_priority = 3
 
 celery.conf.update(**CELERY_CONFIG)
-
+celery.conf.beat_schedule = {
+    'fcl_freigh_rates_to_cogo_assured': {
+        'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
+        'schedule': crontab(minute=30,hour=5),
+        'options': {'queue' : 'fcl_freight_rate'}
+        }
+}
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def create_fcl_freight_rate_delay(self, request):
@@ -208,3 +215,46 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
         return validate_and_process_rate_sheet_converted_file(request)
     except Exception as exc:
         raise self.retry(exc = exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def fcl_freight_rates_to_cogo_assured(self):
+    try:
+        query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
+            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])        
+        total_count = query.count()
+        batches = total_count/5000
+        last_batch = total_count%5000
+        offset =0
+        limit =5000
+        queries =[]
+        for each in range(0,batches):
+            queries.append(batches_query(query,limit,offset))
+            offset = offset+limit
+        if last_batch:
+            queries.append(batches_query(query,last_batch,offset))
+
+        query_result = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+            futures = [executor.submit(execute_query, query) for query in queries] 
+
+            for i in range(0,len(futures)): 
+                result = futures[i].result()
+                query_result.extend(result)
+        date = datetime.now() - timedelta(days = 1)
+        for each in query_result:
+            data ={"origin_location_id": each['origin_port_id'], "origin_port_id": each['origin_main_port_id'], "destination_location_id": each['destination_port_id'], "destination_port_id": each['destination_main_port_id'], "container_size": each["container_size"], "container_type": each["container_type"], "commodity": each['commodity'], "fcl_rates_updated_date": date}
+            common.fcl_freight_rates_to_cogo_assured(data)
+    except Exception as exc:
+        raise self.retry(exc=exc)
+
+def batches_query(query,limit,offset):
+    return query.limit(limit).offset(offset)
+
+def execute_query(query):
+    return list(query.dicts())
+
+
+
+
+
+
