@@ -924,8 +924,18 @@ def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtens
         raise
 
 @fcl_freight_router.post("/extend_create_fcl_freight_rate")
-def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
-    return extend_create_fcl_freight_rate_data(request)
+def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = extend_create_fcl_freight_rate_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
+
 
 @fcl_freight_router.post("/update_fcl_freight_rate_extension_rule_set")
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet, resp: dict = Depends(authorize_token)):
