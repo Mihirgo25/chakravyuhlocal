@@ -46,7 +46,7 @@ async def log_request_response_time(request: Request, call_next):
 def startup():
     if db.is_closed():
         db.connect()
-    create_table()
+    # create_table()
     # fcl_freight_migration()
     # create_partition_table()
     # fcl_local_migration()
