@@ -58,7 +58,7 @@ def execute_transaction_code(request):
     create_audit(request, feedback)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
-    update_likes_dislikes_count(rate, request)
+    # update_likes_dislikes_count(rate, request)
     if request['feedback_type'] == 'disliked':
         send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
