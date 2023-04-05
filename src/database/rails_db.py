@@ -158,14 +158,15 @@ def get_partner_users_by_expertise(service, origin_location_ids = None, destinat
 
 def get_organization_stakeholders(stakeholder_type, stakeholder_id):
     org_ids = []
-    with conn.cursor() as cur:
-        sql = 'select organization_stakeholders.organization_id from organization_stakeholders where status = %s and stakeholder_type = %s and stakeholder_id = %s'
-        cur.execute(sql, ('active', stakeholder_type, stakeholder_id,))
-        result = cur.fetchall()
+    with conn:
+        with conn.cursor() as cur:
+            sql = 'select organization_stakeholders.organization_id from organization_stakeholders where status = %s and stakeholder_type = %s and stakeholder_id = %s'
+            cur.execute(sql, ('active', stakeholder_type, stakeholder_id,))
+            result = cur.fetchall()
 
-        for res in result:
-            org_ids.append(str(res[0]))
-        cur.close()
+            for res in result:
+                org_ids.append(str(res[0]))
+            cur.close()
     return org_ids
 
 def get_partner_users(ids, status = 'active'):
@@ -189,9 +190,9 @@ def get_partner_users(ids, status = 'active'):
 
 def get_organization_service_experties(service, supply_agent_id):
     all_result = []
+    org_ids = get_organization_stakeholders('supply_agent', supply_agent_id)
     with conn:
         with conn.cursor() as cur:
-            org_ids = get_organization_stakeholders('supply_agent', supply_agent_id)
             if len(org_ids) == 0:
                 return []
             org_ids_tuple = tuple(org_ids)
