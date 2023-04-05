@@ -60,19 +60,19 @@ class FclFreightRateTask(BaseModel):
         port = maps.list_locations(obj)['list']
         if port:
             port =port[0]
-            self.port = {key:value for key,value in port.items() if key in ['id', 'name','display_name', 'port_code', 'type']}
+            self.port = {key:value for key,value in port.items() if key in ['id', 'name','display_name', 'port_code', 'type', 'is_icd']}
             self.country_id = port.get('country_id', None)
             self.trade_id = port.get('trade_id', None)
             self.continent_id = port.get('continent_id', None)
-            self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
+            self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id] if x is not None]
         else:
             raise HTTPException(status_code=500,detail='Invalid port')
 
     def validate_main_port_id(self):
-        if self.port and self.port.get('is_icd')==False:
-            if self.main_port_id and self.main_port_id!=self.port_id:
-                raise HTTPException(status_code=500,detail='Invalid Main Port')
-        elif self.port and self.port.get('is_icd')==True:
+        # if self.port and self.port.get('is_icd')==False:
+        #     if self.main_port_id and self.main_port_id!=self.port_id:
+        #         raise HTTPException(status_code=500,detail='Invalid Main Port')
+        if self.port and self.port.get('is_icd')==True:
             main_port_data = maps.list_locations({"filters":{"id": [str(self.main_port_id)],'type':'seaport','is_icd':False}})['list']
             if main_port_data:
                 self.main_port = {key:value for key,value in main_port_data[0].items() if key in ['id', 'name','display_name', 'port_code', 'type']}
