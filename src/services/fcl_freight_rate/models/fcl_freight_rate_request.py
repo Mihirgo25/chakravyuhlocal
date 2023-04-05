@@ -119,7 +119,7 @@ class FclFreightRateRequest(BaseModel):
 
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.destination_port_id).where(FclFreightRateRequest.source_id == self.source_id).limit(1).dicts().get()
-        location_pair_data = maps.list_locations({ 'id': [str(location_pair['origin_port_id']), str(location_pair['destination_port_id'])]})['list']
+        location_pair_data = maps.list_locations({ 'filters': {'id': [str(location_pair['origin_port_id']), str(location_pair['destination_port_id'])] }})['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
             importer_exporter_id = common.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
