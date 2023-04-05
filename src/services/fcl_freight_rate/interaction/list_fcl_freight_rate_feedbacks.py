@@ -21,10 +21,10 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
             filters = json.loads(filters)
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, FclFreightRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
-        
+
     query = get_join_query(query)
     query = query.select(FclFreightRateFeedback, FclFreightRate.origin_port, FclFreightRate.destination_port, FclFreightRate.shipping_line,FclFreightRate.container_size,FclFreightRate.commodity,FclFreightRate.container_type,FclFreightRate.validities,FclFreightRate.service_provider)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
@@ -134,7 +134,8 @@ def apply_similar_id_filter(query, filters):
          .limit(1))
 
     query = query.where(FclFreightRateFeedback.id != filters.get('similar_id'))
-    query = query.where(FclFreightRate.origin_port_id == feedback_data.origin_port_id, FclFreightRate.destination_port_id == feedback_data.destination_port_id, FclFreightRate.container_size == feedback_data.container_size, FclFreightRate.container_type == feedback_data.container_type, FclFreightRate.commodity == feedback_data.commodity)
+    if feedback_data:
+        query = query.where(FclFreightRate.origin_port_id == feedback_data.origin_port_id, FclFreightRate.destination_port_id == feedback_data.destination_port_id, FclFreightRate.container_size == feedback_data.container_size, FclFreightRate.container_type == feedback_data.container_type, FclFreightRate.commodity == feedback_data.commodity)
 
     return query
 
@@ -196,12 +197,12 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if filters:
         if 'status' in filters:
             del filters['status']
-        
+
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, FclFreightRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
-    
+
     query = get_join_query(query)
     query = (
         query
