@@ -127,14 +127,14 @@ def apply_shipping_line_id_filter(query, filters):
     return query
 
 def apply_similar_id_filter(query, filters):
-    feedback_data = (FclFreightRateFeedback
+    feedback_data = (FclFreightRate
          .select(FclFreightRate.origin_port_id, FclFreightRate.destination_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity)
-         .join(FclFreightRate, on=(FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id))
-         .where(FclFreightRateFeedback.id == filters['similar_id'])
-         .limit(1))
-
-    query = query.where(FclFreightRateFeedback.id != filters.get('similar_id'))
-    query = query.where(FclFreightRate.origin_port_id == feedback_data.origin_port_id, FclFreightRate.destination_port_id == feedback_data.destination_port_id, FclFreightRate.container_size == feedback_data.container_size, FclFreightRate.container_type == feedback_data.container_type, FclFreightRate.commodity == feedback_data.commodity)
+         .join(FclFreightRateFeedback, on=(FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id))
+         .where(FclFreightRate.origin_port_id==FclFreightRateFeedback.origin_port_id,FclFreightRateFeedback.id == filters['similar_id'])).first()
+   
+    if feedback_data:
+        query = query.where(FclFreightRateFeedback.id != filters.get('similar_id'))
+        query = query.where(FclFreightRate.origin_port_id == feedback_data.origin_port_id, FclFreightRate.destination_port_id == feedback_data.destination_port_id, FclFreightRate.container_size == feedback_data.container_size, FclFreightRate.container_type == feedback_data.container_type, FclFreightRate.commodity == feedback_data.commodity)
 
     return query
 
