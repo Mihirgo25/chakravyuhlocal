@@ -4,7 +4,7 @@ from typing import Union, List
 import json
 from fastapi.encoders import jsonable_encoder
 from params import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
@@ -380,8 +380,12 @@ def get_fcl_freight_rate_cards_data(
     cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token)
 ):
-    validity_start = datetime.fromisoformat(validity_start).date()
-    validity_end = datetime.fromisoformat(validity_end).date()
+    try:
+        validity_start = datetime.fromisoformat(validity_start).date()
+        validity_end = datetime.fromisoformat(validity_end).date()
+    except:
+        validity_start =  datetime.now().date()
+        validity_end = (datetime.now() + timedelta(days=30)).date()
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
