@@ -64,7 +64,7 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id)) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id)
+    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id))
     query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
     return query
 
@@ -72,7 +72,7 @@ def apply_supply_agent_id_filter(query, filters):
     expertises = get_organization_service_experties('fcl_freight', filters['supply_agent_id'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id)) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id)
+    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id))
     query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
     return query
 
