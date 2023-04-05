@@ -225,7 +225,7 @@ class FclFreightRateFeedback(BaseModel):
     def send_create_notifications_to_supply_agents(self):
         feedback_info = self.supply_agents_to_notify()
 
-        if feedback_info['commodity_type']:
+        if 'commodity_type' in feedback_info and feedback_info['commodity_type']:
             commodity = feedback_info['commodity_type'].upper()
         data = {
             'type': 'platform_notification',
@@ -270,14 +270,14 @@ class FclFreightRateFeedback(BaseModel):
             'user_id': str(self.performed_by_id),
             'type': 'platform_notification',
             'service': 'fcl_freight_rate',
-            'service_id': self.id,
+            'service_id': str(self.id),
             'template_name': 'freight_rate_feedback_completed_notification' if ('rate_added' in self.closing_remarks) else 'freight_rate_feedback_closed_notification',
             'variables': {
                 'service_type': 'fcl freight',
                 'origin_location': location_pair_name[str(locations_data.origin_port_id)],
                 'destination_location': location_pair_name[str(locations_data.destination_port_id)],
                 'remarks': None if ('rate_added' in self.closing_remarks)  else f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}",
-                'request_serial_id': self.serial_id,
+                'request_serial_id': str(self.serial_id),
                 'spot_search_id': str(self.source_id),
                 'importer_exporter_id': importer_exporter_id
             }
