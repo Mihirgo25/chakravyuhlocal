@@ -234,12 +234,12 @@ class FclFreightRateLocal(BaseModel):
         if self.demurrage_id:
             free_day_ids.append(str(self.demurrage_id))
         if self.detention_id:
-            free_day_ids.append(str(self.demurrage_id))
+            free_day_ids.append(str(self.detention_id))
         if self.plugin_id:
             free_day_ids.append(str(self.plugin_id))
 
         free_days_charges = {}
-        free_days_new = []
+        free_days_new = []  
 
 
         if len(free_day_ids):
