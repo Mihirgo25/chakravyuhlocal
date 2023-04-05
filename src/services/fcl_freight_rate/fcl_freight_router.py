@@ -318,7 +318,7 @@ def get_fcl_freight_local_rate_cards_data(
     include_confirmed_inventory_rates: bool =False,
     additional_services: List[str] | None= Query(None),
     include_destination_dpd: bool = False,
-    cargo_weight_per_container: int = None,
+    cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -377,7 +377,7 @@ def get_fcl_freight_rate_cards_data(
     additional_services: str = None,
     ignore_omp_dmp_sl_sps: str = None,
     include_destination_dpd: bool = False,
-    cargo_weight_per_container: int = 0 ,
+    cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token)
 ):
     validity_start = datetime.fromisoformat(validity_start).date()
