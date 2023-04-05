@@ -115,11 +115,11 @@ def apply_shipping_line_filter(query, filters):
     )
     
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d').date())
+    query = query.where(FclFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at.cast('date') <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d').date())
+    query = query.where(FclFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):

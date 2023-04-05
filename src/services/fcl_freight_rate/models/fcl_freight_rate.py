@@ -689,7 +689,7 @@ class FclFreightRate(BaseModel):
               # 'shipping_line_id': self.shipping_line_id,
 
           },
-          'weight_limit': dict(self.weight_limit)
+          'weight_limit': dict(self.weight_limit or {})
         }
 
       data = {k: v for k, v in data.items()}

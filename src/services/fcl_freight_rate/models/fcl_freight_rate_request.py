@@ -111,8 +111,8 @@ class FclFreightRateRequest(BaseModel):
     def validate(self):
         self.validate_source()
         self.validate_source_id()
-        self.validate_performed_by_id()
-        self.validate_performed_by_org_id()
+        # self.validate_performed_by_id()
+        # self.validate_performed_by_org_id()
         self.validate_preferred_shipping_line_ids()
         return True
 
@@ -140,4 +140,4 @@ class FclFreightRateRequest(BaseModel):
                     'importer_exporter_id': importer_exporter_id }
 
         }
-        # common.create_communication(data)
+        common.create_communication(data)

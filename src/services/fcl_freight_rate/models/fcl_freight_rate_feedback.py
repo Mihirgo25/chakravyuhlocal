@@ -140,8 +140,8 @@ class FclFreightRateFeedback(BaseModel):
         if not self.validate_fcl_freight_rate_id():
             raise HTTPException(status_code=422, detail="incorrect fcl freight rate id")
 
-        if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=422, detail="incorrect performed by org id")
+        # if not self.validate_performed_by_org_id():
+        #     raise HTTPException(status_code=422, detail="incorrect performed by org id")
 
         if len(self.feedbacks) != 0:
             if not self.validate_feedbacks():
@@ -242,7 +242,7 @@ class FclFreightRateFeedback(BaseModel):
 
         for user_id in feedback_info['user_ids']:
             data['user_id'] = user_id
-            # common.create_communication(data)
+            common.create_communication(data)
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(
@@ -282,4 +282,4 @@ class FclFreightRateFeedback(BaseModel):
                 'importer_exporter_id': importer_exporter_id
             }
         }
-        # common.create_communication(data)
+        common.create_communication(data)
