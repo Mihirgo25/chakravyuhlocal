@@ -134,8 +134,9 @@ def build_local_line_item_object(line_item, request):
             slab_value = request['cargo_weight_per_container']
 
     if slab_value:
-        slab = [t for t in line_item['slabs'] if (t['lower_limit'] <= slab_value) and (t['upper_limit'] >= slab_value)][0]
+        slab = [t for t in line_item['slabs'] if (t['lower_limit'] <= slab_value) and (t['upper_limit'] >= slab_value)]
         if slab:
+            slab = slab[0]
             line_item['price'] = slab['price']
             line_item['currency'] = slab['currency']
     line_item = {
