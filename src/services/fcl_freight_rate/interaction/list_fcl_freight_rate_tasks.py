@@ -84,10 +84,13 @@ def get_data(query, filters):
 
         port_ids.append(object['port_id'])
         if object['main_port_id']:
-            main_port_ids.append(object['main_port_id']), 
-        container_sizes.append(object['container_size']), 
-        container_types.append(object['container_type']), 
-        commodities.append(object['commodity']),
+            main_port_ids.append(object['main_port_id']) 
+        
+        if object['commodity']:
+            commodities.append(object['commodity'])
+            
+        container_sizes.append(object['container_size']) 
+        container_types.append(object['container_type'])
         trade_types.append(object['trade_type']) 
         shipping_line_ids.append(object['shipping_line_id'])
         new_data.append(object)
@@ -126,37 +129,33 @@ def get_data(query, filters):
       (FclFreightRateLocal.main_port_id.in_(list(set(main_port_ids))) | FclFreightRateLocal.main_port_id.is_null(True)),
       FclFreightRateLocal.container_size.in_(list(set(container_sizes))),
       FclFreightRateLocal.container_type.in_(list(set(container_types))),
-      FclFreightRateLocal.commodity.in_(list(set(commodities))),
+      (FclFreightRateLocal.commodity.in_(list(set(commodities))) | FclFreightRateLocal.commodity.is_null(True)),
       FclFreightRateLocal.trade_type.in_(list(set(trade_types))),
       FclFreightRateLocal.shipping_line_id.in_(list(set(shipping_line_ids))),
       FclFreightRateLocal.service_provider_id == DEFAULT_SERVICE_PROVIDER_ID
     )
-    existing_system_rates = [model_to_dict(item) for item in existing_system_query]
-    
-    for i in range(len(new_data)):
-        new_data[i]['service_provider_id'] = DEFAULT_SERVICE_PROVIDER_ID
-        new_data[i]['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
-        new_data[i]['procured_by_id'] = DEFAULT_PROCURED_BY_ID
-        new_data[i]['existing_system_rate'] = None
-        
-        if existing_system_rates:
-            existing_system_rate = list(filter(lambda rate: 
-                                    rate['port_id'] == new_data[i]['port_id'] and
-                                    rate['main_port_id'] == new_data[i]['main_port_id'] and
-                                    rate['container_size'] == new_data[i]['container_size'] and
-                                    rate['container_type'] == new_data[i]['container_type'] and
-                                    rate['commodity'] == new_data[i]['commodity'] and
-                                    rate['trade_type'] == new_data[i]['trade_type'] and
-                                    rate['shipping_line_id'] == new_data[i]['shipping_line_id'],
-                                existing_system_rates))
 
+    existing_system_rates = [model_to_dict(item) for item in existing_system_query]
+
+
+    for val in new_data:
+        val['service_provider_id'] = DEFAULT_SERVICE_PROVIDER_ID
+        val['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
+        val['procured_by_id'] = DEFAULT_PROCURED_BY_ID
+        val['existing_system_rate'] = None
+    
+        if existing_system_rates:
+            existing_system_rate = []
+            for rate in existing_system_rates:
+                if rate['port_id'] == val['port_id'] and rate['main_port_id'] == val['main_port_id'] and rate['container_size'] == val['container_size'] and rate['container_type'] == val['container_type'] and rate['commodity'] == val['commodity'] and rate['trade_type'] == val['trade_type'] and rate['shipping_line_id'] == val['shipping_line_id']:
+                    existing_system_rate.append(rate)
 
             if existing_system_rate:
-                new_data[i]['existing_system_rate'] = existing_system_rate[0]['data']
-                new_data[i]['existing_system_rate']['updated_at'] = existing_system_rate[0]['updated_at']
+                val['existing_system_rate'] = existing_system_rate[0]['data']
+                val['existing_system_rate']['updated_at'] = existing_system_rate[0]['updated_at']
         else:
-            new_data[i]['existing_system_rate'] = {}
-            new_data[i]['existing_system_rate']['updated_at'] = None
+            val['existing_system_rate'] = {}
+            val['existing_system_rate']['updated_at'] = None
             
     return new_data
 
