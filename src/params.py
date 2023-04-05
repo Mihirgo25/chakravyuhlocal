@@ -338,6 +338,20 @@ class CreateFclFreightRateFeedback(BaseModel):
   feedback_type: str
   booking_params: dict = {}
   cogo_entity_id: str = None
+  origin_port_id: str = None
+  origin_trade_id: str = None
+  origin_country_id: str = None
+  destination_port_id: str = None
+  destination_continent_id: str = None
+  destination_trade_id: str = None
+  destination_country_id: str = None
+  commodity: str = None
+  container_size: str = None
+  container_type: str = None
+  service_provider_id: str = None
+  origin_port: dict = {}
+  destination_port: dict = {}
+
 
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str

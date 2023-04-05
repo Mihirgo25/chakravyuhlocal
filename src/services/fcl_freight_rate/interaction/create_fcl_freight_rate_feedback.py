@@ -29,7 +29,7 @@ def execute_transaction_code(request):
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
         'performed_by_org_id': request['performed_by_org_id'],
-        'origin_port_id':request['booking_params']['origin_port_id']
+        'origin_port_id':request['origin_port_id']
     }
 
     feedback = FclFreightRateFeedback.select().where(
@@ -90,7 +90,20 @@ def get_create_params(request):
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',
-        'cogo_entity_id':request.get('cogo_entity_id')
+        'cogo_entity_id':request.get('cogo_entity_id'),
+        'origin_continent_id':request.get('origin_continent_id'),
+        'origin_trade_id': request.get('origin_trade_id'),
+        'origin_country_id': request.get('origin_country_id'),
+        'destination_port_id': request.get('destination_port_id'),
+        'destination_continent_id': request.get('destination_continent_id'),
+        'destination_trade_id': request.get('destination_trade_id'),
+        'destination_country_id': request.get('destination_country_id'),
+        'commodity': request.get('commodity'),
+        'container_size': request.get('container_size'),
+        'container_type': request.get('container_type'),
+        'service_provider_id': request.get('service_provider_id'),
+        'origin_port': request.get('origin_port'),
+        'destination_port': request.get('destination_port'),
     }
     return params
 
