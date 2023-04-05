@@ -1,5 +1,5 @@
 
-# Welcome to your CDK Python project!
+# Welcome to OCEAN DYNAMIC PRICING ENGINE
 
 
 To manually create a virtualenv on MacOS and Linux:
