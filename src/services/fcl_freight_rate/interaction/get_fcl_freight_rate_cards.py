@@ -298,8 +298,9 @@ def build_local_line_item_object(line_item, request):
             slab_value = request['cargo_weight_per_container']
 
     if slab_value:
-        slab = [t for t in line_item['slabs'] if (t['lower_limit'] <= slab_value) and (t['upper_limit'] >= slab_value)][0]
+        slab = [t for t in line_item['slabs'] if (t['lower_limit'] <= slab_value) and (t['upper_limit'] >= slab_value)]
         if slab:
+            slab=slab[0]
             line_item['price'] = slab['price']
             line_item['currency'] = slab['currency']
             
@@ -444,8 +445,9 @@ def build_freight_line_item_object(line_item, request):
         slab_value = request['containers_count']
 
     if slab_value:
-        slab = [t for t in line_item['slabs'] if t['lower_limit'] <= slab_value and t['upper_limit'] >= slab_value][0]
+        slab = [t for t in line_item['slabs'] if t['lower_limit'] <= slab_value and t['upper_limit'] >= slab_value]
         if slab:
+            slab = slab[0]
             line_item['price'] = slab['price']
             line_item['currency'] = slab['currency']
 
@@ -608,7 +610,7 @@ def discard_no_weight_limit_rates(freight_rates, requirements):
 
     new_freight_rates = []
     for rate in freight_rates:
-        if ("weight_limit" not in rate) or ("free_limit" not in (rate.get("weight_limit") or {})) or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or (rate["weight_limit"]["slabs"][-1] or {}).get("upper_limit") < requirements["cargo_weight_per_container"])):
+        if ("weight_limit" not in rate) or ("free_limit" not in (rate.get("weight_limit") or {})) or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or (not rate['weight_limit']['slabs']) or (rate["weight_limit"]["slabs"][-1] or {}).get("upper_limit") < requirements["cargo_weight_per_container"])):
             continue
 
         new_freight_rates.append(rate)
