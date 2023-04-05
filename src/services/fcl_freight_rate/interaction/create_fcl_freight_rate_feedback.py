@@ -6,6 +6,8 @@ from datetime import datetime
 from celery_worker import send_create_notifications_to_supply_agents_function
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
+from micro_services.client import *
+
 
 
 def create_fcl_freight_rate_feedback(request):
@@ -106,6 +108,12 @@ def get_create_params(request):
         'origin_port': request.get('origin_port'),
         'destination_port': request.get('destination_port'),
     }
+    if request.get('origin_port_id') :
+        obj = {'filters':{"id": request.get('origin_port_id')}}
+        params['origin_port'] = maps.list_locations(obj)['list'][0]
+    if request.get('destination_port_id') :
+        obj = {'filters':{"id": request.get('destination_port_id')}}
+        params['destination_port'] = maps.list_locations(obj)['list'][0]
     return params
 
 
