@@ -2,7 +2,7 @@ import json
 from fastapi import Request
 import httpx
 import json
-from configs.env import APP_ENV,RAILS_DATABASE_NAME
+from configs.env import APP_ENV
 from micro_services.discover_client import get_instance_url
 
 
@@ -12,7 +12,7 @@ def authorize_token(
     authorization_token = request.headers.get('authorization')
     authorization_scope = request.headers.get('authorizationscope')
     authorization_parameters = request.headers.get('authorizationparameters')
-    if RAILS_DATABASE_NAME=='rails' or APP_ENV != "production" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
+    if APP_ENV != "production" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
         return {"status_code": 200, "isAuthorized": False}
 
     url = get_instance_url('user') + "/verify_request"
