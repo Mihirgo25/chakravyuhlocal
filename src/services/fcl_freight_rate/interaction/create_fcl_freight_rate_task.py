@@ -26,7 +26,7 @@ def create_fcl_freight_rate_task(request):
 
 
 def execute_transaction_code(request):
-    from celery_worker import send_fcl_freight_rate_task_notifications, update_multiple_service_objects
+    from celery_worker import update_multiple_service_objects
     object_unique_params = {
         'service': request.get("service"),
         'port_id': request.get("port_id"),
@@ -87,7 +87,7 @@ def execute_transaction_code(request):
 
     create_audit(request, task.id)
     update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-    send_fcl_freight_rate_task_notifications.apply_async(kwargs={'task_id':task.id},queue='low')
+    # send_fcl_freight_rate_task_notifications.apply_async(kwargs={'task_id':task.id},queue='low')
 
     return {
       "id": task.id

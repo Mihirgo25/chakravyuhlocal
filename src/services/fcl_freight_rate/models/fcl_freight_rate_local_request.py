@@ -134,12 +134,13 @@ class FclFreightRateLocalRequest(BaseModel):
 
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id).where(FclFreightRateLocalRequest.source_id == self.source_id).limit(1).dicts().get()
-        location_pair_data = maps.list_locations({'filters':{ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']] }})['list']
+        location_pair_data = maps.list_locations({'filters':{ 'id': [str(location_pair['port_id'])] }})['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
             importer_exporter_id = spot_search.list_spot_searches({'filters': {'id': str(self.source_id)}})['list'][0]['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
+        location = location_pair_name[str(location_pair['port_id'])]
         data = {
         'user_id': self.performed_by_id,
         'type': 'platform_notification',
@@ -147,10 +148,10 @@ class FclFreightRateLocalRequest(BaseModel):
         'service_id': self.id,
         'template_name': 'missing_customs_rate_request_completed_notification' if 'rate_added' in self.closing_remarks else 'missing_customs_rate_request_closed_notification',
         'variables': { 'service_type': 'fcl freight local',
-                    'location': location_pair_name[location_pair['port_id']],
+                    'location': location,
                     'remarks': None if 'rate_added' in self.closing_remarks else "Reason: {}.".format(self.closing_remarks[0].lower().replace('_', ' ')),
-                    'request_serial_id': self.serial_id,
-                    'spot_search_id': self.source_id,
+                    'request_serial_id': str(self.serial_id),
+                    'spot_search_id': str(self.source_id),
                     'importer_exporter_id': importer_exporter_id }
 
         }

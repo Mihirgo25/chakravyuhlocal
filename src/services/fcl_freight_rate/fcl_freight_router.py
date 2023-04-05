@@ -4,7 +4,7 @@ from typing import Union, List
 import json
 from fastapi.encoders import jsonable_encoder
 from params import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
@@ -318,7 +318,7 @@ def get_fcl_freight_local_rate_cards_data(
     include_confirmed_inventory_rates: bool =False,
     additional_services: List[str] | None= Query(None),
     include_destination_dpd: bool = False,
-    cargo_weight_per_container: int = None,
+    cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -362,8 +362,8 @@ def get_fcl_freight_rate_cards_data(
     container_size: str,
     container_type: str,
     containers_count: int,
-    validity_start: date,
-    validity_end: date,
+    validity_start: str,
+    validity_end: str,
     trade_type: str = None,
     include_destination_local: bool = True,
     include_origin_local: bool = True,
@@ -377,9 +377,15 @@ def get_fcl_freight_rate_cards_data(
     additional_services: str = None,
     ignore_omp_dmp_sl_sps: str = None,
     include_destination_dpd: bool = False,
-    cargo_weight_per_container: int = None,
+    cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token)
 ):
+    try:
+        validity_start = datetime.fromisoformat(validity_start).date()
+        validity_end = datetime.fromisoformat(validity_end).date()
+    except:
+        validity_start =  datetime.now().date()
+        validity_end = (datetime.now() + timedelta(days=30)).date()
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
@@ -924,8 +930,18 @@ def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtens
         raise
 
 @fcl_freight_router.post("/extend_create_fcl_freight_rate")
-def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
-    return extend_create_fcl_freight_rate_data(request)
+def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = extend_create_fcl_freight_rate_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except:
+        raise
+
 
 @fcl_freight_router.post("/update_fcl_freight_rate_extension_rule_set")
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet, resp: dict = Depends(authorize_token)):
@@ -1406,12 +1422,16 @@ def list_rates_sheet_stat(
         return JSONResponse(status_code=200, content=response)
     except:
         raise
-    
+
 @fcl_freight_router.get('/get_eligible_fcl_freight_rate_free_day')
 def get_eligible_freight_rate_free_day_func(
     filters: str = None,
-    sort_by_specificity_type: bool = True
+    sort_by_specificity_type: bool = True,
+    resp: dict = Depends(authorize_token)
 ):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
     try:
         resp = get_eligible_fcl_freight_rate_free_day(filters,sort_by_specificity_type = sort_by_specificity_type)
         return JSONResponse(status_code=200, content=resp)

@@ -8,8 +8,6 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
 def extend_create_fcl_freight_rate_data(request):
     from celery_worker import create_fcl_freight_rate_delay
-    if not isinstance(request, dict):
-        request = request.dict(exclude_none=True)
 
     if request.get('extend_rates_for_lens'):
         request['source']= 'cogo_lens'
