@@ -140,8 +140,8 @@ class FclFreightRateFeedback(BaseModel):
         if not self.validate_fcl_freight_rate_id():
             raise HTTPException(status_code=422, detail="incorrect fcl freight rate id")
 
-        if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=422, detail="incorrect performed by org id")
+        # if not self.validate_performed_by_org_id():
+        #     raise HTTPException(status_code=422, detail="incorrect performed by org id")
 
         if len(self.feedbacks) != 0:
             if not self.validate_feedbacks():
