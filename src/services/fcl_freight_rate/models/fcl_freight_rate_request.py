@@ -125,19 +125,22 @@ class FclFreightRateRequest(BaseModel):
             importer_exporter_id = common.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
+        origin_location = location_pair_name[str(location_pair['origin_port_id'])]
+        destination_location = location_pair_name[str(location_pair['destination_port_id'])]
         data = {
-        'user_id': self.performed_by_id,
-        'type': 'platform_notification',
-        'service': 'fcl_freight_rate',
-        'service_id': self.id,
-        'template_name': 'freight_rate_request_completed_notification' if 'rate_added' in self.closing_remarks else 'freight_rate_request_closed_notification',
-        'variables': { 'service_type': 'fcl freight',
-                    'origin_location': location_pair_name[str(location_pair['origin_port_id'])],
-                    'destination_location': location_pair_name[str(location_pair['destination_port_id'])],
-                    'remarks': None if 'rate_added' in self.closing_remarks else "Reason: {}.".format(self.closing_remarks[0].lower().replace('_', ' ')),
-                    'request_serial_id': str(self.serial_id),
-                    'spot_search_id': str(self.source_id),
-                    'importer_exporter_id': importer_exporter_id }
-
+            'user_id': self.performed_by_id,
+            'type': 'platform_notification',
+            'service': 'fcl_freight_rate',
+            'service_id': self.id,
+            'template_name': 'freight_rate_request_completed_notification' if 'rate_added' in self.closing_remarks else 'freight_rate_request_closed_notification',
+            'variables': { 
+                'service_type': 'fcl freight',
+                'origin_location': origin_location,
+                'destination_location': destination_location,
+                'remarks': None if 'rate_added' in self.closing_remarks else "Reason: {}.".format(self.closing_remarks[0].lower().replace('_', ' ')),
+                'request_serial_id': str(self.serial_id),
+                'spot_search_id': str(self.source_id),
+                'importer_exporter_id': importer_exporter_id 
+            }
         }
         common.create_communication(data)
