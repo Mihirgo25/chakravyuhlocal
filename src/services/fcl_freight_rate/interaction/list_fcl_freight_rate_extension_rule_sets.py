@@ -16,7 +16,7 @@ def list_fcl_freight_rate_extension_rule_set_data(filters = {}, page_limit = 10,
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-            
+  
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
         query = get_filters(direct_filters, query, FclFreightRateExtensionRuleSet)
