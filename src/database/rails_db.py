@@ -5,7 +5,7 @@ conn = psycopg2.connect(
     host=RAILS_DATABASE_HOST,
     user=RAILS_DATABASE_USER,
     password=RAILS_DATABASE_PASSWORD,
-    port=RAILS_DATABASE_PORT 
+    port=RAILS_DATABASE_PORT
     )
 
 print("connection successful")
@@ -39,7 +39,7 @@ def get_shipping_line(id=None, short_name=None):
                         "status": res[5]
                     }
                 )
-            cur.close()    
+            cur.close()
     return all_result
 
 def get_organization(id=None, short_name=None):
@@ -58,7 +58,7 @@ def get_organization(id=None, short_name=None):
                 cur.execute(sql, (id,))
 
             result = cur.fetchall()
-            
+
             for res in result:
                 all_result.append(
                     {
@@ -117,7 +117,7 @@ def get_partner_user_experties(service, partner_user_id):
             sql = 'select partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user_expertises.trade_type from partner_user_expertises where status = %s and service_type = %s and partner_user_id = %s'
             cur.execute(sql, ('active', service, partner_user_id,))
             result = cur.fetchall()
-            
+
             for res in result:
                 new_obj = {
                     "origin_location_id": str(res[0]),
@@ -133,8 +133,8 @@ def get_partner_users_by_expertise(service, origin_location_ids = None, destinat
     all_result = []
     with conn:
         with conn.cursor() as cur:
-            if origin_location_ids and destination_location_ids: 
-                origin_location_ids = tuple(origin_location_ids)   
+            if origin_location_ids and destination_location_ids:
+                origin_location_ids = tuple(origin_location_ids)
                 destination_location_ids = tuple(destination_location_ids)
                 sql = 'select partner_user_expertises.partner_user_id, partner_user_expertises.origin_location_id, partner_user_expertises.destination_location_id, partner_user_expertises.location_id, partner_user_expertises.trade_type from partner_user_expertises where status = %s and service_type = %s and origin_location_id IN %s and destination_location_id IN %s'
                 cur.execute(sql, ('active', service, origin_location_ids, destination_location_ids,))
@@ -163,7 +163,7 @@ def get_organization_stakeholders(stakeholder_type, stakeholder_id):
             sql = 'select organization_stakeholders.organization_id from organization_stakeholders where status = %s and stakeholder_type = %s and stakeholder_id = %s'
             cur.execute(sql, ('active', stakeholder_type, stakeholder_id,))
             result = cur.fetchall()
-            
+
             for res in result:
                 org_ids.append(str(res[0]))
             cur.close()
@@ -190,16 +190,16 @@ def get_partner_users(ids, status = 'active'):
 
 def get_organization_service_experties(service, supply_agent_id):
     all_result = []
+    org_ids = get_organization_stakeholders('supply_agent', supply_agent_id)
     with conn:
         with conn.cursor() as cur:
-            org_ids = get_organization_stakeholders('supply_agent', supply_agent_id)
             if len(org_ids) == 0:
                 return []
             org_ids_tuple = tuple(org_ids)
-            sql = 'select organization_service_expertises.origin_location_id, organization_service_expertises.destination_location_id, organization_service_expertises.location_id, organization_service_expertises.trade_type, organization_service_expertises.organization_id from organization_service_expertises where status = %s and service = %s and organization_id IN %s'
+            sql = 'select organization_service_expertises.origin_location_id, organization_service_expertises.destination_location_id, organization_service_expertises.location_id, organization_service_expertises.trade_type, organization_service_expertises.organization_id from organization_service_expertises join organization_services on organization_service_expertises.service_id = organization_services.id where organization_service_expertises.status = %s and organization_services.service = %s and organization_service_expertises.organization_id IN %s'
             cur.execute(sql, ('active', service, org_ids_tuple,))
             result = cur.fetchall()
-        
+
             for res in result:
                 new_obj = {
                     "origin_location_id": str(res[0]),
