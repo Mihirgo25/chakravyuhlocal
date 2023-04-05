@@ -13,7 +13,7 @@ from micro_services.client import spot_search
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
 
-def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
+def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
     query = FclFreightRateFeedback.select()
 
     if filters:
@@ -31,7 +31,7 @@ def list_fcl_freight_rate_feedbacks(filters = {}, page_limit =10, page=1, perfor
     pagination_data = get_pagination_data(query, page, page_limit)
 
     query = get_page(query, page, page_limit)
-    data = get_data(query)
+    data = get_data(query,spot_search_details_required)
 
     return {'list': data } | (pagination_data) | (stats)
 
@@ -134,7 +134,7 @@ def apply_similar_id_filter(query, filters):
 
     return query
 
-def get_data(query):
+def get_data(query, spot_search_details_required):
     data = list(query.dicts())
     # fcl_freight_rate_ids = [row['fcl_freight_rate_id'] for row in data]
 
@@ -142,11 +142,12 @@ def get_data(query):
     # fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}
 
     new_data = []
-    spot_search_hash = {}
-    spot_search_ids = list(set([str(row['source_id']) for row in data]))
-    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
-    for search in spot_search_data:
-        spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
+    if spot_search_details_required:
+        spot_search_hash = {}
+        spot_search_ids = list(set([str(row['source_id']) for row in data]))
+        spot_search_data = spot_search.list_spot_searches({'filters':{'id':'7de897b5-e354-4add-a7ca-79a81a6d341e'}})['list']
+        for search in spot_search_data:
+            spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for object in data:
         # rate = fcl_freight_rate_mappings[object.get('fcl_freight_rate_id', None)] or {}
@@ -169,7 +170,8 @@ def get_data(query):
                 service_provider = object.get('service_provider_id', None)
                 if service_provider:
                     object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
-        object['spot_search'] = spot_search_hash[str(object['source_id'])]
+        if spot_search_details_required:
+            object['spot_search'] = spot_search_hash.get(str(object['source_id']))
         new_data.append(object)
     return new_data
 
