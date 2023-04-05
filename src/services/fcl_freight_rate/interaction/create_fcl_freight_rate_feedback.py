@@ -92,6 +92,7 @@ def get_create_params(request):
         'status': 'active',
         'cogo_entity_id':request.get('cogo_entity_id'),
         'origin_continent_id':request.get('origin_continent_id'),
+        'origin_port_id':request.get('origin_port_id'),
         'origin_trade_id': request.get('origin_trade_id'),
         'origin_country_id': request.get('origin_country_id'),
         'destination_port_id': request.get('destination_port_id'),

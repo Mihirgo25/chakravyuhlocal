@@ -341,6 +341,7 @@ class CreateFclFreightRateFeedback(BaseModel):
   origin_port_id: str = None
   origin_trade_id: str = None
   origin_country_id: str = None
+  origin_continent_id: str = None
   destination_port_id: str = None
   destination_continent_id: str = None
   destination_trade_id: str = None
