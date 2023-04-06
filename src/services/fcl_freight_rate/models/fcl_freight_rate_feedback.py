@@ -50,6 +50,19 @@ class FclFreightRateFeedback(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(index=True, null=True)
     origin_port_id = UUIDField(index=True,null=True)
+    origin_continent_id  = UUIDField(null=True)
+    origin_trade_id = UUIDField(null=True)
+    origin_country_id = UUIDField(null=True)
+    destination_port_id = UUIDField(index=True,null=True)
+    destination_continent_id  = UUIDField(null=True)
+    destination_trade_id = UUIDField(null=True)
+    destination_country_id = UUIDField(null=True)
+    commodity = CharField(null=True)
+    container_size=CharField(null=True)
+    container_type=CharField(null=True)
+    service_provider_id= UUIDField(null=True)
+    origin_port = BinaryJSONField(null=True)
+    destination_port = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -113,17 +126,22 @@ class FclFreightRateFeedback(BaseModel):
 
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
-            pass
+            return True
 
         if self.preferred_shipping_line_ids:
-            shipping_lines = get_shipping_line(id=self.preferred_shipping_line_ids)
+            ids = []
+            for sl_id in self.preferred_shipping_line_ids:
+                ids.append(str(sl_id))
+            
+            shipping_lines = get_shipping_line(id=ids)
             shipping_lines_hash = {}
             for sl in shipping_lines:
                 shipping_lines_hash[sl["id"]] = sl
             for shipping_line_id in self.preferred_shipping_line_ids:
-                if not shipping_line_id in shipping_lines_hash:
+                if not str(shipping_line_id) in shipping_lines_hash:
                     return False
             self.preferred_shipping_lines = shipping_lines
+        return True
 
     def validate_feedback_type(self):
         if self.feedback_type in FEEDBACK_TYPES:
@@ -267,7 +285,7 @@ class FclFreightRateFeedback(BaseModel):
             importer_exporter_id = spot_search.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
-        
+
         origin_location = location_pair_name[str(locations_data.origin_port_id)]
         destination_location = location_pair_name[str(locations_data.destination_port_id)]
 
