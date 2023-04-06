@@ -1,7 +1,7 @@
 from configs.env import *
 
 def get_instance_url(service_name=None):
-    if APP_ENV == 'development':
+    if APP_ENV != 'production':
         url = RUBY_ADDRESS_URL
         if service_name in ["organization", "partner", "user"]:
             url = url + "/{}".format(service_name)
