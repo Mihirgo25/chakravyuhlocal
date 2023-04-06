@@ -11,8 +11,9 @@ conn = psycopg2.connect(
 
 def get_shipping_line(id=None, short_name=None):
     all_result = []
-    if conn.closed:
-        conn = psycopg2.connect(
+    newconnection = conn
+    if newconnection.closed:
+        newconnection = psycopg2.connect(
             database=RAILS_DATABASE_NAME,
             host=RAILS_DATABASE_HOST,
             user=RAILS_DATABASE_USER,
@@ -20,8 +21,8 @@ def get_shipping_line(id=None, short_name=None):
             port=RAILS_DATABASE_PORT
         )
         
-    with conn:
-        with conn.cursor() as cur:
+    with newconnection:
+        with newconnection.cursor() as cur:
             if short_name:
                 sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.short_name = %s and operators.status = %s and operators.operator_type = %s'
                 cur.execute(sql, (short_name,'active','shipping_line',))
