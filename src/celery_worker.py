@@ -47,11 +47,7 @@ celery.conf.beat_schedule = {
         'options': {'queue' : 'fcl_freight_rate'}
         }
 }
-class BadException(HTTPException):
-    def __init__(self, msg, status, detail):
-        super().__init__(msg, status, detail)
-        self.status = status
-        self.detail = detail
+
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def create_fcl_freight_rate_delay(self, request):
@@ -66,15 +62,12 @@ def create_fcl_freight_rate_delay(self, request):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def delay_fcl_functions(self,fcl_object,request):
     try:
-        create_freight_trend_port_pair(request)
-        create_sailing_schedule_port_pair(request)
         if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
         if request.get("fcl_freight_rate_request_id"):
             delete_fcl_freight_rate_request(request)
 
-        # fcl_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
         get_multiple_service_objects(fcl_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
@@ -82,30 +75,7 @@ def delay_fcl_functions(self,fcl_object,request):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_sailing_schedule_port_pair(self,request):
-    try:
-        port_pair_coverage_data = {
-        'origin_port_id': request["origin_main_port_id"] if request.get("origin_main_port_id") else request["origin_port_id"],
-        'destination_port_id': request["destination_main_port_id"] if request.get("destination_main_port_id") else request["destination_port_id"],
-        'shipping_line_id': request["shipping_line_id"]
-        }
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
 
-
-def create_freight_trend_port_pair(request):
-    try:
-        port_pair_data = {
-            'origin_port_id': request["origin_port_id"],
-            'destination_port_id': request["destination_port_id"]
-        }
-    # common.create_freight_trend_port_pair(port_pair_data) expose
-    except Exception as exc:
-        raise exc
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def fcl_freight_local_data_updation(self, local_object,request):
