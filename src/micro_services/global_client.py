@@ -1,6 +1,7 @@
 import httpx
 from configs.env import *
 import json
+from fastapi.encoders import jsonable_encoder
 
 class GlobalClient:
     def __init__(self, url,headers):
@@ -9,6 +10,8 @@ class GlobalClient:
         self.headers = headers
 
     def request(self, method, action, data={}, params={}):
+        if isinstance(data, dict):
+            data = jsonable_encoder(data)
         kwargs = {
             "headers": self.headers,
             "url": self.normalize_url(action),

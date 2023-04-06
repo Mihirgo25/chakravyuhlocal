@@ -50,6 +50,19 @@ class FclFreightRateFeedback(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(index=True, null=True)
     origin_port_id = UUIDField(index=True,null=True)
+    origin_continent_id  = UUIDField(null=True)
+    origin_trade_id = UUIDField(null=True)
+    origin_country_id = UUIDField(null=True)
+    destination_port_id = UUIDField(index=True,null=True)
+    destination_continent_id  = UUIDField(null=True)
+    destination_trade_id = UUIDField(null=True)
+    destination_country_id = UUIDField(null=True)
+    commodity = CharField(null=True)
+    container_size=CharField(null=True)
+    container_type=CharField(null=True)
+    service_provider_id= UUIDField(null=True)
+    origin_port = BinaryJSONField(null=True)
+    destination_port = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -113,17 +126,22 @@ class FclFreightRateFeedback(BaseModel):
 
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
-            pass
+            return True
 
         if self.preferred_shipping_line_ids:
-            shipping_lines = get_shipping_line(id=self.preferred_shipping_line_ids)
+            ids = []
+            for sl_id in self.preferred_shipping_line_ids:
+                ids.append(str(sl_id))
+            
+            shipping_lines = get_shipping_line(id=ids)
             shipping_lines_hash = {}
             for sl in shipping_lines:
                 shipping_lines_hash[sl["id"]] = sl
             for shipping_line_id in self.preferred_shipping_line_ids:
-                if not shipping_line_id in shipping_lines_hash:
+                if not str(shipping_line_id) in shipping_lines_hash:
                     return False
             self.preferred_shipping_lines = shipping_lines
+        return True
 
     def validate_feedback_type(self):
         if self.feedback_type in FEEDBACK_TYPES:
@@ -140,8 +158,8 @@ class FclFreightRateFeedback(BaseModel):
         if not self.validate_fcl_freight_rate_id():
             raise HTTPException(status_code=422, detail="incorrect fcl freight rate id")
 
-        if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=422, detail="incorrect performed by org id")
+        # if not self.validate_performed_by_org_id():
+        #     raise HTTPException(status_code=422, detail="incorrect performed by org id")
 
         if len(self.feedbacks) != 0:
             if not self.validate_feedbacks():
@@ -178,10 +196,10 @@ class FclFreightRateFeedback(BaseModel):
 
         if locations_data:
             origin_locations = [
-                locations_data.origin_port_id,
-                locations_data.origin_country_id,
-                locations_data.origin_continent_id,
-                locations_data.origin_trade_id,
+                str(locations_data.origin_port_id),
+                str(locations_data.origin_country_id),
+                str(locations_data.origin_continent_id),
+                str(locations_data.origin_trade_id),
             ]
             origin_locations = [t for t in origin_locations if t is not None]
         else:
@@ -189,10 +207,10 @@ class FclFreightRateFeedback(BaseModel):
 
         if locations_data:
             destination_locations = [
-                locations_data.destination_port_id,
-                locations_data.destination_country_id,
-                locations_data.destination_continent_id,
-                locations_data.destination_trade_id
+                str(locations_data.destination_port_id),
+                str(locations_data.destination_country_id),
+                str(locations_data.destination_continent_id),
+                str(locations_data.destination_trade_id)
             ]
             destination_locations = [t for t in destination_locations if t is not None]
         else:
@@ -212,37 +230,39 @@ class FclFreightRateFeedback(BaseModel):
             })['list']
         supply_agents_user_ids = list(set(t['user_id'] for t in supply_agents_user_ids))
 
-        route = maps.list_locations({'filters':{'id': [locations_data.origin_port_id, locations_data.destination_port_id]}})['list']
+        route = maps.list_locations({'filters':{'id': [str(locations_data.origin_port_id), str(locations_data.destination_port_id)]}})['list']
         route = {t['id']:t['display_name'] for t in route}
 
         return {
           'user_ids': supply_agents_user_ids,
-          'origin_location': route[locations_data.origin_port_id],
-          'destination_location': route[locations_data.destination_port_id],
+          'origin_location': route[str(locations_data.origin_port_id)],
+          'destination_location': route[str(locations_data.destination_port_id)],
           'commodity': locations_data.commodity
         }
 
     def send_create_notifications_to_supply_agents(self):
         feedback_info = self.supply_agents_to_notify()
 
-        if feedback_info['commodity_type']:
+        if 'commodity_type' in feedback_info and feedback_info['commodity_type']:
             commodity = feedback_info['commodity_type'].upper()
+        origin_port = feedback_info['origin_location']
+        destination_port = feedback_info['destination_location']
         data = {
             'type': 'platform_notification',
             'service': 'fcl_freight_rate',
-            'service_id': self.id,
+            'service_id': str(self.id),
             'template_name': 'freight_rate_disliked',
             'variables': {
                 'service_type': 'fcl freight',
-                'origin_port': feedback_info['origin_location'],
-                'destination_port': feedback_info['destination_location'],
+                'origin_port': origin_port,
+                'destination_port': destination_port,
                 'details': {"commodity" : commodity} if commodity else ''
             }
         }
 
         for user_id in feedback_info['user_ids']:
             data['user_id'] = user_id
-            # common.create_communication(data)
+            common.create_communication(data)
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(
@@ -258,28 +278,31 @@ class FclFreightRateFeedback(BaseModel):
 
         # for item in loc_data:
         #     locations_data = model_to_dict(item)
-        location_pair_name = maps.list_locations({'filters':{'id': [locations_data['origin_port_id'], locations_data['destination_port_id']]}})['list']
+        location_pair_name = maps.list_locations({'filters':{'id': [str(locations_data.origin_port_id), str(locations_data.destination_port_id)]}})['list']
         location_pair_name = {t['id']:t['display_name'] for t in location_pair_name}
 
         try:
-            importer_exporter_id = spot_search.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
+            importer_exporter_id = spot_search.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
 
+        origin_location = location_pair_name[str(locations_data.origin_port_id)]
+        destination_location = location_pair_name[str(locations_data.destination_port_id)]
+
         data = {
-            'user_id': self.performed_by_id,
+            'user_id': str(self.performed_by_id),
             'type': 'platform_notification',
             'service': 'fcl_freight_rate',
-            'service_id': self.id,
+            'service_id': str(self.id),
             'template_name': 'freight_rate_feedback_completed_notification' if ('rate_added' in self.closing_remarks) else 'freight_rate_feedback_closed_notification',
             'variables': {
                 'service_type': 'fcl freight',
-                'origin_location': location_pair_name[locations_data['origin_port_id']],
-                'destination_location': location_pair_name[locations_data['destination_port_id']],
+                'origin_location': origin_location,
+                'destination_location': destination_location,
                 'remarks': None if ('rate_added' in self.closing_remarks)  else f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}",
-                'request_serial_id': self.serial_id,
-                'spot_search_id': self.source_id,
+                'request_serial_id': str(self.serial_id),
+                'spot_search_id': str(self.source_id),
                 'importer_exporter_id': importer_exporter_id
             }
         }
-        # common.create_communication(data)
+        common.create_communication(data)

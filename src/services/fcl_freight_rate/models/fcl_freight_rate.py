@@ -80,10 +80,10 @@ class FclFreightRate(BaseModel):
     origin_port = BinaryJSONField(null=True)
     origin_trade_id = UUIDField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
-    service_provider_id = UUIDField(index=True, null=True)
+    service_provider_id = UUIDField(index=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line = BinaryJSONField(null=True)
-    shipping_line_id = UUIDField(index=True, null=True)
+    shipping_line_id = UUIDField(index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     validities = BinaryJSONField(default = [], null=True)
     weight_limit = BinaryJSONField(null=True)
@@ -166,6 +166,7 @@ class FclFreightRate(BaseModel):
         else:
           return False
       return True
+
 
     def validate_destination_main_port_id(self):
       if self.destination_port and not self.destination_port['is_icd']:
@@ -479,11 +480,13 @@ class FclFreightRate(BaseModel):
             if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end:
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
-                validity_object_validity_end = validity_start - datetime.timedelta(days=1)
+                # validity_object_validity_end = validity_start - datetime.timedelta(days=1)
+                validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
-                validity_object_validity_start = validity_end + datetime.timedelta(days=1)
+                # validity_object_validity_start = validity_end + datetime.timedelta(days=1)
+                validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
@@ -505,7 +508,6 @@ class FclFreightRate(BaseModel):
           new_validity.pop('__rel__')
           new_validity.pop('_dirty')
           main_validities.append(new_validity)
-
         self.validities = main_validities
 
 
@@ -717,7 +719,7 @@ class FclFreightRate(BaseModel):
               # 'shipping_line_id': self.shipping_line_id,
 
           },
-          'weight_limit': dict(self.weight_limit)
+          'weight_limit': dict(self.weight_limit or {})
         }
 
       data = {k: v for k, v in data.items()}
