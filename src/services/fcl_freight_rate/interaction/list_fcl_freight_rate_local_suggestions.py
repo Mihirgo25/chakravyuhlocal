@@ -27,12 +27,19 @@ def list_fcl_freight_rate_local_suggestions(service_provider_id, filters = {}, p
 def get_query(filters, service_provider_id, sort_by, sort_type):
     query = FclFreightRateLocal.select(FclFreightRateLocal.selected_suggested_rate_id).where(FclFreightRateLocal.service_provider_id == service_provider_id)
     if filters:
-        direct_filters = {key:value for key,value in filters.items() if key in possible_direct_filters}
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
         for key in direct_filters:
-            query = query.select().where(attrgetter(key)(FclFreightRateLocal) == filters[key])
+            if key == 'commodity':
+                if 'general' in filters[key]:
+                    query = query.where((attrgetter(key)(FclFreightRateLocal) == None) | (attrgetter(key)(FclFreightRateLocal).in_(filters[key])))
+                else:
+                    query = query.where(attrgetter(key)(FclFreightRateLocal).in_(filters[key]))
+            else:
+                query = query.where(attrgetter(key)(FclFreightRateLocal) == filters[key])
+
     already_added_rates = [item.selected_suggested_rate_id for item in query.execute() if item.selected_suggested_rate_id]
     query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_([INTERNAL_BOOKING['service_provider_id']]), FclFreightRateLocal.is_line_items_error_messages_present == False)
-    
+
     if already_added_rates:
         query = query.where(FclFreightRateLocal.id.not_in(already_added_rates))
     query = query.order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type)))
