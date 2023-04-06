@@ -8,6 +8,7 @@ from params import Slab
 from micro_services.client import *
 from database.rails_db import *
 from micro_services.client import maps
+from libs.common_validations import validate_shipping_line
 
 class BaseModel(Model):
     class Meta:
@@ -77,12 +78,6 @@ class FclFreightRateFreeDay(BaseModel):
             return True
         return False
 
-    def validate_shipping_line(self):
-        shipping_line_data = get_shipping_line(id=self.shipping_line_id)
-        if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
-            self.shipping_line = shipping_line_data[0]
-            return True
-        return False
 
     def validate_service_provider(self):
         service_provider_data = get_organization(id=str(self.service_provider_id))
@@ -139,8 +134,8 @@ class FclFreightRateFreeDay(BaseModel):
         if not self.validate_specificity_type():
             raise HTTPException(status_code=422, detail="Invalid specificity type")
 
-        # if not self.validate_shipping_line():
-        #     raise HTTPException(status_code=422, detail="Invalid shipping line")
+        if not validate_shipping_line(self):
+            raise HTTPException(status_code=422, detail="Invalid shipping line")
 
 
         # if not self.validate_service_provider():
