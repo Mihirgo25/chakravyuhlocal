@@ -104,16 +104,25 @@ def get_create_params(request):
         'commodity': request.get('commodity'),
         'container_size': request.get('container_size'),
         'container_type': request.get('container_type'),
-        'service_provider_id': request.get('service_provider_id'),
-        'origin_port': request.get('origin_port'),
-        'destination_port': request.get('destination_port'),
+        'service_provider_id': request.get('service_provider_id')
     }
-    if request.get('origin_port_id') :
-        obj = {'filters':{"id": request.get('origin_port_id')}}
-        params['origin_port'] = maps.list_locations(obj)['list'][0]
-    if request.get('destination_port_id') :
-        obj = {'filters':{"id": request.get('destination_port_id')}}
-        params['destination_port'] = maps.list_locations(obj)['list'][0]
+    loc_ids = []
+
+    if request.get('origin_port_id'):
+        loc_ids.append(request.get('origin_port_id'))
+    if request.get('destination_port_id'):
+        loc_ids.append(request.get('destination_port_id'))
+    
+    obj = {'filters':{"id": loc_ids }}
+    locations = maps.list_locations(obj)['list']
+    locations_hash = {}
+    for loc in locations:
+        locations_hash[loc['id']] = loc
+    if request.get('origin_port_id'):
+        params['origin_port'] = locations_hash[request.get('origin_port_id')]
+    if request.get('destination_port_id'):
+        params['destination_port'] = locations_hash[request.get('destination_port_id')]
+    
     return params
 
 

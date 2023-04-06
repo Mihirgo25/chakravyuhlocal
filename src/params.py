@@ -350,8 +350,6 @@ class CreateFclFreightRateFeedback(BaseModel):
   container_size: str = None
   container_type: str = None
   service_provider_id: str = None
-  origin_port: dict = {}
-  destination_port: dict = {}
 
 
 class CreateFclFreightRateNotAvailable(BaseModel):
