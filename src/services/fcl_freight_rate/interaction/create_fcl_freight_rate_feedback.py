@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from datetime import datetime
+from playhouse.postgres_ext import *
 from celery_worker import send_create_notifications_to_supply_agents_function
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
@@ -49,13 +50,19 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():
-        setattr(feedback, attr, value)
+        if attr == 'preferred_shipping_line_ids' and value:
+            ids = []
+            for val in value:
+                ids.append(uuid.UUID(str(val)))
+            setattr(feedback, attr, ids)
+        else:
+            setattr(feedback, attr, value)
 
     try:
         if feedback.validate_before_save():
             feedback.save()
-    except Exception as e:
-        return e
+    except:
+        raise
 
     create_audit(request, feedback)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
