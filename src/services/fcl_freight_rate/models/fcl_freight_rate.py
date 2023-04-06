@@ -167,12 +167,6 @@ class FclFreightRate(BaseModel):
           return False
       return True
 
-    def validate_shipping_line(self):
-        shipping_line_data = get_shipping_line(id=self.shipping_line_id)
-        if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
-            self.shipping_line = shipping_line_data[0]
-            return True
-        return False
 
     def validate_destination_main_port_id(self):
       if self.destination_port and not self.destination_port['is_icd']:
@@ -491,7 +485,7 @@ class FclFreightRate(BaseModel):
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
-                # validity_object_validity_start = validity_end + datetime.timedelta(days=1) 
+                # validity_object_validity_start = validity_end + datetime.timedelta(days=1)
                 validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
