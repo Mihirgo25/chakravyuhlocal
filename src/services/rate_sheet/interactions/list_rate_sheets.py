@@ -7,7 +7,7 @@ import json, uuid, math
 import concurrent.futures
 from micro_services.client import *
 from database.rails_db import get_organization ,get_user
-
+from datetime import datetime, timedelta
 from peewee import *
 from database.db_session import rd
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_last_line
@@ -173,6 +173,8 @@ def get_final_data(query):
     for object in final_data:
         # assumption here
         rates_count_sum=0
+        object['updated_at'] = datetime.fromisoformat(object['updated_at']) +timedelta(hours=5, minutes=30)
+
         if 'converted_files' in object:
             if object.get('converted_files'):
                 for obj in object.get('converted_files'):
