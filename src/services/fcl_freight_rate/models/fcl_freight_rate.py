@@ -486,11 +486,13 @@ class FclFreightRate(BaseModel):
             if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end:
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
-                validity_object_validity_end = validity_start - datetime.timedelta(days=1)
+                # validity_object_validity_end = validity_start - datetime.timedelta(days=1)
+                validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
-                validity_object_validity_start = validity_end + datetime.timedelta(days=1)
+                # validity_object_validity_start = validity_end + datetime.timedelta(days=1) 
+                validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
@@ -512,7 +514,6 @@ class FclFreightRate(BaseModel):
           new_validity.pop('__rel__')
           new_validity.pop('_dirty')
           main_validities.append(new_validity)
-
         self.validities = main_validities
 
     def delete_rate_not_available_entry(self):
