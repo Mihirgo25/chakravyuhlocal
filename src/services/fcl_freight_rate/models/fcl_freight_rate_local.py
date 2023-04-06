@@ -70,11 +70,11 @@ class FclFreightRateLocal(BaseModel):
         table_name = 'fcl_freight_rate_locals'
 
     def validate_main_port_id(self):
-        if self.port and self.port['is_icd']==False:
-            if not self.main_port_id or self.main_port_id == self.port_id:
-                return True
-            return False
-        elif self.port and self.port['is_icd']==True:
+        # if self.port and self.port['is_icd']==False:
+        #     if not self.main_port_id or self.main_port_id == self.port_id:
+        #         return True
+        #     return False
+        if self.port and self.port['is_icd']==True:
             if self.main_port_id:
                 if not self.main_port or self.main_port['is_icd'] == True:
                     return False

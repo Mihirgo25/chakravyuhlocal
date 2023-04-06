@@ -22,7 +22,49 @@ If you are a Windows platform, you would activate the virtualenv like this:
 % .venv\Scripts\activate.bat
 ```
 
-Once the virtualenv is activated, you can install the required dependencies.
+### Using Envision CLI
+Envision provides with a CLI, providing server,shell and more to come commands
+
+Run these commands before we start
+```
+cd src
+```
+```
+pip install --editable .
+```
+
+#### Develop
+
+The `develop` command starts the development server if a port is busy it will select the next port. This server will continually watch for file changes and reload the server accordingly.
+
+```bash
+> envision server develop
+```
+#### Start
+
+The `start` command starts a envision web server of production grade. It's an alias to the [uvicorn](https://www.uvicorn.org/) web server, it contains all of the options available with that server.
+
+```bash
+> envision server start --help
+Usage: maps server start [OPTIONS] main:app
+
+Options:
+  --port INTEGER                  Bind socket to this port.  [default: 8000]
+  --reload                        Enable auto-reload.
+  --reload-dir TEXT               Sets reload directories explicitly, instead
+                                  of using the current working directory.
+  ...
+```
+
+#### Shell
+
+The `shell` command is useful for development. It drops you into an python shell with the database connection.
+
+```bash
+> envision server shell
+```
+
+### Without using Envision CLI
 
 ```
 $ python3 -m pip install --upgrade -r requirements.txt

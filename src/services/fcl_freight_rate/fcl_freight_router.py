@@ -693,6 +693,7 @@ def list_fcl_freight_rate_seasonal_surcharges_data(
 @fcl_freight_router.get("/list_fcl_freight_rate_feedbacks")
 def list_fcl_freight_rate_feedbacks_data(
     filters: str = None,
+    spot_search_details_required: bool = False,
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
@@ -703,7 +704,7 @@ def list_fcl_freight_rate_feedbacks_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required)
+        data = list_fcl_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except:
         raise
