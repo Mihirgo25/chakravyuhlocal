@@ -6,13 +6,20 @@ conn = psycopg2.connect(
     user=RAILS_DATABASE_USER,
     password=RAILS_DATABASE_PASSWORD,
     port=RAILS_DATABASE_PORT
-    )
-
-print("connection successful")
+)
 
 
 def get_shipping_line(id=None, short_name=None):
     all_result = []
+    if conn.closed:
+        conn = psycopg2.connect(
+            database=RAILS_DATABASE_NAME,
+            host=RAILS_DATABASE_HOST,
+            user=RAILS_DATABASE_USER,
+            password=RAILS_DATABASE_PASSWORD,
+            port=RAILS_DATABASE_PORT
+        )
+        
     with conn:
         with conn.cursor() as cur:
             if short_name:
