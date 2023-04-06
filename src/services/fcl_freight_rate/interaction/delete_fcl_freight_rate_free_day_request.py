@@ -32,7 +32,7 @@ def execute_transaction_code(request):
 
 def find_objects(request):
     try:
-        return FclFreightRateFreeDayRequest.select().where(FclFreightRateFreeDayRequest.id << request['fcl_freight_rate_free_day_request_id'], FclFreightRateFreeDayRequest.status == 'active').first()
+        return FclFreightRateFreeDayRequest.select().where(FclFreightRateFreeDayRequest.id == request['fcl_freight_rate_free_day_request_id'], FclFreightRateFreeDayRequest.status == 'active').first()
     except:
         return None
 
