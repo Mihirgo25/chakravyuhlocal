@@ -32,7 +32,7 @@ def execute_transaction_code(request):
 
 def find_objects(request):
     try:
-        return FclFreightRateFreeDayRequest.select().where(FclFreightRateFreeDayRequest.id << request['fcl_freight_rate_free_day_request_id'], FclFreightRateFreeDayRequest.status == 'active').execute()
+        return FclFreightRateFreeDayRequest.select().where(FclFreightRateFreeDayRequest.id << request['fcl_freight_rate_free_day_request_id'], FclFreightRateFreeDayRequest.status == 'active').first()
     except:
         return None
 
@@ -41,7 +41,7 @@ def create_audit(request, freight_rate_free_day_request_id):
     FclFreightRateAudit.create(
     action_name = 'delete',
     performed_by_id = request['performed_by_id'],
-    data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},    #######already performed_by_id column is present do we need to also save it in data?
+    data = {'closing_remarks' : request['closing_remarks']},    #######already performed_by_id column is present do we need to also save it in data?
     object_id = freight_rate_free_day_request_id,
     object_type = 'FclFreightRateFreeDayRequest'
     )
