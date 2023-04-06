@@ -104,7 +104,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
         return False
 
     def validate_performed_by_org(self):
-      data = get_organization(id=self.performed_by_id)
+      data = get_organization(id=self.performed_by_org_id)
       if (len(data) > 0):
           data = data[0]
           if data.get('account_type',None) == 'importer_exporter':
@@ -118,6 +118,6 @@ class FclFreightRateFreeDayRequest(BaseModel):
       data = get_shipping_line(id=self.shipping_line_id)
       if len(data) > 0:
         data = data[0]
-        if data.get('account_type',None) == 'shipping_line':
+        if data.get('operator_type',None) == 'shipping_line':
           return True
       return False
