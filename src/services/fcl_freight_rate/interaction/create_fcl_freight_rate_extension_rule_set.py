@@ -5,21 +5,21 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from celery_worker import update_multiple_service_objects
 def get_extension_rule_set_object(request):
   row = {
-      'extension_name' : request['extension_name'],
-      'service_provider_id' : request['service_provider_id'],
+      'extension_name' : request.get('extension_name'),
+      'service_provider_id' : request.get('service_provider_id'),
       'shipping_line_id' : request.get('shipping_line_id'),
-      'cluster_type' : request['cluster_type'],
-      'cluster_reference_name' : request['cluster_reference_name'],
+      'cluster_type' : request.get('cluster_type'),
+      'cluster_reference_name' : request.get('cluster_reference_name'),
       'line_item_charge_code' : request.get('line_item_charge_code'),
       'trade_type' : request.get('trade_type')
     }
   
   extension_rule_set = FclFreightRateExtensionRuleSet.select().where(
-      FclFreightRateExtensionRuleSet.extension_name == request['extension_name'],
+      FclFreightRateExtensionRuleSet.extension_name == request.get('extension_name'),
       FclFreightRateExtensionRuleSet.service_provider_id == request.get('service_provider_id'),
       FclFreightRateExtensionRuleSet.shipping_line_id == request.get('shipping_line_id'),
-      FclFreightRateExtensionRuleSet.cluster_type == request['cluster_type'],
-      FclFreightRateExtensionRuleSet.cluster_reference_name == request['cluster_reference_name'],
+      FclFreightRateExtensionRuleSet.cluster_type == request.get('cluster_type'),
+      FclFreightRateExtensionRuleSet.cluster_reference_name == request.get('cluster_reference_name'),
       FclFreightRateExtensionRuleSet.line_item_charge_code == request.get('line_item_charge_code'),
       FclFreightRateExtensionRuleSet.trade_type == request.get('trade_type')).first()
 
@@ -56,7 +56,7 @@ def execute_transaction_code(request):
       raise HTTPException(status_code=500, detail='fcl freight rate exclusive rule set did not save')
 
   update_multiple_service_objects.apply_async(kwargs={'object':rule_set},queue='low')
-  create_audit(data, request['performed_by_id'], rule_set.id)
+  create_audit(data, request.get('performed_by_id'), rule_set.id)
 
   return {"id": rule_set.id}
 
