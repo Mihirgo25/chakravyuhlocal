@@ -10,6 +10,7 @@ import concurrent.futures, json
 from peewee import fn, SQL,Window
 from math import ceil
 from micro_services.client import spot_search
+from database.rails_db import get_organization
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
 
@@ -140,12 +141,25 @@ def get_data(query, spot_search_details_required):
 
     # fcl_freight_rates = list(FclFreightRate.select(FclFreightRate.id,FclFreightRate.container_size,FclFreightRate.container_type,FclFreightRate.validities).where(FclFreightRate.id.in_(fcl_freight_rate_ids)).dicts())
     # fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}
-
+    service_provider_ids = []
+    for item in data:
+        if 'rate_card' in item['booking_params'] and item['booking_params']['rate_card'] and 'service_rates' in item['booking_params']['rate_card']:
+            service_rates = item['booking_params']['rate_card']['service_rates'] or {}
+            rates = service_rates.values()
+            for rate in rates:
+                if 'service_provider_id' in rate:
+                    service_provider_ids.append(rate['service_provider_id'])
+    service_providers = []
+    service_providers_hash = {}
+    if len(service_provider_ids):
+        service_providers = get_organization(service_provider_ids)
+        for sp in service_providers:
+            service_providers_hash[sp['id']] = sp
+    spot_search_hash = {}
     new_data = []
     if spot_search_details_required:
-        spot_search_hash = {}
         spot_search_ids = list(set([str(row['source_id']) for row in data]))
-        spot_search_data = spot_search.list_spot_searches({'filters':{'id':'7de897b5-e354-4add-a7ca-79a81a6d341e'}})['list']
+        spot_search_data = spot_search.list_spot_searches({'filters':{'id': spot_search_ids}})['list']
         for search in spot_search_data:
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
@@ -167,9 +181,9 @@ def get_data(query, spot_search_details_required):
 
         if object['booking_params'].get('rate_card', {}).get('service_rates', {}):
             for key, value in object['booking_params']['rate_card']['service_rates'].items():
-                service_provider = object.get('service_provider_id', None)
+                service_provider = value.get('service_provider_id', None)
                 if service_provider:
-                    object['booking_params']['rate_card']['service_rates'][key]['service_provider'] = service_provider
+                    value['service_provider'] = service_providers_hash[service_provider]
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']))
         new_data.append(object)
