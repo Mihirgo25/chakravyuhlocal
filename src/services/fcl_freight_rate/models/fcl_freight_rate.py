@@ -506,7 +506,6 @@ class FclFreightRate(BaseModel):
           new_validity.pop('__rel__')
           new_validity.pop('_dirty')
           main_validities.append(new_validity)
-        print(main_validities)
         self.validities = main_validities
 
     def delete_rate_not_available_entry(self):
