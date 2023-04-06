@@ -1,5 +1,5 @@
 from peewee import *
-import datetime
+from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
