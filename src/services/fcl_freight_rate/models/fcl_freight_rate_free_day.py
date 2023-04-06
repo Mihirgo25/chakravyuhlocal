@@ -1,5 +1,5 @@
 from peewee import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
@@ -21,7 +21,7 @@ class FclFreightRateFreeDay(BaseModel):
     container_type = CharField(index=True, null=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeField(default=datetime.now)
     free_days_type = CharField(index=True, null=True)
     free_limit = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
@@ -43,16 +43,16 @@ class FclFreightRateFreeDay(BaseModel):
     specificity_type = CharField(index=True, null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(index=True, null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now())
-    validity_start = DateTimeField(index=True, null=True, default=datetime.datetime.now())
-    validity_end = DateTimeField(index=True, null=True, default=datetime.datetime.now() + datetime.timedelta(days=90))
+    updated_at = DateTimeField(default=datetime.now())
+    validity_start = DateTimeField(index=True, null=True, default=datetime.now())
+    validity_end = DateTimeField(index=True, null=True, default=datetime.now() + timedelta(days=90))
     sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
-      self.updated_at = datetime.datetime.now()
+      self.updated_at = datetime.now()
       return super(FclFreightRateFreeDay, self).save(*args, **kwargs)
 
     class Meta:
