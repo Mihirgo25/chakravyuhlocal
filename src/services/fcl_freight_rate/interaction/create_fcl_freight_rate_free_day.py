@@ -12,12 +12,11 @@ def create_fcl_freight_rate_free_day(request):
 
 def execute_transaction_code(request):
     from celery_worker import update_multiple_service_objects
-    request["validity_start"] = (request.get('validity_start') or datetime.now().date())
-    request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)).date())
+    request["validity_start"] = (request.get('validity_start') or datetime.now())
+    request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)))
     free_day = get_free_day_object(request)
     if 'rate_sheet_validation' not in request:
-        free_day.validate_validity_object(request['validity_start'], request['validity_end'])
-
+        free_day.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
         free_day.validate_before_save()
 
     free_day.update_special_attributes()

@@ -1,8 +1,6 @@
 
 # Welcome to OCEAN DYNAMIC PRICING ENGINE
 
-Staging
-
 To manually create a virtualenv on MacOS and Linux:
 
 ```
@@ -63,6 +61,25 @@ The `shell` command is useful for development. It drops you into an python shell
 ```bash
 > envision server shell
 ```
+
+Envision shell has autoreload enabled, to disable it run
+
+```
+%autoreload 0
+```
+
+to enable it again run
+
+```
+%autoreload
+```
+
+to reload it just once run 
+
+```
+%autoreload 2
+```
+
 
 ### Without using Envision CLI
 
