@@ -129,12 +129,16 @@ class FclFreightRateFeedback(BaseModel):
             return True
 
         if self.preferred_shipping_line_ids:
-            shipping_lines = get_shipping_line(id=self.preferred_shipping_line_ids)
+            ids = []
+            for sl_id in self.preferred_shipping_line_ids:
+                ids.append(str(sl_id))
+            
+            shipping_lines = get_shipping_line(id=ids)
             shipping_lines_hash = {}
             for sl in shipping_lines:
                 shipping_lines_hash[sl["id"]] = sl
             for shipping_line_id in self.preferred_shipping_line_ids:
-                if not shipping_line_id in shipping_lines_hash:
+                if not str(shipping_line_id) in shipping_lines_hash:
                     return False
             self.preferred_shipping_lines = shipping_lines
         return True
