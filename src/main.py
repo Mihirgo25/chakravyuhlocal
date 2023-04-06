@@ -8,7 +8,8 @@ from params import *
 from fastapi.responses import JSONResponse
 from database.create_tables import create_table
 from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
-
+# from db_migration import run_migration
+# from migrate import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 
 # sentry_sdk.init(
@@ -46,12 +47,14 @@ async def log_request_response_time(request: Request, call_next):
 def startup():
     if db.is_closed():
         db.connect()
+    # run_migration()
+    # insert()
     # create_table()
     # fcl_freight_migration()
     # create_partition_table()
     # fcl_local_migration()
     # free_day()
-    
+
 
 
 @app.on_event("shutdown")
