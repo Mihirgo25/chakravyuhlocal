@@ -1,8 +1,6 @@
 
 # Welcome to OCEAN DYNAMIC PRICING ENGINE
 
-Staging
-
 To manually create a virtualenv on MacOS and Linux:
 
 ```
