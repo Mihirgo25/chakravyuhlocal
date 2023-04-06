@@ -42,7 +42,7 @@ celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
     'fcl_freigh_rates_to_cogo_assured': {
         'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
-        'schedule': crontab(minute=30,hour=5),
+        'schedule': crontab(minute=00,hour=00),
         'options': {'queue' : 'fcl_freight_rate'}
         }
 }
