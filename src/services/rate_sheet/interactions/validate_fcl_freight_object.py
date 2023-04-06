@@ -59,6 +59,8 @@ def get_freight_object(object):
         rate_object.validate_line_items(object['line_items'])
     except HTTPException as e:
         validation['error']+=' ' + str(e.detail)
+    if not rate_object.validate_shipping_line():
+         validation['error']+=' Invalid shipping line'
     return validation
 
 def get_local_object(object):

@@ -16,6 +16,7 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
+from database.rails_db import get_shipping_line
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -79,10 +80,10 @@ class FclFreightRate(BaseModel):
     origin_port = BinaryJSONField(null=True)
     origin_trade_id = UUIDField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
-    service_provider_id = UUIDField(index=True, null=True)
+    service_provider_id = UUIDField(index=True)
     service_provider = BinaryJSONField(null=True)
     shipping_line = BinaryJSONField(null=True)
-    shipping_line_id = UUIDField(index=True, null=True)
+    shipping_line_id = UUIDField(index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     validities = BinaryJSONField(default = [], null=True)
     weight_limit = BinaryJSONField(null=True)
@@ -165,6 +166,13 @@ class FclFreightRate(BaseModel):
         else:
           return False
       return True
+
+    def validate_shipping_line(self):
+        shipping_line_data = get_shipping_line(id=self.shipping_line_id)
+        if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
+            self.shipping_line = shipping_line_data[0]
+            return True
+        return False
 
     def validate_destination_main_port_id(self):
       if self.destination_port and not self.destination_port['is_icd']:
