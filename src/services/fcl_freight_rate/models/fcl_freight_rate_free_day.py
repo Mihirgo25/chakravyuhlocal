@@ -9,7 +9,7 @@ from micro_services.client import *
 from database.rails_db import *
 from micro_services.client import maps
 from libs.common_validations import validate_shipping_line
-from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 
 
 class BaseModel(Model):
@@ -189,10 +189,10 @@ class FclFreightRateFreeDay(BaseModel):
         if not validity_end:
             raise HTTPException(status_code=400, detail=f"{validity_end} validity end is invalid")
 
-        if validity_end > (datetime.datetime.utcnow() + relativedelta(days=180)):
+        if validity_end > (datetime.datetime.now() + timedelta(days=180)):
             raise HTTPException(status_code=400, detail=validity_end + ' can not be greater than 60 days from current date')
 
-        if validity_start < (datetime.datetime.utcnow() - relativedelta(days = 15)):
+        if validity_start < (datetime.datetime.now() - timedelta(days = 15)):
             raise HTTPException(status_code=400, detail=validity_start + ' can not be less than 15 days from current date')
 
         if validity_end < validity_start:
