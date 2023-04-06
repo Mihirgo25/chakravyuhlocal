@@ -16,7 +16,6 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
-from database.rails_db import get_shipping_line
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
