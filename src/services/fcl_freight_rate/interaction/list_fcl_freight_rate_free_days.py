@@ -86,8 +86,8 @@ def apply_importer_exporter_present_filter(query, filters):
     query = query.where(FclFreightRateFreeDay.importer_exporter_id == None)
     return query
 
-def apply_active_filter(query):
+def apply_active_filter(query,filters):
     return query.where(FclFreightRateFreeDay.validity_end >= datetime.now())
 
-def apply_inactive_filter(query):
+def apply_inactive_filter(query,filters):
     return query.where( FclFreightRateFreeDay.validity_end < datetime.now())
