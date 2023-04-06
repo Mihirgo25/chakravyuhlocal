@@ -86,6 +86,7 @@ def get_direct_indirect_filters(filters):
 def apply_pagination(query, page, page_limit):
     offset = (page - 1) * page_limit
     total_count = query.count()
+    query =query.order_by(SQL("updated_at desc"))
     query = query.offset(offset).limit(page_limit)
     return query, total_count
 
