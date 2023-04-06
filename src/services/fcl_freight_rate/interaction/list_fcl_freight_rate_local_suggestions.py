@@ -32,7 +32,7 @@ def get_query(filters, service_provider_id, sort_by, sort_type):
             query = query.select().where(attrgetter(key)(FclFreightRateLocal) == filters[key])
     already_added_rates = [item.selected_suggested_rate_id for item in query.execute() if item.selected_suggested_rate_id]
     query = FclFreightRateLocal.select().where(FclFreightRateLocal.service_provider_id.in_([INTERNAL_BOOKING['service_provider_id']]), FclFreightRateLocal.is_line_items_error_messages_present == False)
-   
+    
     if already_added_rates:
         query = query.where(FclFreightRateLocal.id.not_in(already_added_rates))
     query = query.order_by(eval("FclFreightRateLocal.{}.{}()".format(sort_by, sort_type)))
@@ -73,9 +73,9 @@ def get_data(query):
         result['detention'] = result['data'].get('detention')
         result['demurrage'] = result['data'].get('demurrage')
         result['plugin'] = result['data'].get('plugin')
-        result['is_detention_missing'] = True if not result['detention'] or not result['detention']['free_limit'] else False
-        result['is_demurrage_missing'] = (not result['demurrage'] or not result['demurrage']['free_limit']) if result['trade_type'] == 'import' else None
-        result['is_plugin_missing'] = (not result['plugin']['free_limit']) if result['container_type'] == 'refer' else None
+        result['is_detention_missing'] = True if not result['detention'] or not (result['detention'] or {}).get('free_limit') else False
+        result['is_demurrage_missing'] = (not (result['demurrage'] or {}).get('free_limit')) if result['trade_type'] == 'import' else None
+        result['is_plugin_missing'] = (not (result['plugin'] or {}).get('free_limit')) if result['container_type'] == 'refer' else None
 
         result['total_price'] = 0
         result['total_price_currency'] = result['line_items'][0].get('currency')
