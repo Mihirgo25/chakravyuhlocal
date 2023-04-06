@@ -167,9 +167,9 @@ class FclFreightRateFeedback(BaseModel):
             if not self.validate_preferred_detention_free_days():
                 raise HTTPException(status_code=422, detail="incorrect preferred detention free days")
 
-        if self.preferred_shipping_line_ids:
-            if not self.validate_preferred_shipping_line_ids():
-                raise HTTPException(status_code=422, detail="incorrect preferred shipping line ids")
+        # if self.preferred_shipping_line_ids:
+        #     if not self.validate_preferred_shipping_line_ids():
+        #         raise HTTPException(status_code=422, detail="incorrect preferred shipping line ids")
 
         if not self.validate_feedback_type():
             raise HTTPException(status_code=422, detail="incorrect feedback type")
