@@ -94,7 +94,7 @@ def apply_pagination(query, page, page_limit):
 
 def detail(data):
     for d in data:
-        d['processed_percent'] = get_processed_percent(d)
+
         total_percentage = 0
         if d['converted_files']:
             for converted_file in d['converted_files']:
@@ -103,6 +103,10 @@ def detail(data):
                 converted_file['total_lines'] = get_total_line(converted_file)
                 converted_file['last_line'] = get_last_line(converted_file)
             d['completed_percent'] = total_percentage/len(d['converted_files'])
+            if d['status'] == 'processing':
+                d['processed_percent'] = get_processed_percent(d)
+            else:
+                d['processed_percent'] = d['completed_percent']
     return data
 
 
