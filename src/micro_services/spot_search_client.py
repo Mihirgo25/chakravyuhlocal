@@ -5,9 +5,9 @@ from micro_services.discover_client import get_instance_url
 class SpotSearchApiClient:
     def __init__(self):
         self.client=GlobalClient(url = str(get_instance_url('spot_search')),headers={
-            "Authorization": "Bearer: " + RUBY_AUTHTOKEN,
+            "Authorization": "Bearer: " + 'a1e269a8-1058-4d51-9b41-9c169ab8d493',
             "AuthorizationScope": RUBY_AUTHSCOPE,
-            "AuthorizationScopeId": RUBY_AUTHSCOPEID,
+            "AuthorizationScopeId": 'f3297aef-dfc1-442a-adcd-eaf9d701d558',
             "Content-Type": "application/json",
             "Accept": "application/json",
         })
