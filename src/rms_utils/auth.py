@@ -2,7 +2,7 @@ import json
 from fastapi import Request
 import httpx
 import json
-from configs.env import APP_ENV
+from configs.env import APP_ENV, DEFAULT_USER_ID
 from micro_services.discover_client import get_instance_url
 
 
@@ -13,7 +13,7 @@ def authorize_token(
     authorization_scope = request.headers.get('authorizationscope')
     authorization_parameters = request.headers.get('authorizationparameters')
     if APP_ENV != "production" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
-        return {"status_code": 200, "isAuthorized": False}
+        return {"status_code": 200, "isAuthorized": True, "setters": { "performed_by_id": DEFAULT_USER_ID, "performed_by_type": "agent" }}
 
     url = get_instance_url('user') + "/verify_request"
 
