@@ -8,7 +8,7 @@ import datetime
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, SPECIFICITY_TYPE
-
+from libs.common_validations import validate_shipping_line
 from database.rails_db import get_shipping_line, get_organization
 
 # validate_validity_object
@@ -59,7 +59,7 @@ def get_freight_object(object):
         rate_object.validate_line_items(object['line_items'])
     except HTTPException as e:
         validation['error']+=' ' + str(e.detail)
-    if not rate_object.validate_shipping_line():
+    if not validate_shipping_line(rate_object):
          validation['error']+=' Invalid shipping line'
     return validation
 
