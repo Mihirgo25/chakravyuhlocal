@@ -86,8 +86,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
       return False
 
     def set_location(self):
-      self.location = {key:value for key, value in maps.list_locations({'filters' : {'id': self.location_id}})['list'] if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-
+      location = maps.list_locations({'filters' : {'id': self.location_id}})
+      if 'list' in location and location['list']:
+        self.location= {key:value for key,value in location['list'][0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
     # def validate_source_id(self):
     #   data = common.list_spot_searches({'filters':{'id':self.source_id}})
     #   if ('list' in data) and (len(data['list']) > 0):
