@@ -1,7 +1,6 @@
 from celery import Celery
 from kombu.serialization import registry
 from configs.env import *
-from fastapi import HTTPException
 from micro_services.client import organization, common
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
