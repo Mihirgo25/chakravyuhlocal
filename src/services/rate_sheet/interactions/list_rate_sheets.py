@@ -98,8 +98,10 @@ def detail(data):
         total_percentage = 0
         if d['converted_files']:
             for converted_file in d['converted_files']:
-                if converted_file.get('percent'):
-                    total_percentage += converted_file.get('percent')
+                try:
+                    total_percentage += converted_file.get('valid_rates_count')/converted_file.get('rates_count')*100
+                except:
+                    total_percentage += 0
                 converted_file['total_lines'] = get_total_line(converted_file)
                 converted_file['last_line'] = get_last_line(converted_file)
             d['completed_percent'] = total_percentage/len(d['converted_files'])
