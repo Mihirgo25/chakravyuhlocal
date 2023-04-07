@@ -40,5 +40,5 @@ def find_object(request):
         ).first()
 
     except:
-        raise HTTPException(status_code=404, detail="no weight limit entry with the given id exists")
+        raise HTTPException(status_code=400, detail="no weight limit entry with the given id exists")
     return objects

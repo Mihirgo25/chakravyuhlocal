@@ -11,7 +11,7 @@ def execute_transaction_code(request):
     object = find_object(request)
 
     if not object:
-        raise HTTPException(status_code=404, detail="Rate id not found")
+        raise HTTPException(status_code=400, detail="Rate id not found")
 
     object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
     object.set_platform_prices()

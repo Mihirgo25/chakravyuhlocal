@@ -242,7 +242,7 @@ class FclFreightRateFeedback(BaseModel):
 
     def send_create_notifications_to_supply_agents(self):
         feedback_info = self.supply_agents_to_notify()
-
+        commodity = ''
         if 'commodity_type' in feedback_info and feedback_info['commodity_type']:
             commodity = feedback_info['commodity_type'].upper()
         origin_port = feedback_info['origin_location']
@@ -256,7 +256,7 @@ class FclFreightRateFeedback(BaseModel):
                 'service_type': 'fcl freight',
                 'origin_port': origin_port,
                 'destination_port': destination_port,
-                'details': {"commodity" : commodity} if commodity else ''
+                'details': {"commodity" : commodity}
             }
         }
 

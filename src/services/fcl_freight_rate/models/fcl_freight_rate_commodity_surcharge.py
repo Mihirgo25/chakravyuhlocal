@@ -148,11 +148,11 @@ class FclFreightRateCommoditySurcharge(BaseModel):
         self.validate_location_types()
         self.set_origin_destination_location_type()
         if not self.validate_container_size():
-            raise HTTPException(status_code=404, detail="Container size not valid")
+            raise HTTPException(status_code=400, detail="Container size not valid")
         if not self.validate_container_type():
-            raise HTTPException(status_code=404, detail="Container type not valid")
+            raise HTTPException(status_code=400, detail="Container type not valid")
         if not self.validate_commodity():
-            raise HTTPException(status_code=404, detail="Commodity not valid")
+            raise HTTPException(status_code=400, detail="Commodity not valid")
         if not self.validate_currency():
-            raise HTTPException(status_code=404, detail="Currency not valid")
+            raise HTTPException(status_code=400, detail="Currency not valid")
         return True
