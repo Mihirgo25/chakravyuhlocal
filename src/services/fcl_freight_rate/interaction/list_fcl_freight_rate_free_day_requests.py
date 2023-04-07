@@ -32,10 +32,10 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
     spot_search_ids = list(set([str(row['source_id']) for row in data]))
     spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
     for search in spot_search_data:
-            spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
+        spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for index in range(0,len(data)):
-            data[index]['spot_search'] = spot_search_hash[str(data[index]['source_id'])]
+        data[index]['spot_search'] = spot_search_hash[str(data[index]['source_id'])]
 
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
