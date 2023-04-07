@@ -279,7 +279,7 @@ def fcl_freight_rates_to_cogo_assured(self):
             data ={"origin_location_id": each['origin_port_id'], "origin_port_id": each['origin_main_port_id'], "destination_location_id": each['destination_port_id'], "destination_port_id": each['destination_main_port_id'], "container_size": each["container_size"], "container_type": each["container_type"], "commodity": each['commodity'], "fcl_rates_updated_date": date}
             common.fcl_freight_rates_to_cogo_assured(data)
     except Exception as exc:
-        raise
+        pass
 
 def batches_query(query,limit,offset):
     return query.limit(limit).offset(offset)
