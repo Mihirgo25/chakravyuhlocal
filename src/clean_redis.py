@@ -27,7 +27,6 @@ def fcl_freight_objects_updation():
     )
 
     for object in rates_to_update.iterator():
-        print('Yes')
         delay_func(object)
     print('Done')
     
