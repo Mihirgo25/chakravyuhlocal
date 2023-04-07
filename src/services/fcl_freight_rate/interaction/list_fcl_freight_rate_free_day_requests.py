@@ -107,7 +107,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     #     'total_closed': total_closed
     # }
 
-        query = (query.select(
+    query = (query.select(
         fn.count(FclFreightRateFreeDayRequest.id).over().alias('get_total'),
         fn.count(FclFreightRateFreeDayRequest.id).filter(FclFreightRateFreeDayRequest.status == 'active').over().alias('get_status_count_active'),
         fn.count(FclFreightRateFreeDayRequest.id).filter(FclFreightRateFreeDayRequest.status == 'inactive').over().alias('get_status_count_inactive'),

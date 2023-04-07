@@ -1,5 +1,4 @@
 from peewee import *
-from datetime import datetime, timedelta
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
@@ -9,7 +8,8 @@ from micro_services.client import *
 from database.rails_db import *
 from micro_services.client import maps
 from libs.common_validations import validate_shipping_line
-from dateutil.relativedelta import relativedelta
+from datetime import timedelta,datetime
+
 
 class BaseModel(Model):
     class Meta:
@@ -188,10 +188,10 @@ class FclFreightRateFreeDay(BaseModel):
         if not validity_end:
             raise HTTPException(status_code=400, detail=f"{validity_end} validity end is invalid")
 
-        if validity_end > (datetime.now() + relativedelta(days=180)):
+        if validity_end.isoformat() > (datetime.now() + timedelta(days=180)).isoformat():
             raise HTTPException(status_code=400, detail=validity_end + ' can not be greater than 60 days from current date')
 
-        if validity_start < (datetime.now() - relativedelta(days = 15)):
+        if validity_start.isoformat() < (datetime.now() - timedelta(days = 15)).isoformat():
             raise HTTPException(status_code=400, detail=validity_start + ' can not be less than 15 days from current date')
 
         if validity_end < validity_start:
