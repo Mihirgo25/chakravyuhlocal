@@ -669,10 +669,9 @@ class FclFreightRate(BaseModel):
 
       origin_local_object_id = origin_locals[0]["id"] if len(origin_locals) > 0 else None
       destination_local_object_id = destination_locals[0]["id"] if len(destination_locals) > 0 else None
-
-      FclFreightRate.update(origin_local_id = origin_local_object_id,destination_local_id=destination_local_object_id).where(
-        FclFreightRate.id == self.id
-      ).execute()
+      
+      self.origin_local_id = origin_local_object_id
+      self.destination_local_id = destination_local_object_id
 
     def detail(self):
       data = {
