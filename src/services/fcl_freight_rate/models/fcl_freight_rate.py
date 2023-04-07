@@ -101,7 +101,7 @@ class FclFreightRate(BaseModel):
       return super(FclFreightRate, self).save(*args, **kwargs)
 
     class Meta:
-        table_name = 'fcl_freight_rates'
+        table_name = 'fcl_freight_rates_temp'
 
     def set_locations(self):
 
