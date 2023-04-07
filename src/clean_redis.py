@@ -28,10 +28,11 @@ def fcl_freight_objects_updation():
     )
     
     result = parallel(n_jobs=4)(delayed(delay_func)(object) for object in rates_to_update.iterator())
+    print('Done')
     
     
 def delay_func(object):
     from celery_worker import update_multiple_service_objects
-    update_multiple_service_objects.apply_async(kwargs={"object":object},queue='low')
+    update_multiple_service_objects(object)
     
     
