@@ -23,11 +23,13 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_s
 
     if not all_fields_present(filters):
         return {}
+    
+    all_service_provider_ids = []
 
     if isinstance(filters['service_provider_id'],str):
-        all_service_provider_ids = [filters["service_provider_id"]]
+        all_service_provider_ids += [filters["service_provider_id"]]
     else:
-        all_service_provider_ids = filters["service_provider_id"]
+        all_service_provider_ids += filters["service_provider_id"]
 
     if 'local_service_provider_ids' in filters:
         all_service_provider_ids+=filters["local_service_provider_ids"]
