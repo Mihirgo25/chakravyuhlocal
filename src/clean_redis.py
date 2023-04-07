@@ -1,7 +1,6 @@
 from database.db_session import rd
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from celery_worker import update_multiple_service_objects
-from joblib import parallel, delayed
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
@@ -26,13 +25,14 @@ def fcl_freight_objects_updation():
         FclFreightRate.sourced_by.is_null(True) |
         FclFreightRate.procured_by.is_null(True)
     )
-    
-    result = parallel(n_jobs=4)(delayed(delay_func)(object) for object in rates_to_update.iterator())
+
+    for object in rates_to_update.iterator():
+        print('Yes')
+        delay_func(object)
     print('Done')
     
     
 def delay_func(object):
-    from celery_worker import update_multiple_service_objects
-    update_multiple_service_objects(object)
+    get_multiple_service_objects(object)
     
     
