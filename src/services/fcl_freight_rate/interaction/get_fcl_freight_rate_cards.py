@@ -93,15 +93,15 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
     service_provider_ids = {}
     service_provider_ids[local_default_service_provider] = True
     for rate in origin_rates:
-        # if rate["service_provider_id"]:
-        #     service_provider_ids[rate["service_provider_id"]] = True
+        if rate["service_provider_id"]:
+            service_provider_ids[rate["service_provider_id"]] = True
         if rate["origin_main_port_id"]:
             main_port_ids.append(rate["origin_main_port_id"])
         shipping_line_ids.append(rate["shipping_line_id"])
 
     for rate in destination_rates:
-        # if rate["service_provider_id"]:
-        #     service_provider_ids[rate["service_provider_id"]] = True
+        if rate["service_provider_id"]:
+            service_provider_ids[rate["service_provider_id"]] = True
         if rate["destination_main_port_id"]:
             main_port_ids.append(rate["destination_main_port_id"])
         shipping_line_ids.append(rate["shipping_line_id"])
@@ -147,18 +147,19 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
     if local_type == 'destination_local':
         trade_type = 'import'
     port_id = rate['origin_port_id'] if trade_type == 'export' else rate['destination_port_id']
+    shipping_line_id = rate['shipping_line_id']
     main_port_id = None
     if trade_type == 'export' and rate['origin_main_port_id']:
         main_port_id = rate['origin_main_port_id']
     if trade_type == 'import' and rate['destination_main_port_id']:
         main_port_id = rate['destination_main_port_id']
     for local_rate in local_rates:
-        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
+        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:
             matching_locals[local_rate["service_provider_id"]] = local_rate
-    if rate["service_provider_id"] in matching_locals:
-        return matching_locals[rate["service_provider_id"]]
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
+    if rate["service_provider_id"] in matching_locals:
+        return matching_locals[rate["service_provider_id"]]
     return None
 
 
