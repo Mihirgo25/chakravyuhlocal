@@ -20,7 +20,7 @@ from currency_converter import CurrencyConverter
 from services.fcl_freight_rate.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
 
 CELERY_CONFIG = {
-    "enable_utc": False,
+    "enable_utc": True,
     "task_serializer": "pickle",
     "event_serializer": "pickle",
     "result_serializer": "pickle",
@@ -254,7 +254,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 def fcl_freight_rates_to_cogo_assured(self):
     try:
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
-            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])        
+            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40']) 
         total_count = query.count()
         batches = int(total_count/5000)
         last_batch = total_count%5000
@@ -269,7 +269,7 @@ def fcl_freight_rates_to_cogo_assured(self):
 
         query_result = []
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-            futures = [executor.submit(execute_query, query) for query in queries] 
+            futures = [executor.submit(execute_query, query) for query in queries]
 
             for i in range(0,len(futures)): 
                 result = futures[i].result()
@@ -279,7 +279,7 @@ def fcl_freight_rates_to_cogo_assured(self):
             data ={"origin_location_id": each['origin_port_id'], "origin_port_id": each['origin_main_port_id'], "destination_location_id": each['destination_port_id'], "destination_port_id": each['destination_main_port_id'], "container_size": each["container_size"], "container_type": each["container_type"], "commodity": each['commodity'], "fcl_rates_updated_date": date}
             common.fcl_freight_rates_to_cogo_assured(data)
     except Exception as exc:
-        raise self.retry(exc=exc)
+        raise
 
 def batches_query(query,limit,offset):
     return query.limit(limit).offset(offset)

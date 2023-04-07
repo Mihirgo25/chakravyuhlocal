@@ -31,18 +31,3 @@ class FclRatePredictionFeedback(BaseModel):
 
     class Meta:
         db_table = "fcl_rate_prediction_feedback"
-        indexes = (
-            (
-                (
-                    "origin_port_id",
-                    "destination_port_id",
-                    "origin_country_id",
-                    "destination_country_id",
-                    "shipping_line_id",
-                    "container_size",
-                    "container_type",
-                    "commodity",
-                ),
-                False,
-            ),
-        )
