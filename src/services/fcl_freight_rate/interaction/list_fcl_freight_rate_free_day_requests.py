@@ -35,10 +35,7 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for index in range(0,len(data)):
-        try:
             data[index]['spot_search'] = spot_search_hash[str(data[index]['source_id'])]
-        except Exception:
-            continue
 
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}

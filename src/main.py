@@ -33,20 +33,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-async def set_client_base_url(request: Request, call_next):
-    url = request.headers.get('dev_server_url')
-    common.reset_context_var(url)
-    organization.reset_context_var(url) 
-    partner.reset_context_var(url)    
-    maps.reset_context_var(url)  
-    spot_search.reset_context_var(url) 
-    checkout.reset_context_var(url) 
-    shipment.reset_context_var(url) 
-    response = await call_next(request)
-    return response
-
-app.middleware('http')(set_client_base_url)
-
 
 if APP_ENV != 'production':
     async def set_client_base_url(request: Request, call_next):
