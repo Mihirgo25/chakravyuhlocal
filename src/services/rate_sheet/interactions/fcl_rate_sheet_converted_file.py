@@ -181,7 +181,7 @@ def process_fcl_freight_local(params, converted_file, update):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    edit_file = open(get_file_path(converted_file), 'w',newline="")
+    edit_file = open(get_file_path(converted_file), 'w')
     file_path = original_path
     last_row = []
     with open(file_path, 'rb') as f:
