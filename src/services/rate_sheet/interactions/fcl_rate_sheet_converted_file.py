@@ -82,10 +82,7 @@ def get_airport_id(port_code, country_code):
 
 def get_shipping_line_id(shipping_line_name):
     shipping_line_name = shipping_line_name.strip()
-    try:
-        shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
-    except:
-        shipping_line_id = None
+    shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
     return shipping_line_id
 
 

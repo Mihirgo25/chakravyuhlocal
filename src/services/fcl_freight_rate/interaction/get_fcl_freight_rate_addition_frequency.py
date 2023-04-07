@@ -32,7 +32,7 @@ def apply_indirect_filters(query, filters):
   return query
 
 def get_data(query, sort_type, group_by):
-    data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', FclFreightRate.updated_at).alias(f'date_trunc_{group_by}_fcl_freight_rates_updated_at')
+    data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', FclFreightRate.updated_at).alias(f'date_trunc_{group_by}_fcl_freight_rates_temp_updated_at')
         ).group_by(fn.date_trunc(f'{group_by}', FclFreightRate.updated_at)
         ).order_by(eval(f"fn.date_trunc('{group_by}', FclFreightRate.updated_at).{sort_type}()")))
     return jsonable_encoder(list(data.dicts()))

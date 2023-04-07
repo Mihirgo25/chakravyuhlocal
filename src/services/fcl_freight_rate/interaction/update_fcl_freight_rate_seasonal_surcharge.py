@@ -32,7 +32,7 @@ def execute_transaction_code(request):
     fcl_freight_rate_seasonal_surcharge = FclFreightRateSeasonalSurcharge.get(id=request['id'])
 
     if not fcl_freight_rate_seasonal_surcharge:
-        raise HTTPException(status_code=404, detail="Seasonal Surcharge not found")
+        raise HTTPException(status_code=400, detail="Seasonal Surcharge not found")
     
     for k, v in request.items():
         if k in ['price', 'currency', 'validity_start', 'validity_end', 'remarks']:

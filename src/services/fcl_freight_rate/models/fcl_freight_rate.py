@@ -101,7 +101,7 @@ class FclFreightRate(BaseModel):
       return super(FclFreightRate, self).save(*args, **kwargs)
 
     class Meta:
-        table_name = 'fcl_freight_rates'
+        table_name = 'fcl_freight_rates_temp'
 
     def set_locations(self):
 
@@ -302,19 +302,19 @@ class FclFreightRate(BaseModel):
     def validate_origin_local(self):
       if 'origin_local' in self.dirty_fields and self.origin_local:
         if not self.origin_local_instance.validate_duplicate_charge_codes():
-            raise HTTPException(status_code=404,detail="Duplicate line items in Origin Local")
+            raise HTTPException(status_code=400,detail="Duplicate line items in Origin Local")
         invalid_charge_codes = self.origin_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes())
         if invalid_charge_codes:
-            raise HTTPException(status_code=404,detail=f"{invalid_charge_codes} are invalid Origin Local line items")
+            raise HTTPException(status_code=400,detail=f"{invalid_charge_codes} are invalid Origin Local line items")
 
 
     def validate_destination_local(self):
       if 'destination_local' in self.dirty_fields and self.destination_local:
         if not self.destination_local_instance.validate_duplicate_charge_codes():
-            raise HTTPException(status_code=404,detail="Duplicate line items in Destination Local")
+            raise HTTPException(status_code=400,detail="Duplicate line items in Destination Local")
         invalid_charge_codes = self.destination_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes())
         if invalid_charge_codes:
-            raise HTTPException(status_code=404,detail=f"{invalid_charge_codes} are invalid Destination Local line items")
+            raise HTTPException(status_code=400,detail=f"{invalid_charge_codes} are invalid Destination Local line items")
 
     def validate_validity_object(self, validity_start, validity_end):
       if not validity_start:
@@ -669,10 +669,9 @@ class FclFreightRate(BaseModel):
 
       origin_local_object_id = origin_locals[0]["id"] if len(origin_locals) > 0 else None
       destination_local_object_id = destination_locals[0]["id"] if len(destination_locals) > 0 else None
-
-      FclFreightRate.update(origin_local_id = origin_local_object_id,destination_local_id=destination_local_object_id).where(
-        FclFreightRate.id == self.id
-      ).execute()
+      
+      self.origin_local_id = origin_local_object_id
+      self.destination_local_id = destination_local_object_id
 
     def detail(self):
       data = {
