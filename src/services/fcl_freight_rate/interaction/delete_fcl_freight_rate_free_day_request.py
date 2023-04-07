@@ -12,7 +12,7 @@ def execute_transaction_code(request):
     object = find_objects(request)
 
     if not object:
-      raise HTTPException(status_code=404, detail="Freight rate free day request id not found")
+      raise HTTPException(status_code=400, detail="Freight rate free day request id not found")
 
     object.status = 'inactive'
     object.closed_by_id = request['performed_by_id']

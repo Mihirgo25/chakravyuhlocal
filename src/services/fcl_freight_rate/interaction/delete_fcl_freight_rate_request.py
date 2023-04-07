@@ -12,7 +12,7 @@ def execute_transaction_code(request):
     objects = find_objects(request)
 
     if not objects:
-      raise HTTPException(status_code=404, detail="Freight rate request id not found")
+      raise HTTPException(status_code=400, detail="Freight rate request id not found")
 
     for obj in objects:
         obj.status = 'inactive'

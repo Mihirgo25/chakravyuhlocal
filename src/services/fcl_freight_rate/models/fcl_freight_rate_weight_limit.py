@@ -87,7 +87,7 @@ class FclFreightRateWeightLimit(BaseModel):
                     self.origin_destination_location_type = str(self.origin_location_type) + ':' + str(self.destination_location_type)
                     count += 1
             if count != 2:
-                raise HTTPException(status_code=404, detail="Invalid location")
+                raise HTTPException(status_code=400, detail="Invalid location")
 
     # def valid_uniqueness(self):
     #     freight_weight_limit_cnt = FclFreightRateWeightLimit.select().where(
@@ -107,7 +107,7 @@ class FclFreightRateWeightLimit(BaseModel):
 
     def validate_free_limit(self):
       if not self.free_limit:
-        raise HTTPException(status_code=404, detail="free limit required")
+        raise HTTPException(status_code=400, detail="free limit required")
 
     def validate_slabs(self):
         if self.slabs:
@@ -116,16 +116,16 @@ class FclFreightRateWeightLimit(BaseModel):
                 try:
                     Slab.validate(slab)
                 except:
-                    raise HTTPException(status_code=404, detail=f"Incorrect Slab: {slab}")
+                    raise HTTPException(status_code=400, detail=f"Incorrect Slab: {slab}")
 
             slabs = sorted(self.slabs, key=lambda slab:slab['lower_limit'])
 
             if len(slabs) != 0 and float(self.free_limit) != 0 and (float(self.free_limit) > float(slabs[0]['lower_limit'])):
-                raise HTTPException(status_code=404, detail='lower limit should be greater than free limit')
+                raise HTTPException(status_code=400, detail='lower limit should be greater than free limit')
             
             for index, slab in enumerate(slabs):
                 if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index != 0 and float(slab['lower_limit']) <= float(slabs[index - 1]['upper_limit'])):
-                    raise HTTPException(status_code=404, detail=f'{slab} invalid')
+                    raise HTTPException(status_code=400, detail=f'{slab} invalid')
 
     def validate_before_save(self):
 

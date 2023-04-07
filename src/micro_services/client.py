@@ -11,7 +11,7 @@ from configs.env import *
 
 maps = organization = partner = spot_search = checkout = shipment = None
 
-if APP_ENV == 'development':
+if APP_ENV != 'production':
     common = organization = partner = maps = spot_search = checkout = shipment  = DevelopmentApiClient()
 else:
     common = CommonApiClient()

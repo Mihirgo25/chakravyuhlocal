@@ -19,6 +19,6 @@ class DevelopmentApiClient(CommonApiClient,AuthApiClient,CheckoutApiClient,SpotS
             "Content-Type": "application/json",
             "Accept": "application/json",
         })
-        
+
     def reset_context_var(self,url):
-        self.client.url = url
+        self.client.url.set(url)
