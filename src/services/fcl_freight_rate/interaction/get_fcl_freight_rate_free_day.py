@@ -41,5 +41,5 @@ def find_object(request):
             FclFreightRateFreeDay.importer_exporter_id == request['importer_exporter_id']
         ).first()
     except:
-        raise HTTPException(status_code=404, detail="no free day entry with the given id exists")
+        raise HTTPException(status_code=400, detail="no free day entry with the given id exists")
     return objects
