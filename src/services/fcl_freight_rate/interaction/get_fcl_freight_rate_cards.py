@@ -56,7 +56,7 @@ def initialize_freight_query(requirements):
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
 
     if requirements['ignore_omp_dmp_sl_sps']:
-        freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != (requirements['ignore_omp_dmp_sl_sps']))
+        freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
     return freight_query
 
 def is_rate_missing_locals(local_type, rate):
