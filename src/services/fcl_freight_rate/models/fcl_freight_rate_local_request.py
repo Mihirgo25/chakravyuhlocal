@@ -117,19 +117,19 @@ class FclFreightRateLocalRequest(BaseModel):
     def validate(self):
         self.set_ports()
         if not self.validate_source():
-            raise HTTPException(status_code=404, detail="incorrect source")
+            raise HTTPException(status_code=400, detail="incorrect source")
 
         if not self.validate_source_id():
-            raise HTTPException(status_code=404, detail="invalid source id")
+            raise HTTPException(status_code=400, detail="invalid source id")
 
         if not self.validate_performed_by_id():
-            raise HTTPException(status_code=404, detail='Invalid Performed by ID')
+            raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
         if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=404, detail="incorrect performed by id")
+            raise HTTPException(status_code=400, detail="incorrect performed by id")
 
         if not self.validate_closed_by_id():
-            raise HTTPException(status_code=404, detail='Invalid Closed by ID')
+            raise HTTPException(status_code=400, detail='Invalid Closed by ID')
         return True
 
     def send_closed_notifications_to_sales_agent(self):

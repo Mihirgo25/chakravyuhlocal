@@ -48,7 +48,7 @@ class FclFreightRateBulkOperation(BaseModel):
     
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
-            raise HTTPException(status_code=404,detail='Invalid action Name')
+            raise HTTPException(status_code=400,detail='Invalid action Name')
     
     def validate_extend_validity_data(self):
         data = self.data

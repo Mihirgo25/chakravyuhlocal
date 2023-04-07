@@ -30,7 +30,7 @@ def execute_transaction_code(request):
     fcl_freight_rate_commodity_surcharge = FclFreightRateCommoditySurcharge.get_by_id(request['id'])
 
     if not fcl_freight_rate_commodity_surcharge:
-        raise HTTPException(status_code=404, detail="Commodity Surcharge not found")
+        raise HTTPException(status_code=400, detail="Commodity Surcharge not found")
 
     for k, v in request.items():
         if k in ['price', 'currency', 'remarks']:
