@@ -52,7 +52,7 @@ def execute_transaction_code(request):
     update_multiple_service_objects.apply_async(kwargs={'object':free_day_request},queue='low')
 
     return {
-      'id': request.id
+      'id': free_day_request.id
     }
 
 def create_audit(request, free_day_request_id):
@@ -68,7 +68,7 @@ def create_audit(request, free_day_request_id):
     )
 
 def check_validations(free_day_request):
-    if free_day_request.validate_source() and free_day_request.validate_performed_by() and free_day_request.validate_performed_by_org() and free_day_request.validate_shipping_line_id() and free_day_request.validate_source_id():
+    if free_day_request.validate_source() and free_day_request.validate_performed_by() and free_day_request.validate_performed_by_org() and free_day_request.validate_shipping_line_id():
         return True
     else:
         return False

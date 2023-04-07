@@ -479,8 +479,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   rate_sheet_id: str = None
   performed_by_id: str = None
   performed_by_type: str = None
-  sourced_by_id: str
-  procured_by_id: str
+  sourced_by_id: str = None
+  procured_by_id: str = None
   trade_type: str
   location_id: str
   free_days_type: str
@@ -506,8 +506,8 @@ class UpdateFclFreightRateFreeDay(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
-  procured_by_id: str
-  sourced_by_id: str
+  procured_by_id: str = None
+  sourced_by_id: str = None
   id: str
   free_limit: int = None
   validity_start: datetime = datetime.now()

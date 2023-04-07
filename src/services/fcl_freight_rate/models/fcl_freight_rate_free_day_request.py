@@ -86,8 +86,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
       return False
 
     def set_location(self):
-      self.location = {key:value for key, value in maps.list_locations({'filters' : {'id': self.location_id}})['list'] if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-
+      location = maps.list_locations({'filters' : {'id': self.location_id}})
+      if 'list' in location and location['list']:
+        self.location= {key:value for key,value in location['list'][0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
     # def validate_source_id(self):
     #   data = common.list_spot_searches({'filters':{'id':self.source_id}})
     #   if ('list' in data) and (len(data['list']) > 0):
@@ -103,7 +104,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
         return False
 
     def validate_performed_by_org(self):
-      data = get_organization(id=self.performed_by_id)
+      data = get_organization(id=self.performed_by_org_id)
       if (len(data) > 0):
           data = data[0]
           if data.get('account_type',None) == 'importer_exporter':
@@ -117,6 +118,6 @@ class FclFreightRateFreeDayRequest(BaseModel):
       data = get_shipping_line(id=self.shipping_line_id)
       if len(data) > 0:
         data = data[0]
-        if data.get('account_type',None) == 'shipping_line':
+        if data.get('operator_type',None) == 'shipping_line':
           return True
       return False
