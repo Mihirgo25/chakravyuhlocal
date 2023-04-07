@@ -34,6 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 if APP_ENV != 'production':
     async def set_client_base_url(request: Request, call_next):
         url = request.headers.get('dev_server_url')
