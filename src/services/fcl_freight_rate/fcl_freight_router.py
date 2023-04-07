@@ -370,6 +370,7 @@ def get_fcl_freight_rate_cards_data(
     cogo_entity_id: str = None,
     importer_exporter_id: str = None,
     bls_count: int = 1,
+    commodity: str = None,
     shipping_line_id: str = None,
     service_provider_id: str = None,
     include_confirmed_inventory_rates: bool =False,

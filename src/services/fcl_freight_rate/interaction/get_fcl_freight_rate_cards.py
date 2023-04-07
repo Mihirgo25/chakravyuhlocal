@@ -624,11 +624,11 @@ def pre_discard_noneligible_rates(freight_rates, requirements):
     if len(freight_rates) > 0:
         freight_rates = discard_noneligible_lsps(freight_rates, requirements)
     if len(freight_rates) > 0:
-        freight_rates = discard_noneligible_shipping_lines(freight_rates, requirements)
+        freight_rates = discard_noneligible_shipping_lines(freight_rates)
     return freight_rates
 
 def post_discard_noneligible_rates(freight_rates, requirements):
-    freight_rates = discard_no_free_day_rates(freight_rates)
+    freight_rates = discard_no_free_day_rates(freight_rates, requirements)
     freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 

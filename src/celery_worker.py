@@ -14,7 +14,10 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
+from database.db_session import db_cogo_lens
 import concurrent.futures
+from currency_converter import CurrencyConverter
+from services.fcl_freight_rate.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
 
 CELERY_CONFIG = {
     "enable_utc": False,
@@ -251,37 +254,6 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 def fcl_freight_rates_to_cogo_assured(self):
     try:
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
-            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])
-        total_count = query.count()
-        batches = int(total_count/5000)
-        last_batch = total_count%5000
-        offset =0
-        limit =5000
-        queries =[]
-        for each in range(0,batches):
-            queries.append(batches_query(query,limit,offset))
-            offset = offset+limit
-        if last_batch:
-            queries.append(batches_query(query,last_batch,offset))
-
-        query_result = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-            futures = [executor.submit(execute_query, query) for query in queries]
-
-            for i in range(0,len(futures)):
-                result = futures[i].result()
-                query_result.extend(result)
-        date = datetime.now() - timedelta(days = 1)
-        for each in query_result:
-            data ={"origin_location_id": each['origin_port_id'], "origin_port_id": each['origin_main_port_id'], "destination_location_id": each['destination_port_id'], "destination_port_id": each['destination_main_port_id'], "container_size": each["container_size"], "container_type": each["container_type"], "commodity": each['commodity'], "fcl_rates_updated_date": date}
-            common.fcl_freight_rates_to_cogo_assured(data)
-    except Exception as exc:
-        pass
-
-@celery.task(bind = True, retry_backoff=True,max_retries=5)
-def fcl_freight_rates_to_cogo_assured(self):
-    try:
-        query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
             ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])        
         total_count = query.count()
         batches = int(total_count/5000)
@@ -316,53 +288,43 @@ def execute_query(query):
     return list(query.dicts())
 
 
+@celery.task()
+def create_fcl_freight_rate_feedback_for_prediction(result):
+    with db_cogo_lens.atomic():
+        for feedback in result:
+            if "origin_country_id" not in feedback:
+                feedback["origin_country_id"] = None
+            if "destination_country_id" not in feedback:
+                feedback["destination_country_id"] = None
+            record = {
+                "origin_port_id": feedback["origin_port_id"],
+                "destination_port_id": feedback["destination_port_id"],
+                "origin_country_id": feedback["origin_country_id"],
+                "destination_country_id": feedback["destination_country_id"],
+                "shipping_line_id": feedback["shipping_line_id"],
+                "container_size": feedback["container_size"],
+                "container_type": feedback["container_type"],
+                "commodity": feedback["commodity"],
+                "validity_start": feedback['validities'][0]["validity_start"],
+                "validity_end": feedback['validities'][0]["validity_end"],
+                "predicted_price_currency": "USD",
+                "predicted_price": feedback["validities"][0]['line_items'][0]['price'] if ("validities" in feedback) and (feedback['validities']) else None,
+                "actual_price": feedback["actual_price"] if "actual_price" in feedback else None,
+                "actual_price_currency": feedback["actual_price_currency"] if "actual_price_currency" in feedback else None,
+                "source" : "predicted_for_rate_cards",
+                "creation_id" : feedback["id"],
+                "importer_exporter_id" : feedback['importer_exporter_id']
+            }
 
+            new_rate = FclRatePredictionFeedback.create(**record)
+            feedback['id'] = new_rate.id
 
+        c = CurrencyConverter(fallback_on_missing_rate=True, fallback_on_wrong_date=True)
 
-
-
-
-def execute_query(query):
-    return list(query.dicts())
-
-# @celery.task()
-# def create_fcl_freight_rate_feedback_for_prediction(result):
-#     with db_cogo_lens.atomic() as transaction:
-#         try:
-#             for feedback in result:
-#                 if "origin_country_id" not in feedback:
-#                     feedback["origin_country_id"] = None
-#                 if "destination_country_id" not in feedback:
-#                     feedback["destination_country_id"] = None
-#                 record = {
-#                     "origin_port_id": feedback["origin_port_id"],
-#                     "destination_port_id": feedback["destination_port_id"],
-#                     "origin_country_id": feedback["origin_country_id"],
-#                     "destination_country_id": feedback["destination_country_id"],
-#                     "shipping_line_id": feedback["shipping_line_id"],
-#                     "container_size": feedback["container_size"],
-#                     "container_type": feedback["container_type"],
-#                     "commodity": feedback["commodity"],
-#                     "validity_start": feedback['validities'][0]["validity_start"],
-#                     "validity_end": feedback['validities'][0]["validity_end"],
-#                     "predicted_price_currency": "USD",
-#                     "predicted_price": feedback["validities"][0]['line_items'][0]['price'] if ("validities" in feedback) and (feedback['validities']) else None,
-#                     "actual_price": feedback["actual_price"] if "actual_price" in feedback else None,
-#                     "actual_price_currency": feedback["actual_price_currency"] if "actual_price_currency" in feedback else None,
-#                     "source" : "predicted_for_rate_cards",
-#                     "creation_id" : feedback["id"],
-#                     "importer_exporter_id" : feedback['importer_exporter_id']
-#                 }
-
-#                 new_rate = FclRatePredictionFeedback.create(**record)
-#                 feedback['id'] = new_rate.id
-
-#             c = CurrencyConverter(fallback_on_missing_rate=True, fallback_on_wrong_date=True)
-
-#             for val in result:
-#                 if ("predicted_price" in val) and val['predicted_price']:
-#                     val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.now()))
-#             return result
+        for val in result:
+            if ("predicted_price" in val) and val['predicted_price']:
+                val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.now()))
+        return result
 
 # @celery.task()
 # def update_expired_fcl_freight_rate_price():

@@ -14,6 +14,8 @@ def port_distance(cord1, cord2):
 
 def get_fcl_freight_predicted_rate(request, key):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+    from celery_worker import create_fcl_freight_rate_feedback_for_prediction
+
     if type(request) == dict:
         request = request
     else:
@@ -35,23 +37,8 @@ def get_fcl_freight_predicted_rate(request, key):
         countries_distance = port_distance(location_dict[origin_country_id],location_dict[destination_country_id])
     container_size = int(request['container_size'][:2])
     model = joblib.load(open(MODEL_PATH, "rb"))
-    if key == 'expired_objects':
-        validity_start = datetime.now()
-        validity_end = datetime.now() + timedelta(days = 14)
-        df = pd.DataFrame()
-        df['container_size'] = [container_size]
-        df['shipping_line_rank'] = shipping_line_dict[str(request['shipping_line_id'])]
 
-        df['Distance'] = [ports_distance]
-        df['Country_Distance'] = [countries_distance]
-        df['ds'] = validity_start
-        model_result = model.predict(df)['yhat']
-        request["predicted_price"] = round(np.exp(model_result[0]),1)
-        request["validity_start"] = validity_start.date()
-        request["validity_end"] = validity_end.date()
-        return request
-    
-    else:
+    if key == 'rate_cards':
         validity_start = datetime.now().date().isoformat()
         validity_end = (datetime.now() + timedelta(days = 7)).date().isoformat()
         request['origin_main_port_id'] = origin_main_port_dict.get(request['origin_port_id'], None)
@@ -70,7 +57,7 @@ def get_fcl_freight_predicted_rate(request, key):
 
             model_request = model.predict(df)['yhat']
 
-            request = {
+            rate_card_param = {
                 'origin_port_id': request['origin_port_id'],
                 'origin_main_port_id': request['origin_main_port_id'],
                 'destination_port_id': request['destination_port_id'],
@@ -112,7 +99,7 @@ def get_fcl_freight_predicted_rate(request, key):
                 'source':'predicted'
             }
             if request['container_type'] in ['open_top', 'flat_rack', 'iso_tank'] or request['container_size'] == '45HC':
-                request['line_items'].append({
+                rate_card_param['line_items'].append({
                     "code": "SPE",
                     "unit": "per_container",
                     "price": 0,
@@ -123,7 +110,7 @@ def get_fcl_freight_predicted_rate(request, key):
                 })
             
             if request['commodity'] in HAZ_CLASSES:
-                request['line_items'].append({
+                rate_card_param['line_items'].append({
                     "code": "HSC",
                     "unit": "per_container",
                     "price": 0,
@@ -132,9 +119,10 @@ def get_fcl_freight_predicted_rate(request, key):
                     ],
                     "slabs": []
                 })
-            rate_card_id = create_fcl_freight_rate_data(request)['id']
-
-            
+            rate_card_id = create_fcl_freight_rate_data(rate_card_param)['id']
+            print(rate_card_id)
+            create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':rate_card_param})
+        
         # rate_cards = jsonable_encoder(list(FclFreightRate.select(
         #     FclFreightRate.id,
         #     FclFreightRate.validities,
@@ -161,3 +149,19 @@ def get_fcl_freight_predicted_rate(request, key):
         #     ).dicts()))
     
         # return rate_cards
+
+        else: 
+            validity_start = datetime.now()
+            validity_end = datetime.now() + timedelta(days = 14)
+            df = pd.DataFrame()
+            df['container_size'] = [container_size]
+            df['shipping_line_rank'] = shipping_line_dict[str(request['shipping_line_id'])]
+
+            df['Distance'] = [ports_distance]
+            df['Country_Distance'] = [countries_distance]
+            df['ds'] = validity_start
+            model_result = model.predict(df)['yhat']
+            request["predicted_price"] = round(np.exp(model_result[0]),1)
+            request["validity_start"] = validity_start.date()
+            request["validity_end"] = validity_end.date()
+            return request
