@@ -120,7 +120,6 @@ def get_fcl_freight_predicted_rate(request, key):
                     "slabs": []
                 })
             rate_card_id = create_fcl_freight_rate_data(rate_card_param)['id']
-            print(rate_card_id)
             create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':rate_card_param})
         
         # rate_cards = jsonable_encoder(list(FclFreightRate.select(
