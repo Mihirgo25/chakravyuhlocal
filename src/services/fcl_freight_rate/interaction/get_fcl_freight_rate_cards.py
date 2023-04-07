@@ -93,15 +93,15 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
     service_provider_ids = {}
     service_provider_ids[local_default_service_provider] = True
     for rate in origin_rates:
-        if rate["service_provider_id"]:
-            service_provider_ids[rate["service_provider_id"]] = True
+        # if rate["service_provider_id"]:
+        #     service_provider_ids[rate["service_provider_id"]] = True
         if rate["origin_main_port_id"]:
             main_port_ids.append(rate["origin_main_port_id"])
         shipping_line_ids.append(rate["shipping_line_id"])
 
     for rate in destination_rates:
-        if rate["service_provider_id"]:
-            service_provider_ids[rate["service_provider_id"]] = True
+        # if rate["service_provider_id"]:
+        #     service_provider_ids[rate["service_provider_id"]] = True
         if rate["destination_main_port_id"]:
             main_port_ids.append(rate["destination_main_port_id"])
         shipping_line_ids.append(rate["shipping_line_id"])
