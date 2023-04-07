@@ -49,15 +49,17 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclFreightRateLocalRequest.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
+    return query.where(FclFreightRateLocalRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclFreightRateLocalRequest.created_at.cast('date') <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%dT%H:%M:%S.%f%z').date())
+    return query.where(FclFreightRateLocalRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
 
 def apply_similar_id_filter(query,filters):
-    rate_request_obj = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id, FclFreightRateLocalRequest.trade_type, FclFreightRateLocalRequest.container_size, FclFreightRateLocalRequest.container_type).where(FclFreightRateLocalRequest.id == filters['similar_id']).dicts().get()
-    query = query.where(FclFreightRateLocalRequest.id != filters['similar_id'])
-    return query.where(FclFreightRateLocalRequest.port_id == rate_request_obj['port_id'], FclFreightRateLocalRequest.trade_type == rate_request_obj['trade_type'], FclFreightRateLocalRequest.container_size == rate_request_obj['container_size'], FclFreightRateLocalRequest.container_type == rate_request_obj['container_type'])
+    rate_request_obj = FclFreightRateLocalRequest.select(FclFreightRateLocalRequest.port_id, FclFreightRateLocalRequest.trade_type, FclFreightRateLocalRequest.container_size, FclFreightRateLocalRequest.container_type).where(FclFreightRateLocalRequest.id == filters['similar_id']).first()
+    if rate_request_obj:
+        query = query.where(FclFreightRateLocalRequest.id != filters['similar_id'])
+        query.where(FclFreightRateLocalRequest.port_id == rate_request_obj.port_id, FclFreightRateLocalRequest.trade_type == rate_request_obj.trade_type, FclFreightRateLocalRequest.container_size == rate_request_obj.container_size, FclFreightRateLocalRequest.container_type == rate_request_obj.container_type)
+    return query
 
 
 def get_pagination_data(query, page, page_limit):

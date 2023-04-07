@@ -104,7 +104,7 @@ def apply_hash_indirect_filters(query, filter, filters):
         return query
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateAudit.created_at.cast('date') > datetime.strptime(filters['validity_created_at_greater_than'],'%Y-%m-%dT%H:%M:%S.%fz').date())
+    query = query.where(FclFreightRateAudit.created_at.cast('date') > datetime.fromisoformat(filters['validity_created_at_greater_than']).date())
     return query
 
 def apply_fcl_freight_rate_filter(query, filters):

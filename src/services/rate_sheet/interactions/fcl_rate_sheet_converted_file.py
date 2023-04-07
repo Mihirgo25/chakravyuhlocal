@@ -64,6 +64,7 @@ def valid_hash(hash, present_fields=None, blank_fields=None):
     return True
 
 def get_port_id(port_code):
+    port_code = port_code.strip()
     filters =  {"filters":{"type": "seaport", "port_code": port_code, "status": "active"}}
     try:
         port_id =  maps.list_locations(filters)['list'][0]["id"]
@@ -73,12 +74,14 @@ def get_port_id(port_code):
 
 
 def get_airport_id(port_code, country_code):
+    port_code = port_code.strip()
     filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
     airport_id = maps.list_locations({'filters': str(filters)})['list'][0]["id"]
     return airport_id
 
 
 def get_shipping_line_id(shipping_line_name):
+    shipping_line_name = shipping_line_name.strip()
     try:
         shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
     except:
@@ -250,20 +253,23 @@ def process_fcl_freight_local(params, converted_file, update):
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     set_last_line(total_lines, params)
     percent= ((get_last_line(converted_file) / total_lines)* 100)
-    converted_file['percent'] = percent
-    set_processed_percent(percent, params)
     try:
         valid = converted_file.get('valid_rates_count')
         total = converted_file.get('rates_count')
         percent_completed = (valid / total) * 100
     except:
         percent_completed = 0
-    if math.ceil(percent_completed)!=100:
-        update.status = 'partially_complete'
-        converted_file['status'] = 'partially_complete'
-    else:
+    converted_file['percent'] = percent_completed
+    set_processed_percent(percent_completed, params)
+    if valid == total:
         update.status = 'complete'
         converted_file['status'] = 'complete'
+    elif valid==0:
+        update.status = 'uploaded'
+        converted_file['status'] = 'invalidated'
+    else:
+        update.status = 'partially_complete'
+        converted_file['status'] = 'partially_complete'
     edit_file.close()
     try:
         os.remove(get_original_file_path(converted_file))
@@ -453,9 +459,12 @@ def process_fcl_freight_free_day(params, converted_file, update):
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
     converted_file['percent'] = percent_completed
-    set_processed_percent(percent, params)
+    set_processed_percent(percent_completed, params)
     edit_file.close()
-    if math.ceil(percent_completed)!=100:
+    if math.ceil(percent_completed)==0:
+        update.status = 'uploaded'
+        converted_file['status'] = 'invalidated'
+    elif math.ceil(percent_completed)!=100:
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     else:
@@ -1082,14 +1091,17 @@ def process_fcl_freight_freight(params, converted_file, update):
     edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     edit_file.close()
-    if math.ceil(percent_completed)!=100:
+    if valid == total:
+        update.status = 'complete'
+        converted_file['status'] = 'complete'
+    elif math.ceil(percent_completed)==0:
+        update.status = 'uploaded'
+        converted_file['status'] = 'invalidated'
+    else:
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
-    else:
-        update.status = 'complete'
-    converted_file['status'] = 'complete'
 
-    set_processed_percent(percent, params)
+    set_processed_percent(percent_completed, params)
     try:
         os.remove(get_original_file_path(converted_file))
         os.remove(get_file_path(converted_file))

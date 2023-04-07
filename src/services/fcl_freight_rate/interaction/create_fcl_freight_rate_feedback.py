@@ -3,9 +3,12 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from datetime import datetime
+from playhouse.postgres_ext import *
 from celery_worker import send_create_notifications_to_supply_agents_function
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
+from micro_services.client import *
+
 
 
 def create_fcl_freight_rate_feedback(request):
@@ -29,7 +32,7 @@ def execute_transaction_code(request):
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
         'performed_by_org_id': request['performed_by_org_id'],
-        'origin_port_id':request['booking_params']['origin_port_id']
+        'origin_port_id':request['origin_port_id']
     }
 
     feedback = FclFreightRateFeedback.select().where(
@@ -47,18 +50,24 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():
-        setattr(feedback, attr, value)
+        if attr == 'preferred_shipping_line_ids' and value:
+            ids = []
+            for val in value:
+                ids.append(uuid.UUID(str(val)))
+            setattr(feedback, attr, ids)
+        else:
+            setattr(feedback, attr, value)
 
     try:
         if feedback.validate_before_save():
             feedback.save()
-    except Exception as e:
-        return e
+    except:
+        raise
 
     create_audit(request, feedback)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
-    update_likes_dislikes_count(rate, request)
+    # update_likes_dislikes_count(rate, request)
     if request['feedback_type'] == 'disliked':
         send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
@@ -90,8 +99,37 @@ def get_create_params(request):
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',
-        'cogo_entity_id':request.get('cogo_entity_id')
+        'cogo_entity_id':request.get('cogo_entity_id'),
+        'origin_continent_id':request.get('origin_continent_id'),
+        'origin_port_id':request.get('origin_port_id'),
+        'origin_trade_id': request.get('origin_trade_id'),
+        'origin_country_id': request.get('origin_country_id'),
+        'destination_port_id': request.get('destination_port_id'),
+        'destination_continent_id': request.get('destination_continent_id'),
+        'destination_trade_id': request.get('destination_trade_id'),
+        'destination_country_id': request.get('destination_country_id'),
+        'commodity': request.get('commodity'),
+        'container_size': request.get('container_size'),
+        'container_type': request.get('container_type'),
+        'service_provider_id': request.get('service_provider_id')
     }
+    loc_ids = []
+
+    if request.get('origin_port_id'):
+        loc_ids.append(request.get('origin_port_id'))
+    if request.get('destination_port_id'):
+        loc_ids.append(request.get('destination_port_id'))
+    
+    obj = {'filters':{"id": loc_ids }}
+    locations = maps.list_locations(obj)['list']
+    locations_hash = {}
+    for loc in locations:
+        locations_hash[loc['id']] = loc
+    if request.get('origin_port_id'):
+        params['origin_port'] = locations_hash[request.get('origin_port_id')]
+    if request.get('destination_port_id'):
+        params['destination_port'] = locations_hash[request.get('destination_port_id')]
+    
     return params
 
 

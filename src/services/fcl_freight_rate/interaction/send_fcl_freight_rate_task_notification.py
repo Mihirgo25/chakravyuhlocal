@@ -26,5 +26,5 @@ def send_communication(shipping_line_id, port_id,task_id):
             'template_name': 'fcl_freight_task_created',
             'service_objects': [{'service': 'location', 'id': port_id }, { 'service': 'operator', 'id': shipping_line_id }]
         }
-        # create_communication_background.apply_async(args=data,queue='communication')
+        # create_communication_background.apply_async(kwargs={'data':data},queue='communication')
 

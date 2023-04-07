@@ -7,7 +7,7 @@ import json, uuid, math
 import concurrent.futures
 from micro_services.client import *
 from database.rails_db import get_organization ,get_user
-
+from datetime import datetime, timedelta
 from peewee import *
 from database.db_session import rd
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_last_line
@@ -86,6 +86,7 @@ def get_direct_indirect_filters(filters):
 def apply_pagination(query, page, page_limit):
     offset = (page - 1) * page_limit
     total_count = query.count()
+    query =query.order_by(SQL("updated_at desc"))
     query = query.offset(offset).limit(page_limit)
     return query, total_count
 
@@ -93,15 +94,21 @@ def apply_pagination(query, page, page_limit):
 
 def detail(data):
     for d in data:
-        d['processed_percent'] = get_processed_percent(d)
+
         total_percentage = 0
         if d['converted_files']:
             for converted_file in d['converted_files']:
-                if converted_file.get('percent'):
-                    total_percentage += converted_file.get('percent')
+                try:
+                    total_percentage += converted_file.get('valid_rates_count')/converted_file.get('rates_count')*100
+                except:
+                    total_percentage += 0
                 converted_file['total_lines'] = get_total_line(converted_file)
                 converted_file['last_line'] = get_last_line(converted_file)
             d['completed_percent'] = total_percentage/len(d['converted_files'])
+            if d['status'] == 'processing':
+                d['processed_percent'] = get_processed_percent(d)
+            else:
+                d['processed_percent'] = d['completed_percent']
     return data
 
 
@@ -168,6 +175,8 @@ def get_final_data(query):
     for object in final_data:
         # assumption here
         rates_count_sum=0
+        object['updated_at'] = datetime.fromisoformat(object['updated_at']) +timedelta(hours=5, minutes=30)
+
         if 'converted_files' in object:
             if object.get('converted_files'):
                 for obj in object.get('converted_files'):

@@ -1,5 +1,5 @@
 from peewee import *
-import datetime
+from datetime import datetime, timedelta
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import SPECIFICITY_TYPE, FREE_DAYS_TYPES, TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCATION_HIERARCHY
@@ -8,6 +8,8 @@ from params import Slab
 from micro_services.client import *
 from database.rails_db import *
 from micro_services.client import maps
+from libs.common_validations import validate_shipping_line
+from dateutil.relativedelta import relativedelta
 
 class BaseModel(Model):
     class Meta:
@@ -19,7 +21,7 @@ class FclFreightRateFreeDay(BaseModel):
     container_type = CharField(index=True, null=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeField(default=datetime.now)
     free_days_type = CharField(index=True, null=True)
     free_limit = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
@@ -41,16 +43,16 @@ class FclFreightRateFreeDay(BaseModel):
     specificity_type = CharField(index=True, null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(index=True, null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now())
-    validity_start = DateTimeField(index=True, null=True, default=datetime.datetime.now())
-    validity_end = DateTimeField(index=True, null=True, default=datetime.datetime.now() + datetime.timedelta(days=90))
+    updated_at = DateTimeField(default=datetime.now())
+    validity_start = DateTimeField(index=True, null=True, default=datetime.now())
+    validity_end = DateTimeField(index=True, null=True, default=datetime.now() + timedelta(days=90))
     sourced_by_id = UUIDField(null=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
-      self.updated_at = datetime.datetime.now()
+      self.updated_at = datetime.now()
       return super(FclFreightRateFreeDay, self).save(*args, **kwargs)
 
     class Meta:
@@ -77,12 +79,6 @@ class FclFreightRateFreeDay(BaseModel):
             return True
         return False
 
-    def validate_shipping_line(self):
-        shipping_line_data = get_shipping_line(id=self.shipping_line_id)
-        if (len(shipping_line_data) != 0) and shipping_line_data[0].get('operator_type') == 'shipping_line':
-            self.shipping_line = shipping_line_data[0]
-            return True
-        return False
 
     def validate_service_provider(self):
         service_provider_data = get_organization(id=str(self.service_provider_id))
@@ -139,8 +135,8 @@ class FclFreightRateFreeDay(BaseModel):
         if not self.validate_specificity_type():
             raise HTTPException(status_code=422, detail="Invalid specificity type")
 
-        # if not self.validate_shipping_line():
-        #     raise HTTPException(status_code=422, detail="Invalid shipping line")
+        if not validate_shipping_line(self):
+            raise HTTPException(status_code=422, detail="Invalid shipping line")
 
 
         # if not self.validate_service_provider():
@@ -192,10 +188,10 @@ class FclFreightRateFreeDay(BaseModel):
         if not validity_end:
             raise HTTPException(status_code=400, detail=f"{validity_end} validity end is invalid")
 
-        if validity_end > (datetime.date.today() + datetime.timedelta(days = 180)):
+        if validity_end > (datetime.now() + relativedelta(days=180)):
             raise HTTPException(status_code=400, detail=validity_end + ' can not be greater than 60 days from current date')
 
-        if validity_start < (datetime.date.today() - datetime.timedelta(days = 15)):
+        if validity_start < (datetime.now() - relativedelta(days = 15)):
             raise HTTPException(status_code=400, detail=validity_start + ' can not be less than 15 days from current date')
 
         if validity_end < validity_start:

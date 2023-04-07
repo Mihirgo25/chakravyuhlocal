@@ -338,6 +338,19 @@ class CreateFclFreightRateFeedback(BaseModel):
   feedback_type: str
   booking_params: dict = {}
   cogo_entity_id: str = None
+  origin_port_id: str = None
+  origin_trade_id: str = None
+  origin_country_id: str = None
+  origin_continent_id: str = None
+  destination_port_id: str = None
+  destination_continent_id: str = None
+  destination_trade_id: str = None
+  destination_country_id: str = None
+  commodity: str = None
+  container_size: str = None
+  container_type: str = None
+  service_provider_id: str = None
+
 
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str
@@ -481,8 +494,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   free_limit: int
   remarks: list[str] = None
   slabs: list[Slab] = None
-  validity_start: datetime = datetime.now().date()
-  validity_end: datetime = (datetime.now() + timedelta(days=90)).date()
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = (datetime.now() + timedelta(days=90))
 
 class DeleteFclFreightRateFreeDayRequest(BaseModel):
   fcl_freight_rate_free_day_request_id: str
