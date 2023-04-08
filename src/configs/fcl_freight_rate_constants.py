@@ -91,14 +91,14 @@ FEEDBACK_SOURCES = ['spot_search', 'checkout']
 
 FEEDBACK_TYPES = ['liked', 'disliked']
 
-DEFAULT_WEIGHT_LIMITS = {
+DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION = {
   '20' : {
     'free_limit': 18.0,
     'slabs': [
       {
         'lower_limit': 19,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]
@@ -109,7 +109,7 @@ DEFAULT_WEIGHT_LIMITS = {
       {
         'lower_limit': 27,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]
@@ -120,7 +120,7 @@ DEFAULT_WEIGHT_LIMITS = {
       {
         'lower_limit': 27,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]
@@ -131,7 +131,7 @@ DEFAULT_WEIGHT_LIMITS = {
       {
         'lower_limit': 27,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]

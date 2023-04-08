@@ -14,7 +14,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
-from database.db_session import db_cogo_lens
+from database.db_session import db
 import concurrent.futures
 from currency_converter import CurrencyConverter
 from services.fcl_freight_rate.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
@@ -290,7 +290,7 @@ def execute_query(query):
 
 @celery.task()
 def create_fcl_freight_rate_feedback_for_prediction(result):
-    with db_cogo_lens.atomic():
+    with db.atomic():
         for feedback in result:
             if "origin_country_id" not in feedback:
                 feedback["origin_country_id"] = None
@@ -309,10 +309,10 @@ def create_fcl_freight_rate_feedback_for_prediction(result):
                 "validity_end": feedback['validities'][0]["validity_end"],
                 "predicted_price_currency": "USD",
                 "predicted_price": feedback["validities"][0]['line_items'][0]['price'] if ("validities" in feedback) and (feedback['validities']) else None,
-                "actual_price": feedback["actual_price"] if "actual_price" in feedback else None,
-                "actual_price_currency": feedback["actual_price_currency"] if "actual_price_currency" in feedback else None,
+                "actual_price": feedback.get("actual_price") if "actual_price" in feedback else None,
+                "actual_price_currency": feedback.get("actual_price_currency") if "actual_price_currency" in feedback else None,
                 "source" : "predicted_for_rate_cards",
-                "creation_id" : feedback["id"],
+                "creation_id" : feedback.get("creation_id"),
                 "importer_exporter_id" : feedback['importer_exporter_id']
             }
 

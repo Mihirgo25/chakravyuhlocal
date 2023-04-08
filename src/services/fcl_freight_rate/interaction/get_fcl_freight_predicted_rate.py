@@ -1,5 +1,5 @@
 from configs.definitions import ROOT_DIR
-from configs.fcl_freight_rate_constants import SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS
+from configs.fcl_freight_rate_constants import SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
 import pickle, joblib, os, geopy.distance
 from datetime import datetime, timedelta
@@ -47,6 +47,7 @@ def get_fcl_freight_predicted_rate(request, key):
         if request['shipping_line_id']:
             SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION[request['shipping_line_id']] = request['service_provider_id']
 
+        data_for_feedback = []
         for shipping_line_id in list(SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION.keys()):
             df = pd.DataFrame()
             df['container_size'] = [container_size]
@@ -82,7 +83,7 @@ def get_fcl_freight_predicted_rate(request, key):
                     "slabs": []
                 }
                 ],
-                'weight_limit': DEFAULT_WEIGHT_LIMITS[request['container_size']],
+                'weight_limit': DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION[request['container_size']],
                 'origin_local': {
                         'plugin': None,
                         'line_items': []
@@ -95,8 +96,8 @@ def get_fcl_freight_predicted_rate(request, key):
                 'performed_by_id': 'dd87a6be-7334-4190-834d-6018a1560b2a',
                 'procured_by_id': 'dd87a6be-7334-4190-834d-6018a1560b2a',#WHAT SHOULD I TAKE?
                 'sourced_by_id': 'dd87a6be-7334-4190-834d-6018a1560b2a',
-                'cogo_entity_id': request['cogo_entity_id'],
-                'source':'predicted'
+                'source':'predicted_rate',
+                'mode':'predicted'
             }
             if request['container_type'] in ['open_top', 'flat_rack', 'iso_tank'] or request['container_size'] == '45HC':
                 rate_card_param['line_items'].append({
@@ -119,8 +120,11 @@ def get_fcl_freight_predicted_rate(request, key):
                     ],
                     "slabs": []
                 })
+
             rate_card_id = create_fcl_freight_rate_data(rate_card_param)['id']
-            create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':rate_card_param})
+            rate_card_param['creation_id'] = rate_card_id
+            data_for_feedback.append(rate_card_param)
+        create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':data_for_feedback})
         
         # rate_cards = jsonable_encoder(list(FclFreightRate.select(
         #     FclFreightRate.id,
@@ -149,18 +153,18 @@ def get_fcl_freight_predicted_rate(request, key):
     
         # return rate_cards
 
-        else: 
-            validity_start = datetime.now()
-            validity_end = datetime.now() + timedelta(days = 14)
-            df = pd.DataFrame()
-            df['container_size'] = [container_size]
-            df['shipping_line_rank'] = shipping_line_dict[str(request['shipping_line_id'])]
+    else: 
+        validity_start = datetime.now()
+        validity_end = datetime.now() + timedelta(days = 14)
+        df = pd.DataFrame()
+        df['container_size'] = [container_size]
+        df['shipping_line_rank'] = shipping_line_dict[str(request['shipping_line_id'])]
 
-            df['Distance'] = [ports_distance]
-            df['Country_Distance'] = [countries_distance]
-            df['ds'] = validity_start
-            model_result = model.predict(df)['yhat']
-            request["predicted_price"] = round(np.exp(model_result[0]),1)
-            request["validity_start"] = validity_start.date()
-            request["validity_end"] = validity_end.date()
-            return request
+        df['Distance'] = [ports_distance]
+        df['Country_Distance'] = [countries_distance]
+        df['ds'] = validity_start
+        model_result = model.predict(df)['yhat']
+        request["predicted_price"] = round(np.exp(model_result[0]),1)
+        request["validity_start"] = validity_start.date()
+        request["validity_end"] = validity_end.date()
+        return request
