@@ -155,19 +155,19 @@ def get_location_id(q, country_code = None, service_provider_id = None):
 
 
 
-def get_location(location, type):
+def get_location(location_code, type):
     location = {
         'id': None
     }
     if type == "port":
         location_list = maps.list_locations(
-            {"filters": {"type": "seaport", "port_code": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+            {"filters": {"type": "seaport", "port_code": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )
         if 'list' in location_list and len(location_list['list']) > 0:
             location = location_list['list'][0]
     else:
         location_list = maps.list_locations(
-            {"filters": {"type": type, "name": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+            {"filters": {"type": type, "name": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )
         if 'list' in location_list and len(location_list['list']) > 0:
             location = location_list['list'][0]
@@ -1197,6 +1197,7 @@ def create_fcl_freight_freight_rate(
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
+    print(request_params)
     validation = write_fcl_freight_freight_object(request_params, csv_writer, params, converted_file, last_row)
     if validation.get('valid'):
         object['rate_sheet_validation'] = True
