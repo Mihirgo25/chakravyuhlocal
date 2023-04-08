@@ -64,7 +64,10 @@ def valid_hash(hash, present_fields=None, blank_fields=None):
     return True
 
 def get_port_id(port_code):
-    port_code = port_code.strip()
+    try:
+        port_code = port_code.strip()
+    except:
+        port_code = port_code
     filters =  {"filters":{"type": "seaport", "port_code": port_code, "status": "active"}}
     try:
         port_id =  maps.list_locations(filters)['list'][0]["id"]
@@ -74,15 +77,18 @@ def get_port_id(port_code):
 
 
 def get_airport_id(port_code, country_code):
-    port_code = port_code.strip()
+    try:
+        port_code = port_code.strip()
+    except:
+        port_code = port_code
     filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
     airport_id = maps.list_locations({'filters': str(filters)})['list'][0]["id"]
     return airport_id
 
 
 def get_shipping_line_id(shipping_line_name):
-    shipping_line_name = shipping_line_name.strip()
     try:
+        shipping_line_name = shipping_line_name.strip()
         shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
     except:
         shipping_line_id = None
@@ -398,6 +404,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
         set_total_line(converted_file, total_lines)
         csv_writer.writerow(headers)
         file.seek(0)
+        next(file)
         for row in input_file:
             index += 1
             for k, v in row.items():
