@@ -9,10 +9,9 @@ from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
 
 def get_relevant_user_ids(params):
     user_ids = []
-    audit_data = RateSheetAudit.select().where(RateSheetAudit.action_name == 'update').limit(1)
-    audit_data = audit_data.dicts().get()
-    user_ids.append(str(audit_data['performed_by_id']))
-    user_ids.append(str(audit_data['procured_by_id']))
+    audit_data = RateSheetAudit.select().where(RateSheetAudit.action_name == 'update', RateSheetAudit.object_id ==  params['id']).first()
+    user_ids.append(str(audit_data.performed_by_id))
+    user_ids.append(str(audit_data.procured_by_id))
     return user_ids
 
 def send_rate_sheet_notifications(params):
@@ -33,10 +32,10 @@ def send_rate_sheet_notifications(params):
             'partner_status': 'active',
         }).list()]
         template_name = 'rate_sheet_uploaded'
-    elif params.get('status') == 'converted' or params.get('status') == 'processing' or params.get('status') == 'complete':
+    elif params.get('status') == 'processing' or params.get('status') == 'complete' or params.get('status') == 'partially_complete':
         user_ids = get_relevant_user_ids(params)
-        if params.get('status') == 'converted':
-            template_name = 'rate_sheet_converted'
+        if params.get('status') == 'partially_complete':
+            template_name = 'rate_sheet_partially_complete'
         elif params.get('status') == 'processing':
             template_name = 'rate_sheet_processing'
         else:
