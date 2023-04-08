@@ -155,19 +155,19 @@ def get_location_id(q, country_code = None, service_provider_id = None):
 
 
 
-def get_location(location, type):
+def get_location(location_code, type):
     location = {
         'id': None
     }
     if type == "port":
         location_list = maps.list_locations(
-            {"filters": {"type": "seaport", "port_code": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+            {"filters": {"type": "seaport", "port_code": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )
         if 'list' in location_list and len(location_list['list']) > 0:
             location = location_list['list'][0]
     else:
         location_list = maps.list_locations(
-            {"filters": {"type": type, "name": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+            {"filters": {"type": type, "name": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )
         if 'list' in location_list and len(location_list['list']) > 0:
             location = location_list['list'][0]
