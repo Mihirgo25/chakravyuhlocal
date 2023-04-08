@@ -92,9 +92,9 @@ def get_free_day_object(object):
     except HTTPException as e:
         validation['error'] += ' ' +str(e.detail)
     if not is_valid_uuid(free_day.location_id):
-        validation['error'] += ' location is invalid'
+        validation['error'] += ' location {} is invalid'.format(free_day.location_id)
     if not is_valid_uuid(free_day.shipping_line_id):
-        validation['error'] += ' shipping is invalid'
+        validation['error'] += ' shipping {} is  invalid'.format(free_day.shipping_line_id)
     # if free_day.specificity_type in SPECIFICITY_TYPE:
     #     validation['error'] += 'specificity_type is invalid'
 
