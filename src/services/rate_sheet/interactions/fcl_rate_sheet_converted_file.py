@@ -425,7 +425,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
             present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable', 'validity_start', 'validity_end']
             blank_field = ['lower_limit','upper_limit', 'price', 'currency']
             is_main_rate_row = False
-            if row['origin_port']:
+            if row['location_type']:
                 is_main_rate_row = True
             if valid_hash(row, present_field, blank_field) or valid_hash(row, ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable', 'lower_limit', 'upper_limit', 'price', 'currency', 'validity_start', 'validity_end']):
                 if rows:
