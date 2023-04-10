@@ -25,7 +25,7 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
     query = apply_indirect_filters(query, indirect_filters)
 
   if return_query:
-    return {'list': str(query)} 
+    return {'list': query} 
     
   data = get_data(query,expired_rates_required)
   
