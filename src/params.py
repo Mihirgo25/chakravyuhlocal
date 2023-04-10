@@ -479,8 +479,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   rate_sheet_id: str = None
   performed_by_id: str = None
   performed_by_type: str = None
-  sourced_by_id: str
-  procured_by_id: str
+  sourced_by_id: str = None
+  procured_by_id: str = None
   trade_type: str
   location_id: str
   free_days_type: str
@@ -494,8 +494,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   free_limit: int
   remarks: list[str] = None
   slabs: list[Slab] = None
-  validity_start: datetime = datetime.now().date()
-  validity_end: datetime = (datetime.now() + timedelta(days=90)).date()
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = (datetime.now() + timedelta(days=90))
 
 class DeleteFclFreightRateFreeDayRequest(BaseModel):
   fcl_freight_rate_free_day_request_id: str
@@ -506,8 +506,8 @@ class UpdateFclFreightRateFreeDay(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
-  procured_by_id: str
-  sourced_by_id: str
+  procured_by_id: str = None
+  sourced_by_id: str = None
   id: str
   free_limit: int = None
   validity_start: datetime = datetime.now()

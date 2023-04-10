@@ -11,7 +11,8 @@ from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from peewee import fn
 from datetime import datetime, timedelta
 import json
-from peewee import SQL 
+from peewee import SQL
+from micro_services.client import common
 
 possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
@@ -106,6 +107,9 @@ def get_data(query, filters):
             
             for i in range(len(rate['line_items'])):
                 rate['line_items'][i]['name'] = fcl_freight_local_charges[rate['line_items'][i]['code']]['name']
+                rate['total_price'] += common.get_money_exchange_for_fcl({'from_currency': rate['line_items'][i]['currency'], 'to_currency': rate['total_price_currency'], 'price': rate['line_items'][i]['price']})['price']
+            
+            rate['total_price'] = round(rate['total_price'])
 
             object['rate'] = rate
 

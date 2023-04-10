@@ -62,6 +62,25 @@ The `shell` command is useful for development. It drops you into an python shell
 > envision server shell
 ```
 
+Envision shell has autoreload enabled, to disable it run
+
+```
+%autoreload 0
+```
+
+to enable it again run
+
+```
+%autoreload
+```
+
+to reload it just once run 
+
+```
+%autoreload 2
+```
+
+
 ### Without using Envision CLI
 
 ```
