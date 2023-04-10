@@ -155,21 +155,17 @@ class FclFreightRate(BaseModel):
 
     def validate_origin_main_port_id(self):
         if self.origin_port and self.origin_port['is_icd'] and not self.rate_not_available_entry:
-          if self.origin_main_port_id:
-            if not self.origin_main_port or self.origin_main_port['is_icd']:
+          if not self.origin_main_port_id or not self.origin_main_port or self.origin_main_port['is_icd']:
               return False
-          else:
-            return False
+
         return True
 
 
     def validate_destination_main_port_id(self):
         if self.destination_port and self.destination_port['is_icd'] and not self.rate_not_available_entry:
-          if self.destination_main_port_id:
-            if not self.destination_main_port or self.destination_main_port['is_icd']:
-              return False
-          else:
+          if not self.destination_main_port_id or not self.destination_main_port or self.destination_main_port['is_icd']:
             return False
+
         return True
 
     def validate_container_size(self):
