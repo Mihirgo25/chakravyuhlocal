@@ -849,6 +849,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         csv_writer.writerow(headers)
         file.seek(0)
         next(file)
+        is_previous_rate_valid = True
         for row in input_file:
             index += 1
             for k, v in row.items():
@@ -856,12 +857,22 @@ def process_fcl_freight_freight(params, converted_file, update):
                     row[k] = None
             present_field = ['origin_port', 'destination_port', 'container_size', 'container_type', 'commodity', 'shipping_line', 'validity_start', 'validity_end', 'code', 'unit', 'price', 'currency']
             blank_field = ['weight_free_limit','weight_lower_limit', 'weight_upper_limit', 'weight_limit_price', 'weight_limit_currency', 'destination_detention_free_limit', 'destination_detention_lower_limit', 'destination_detention_upper_limit', 'destination_detention_price', 'destination_detention_currency']
+
+            is_main_rate_row = False
+            if row['origin_port']:
+                is_main_rate_row = True
+
             if valid_hash(row, present_field, blank_field):
                 if rows:
                     last_row = list(row.values())
-                    create_fcl_freight_freight_rate(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
-                    )
+                    # Create previous rate if previous rate was valid
+                    if is_previous_rate_valid:
+                        create_fcl_freight_freight_rate(
+                            params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
+                        )
+                    else:
+                        is_previous_rate_valid = True
+                    # Set Processing percent
                     set_current_processing_line(index-1, converted_file)
                     percent=  ((get_current_processing_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
@@ -1083,7 +1094,7 @@ def process_fcl_freight_freight(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
             else:
-                if rows:
+                if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_freight_rate(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
@@ -1091,11 +1102,16 @@ def process_fcl_freight_freight(params, converted_file, update):
                     set_current_processing_line(index-1, converted_file)
                     percent=  ((get_current_processing_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
+                elif rows:
+                    list_opt = list(row.values())
+                    list_opt.append('Invalid Row')
+                    csv_writer.writerow(list_opt)
                 else:
                     list_opt = list(row.values())
                     csv_writer.writerow(list_opt)
+                is_previous_rate_valid = False
                 rows = []
-    if rows:
+    if rows and is_previous_rate_valid:
         create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     set_current_processing_line(total_lines, converted_file)
     try:
