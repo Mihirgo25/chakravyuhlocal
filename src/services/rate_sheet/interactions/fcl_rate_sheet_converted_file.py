@@ -209,6 +209,7 @@ def process_fcl_freight_local(params, converted_file, update):
         set_total_line(converted_file, total_lines)
         csv_writer.writerow(headers)
         file.seek(0)
+        next(file)
         for row in input_file:
             index += 1
             for k, v in row.items():
@@ -846,6 +847,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         set_total_line(converted_file, total_lines)
         csv_writer.writerow(headers)
         file.seek(0)
+        next(file)
         for row in input_file:
             index += 1
             for k, v in row.items():
