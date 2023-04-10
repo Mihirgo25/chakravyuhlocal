@@ -1220,7 +1220,7 @@ def create_fcl_freight_freight_rate(
         elif t.get('destination_detention_free_limit') or t.get('destination_detention_lower_limit'):
             if 'destination_local' not in object:
                 object['destination_local'] = {'detention': {}}
-            if not object['destination_local']['detention'].get('free_limit'):
+            if not object['destination_local']['detention'].get('free_limit') and t.get('destination_detention_free_limit'):
                 object['destination_local']['detention']['free_limit'] = float(t.get('destination_detention_free_limit'))
             if 'slabs' not in object['destination_local']['detention']:
                 object['destination_local']['detention']['slabs'] = []
