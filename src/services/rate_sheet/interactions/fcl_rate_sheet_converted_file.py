@@ -258,9 +258,8 @@ def process_fcl_freight_local(params, converted_file, update):
                     csv_writer.writerow(list_opt)
                 rows = []
 
-    if not rows:
-        return
-    create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
+    if rows:
+        create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     set_last_line(total_lines, params)
@@ -410,9 +409,9 @@ def process_fcl_freight_free_day(params, converted_file, update):
             for k, v in row.items():
                 if v == '':
                     row[k] = None
-            present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable']
+            present_field = ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable', 'validity_start', 'validity_end']
             blank_field = ['lower_limit','upper_limit', 'price', 'currency']
-            if valid_hash(row, present_field, blank_field) or valid_hash(row, ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable', 'lower_limit', 'upper_limit', 'price', 'currency']):
+            if valid_hash(row, present_field, blank_field) or valid_hash(row, ['location_type', 'location', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line', 'free_limit', 'specificity_type', 'previous_days_applicable', 'lower_limit', 'upper_limit', 'price', 'currency', 'validity_start', 'validity_end']):
                 if rows:
                     last_row = list(row.values())
                     create_fcl_freight_rate_free_days(
@@ -439,7 +438,9 @@ def process_fcl_freight_free_day(params, converted_file, update):
                         "shipping_line",
                         "free_limit",
                         "specificity_type",
-                        "previous_days_applicable"
+                        "previous_days_applicable",
+                        "validity_start",
+                        "validity_end"
                     ],
                 )
             ):
@@ -459,13 +460,15 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     list_opt = list(row.values())
                     csv_writer.writerow(list_opt)
                 rows = []
-    if not rows:
-        return
-    create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
+    if rows:
+        create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     set_last_line(total_lines, converted_file)
-    valid = converted_file.get('valid_rates_count')
-    total = converted_file.get('rates_count')
-    percent_completed = (valid / total) * 100
+    try:
+        valid = converted_file.get('valid_rates_count')
+        total = converted_file.get('rates_count')
+        percent_completed = (valid / total) * 100
+    except:
+        percent_completed = 0
     edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     percent= (converted_file.get('file_index') * 1.0) // len(rate_sheet.get('data').get('converted_files'))
@@ -492,7 +495,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
 
 def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row):
     from celery_worker import celery_create_fcl_freight_rate_free_day
-    keys_to_extract = ['location_type', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'specificity_type', 'previous_days_applicable']
+    keys_to_extract = ['location_type', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'specificity_type', 'previous_days_applicable', 'validity_start', 'validity_end']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     keys_to_float = ['lower_limit', 'upper_limit', 'price']
     for key, val in object.items():
@@ -508,6 +511,8 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     object['shipping_line_id'] = get_shipping_line_id(rows[0]['shipping_line'])
     object['importer_exporter_id'] = get_importer_exporter_id(rows[0]['importer_exporter'])
     object['remarks'] = [rows[0]['remark1'], rows[0]['remark2'], rows[0]['remark3']]
+    object['validity_start'] = convert_date_format(object['validity_start'])
+    object['validity_end'] = convert_date_format(object['validity_end'])
     object['slabs'] = []
     for t in rows:
         keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']
@@ -1087,9 +1092,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                     list_opt = list(row.values())
                     csv_writer.writerow(list_opt)
                 rows = []
-    if not rows:
-        return
-    create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
+    if rows:
+        create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     set_last_line(total_lines, converted_file)
     try:
         valid = converted_file.get('valid_rates_count')
