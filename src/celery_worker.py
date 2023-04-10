@@ -24,6 +24,9 @@ CELERY_CONFIG = {
     "accept_content": ['application/json', 'application/x-python-serialize']
 }
 
+if APP_ENV == 'development':
+    CELERY_REDIS_URL = 'redis://@127.0.0.1:6379/0'
+
 celery = Celery(__name__)
 registry.enable("pickle")
 celery.conf.broker_url = CELERY_REDIS_URL
