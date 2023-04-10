@@ -17,7 +17,7 @@ from datetime import datetime,timedelta
 from database.db_session import db
 import concurrent.futures
 from currency_converter import CurrencyConverter
-from services.fcl_freight_rate.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
+from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -288,60 +288,13 @@ def execute_query(query):
     return list(query.dicts())
 
 
-@celery.task()
-def create_fcl_freight_rate_feedback_for_prediction(result):
-    with db.atomic():
-        for feedback in result:
-            if "origin_country_id" not in feedback:
-                feedback["origin_country_id"] = None
-            if "destination_country_id" not in feedback:
-                feedback["destination_country_id"] = None
-            record = {
-                "origin_port_id": feedback["origin_port_id"],
-                "destination_port_id": feedback["destination_port_id"],
-                "origin_country_id": feedback["origin_country_id"],
-                "destination_country_id": feedback["destination_country_id"],
-                "shipping_line_id": feedback["shipping_line_id"],
-                "container_size": feedback["container_size"],
-                "container_type": feedback["container_type"],
-                "commodity": feedback["commodity"],
-                "validity_start": feedback['validities'][0]["validity_start"],
-                "validity_end": feedback['validities'][0]["validity_end"],
-                "predicted_price_currency": "USD",
-                "predicted_price": feedback["validities"][0]['line_items'][0]['price'] if ("validities" in feedback) and (feedback['validities']) else None,
-                "actual_price": feedback.get("actual_price") if "actual_price" in feedback else None,
-                "actual_price_currency": feedback.get("actual_price_currency") if "actual_price_currency" in feedback else None,
-                "source" : "predicted_for_rate_cards",
-                "creation_id" : feedback.get("creation_id"),
-                "importer_exporter_id" : feedback['importer_exporter_id']
-            }
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def create_fcl_freight_rate_feedback_for_prediction(self, result):
+    try:
+        create_fcl_freight_rate_prediction_feedback(result)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
-            new_rate = FclRatePredictionFeedback.create(**record)
-            feedback['id'] = new_rate.id
-
-        c = CurrencyConverter(fallback_on_missing_rate=True, fallback_on_wrong_date=True)
-
-        for val in result:
-            if ("predicted_price" in val) and val['predicted_price']:
-                val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.now()))
-        return result
-
-# @celery.task()
-# def update_expired_fcl_freight_rate_price():
-#     from services.fcl_freight_rate.helpers.get_expired_rows import get_expired_fcl_freight_rates
-#     from services.fcl_freight_rate.interaction.update_expired_fcl_freight_rates import update_expired_fcl_freight_rate_platform_prices
-#     ides = get_expired_fcl_freight_rates()
-#     for req in ides:
-#         req['procured_by_id'] = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
-#         req['sourced_by_id'] = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
-#         req['performed_by_id'] = "039a0141-e6f3-43b0-9c51-144b22b9fc84"
-#         req['schedule_type'] = "transhipment"
-#         req['payment_term'] = "prepaid"
-#         update_expired_fcl_freight_rate_platform_prices(req)
-# celery.conf.beat_schedule = {
-#     'update_expired_fcl_freight_rate_price': {
-#         'task': 'celery_worker.update_expired_fcl_freight_rate_price',
-#         'schedule': crontab(minute=0,hour=0)
-#     }
-# }
-# celery.start

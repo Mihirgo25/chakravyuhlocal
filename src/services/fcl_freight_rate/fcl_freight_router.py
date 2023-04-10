@@ -79,6 +79,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
+from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
@@ -1438,4 +1439,34 @@ def get_eligible_freight_rate_free_day_func(
         return JSONResponse(status_code=200, content=resp)
     except:
         raise
+    
 
+@fcl_freight_router.get('/get_fcl_freight_predicted_rate')
+def get_fcl_freight_predicted_rates(
+    origin_port_id: str,
+    origin_country_id:str,
+    destination_port_id: str,
+    destination_country_id: str, 
+    container_size: str,
+    container_type: str,
+    shipping_line_id: str, 
+    commodity: str,
+    is_source_lcl: bool = False,
+
+):
+    request = {
+        'origin_port_id':origin_port_id,
+        'origin_country_id':origin_country_id,
+        'destination_port_id':destination_port_id,
+        'destination_country_id':destination_country_id,
+        'container_size':container_size,
+        'container_type':container_type,
+        'shipping_line_id':shipping_line_id,
+        'is_source_lcl':is_source_lcl,
+        'commodity':commodity
+    }
+    try:
+        resp = get_fcl_freight_predicted_rate(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(resp))
+    except:
+        raise
