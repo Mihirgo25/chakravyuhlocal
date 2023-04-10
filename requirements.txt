@@ -84,3 +84,4 @@ click-plugins==1.1.1
 CurrencyConverter==0.17.6
 prophet==1.1.2
 geopy==2.3.0
+chardet==5.1.0
