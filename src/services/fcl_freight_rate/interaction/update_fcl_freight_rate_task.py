@@ -5,7 +5,7 @@ from micro_services.client import *
 from configs.global_constants import HAZ_CLASSES
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from celery_worker import update_multiple_service_objects
+from celery_worker import update_multiple_service_objects, update_contract_service_task_delay
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi import HTTPException
 
@@ -38,13 +38,13 @@ def validate_closing_remarks(request):
 def execute_transaction_code(request):
     request['service_provider_id'] = DEFAULT_SERVICE_PROVIDER_ID
     request['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
-    request['procured_by_id'] = DEFAULT_PROCURED_BY_ID
+    request['procured_by_id'] = request['performed_by_id']
 
     task = FclFreightRateTask.select().where(FclFreightRateTask.id == request['id']).first()
 
     if not task:
         raise HTTPException(status_code = 422, detail = f"{request['id']} is invalid")
-    
+
     update_params = get_update_params(request)
     for attr, value in update_params.items():
         setattr(task, attr, value)
@@ -58,10 +58,19 @@ def execute_transaction_code(request):
     result = create_fcl_freight_local_rate(task,request) 
     
     update_shipment_local_charges(task,request)
-
-    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-
+    
     create_audit(request)
+    
+    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
+    
+    contract_object = {
+        "task_id": task.id,
+        "service_type": "fcl_freight",
+        "rate": request.get("rate")
+    }
+    
+    if task.source == "contract":
+        update_contract_service_task_delay.apply_async(kwargs = {"object": contract_object}, queue='low')
     # if task['source'] == 'contract':
         # UpdateContractServiceTask.delay(queue: 'low').run!({ task_id: task.id, service_type: 'fcl_freight', rate: self.rate }) if task.source == 'contract'
  
@@ -111,6 +120,7 @@ def create_fcl_freight_local_rate(task,request):
 
 def update_shipment_local_charges(task,request):
     rate = task.completion_data['rate']
+    rate['line_items'] = [{k:v for k,v in c.items() if k in ["code", "unit", "price", "currency"]} for c in rate['line_items']]
     try:
         result = shipment.bulk_update_shipment_quotations({
         'performed_by_id': request['performed_by_id'],

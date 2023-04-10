@@ -26,3 +26,6 @@ class CommonApiClient:
 
     def fcl_freight_rates_to_cogo_assured(self,data={}):
         return self.client.request('POST','update_fcl_rates_to_cogo_assured',data)
+    
+    def update_contract_service_task(self, data={}):
+        return self.client.request('POST', 'update_contract_service_task', data)

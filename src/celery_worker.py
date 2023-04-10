@@ -284,6 +284,16 @@ def batches_query(query,limit,offset):
 def execute_query(query):
     return list(query.dicts())
 
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_contract_service_task_delay(self, object):
+    try:
+        common.update_contract_service_task(object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
 
 
 
