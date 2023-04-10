@@ -71,9 +71,7 @@ def execute_transaction_code(request):
     
     if task.source == "contract":
         update_contract_service_task_delay.apply_async(kwargs = {"object": contract_object}, queue='low')
-    # if task['source'] == 'contract':
-        # UpdateContractServiceTask.delay(queue: 'low').run!({ task_id: task.id, service_type: 'fcl_freight', rate: self.rate }) if task.source == 'contract'
- 
+    
     return {'id': str(task.id)}
 
 def get_update_params(request):
