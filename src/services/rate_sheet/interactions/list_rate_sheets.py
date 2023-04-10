@@ -10,7 +10,7 @@ from database.rails_db import get_organization ,get_user
 from datetime import datetime, timedelta
 from peewee import *
 from database.db_session import rd
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_last_line
+from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_current_processing_line
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_processed_percent
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'agent_id', 'service_provider_id', 'status', 'service_name', 'serial_id', 'cogo_entity_id']
@@ -103,7 +103,7 @@ def detail(data):
                 except:
                     total_percentage += 0
                 converted_file['total_lines'] = get_total_line(converted_file)
-                converted_file['last_line'] = get_last_line(converted_file)
+                converted_file['last_line'] = get_current_processing_line(converted_file)
             d['completed_percent'] = total_percentage/len(d['converted_files'])
             if d['status'] == 'processing':
                 d['processed_percent'] = get_processed_percent(d)
