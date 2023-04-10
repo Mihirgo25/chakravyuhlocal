@@ -14,3 +14,4 @@ src/celerybeat-schedule
 src/.DS_Store
 .DS_Store
 celerybeat-schedule.db
+.data
