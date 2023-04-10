@@ -1149,8 +1149,8 @@ def create_fcl_freight_freight_rate(
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
 
-    object['validity_start'] = convert_date_format(object['validity_start'])
-    object['validity_end'] = convert_date_format(object['validity_end'])
+    object['validity_start'] = convert_date_format(object.get('validity_start'))
+    object['validity_end'] = convert_date_format(object.get('validity_end'))
     for port in [
         "origin_port",
         "origin_main_port",
@@ -1160,50 +1160,56 @@ def create_fcl_freight_freight_rate(
         if rows[0][port]:
             object[f"{str(port)}_id"] = get_port_id(rows[0][port])
     if rows[0]["shipping_line"]:
-        object["shipping_line_id"] = get_shipping_line_id(rows[0]["shipping_line"])
+        object["shipping_line_id"] = get_shipping_line_id(rows[0].get("shipping_line"))
     object["line_items"] = []
     for t in rows:
-        if t['code']:
+        if t.get('code'):
             line_item = {
-            'code': t['code'],
-            'unit': t['unit'],
-            'price': float(t['price']),
-            'currency': t['currency'],
-            'remarks': [t['remark1'], t['remark2'], t['remark3']] if any([t['remark1'], t['remark2'], t['remark3']]) else None,
+            'code': t.get('code'),
+            'unit': t.get('unit'),
+            'price': float(t.get('price')),
+            'currency': t.get('currency'),
+            'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
             }
             object["line_items"].append(line_item)
-        elif t['weight_free_limit'] or t['weight_lower_limit']:
+        elif t.get('weight_free_limit') or t.get('weight_lower_limit'):
             if 'weight_limit' not in object:
                 object['weight_limit'] = {}
-            if not object['weight_limit'].get('free_limit'):
-                object['weight_limit']['free_limit'] = float(t['weight_free_limit'])
-            if 'slabs' not in object['weight_limit']:
+            if not object['weight_limit'].get('free_limit') and t.get('weight_free_limit'):
+                object['weight_limit']['free_limit'] = float(t.get('weight_free_limit'))
+            if 'slabs' not in object.get('weight_limit'):
                 object['weight_limit']['slabs'] = []
-            if t['weight_lower_limit']:
+            if t.get('weight_lower_limit'):
                 weight_slab = {
-                    'lower_limit': float(t['weight_lower_limit']),
-                    'upper_limit': float(t['weight_upper_limit']),
-                    'price': float(t['weight_limit_price']),
-                    'currency': t['weight_limit_currency']
+                    'lower_limit': float(t.get('weight_lower_limit')),
+                    'upper_limit': float(t.get('weight_upper_limit')),
+                    'price': float(t.get('weight_limit_price')),
+                    'currency': t.get('weight_limit_currency')
                 }
                 object['weight_limit']['slabs'].append(weight_slab)
 
 
-        elif t['destination_detention_free_limit'] or t['destination_detention_lower_limit']:
+        elif t.get('destination_detention_free_limit') or t.get('destination_detention_lower_limit'):
             if 'destination_local' not in object:
                 object['destination_local'] = {'detention': {}}
             if not object['destination_local']['detention'].get('free_limit'):
-                object['destination_local']['detention']['free_limit'] = float(t['destination_detention_free_limit'])
+                object['destination_local']['detention']['free_limit'] = float(t.get('destination_detention_free_limit'))
             if 'slabs' not in object['destination_local']['detention']:
                 object['destination_local']['detention']['slabs'] = []
-            if t['destination_detention_lower_limit']:
-                slab = {
-                    'lower_limit': float(t['destination_detention_lower_limit']),
-                    'upper_limit': float(t['destination_detention_upper_limit']),
-                    'price': float(t['destination_detention_price']),
-                    'currency': t['destination_detention_currency']
-                }
+            if t.get('destination_detention_lower_limit'):
+                if t.get('destination_detention_price') and t.get('destination_detention_upper_limit'):
+                    slab = {
+                        'lower_limit': float(t.get('destination_detention_lower_limit')),
+                        'upper_limit': float(t.get('destination_detention_upper_limit')),
+                        'price': float(t.get('destination_detention_price')),
+                        'currency': t.get('destination_detention_currency')
+                    }
+                else:
+                    slab = {
+                        'lower_limit': float(t.get('destination_detention_lower_limit')),
+                        'currency': t.get('destination_detention_currency')
+                    }
                 object['destination_local']['detention']['slabs'].append(slab)
     object["rate_sheet_id"] = params['rate_sheet_id']
     object["performed_by_id"] = created_by_id
@@ -1211,7 +1217,7 @@ def create_fcl_freight_freight_rate(
         object["service_provider_id"] = params['service_provider_id']
     object["procured_by_id"] = procured_by_id
     object["sourced_by_id"] = sourced_by_id
-    object["cogo_entity_id"] = params['cogo_entity_id']
+    object["cogo_entity_id"] = params.get('cogo_entity_id')
     object["source"] = "rate_sheet"
     object["is_extended"] = False
     for line_items in object['line_items']:

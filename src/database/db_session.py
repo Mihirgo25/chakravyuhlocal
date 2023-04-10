@@ -14,7 +14,7 @@ db = PostgresqlDatabase(
 if APP_ENV == 'production':
     rd = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, username=REDIS_USERNAME, password=REDIS_PASSWORD, ssl=True, ssl_cert_reqs=None, decode_responses= True)
 else:
-    rd = redis.Redis(host='127.0.0.1', port=6379, db=0)
+    rd = redis.Redis(host='127.0.0.1', port=6379, db=0, decode_responses= True)
 
 
 # print(rd, rd.keys())
