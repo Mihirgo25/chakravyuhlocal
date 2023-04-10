@@ -118,7 +118,6 @@ def create_fcl_freight_local_rate(task,request):
 
 def update_shipment_local_charges(task,request):
     rate = task.completion_data['rate']
-    rate['line_items'] = [{k:v for k,v in c.items() if k in ["code", "unit", "price", "currency"]} for c in rate['line_items']]
     try:
         result = shipment.bulk_update_shipment_quotations({
         'performed_by_id': request['performed_by_id'],
