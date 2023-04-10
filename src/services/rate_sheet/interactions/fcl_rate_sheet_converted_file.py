@@ -14,7 +14,7 @@ from datetime import datetime
 import dateutil.parser as parser
 from database.rails_db import get_shipping_line, get_organization
 from services.rate_sheet.helpers import *
-
+import chardet
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
 csv_options = {
@@ -64,7 +64,10 @@ def valid_hash(hash, present_fields=None, blank_fields=None):
     return True
 
 def get_port_id(port_code):
-    port_code = port_code.strip()
+    try:
+        port_code = port_code.strip()
+    except:
+        port_code = port_code
     filters =  {"filters":{"type": "seaport", "port_code": port_code, "status": "active"}}
     try:
         port_id =  maps.list_locations(filters)['list'][0]["id"]
@@ -74,15 +77,18 @@ def get_port_id(port_code):
 
 
 def get_airport_id(port_code, country_code):
-    port_code = port_code.strip()
+    try:
+        port_code = port_code.strip()
+    except:
+        port_code = port_code
     filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
     airport_id = maps.list_locations({'filters': str(filters)})['list'][0]["id"]
     return airport_id
 
 
 def get_shipping_line_id(shipping_line_name):
-    shipping_line_name = shipping_line_name.strip()
     try:
+        shipping_line_name = shipping_line_name.strip()
         shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
     except:
         shipping_line_id = None
@@ -149,15 +155,22 @@ def get_location_id(q, country_code = None, service_provider_id = None):
 
 
 
-def get_location(location, type):
+def get_location(location_code, type):
+    location = {
+        'id': None
+    }
     if type == "port":
-        location = maps.list_locations(
-            {"filters": {"type": "seaport", "port_code": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
-        )["list"][0]
+        location_list = maps.list_locations(
+            {"filters": {"type": "seaport", "port_code": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+        )
+        if 'list' in location_list and len(location_list['list']) > 0:
+            location = location_list['list'][0]
     else:
-        location = maps.list_locations(
-            {"filters": {"type": type, "name": location, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
-        )["list"][0]
+        location_list = maps.list_locations(
+            {"filters": {"type": type, "name": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+        )
+        if 'list' in location_list and len(location_list['list']) > 0:
+            location = location_list['list'][0]
     return location
 
 
@@ -172,14 +185,7 @@ def get_importer_exporter_id(importer_exporter_name):
 def process_fcl_freight_local(params, converted_file, update):
     total_lines = 0
     original_path = get_original_file_path(converted_file)
-    with open(original_path, encoding='iso-8859-1') as file:
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        headers = next(reader)
-        for row in reader:
-            total_lines += 1
-    set_total_line(converted_file, total_lines)
 
-    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -188,15 +194,21 @@ def process_fcl_freight_local(params, converted_file, update):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(converted_file)
-    edit_file = open(get_file_path(converted_file), 'w',newline="")
+    edit_file = open(get_file_path(converted_file), 'w')
+    file_path = original_path
     last_row = []
-    with open(file_path, encoding='iso-8859-1') as file:
+    with open(file_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+    with open(original_path, mode='rt', encoding=encoding) as file:
         csv_writer = csv.writer(edit_file)
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        input_file = csv.DictReader(open(file_path))
+        input_file = csv.DictReader(file)
         headers = input_file.fieldnames
+        for row in input_file:
+            total_lines += 1
+        set_total_line(converted_file, total_lines)
         csv_writer.writerow(headers)
+        file.seek(0)
         for row in input_file:
             index += 1
             for k, v in row.items():
@@ -369,14 +381,6 @@ def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, last_r
 def process_fcl_freight_free_day(params, converted_file, update):
     total_lines = 0
     original_path = get_original_file_path(converted_file)
-    with open(original_path, encoding='iso-8859-1') as file:
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        headers = next(reader)
-        for row in reader:
-            total_lines += 1
-    set_total_line(converted_file, total_lines)
-
-    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -385,15 +389,22 @@ def process_fcl_freight_free_day(params, converted_file, update):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(converted_file)
-    edit_file = open(get_file_path(converted_file), 'w',newline="")
+    file_path = original_path
+    edit_file = open(get_file_path(converted_file), 'w')
     last_row = []
-    with open(file_path, encoding='iso-8859-1') as file:
+    with open(file_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+    with open(original_path, mode='rt', encoding=encoding) as file:
         csv_writer = csv.writer(edit_file)
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        input_file = csv.DictReader(open(file_path))
+        input_file = csv.DictReader(file)
         headers = input_file.fieldnames
+        for row in input_file:
+            total_lines += 1
+        set_total_line(converted_file, total_lines)
         csv_writer.writerow(headers)
+        file.seek(0)
+        next(file)
         for row in input_file:
             index += 1
             for k, v in row.items():
@@ -806,13 +817,6 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_ro
 def process_fcl_freight_freight(params, converted_file, update):
     total_lines = 0
     original_path = get_original_file_path(converted_file)
-    with open(original_path, encoding='iso-8859-1') as file:
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        headers = next(reader)
-        for row in reader:
-            total_lines += 1
-    set_total_line(converted_file, total_lines)
-    last_line = get_last_line(converted_file)
     rows = []
     params["rate_sheet_id"] = params["id"]
     rate_sheet = RateSheetAudit.get((RateSheetAudit.object_id == params["rate_sheet_id"]) & (RateSheetAudit.action_name == 'update') )
@@ -821,15 +825,22 @@ def process_fcl_freight_freight(params, converted_file, update):
     procured_by_id = rate_sheet['procured_by_id']
     sourced_by_id = rate_sheet['sourced_by_id']
     index = -1
-    file_path = get_original_file_path(converted_file)
+    file_path = original_path
     edit_file = open(get_file_path(converted_file), 'w')
     last_row = []
-    with open(file_path, encoding='iso-8859-1') as file:
+    with open(file_path, 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+
+    with open(original_path, mode='rt', encoding=encoding) as file:
         csv_writer = csv.writer(edit_file)
-        reader = csv.reader(file, skipinitialspace=True, delimiter=',', quotechar=None)
-        input_file = csv.DictReader(open(file_path))
+        input_file = csv.DictReader(file)
         headers = input_file.fieldnames
+        for row in input_file:
+            total_lines += 1
+        set_total_line(converted_file, total_lines)
         csv_writer.writerow(headers)
+        file.seek(0)
         for row in input_file:
             index += 1
             for k, v in row.items():
