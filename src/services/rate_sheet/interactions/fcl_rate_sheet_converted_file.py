@@ -208,6 +208,7 @@ def process_fcl_freight_local(params, converted_file, update):
         csv_writer.writerow(headers)
         file.seek(0)
         next(file)
+        is_previous_rate_valid = True
         for row in input_file:
             index += 1
             for k, v in row.items():
@@ -215,12 +216,19 @@ def process_fcl_freight_local(params, converted_file, update):
                     row[k] = None
             present_field = ['trade_type', 'port', 'container_type', 'container_size', 'shipping_line', 'code', 'unit', 'price', 'currency']
             blank_field = ['lower_limit', 'upper_limit']
+
+            is_main_rate_row = False
+            if row['port']:
+                is_main_rate_row = True
             if valid_hash(row, present_field, blank_field):
                 if rows:
                     last_row = list(row.values())
-                    create_fcl_freight_local_rate(
-                        params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
-                    )
+                    if is_previous_rate_valid:
+                        create_fcl_freight_local_rate(
+                            params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
+                        )
+                    else:
+                        is_previous_rate_valid = True
                     set_current_processing_line(index, converted_file)
                     percent= ((get_current_processing_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
@@ -244,7 +252,7 @@ def process_fcl_freight_local(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
             else:
-                if rows:
+                if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_local_rate(
                         params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
@@ -252,12 +260,17 @@ def process_fcl_freight_local(params, converted_file, update):
                     set_current_processing_line(index-1, converted_file)
                     percent= ((get_current_processing_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
+                elif rows:
+                    list_opt = list(row.values())
+                    list_opt.append('Invalid Row')
+                    csv_writer.writerow(list_opt)
                 else:
                     list_opt = list(row.values())
                     csv_writer.writerow(list_opt)
+                is_previous_rate_valid = False
                 rows = []
 
-    if rows:
+    if rows and is_previous_rate_valid:
         create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
@@ -296,17 +309,17 @@ def create_fcl_freight_local_rate(
     object['main_port_id'] = get_port_id(rows[0].get('main_port'))
     object['port_id'] = get_port_id(rows[0].get('port'))
 
-    object["shipping_line_id"] = get_shipping_line_id(rows[0]["shipping_line"])
+    object["shipping_line_id"] = get_shipping_line_id(rows[0].get("shipping_line"))
     object['data'] = { 'line_items': [] }
     object["line_items"] = []
     for t in rows:
         if t['code']:
             line_item = {
-            'code': t['code'],
-            'unit': t['unit'],
-            'price': float(t['price']),
-            'currency': t['currency'],
-            'remarks': [t['remark1'], t['remark2'], t['remark3']] if any([t['remark1'], t['remark2'], t['remark3']]) else None,
+            'code': t.get('code'),
+            'unit': t.get('unit'),
+            'price': float(t.get('price')),
+            'currency': t.get('currency'),
+            'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
             }
             line_item['location_id'] = get_location_id(t.get('location'))
@@ -1128,7 +1141,7 @@ def process_fcl_freight_freight(params, converted_file, update):
     if valid == total:
         update.status = 'complete'
         converted_file['status'] = 'complete'
-    elif math.ceil(percent_completed)==0:
+    elif valid == 0:
         update.status = 'uploaded'
         converted_file['status'] = 'invalidated'
     else:
@@ -1181,12 +1194,18 @@ def create_fcl_freight_freight_rate(
             if 'slabs' not in object.get('weight_limit'):
                 object['weight_limit']['slabs'] = []
             if t.get('weight_lower_limit'):
-                weight_slab = {
-                    'lower_limit': float(t.get('weight_lower_limit')),
-                    'upper_limit': float(t.get('weight_upper_limit')),
-                    'price': float(t.get('weight_limit_price')),
-                    'currency': t.get('weight_limit_currency')
-                }
+                if t.get('weight_upper_limit') and t.get('weight_limit_price'):
+                    weight_slab = {
+                        'lower_limit': float(t.get('weight_lower_limit')),
+                        'upper_limit': float(t.get('weight_upper_limit')),
+                        'price': float(t.get('weight_limit_price')),
+                        'currency': t.get('weight_limit_currency')
+                    }
+                else:
+                    weight_slab = {
+                        'lower_limit': float(t.get('weight_lower_limit')),
+                        'currency': t.get('weight_limit_currency')
+                    }
                 object['weight_limit']['slabs'].append(weight_slab)
 
 
