@@ -253,6 +253,7 @@ def process_fcl_freight_local(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
             else:
+                list_opt = []
                 if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_local_rate(
@@ -261,13 +262,10 @@ def process_fcl_freight_local(params, converted_file, update):
                     set_current_processing_line(index-1, converted_file)
                     percent= ((get_current_processing_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
-                elif rows:
-                    list_opt = list(row.values())
-                    list_opt.append('Invalid Row')
-                    csv_writer.writerow(list_opt)
                 else:
                     list_opt = list(row.values())
-                    csv_writer.writerow(list_opt)
+                list_opt.append('Invalid Row')
+                csv_writer.writerow(list_opt)
                 is_previous_rate_valid = False
                 rows = []
 
@@ -469,6 +467,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
             else:
+                list_opt = []
                 if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_rate_free_days(
@@ -477,13 +476,10 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     set_current_processing_line(index-1, converted_file)
                     percent= (((converted_file.get('file_index') * 1.0) * get_current_processing_line(converted_file)) // (len(rate_sheet.get('data').get('converted_files'))) * get_total_line(converted_file) )* 100
                     set_processed_percent(percent, params)
-                elif rows:
-                    list_opt = list(row.values())
-                    list_opt.append('Invalid Row')
-                    csv_writer.writerow(list_opt)
                 else:
                     list_opt = list(row.values())
-                    csv_writer.writerow(list_opt)
+                list_opt.append('Invalid Row')
+                csv_writer.writerow(list_opt)
                 is_previous_rate_valid = False
                 rows = []
     if rows and is_previous_rate_valid:
@@ -1121,6 +1117,7 @@ def process_fcl_freight_freight(params, converted_file, update):
                 list_opt = list(row.values())
                 csv_writer.writerow(list_opt)
             else:
+                list_opt = []
                 if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_freight_rate(
@@ -1129,13 +1126,10 @@ def process_fcl_freight_freight(params, converted_file, update):
                     set_current_processing_line(index-1, converted_file)
                     percent=  ((get_current_processing_line(converted_file) / total_lines)* 100)
                     set_processed_percent(percent, params)
-                elif rows:
-                    list_opt = list(row.values())
-                    list_opt.append('Invalid Row')
-                    csv_writer.writerow(list_opt)
                 else:
                     list_opt = list(row.values())
-                    csv_writer.writerow(list_opt)
+                list_opt.append('Invalid Row')
+                csv_writer.writerow(list_opt)
                 is_previous_rate_valid = False
                 rows = []
     if rows and is_previous_rate_valid:
