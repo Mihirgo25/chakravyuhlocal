@@ -1,7 +1,6 @@
 
 from services.rate_sheet.models.rate_sheet import RateSheet
 from params import CreateRateSheet
-from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from playhouse.postgres_ext import *
 from peewee import *
 from services.rate_sheet.interactions.send_rate_sheet_notification import send_rate_sheet_notifications

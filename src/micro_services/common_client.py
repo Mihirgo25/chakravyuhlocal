@@ -15,20 +15,14 @@ class CommonApiClient:
     def list_operators(self,data={}):
         return self.client.request('GET','list_operators',data)
 
-    def create_sailing_schedule_port_pair_coverage(self, data = {}):
-        return self.client.request('POST','create_sailing_schedule_port_pair_coverage',data)
-
     def get_money_exchange_for_fcl(self, data = {}):
         return self.client.request('GET','get_money_exchange_for_fcl', data)
 
     def create_communication(self, data = {}):
-        return self.client.request('POST','create_communication',data)
-
-    def bulk_update_shipment_quotations(self, data = {}):
-        return self.client.request('GET','bulk_update_shipment_quotations',data)
-
-    def get_shipment(self, data = {}):
-        return self.client.request('GET','get_shipment',data)
+        return self.client.request('POST','communication/create_communication',data)
 
     def list_money_currencies(self,data={}):
         return self.client.request('GET','list_money_currencies',data)
+
+    def fcl_freight_rates_to_cogo_assured(self,data={}):
+        return self.client.request('POST','update_fcl_rates_to_cogo_assured',data)

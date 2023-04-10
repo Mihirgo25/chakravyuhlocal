@@ -41,7 +41,7 @@ def get_most_relevant_slabs(data, direct_filters):
         0 if t['commodity'] else 1)
     )
     try:
-        return {'max_weight': data[0]['max_weight'], 'slabs':data[0]['slabs']}
+        return {'free_limit': data[0]['max_weight'], 'slabs':data[0]['slabs']}
     except:
         return None
 
@@ -131,7 +131,7 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
             "container_type": [requirements["container_type"], None],
             "is_cogo_assured": [False, None],
         }
-        category = service_providers_to_category[sp_id] or []
+        category = service_providers_to_category[sp_id]['category_types'] or []
         final_result = {}
         for rate in rates:
             direct_filters = {

@@ -10,7 +10,7 @@ possible_direct_filters = ['action_name', 'service_provider_id']
 possible_indirect_filters = []
 
 def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 1):
-    query = get_query(page, page_limit)
+    query = FclFreightRateBulkOperation.select().order_by(FclFreightRateBulkOperation.updated_at.desc())
 
     if filters:
         if type(filters) != dict:
@@ -20,21 +20,18 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
   
         query = get_filters(direct_filters, query, FclFreightRateBulkOperation)
 
-
+    pagination_data = get_pagination_data(query, page, page_limit)
+    query = query.paginate(page, page_limit)
     data = jsonable_encoder(list(query.dicts()))
-    pagination_data = get_pagination_data(data, page, page_limit)
 
     return {'list': data } | (pagination_data)
 
-def get_query(page, page_limit):
-    query = FclFreightRateBulkOperation.select().order_by(FclFreightRateBulkOperation.updated_at.desc()).paginate(page, page_limit)
-    return query
-
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

@@ -1,6 +1,6 @@
 from configs.global_constants import *
 
-REQUEST_SOURCES = ['spot_search']
+REQUEST_SOURCES = ['spot_search','shipment']
 LOCATION_HIERARCHY = {
 'port' : 1,
 'country' : 2,
@@ -66,6 +66,8 @@ DEFAULT_WEIGHT_FREE_LIMIT = {
   "20" : 18,
   "others" : 20
 }
+
+DEFAULT_FREE_DAY_LIMIT = 3
 
 DEFAULT_LOCAL_AGENT_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36" #cogo freight
 

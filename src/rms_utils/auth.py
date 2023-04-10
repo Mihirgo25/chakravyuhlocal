@@ -1,36 +1,32 @@
 import json
-from fastapi import Request, Header
+from fastapi import Request
 import httpx
 import json
-from configs.env import APP_ENV, RUBY_ADDRESS_URL
+from configs.env import APP_ENV, DEFAULT_USER_ID
 from micro_services.discover_client import get_instance_url
 
 
 def authorize_token(
-    request: Request,
-    authorization_token: str = Header(default=None, convert_underscores=False),
-    authorization_scope: str = Header(default=None, convert_underscores=False),
-    authorization_parameters: str = Header(default=None, convert_underscores=False),
+    request: Request
 ):
-    if APP_ENV == "development" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
-        return {"status_code": 200, "isAuthorized": False}
+    authorization_token = request.headers.get('authorization')
+    authorization_scope = request.headers.get('authorizationscope')
+    authorization_parameters = request.headers.get('authorizationparameters')
+    if APP_ENV != "production" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
+        return {"status_code": 200, "isAuthorized": True, "setters": { "performed_by_id": DEFAULT_USER_ID, "performed_by_type": "agent" }}
 
-    url = "https://api-nirvana1.dev.cogoport.io" + "/verify_request" #get_instance_url('user')
+    url = get_instance_url('user') + "/verify_request"
 
     if (
         authorization_token is None
         and authorization_scope is None
         and authorization_parameters is None
     ):
-        header = {
-            "Authorization": request.headers.get("authorization"),
-            "AuthorizationScope": request.headers.get("authorizationscope"),
-            "AuthorizationParameters": request.headers.get("authorizationparameters"),
-        }
+        return {"status_code": 403, "isAuthorized": False}
     else:
         header = {
-            "Authorization": authorization_token,
-            "AuthorizationScope": authorization_scope,
+            "Authorization": authorization_token if authorization_token else "",
+            "AuthorizationScope": authorization_scope if authorization_scope else "",
             "AuthorizationParameters": authorization_parameters if authorization_parameters else "",
         }
 

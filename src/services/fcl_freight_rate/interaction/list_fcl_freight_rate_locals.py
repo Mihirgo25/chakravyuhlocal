@@ -140,15 +140,20 @@ def apply_location_ids_filter(query, filters):
     return query
 
 def apply_commodity_filter(query, filters):
-    query = query.where((FclFreightRateLocal.commodity == None) | (FclFreightRateLocal.commodity == filters['commodity']))
+    if isinstance(filters['commodity'],str):
+        filters['commodity'] = [filters['commodity']]
+    if 'general' in filters['commodity']:
+        query = query.where((FclFreightRateLocal.commodity == None) | (FclFreightRateLocal.commodity.in_(filters['commodity'])))
+    else:
+        query = query.where(FclFreightRateLocal.commodity.in_(filters['commodity']))
     return query
 
 def apply_updated_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateLocal.updated_at >= datetime.strptime(filters['updated_at_greater_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateLocal.updated_at.cast('date') >= datetime.fromisoformat(filters['updated_at_greater_than']).date())
     return query
 
 def apply_updated_at_less_than_filter(query, filters):
-    query = query.where(FclFreightRateLocal.updated_at <= datetime.strptime(filters['updated_at_less_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateLocal.updated_at <= datetime.fromisoformat(filters['updated_at_less_than']).date())
     return query
 
 def apply_procured_by_id_filter(query, filters):

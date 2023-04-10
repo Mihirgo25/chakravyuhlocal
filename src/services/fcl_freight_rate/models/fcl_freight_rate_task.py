@@ -56,23 +56,23 @@ class FclFreightRateTask(BaseModel):
             raise HTTPException(status_code=400, detail="Invalid service")
 
     def validate_port_id(self):
-        obj = {"filters":{"id": [(self.port_id)],'type':'seaport'}}
+        obj = {"filters":{"id": [(str(self.port_id))],'type':'seaport'}}
         port = maps.list_locations(obj)['list']
         if port:
             port =port[0]
-            self.port = {key:value for key,value in port.items() if key in ['id', 'name','display_name', 'port_code', 'type']}
+            self.port = {key:value for key,value in port.items() if key in ['id', 'name','display_name', 'port_code', 'type', 'is_icd']}
             self.country_id = port.get('country_id', None)
             self.trade_id = port.get('trade_id', None)
             self.continent_id = port.get('continent_id', None)
-            self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id, self.continent_id] if x is not None]
+            self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id] if x is not None]
         else:
             raise HTTPException(status_code=500,detail='Invalid port')
 
     def validate_main_port_id(self):
-        if self.port and self.port.get('is_icd')==False:
-            if self.main_port_id and self.main_port_id!=self.port_id:
-                raise HTTPException(status_code=500,detail='Invalid Main Port')
-        elif self.port and self.port.get('is_icd')==True:
+        # if self.port and self.port.get('is_icd')==False:
+        #     if self.main_port_id and self.main_port_id!=self.port_id:
+        #         raise HTTPException(status_code=500,detail='Invalid Main Port')
+        if self.port and self.port.get('is_icd')==True:
             main_port_data = maps.list_locations({"filters":{"id": [str(self.main_port_id)],'type':'seaport','is_icd':False}})['list']
             if main_port_data:
                 self.main_port = {key:value for key,value in main_port_data[0].items() if key in ['id', 'name','display_name', 'port_code', 'type']}
@@ -118,20 +118,20 @@ class FclFreightRateTask(BaseModel):
         if self.task_type == 'locals_purchase_invoice_review' and self.job_data is None:
             raise ValueError("job_data cannot be Empty for locals_purchase_invoice_review tasks")
 
-    def validate_uniqueness(self):
-        if self.status == 'pending' and FclFreightRateTask.select().where(
-            (FclFreightRateTask.port_id == self.port_id) &
-            (FclFreightRateTask.trade_type == self.trade_type) &
-            (FclFreightRateTask.main_port_id == self.main_port_id) &
-            (FclFreightRateTask.container_size == self.container_size) &
-            (FclFreightRateTask.container_type == self.container_type) &
-            (FclFreightRateTask.commodity == self.commodity) &
-            (FclFreightRateTask.shipping_line_id == self.shipping_line_id) &
-            (FclFreightRateTask.source == self.source) &
-            (FclFreightRateTask.task_type == self.task_type) &
-            (FclFreightRateTask.service == self.service) &
-            (FclFreightRateTask.status == self.status)).count()!=0:
-            raise ValueError("Record already exists with the given attributes")
+    # def validate_uniqueness(self):
+    #     if self.status == 'pending' and FclFreightRateTask.select().where(
+    #         (FclFreightRateTask.port_id == self.port_id) &
+    #         (FclFreightRateTask.trade_type == self.trade_type) &
+    #         (FclFreightRateTask.main_port_id == self.main_port_id) &
+    #         (FclFreightRateTask.container_size == self.container_size) &
+    #         (FclFreightRateTask.container_type == self.container_type) &
+    #         (FclFreightRateTask.commodity == self.commodity) &
+    #         (FclFreightRateTask.shipping_line_id == self.shipping_line_id) &
+    #         (FclFreightRateTask.source == self.source) &
+    #         (FclFreightRateTask.task_type == self.task_type) &
+    #         (FclFreightRateTask.service == self.service) &
+    #         (FclFreightRateTask.status == self.status)).count()!=0:
+    #         raise ValueError("Record already exists with the given attributes")
 
     def validate(self):
         self.validate_service()
@@ -143,7 +143,7 @@ class FclFreightRateTask(BaseModel):
         self.validate_source()
         self.validate_status()
         self.validate_job_data()
-        self.validate_uniqueness()
+        # self.validate_uniqueness()
         self.validate_port_id()
         self.validate_main_port_id()
         self.validate_shipping_line_id()

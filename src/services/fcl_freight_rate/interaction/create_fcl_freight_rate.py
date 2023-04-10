@@ -1,8 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from celery_worker import delay_fcl_functions
-from datetime import datetime
 from database.db_session import db
 
 def create_audit(request, freight_id):
@@ -28,13 +26,14 @@ def create_audit(request, freight_id):
     )
     return id
 def create_fcl_freight_rate_data(request):
-    origin_port_id = str(request.get("origin_port_id"))
-    query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
-    db.execute_sql(query)
+    # origin_port_id = str(request.get("origin_port_id"))
+    # query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)
+    # db.execute_sql(query)
     with db.atomic():
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
+    from celery_worker import delay_fcl_functions
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
@@ -95,9 +94,9 @@ def create_fcl_freight_rate(request):
         }
     else:
         freight.destination_local = { "line_items": [] }
-
-    freight.validate_validity_object(request["validity_start"], request["validity_end"])
-    freight.validate_line_items(request.get("line_items"))
+    if 'rate_sheet_validation' not in request:
+        freight.validate_validity_object(request["validity_start"], request["validity_end"])
+        freight.validate_line_items(request.get("line_items"))
 
     freight.set_validities(
         request["validity_start"].date(),
@@ -111,28 +110,29 @@ def create_fcl_freight_rate(request):
     freight.set_platform_prices()
     freight.set_is_best_price()
     freight.set_last_rate_available_date()
-    freight.validate_before_save()
+    
+    if 'rate_sheet_validation' not in request:
+        freight.validate_before_save()
+
+    freight.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
+
+    freight.update_special_attributes()
+
+    freight.update_local_references()  
 
     try:
         freight.save()
     except Exception as e:
         raise HTTPException(status_code=499, detail="rate did not save")
-
-    freight.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
-
+    
+    create_audit(request, freight.id)
+    
     if not request.get('importer_exporter_id'):
       freight.delete_rate_not_available_entry()
-
-    create_audit(request, freight.id)
-    freight.update_special_attributes()
-
-    freight.update_local_references()
-
+    
     freight.update_platform_prices_for_other_service_providers()
-
-    freight.save()
+    
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
     return {"id": freight.id}
-

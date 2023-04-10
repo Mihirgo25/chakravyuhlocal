@@ -20,7 +20,7 @@ class FclFreightRateRequest(BaseModel):
     cogo_entity_id = UUIDField(index=True, null = True)
     closed_by_id = UUIDField(index=True, null=True)
     closed_by = BinaryJSONField(null=True)
-    closing_remarks = ArrayField(field_class=CharField, null=True)
+    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     commodity = CharField(index=True, null=True)
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
@@ -40,7 +40,7 @@ class FclFreightRateRequest(BaseModel):
     origin_trade_id = UUIDField( null=True)
     performed_by_id = UUIDField(index=True, null=True)
     performed_by = BinaryJSONField(null=True)
-    performed_by_org_id = CharField(index=True, null=True)
+    performed_by_org_id = UUIDField(index=True, null=True)
     performed_by_type = CharField(index=True, null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
@@ -48,10 +48,9 @@ class FclFreightRateRequest(BaseModel):
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     preferred_shipping_lines = BinaryJSONField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
-    remarks = ArrayField(CharField, null=True, constraints=[SQL("DEFAULT '{}'::character varying[]")])
+    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     request_type = CharField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_request_serial_id_seq'::regclass)")])
-    spot_search = BinaryJSONField(null=True)
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)
@@ -91,52 +90,57 @@ class FclFreightRateRequest(BaseModel):
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
             pass
-
         if self.preferred_shipping_line_ids:
-            preferred_shipping_lines = []
-            for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(id=shipping_line_id)
-                if len(shipping_line_data) == 0:
-                    raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
-                preferred_shipping_lines.append(shipping_line_data[0])
-            self.preferred_shipping_lines = preferred_shipping_lines
+            # preferred_shipping_lines = []
+            # for shipping_line_id in self.preferred_shipping_line_ids:
+            shipping_line_data = get_shipping_line(id=self.preferred_shipping_line_ids)
+            if len(shipping_line_data) != len(self.preferred_shipping_line_ids):
+                raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
+            self.preferred_shipping_lines = shipping_line_data
+            self.preferred_shipping_line_ids = [uuid.UUID(str(shipping_line_id)) for shipping_line_id in self.preferred_shipping_line_ids]
+            # preferred_shipping_lines.append(shipping_line_data[0])
 
     def set_location(self):
-        origin_location_data = maps.list_locations({'filters':{'id':self.origin_port_id}})['list']
-        self.origin_port = {key:value for key,value in origin_location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-        destination_location_data = maps.list_locations({'filters':{'id':self.destination_port_id}})['list']
-        self.destination_port = {key:value for key,value in destination_location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+        location_data = maps.list_locations({'filters':{'id':[self.origin_port_id,self.destination_port_id]}})['list']
+        for location in location_data:
+            if location['id']==self.origin_port_id:
+                self.origin_port = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+            elif location['id']==self.destination_port_id:
+                self.destination_port = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def validate(self):
         self.validate_source()
         self.validate_source_id()
-        self.validate_performed_by_id()
-        self.validate_performed_by_org_id()
+        # self.validate_performed_by_id()
+        # self.validate_performed_by_org_id()
         self.validate_preferred_shipping_line_ids()
         return True
 
 
     def send_closed_notifications_to_sales_agent(self):
-        location_pair = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.destination_port_id).where(source_id = self.source_id).limit(1).dicts().get()
-        location_pair_data = maps.list_locations({ 'id': [location_pair['origin_port_id'], location_pair['destination_port_id']]})['list']
+        location_pair = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.destination_port_id).where(FclFreightRateRequest.source_id == self.source_id).limit(1).dicts().get()
+        location_pair_data = maps.list_locations({ 'filters': {'id': [str(location_pair['origin_port_id']), str(location_pair['destination_port_id'])] }})['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
-            importer_exporter_id = common.get_spot_search({'id': self.source_id})['detail']['importer_exporter_id']
+            importer_exporter_id = common.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
+        origin_location = location_pair_name[str(location_pair['origin_port_id'])]
+        destination_location = location_pair_name[str(location_pair['destination_port_id'])]
         data = {
-        'user_id': self.performed_by_id,
-        'type': 'platform_notification',
-        'service': 'fcl_freight_rate',
-        'service_id': self.id,
-        'template_name': 'freight_rate_request_completed_notification' if 'rate_added' in self.closing_remarks else 'freight_rate_request_closed_notification',
-        'variables': { 'service_type': 'fcl freight',
-                    'origin_location': location_pair_name[location_pair['origin_port_id']],
-                    'destination_location': location_pair_name[location_pair['destination_port_id']],
-                    'remarks': None if 'rate_added' in self.closing_remarks else "Reason: {}.".format(self.closing_remarks[0].lower().replace('_', ' ')),
-                    'request_serial_id': self.serial_id,
-                    'spot_search_id': self.source_id,
-                    'importer_exporter_id': importer_exporter_id }
-
+            'user_id': self.performed_by_id,
+            'type': 'platform_notification',
+            'service': 'fcl_freight_rate',
+            'service_id': self.id,
+            'template_name': 'freight_rate_request_completed_notification' if 'rate_added' in self.closing_remarks else 'freight_rate_request_closed_notification',
+            'variables': { 
+                'service_type': 'fcl freight',
+                'origin_location': origin_location,
+                'destination_location': destination_location,
+                'remarks': None if 'rate_added' in self.closing_remarks else "Reason: {}.".format(self.closing_remarks[0].lower().replace('_', ' ')),
+                'request_serial_id': str(self.serial_id),
+                'spot_search_id': str(self.source_id),
+                'importer_exporter_id': importer_exporter_id 
+            }
         }
-        # common.create_communication(data)
+        common.create_communication(data)
