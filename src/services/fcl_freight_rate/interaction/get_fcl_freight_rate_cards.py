@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS, DEFAULT_PAYMENT_TERM
@@ -8,6 +8,7 @@ from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
+from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from database.rails_db import get_shipping_line, get_eligible_orgs
 
 def initialize_freight_query(requirements):
@@ -31,7 +32,8 @@ def initialize_freight_query(requirements):
     FclFreightRate.destination_local,
     FclFreightRate.is_origin_local_line_items_error_messages_present,
     FclFreightRate.is_destination_local_line_items_error_messages_present,
-    FclFreightRate.cogo_entity_id
+    FclFreightRate.cogo_entity_id,
+    FclFreightRate.mode
     ).where(
     FclFreightRate.origin_port_id == requirements['origin_port_id'],
     FclFreightRate.destination_port_id == requirements['destination_port_id'],
@@ -41,7 +43,6 @@ def initialize_freight_query(requirements):
     ~FclFreightRate.rate_not_available_entry,
     ((FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
     )
-
     rate_constant_mapping_key = requirements['cogo_entity_id']
 
     allow_entity_ids = None
@@ -57,7 +58,6 @@ def initialize_freight_query(requirements):
 
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
-
     return freight_query
 
 def is_rate_missing_locals(local_type, rate):
@@ -127,12 +127,14 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
         (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
     )
+
     if len(main_port_ids) == 2:
         all_rate_locals_query = all_rate_locals_query.where(FclFreightRateLocal.main_port_id << main_port_ids)
     elif len(main_port_ids) == 1:
         all_rate_locals_query = all_rate_locals_query.where((FclFreightRateLocal.main_port_id.is_null(True) | FclFreightRateLocal.main_port_id << main_port_ids))
 
     all_rate_locals = jsonable_encoder(list(all_rate_locals_query.dicts()))
+
     all_formatted_locals = []
     for local_charge in all_rate_locals:
         new_local_obj = local_charge | {
@@ -197,7 +199,6 @@ def fill_missing_weight_limit_in_rates(freight_rates, weight_limits, requirement
 
 
 def fill_missing_free_days_in_rates(requirements, freight_rates):
-    service_provider_ids = []
     service_provider_ids = []
     shipping_line_ids = []
     origin_local_service_providers = []
@@ -406,7 +407,6 @@ def add_free_days_objects(freight_query_result, response_object, request):
 
 def add_weight_limit_object(freight_query_result, response_object, request):
     response_object['weight_limit'] = freight_query_result['weight_limit'] | {'unit': 'per_container'}
-
     return True
 
 def build_additional_weight_line_item_object(additional_weight_rate, additional_weight_rate_currency, request):
@@ -510,12 +510,11 @@ def add_freight_objects(freight_query_result, response_object, request):
 
     additional_weight_rate = 0
     additional_weight_rate_currency = 'USD'
-
     if request['cargo_weight_per_container'] and (request['cargo_weight_per_container'] - (response_object['weight_limit'].get('free_limit',0))) > 0:
         for slab in (response_object['weight_limit'].get('slabs',[]) or []):
             if slab['upper_limit'] < request['cargo_weight_per_container']:
                 continue
-
+            
             additional_weight_rate = slab['price']
             additional_weight_rate_currency = slab['currency']
             break
@@ -549,7 +548,7 @@ def build_response_object(freight_query_result, request):
       'commodity': freight_query_result['commodity'],
       'service_provider_id': freight_query_result['service_provider_id'],
       'importer_exporter_id': freight_query_result['importer_exporter_id'],
-      'source': 'predicted' if (freight_query_result['service_provider_id'] in PREDICTED_RATES_SERVICE_PROVIDER_IDS) else 'spot_rates',
+      'source': 'predicted' if freight_query_result['mode'] == 'predicted' else 'spot_rates',
       'tags': [],
       'rate_id': freight_query_result['id']
     }
@@ -608,9 +607,8 @@ def discard_no_free_day_rates(freight_rates, requirements):
 
 def discard_no_weight_limit_rates(freight_rates, requirements):
     if "cargo_weight_per_container" not in requirements:
-        return freight_rates
-
-
+        return freight_rates     
+    
     new_freight_rates = []
     for rate in freight_rates:
         if ("weight_limit" not in rate) or ("free_limit" not in (rate.get("weight_limit") or {})) or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or (not rate['weight_limit']['slabs']) or (rate["weight_limit"]["slabs"][-1] or {}).get("upper_limit") < requirements["cargo_weight_per_container"])):
@@ -759,6 +757,10 @@ def get_fcl_freight_rate_cards(requirements):
     try:
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        if len(freight_rates) == 0:
+            get_fcl_freight_predicted_rate(requirements)
+            initial_query = initialize_freight_query(requirements)
+            freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
@@ -783,5 +785,3 @@ def get_fcl_freight_rate_cards(requirements):
         return {
             "list": []
         }
-
-
