@@ -12,7 +12,7 @@ from math import ceil
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
-possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
+possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id', 'relevant_service_provider_id']
 
 def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
     query = FclFreightRateFeedback.select()
@@ -63,6 +63,14 @@ def apply_relevant_supply_agent_filter(query, filters):
                     (FclFreightRateFeedback.destination_country_id << destination_port_id) |
                     (FclFreightRateFeedback.destination_continent_id << destination_port_id) |
                     (FclFreightRateFeedback.destination_trade_id << destination_port_id))
+    return query
+
+def apply_relevant_service_provider_id_filter(query, filters):
+    expertises = get_organization_service_experties('fcl_freight', filters['service_provider_id'], account_type='organization')
+    origin_port_id = [t['origin_location_id'] for t in expertises]
+    destination_port_id =  [t['destination_location_id'] for t in expertises]
+    query = query.where((FclFreightRateFeedback.origin_port_id << origin_port_id) | (FclFreightRateFeedback.origin_country_id << origin_port_id) | (FclFreightRateFeedback.origin_continent_id << origin_port_id) | (FclFreightRateFeedback.origin_trade_id << origin_port_id))
+    query = query.where((FclFreightRateFeedback.destination_port_id << destination_port_id) | (FclFreightRateFeedback.destination_country_id << destination_port_id) | (FclFreightRateFeedback.destination_continent_id << destination_port_id) | (FclFreightRateFeedback.destination_trade_id << destination_port_id))
     return query
 
 def apply_supply_agent_id_filter(query, filters):
