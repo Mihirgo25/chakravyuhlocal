@@ -10,6 +10,7 @@ import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from database.rails_db import get_shipping_line, get_eligible_orgs
+from database.db_session import rd
 
 def initialize_freight_query(requirements):
     freight_query = FclFreightRate.select(
@@ -232,6 +233,8 @@ def fill_missing_weight_limit_in_rates(freight_rates, weight_limits, requirement
                 'free_limit': rate_free_limit,
                 'slabs': rate_slabs
             }
+            rate_key = 'missing_weight_limit_{}'.format(rate['id'])
+            rd.set(name=rate_key, value=True, ex=86400)
         with_weight_limit_rates.append(rate)
 
     return with_weight_limit_rates
