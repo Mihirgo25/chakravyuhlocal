@@ -91,47 +91,47 @@ FEEDBACK_SOURCES = ['spot_search', 'checkout']
 
 FEEDBACK_TYPES = ['liked', 'disliked']
 
-DEFAULT_WEIGHT_LIMITS = {
+DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION = {
   '20' : {
-    'free_limit': 18,
+    'free_limit': 18.0,
     'slabs': [
       {
         'lower_limit': 19,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]
   },
   '40' : {
-    'free_limit': 26,
+    'free_limit': 26.0,
     'slabs': [
       {
         'lower_limit': 27,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]
   },
   '40HC' : {
-    'free_limit': 26,
+    'free_limit': 26.0,
     'slabs': [
       {
         'lower_limit': 27,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]
   },
   '45HC' : {
-    'free_limit': 26,
+    'free_limit': 26.0,
     'slabs': [
       {
         'lower_limit': 27,
         'upper_limit': 1000,
-        'price': 200,
+        'price': 0,
         'currency': 'USD'
       }
     ]
@@ -181,3 +181,7 @@ DEFAULT_LOCAL_AGENT_IDS = {
   "541d1232-58ce-4d64-83d6-556a42209eb7":{'platform_config_constant_id':'3617e7ea-fc4f-4478-aea2-651fcb0ec1e6', 'value_type':'default', 'value':'5dc403b3-c1bd-4871-b8bd-35543aaadb36', 'display_name':'COGO FREIGHT PRIVATE LIMITED', 'status':'active'},
   "default": {'platform_config_constant_id':'3617e7ea-fc4f-4478-aea2-651fcb0ec1e6', 'value_type':'default', 'value':'5dc403b3-c1bd-4871-b8bd-35543aaadb36', 'display_name':'COGO FREIGHT PRIVATE LIMITED', 'status':'active'}
 }
+
+
+SHIPPING_LINES_FOR_PREDICTION = ['c3649537-0c4b-4614-b313-98540cffcf40', 'b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', 'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd','9ee49704-f5a7-4f17-9e25-c5c3b5ec3d1d']
+#Maersk, cma, hapag, msc, oocl
