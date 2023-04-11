@@ -428,7 +428,7 @@ class FclFreightRate(BaseModel):
         if not schedule_type:
           schedule_type = DEFAULT_SCHEDULE_TYPES
         if not payment_term:
-          schedule_type = DEFAULT_PAYMENT_TERM
+          payment_term = DEFAULT_PAYMENT_TERM
 
         if not deleted:
             currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
@@ -502,6 +502,7 @@ class FclFreightRate(BaseModel):
           main_validities.append(new_validity)
         self.validities = main_validities
 
+
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
             FclFreightRate.origin_port_id == self.origin_port_id,
@@ -519,6 +520,7 @@ class FclFreightRate(BaseModel):
 
       if self.weight_limit:
         schema_weight_limit.validate(self.weight_limit)
+        
 
         self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
 
@@ -530,7 +532,6 @@ class FclFreightRate(BaseModel):
             raise HTTPException(status_code=499, detail="slabs are not valid")
 
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
-
       self.destination_local_instance = FclFreightRateLocalData(self.destination_local)
 
       if not self.validate_container_size():
@@ -612,7 +613,6 @@ class FclFreightRate(BaseModel):
 
     def is_rate_not_available(self):
       return self.last_rate_available_date is None
-
 
     def local_data_get_line_item_messages(self):
 

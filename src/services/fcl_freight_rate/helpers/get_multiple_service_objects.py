@@ -59,3 +59,4 @@ def get_multiple_service_objects(freight_object):
 
 
     freight_object.save()
+

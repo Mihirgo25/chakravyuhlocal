@@ -15,6 +15,7 @@ from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
 import concurrent.futures
+from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -254,7 +255,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 def fcl_freight_rates_to_cogo_assured(self):
     try:
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
-            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])
+            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40']) 
         total_count = query.count()
         batches = int(total_count/5000)
         last_batch = total_count%5000
@@ -271,7 +272,7 @@ def fcl_freight_rates_to_cogo_assured(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
             futures = [executor.submit(execute_query, query) for query in queries]
 
-            for i in range(0,len(futures)):
+            for i in range(0,len(futures)): 
                 result = futures[i].result()
                 query_result.extend(result)
         date = datetime.now() - timedelta(days = 1)
@@ -298,7 +299,13 @@ def update_contract_service_task_delay(self, object):
             raise self.retry(exc= exc)
 
 
-
-
-
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def create_fcl_freight_rate_feedback_for_prediction(self, result):
+    try:
+        create_fcl_freight_rate_prediction_feedback(result)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
