@@ -1,5 +1,6 @@
 from configs.definitions import ROOT_DIR
-from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID, HAZ_CLASSES, DEFAULT_SCHEDULE_TYPES
+from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
+from configs.global_constants import HAZ_CLASSES
 import pickle, joblib, os
 from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
