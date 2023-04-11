@@ -6,6 +6,60 @@ from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
+from configs.rate_averages import AVERAGE_RATES
+from configs.trade_lane import TRADE_LANE_PRICES
+
+def get_final_price(min_price, price, op, dp, ldh):
+    price_delta = price - min_price
+    avg_price = AVERAGE_RATES['default']
+    predicted_price = price + (5 - price%10) if price%10 <= 5 else (price + (10 - price%10))
+
+    if predicted_price > avg_price:
+        return predicted_price
+
+    origin_port = ldh[op]
+    destination_port = ldh[dp]
+
+    origin_trade_id = origin_port['trade_id']
+    destination_trade_id = destination_port['trade_id']
+
+    origin_continent_id = origin_port['continent_id']
+    destination_continent_id = destination_port['continent_id']
+
+    key = '{}:{}'.format(op, dp)
+    trade_key = '{}:{}:{}:{}'.format(origin_trade_id, destination_trade_id, origin_continent_id, destination_continent_id)
+    if key in AVERAGE_RATES:
+        avg_price = AVERAGE_RATES[key] + price_delta
+    elif trade_key in TRADE_LANE_PRICES:
+        avg_price = TRADE_LANE_PRICES[key] + price_delta
+        
+    return avg_price
+    
+def insert_rates_to_rms(create_params, request):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+    locations_description = maps.list_locations({'filters': {'id': [request['origin_port_id'],request['destination_port_id']]}})['list'] or []
+
+    ldh = {}
+
+    min_price = 10000000000
+
+    for create_param in create_params:
+        price = create_param['line_items'][0]['price']
+        if price < min_price:
+            min_price = price
+    
+
+    for loc in locations_description:
+        ldh[loc['id']] = loc
+      
+    for create_param in create_params:
+        price = create_param['line_items'][0]['price']
+        final_bas_price_to_rms = get_final_price(min_price, price, request['origin_port_id'],request['destination_port_id'], ldh)
+        create_param['line_items'][0]['price'] = final_bas_price_to_rms
+        rate_card_id = create_fcl_freight_rate_data(create_param)['id'] 
+        create_param['creation_id'] = rate_card_id
+    return create_params
+    
 
 def get_fcl_freight_predicted_rate(request):
     from celery_worker import create_fcl_freight_rate_feedback_for_prediction
@@ -51,14 +105,16 @@ def get_fcl_freight_predicted_rate(request):
 
     for i in range(len(data_for_feedback)):
         data_for_feedback[i] = data_for_feedback[i].result()
+    
 
     if request.get('is_source_lcl'):
         return data_for_feedback
+    
+    data_for_feedback = insert_rates_to_rms(data_for_feedback, request)
 
     create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':data_for_feedback}, queue = 'low')
 
 def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request, ports_distance):
-    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
     validity_start = datetime.now().date().isoformat()
     validity_end = (datetime.now() + timedelta(days = 7)).date().isoformat()
 
@@ -89,7 +145,6 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
         'container_size': request['container_size'],
         'container_type': request['container_type'],
         'commodity': request['commodity'] if request.get('commodity') else 'general',
-        'importer_exporter_id': request.get('importer_exporter_id'),
         'shipping_line_id' : shipping_line_id,
         'service_provider_id' : DEFAULT_SERVICE_PROVIDER_ID,
         'validity_start': datetime.strptime(validity_start,'%Y-%m-%d'),
@@ -100,9 +155,7 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
             "unit": "per_container",
             "price" : price + (5 - price%10) if price%10 <= 5 else (price + (10 - price%10)),
             "currency": "USD",
-            "remarks": [
-                "predicted price"
-            ],
+            "remarks": []            ,
             "slabs": []
         }
         ],
@@ -154,9 +207,5 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
     if creation_param['destination_country_id'] == '541d1232-58ce-4d64-83d6-556a42209eb7':
         creation_param['line_items'][0]['price'] = creation_param['line_items'][0]['price'] + 100
 
-    if request.get('is_source_lcl'):
-        return creation_param
-
-    rate_card_id = create_fcl_freight_rate_data(creation_param)['id'] 
-    creation_param['creation_id'] = rate_card_id
     return creation_param
+    

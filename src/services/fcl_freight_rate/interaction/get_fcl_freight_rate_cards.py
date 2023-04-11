@@ -3,13 +3,14 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
-from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM
+from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from database.rails_db import get_shipping_line, get_eligible_orgs
+from database.db_session import rd
 
 def initialize_freight_query(requirements):
     freight_query = FclFreightRate.select(
@@ -177,25 +178,66 @@ def fill_missing_locals_in_rates(freight_rates, local_rates):
         new_freight_rates.append(freight_rate)
     return new_freight_rates
 
+def is_weight_limit_missing(rate, requirements):
+    return ("weight_limit" not in rate) or ("free_limit" not in (rate.get("weight_limit") or {})) or (rate["weight_limit"]["free_limit"] < requirements["cargo_weight_per_container"] and ("slabs" not in rate["weight_limit"] or (not rate['weight_limit']['slabs']) or (rate["weight_limit"]["slabs"][-1] or {}).get("upper_limit") < requirements["cargo_weight_per_container"]))
+
 def get_rates_which_need_free_limit(requirements, freight_rates):
     missing_free_weight_limit = []
     for rate in freight_rates:
-        if not rate['weight_limit'] or not 'free_limit' in rate['weight_limit'] or rate['weight_limit']['free_limit'] < requirements['cargo_weight_per_container'] :
+        if is_weight_limit_missing(rate, requirements):
             missing_free_weight_limit.append(rate)
     return missing_free_weight_limit
 
 def get_missing_weight_limit(requirements, missing_free_weight_limit):
     return get_fcl_freight_weight_slabs_for_rates(requirements, missing_free_weight_limit)
 
+def get_built_in_slabs(slabs, rate_free_limit, requirements):
+    rate_slabs = []
+    if requirements['cargo_weight_per_container'] <= rate_free_limit:
+        return rate_slabs
+    if not slabs:
+        rate_slabs = [{
+            'lower_limit': rate_free_limit + 0.1,
+            'upper_limit': requirements['cargo_weight_per_container'],
+            'price': 0,
+            'currency': 'USD'
+        }]
+    else:
+        last_slab = slabs[-1]
+        rate_slabs = slabs.append({
+            'lower_limit': last_slab['upper_limit'] + 0.1,
+            'upper_limit': requirements['cargo_weight_per_container'],
+            'price': last_slab['price'],
+            'currency': last_slab['currency']
+        })
+    return rate_slabs
+
 def fill_missing_weight_limit_in_rates(freight_rates, weight_limits, requirements):
     new_freight_rates = []
     for rate in freight_rates:
         if rate['id'] in weight_limits:
             weight_limit = weight_limits[rate["id"]]
-            if (not rate['weight_limit'] or not 'free_limit' in rate['weight_limit'] or rate['weight_limit']['free_limit'] < requirements['cargo_weight_per_container']) and weight_limit:
+            if is_weight_limit_missing(rate, requirements):
                 rate['weight_limit'] = weight_limit
         new_freight_rates.append(rate)
-    return new_freight_rates
+    
+    with_weight_limit_rates = []
+    for rate in new_freight_rates:
+        if is_weight_limit_missing(rate, requirements):
+            free_limit = (rate.get("weight_limit") or {}).get('free_limit')
+            slabs = (rate.get("weight_limit") or {}).get('slabs') or []
+            rate_free_limit = free_limit or DEFAULT_MAX_WEIGHT_LIMIT[requirements['container_size']]
+            rate_slabs = slabs
+            rate_slabs = get_built_in_slabs(slabs=slabs, rate_free_limit=rate_free_limit, requirements=requirements)
+            rate['weight_limit'] = {
+                'free_limit': rate_free_limit,
+                'slabs': rate_slabs
+            }
+            rate_key = 'missing_weight_limit_{}'.format(rate['id'])
+            rd.set(name=rate_key, value=1, ex=86400)
+        with_weight_limit_rates.append(rate)
+
+    return with_weight_limit_rates
 
 
 def fill_missing_free_days_in_rates(requirements, freight_rates):
@@ -627,7 +669,7 @@ def pre_discard_noneligible_rates(freight_rates, requirements):
 
 def post_discard_noneligible_rates(freight_rates, requirements):
     freight_rates = discard_no_free_day_rates(freight_rates, requirements)
-    freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
+    # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 
 
@@ -757,12 +799,13 @@ def get_fcl_freight_rate_cards(requirements):
     try:
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
+
+        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+
         if len(freight_rates) == 0:
             get_fcl_freight_predicted_rate(requirements)
             initial_query = initialize_freight_query(requirements)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
-
-        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
@@ -779,7 +822,7 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates
-    }
+        }
     except Exception as e:
         print(e, 'Error In Fcl Freight Rate Cards')
         return {
