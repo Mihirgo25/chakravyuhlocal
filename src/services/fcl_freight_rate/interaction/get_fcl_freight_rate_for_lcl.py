@@ -15,6 +15,7 @@ def get_fcl_freight_rate_for_lcl(request):
         fcl_object.set_locations()
     
     if not details:
+        request['is_source_lcl'] = True
         details  = get_fcl_freight_predicted_rate(request)
         source = 'predicted'
       
