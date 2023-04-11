@@ -12,7 +12,7 @@ from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
 
-def initialize_freight_query(requirements):
+def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
     FclFreightRate.id,
     FclFreightRate.validities,
@@ -56,6 +56,9 @@ def initialize_freight_query(requirements):
     #     freight_query = freight_query.where(FclFreightRate.cogo_entity_id == None)
 
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
+
+    if not prediction_required:
+        freight_query  = freight_query.where(FclFreightRate.mode != 'predicted')
 
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
@@ -804,7 +807,7 @@ def get_fcl_freight_rate_cards(requirements):
 
         if len(freight_rates) == 0:
             get_fcl_freight_predicted_rate(requirements)
-            initial_query = initialize_freight_query(requirements)
+            initial_query = initialize_freight_query(requirements, True)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
