@@ -8,31 +8,40 @@ from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
+from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 
-def get_final_price(min_price, price, op, dp, ldh):
+def get_final_price(min_price, price, ldh, request):
     price_delta = price - min_price
+
     avg_price = AVERAGE_RATES['default']
-    predicted_price = price + (5 - price%10) if price%10 <= 5 else (price + (10 - price%10))
 
-    if predicted_price > avg_price:
-        return predicted_price
+    origin_trade_id = ldh[request['origin_port_id']]['trade_id']
+    destination_trade_id = ldh[request['destination_port_id']]['trade_id']
 
-    origin_port = ldh[op]
-    destination_port = ldh[dp]
 
-    origin_trade_id = origin_port['trade_id']
-    destination_trade_id = destination_port['trade_id']
+    modified_container_size = '40'
 
-    origin_continent_id = origin_port['continent_id']
-    destination_continent_id = destination_port['continent_id']
+    if request['container_size'] == '20':
+        modified_container_size = '20'
 
-    key = '{}:{}'.format(op, dp)
-    trade_key = '{}:{}:{}:{}'.format(origin_trade_id, destination_trade_id, origin_continent_id, destination_continent_id)
+    key = '{}:{}:{}'.format(request['origin_country_id'], request['destination_country_id'], modified_container_size)
+    reverse_key = '{}:{}:{}'.format(request['destination_country_id'], request['origin_country_id'], modified_container_size)
+    trade_key = '{}:{}:{}'.format(origin_trade_id, destination_trade_id, modified_container_size)
+    reverse_trade_key = '{}:{}:{}'.format(destination_trade_id, origin_trade_id, modified_container_size)
+
     if key in AVERAGE_RATES:
         avg_price = AVERAGE_RATES[key] + price_delta
+    elif reverse_key in AVERAGE_RATES:
+        avg_price = AVERAGE_RATES[reverse_key] + price_delta
     elif trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[key] + price_delta
-        
+        avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
+    elif reverse_trade_key in TRADE_LANE_PRICES:
+        avg_price = TRADE_LANE_PRICES[reverse_trade_key] + price_delta
+    elif price > 1500 and price < avg_price:
+        return price
+    else:
+        avg_price = AVERAGE_RATES['default'] + price
+
     return avg_price
     
 def insert_rates_to_rms(create_params, request):
@@ -54,10 +63,12 @@ def insert_rates_to_rms(create_params, request):
       
     for create_param in create_params:
         price = create_param['line_items'][0]['price']
-        final_bas_price_to_rms = get_final_price(min_price, price, request['origin_port_id'],request['destination_port_id'], ldh)
-        create_param['line_items'][0]['price'] = final_bas_price_to_rms
+        final_bas_price_to_rms = get_final_price(min_price, price, ldh, request)
+        create_param['line_items'][0]['price'] = final_bas_price_to_rms + (5 - final_bas_price_to_rms%10) if final_bas_price_to_rms%10 <= 5 else (final_bas_price_to_rms + (10 - final_bas_price_to_rms%10))
         rate_card_id = create_fcl_freight_rate_data(create_param)['id'] 
         create_param['creation_id'] = rate_card_id
+        create_param['predicted_price'] = price
+
     return create_params
     
 
@@ -153,9 +164,9 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
         {
             "code": "BAS",
             "unit": "per_container",
-            "price" : price + (5 - price%10) if price%10 <= 5 else (price + (10 - price%10)),
+            "price" : price,
             "currency": "USD",
-            "remarks": []            ,
+            "remarks": [],
             "slabs": []
         }
         ],

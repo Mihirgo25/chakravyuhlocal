@@ -24,7 +24,7 @@ def create_fcl_freight_rate_prediction_feedback(result):
                     "validity_start": feedback.get("validity_start"),
                     "validity_end": feedback.get("validity_end"),
                     "predicted_price_currency": "USD",
-                    "predicted_price": feedback['line_items'][0].get('price') if ("line_items" in feedback) and (feedback['line_items']) else None,
+                    "predicted_price": feedback.get('predicted_price'),
                     "actual_price": feedback.get("actual_price") if "actual_price" in feedback else None,
                     "actual_price_currency": feedback.get("actual_price_currency") if "actual_price_currency" in feedback else None,
                     "source" : feedback.get('source'),
@@ -34,12 +34,14 @@ def create_fcl_freight_rate_prediction_feedback(result):
 
                 new_rate = FclRatePredictionFeedback.create(**record)
                 feedback['id'] = new_rate.id
-                return {"id": feedback['id']}
-                # for val in result:
-                #     if ("predicted_price" in val) and val['predicted_price']:
-                #         val["predicted_price"] = round(common.get_money_exchange_for_fcl({'from_currency': "USD", 'to_currency': val["currency"], 'price': val["predicted_price"]})['price'])
-                # return result
+
+                    # for val in result:
+                    #     if ("predicted_price" in val) and val['predicted_price']:
+                    #         val["predicted_price"] = round(common.get_money_exchange_for_fcl({'from_currency': "USD", 'to_currency': val["currency"], 'price': val["predicted_price"]})['price'])
+                    # return result
 
             except:
                 transaction.rollback()
                 return {'success' : False}
+    
+    return {'success':True}
