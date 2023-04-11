@@ -1,5 +1,5 @@
 from configs.definitions import ROOT_DIR
-from configs.fcl_freight_rate_constants import SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SOURCED_BY_ID, DEFAULT_PROCURED_BY_ID
+from configs.fcl_freight_rate_constants import SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
 from configs.fcl_freight_rate_constants import HAZ_CLASSES
 import pickle, joblib, os, geopy.distance
 from datetime import datetime, timedelta
@@ -17,8 +17,7 @@ def get_fcl_freight_predicted_rate(request):
         request = request
     else:
         request = request.__dict__
-    location_dict = joblib.load(open(os.path.join(ROOT_DIR, "utils", "prediction_based_models", "location_distance.pkl"), "rb"))
-
+    location_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision","prediction_based_models", "location_distance.pkl"), "rb"))
     location_data = maps.list_locations_mapping({'location_id':[request['origin_port_id'],request['destination_port_id']],'type':['main_ports']})['list']
 
     origin_main_port_ids = []
@@ -63,8 +62,8 @@ def predict_rates(origin_port_data,destination_port_data, shipping_line_id, requ
     validity_start = datetime.now().date().isoformat()
     validity_end = (datetime.now() + timedelta(days = 7)).date().isoformat()
 
-    MODEL_PATH = os.path.join(ROOT_DIR, "utils", "prediction_based_models", "fcl_freight_forecasting_model.pkl")
-    shipping_line_dict = pickle.load(open(os.path.join(ROOT_DIR, "utils", "prediction_based_models","shipping_line.pkl"), 'rb'))
+    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "fcl_freight_forecasting_model.pkl")
+    shipping_line_dict = pickle.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models","shipping_line.pkl"), 'rb'))
     model = joblib.load(open(MODEL_PATH, "rb"))
     
     if request['origin_country_id'] == request['destination_country_id']:
