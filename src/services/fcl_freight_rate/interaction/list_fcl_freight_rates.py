@@ -62,7 +62,7 @@ def get_data(query, expired_rates_required):
     
     if result['validities']:
       for validity_object in result['validities']:
-        if (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') < datetime.now()) and (not expired_rates_required):
+        if (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') <= datetime.now()) and (not expired_rates_required):
             continue 
 
         validity = {
