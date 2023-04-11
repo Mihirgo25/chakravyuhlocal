@@ -25,7 +25,7 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
     query = apply_indirect_filters(query, indirect_filters)
 
   if return_query:
-    return {'list': str(query)} 
+    return {'list': query} 
     
   data = get_data(query,expired_rates_required)
   
@@ -62,7 +62,7 @@ def get_data(query, expired_rates_required):
     
     if result['validities']:
       for validity_object in result['validities']:
-        if (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') < datetime.now()) and (not expired_rates_required):
+        if (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') <= datetime.now()) and (not expired_rates_required):
             continue 
 
         validity = {
