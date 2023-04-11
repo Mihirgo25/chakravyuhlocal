@@ -234,7 +234,7 @@ def fill_missing_weight_limit_in_rates(freight_rates, weight_limits, requirement
                 'slabs': rate_slabs
             }
             rate_key = 'missing_weight_limit_{}'.format(rate['id'])
-            rd.set(name=rate_key, value=True, ex=86400)
+            rd.set(name=rate_key, value=1, ex=86400)
         with_weight_limit_rates.append(rate)
 
     return with_weight_limit_rates
@@ -822,7 +822,7 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates
-    }
+        }
     except Exception as e:
         print(e, 'Error In Fcl Freight Rate Cards')
         return {
