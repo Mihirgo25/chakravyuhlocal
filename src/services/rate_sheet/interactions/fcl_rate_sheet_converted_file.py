@@ -287,7 +287,7 @@ def process_fcl_freight_local(params, converted_file, update):
         percent_completed = 0
     converted_file['percent'] = percent_completed
     set_processed_percent(percent_completed, params)
-    if valid == total:
+    if valid == total and total!=0:
         update.status = 'complete'
         converted_file['status'] = 'complete'
     elif valid==0:
@@ -505,7 +505,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
     converted_file['percent'] = percent_completed
     set_processed_percent(percent_completed, params)
     edit_file.close()
-    if valid == total:
+    if valid == total and total!=0:
         update.status = 'complete'
         converted_file['status'] = 'complete'
     elif valid == 0:
@@ -1158,7 +1158,7 @@ def process_fcl_freight_freight(params, converted_file, update):
     edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     edit_file.close()
-    if valid == total:
+    if valid == total and total!=0:
         update.status = 'complete'
         converted_file['status'] = 'complete'
     elif valid == 0:
