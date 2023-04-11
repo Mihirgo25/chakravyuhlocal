@@ -18,7 +18,7 @@ def get_fcl_freight_rate_for_lcl(request):
         request['is_source_lcl'] = True
         details  = get_fcl_freight_predicted_rate(request)
         for detail in details:
-            detail['frieght'] = {'validities':[]}
+            detail['freight'] = {'validities':[]}
             detail['freight']['validities'].append(
             {'line_items': detail['line_items'],
             'validity_start': detail['validity_start'],

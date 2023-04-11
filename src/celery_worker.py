@@ -14,9 +14,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import 
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
-from database.db_session import db
 import concurrent.futures
-from currency_converter import CurrencyConverter
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 
 CELERY_CONFIG = {
