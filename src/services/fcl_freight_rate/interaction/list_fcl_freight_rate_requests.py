@@ -102,6 +102,8 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if filters:
         if 'status' in filters:
             del filters['status']
+        if 'closed_by_id' in filters:
+            del filters['closed_by_id']
         
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   
