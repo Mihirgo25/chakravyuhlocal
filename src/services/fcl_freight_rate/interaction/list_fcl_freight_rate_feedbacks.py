@@ -66,7 +66,7 @@ def apply_relevant_supply_agent_filter(query, filters):
     return query
 
 def apply_relevant_service_provider_id_filter(query, filters):
-    expertises = get_organization_service_experties('fcl_freight', filters['service_provider_id'], account_type='organization')
+    expertises = get_organization_service_experties('fcl_freight', filters['relevant_service_provider_id'], account_type='organization')
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
     query = query.where((FclFreightRateFeedback.origin_port_id << origin_port_id) | (FclFreightRateFeedback.origin_country_id << origin_port_id) | (FclFreightRateFeedback.origin_continent_id << origin_port_id) | (FclFreightRateFeedback.origin_trade_id << origin_port_id))
