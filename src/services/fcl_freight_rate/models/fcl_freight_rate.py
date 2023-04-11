@@ -428,7 +428,7 @@ class FclFreightRate(BaseModel):
         if not schedule_type:
           schedule_type = DEFAULT_SCHEDULE_TYPES
         if not payment_term:
-          schedule_type = DEFAULT_PAYMENT_TERM
+          payment_term = DEFAULT_PAYMENT_TERM
 
         if not deleted:
             currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
