@@ -875,6 +875,8 @@ def process_fcl_freight_freight(params, converted_file, update):
         is_previous_rate_valid = True
         for row in input_file:
             index += 1
+            if not ''.join(list(row.values())).strip():
+                continue
             for k, v in row.items():
                 if v == '':
                     row[k] = None
@@ -1130,6 +1132,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                     list_opt = list(row.values())
                 list_opt.append('Invalid Row')
                 csv_writer.writerow(list_opt)
+                if is_previous_rate_valid == True:
+                    converted_file['rates_count']+=1
                 is_previous_rate_valid = False
                 rows = []
     if rows and is_previous_rate_valid:
@@ -1137,7 +1141,7 @@ def process_fcl_freight_freight(params, converted_file, update):
     set_current_processing_line(total_lines, converted_file)
     try:
         valid = converted_file.get('valid_rates_count')
-        total = converted_file.get('rates_count')
+        total = min(converted_file.get('rates_count'), 1)
         percent_completed = (valid / total) * 100
     except:
         percent_completed = 0
