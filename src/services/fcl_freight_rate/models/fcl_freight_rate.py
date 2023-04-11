@@ -155,31 +155,19 @@ class FclFreightRate(BaseModel):
       self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
 
     def validate_origin_main_port_id(self):
-      if self.origin_port and not self.origin_port['is_icd']:
-        if not self.origin_main_port_id or self.origin_main_port_id==self.origin_port_id:
-          return True
-        return False
-      elif self.origin_port and self.origin_port['is_icd'] and not self.rate_not_available_entry:
-        if self.origin_main_port_id:
-          if not self.origin_main_port or self.origin_main_port['is_icd']:
-            return False
-        else:
-          return False
-      return True
+        if self.origin_port and self.origin_port['is_icd'] and not self.rate_not_available_entry:
+          if not self.origin_main_port_id or not self.origin_main_port or self.origin_main_port['is_icd']:
+              return False
+
+        return True
 
 
     def validate_destination_main_port_id(self):
-      if self.destination_port and not self.destination_port['is_icd']:
-        if not self.destination_main_port_id or self.destination_main_port_id==self.destination_port_id:
-          return True
-        return False
-      elif self.destination_port and self.destination_port['is_icd'] and not self.rate_not_available_entry:
-        if self.destination_main_port_id:
-          if not self.destination_main_port or self.destination_main_port['is_icd']:
+        if self.destination_port and self.destination_port['is_icd'] and not self.rate_not_available_entry:
+          if not self.destination_main_port_id or not self.destination_main_port or self.destination_main_port['is_icd']:
             return False
-        else:
-          return False
-      return True
+
+        return True
 
     def validate_container_size(self):
       if self.container_size and self.container_size in CONTAINER_SIZES:

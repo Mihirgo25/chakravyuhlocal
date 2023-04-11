@@ -5,7 +5,7 @@ from micro_services.client import *
 from configs.global_constants import HAZ_CLASSES
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from celery_worker import update_multiple_service_objects
+from celery_worker import update_multiple_service_objects, update_contract_service_task_delay
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi import HTTPException
 
@@ -22,7 +22,7 @@ def create_audit(request):
     )
 def update_fcl_freight_rate_task_data(request):
     if not validate_closing_remarks(request):
-        return {request['closing_remarks'], 'is not valid'}
+        raise HTTPException(status_code = 409, detail = f"{request['closing_remarks']} is invalid")
     
     with db.atomic():
         object_type = 'Fcl_Freight_Rate_Task'
@@ -38,13 +38,13 @@ def validate_closing_remarks(request):
 def execute_transaction_code(request):
     request['service_provider_id'] = DEFAULT_SERVICE_PROVIDER_ID
     request['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
-    request['procured_by_id'] = DEFAULT_PROCURED_BY_ID
+    request['procured_by_id'] = request['performed_by_id']
 
     task = FclFreightRateTask.select().where(FclFreightRateTask.id == request['id']).first()
 
     if not task:
         raise HTTPException(status_code = 422, detail = f"{request['id']} is invalid")
-    
+
     update_params = get_update_params(request)
     for attr, value in update_params.items():
         setattr(task, attr, value)
@@ -58,13 +58,20 @@ def execute_transaction_code(request):
     result = create_fcl_freight_local_rate(task,request) 
     
     update_shipment_local_charges(task,request)
-
-    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-
+    
     create_audit(request)
-    # if task['source'] == 'contract':
-        # UpdateContractServiceTask.delay(queue: 'low').run!({ task_id: task.id, service_type: 'fcl_freight', rate: self.rate }) if task.source == 'contract'
- 
+    
+    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
+    
+    contract_object = {
+        "task_id": task.id,
+        "service_type": "fcl_freight",
+        "rate": request.get("rate")
+    }
+    
+    if task.source == "contract":
+        update_contract_service_task_delay.apply_async(kwargs = {"object": contract_object}, queue='low')
+    
     return {'id': str(task.id)}
 
 def get_update_params(request):
