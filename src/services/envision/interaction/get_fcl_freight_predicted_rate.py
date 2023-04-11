@@ -25,14 +25,11 @@ def get_final_price(min_price, price, ldh, request):
         modified_container_size = '20'
 
     key = '{}:{}:{}'.format(request['origin_country_id'], request['destination_country_id'], modified_container_size)
-    reverse_key = '{}:{}:{}'.format(request['destination_country_id'], request['origin_country_id'], modified_container_size)
     trade_key = '{}:{}:{}'.format(origin_trade_id, destination_trade_id, modified_container_size)
     reverse_trade_key = '{}:{}:{}'.format(destination_trade_id, origin_trade_id, modified_container_size)
 
     if key in AVERAGE_RATES:
         avg_price = AVERAGE_RATES[key] + price_delta
-    elif reverse_key in AVERAGE_RATES:
-        avg_price = AVERAGE_RATES[reverse_key] + price_delta
     elif trade_key in TRADE_LANE_PRICES:
         avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
     elif reverse_trade_key in TRADE_LANE_PRICES:
