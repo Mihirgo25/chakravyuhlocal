@@ -4,7 +4,7 @@ from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl
 
 def get_fcl_freight_rate_for_lcl(request):
   details = []
-  source = 'rates'
+  source = 'FCL'
   
   if all_fields_present(request):
     fcl_objects = find_object(request)
@@ -27,7 +27,7 @@ def get_fcl_freight_rate_for_lcl(request):
             del detail['line_items']
             del detail['validity_start']
             del detail['validity_end']
-        source = 'predicted'
+        source = 'ENVISION'
       
   return {'details': details,'source': source}
 

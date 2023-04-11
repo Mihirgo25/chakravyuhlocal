@@ -13,7 +13,7 @@ def authorize_token(
     authorization_scope = request.headers.get('authorizationscope')
     authorization_parameters = request.headers.get('authorizationparameters')
     if APP_ENV != "production" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
-        if not "is_authorization_required" in request.query_params:
+        if not "is_authorization_required" in request.query_params or not (request.method == "POST" and "is_authorization_required" in json.loads(request._body)):
             return {"status_code": 200, "isAuthorized": False, "setters": { "performed_by_id": DEFAULT_USER_ID, "performed_by_type": "agent" }}
         return { "status_code": 200, "isAuthorized": False }
 
