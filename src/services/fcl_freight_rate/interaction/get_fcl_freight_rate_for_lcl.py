@@ -17,6 +17,14 @@ def get_fcl_freight_rate_for_lcl(request):
     if not details:
         request['is_source_lcl'] = True
         details  = get_fcl_freight_predicted_rate(request)
+        for detail in details:
+            detail['frieght'] = {}
+            detail['freight']['line_items'] = detail['line_items']
+            detail['freight']['validity_start'] = detail['validity_start']
+            detail['freight']['validity_end'] = detail['validity_end']
+            del detail['line_items']
+            del detail['validity_start']
+            del detail['validity_end']
         source = 'predicted'
       
   return {'details': details,'source': source}
