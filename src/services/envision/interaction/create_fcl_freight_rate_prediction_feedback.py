@@ -34,7 +34,7 @@ def create_fcl_freight_rate_prediction_feedback(result):
 
                 new_rate = FclRatePredictionFeedback.create(**record)
                 feedback['id'] = new_rate.id
-                return feedback['id']
+                return {"id": feedback['id']}
                 # for val in result:
                 #     if ("predicted_price" in val) and val['predicted_price']:
                 #         val["predicted_price"] = round(common.get_money_exchange_for_fcl({'from_currency': "USD", 'to_currency': val["currency"], 'price': val["predicted_price"]})['price'])
