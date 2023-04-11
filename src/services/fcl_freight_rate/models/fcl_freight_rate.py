@@ -16,7 +16,7 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
-from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES
+from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -439,6 +439,8 @@ class FclFreightRate(BaseModel):
         new_validities = []
         if not schedule_type:
           schedule_type = DEFAULT_SCHEDULE_TYPES
+        if not payment_term:
+          schedule_type = DEFAULT_PAYMENT_TERM
 
         if not deleted:
             currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
