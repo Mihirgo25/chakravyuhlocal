@@ -5,13 +5,12 @@ from database.db_session import rd
 client = httpx.Client()
 
 
-last_line_hash = "last_line"
+current_processing_line = "last_line"
 total_line_hash = "total_line"
 error_present_hash = "error_present"
 processed_percent_hash = "process_percent"
 
 def get_original_file_path(params):
-    os.makedirs("tmp/rate_sheets", exist_ok=True)
     path = os.path.join("tmp", "rate_sheets", f"{params['id']}_original.csv")
     return path
 
@@ -23,7 +22,7 @@ def delete_original_file_path(params):
         pass
 
 
-def set_original_file_path(params, converted_file):
+def download_converted_csv_file(converted_file):
     os.makedirs('tmp/rate_sheets', exist_ok=True)
     file_path = os.path.join('tmp', 'rate_sheets', f"{converted_file['id']}_original.csv")
     with open(file_path, 'wb') as f:
@@ -32,7 +31,6 @@ def set_original_file_path(params, converted_file):
 
 
 def get_file_path(params):
-    os.makedirs("tmp/rate_sheets", exist_ok=True)
     return os.path.join("tmp", "rate_sheets", f"{params['id']}.csv")
 
 
@@ -68,38 +66,35 @@ def delete_total_line(params):
 def last_line_key(params):
     return f"rate_sheet_converted_file_last_line_{params['id']}"
 
-def set_last_line(last_line, params):
+def set_current_processing_line(last_line, params):
     if rd:
-        rd.hset(last_line_hash, last_line_key(params), last_line)
+        rd.hset(current_processing_line, last_line_key(params), last_line)
 
 
-def get_last_line(params):
+def get_current_processing_line(params):
     if rd:
         try:
-            cached_response = rd.hget(last_line_hash, last_line_key(params))
+            cached_response = rd.hget(current_processing_line, last_line_key(params))
             return int(cached_response)
         except:
             return 0
 
 def delete_last_line(params):
     if rd:
-        rd.delete(last_line_hash, last_line_key(params))
+        rd.delete(current_processing_line, last_line_key(params))
 
-def reset_counters(params, converted_file):
-    total_lines = get_total_line(params)
-    if total_lines == 0:
-        delete_temp_data(params)
-    set_original_file_path(params, converted_file)
+def set_initial_counters(converted_file):
+    download_converted_csv_file(converted_file)
 
 def errors_present_key(params):
     return  f"rate_sheet_converted_file_errors_present_{params['id']}"
 
 def delete_errors_present(params):
     if rd:
-        rd.delete(last_line_hash, errors_present_key(params))
+        rd.delete(current_processing_line, errors_present_key(params))
 
 
-def delete_temp_data(params):
+def clean_rate_sheet_data(params):
     delete_original_file_path(params)
     delete_file_path(params)
     delete_errors_present(params)

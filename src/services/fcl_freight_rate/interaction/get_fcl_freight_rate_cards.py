@@ -1,14 +1,14 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
-from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS, DEFAULT_PAYMENT_TERM
+from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
-from services.fcl_freight_rate.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
+from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from database.rails_db import get_shipping_line, get_eligible_orgs
 
 def initialize_freight_query(requirements):
@@ -32,7 +32,8 @@ def initialize_freight_query(requirements):
     FclFreightRate.destination_local,
     FclFreightRate.is_origin_local_line_items_error_messages_present,
     FclFreightRate.is_destination_local_line_items_error_messages_present,
-    FclFreightRate.cogo_entity_id
+    FclFreightRate.cogo_entity_id,
+    FclFreightRate.mode
     ).where(
     FclFreightRate.origin_port_id == requirements['origin_port_id'],
     FclFreightRate.destination_port_id == requirements['destination_port_id'],
@@ -547,7 +548,7 @@ def build_response_object(freight_query_result, request):
       'commodity': freight_query_result['commodity'],
       'service_provider_id': freight_query_result['service_provider_id'],
       'importer_exporter_id': freight_query_result['importer_exporter_id'],
-      'source': 'predicted' if (freight_query_result['service_provider_id'] in PREDICTED_RATES_SERVICE_PROVIDER_IDS + list(SHIPPING_LINE_SERVICE_PROVIDER_FOR_PREDICTION.values())) else 'spot_rates',
+      'source': 'predicted' if freight_query_result['mode'] == 'predicted' else 'spot_rates',
       'tags': [],
       'rate_id': freight_query_result['id']
     }
@@ -757,7 +758,7 @@ def get_fcl_freight_rate_cards(requirements):
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
         if len(freight_rates) == 0:
-            get_fcl_freight_predicted_rate(requirements, 'rate_cards')
+            get_fcl_freight_predicted_rate(requirements)
             initial_query = initialize_freight_query(requirements)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
 

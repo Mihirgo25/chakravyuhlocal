@@ -47,6 +47,8 @@ def create_fcl_freight_rate(request):
         "cogo_entity_id": request.get("cogo_entity_id"),
         "sourced_by_id": request.get("sourced_by_id"),
         "procured_by_id": request.get("procured_by_id"),
+        "mode": request.get("mode"),
+        "accuracy":request.get("accuracy")
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'

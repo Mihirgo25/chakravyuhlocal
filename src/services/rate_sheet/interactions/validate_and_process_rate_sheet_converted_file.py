@@ -5,15 +5,18 @@ from services.rate_sheet.interactions.send_rate_sheet_notification import send_r
 from services.rate_sheet.helpers import *
 
 def validate_and_process_rate_sheet_converted_file(params):
-    update = RateSheet.get(RateSheet.id == params['id'])
+    rate_sheet = RateSheet.get(RateSheet.id == params['id'])
     for converted_file in params['converted_files']:
-        reset_counters(params, converted_file)
+        set_initial_counters(converted_file)
         getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
-            params, converted_file, update
+            params, converted_file, rate_sheet
         )
-    update.converted_files = params.get('converted_files')
-    update.save()
     for converted_file in params['converted_files']:
-        delete_temp_data(converted_file)
+        if converted_file['status']!='complete':
+            rate_sheet.status = converted_file['status']
+    rate_sheet.converted_files = params.get('converted_files')
+    rate_sheet.save()
+    for converted_file in params['converted_files']:
+        clean_rate_sheet_data(converted_file)
     send_rate_sheet_notifications(params)
     return params

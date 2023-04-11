@@ -10,13 +10,13 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.fcl_freight_rate_constants import *
 from schema import Schema, Optional
 from configs.definitions import FCL_FREIGHT_CHARGES,FCL_FREIGHT_LOCAL_CHARGES,FCL_FREIGHT_CURRENCIES
-from services.fcl_freight_rate.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
+from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -155,31 +155,19 @@ class FclFreightRate(BaseModel):
       self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
 
     def validate_origin_main_port_id(self):
-      if self.origin_port and not self.origin_port['is_icd']:
-        if not self.origin_main_port_id or self.origin_main_port_id==self.origin_port_id:
-          return True
-        return False
-      elif self.origin_port and self.origin_port['is_icd'] and not self.rate_not_available_entry:
-        if self.origin_main_port_id:
-          if not self.origin_main_port or self.origin_main_port['is_icd']:
-            return False
-        else:
-          return False
-      return True
+        if self.origin_port and self.origin_port['is_icd'] and not self.rate_not_available_entry:
+          if not self.origin_main_port_id or not self.origin_main_port or self.origin_main_port['is_icd']:
+              return False
+
+        return True
 
 
     def validate_destination_main_port_id(self):
-      if self.destination_port and not self.destination_port['is_icd']:
-        if not self.destination_main_port_id or self.destination_main_port_id==self.destination_port_id:
-          return True
-        return False
-      elif self.destination_port and self.destination_port['is_icd'] and not self.rate_not_available_entry:
-        if self.destination_main_port_id:
-          if not self.destination_main_port or self.destination_main_port['is_icd']:
+        if self.destination_port and self.destination_port['is_icd'] and not self.rate_not_available_entry:
+          if not self.destination_main_port_id or not self.destination_main_port or self.destination_main_port['is_icd']:
             return False
-        else:
-          return False
-      return True
+
+        return True
 
     def validate_container_size(self):
       if self.container_size and self.container_size in CONTAINER_SIZES:
@@ -437,6 +425,10 @@ class FclFreightRate(BaseModel):
 
     def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term):
         new_validities = []
+        if not schedule_type:
+          schedule_type = DEFAULT_SCHEDULE_TYPES
+        if not payment_term:
+          payment_term = DEFAULT_PAYMENT_TERM
 
         if not deleted:
             currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
@@ -558,16 +550,7 @@ class FclFreightRate(BaseModel):
 
       if not self.validate_destination_main_port_id():
         raise HTTPException(status_code=499, detail="destination main port id is required")
-    # def mode_to_predicted(self):
-    #   self.mode = "predicted"
-    # def get_line_items(self):
-    #   return self.validities[0]['line_items']
-    # def get_weight_limit(self):
-    #   return self.weight_limit
-    # def get_origin_local(self):
-    #   return self.origin_local
-    # def get_destination_local(self):
-    #   return self.destination_local
+
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port
       fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
@@ -630,24 +613,6 @@ class FclFreightRate(BaseModel):
 
     def is_rate_not_available(self):
       return self.last_rate_available_date is None
-    # def update_platform_prices_based_on_prediction_model(self):
-    #   self.update_fcl_freight_rate_platform_price_of_validity_expired(self.id)
-
-    # def update_fcl_freight_rate_platform_price_of_validity_expired(self,objectid):
-    #   data = list(FclFreightRate.select(FclFreightRate.shipping_line_id,FclFreightRate.origin_port_id,FclFreightRate.destination_port_id,FclFreightRate.container_size,FclFreightRate.last_rate_available_date,FclFreightRate.commodity,FclFreightRate.validities,FclFreightRate.destination_country_id,FclFreightRate.origin_country_id,FclFreightRate.id,FclFreightRate.mode).where((FclFreightRate.last_rate_available_date <= datetime.datetime.now()),(FclFreightRate.id == objectid)).dicts())
-    #   model_result = get_fcl_freight_predicted_rate(data[0],'expired_objects')
-    #   price = model_result['validities'][0]['price']
-    #   threshold = round(price/10)
- 
-    #   if (model_result['predicted_price'] >= price + threshold) or (model_result['predicted_price'] <= price - threshold):
-    #     model_result['predicted_price'] = model_result['validities'][0]['price']
-      
-    #   for validity_object in self.validities:
-    #     validity_object['platform_price']= model_result['predicted_price']
-    #     validity_object['price'] = model_result['predicted_price']
-    #     validity_object['line_items'][0]['price']  = model_result['predicted_price']
-    #     validity_object['validity_start']  = model_result['validity_start']
-    #     validity_object['validity_end']  = model_result['validity_end']
 
     def local_data_get_line_item_messages(self):
 
@@ -697,7 +662,7 @@ class FclFreightRate(BaseModel):
 
       origin_local_object_id = origin_locals[0]["id"] if len(origin_locals) > 0 else None
       destination_local_object_id = destination_locals[0]["id"] if len(destination_locals) > 0 else None
-      
+
       self.origin_local_id = origin_local_object_id
       self.destination_local_id = destination_local_object_id
 
