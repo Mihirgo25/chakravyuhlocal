@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from operator import attrgetter
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
+import datetime
 
 def get_fcl_freight_rate_for_lcl(request):
   details = []
@@ -33,7 +34,7 @@ def get_fcl_freight_rate_for_lcl(request):
 
 
 def find_object(object_params):
-  query = FclFreightRate.select().where(FclFreightRate.rate_not_available_entry == False)
+  query = FclFreightRate.select().where(FclFreightRate.last_rate_available_date >= datetime.datetime.now())
   for key in object_params:
       if object_params[key]:
         query = query.where(attrgetter(key)(FclFreightRate) == object_params[key])
