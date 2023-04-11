@@ -9,7 +9,7 @@ from services.rate_sheet.interactions.validate_fcl_freight_object import validat
 from database.db_session import rd
 
 from fastapi.encoders import jsonable_encoder
-
+from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
 from datetime import datetime
 import dateutil.parser as parser
 from database.rails_db import get_shipping_line, get_organization
@@ -1250,6 +1250,10 @@ def create_fcl_freight_freight_rate(
     for line_items in object['line_items']:
         if line_items['price']:
             line_items['price'] = float(line_items['price'])
+    if not object.get('schedule_type'):
+        object['schedule_type'] = DEFAULT_SCHEDULE_TYPES
+    if not object.get('payment_term'):
+        object['payment_term'] = DEFAULT_PAYMENT_TERM
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
