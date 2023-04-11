@@ -1141,7 +1141,7 @@ def process_fcl_freight_freight(params, converted_file, update):
     set_current_processing_line(total_lines, converted_file)
     try:
         valid = converted_file.get('valid_rates_count')
-        total = min(converted_file.get('rates_count'), 1)
+        total = converted_file.get('rates_count')
         percent_completed = (valid / total) * 100
     except:
         percent_completed = 0
