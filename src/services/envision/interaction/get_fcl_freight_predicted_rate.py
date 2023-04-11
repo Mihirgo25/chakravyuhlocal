@@ -89,7 +89,6 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
         'container_size': request['container_size'],
         'container_type': request['container_type'],
         'commodity': request['commodity'] if request.get('commodity') else 'general',
-        'importer_exporter_id': request.get('importer_exporter_id'),
         'shipping_line_id' : shipping_line_id,
         'service_provider_id' : DEFAULT_SERVICE_PROVIDER_ID,
         'validity_start': datetime.strptime(validity_start,'%Y-%m-%d'),
@@ -100,9 +99,7 @@ def predict_rates(origin_port_id, destination_port_id, shipping_line_id, request
             "unit": "per_container",
             "price" : price + (5 - price%10) if price%10 <= 5 else (price + (10 - price%10)),
             "currency": "USD",
-            "remarks": [
-                "predicted price"
-            ],
+            "remarks": []            ,
             "slabs": []
         }
         ],
