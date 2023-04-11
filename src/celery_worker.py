@@ -27,6 +27,9 @@ CELERY_CONFIG = {
     "accept_content": ['application/json', 'application/x-python-serialize']
 }
 
+if APP_ENV == 'development':
+    CELERY_REDIS_URL = 'redis://@127.0.0.1:6379/0'
+
 celery = Celery(__name__)
 registry.enable("pickle")
 celery.conf.broker_url = CELERY_REDIS_URL
@@ -286,6 +289,16 @@ def batches_query(query,limit,offset):
 
 def execute_query(query):
     return list(query.dicts())
+
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_contract_service_task_delay(self, object):
+    try:
+        common.update_contract_service_task(object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
