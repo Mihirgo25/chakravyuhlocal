@@ -33,7 +33,7 @@ def get_fcl_freight_rate_for_lcl(request):
 
 
 def find_object(object_params):
-  query = FclFreightRate.select()
+  query = FclFreightRate.select().where(FclFreightRate.rate_not_available_entry == False)
   for key in object_params:
       if object_params[key]:
         query = query.where(attrgetter(key)(FclFreightRate) == object_params[key])
