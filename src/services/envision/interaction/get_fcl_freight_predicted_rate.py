@@ -31,8 +31,6 @@ def get_final_price(min_price, price, ldh, request):
 
     if key in AVERAGE_RATES:
         avg_price = AVERAGE_RATES[key] + price_delta
-    elif reverse_key in AVERAGE_RATES:
-        avg_price = AVERAGE_RATES[reverse_key] + price_delta
     elif trade_key in TRADE_LANE_PRICES:
         avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
     elif reverse_trade_key in TRADE_LANE_PRICES:
