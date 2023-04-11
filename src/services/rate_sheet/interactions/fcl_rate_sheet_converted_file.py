@@ -268,7 +268,7 @@ def process_fcl_freight_local(params, converted_file, update):
                     list_opt = list(row.values())
                 list_opt.append('Invalid Row')
                 csv_writer.writerow(list_opt)
-                if is_previous_rate_valid == True:
+                if is_previous_rate_valid:
                     converted_file['rates_count']+=1
                 is_previous_rate_valid = False
                 rows = []
@@ -486,7 +486,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     list_opt = list(row.values())
                 list_opt.append('Invalid Row')
                 csv_writer.writerow(list_opt)
-                if is_previous_rate_valid == True:
+                if is_previous_rate_valid:
                     converted_file['rates_count']+=1
                 is_previous_rate_valid = False
                 rows = []
@@ -1140,7 +1140,7 @@ def process_fcl_freight_freight(params, converted_file, update):
                     list_opt = list(row.values())
                 list_opt.append('Invalid Row')
                 csv_writer.writerow(list_opt)
-                if is_previous_rate_valid == True:
+                if is_previous_rate_valid:
                     converted_file['rates_count']+=1
                 is_previous_rate_valid = False
                 rows = []
