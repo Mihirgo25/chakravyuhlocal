@@ -12,7 +12,7 @@ from datetime import datetime
 from micro_services.client import spot_search
 possible_direct_filters = ['origin_port_id', 'destination_port_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id', 'service_provider_id']
 
 def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
     query = FclFreightRateRequest.select()
@@ -76,6 +76,14 @@ def apply_supply_agent_id_filter(query, filters):
     query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
     return query
 
+def apply_service_provider_id_filter(query, filters):
+    expertises = get_organization_service_experties('fcl_freight', filters['service_provider_id'], account_type='organization')
+    origin_port_id = [t['origin_location_id'] for t in expertises]
+    destination_port_id =  [t['destination_location_id'] for t in expertises]
+    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id))
+    query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
+    return query
+
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclFreightRateRequest.select().where(FclFreightRateRequest.id == filters['similar_id']).dicts().get()
     query = query.where(FclFreightRateRequest.id != filters['similar_id'])
@@ -102,6 +110,8 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if filters:
         if 'status' in filters:
             del filters['status']
+        if 'closed_by_id' in filters:
+            del filters['closed_by_id']
         
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   

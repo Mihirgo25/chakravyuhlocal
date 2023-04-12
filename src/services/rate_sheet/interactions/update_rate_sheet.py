@@ -23,16 +23,16 @@ def get_audit_params(parameters):
 
 
 
-def  update_rate_sheet(params: UpdateRateSheet):
+def update_rate_sheet(params: UpdateRateSheet):
     from celery_worker import validate_and_process_rate_sheet_converted_file_delay
     rate_sheet = RateSheet.get(RateSheet.id == params['id'])
     if rate_sheet.status not in ['uploaded', 'partially_complete']:
-        raise HTTPException(status_code=403, detail= "File already uploaded")
+        raise HTTPException(status_code=400, detail= "File already uploaded")
     if 'converted_files' in params:
         index = 0
         for converted_file in params.get('converted_files'):
                 converted_file['status'] = 'under_validation'
-                converted_file['id'] = str(uuid.uuid4())
+                converted_file['id'] = '{}_{}'.format(rate_sheet.id, str(uuid.uuid4()))
                 converted_file['service_provider_id'] = str(rate_sheet.service_provider_id)
                 converted_file['cogo_entity_id'] = str(rate_sheet.cogo_entity_id)
                 converted_file['rate_sheet_id'] = str(rate_sheet.id)
