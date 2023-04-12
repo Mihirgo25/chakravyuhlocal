@@ -1,4 +1,4 @@
-class FclFreight():
+class FclFreightVyuh():
     def __init__(self, rates: list = []):
         self.rates = rates
     
