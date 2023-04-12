@@ -4,10 +4,11 @@ from database.rails_db import get_organization,get_shipping_line,get_user
 def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'shipping_line_id') and freight_object.shipping_line_id:
         shipping_line = get_shipping_line(id=str(freight_object.shipping_line_id))
-        try:
-            freight_object.shipping_line = shipping_line[0]
-        except:
-            freight_object.shipping_line_detail = shipping_line[0]
+        if len(shipping_line or []) > 0:
+            try:
+                freight_object.shipping_line = shipping_line[0]
+            except:
+                freight_object.shipping_line_detail = shipping_line[0]
             
     user_list =[]
     if hasattr(freight_object,'procured_by_id') and freight_object.procured_by_id:
@@ -58,3 +59,4 @@ def get_multiple_service_objects(freight_object):
 
 
     freight_object.save()
+

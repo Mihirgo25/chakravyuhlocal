@@ -16,6 +16,7 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
+from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -424,6 +425,10 @@ class FclFreightRate(BaseModel):
 
     def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term):
         new_validities = []
+        if not schedule_type:
+          schedule_type = DEFAULT_SCHEDULE_TYPES
+        if not payment_term:
+          payment_term = DEFAULT_PAYMENT_TERM
 
         if not deleted:
             currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
@@ -497,6 +502,7 @@ class FclFreightRate(BaseModel):
           main_validities.append(new_validity)
         self.validities = main_validities
 
+
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
             FclFreightRate.origin_port_id == self.origin_port_id,
@@ -514,6 +520,7 @@ class FclFreightRate(BaseModel):
 
       if self.weight_limit:
         schema_weight_limit.validate(self.weight_limit)
+        
 
         self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
 
@@ -525,7 +532,6 @@ class FclFreightRate(BaseModel):
             raise HTTPException(status_code=499, detail="slabs are not valid")
 
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
-
       self.destination_local_instance = FclFreightRateLocalData(self.destination_local)
 
       if not self.validate_container_size():
@@ -608,7 +614,6 @@ class FclFreightRate(BaseModel):
     def is_rate_not_available(self):
       return self.last_rate_available_date is None
 
-
     def local_data_get_line_item_messages(self):
 
       location_ids = list(set([item["location_id"] for item in self.origin_local["line_items"] if item["location_id"] is not None]))
@@ -657,7 +662,7 @@ class FclFreightRate(BaseModel):
 
       origin_local_object_id = origin_locals[0]["id"] if len(origin_locals) > 0 else None
       destination_local_object_id = destination_locals[0]["id"] if len(destination_locals) > 0 else None
-      
+
       self.origin_local_id = origin_local_object_id
       self.destination_local_id = destination_local_object_id
 

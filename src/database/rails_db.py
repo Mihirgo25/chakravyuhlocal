@@ -205,9 +205,12 @@ def get_partner_users(ids, status = 'active'):
     conn.close()
     return all_result
 
-def get_organization_service_experties(service, supply_agent_id):
+def get_organization_service_experties(service, supply_agent_id, account_type = 'supply_agent'):
     all_result = []
-    org_ids = get_organization_stakeholders('supply_agent', supply_agent_id)
+    if account_type == 'supply_agent':
+        org_ids = get_organization_stakeholders('supply_agent', supply_agent_id)
+    else:
+        org_ids = [supply_agent_id]
     conn = get_connection()
     with conn:
         with conn.cursor() as cur:

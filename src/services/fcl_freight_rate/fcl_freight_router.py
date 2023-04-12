@@ -84,6 +84,7 @@ from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 
 fcl_freight_router = APIRouter()
 
@@ -269,6 +270,44 @@ def get_fcl_freight_rate_data(
         return JSONResponse(status_code=200, content=data)
     except:
         raise
+    
+    
+@fcl_freight_router.get("/get_fcl_freight_rate_for_lcl")
+def get_fcl_freight_rate_for_lcl_func(
+    origin_port_id: str = None,
+    origin_main_port_id: str = None,
+    destination_port_id: str = None,
+    destination_main_port_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None,
+    importer_exporter_id: str = None,
+    origin_country_id: str = None,
+    destination_country_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'origin_port_id':origin_port_id,
+        'origin_main_port_id':origin_main_port_id,
+        'destination_port_id':destination_port_id,
+        'destination_main_port_id' : destination_main_port_id,
+        'origin_country_id':origin_country_id,
+        'destination_country_id':destination_country_id,
+        'container_size' : container_size,
+        'container_type' : container_type,
+        'commodity' : commodity,
+        'shipping_line_id' : shipping_line_id,
+        'service_provider_id': service_provider_id,
+        'importer_exporter_id': importer_exporter_id,
+    }
+
+    data = get_fcl_freight_rate_for_lcl(request)
+    data = jsonable_encoder(data)
+    return JSONResponse(status_code=200, content=data)
 
 @fcl_freight_router.get("/get_fcl_freight_rate_local")
 def get_fcl_freight_local_data(
@@ -1438,4 +1477,3 @@ def get_eligible_freight_rate_free_day_func(
         return JSONResponse(status_code=200, content=resp)
     except:
         raise
-

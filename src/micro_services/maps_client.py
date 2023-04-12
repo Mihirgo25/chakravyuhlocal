@@ -31,3 +31,11 @@ class MapsApiClient:
 
     def get_location_cluster(self,data={}):
         return self.client.request('GET','get_location_cluster',{}, data)
+    
+    def list_locations_mapping(self, data = {}):
+        if APP_ENV == "production":
+            return self.client.request('GET','list_locations_mapping',{}, data)
+        return self.client.request('GET','list_locations_mapping',{}, data)
+
+    def get_sea_route(self, data = {}):
+        return self.client.request('GET','get_sea_route',{}, data)
