@@ -36,10 +36,13 @@ celery.conf.critical_queues = [Queue('critical', Exchange('critical'), routing_k
           queue_arguments={'x-max-priority': 9})]
 celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
           queue_arguments={'x-max-priority': 6})]
+celery.conf.communication_queues = [Queue('communication', Exchange('communication'), routing_key='communication',
+          queue_arguments={'x-max-priority': 6})]
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
           queue_arguments={'x-max-priority': 3})]
 celery.conf.critical_default_priority = 9
 celery.conf.fcl_freight_rate_default_priority = 6
+celery.conf.communication_queues_default_priority = 6
 celery.conf.low_default_priority = 3
 
 celery.conf.update(**CELERY_CONFIG)
@@ -255,7 +258,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 def fcl_freight_rates_to_cogo_assured(self):
     try:
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
-            ).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40']) 
+            ).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])
         total_count = query.count()
         batches = int(total_count/5000)
         last_batch = total_count%5000
@@ -272,7 +275,7 @@ def fcl_freight_rates_to_cogo_assured(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
             futures = [executor.submit(execute_query, query) for query in queries]
 
-            for i in range(0,len(futures)): 
+            for i in range(0,len(futures)):
                 result = futures[i].result()
                 query_result.extend(result)
         date = datetime.now() - timedelta(days = 1)
