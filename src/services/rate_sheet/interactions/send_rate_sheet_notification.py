@@ -4,6 +4,7 @@ from playhouse.postgres_ext import *
 from peewee import *
 from micro_services.client import *
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
+from celery_worker import create_communication_background
 from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
 
 def get_relevant_user_ids(params):
@@ -14,7 +15,6 @@ def get_relevant_user_ids(params):
     return user_ids
 
 def send_rate_sheet_notifications(params):
-    from celery_worker import create_communication_background
     user_ids = []
     if params.get('serial_id'):
         serial_id = params.get('serial_id')
@@ -26,11 +26,13 @@ def send_rate_sheet_notifications(params):
         variables = {'file_name': params.get('file_url').split('/').pop(), 'serial_id': serial_id}
 
     if params.get('status') == 'uploaded':
-        user_ids = [user["user_id"] for user in partner.list_partner_users({"filters":{
-            'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID,
+        list_partners = partner.list_partner_users({
+            'filters': {
+            'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID},
             'status': 'active',
-            'partner_status': 'active',
-        }})['list']]
+            'partner_status': 'active'
+            })['list']
+        user_ids = list(set([lp['user_id'] for lp in list_partners]))
         template_name = 'rate_sheet_uploaded'
     elif params.get('status') == 'processing' or params.get('status') == 'complete' or params.get('status') == 'partially_complete':
         user_ids = get_relevant_user_ids(params)
