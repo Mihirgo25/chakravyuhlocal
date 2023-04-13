@@ -42,7 +42,7 @@ class GlobalClient:
             self.url = url
         self.headers = headers
 
-    def request(self, method, action, data={}, params={},timeout = 10):
+    def request(self, method, action, data={}, params={}, timeout = 15):
             
         if isinstance(data, dict):
             data = jsonable_encoder(data)
@@ -70,7 +70,7 @@ class GlobalClient:
             else:
                 response = self.client.post(**kwargs)
         except httpx.TimeoutException as exc:
-            return {'status_code': 408}
+            return { 'status_code': 408 }
 
         try:
             response.raise_for_status()
