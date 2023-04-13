@@ -117,8 +117,7 @@ def apply_fcl_freight_rate_filter(query, filters):
 
 def apply_fcl_freight_rate_direct_filter(query, filters):
     direct_filters = {key:value for key,value in filters['fcl_freight_rate'].items() if key in possible_hash_filters['fcl_freight_rate']['direct']}
-    for direct_filter in direct_filters:
-        query = query.where(attrgetter(direct_filter)(FclFreightRate) == direct_filters[direct_filter])
+    query = get_filters(direct_filters, query, FclFreightRate)
     return query
 
 def apply_fcl_freight_rate_seasonal_surcharge_filter(query, filters):
@@ -127,8 +126,7 @@ def apply_fcl_freight_rate_seasonal_surcharge_filter(query, filters):
 
 def apply_fcl_freight_rate_seasonal_surcharge_direct_filter(query, filters):
     direct_filters = {key:value for key,value in filters['fcl_freight_rate_seasonal_surcharge'].items() if key in possible_hash_filters['fcl_freight_rate_seasonal_surcharge']['direct']}
-    for direct_filter in direct_filters:
-        query = query.where(attrgetter(direct_filter)(FclFreightRateSeasonalSurcharge) == direct_filters[direct_filter])
+    query = get_filters(direct_filters, query, FclFreightRateSeasonalSurcharge)
     return query
 
 def apply_fcl_freight_rate_validity_start_less_than_equal_to_filter(query, filters):
