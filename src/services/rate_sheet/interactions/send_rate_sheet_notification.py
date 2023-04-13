@@ -26,7 +26,7 @@ def send_rate_sheet_notifications(params):
         variables = {'file_name': params.get('file_url').split('/').pop(), 'serial_id': serial_id}
 
     if params.get('status') == 'uploaded':
-        user_ids = [user.user_id for user in common.list_partner_users.run(filters={
+        user_ids = [user.user_id for user in partner.list_partner_users.run(filters={
             'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID,
             'status': 'active',
             'partner_status': 'active',

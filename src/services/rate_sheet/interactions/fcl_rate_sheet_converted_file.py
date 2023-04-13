@@ -93,13 +93,6 @@ def get_shipping_line_id(shipping_line_name):
     return shipping_line_id
 
 
-def get_airline_id(params):
-    airline_id = common.list_operators(
-        {"filters": {"id": params.origin_location_id}}
-    )["list"][0]
-    return airline_id
-
-
 def convert_date_format(date):
     if not date:
         return date
