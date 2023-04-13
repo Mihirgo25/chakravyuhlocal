@@ -104,7 +104,7 @@ def get_user(id):
                 for res in result:
                     all_result.append(
                         {
-                            "id": str(res[0]),
+               "id": str(res[0]),
                             "name": res[1],
                             "email": res[2],
                             "mobile_number_eformat":res[3]

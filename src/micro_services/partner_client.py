@@ -11,9 +11,6 @@ class PartnerApiClient:
             "Content-Type": "application/json",
             "Accept": "application/json",
         })
-
-    def list_partners(self, data):
-        return self.client.request('GET', 'list_partners', data)
     
     def list_partner_users(self, data):
         return self.client.request('GET', 'list_partner_users', data)
