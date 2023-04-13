@@ -20,10 +20,10 @@ class CommonApiClient:
         return resp
 
     def create_communication(self, data = {}):
-        return self.client.request('POST','communication/create_communication',data)
+        return self.client.request('POST','communication/create_communication',data, timeout=60)
 
     def fcl_freight_rates_to_cogo_assured(self,data={}):
-        return self.client.request('POST','update_fcl_rates_to_cogo_assured',data)
+        return self.client.request('POST','update_fcl_rates_to_cogo_assured',data, timeout=60)
 
     def update_contract_service_task(self, data={}):
         return self.client.request('POST', 'update_contract_service_task', data)
