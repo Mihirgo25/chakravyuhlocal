@@ -11,6 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
+import sentry_sdk
 
 def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
@@ -805,10 +806,10 @@ def get_fcl_freight_rate_cards(requirements):
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
-        # if len(freight_rates) == 0:
-        #     get_fcl_freight_predicted_rate(requirements)
-        #     initial_query = initialize_freight_query(requirements, True)
-        #     freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        if len(freight_rates) == 0:
+            get_fcl_freight_predicted_rate(requirements)
+            initial_query = initialize_freight_query(requirements, True)
+            freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
@@ -827,6 +828,7 @@ def get_fcl_freight_rate_cards(requirements):
             "list" : freight_rates
         }
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         print(e, 'Error In Fcl Freight Rate Cards')
         return {
             "list": []
