@@ -215,19 +215,13 @@ class FclFreightRateFeedback(BaseModel):
             destination_locations = [t for t in destination_locations if t is not None]
         else:
             destination_locations = []
+        
+        supply_agents_list = get_partner_users_by_expertise('fcl_freight', origin_locations, destination_locations)
 
-        supply_agents_list = partner.list_partner_user_expertises({
-            'filters': {'service_type': 'fcl_freight','status': 'active','origin_location_id': origin_locations,'destination_location_id': destination_locations},
-            'pagination_data_required': False,
-            'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-        })['list']
         supply_agents_list = list(set(t['partner_user_id'] for t in supply_agents_list))
 
-        supply_agents_user_ids = partner.list_partner_users({   ##############
-            'filters': {'id': supply_agents_list},
-            'pagination_data_required': False,
-            'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-            })['list']
+        supply_agents_user_ids = get_partner_users(supply_agents_list)
+
         supply_agents_user_ids = list(set(t['user_id'] for t in supply_agents_user_ids))
 
         route = maps.list_locations({'filters':{'id': [str(locations_data.origin_port_id), str(locations_data.destination_port_id)]}})['list']
