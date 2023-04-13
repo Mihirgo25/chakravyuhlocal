@@ -59,11 +59,10 @@ class GlobalClient:
             kwargs['data'] = json.dumps(data)
         elif method == 'GET':
             if data:    
-                kwargs['url'] = kwargs['url'] + '?' + http_build_query(data)  # Rails backend
+                kwargs['url'] = kwargs['url'] + '?' + http_build_query(json.dumps(data))  # Rails backend
             else:
                 kwargs['params'] = params  # Python Backend
-        
-            
+           
         try:
             if method == 'GET':
                 response = self.client.get(**kwargs)
