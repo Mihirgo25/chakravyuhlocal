@@ -26,11 +26,11 @@ def send_rate_sheet_notifications(params):
         variables = {'file_name': params.get('file_url').split('/').pop(), 'serial_id': serial_id}
 
     if params.get('status') == 'uploaded':
-        user_ids = [user.user_id for user in partner.list_partner_users.run(filters={
+        user_ids = [user["user_id"] for user in partner.list_partner_users({"filters":{
             'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID,
             'status': 'active',
             'partner_status': 'active',
-        }).list()]
+        }})['list']]
         template_name = 'rate_sheet_uploaded'
     elif params.get('status') == 'processing' or params.get('status') == 'complete' or params.get('status') == 'partially_complete':
         user_ids = get_relevant_user_ids(params)
