@@ -41,7 +41,7 @@ def authorize_token(
         data = {"request_api_path": actual_resource}
     
         with httpx.Client() as client:
-            response = client.get(url, headers=header, params=data)
+            response = client.get(url, headers=header, params=data, timeout=10)
             if response.status_code == 200:
                 return json.loads(response.content)
         try:
