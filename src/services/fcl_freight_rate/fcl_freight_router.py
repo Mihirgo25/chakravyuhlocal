@@ -1546,7 +1546,7 @@ def list_rates_sheet_stat(
 @fcl_freight_router.get('/get_eligible_fcl_freight_rate_free_day')
 def get_eligible_freight_rate_free_day_func(
     filters: str = None,
-    sort_by_specificity_type: bool = True,
+    sort_by_specificity_type: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
