@@ -52,14 +52,15 @@ if APP_ENV != 'production':
         return response
     app.middleware('http')(set_client_base_url)
 
-@app.middleware("http")
-async def log_request_response_time(request: Request, call_next):
-    from time import time
-    start_time = time()
-    response = await call_next(request)
-    process_time = time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
+if APP_ENV != 'production':
+    @app.middleware("http")
+    async def log_request_response_time(request: Request, call_next):
+        from time import time
+        start_time = time()
+        response = await call_next(request)
+        process_time = time() - start_time
+        response.headers["X-Process-Time"] = str(process_time)
+        return response
 
 @app.on_event("startup")
 def startup():
