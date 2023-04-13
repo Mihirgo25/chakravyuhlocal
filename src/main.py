@@ -4,6 +4,7 @@ import sentry_sdk
 from database.db_session import db
 from fastapi import FastAPI, Request
 from configs.env import APP_ENV, SENTRY_DSN
+from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
 from database.create_tables import create_table
@@ -16,7 +17,8 @@ sentry_sdk.init(
     dsn=SENTRY_DSN,
     environment="production",
     traces_sample_rate=0.5,
-    attach_stacktrace=True
+    attach_stacktrace=True,
+    ignore_errors=[HTTPException]
 )
 
 docs_url = None if APP_ENV == "production" else "/docs"
