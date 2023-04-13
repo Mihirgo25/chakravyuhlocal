@@ -4,6 +4,7 @@ import sentry_sdk
 from database.db_session import db
 from fastapi import FastAPI, Request
 from configs.env import APP_ENV, SENTRY_DSN
+from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
 from database.create_tables import create_table
@@ -16,7 +17,8 @@ sentry_sdk.init(
     dsn=SENTRY_DSN,
     environment="production",
     traces_sample_rate=0.5,
-    attach_stacktrace=True
+    attach_stacktrace=True,
+    ignore_errors=[HTTPException]
 )
 
 docs_url = None if APP_ENV == "production" else "/docs"
@@ -50,14 +52,15 @@ if APP_ENV != 'production':
         return response
     app.middleware('http')(set_client_base_url)
 
-@app.middleware("http")
-async def log_request_response_time(request: Request, call_next):
-    from time import time
-    start_time = time()
-    response = await call_next(request)
-    process_time = time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
+if APP_ENV != 'production':
+    @app.middleware("http")
+    async def log_request_response_time(request: Request, call_next):
+        from time import time
+        start_time = time()
+        response = await call_next(request)
+        process_time = time() - start_time
+        response.headers["X-Process-Time"] = str(process_time)
+        return response
 
 @app.on_event("startup")
 def startup():

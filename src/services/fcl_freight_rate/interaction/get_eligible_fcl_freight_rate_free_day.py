@@ -38,6 +38,9 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_s
 
     if isinstance(filters['shipping_line_id'],str):
         filters['shipping_line_id'] = [filters['shipping_line_id']]
+        
+    if isinstance(filters['location_id'],str):
+        filters['location_id'] = [filters['location_id']]
     
     query = FclFreightRateFreeDay.select(
         FclFreightRateFreeDay.id,
@@ -56,7 +59,7 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_s
         FclFreightRateFreeDay.rate_not_available_entry
     ).where(
         ((FclFreightRateFreeDay.rate_not_available_entry.is_null(True)) | (~FclFreightRateFreeDay.rate_not_available_entry)),
-        FclFreightRateFreeDay.location_id == filters['location_id'],
+        FclFreightRateFreeDay.location_id.in_(filters['location_id']),
         FclFreightRateFreeDay.trade_type == filters['trade_type'],
         FclFreightRateFreeDay.free_days_type == filters['free_days_type'],
         FclFreightRateFreeDay.container_size == filters['container_size'],
