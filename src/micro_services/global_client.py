@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from contextvars import ContextVar
 class GlobalClient:
     def __init__(self, url,headers):
-        self.client = httpx.Client(timeout=30.0)
+        self.client = httpx.Client(timeout=20.0)
         if APP_ENV !='production':
             self.url = ContextVar('client_base_url', default=RUBY_ADDRESS_URL)
         else:
@@ -33,8 +33,6 @@ class GlobalClient:
             response = client.send(request)  
         except httpx.TimeoutException as exc:
             return {'status_code': 408}
-
-        response = self.client.send(request)
 
         try:
             response.raise_for_status()

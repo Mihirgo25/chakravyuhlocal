@@ -17,7 +17,7 @@ class CommonApiClient:
         return self.client.request('GET','list_operators',data)
 
     def get_money_exchange_for_fcl(self, data = {}):
-        resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 8)
+        resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 10)
         if resp.get('status_code') and resp.get('status_code')==408:
             resp = get_money_exchange_for_fcl_fallback(**data)
         return resp
