@@ -1,6 +1,7 @@
 from configs.env import RUBY_AUTHTOKEN,RUBY_AUTHSCOPE,RUBY_AUTHSCOPEID
 from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
+from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 
 class CommonApiClient:
     def __init__(self):
@@ -13,7 +14,10 @@ class CommonApiClient:
         })
 
     def get_money_exchange_for_fcl(self, data = {}):
-        return self.client.request('GET','get_money_exchange_for_fcl', data)
+        resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 10)
+        if resp.get('status_code') and resp.get('status_code')==408:
+            resp = get_money_exchange_for_fcl_fallback(**data)
+        return resp
 
     def create_communication(self, data = {}):
         return self.client.request('POST','communication/create_communication',data)
