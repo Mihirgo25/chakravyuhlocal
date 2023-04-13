@@ -13,9 +13,6 @@ class CommonApiClient:
             "Accept": "application/json",
         })
 
-    def list_operators(self,data={}):
-        return self.client.request('GET','list_operators',data)
-
     def get_money_exchange_for_fcl(self, data = {}):
         resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
         if isinstance(resp,dict) and resp.get('status_code') and resp.get('status_code')==408:
@@ -25,11 +22,8 @@ class CommonApiClient:
     def create_communication(self, data = {}):
         return self.client.request('POST','communication/create_communication',data)
 
-    def list_money_currencies(self,data={}):
-        return self.client.request('GET','list_money_currencies',data)
-
     def fcl_freight_rates_to_cogo_assured(self,data={}):
         return self.client.request('POST','update_fcl_rates_to_cogo_assured',data)
-    
+
     def update_contract_service_task(self, data={}):
         return self.client.request('POST', 'update_contract_service_task', data)
