@@ -4,7 +4,6 @@ from playhouse.postgres_ext import *
 from peewee import *
 from micro_services.client import *
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
-from celery_worker import create_communication_background
 from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
 
 def get_relevant_user_ids(params):
@@ -15,6 +14,7 @@ def get_relevant_user_ids(params):
     return user_ids
 
 def send_rate_sheet_notifications(params):
+    from celery_worker import create_communication_background
     user_ids = []
     if params.get('serial_id'):
         serial_id = params.get('serial_id')
