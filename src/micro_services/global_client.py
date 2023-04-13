@@ -1,6 +1,7 @@
 import httpx
 from configs.env import *
 import json
+import re
 from fastapi.encoders import jsonable_encoder
 from contextvars import ContextVar
 import urllib
@@ -58,11 +59,12 @@ class GlobalClient:
         if method == 'POST' and data:
             kwargs['data'] = json.dumps(data)
         elif method == 'GET':
-            if data:    
-                kwargs['url'] = kwargs['url'] + '?' + http_build_query(json.dumps(data))  # Rails backend
+            if data: 
+                prefinal_url = str(http_build_query(data))
+                final_url = re.sub(r'%5D%5B\d%5D','%5D%5B%5D',prefinal_url)
+                kwargs['url'] = kwargs['url'] + '?' + final_url  # Rails backend
             else:
-                kwargs['params'] = params  # Python Backend
-           
+                kwargs['params'] = params  # Python Backend   
         try:
             if method == 'GET':
                 response = self.client.get(**kwargs)
