@@ -13,13 +13,15 @@ from libs.migration import fcl_freight_migration, create_partition_table, fcl_lo
 # from migrate import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from micro_services.client import *
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    environment="production",
-    traces_sample_rate=0.5,
-    attach_stacktrace=True,
-    ignore_errors=[HTTPException]
-)
+
+if APP_ENV == "production":
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment="production",
+        traces_sample_rate=0.5,
+        attach_stacktrace=True,
+        ignore_errors=[HTTPException]
+    )
 
 docs_url = None if APP_ENV == "production" else "/docs"
 

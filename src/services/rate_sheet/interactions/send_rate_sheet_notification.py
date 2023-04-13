@@ -15,6 +15,7 @@ def get_relevant_user_ids(params):
     return user_ids
 
 def send_rate_sheet_notifications(params):
+    from celery_worker import create_communication_background
     user_ids = []
     if params.get('serial_id'):
         serial_id = params.get('serial_id')
@@ -50,4 +51,4 @@ def send_rate_sheet_notifications(params):
             'template_name': template_name,
             'variables': variables
         }
-        common.create_communication(data)
+        create_communication_background.apply_async(kwargs={'data':data},queue='communication')
