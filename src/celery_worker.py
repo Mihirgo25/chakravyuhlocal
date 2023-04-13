@@ -22,7 +22,8 @@ CELERY_CONFIG = {
     "task_serializer": "pickle",
     "event_serializer": "pickle",
     "result_serializer": "pickle",
-    "accept_content": ['application/json', 'application/x-python-serialize']
+    "accept_content": ['application/json', 'application/x-python-serialize'],
+    "task_acks_late": True
 }
 
 if APP_ENV == 'development':

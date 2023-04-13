@@ -56,7 +56,14 @@ def get_direct_indirect_filters(filters):
     indirect_filters = {}
     for key, val in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS:
-            direct_filters[key] = val
+            if key == "serial_id":
+                try:
+                    val = int(val)
+                    direct_filters[key] = val
+                except:
+                    direct_filters[key] = 0
+            else:
+                direct_filters[key] = val
         if key in POSSIBLE_INDIRECT_FILTERS:
             indirect_filters[key] = val
     for type in [
