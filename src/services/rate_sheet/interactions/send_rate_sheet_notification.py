@@ -28,9 +28,14 @@ def send_rate_sheet_notifications(params):
     if params.get('status') == 'uploaded':
         list_partners = partner.list_partner_users({
             'filters': {
-            'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID},
+            'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID,
             'status': 'active',
-            'partner_status': 'active'
+            'partner_status': 'active',
+            },
+            'page_limit': 50,
+            'partner_data_required': False,
+            'rm_mappings_data_required': False,
+            'pagination_data_required': False
             })['list']
         user_ids = list(set([lp['user_id'] for lp in list_partners]))
         template_name = 'rate_sheet_uploaded'
