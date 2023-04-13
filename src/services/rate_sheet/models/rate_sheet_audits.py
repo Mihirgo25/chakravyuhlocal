@@ -28,4 +28,8 @@ class RateSheetAudit(BaseModel):
     class Meta:
         table_name = 'rate_sheet_audits'
 
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(RateSheetAudit, self).save(*args, **kwargs)
+
 RateSheetAudit.add_index(SQL("CREATE INDEX index_rate_sheet_audits_on_object_type_and_object_id ON rate_sheet_audits (object_type, object_id);"))
