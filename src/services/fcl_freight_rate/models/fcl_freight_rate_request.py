@@ -122,7 +122,7 @@ class FclFreightRateRequest(BaseModel):
         location_pair_data = maps.list_locations({ 'filters': {'id': [str(location_pair['origin_port_id']), str(location_pair['destination_port_id'])] }})['list']
         location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
         try:
-            importer_exporter_id = common.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
+            importer_exporter_id = spot_search.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
         except:
             importer_exporter_id = None
         origin_location = location_pair_name[str(location_pair['origin_port_id'])]
