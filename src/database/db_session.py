@@ -23,16 +23,16 @@ if APP_ENV != "development":
         decode_responses=True,
     )
 
-    rails_redis = redis.Redis(
-        host=RAILS_REDIS_HOST,
-        port=RAILS_REDIS_PORT,
-        db=0,
-        username=RAILS_REDIS_USERNAME,
-        password=RAILS_REDIS_PASSWORD,
-        ssl=True,
-        ssl_cert_reqs=None,
-        decode_responses=True,
-    )
+    # rails_redis = redis.Redis(
+    #     host=RAILS_REDIS_HOST,
+    #     port=RAILS_REDIS_PORT,
+    #     db=0,
+    #     username=RAILS_REDIS_USERNAME,
+    #     password=RAILS_REDIS_PASSWORD,
+    #     ssl=True,
+    #     ssl_cert_reqs=None,
+    #     decode_responses=True,
+    # )
 else:
     rd = redis.Redis(host="127.0.0.1", port=6379, db=0, decode_responses=True)
-    rails_redis = None
+    # rails_redis = None
