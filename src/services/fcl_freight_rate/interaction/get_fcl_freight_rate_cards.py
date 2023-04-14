@@ -805,7 +805,6 @@ def get_fcl_freight_rate_cards(requirements):
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
-        print(len(freight_rates), requirements)
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
