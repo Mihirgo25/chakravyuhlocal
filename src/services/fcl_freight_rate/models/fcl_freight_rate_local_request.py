@@ -160,14 +160,19 @@ class FclFreightRateLocalRequest(BaseModel):
 
     def send_notifications_to_supply_agents(self):
         port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
+        user_ids = []
         try:
-            partner.list_partner_users({
+            partner_users = partner.list_partner_users({
             'filters': {'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID, 'status':'active', 'partner_status':'active'},
             'pagination_data_required': False,
-            'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+            'rm_mappings_data_required': False,
+            'partner_data_required': False,
+            'page_limit': 50
             })['list']
+            for p_user in partner_users:
+                user_ids.append(p_user['user_id'])
         except:
-            user_ids = None
+            user_ids = []
 
         data = {
         'type': 'platform_notification',

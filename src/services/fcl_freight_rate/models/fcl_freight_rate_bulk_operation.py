@@ -101,10 +101,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        if data['markup_currency'] not in currencies:
-            raise HTTPException(status_code=499, detail='markup_currency is invalid')
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
         
@@ -130,11 +126,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        if data['markup_currency'] not in currencies:
-            raise HTTPException(status_code=499, detail='markup_currency is invalid')
-        
     def validate_update_free_days_limit_data(self):
         data = self.data
 
@@ -152,12 +143,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if any(index > 0 and slab.get('lower_limit', 0) <= slabs[index - 1].get('upper_limit', 0) for index, slab in enumerate(slabs)):
             raise HTTPException(status_code=499, detail='slabs is invalid')
 
-        currencies = slabs[0]['currency']
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        # if [x for x in currencies if x not in valid_currencies] != []:
-        #     raise HTTPException(status_code=499, detail='slabs.currency is invalid')
-
     def validate_add_freight_line_item_data(self):
         data = self.data
 
@@ -169,10 +154,6 @@ class FclFreightRateBulkOperation(BaseModel):
         
         if data['units'] not in code_config['units']:
             raise HTTPException(status_code=499, detail='unit is invalid')
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        # if data['currency'] not in valid_currencies:
-        #     raise HTTPException(status_code=499, detail='currency is invalid')
         
         if data['validity_end'] < datetime.now():
             raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
@@ -236,11 +217,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
-        
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
-        # if data['currency'] not in valid_currencies:
-            raise HTTPException(status_code=499, detail='currency is invalid')
         
     def validate_extend_freight_rate_to_icds_data(self):
         data = self.data
@@ -249,11 +226,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
-        
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-        
-        # if data['currency'] not in valid_currencies:
-        #     raise HTTPException(status_code=499, detail='currency is invalid')
+    
         
         if self.data['origin_port_ids'] or self.data['destination_port_ids']:
             rate_id = data['filters']['id']

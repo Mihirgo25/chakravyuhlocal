@@ -12,8 +12,12 @@ def validate_and_process_rate_sheet_converted_file(params):
             params, converted_file, rate_sheet
         )
     for converted_file in params['converted_files']:
+        if converted_file['status']=='invalidated':
+            rate_sheet.status = 'uploaded'
+            break
         if converted_file['status']!='complete':
             rate_sheet.status = converted_file['status']
+            break
     rate_sheet.converted_files = params.get('converted_files')
     rate_sheet.save()
     for converted_file in params['converted_files']:

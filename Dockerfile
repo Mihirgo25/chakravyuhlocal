@@ -30,7 +30,7 @@ EXPOSE 8110
 EXPOSE 8111
 
 FROM base as rms
-CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8110"]
+CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8110", "--workers=2"]
 
 FROM base as celery
 CMD ["celery" ,"-A" ,"celery_worker.celery" , "worker" ,"-B" , "--loglevel=info" , "-Q" , "communication,critical,low,fcl_freight_rate"]

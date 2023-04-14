@@ -8,6 +8,7 @@ from peewee import fn
 from datetime import datetime
 import json
 from micro_services.client import *
+from database.rails_db import get_partner_user_experties
 
 possible_direct_filters = ['feedback_type', 'continent', 'status']
 
@@ -123,8 +124,7 @@ def apply_validity_end_less_than_filter(query, filters):
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):
-    page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-    expertises = partner.list_partner_user_expertises({'filters': {'service_type': 'fcl_freight', 'partner_user_id': filters['relevant_supply_agent']}, 'page_limit': page_limit})['list']
+    expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
     query = query.where((FclFreightRate.origin_port_id << origin_port_id) | (FclFreightRate.origin_country_id << origin_port_id) | (FclFreightRate.origin_continent_id << origin_port_id) | (FclFreightRate.origin_trade_id << origin_port_id))

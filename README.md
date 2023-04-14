@@ -1,5 +1,5 @@
 
-# Welcome to OCEAN PRICING
+# Welcome to Dynamic Pricing Engine
 
 To manually create a virtualenv on MacOS and Linux:
 

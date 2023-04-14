@@ -239,7 +239,7 @@ def get_data(query, spot_search_details_required, booking_details_required):
                     if service_provider:
                         value['service_provider'] = service_providers_hash[service_provider]
         if spot_search_details_required:
-            object['spot_search'] = spot_search_hash.get(str(object['source_id']))
+            object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
         new_data.append(object)
     return new_data
 

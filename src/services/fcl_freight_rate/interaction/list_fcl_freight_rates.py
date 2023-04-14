@@ -6,7 +6,6 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 from fastapi.encoders import jsonable_encoder
-from playhouse.shortcuts import model_to_dict
 
 NOT_REQUIRED_FIELDS = ["destination_local_line_items_info_messages",  "origin_local_line_items_info_messages", "origin_local_line_items_error_messages", "destination_local_line_items_error_messages", "destination_location_ids", "origin_location_ids", "omp_dmp_sl_sp", "init_key"]
 
@@ -230,17 +229,17 @@ def apply_importer_exporter_present_filter(query, filters):
 
 
 def apply_last_rate_available_date_greater_than_filter(query, filters):
-  query = query.where(FclFreightRate.last_rate_available_date >= datetime.strptime(filters['last_rate_available_date_greater_than'],'%Y-%m-%d').date())
+  query = query.where(FclFreightRate.last_rate_available_date >= datetime.fromisoformat(filters['last_rate_available_date_greater_than']).date())
   return query
 
 
 def apply_validity_start_greater_than_filter(query, filters):
-  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.strptime(filters['validity_start_greater_than'],'%Y-%m-%d').date())
+  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
   return query
 
 
 def apply_validity_end_less_than_filter(query,filters):
-  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.strptime(filters['validity_end_less_than'],'%Y-%m-%d').date())
+  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.fromisoformat(filters['validity_end_less_than']).date())
   return query
 
 def apply_procured_by_id_filter(query, filters):
