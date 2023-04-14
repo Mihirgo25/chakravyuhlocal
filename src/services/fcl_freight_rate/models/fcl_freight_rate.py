@@ -301,7 +301,7 @@ class FclFreightRate(BaseModel):
       if 'destination_local' in self.dirty_fields and self.destination_local:
         if not self.destination_local_instance.validate_duplicate_charge_codes():
             raise HTTPException(status_code=400,detail="Duplicate line items in Destination Local")
-        invalid_charge_codes = self.destination_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes())
+        invalid_charge_codes = self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes())
         if invalid_charge_codes:
             raise HTTPException(status_code=400,detail=f"{invalid_charge_codes} are invalid Destination Local line items")
 
