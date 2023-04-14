@@ -58,7 +58,6 @@ class FclFreightRateRequest(BaseModel):
     attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     commodity_description = CharField(null=True)
 
-
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateRequest, self).save(*args, **kwargs)
