@@ -111,7 +111,9 @@ def get_create_params(request):
         'commodity': request.get('commodity'),
         'container_size': request.get('container_size'),
         'container_type': request.get('container_type'),
-        'service_provider_id': request.get('service_provider_id')
+        'service_provider_id': request.get('service_provider_id'),
+        'attachment_file_urls':request.get('attachment_file_urls'),
+        'commodity_description':request.get('commodity_description')
     }
     loc_ids = []
 
