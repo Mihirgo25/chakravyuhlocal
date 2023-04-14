@@ -104,7 +104,7 @@ def get_fcl_freight_predicted_rate(request):
     data_for_feedback = []
     for origin_port_id in origin_main_port_ids:
         for destination_port_id in destination_main_port_ids:
-            ports_distance = maps.get_sea_route({'origin_port_id':origin_port_id, 'destination_port_id':destination_port_id})
+            ports_distance = maps.get_sea_route({ 'origin_port_id':origin_port_id, 'destination_port_id':destination_port_id,'includes':['length'] })
             if ports_distance:
                 ports_distance = ports_distance['length']['length']
             with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
