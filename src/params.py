@@ -350,6 +350,8 @@ class CreateFclFreightRateFeedback(BaseModel):
   container_size: str = None
   container_type: str = None
   service_provider_id: str = None
+  attachment_file_urls: List[str] =[]
+  commodity_description:str=None
 
 
 class CreateFclFreightRateNotAvailable(BaseModel):
@@ -544,6 +546,9 @@ class CreateFclFreightRateRequest(BaseModel):
   origin_port_id: str
   origin_trade_id: str = None
   container_type: str = None
+  attachment_file_urls:List[str]=[]
+  commodity_description:str=None
+
 
 class CreateFclFreightRateLocalRequest(BaseModel):
   source: str

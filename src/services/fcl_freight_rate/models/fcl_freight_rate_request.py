@@ -55,6 +55,8 @@ class FclFreightRateRequest(BaseModel):
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default = datetime.datetime.now)
+    attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    commodity_description = CharField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -63,29 +65,29 @@ class FclFreightRateRequest(BaseModel):
     class Meta:
         table_name = 'fcl_freight_rate_requests'
 
-    def validate_source(self):
-        if self.source and self.source not in REQUEST_SOURCES:
-            raise HTTPException(status_code=400, detail="Invalid source")
+    # def validate_source(self):
+    #     if self.source and self.source not in REQUEST_SOURCES:
+    #         raise HTTPException(status_code=400, detail="Invalid source")
 
 
-    def validate_source_id(self):
-        if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
-            if len(spot_search_data) == 0:
-                raise HTTPException(status_code=400, detail="Invalid Source ID")
+    # def validate_source_id(self):
+    #     if self.source == 'spot_search':
+    #         spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+    #         if len(spot_search_data) == 0:
+    #             raise HTTPException(status_code=400, detail="Invalid Source ID")
 
-    def validate_performed_by_id(self):
-        data = get_user(self.performed_by_id)
+    # def validate_performed_by_id(self):
+    #     data = get_user(self.performed_by_id)
 
-        if data!={}:
-            pass
-        else:
-            raise HTTPException(status_code=400, detail='Invalid Performed by ID')
+    #     if data!={}:
+    #         pass
+    #     else:
+    #         raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
-    def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
-        if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
-            raise HTTPException(status_code=400, detail='Invalid Account Type')
+    # def validate_performed_by_org_id(self):
+    #     performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
+    #     if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
+    #         raise HTTPException(status_code=400, detail='Invalid Account Type')
 
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
@@ -109,8 +111,8 @@ class FclFreightRateRequest(BaseModel):
                 self.destination_port = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def validate(self):
-        self.validate_source()
-        self.validate_source_id()
+        # self.validate_source()
+        # self.validate_source_id()
         # self.validate_performed_by_id()
         # self.validate_performed_by_org_id()
         self.validate_preferred_shipping_line_ids()
