@@ -51,18 +51,19 @@ def initialize_freight_query(requirements, prediction_required = False):
     if rate_constant_mapping_key in RATE_ENTITY_MAPPING:
         allow_entity_ids = RATE_ENTITY_MAPPING[rate_constant_mapping_key]
 
-    # if allow_entity_ids:
-    #     freight_query = freight_query.where(FclFreightRate.cogo_entity_id << allow_entity_ids)
-    # else:
-    #     freight_query = freight_query.where(FclFreightRate.cogo_entity_id == None)
+    if allow_entity_ids:
+        freight_query = freight_query.where(((FclFreightRate.cogo_entity_id << allow_entity_ids) | (FclFreightRate.cogo_entity_id.is_null(True))))
+    else:
+        freight_query = freight_query.where(FclFreightRate.cogo_entity_id == None)
 
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
 
     if not prediction_required:
-        freight_query  = freight_query.where(FclFreightRate.mode != 'predicted')
+        freight_query  = freight_query.where(((FclFreightRate.mode != 'predicted') | (FclFreightRate.mode.is_null(True))))
 
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
+
     return freight_query
 
 def is_rate_missing_locals(local_type, rate):
@@ -803,6 +804,7 @@ def get_fcl_freight_rate_cards(requirements):
     try:
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
+
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
