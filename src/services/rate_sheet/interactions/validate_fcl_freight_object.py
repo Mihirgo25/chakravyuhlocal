@@ -74,6 +74,10 @@ def get_local_object(object):
     validation['error'] = ''
     res = object
     local = FclFreightRateLocal(**res)
+    if not local.port_id:
+        validation['error']+=' Invalid port'
+    if 'error' in validation:
+        return validation
     try:
         local.validate_before_save()
     except HTTPException as e:
