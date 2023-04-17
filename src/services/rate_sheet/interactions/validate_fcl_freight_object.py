@@ -32,6 +32,10 @@ def get_freight_object(object):
     res = object
     res['rate_not_available_entry'] = False
     rate_object = FclFreightRate(**res)
+    if not rate_object.origin_port_id:
+        validation['error']+=' Invalid origin port'
+    if not rate_object.destination_port_id:
+        validation['error']+=' Invalid destination port'
     try:
         rate_object.set_locations()
         rate_object.set_origin_location_ids()
@@ -39,6 +43,8 @@ def get_freight_object(object):
         rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], False, object['payment_term'])
     except:
         validation['error']+=' Invalid location'
+    if 'error' in validation:
+        return validation
     try:
         rate_object.validate_before_save()
     except HTTPException as e:
