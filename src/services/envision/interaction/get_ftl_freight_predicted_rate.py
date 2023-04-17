@@ -1,0 +1,46 @@
+from services.envision.additional_service_prediction import port_distance
+from configs.definitions import ROOT_DIR
+import os
+import joblib
+from configs.ftl_freight_rate_constants import *
+from micro_services.client import maps
+
+
+
+def get_ftl_freight_predicted_rate(request):
+    if type(request) == dict:
+        result = request
+    else:
+        result = request.__dict__
+    origin_location_id = result.get('origin_location_id')
+    destination_location_id = result['destination_location_id']
+    origin_region_id = result['origin_region_id']
+    destination_region_id = result['destination_region_id']
+    truck_type = result['truck_type']
+    tyre = PREDICTION_TRUCK_TYPES[truck_type]['tyre']
+    weight = PREDICTION_TRUCK_TYPES[truck_type]['weight']
+    volume = PREDICTION_TRUCK_TYPES[truck_type]['volume']
+    ltr_per_km = 1/PREDICTION_TRUCK_TYPES[truck_type]['mileage']
+    origin_gdp = REGION_ID_GDP[origin_region_id]
+    destination_gdp = REGION_ID_GDP[destination_region_id]
+    input = {"filters":{"id":[origin_location_id, destination_location_id]}}
+    data = maps.list_locations(input)
+    if data:
+        data = data["list"]
+    for d in data:
+        if d["id"] == origin_location_id:
+            origin_location = (d["latitude"], d["longitude"])
+        if d["id"] == destination_location_id:
+            destination_location = (d["latitude"], d["longitude"])
+    try:
+        distance = port_distance(origin_location,destination_location)
+    except:
+        distance = 250
+    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "pred_based_models", "ftl_freight_prediction_model.pkl")
+    model = joblib.load(open(MODEL_PATH, "rb"))
+    data = [tyre, weight, volume, ltr_per_km, distance, origin_gdp, destination_gdp]
+    model_result = model.predict([data])
+    result["predicted_price"] = round(model_result[0])
+    result["distance"] = distance
+
+    return result
