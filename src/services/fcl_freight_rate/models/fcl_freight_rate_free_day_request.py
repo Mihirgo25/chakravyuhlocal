@@ -63,7 +63,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
     def send_closed_notifications_to_sales_agent(self):
       locations_data = maps.list_locations({'filters' : {'id': self.location_id}})['list']
       location_name = {data['id']:data['display_name'] for data in locations_data}
-      importer_exporter_id = common.get_spot_search({'filters':{'id': self.source_id}})['detail']['importer_exporter_id']
+      importer_exporter_id = spot_search.get_spot_search({'filters':{'id': self.source_id}})['detail']['importer_exporter_id']
       data = {
         'user_id': self.performed_by_id,
         'type': 'platform_notification',
@@ -89,13 +89,6 @@ class FclFreightRateFreeDayRequest(BaseModel):
       location = maps.list_locations({'filters' : {'id': self.location_id}})
       if 'list' in location and location['list']:
         self.location= {key:value for key,value in location['list'][0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-    # def validate_source_id(self):
-    #   data = common.list_spot_searches({'filters':{'id':self.source_id}})
-    #   if ('list' in data) and (len(data['list']) > 0):
-    #     data = data['list'][0]
-    #     if data.get('source_type',None) == 'spot_search':
-    #       return True
-    #   return False
 
     def validate_performed_by(self):
         data = get_user(self.performed_by_id)
