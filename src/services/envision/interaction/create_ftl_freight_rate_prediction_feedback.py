@@ -6,10 +6,10 @@ def create_ftl_freight_rate_prediction_feedback(result):
     for feedback in result:
         with db.atomic() as transaction:
             try:
-                if "origin_region_id" not in feedback:
-                    feedback["origin_region_id"] = None
-                if "destination_region_id" not in feedback:
-                    feedback["destination_region_id"] = None
+                if "origin_country_id" not in feedback:
+                    feedback["origin_country_id"] = None
+                if "destination_country_id" not in feedback:
+                    feedback["destination_country_id"] = None
                 record = {
                     "origin_location_id": feedback.get("origin_location_id"),
                     "destination_location_id": feedback.get("destination_location_id"),
