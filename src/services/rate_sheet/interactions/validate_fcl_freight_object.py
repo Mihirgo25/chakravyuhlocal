@@ -43,7 +43,7 @@ def get_freight_object(object):
         rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], False, object['payment_term'])
     except:
         validation['error']+=' Invalid location'
-    if 'error' in validation:
+    if validation['error'].strip() != '':
         return validation
     try:
         rate_object.validate_before_save()
@@ -76,7 +76,7 @@ def get_local_object(object):
     local = FclFreightRateLocal(**res)
     if not local.port_id:
         validation['error']+=' Invalid port'
-    if 'error' in validation:
+    if validation['error'].strip() != '':
         return validation
     try:
         local.validate_before_save()
