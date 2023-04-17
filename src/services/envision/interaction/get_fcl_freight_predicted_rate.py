@@ -8,11 +8,7 @@ from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
-
-def calculate_port_distance(cord1, cord2):
-    coords_1 = cord1
-    coords_2 = cord2
-    return geopy.distance.geodesic(coords_1, coords_2).km
+from services.envision.additional_service_prediction import port_distance
 
 def get_final_price(min_price, price, ldh, request):
     price_delta = price - min_price
@@ -121,7 +117,7 @@ def get_fcl_freight_predicted_rate(request):
                 ports_distance = ports_distance['length']['length']
             else:
                 port_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "seaports_dict.pkl") , "rb"))
-                ports_distance = calculate_port_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
+                ports_distance = port_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
             with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
                 futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
             data_for_feedback.extend(futures)
