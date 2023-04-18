@@ -17,7 +17,7 @@ def validate_fcl_freight_object(module, object):
     response['valid'] = False
     try:
         rate_object = getattr(validate_rate_sheet, "get_{}_object".format(module))(object)
-        if rate_object['error'].strip() != '':
+        if rate_object['error'].strip():
             response['error'] = rate_object['error']
         else:
             response['valid'] = True
@@ -32,6 +32,10 @@ def get_freight_object(object):
     res = object
     res['rate_not_available_entry'] = False
     rate_object = FclFreightRate(**res)
+    if not rate_object.origin_port_id:
+        validation['error']+=' Invalid origin port'
+    if not rate_object.destination_port_id:
+        validation['error']+=' Invalid destination port'
     try:
         rate_object.set_locations()
         rate_object.set_origin_location_ids()
@@ -39,6 +43,8 @@ def get_freight_object(object):
         rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], False, object['payment_term'])
     except:
         validation['error']+=' Invalid location'
+    if validation['error'].strip():
+        return validation
     try:
         rate_object.validate_before_save()
     except HTTPException as e:
@@ -68,6 +74,10 @@ def get_local_object(object):
     validation['error'] = ''
     res = object
     local = FclFreightRateLocal(**res)
+    if not local.port_id:
+        validation['error']+=' Invalid port'
+    if validation['error'].strip():
+        return validation
     try:
         local.validate_before_save()
     except HTTPException as e:

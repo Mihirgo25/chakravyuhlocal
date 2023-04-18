@@ -45,6 +45,7 @@ celery.conf.critical_default_priority = 9
 celery.conf.fcl_freight_rate_default_priority = 6
 celery.conf.communication_queues_default_priority = 6
 celery.conf.low_default_priority = 3
+celery.conf.broker_transport_options = {'visibility_timeout': 14400}
 
 celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
