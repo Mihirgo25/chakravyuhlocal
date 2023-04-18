@@ -33,7 +33,11 @@ def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
     spot_search_hash = {}
     data = list(query.dicts())
     spot_search_ids = list(set([str(row['source_id']) for row in data]))
-    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids }})['list']
+    try:
+        spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    except:
+        spot_search_data = []
+
     for search in spot_search_data:
         spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
