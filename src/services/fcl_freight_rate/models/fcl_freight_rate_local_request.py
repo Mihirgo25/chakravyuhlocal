@@ -86,7 +86,7 @@ class FclFreightRateLocalRequest(BaseModel):
             return False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=self.performed_by_id)
+        performed_by_org_data = get_organization(id=self.performed_by_org_id)
         if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
             return True
         return False
@@ -126,7 +126,7 @@ class FclFreightRateLocalRequest(BaseModel):
             raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
         if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=400, detail="incorrect performed by id")
+            raise HTTPException(status_code=400, detail="incorrect performed by org id")
 
         if not self.validate_closed_by_id():
             raise HTTPException(status_code=400, detail='Invalid Closed by ID')

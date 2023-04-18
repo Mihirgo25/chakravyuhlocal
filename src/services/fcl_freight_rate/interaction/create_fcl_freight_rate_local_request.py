@@ -47,9 +47,9 @@ def execute_transaction_code(request):
 
     create_audit(request, local_request.id)
 
-    # update_multiple_service_objects.apply_async(kwargs={'object':local_request},queue='low')
+    update_multiple_service_objects.apply_async(kwargs={'object':local_request},queue='low')
 
-    # send_notifications_to_supply_agents_local_request.apply_async(kwargs={'object':local_request},queue='communication')
+    send_notifications_to_supply_agents_local_request.apply_async(kwargs={'object':local_request},queue='communication')
 
     
     return {
