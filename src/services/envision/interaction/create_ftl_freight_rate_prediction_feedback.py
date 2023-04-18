@@ -26,4 +26,4 @@ def create_ftl_freight_rate_feedback(result):
                 transaction.rollback()
                 return {'success' : False}
 
-    return {'success':True}
+    return {'success':True, 'data':feedback}

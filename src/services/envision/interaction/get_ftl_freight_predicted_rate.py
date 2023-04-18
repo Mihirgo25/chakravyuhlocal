@@ -2,12 +2,12 @@ from services.envision.additional_service_prediction import port_distance
 from configs.definitions import ROOT_DIR
 import os
 import joblib
+import pickle
 from configs.ftl_freight_rate_constants import *
 from micro_services.client import maps
 
 
-
-def get_ftl_freight_predicted_rate(request):
+def predict_ftl_freight_rate(request):
     if type(request) == dict:
         result = request
     else:
@@ -36,7 +36,7 @@ def get_ftl_freight_predicted_rate(request):
         distance = port_distance(origin_location,destination_location)
     except:
         distance = 250
-    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "pred_based_models", "ftl_freight_prediction_model.pkl")
+    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "ftl_freight_prediction_model.pkl")
     model = joblib.load(open(MODEL_PATH, "rb"))
     data = [tyre, weight, volume, ltr_per_km, distance, origin_gdp, destination_gdp]
     model_result = model.predict([data])
