@@ -34,3 +34,4 @@ class FclFreightRateEstimation(BaseModel):
     
 
 
+
