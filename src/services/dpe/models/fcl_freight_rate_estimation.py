@@ -24,4 +24,7 @@ class FclFreightRateEstimation(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     status = TextField(default='active',null=False)
 
+    class Meta:
+        table_name = 'fcl_freight_rate_estimation'
+
 
