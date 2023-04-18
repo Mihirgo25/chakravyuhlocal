@@ -13,3 +13,15 @@ class FtlFreightData(BaseModel):
 
 class FtlFreightRate(BaseModel):
     params: list[FtlFreightData]
+
+class HaulageFreightData(BaseModel):
+    origin_location_id: str
+    destination_location_id: str
+    container_size: str
+    upper_limit: float = None
+    validity_start: str = None
+    validity_end: str = None
+    currency: str = "INR"
+
+class HaulageFreightRate(BaseModel):
+    params: list[HaulageFreightData]

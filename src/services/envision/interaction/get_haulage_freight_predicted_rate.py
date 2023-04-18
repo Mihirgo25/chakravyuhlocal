@@ -2,7 +2,6 @@ from services.envision.additional_service_prediction import port_distance
 from configs.definitions import ROOT_DIR
 import os
 import joblib
-from configs.ftl_freight_rate_constants import *
 from micro_services.client import maps
 from configs.haulage_freight_rate_constants import weight_limit_constants
 

@@ -25,4 +25,4 @@ def create_haulage_freight_rate_feedback(result):
                 transaction.rollback()
                 return {'success' : False}
     
-    return {'success':True}
+    return {'success':True, 'data':feedback}
