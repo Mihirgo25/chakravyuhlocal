@@ -87,7 +87,7 @@ from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
-
+from services.dpe.interaction.create_fcl_estimated_rate import create_fcl_estimated_rate_data
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
@@ -1625,6 +1625,24 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+    
+@fcl_freight_router.post("/create_fcl_estimated_rate")
+def create_fcl_estimated_rates(request: CreateFclEstimatedRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    # try:
+    rate_sheet = create_fcl_estimated_rate_data(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
 
 
 
