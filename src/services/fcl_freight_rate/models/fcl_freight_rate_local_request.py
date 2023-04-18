@@ -73,7 +73,7 @@ class FclFreightRateLocalRequest(BaseModel):
     def validate_source_id(self):
         if self.source == 'spot_search':
             spot_search_data = spot_search.list_spot_searches({'filters': {'id': str(self.source_id)}})['list']
-            if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
+            if len(spot_search_data) != 0:
                 self.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
                 return True
             return False
