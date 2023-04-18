@@ -36,7 +36,7 @@ def predict_haulage_freight_rate(request):
         distance = 250
     fuel_used = fuel_consumption(distance,upper_limit)
 
-    MODEL_PATH = os.path.join(ROOT_DIR, "projects", "cogo_envision", "pred_model", "haulage_freight_prediction_model.pkl")
+    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "haulage_freight_prediction_model.pkl")
     model = joblib.load(MODEL_PATH)
     data = [container_size, upper_limit, distance, fuel_used]
     model_result = model.predict([data])
