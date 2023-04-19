@@ -4,12 +4,12 @@ from configs.global_constants import HAZ_CLASSES
 import pickle, joblib, os
 from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
-from micro_services.client import maps
+from micro_services.client import maps,common
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
-
+from services.dpe.interaction.get_eligible_estimated_rate import get_eligible_estimated_rate
 def get_final_price(min_price, price, ldh, request):
     price_delta = price - min_price
 
@@ -18,28 +18,35 @@ def get_final_price(min_price, price, ldh, request):
     origin_trade_id = ldh[request['origin_port_id']]['trade_id']
     destination_trade_id = ldh[request['destination_port_id']]['trade_id']
 
+    request['origin_trade_id']=origin_trade_id
+    request['destination_trade_id']=destination_trade_id
+
 
     modified_container_size = '40'
 
     if request['container_size'] == '20':
         modified_container_size = '20'
 
-    key = '{}:{}:{}'.format(request['origin_country_id'], request['destination_country_id'], modified_container_size)
-    trade_key = '{}:{}:{}'.format(origin_trade_id, destination_trade_id, modified_container_size)
-    reverse_trade_key = '{}:{}:{}'.format(destination_trade_id, origin_trade_id, modified_container_size)
+    # key = '{}:{}:{}'.format(request['origin_country_id'], request['destination_country_id'], modified_container_size)
+    # trade_key = '{}:{}:{}'.format(origin_trade_id, destination_trade_id, modified_container_size)
+    # reverse_trade_key = '{}:{}:{}'.format(destination_trade_id, origin_trade_id, modified_container_size)
+    
+    get_upper_lower_rates=get_eligible_estimated_rate(request)
+    avg_price=(get_upper_lower_rates['lower_rate']+get_upper_lower_rates['upper_rate'])/2
 
-    if key in AVERAGE_RATES:
-        avg_price = AVERAGE_RATES[key] + price_delta
-    elif trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
-    elif reverse_trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[reverse_trade_key] + price_delta
-    elif price > 1500 and price < avg_price:
-        return price
-    else:
-        avg_price = AVERAGE_RATES['default'] + price
+    # if key in AVERAGE_RATES:
+    #     avg_price = AVERAGE_RATES[key] + price_delta
+    # elif trade_key in TRADE_LANE_PRICES:
+    #     avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
+    # elif reverse_trade_key in TRADE_LANE_PRICES:
+    #     avg_price = TRADE_LANE_PRICES[reverse_trade_key] + price_delta
+    # elif price > 1500 and price < avg_price:
+    #     return price
+    # else:
+    #     avg_price = AVERAGE_RATES['default'] + price
+    conversion = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_upper_lower_rates['currency'], "to_currency":'USD'})
 
-    return avg_price
+    return conversion + price_delta
     
 def insert_rates_to_rms(create_params, request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
@@ -63,6 +70,7 @@ def insert_rates_to_rms(create_params, request):
         final_bas_price_to_rms = get_final_price(min_price, price, ldh, request)
         create_param['line_items'][0]['price'] = final_bas_price_to_rms + (5 - final_bas_price_to_rms%10) if final_bas_price_to_rms%10 <= 5 else (final_bas_price_to_rms + (10 - final_bas_price_to_rms%10))
         rate_card_id = create_fcl_freight_rate_data(create_param)['id'] 
+        print(rate_card_id)
         create_param['creation_id'] = rate_card_id
         create_param['predicted_price'] = price
 
@@ -77,7 +85,7 @@ def get_fcl_freight_predicted_rate(request):
         request = request.__dict__
 
     location_data = maps.list_locations_mapping({'location_id':[request['origin_port_id'],request['destination_port_id']],'type':['main_ports']})['list']
-
+    print(location_data)
     origin_main_port_ids = []
     destination_main_port_ids = []
 
@@ -104,12 +112,14 @@ def get_fcl_freight_predicted_rate(request):
     data_for_feedback = []
     for origin_port_id in origin_main_port_ids:
         for destination_port_id in destination_main_port_ids:
+            
             ports_distance = maps.get_sea_route({'origin_port_id':origin_port_id, 'destination_port_id':destination_port_id})
             if ports_distance:
                 ports_distance = ports_distance['length']['length']
             with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
                 futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
             data_for_feedback.extend(futures)
+    print(12)
 
     for i in range(len(data_for_feedback)):
         data_for_feedback[i] = data_for_feedback[i].result()

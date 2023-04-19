@@ -6,7 +6,7 @@ def get_eligible_estimated_rate(request):
     origin_location_ids = [request.get('origin_port_id'),request.get('origin_country_id'),request.get('origin_trade_id')]
     destination_location_ids = [request.get('destination_port_id'),request.get('destination_country_id'),request.get('destination_trade_id')]
 
-    estimated_rate = FclFreightRateEstimation.select(FclFreightRateEstimation.lower_rate,FclFreightRateEstimation.upper_rate).where(
+    estimated_rate = FclFreightRateEstimation.select(FclFreightRateEstimation.lower_rate,FclFreightRateEstimation.upper_rate,FclFreightRateEstimation.currency).where(
         # FclFreightRateEstimation.origin_location_id << origin_location_ids,
         # FclFreightRateEstimation.destination_location_id << destination_location_ids,
         FclFreightRateEstimation.container_size == request['container_size'],
@@ -36,8 +36,10 @@ def get_most_eligible(query,request):
     )).over().alias('port_country')
          )
     ).limit(1)
-    print(count_query)
-    result = count_query.dicts().get()
+    try:
+        result = count_query.dicts().get()
+    except:
+        return {}
 
     if result['port_port']==1:
         return port_port.dicts().get()
@@ -45,6 +47,8 @@ def get_most_eligible(query,request):
         port_port_result = add_shipping_line_commodity(port_port,request)
         if port_port_result:
             return port_port_result
+        else:
+            return port_port.dicts().get()
     
     if result['port_country']==1:
         return port_country.dicts().get()
@@ -52,6 +56,8 @@ def get_most_eligible(query,request):
         port_country_result = add_shipping_line_commodity(port_country,request)
         if port_country_result:
             return port_country_result
+        else:
+            return port_country.dicts().get()
     
     if result['country_country']==1:
         return country_country.dicts().get()
@@ -59,6 +65,8 @@ def get_most_eligible(query,request):
         country_country_result = add_shipping_line_commodity(port_country,request)
         if country_country_result:
             return country_country_result
+        else:
+            return country_country.dicts().get()
     
     return {}
 
