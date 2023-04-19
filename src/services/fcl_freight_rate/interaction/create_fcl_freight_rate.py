@@ -2,6 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
+from configs.global_constants import HAZ_CLASSES
 
 def create_audit(request, freight_id):
 
@@ -47,8 +48,8 @@ def create_fcl_freight_rate(request):
         "cogo_entity_id": request.get("cogo_entity_id"),
         "sourced_by_id": request.get("sourced_by_id"),
         "procured_by_id": request.get("procured_by_id"),
-        "mode": request.get("mode"),
-        "accuracy":request.get("accuracy")
+        "mode": request.get("mode", "manual"),
+        "accuracy":request.get("accuracy", 100)
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
@@ -100,10 +101,15 @@ def create_fcl_freight_rate(request):
         freight.validate_validity_object(request["validity_start"], request["validity_end"])
         freight.validate_line_items(request.get("line_items"))
 
+    source=request.get("source")
+    line_items = request.get("line_items")
+    if source == "flash_booking":
+        line_items = get_flash_booking_rate_line_items(request)
+
     freight.set_validities(
         request["validity_start"].date(),
         request["validity_end"].date(),
-        request.get("line_items"),
+        line_items,
         request.get("schedule_type"),
         False,
         request.get("payment_term"),
@@ -138,3 +144,29 @@ def create_fcl_freight_rate(request):
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
     return {"id": freight.id}
+
+def get_flash_booking_rate_line_items(request):
+    line_items = request.get("line_items")
+    if request['container_type'] in ['open_top', 'flat_rack', 'iso_tank'] or request['container_size'] == '45HC':
+        line_items.append({
+            "code": "SPE",
+            "unit": "per_container",
+            "price": 0,
+            "currency": "USD",
+            "remarks": [
+            ],
+            "slabs": []
+        })
+    
+    if request['commodity'] in HAZ_CLASSES:
+        line_items.append({
+            "code": "HSC",
+            "unit": "per_container",
+            "price": 0,
+            "currency": "USD",
+            "remarks": [
+            ],
+            "slabs": []
+        })
+    return line_items
+
