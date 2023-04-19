@@ -1,7 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day_request import FclFreightRateFreeDayRequest
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
-from libs.logger import logger
 from celery_worker import update_multiple_service_objects
 
 
@@ -15,24 +14,24 @@ def create_fcl_freight_rate_free_day_request(request):
 
 def execute_transaction_code(request):
     row = {
-        'source': request['source'],
-        'source_id': request['source_id'],
-        'performed_by_id': request['performed_by_id'],
-        'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id'],
-        'free_days_type': request['free_days_type'],
-        'service_provider_id': request['service_provider_id'],
-        'location_id': request['location_id']
+        'source': request.get('source'),
+        'source_id': request.get('source_id'),
+        'performed_by_id': request.get('performed_by_id'),
+        'performed_by_type': request.get('performed_by_type'),
+        'performed_by_org_id': request.get('performed_by_org_id'),
+        'free_days_type': request.get('free_days_type'),
+        'service_provider_id': request.get('service_provider_id'),
+        'location_id': request.get('location_id')
     }
     free_day_request = FclFreightRateFreeDayRequest.select().where(
-        FclFreightRateFreeDayRequest.source == request['source'],
-        FclFreightRateFreeDayRequest.source_id == request['source_id'],
-        FclFreightRateFreeDayRequest.performed_by_id == request['performed_by_id'],
-        FclFreightRateFreeDayRequest.performed_by_type == request['performed_by_type'],
-        FclFreightRateFreeDayRequest.performed_by_org_id == request['performed_by_org_id'],
-        FclFreightRateFreeDayRequest.free_days_type == request['free_days_type'],
-        FclFreightRateFreeDayRequest.service_provider_id == request['service_provider_id'],
-        FclFreightRateFreeDayRequest.location_id == request['location_id']).first()
+        FclFreightRateFreeDayRequest.source == request.get('source'),
+        FclFreightRateFreeDayRequest.source_id == request.get('source_id'),
+        FclFreightRateFreeDayRequest.performed_by_id == request.get('performed_by_id'),
+        FclFreightRateFreeDayRequest.performed_by_type == request.get('performed_by_type'),
+        FclFreightRateFreeDayRequest.performed_by_org_id == request.get('performed_by_org_id'),
+        FclFreightRateFreeDayRequest.free_days_type == request.get('free_days_type'),
+        FclFreightRateFreeDayRequest.service_provider_id == request.get('service_provider_id'),
+        FclFreightRateFreeDayRequest.location_id == request.get('location_id')).first()
 
     if not free_day_request:
         free_day_request = FclFreightRateFreeDayRequest(**row)
@@ -56,7 +55,7 @@ def execute_transaction_code(request):
     }
 
 def create_audit(request, free_day_request_id):
-    performed_by_id = request['performed_by_id']
+    performed_by_id = request.get('performed_by_id')
     del request['performed_by_id']
 
     FclServiceAudit.create(
