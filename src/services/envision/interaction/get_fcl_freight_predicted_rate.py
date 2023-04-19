@@ -130,8 +130,8 @@ def get_fcl_freight_predicted_rate(request):
         data_for_feedback[i] = data_for_feedback[i].result()
     
 
-    # if request.get('is_source_lcl'):
-    #     return data_for_feedback
+    if request.get('is_source_lcl'):
+        return data_for_feedback
     
     data_for_feedback = insert_rates_to_rms(data_for_feedback, request)
 
