@@ -11,15 +11,9 @@ class AuthApiClient:
             "Content-Type": "application/json",
             "Accept": "application/json",
         })
-
-    def list_organizations(self, data):
-        return self.client.request('GET', 'list_organizations', data)
         
     def update_organization(self,data={}):
         return self.client.request('POST','update_organization',data)
-    
-    def list_organization_users(self, data):
-        return self.client.request('GET','list_organization_users', data)
 
     def list_organization_services(self, data):
         return self.client.request('GET','list_organization_services', data)  
@@ -29,7 +23,3 @@ class AuthApiClient:
 
     def get_eligible_service_organizations(self, data):
         return self.client.request('GET','get_eligible_service_organizations', data)
-    
-    def list_organization_service_expertises(self, data):
-        return self.client.request('GET','list_organization_service_expertises', data)
-

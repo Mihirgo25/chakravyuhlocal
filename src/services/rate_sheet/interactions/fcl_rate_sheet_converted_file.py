@@ -93,13 +93,6 @@ def get_shipping_line_id(shipping_line_name):
     return shipping_line_id
 
 
-def get_airline_id(params):
-    airline_id = common.list_operators(
-        {"filters": {"id": params.origin_location_id}}
-    )["list"][0]
-    return airline_id
-
-
 def convert_date_format(date):
     if not date:
         return date
@@ -316,7 +309,7 @@ def create_fcl_freight_local_rate(
     object['data'] = { 'line_items': [] }
     object["line_items"] = []
     for t in rows:
-        if t['code']:
+        if t['code'] and t.get('price'):
             line_item = {
             'code': t.get('code'),
             'unit': t.get('unit'),
@@ -333,7 +326,8 @@ def create_fcl_freight_local_rate(
             keys_to_float = ['lower_limit', 'upper_limit', 'price']
             for key, val in slab.items():
                 if key in keys_to_float:
-                    slab[key] = float(val)
+                    if val:
+                        slab[key] = float(val)
             object['data']['line_items'][-1]['slabs'].append(slab)
 
     request_params = object
@@ -342,6 +336,7 @@ def create_fcl_freight_local_rate(
     object["service_provider_id"] = params['service_provider_id']
     object["procured_by_id"] = procured_by_id
     object["sourced_by_id"] = sourced_by_id
+    object["source"] = "rate_sheet"
     validation = write_fcl_freight_local_object(request_params, writer, params, converted_file, last_row)
     if validation.get('valid'):
         object['rate_sheet_validation'] = True
@@ -530,7 +525,8 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     keys_to_float = ['lower_limit', 'upper_limit', 'price']
     for key, val in object.items():
         if key in keys_to_float:
-            object[key] = float(val)
+            if val:
+                object[key] = float(val)
     location = get_location(rows[0]['location'], rows[0]['location_type'])
     object['location'] = location
     object['location_id'] = location['id']
@@ -550,7 +546,8 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
         keys_to_float = ['lower_limit', 'upper_limit', 'price']
         for key, val in slab.items():
             if key in keys_to_float:
-                slab[key] = float(val)
+                if val:
+                    slab[key] = float(val)
         if object['slabs']:
             object['slabs'].append(slab)
     object['rate_sheet_id'] = params['rate_sheet_id']
@@ -558,6 +555,7 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     object['service_provider_id'] = params['service_provider_id']
     object['procured_by_id'] = procured_by_id
     object['sourced_by_id'] = sourced_by_id
+    object["source"] = "rate_sheet"
     request_params = object
     validation = write_fcl_freight_free_day_object(request_params.copy(), csv_writer, params,  converted_file, last_row)
     if validation.get('valid'):
@@ -1196,7 +1194,7 @@ def create_fcl_freight_freight_rate(
         object["shipping_line_id"] = get_shipping_line_id(rows[0].get("shipping_line"))
     object["line_items"] = []
     for t in rows:
-        if t.get('code'):
+        if t.get('code') and t.get('price'):
             line_item = {
             'code': t.get('code'),
             'unit': t.get('unit'),

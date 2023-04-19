@@ -56,7 +56,14 @@ def get_direct_indirect_filters(filters):
     indirect_filters = {}
     for key, val in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS:
-            direct_filters[key] = val
+            if key == "serial_id":
+                try:
+                    val = int(val)
+                    direct_filters[key] = val
+                except:
+                    direct_filters[key] = 0
+            else:
+                direct_filters[key] = val
         if key in POSSIBLE_INDIRECT_FILTERS:
             indirect_filters[key] = val
     for type in [
@@ -116,15 +123,7 @@ def add_service_objects(data):
     if len(data) == 0:
         return data
     objects_organizations_hash = {}
-    objects_organizations = {
-        "filters": {"id": []},
-        "fields": ['id', 'business_name', 'short_name', 'logo_url']
-    }
     objects_user_hash = {}
-    objects_user = {
-        "filters": {"id": []},
-        "fields": ['id', 'name', 'email']
-    }
     org_ids = []
     user_ids = []
     for cluster in data:
@@ -139,7 +138,6 @@ def add_service_objects(data):
             continue
 
     if len(org_ids):
-        objects_organizations['filters']['id'] = org_ids
         list_organizations = get_organization(id=org_ids)
         for org in list_organizations:
             objects_organizations_hash[org['id']] =org
@@ -154,9 +152,10 @@ def add_service_objects(data):
             objects_user_hash[user_obj['id']] =user_obj
     for object in data:
         service_provider = {}
-        for key, val in objects_organizations_hash.get(object.get('service_provider_id')).items():
-            if key in ['id', 'business_name', 'short_name', 'logo_url']:
-                service_provider[key] = val
+        if objects_organizations_hash.get(object.get('service_provider_id')):
+            for key, val in objects_organizations_hash.get(object.get('service_provider_id')).items():
+                if key in ['id', 'business_name', 'short_name', 'logo_url']:
+                    service_provider[key] = val
         object['service_provider'] = service_provider
         object['procured_by'] = objects_user_hash.get(str(object.get('procured_by_id')))
         object['sourced_by'] = objects_user_hash.get(str(object.get('sourced_by_id')))

@@ -2,13 +2,11 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from configs.fcl_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBACKS, FEEDBACK_TYPES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from configs.definitions import FCL_FREIGHT_CURRENCIES
 from fastapi import HTTPException
 import datetime
 from database.rails_db import *
-from micro_services.client import partner, common, maps, spot_search, checkout
+from micro_services.client import partner, common, maps, spot_search
 
 
 class UnknownField(object):
@@ -63,6 +61,8 @@ class FclFreightRateFeedback(BaseModel):
     service_provider_id= UUIDField(null=True)
     origin_port = BinaryJSONField(null=True)
     destination_port = BinaryJSONField(null=True)
+    attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    commodity_description=CharField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -72,57 +72,57 @@ class FclFreightRateFeedback(BaseModel):
         table_name = 'fcl_freight_rate_feedbacks'
 
 
-    def validate_source(self):
-        if self.source and self.source in FEEDBACK_SOURCES:
-            return True
-        return False
+    # def validate_source(self):
+    #     if self.source and self.source in FEEDBACK_SOURCES:
+    #         return True
+    #     return False
 
-    def validate_source_id(self):
-        if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
-            if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
-                return True
+    # def validate_source_id(self):
+    #     if self.source == 'spot_search':
+    #         spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
+    #         if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
+    #             return True
 
-        if self.source == 'checkout':
-            checkout_data = checkout.list_checkouts({'filters':{'id': [str(self.source_id)]}})
-            if 'list' in checkout_data and len(checkout_data['list']) != 0:
-                return True
-        return False
+    #     if self.source == 'checkout':
+    #         checkout_data = checkout.list_checkouts({'filters':{'id': [str(self.source_id)]}})
+    #         if 'list' in checkout_data and len(checkout_data['list']) != 0:
+    #             return True
+    #     return False
 
-    def validate_fcl_freight_rate_id(self):
-        fcl_freight_rate_data = FclFreightRate.get(**{'id' : self.fcl_freight_rate_id})
-        if fcl_freight_rate_data:
-            return True
-        return False
+    # def validate_fcl_freight_rate_id(self):
+    #     fcl_freight_rate_data = FclFreightRate.get(**{'id' : self.fcl_freight_rate_id})
+    #     if fcl_freight_rate_data:
+    #         return True
+    #     return False
 
-    def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=self.performed_by_org_id)
-        if len(performed_by_org_data) > 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
-            return True
-        else:
-            return False
+    # def validate_performed_by_org_id(self):
+    #     performed_by_org_data = get_organization(id=self.performed_by_org_id)
+    #     if len(performed_by_org_data) > 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
+    #         return True
+    #     else:
+    #         return False
 
-    def validate_feedbacks(self):
-        for feedback in self.feedbacks:
-            if feedback in POSSIBLE_FEEDBACKS:
-                return True
-            return False
+    # def validate_feedbacks(self):
+    #     for feedback in self.feedbacks:
+    #         if feedback in POSSIBLE_FEEDBACKS:
+    #             return True
+    #         return False
 
 
-    def validate_preferred_freight_rate_currency(self):
-        if not self.preferred_freight_rate_currency:
-            return True
+    # def validate_preferred_freight_rate_currency(self):
+    #     if not self.preferred_freight_rate_currency:
+    #         return True
 
-        fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
+    #     fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
-        if self.preferred_freight_rate_currency in fcl_freight_currencies:
-            return True
-        return False
+    #     if self.preferred_freight_rate_currency in fcl_freight_currencies:
+    #         return True
+    #     return False
 
-    def validate_preferred_detention_free_days(self):
-        if self.preferred_detention_free_days and int(self.preferred_detention_free_days) >= 0:
-            return True
-        return False
+    # def validate_preferred_detention_free_days(self):
+    #     if self.preferred_detention_free_days and int(self.preferred_detention_free_days) >= 0:
+    #         return True
+    #     return False
 
     def validate_preferred_shipping_line_ids(self):
         if not self.preferred_shipping_line_ids:
@@ -143,41 +143,41 @@ class FclFreightRateFeedback(BaseModel):
             self.preferred_shipping_lines = shipping_lines
         return True
 
-    def validate_feedback_type(self):
-        if self.feedback_type in FEEDBACK_TYPES:
-            return True
-        return False
+    # def validate_feedback_type(self):
+    #     if self.feedback_type in FEEDBACK_TYPES:
+    #         return True
+    #     return False
 
     def validate_before_save(self):
-        if not self.validate_source():
-            raise HTTPException(status_code=422, detail="incorrect source")
+        # if not self.validate_source():
+        #     raise HTTPException(status_code=422, detail="incorrect source")
 
-        if not self.validate_source_id():
-            raise HTTPException(status_code=422, detail="incorrect source id")
+        # if not self.validate_source_id():
+        #     raise HTTPException(status_code=422, detail="incorrect source id")
 
-        if not self.validate_fcl_freight_rate_id():
-            raise HTTPException(status_code=422, detail="incorrect fcl freight rate id")
+        # if not self.validate_fcl_freight_rate_id():
+        #     raise HTTPException(status_code=422, detail="incorrect fcl freight rate id")
 
         # if not self.validate_performed_by_org_id():
         #     raise HTTPException(status_code=422, detail="incorrect performed by org id")
 
-        if len(self.feedbacks) != 0:
-            if not self.validate_feedbacks():
-                raise HTTPException(status_code=422, detail="incorrect feedbacks")
+        # if len(self.feedbacks) != 0:
+        #     if not self.validate_feedbacks():
+        #         raise HTTPException(status_code=422, detail="incorrect feedbacks")
 
-        if not self.validate_preferred_freight_rate_currency():
-            raise HTTPException(status_code=422, detail='invalid currency')
+        # if not self.validate_preferred_freight_rate_currency():
+        #     raise HTTPException(status_code=422, detail='invalid currency')
 
-        if self.preferred_detention_free_days:
-            if not self.validate_preferred_detention_free_days():
-                raise HTTPException(status_code=422, detail="incorrect preferred detention free days")
+        # if self.preferred_detention_free_days:
+        #     if not self.validate_preferred_detention_free_days():
+        #         raise HTTPException(status_code=422, detail="incorrect preferred detention free days")
 
         if self.preferred_shipping_line_ids:
             if not self.validate_preferred_shipping_line_ids():
                 raise HTTPException(status_code=422, detail="incorrect preferred shipping line ids")
 
-        if not self.validate_feedback_type():
-            raise HTTPException(status_code=422, detail="incorrect feedback type")
+        # if not self.validate_feedback_type():
+        #     raise HTTPException(status_code=422, detail="incorrect feedback type")
 
         return True
 
@@ -215,19 +215,13 @@ class FclFreightRateFeedback(BaseModel):
             destination_locations = [t for t in destination_locations if t is not None]
         else:
             destination_locations = []
+        
+        supply_agents_list = get_partner_users_by_expertise('fcl_freight', origin_locations, destination_locations)
 
-        supply_agents_list = partner.list_partner_user_expertises({
-            'filters': {'service_type': 'fcl_freight','status': 'active','origin_location_id': origin_locations,'destination_location_id': destination_locations},
-            'pagination_data_required': False,
-            'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-        })['list']
         supply_agents_list = list(set(t['partner_user_id'] for t in supply_agents_list))
 
-        supply_agents_user_ids = partner.list_partner_users({   ##############
-            'filters': {'id': supply_agents_list},
-            'pagination_data_required': False,
-            'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-            })['list']
+        supply_agents_user_ids = get_partner_users(supply_agents_list)
+
         supply_agents_user_ids = list(set(t['user_id'] for t in supply_agents_user_ids))
 
         route = maps.list_locations({'filters':{'id': [str(locations_data.origin_port_id), str(locations_data.destination_port_id)]}})['list']

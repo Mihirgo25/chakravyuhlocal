@@ -73,8 +73,8 @@ class FclFreightRateLocalRequest(BaseModel):
     def validate_source_id(self):
         if self.source == 'spot_search':
             spot_search_data = spot_search.list_spot_searches({'filters': {'id': str(self.source_id)}})['list']
-            if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
-                self.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
+            if len(spot_search_data) != 0:
+                self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
                 return True
             return False
 
@@ -86,7 +86,7 @@ class FclFreightRateLocalRequest(BaseModel):
             return False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=self.performed_by_id)
+        performed_by_org_data = get_organization(id=self.performed_by_org_id)
         if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
             return True
         return False
@@ -126,7 +126,7 @@ class FclFreightRateLocalRequest(BaseModel):
             raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
         if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=400, detail="incorrect performed by id")
+            raise HTTPException(status_code=400, detail="incorrect performed by org id")
 
         if not self.validate_closed_by_id():
             raise HTTPException(status_code=400, detail='Invalid Closed by ID')
@@ -160,14 +160,19 @@ class FclFreightRateLocalRequest(BaseModel):
 
     def send_notifications_to_supply_agents(self):
         port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
+        user_ids = []
         try:
-            partner.list_partner_users({
+            partner_users = partner.list_partner_users({
             'filters': {'role_ids': PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID, 'status':'active', 'partner_status':'active'},
             'pagination_data_required': False,
-            'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+            'rm_mappings_data_required': False,
+            'partner_data_required': False,
+            'page_limit': 50
             })['list']
+            for p_user in partner_users:
+                user_ids.append(p_user['user_id'])
         except:
-            user_ids = None
+            user_ids = []
 
         data = {
         'type': 'platform_notification',

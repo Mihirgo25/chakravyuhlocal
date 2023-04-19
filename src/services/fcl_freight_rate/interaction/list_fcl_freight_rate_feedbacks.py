@@ -191,9 +191,9 @@ def get_data(query, spot_search_details_required):
             for key, value in object['booking_params']['rate_card']['service_rates'].items():
                 service_provider = value.get('service_provider_id', None)
                 if service_provider:
-                    value['service_provider'] = service_providers_hash[service_provider]
+                    value['service_provider'] = service_providers_hash.get(service_provider)
         if spot_search_details_required:
-            object['spot_search'] = spot_search_hash.get(str(object['source_id']))
+            object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
         new_data.append(object)
     return new_data
 
