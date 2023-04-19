@@ -27,4 +27,11 @@ class FclFreightRateEstimation(BaseModel):
     class Meta:
         table_name = 'fcl_freight_rate_estimation'
 
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(FclFreightRateEstimation, self).save(*args, **kwargs)
+    
+    
+
+
 
