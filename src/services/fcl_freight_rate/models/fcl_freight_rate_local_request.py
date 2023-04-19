@@ -73,8 +73,8 @@ class FclFreightRateLocalRequest(BaseModel):
     def validate_source_id(self):
         if self.source == 'spot_search':
             spot_search_data = spot_search.list_spot_searches({'filters': {'id': str(self.source_id)}})['list']
-            if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
-                self.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
+            if len(spot_search_data) != 0:
+                self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
                 return True
             return False
 
@@ -86,7 +86,7 @@ class FclFreightRateLocalRequest(BaseModel):
             return False
 
     def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=self.performed_by_id)
+        performed_by_org_data = get_organization(id=self.performed_by_org_id)
         if len(performed_by_org_data) != 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
             return True
         return False
@@ -126,7 +126,7 @@ class FclFreightRateLocalRequest(BaseModel):
             raise HTTPException(status_code=400, detail='Invalid Performed by ID')
 
         if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=400, detail="incorrect performed by id")
+            raise HTTPException(status_code=400, detail="incorrect performed by org id")
 
         if not self.validate_closed_by_id():
             raise HTTPException(status_code=400, detail='Invalid Closed by ID')

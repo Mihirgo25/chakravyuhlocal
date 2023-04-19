@@ -278,7 +278,7 @@ class FclFreightRateLocal(BaseModel):
             'is_plugin_slabs_missing': self.is_plugin_slabs_missing
         }
 
-        for item in detail['line_items']:
+        for item in detail.get('line_items',[]):
             line_item_name = fcl_freight_local_charges_dict[item['code']]['name'] if item['code'] in fcl_freight_local_charges_dict else item['code']
             item.update({'name': line_item_name})
 
