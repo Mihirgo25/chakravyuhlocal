@@ -33,7 +33,7 @@ def get_final_price(min_price, price, ldh, request):
     get_upper_lower_rates=get_eligible_estimated_rate(request)
     avg_price=(get_upper_lower_rates['lower_rate']+get_upper_lower_rates['upper_rate'])/2
 
-    conversion = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_upper_lower_rates['currency'], "to_currency":'USD'})
+    conversion = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_upper_lower_rates['currency'], "to_currency":'USD'})['price']
 
     return conversion + price_delta
     
