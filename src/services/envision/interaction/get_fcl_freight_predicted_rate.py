@@ -4,10 +4,11 @@ from configs.global_constants import HAZ_CLASSES
 import pickle, joblib, os, geopy.distance
 from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
-from micro_services.client import maps
+from micro_services.client import maps,common
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
+from services.dpe.interaction.get_eligible_estimated_rate import get_eligible_estimated_rate
 
 def calculate_port_distance(cord1, cord2):
     coords_1 = cord1
@@ -15,34 +16,26 @@ def calculate_port_distance(cord1, cord2):
     return geopy.distance.geodesic(coords_1, coords_2).km
 
 def get_final_price(min_price, price, ldh, request):
+
+    price_delta = price - min_price
+
+    avg_price = AVERAGE_RATES['default']
     price_delta = price - min_price
 
     avg_price = AVERAGE_RATES['default']
 
-    origin_trade_id = (ldh.get(request['origin_port_id']) or {}).get('trade_id') or ''
-    destination_trade_id = (ldh.get(request['destination_port_id']) or {}).get('trade_id') or ''
+    origin_trade_id = ldh[request['origin_port_id']]['trade_id']
+    destination_trade_id = ldh[request['destination_port_id']]['trade_id']
 
-    modified_container_size = '40'
+    request['origin_trade_id']=origin_trade_id
+    request['destination_trade_id']=destination_trade_id
+    
+    get_upper_lower_rates=get_eligible_estimated_rate(request)
+    avg_price=(get_upper_lower_rates['lower_rate']+get_upper_lower_rates['upper_rate'])/2
 
-    if request['container_size'] == '20':
-        modified_container_size = '20'
+    conversion = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_upper_lower_rates['currency'], "to_currency":'USD'})
 
-    key = '{}:{}:{}'.format(request['origin_country_id'], request['destination_country_id'], modified_container_size)
-    trade_key = '{}:{}:{}'.format(origin_trade_id, destination_trade_id, modified_container_size)
-    reverse_trade_key = '{}:{}:{}'.format(destination_trade_id, origin_trade_id, modified_container_size)
-
-    if key in AVERAGE_RATES:
-        avg_price = AVERAGE_RATES[key] + price_delta
-    elif trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
-    elif reverse_trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[reverse_trade_key] + price_delta
-    elif price > 1500 and price < avg_price:
-        return price
-    else:
-        avg_price = AVERAGE_RATES['default'] + price
-
-    return avg_price
+    return conversion + price_delta
     
 def insert_rates_to_rms(create_params, request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
