@@ -1,4 +1,4 @@
-from services.dpe.models.fcl_freight_rate_estimation import FclFreightRateEstimation
+from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from peewee import fn
 
 

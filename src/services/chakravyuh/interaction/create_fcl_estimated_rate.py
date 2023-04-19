@@ -1,5 +1,5 @@
 from database.db_session import db
-from services.dpe.models.fcl_freight_rate_estimation import FclFreightRateEstimation
+from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 
 
 def create_fcl_estimated_rate_data(request):

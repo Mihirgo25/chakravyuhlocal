@@ -87,7 +87,7 @@ from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
-from services.dpe.interaction.create_fcl_estimated_rate import create_fcl_estimated_rate_data
+from services.chakravyuh.interaction.create_fcl_estimated_rate import create_fcl_estimated_rate_data
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")

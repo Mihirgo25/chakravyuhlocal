@@ -15,7 +15,7 @@ from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from database.temp_audit_table import TempAudit
 from services.envision.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
-from services.dpe.models.fcl_freight_rate_estimation import FclFreightRateEstimation
+from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 
 def create_table():
     # db.connect()
