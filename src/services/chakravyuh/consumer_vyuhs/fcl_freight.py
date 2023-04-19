@@ -7,3 +7,4 @@ class FclFreightVyuh():
 
     def apply_dynamic_price(self):
         print(self.rates)
+        return self.rates

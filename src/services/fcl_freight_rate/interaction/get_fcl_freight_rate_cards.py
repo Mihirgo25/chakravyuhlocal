@@ -11,6 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
+from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 
 def initialize_freight_query(requirements, prediction_required = False):
@@ -826,6 +827,8 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
         freight_rates = build_response_list(freight_rates, requirements)
+        fcl_freight_vyuh = FclFreightVyuh(freight_rates)
+        freight_rates = fcl_freight_vyuh.apply_dynamic_price()
         return {
             "list" : freight_rates
         }

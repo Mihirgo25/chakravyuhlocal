@@ -17,6 +17,10 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 
+# Rate Producers
+
+from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh
+
 CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
@@ -314,3 +318,13 @@ def create_fcl_freight_rate_feedback_for_prediction(self, result):
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def extend_fcl_freight_rates(self, rate):
+    try:
+        fcl_freight_vyuh = FclFreightVyuh(rate=rate)
+        fcl_freight_vyuh.extend_rate()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
