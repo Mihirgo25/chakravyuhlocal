@@ -257,15 +257,18 @@ class FclFreightRateLocal(BaseModel):
         for free_day_charge in free_days_new:
           free_days_charges[free_day_charge["id"]] = free_day_charge
 
+        detention_id = str(self.detention_id or '')
+        demurrage_id = str(self.demurrage_id or '')
+        plugin_id = str(self.plugin_id or '')
 
-        if self.detention_id and self.detention_id in free_days_charges:
-            self.data["detention"] = free_days_charges[self.detention_id]
+        if detention_id and detention_id in free_days_charges:
+            self.data["detention"] = free_days_charges[detention_id]
 
-        if self.demurrage_id and self.demurrage_id in free_days_charges:
-            self.data["demurrage"] = free_days_charges[self.demurrage_id]
+        if demurrage_id and demurrage_id in free_days_charges:
+            self.data["demurrage"] = free_days_charges[demurrage_id]
 
-        if self.plugin_id and self.plugin_id in free_days_charges:
-            self.data["plugin"] = free_days_charges[self.plugin_id]
+        if plugin_id and plugin_id in free_days_charges:
+            self.data["plugin"] = free_days_charges[plugin_id]
 
         detail = self.data | {
             'id': self.id,
