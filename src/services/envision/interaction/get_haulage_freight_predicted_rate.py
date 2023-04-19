@@ -1,4 +1,4 @@
-from services.envision.additional_service_prediction import port_distance
+from services.envision.additional_service_prediction import get_distance
 from configs.definitions import ROOT_DIR
 import os
 import joblib
@@ -31,7 +31,7 @@ def predict_haulage_freight_rate(request):
         if d["id"] == destination_location_id:
             destination_location = (d["latitude"], d["longitude"])
     try:
-        distance = port_distance(origin_location,destination_location)
+        distance = get_distance(origin_location,destination_location)
     except:
         distance = 250
     fuel_used = fuel_consumption(distance,upper_limit)
