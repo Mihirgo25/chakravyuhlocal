@@ -231,16 +231,19 @@ class FclFreightRateLocal(BaseModel):
 
         free_day_ids = []
 
-        if self.demurrage_id:
-            free_day_ids.append(str(self.demurrage_id))
-        if self.detention_id:
-            free_day_ids.append(str(self.detention_id))
-        if self.plugin_id:
-            free_day_ids.append(str(self.plugin_id))
+        detention_id = str(self.detention_id or '')
+        demurrage_id = str(self.demurrage_id or '')
+        plugin_id = str(self.plugin_id or '')
+
+        if demurrage_id:
+            free_day_ids.append(demurrage_id)
+        if detention_id:
+            free_day_ids.append(detention_id)
+        if plugin_id:
+            free_day_ids.append(plugin_id)
 
         free_days_charges = {}
         free_days_new = []  
-
 
         if len(free_day_ids):
             free_days_query = FclFreightRateFreeDay.select(
@@ -249,17 +252,14 @@ class FclFreightRateLocal(BaseModel):
               FclFreightRateFreeDay.slabs,
               FclFreightRateFreeDay.free_days_type,
               FclFreightRateFreeDay.specificity_type,
-              FclFreightRateFreeDay.is_slabs_missing
+              FclFreightRateFreeDay.is_slabs_missing,
+              FclFreightRateFreeDay.free_limit
             ).where(FclFreightRateFreeDay.id << free_day_ids, (~FclFreightRateFreeDay.rate_not_available_entry | FclFreightRateFreeDay.rate_not_available_entry.is_null(True)))
 
             free_days_new = jsonable_encoder(list(free_days_query.dicts()))
 
         for free_day_charge in free_days_new:
           free_days_charges[free_day_charge["id"]] = free_day_charge
-
-        detention_id = str(self.detention_id or '')
-        demurrage_id = str(self.demurrage_id or '')
-        plugin_id = str(self.plugin_id or '')
 
         if detention_id and detention_id in free_days_charges:
             self.data["detention"] = free_days_charges[detention_id]
