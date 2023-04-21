@@ -4,11 +4,11 @@ from math import ceil
 from fastapi.encoders import jsonable_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
-import concurrent.futures, json
+import json
 from datetime import datetime
 from peewee import fn, SQL
 from micro_services.client import spot_search
-possible_direct_filters = ['location_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'free_day_type', 'country_id', 'container_size', 'container_type', 'service_provider_id','code','source_id']
+possible_direct_filters = ['location_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'free_days_type', 'country_id', 'container_size', 'container_type', 'service_provider_id','code','source_id']
 
 possible_indirect_filters = ['validity_start_greater_than', 'validity_end_less_than']
  
@@ -30,12 +30,16 @@ def list_fcl_freight_rate_free_day_requests(filters = {}, page_limit = 10, page 
     spot_search_hash = {}
     data = list(query.dicts())
     spot_search_ids = list(set([str(row['source_id']) for row in data]))
-    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    try:
+        spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    except:
+        spot_search_data = []
+
     for search in spot_search_data:
         spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for index in range(0,len(data)):
-        data[index]['spot_search'] = spot_search_hash[str(data[index]['source_id'])]
+        data[index]['spot_search'] = spot_search_hash.get(str(data[index]['source_id']))
 
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
@@ -85,27 +89,6 @@ def get_stats(filters, is_stats_required, performed_by_id):
         query = get_filters(direct_filters, query, FclFreightRateFreeDayRequest)
         query = apply_indirect_filters(query, indirect_filters)
 
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-    #     futures = [executor.submit(eval(method_name), query, performed_by_id) for method_name in ['get_total_closed_by_user', 'get_total_opened_by_user', 'get_status_count']]
-    #     results = {}
-    #     for future in futures:
-    #         result = future.result()
-    #         results.update(result)
-    
-    # if results['get_status_count']:
-    #     total_open = results['get_status_count'].get('active',0)
-    #     total_closed = results['get_status_count'].get('inactive',0)
-    # else:
-    #     total_open = 0
-    #     total_closed = 0
-
-    # stats = {
-    #     'total': total_open + total_closed,
-    #     'total_closed_by_user': results['get_total_closed_by_user'],
-    #     'total_opened_by_user': results['get_total_opened_by_user'],
-    #     'total_open': total_open,
-    #     'total_closed': total_closed
-    # }
 
     query = (query.select(
         fn.count(FclFreightRateFreeDayRequest.id).over().alias('get_total'),
