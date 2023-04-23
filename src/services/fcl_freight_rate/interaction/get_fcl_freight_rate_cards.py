@@ -828,7 +828,7 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
         freight_rates = build_response_list(freight_rates, requirements)
         fcl_freight_vyuh = FclFreightVyuh(freight_rates)
-        freight_rates = fcl_freight_vyuh.apply_dynamic_price()
+        freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         return {
             "list" : freight_rates
         }

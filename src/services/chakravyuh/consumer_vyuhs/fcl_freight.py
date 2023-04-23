@@ -5,6 +5,6 @@ class FclFreightVyuh():
     def check_fulfilment_ratio(self):
         return 100
 
-    def apply_dynamic_price(self):
+    def apply_dynamic_pricing(self):
         print(self.rates)
         return self.rates
