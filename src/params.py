@@ -3,6 +3,15 @@ from datetime import datetime, timedelta,date
 from peewee import *
 from typing import List
 from dateutil.relativedelta import relativedelta
+
+class EstimatedLineItems(BaseModel):
+  code: str
+  unit: str
+  lower_limit: str
+  upper_limit: str
+  currency: str
+  remarks: list[str] = None
+  
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
@@ -853,3 +862,14 @@ class CreateFclEstimatedRate(BaseModel):
   upper_rate : float
   currency : str
 
+class CreateFclLocalEstimatedRate(BaseModel):
+  location_id: str 
+  location_type: str 
+  container_size: str 
+  container_type: str 
+  commodity: str = None
+  trade_type: str
+  shipping_line_id: str
+  line_items: List[EstimatedLineItems] = None
+  local_currency: str
+  status: str
