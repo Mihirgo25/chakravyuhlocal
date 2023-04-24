@@ -19,15 +19,13 @@ class FclFreightRateEstimation(BaseModel):
     container_size = TextField(null=True, index=True)
     container_type = TextField(null=True, index=True)
     commodity = TextField(null=True)
-    lower_rate = FloatField(null=False)
-    upper_rate = FloatField(null=False)
-    currency = TextField(null=True)
+    line_items = BinaryJSONField(default=[])
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     status = TextField(default="active", null=False)
 
     class Meta:
-        table_name = "fcl_freight_rate_estimation"
+        table_name = "fcl_freight_rate_estimations"
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
