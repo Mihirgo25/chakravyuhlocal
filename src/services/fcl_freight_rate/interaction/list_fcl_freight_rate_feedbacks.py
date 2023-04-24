@@ -4,6 +4,7 @@ from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING
 from playhouse.shortcuts import model_to_dict
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
+from libs.json_encoder import json_encoder
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 import concurrent.futures, json
@@ -33,7 +34,7 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     query = get_page(query, page, page_limit)
     data = get_data(query,spot_search_details_required,booking_details_required) 
 
-    return {'list': data } | (pagination_data) | (stats)
+    return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
     query = query.order_by(FclFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
