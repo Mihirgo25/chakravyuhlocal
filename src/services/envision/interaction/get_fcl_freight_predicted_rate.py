@@ -8,7 +8,6 @@ from micro_services.client import maps,common
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
-from services.chakravyuh.interaction.get_eligible_estimated_rate import get_eligible_estimated_rate
 
 def calculate_port_distance(cord1, cord2):
     coords_1 = cord1
@@ -30,8 +29,8 @@ def get_final_price(min_price, price, ldh, request):
     request['origin_trade_id']=origin_trade_id
     request['destination_trade_id']=destination_trade_id
     
-    get_upper_lower_rates=get_eligible_estimated_rate(request)
-    avg_price=(get_upper_lower_rates['lower_rate']+get_upper_lower_rates['upper_rate'])/2
+    # get_upper_lower_rates=get_eligible_estimated_rate(request)
+    # avg_price=(get_upper_lower_rates['lower_rate']+get_upper_lower_rates['upper_rate'])/2
 
     conversion = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_upper_lower_rates['currency'], "to_currency":'USD'})['price']
 

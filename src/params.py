@@ -852,15 +852,13 @@ class CreateFclEstimatedRate(BaseModel):
   performed_by_type: str=None
   origin_location_id : str
   destination_location_id : str
-  origin_location_type: str=None
-  destination_location_type : str=None
+  origin_location_type: str
+  destination_location_type : str
   shipping_line_id : str=None
   container_size: str
   container_type: str
-  commodity: str
-  lower_rate : float
-  upper_rate : float
-  currency : str
+  commodity: str=None
+  line_items: List[EstimatedLineItems]
 
 class CreateFclLocalEstimatedRate(BaseModel):
   location_id: str 
