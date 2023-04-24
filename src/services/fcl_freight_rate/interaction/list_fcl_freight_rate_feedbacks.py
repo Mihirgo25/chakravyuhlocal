@@ -27,7 +27,6 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
         query = apply_indirect_filters(query, indirect_filters)
 
     # query = get_join_query(query)
-    query = query.select()
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
     pagination_data = get_pagination_data(query, page, page_limit)
 
