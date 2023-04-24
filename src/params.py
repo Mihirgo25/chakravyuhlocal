@@ -7,11 +7,11 @@ from dateutil.relativedelta import relativedelta
 class EstimatedLineItems(BaseModel):
   code: str
   unit: str
-  lower_limit: str
-  upper_limit: str
+  lower_price: float
+  upper_price: float
   currency: str
   remarks: list[str] = None
-  
+
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
