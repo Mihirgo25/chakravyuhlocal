@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import Union, List
 import json
-from fastapi.encoders import jsonable_encoder
+from libs.jsonable_encoder import jsonable_encoder
 from params import *
 from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
