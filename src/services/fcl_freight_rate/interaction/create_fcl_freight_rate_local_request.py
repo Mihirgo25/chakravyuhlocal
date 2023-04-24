@@ -15,23 +15,23 @@ def create_fcl_freight_rate_local_request(request):
 def execute_transaction_code(request):
     if type(request) != dict:
         request = request.dict(exclude_none = True)
-    if request['preferred_shipping_line_ids']:
+    if request.get('preferred_shipping_line_ids'):
         request['preferred_shipping_line_ids'] = [uuid.UUID(str_id) for str_id in request['preferred_shipping_line_ids']]
 
     unique_object_params = {
-        'source': request['source'],
-        'source_id': request['source_id'],
-        'performed_by_id': request['performed_by_id'],
-        'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id']
+        'source': request.get('source'),
+        'source_id': request.get('source_id'),
+        'performed_by_id': request.get('performed_by_id'),
+        'performed_by_type': request.get('performed_by_type'),
+        'performed_by_org_id': request.get('performed_by_org_id')
     }
 
     local_request = FclFreightRateLocalRequest.select().where(
-        FclFreightRateLocalRequest.source == request['source'],
-        FclFreightRateLocalRequest.source_id == request['source_id'],
-        FclFreightRateLocalRequest.performed_by_id == request['performed_by_id'],
-        FclFreightRateLocalRequest.performed_by_type == request['performed_by_type'],
-        FclFreightRateLocalRequest.performed_by_org_id == request['performed_by_org_id']
+        FclFreightRateLocalRequest.source == request.get('source'),
+        FclFreightRateLocalRequest.source_id == request.get('source_id'),
+        FclFreightRateLocalRequest.performed_by_id == request.get('performed_by_id'),
+        FclFreightRateLocalRequest.performed_by_type == request.get('performed_by_type'),
+        FclFreightRateLocalRequest.performed_by_org_id == request.get('performed_by_org_id') 
     ).first()
 
     if not local_request:
@@ -60,14 +60,15 @@ def get_create_params(request):
     return {key:value for key,value in request.items() if key not in ['source','source_id','performed_by_id','performed_by_type','performed_by_org_id']} | ({'status': 'active'})
   
 def create_audit(request, local_request_id):
-    request['cargo_readiness_date'] = request['cargo_readiness_date'].isoformat()
+    if request.get('cargo_readiness_date'):
+        request['cargo_readiness_date'] = request['cargo_readiness_date'].isoformat()
 
-    if request['preferred_shipping_line_ids']:
+    if request.get('preferred_shipping_line_ids'):
         request['preferred_shipping_line_ids'] = [str(str_id) for str_id in request['preferred_shipping_line_ids']]
 
     FclServiceAudit.create(
         action_name = 'create',
-        performed_by_id = request['performed_by_id'],
+        performed_by_id = request.get('performed_by_id'),
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
         object_id = local_request_id,
         object_type = 'FclFreightRateLocalRequest'
