@@ -8,33 +8,35 @@ from micro_services.client import maps,common
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
-
+from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 def calculate_port_distance(cord1, cord2):
     coords_1 = cord1
     coords_2 = cord2
     return geopy.distance.geodesic(coords_1, coords_2).km
 
-def get_final_price(min_price, price, ldh, request):
+def get_final_price(min_price,create_params, request, ldh):
 
-    price_delta = price - min_price
+    fcl_freight_rate_vyuh = FclFreightVyuh(create_params)
 
-    avg_price = AVERAGE_RATES['default']
-    price_delta = price - min_price
+    for rate in fcl_freight_rate_vyuh.rates:
+        price = rate['line_items'][0]['price']
+        price_delta = price - min_price
+        avg_price = AVERAGE_RATES['default']
 
-    avg_price = AVERAGE_RATES['default']
+        origin_trade_id = ldh[request['origin_port_id']]['trade_id']
+        destination_trade_id = ldh[request['destination_port_id']]['trade_id']
 
-    origin_trade_id = ldh[request['origin_port_id']]['trade_id']
-    destination_trade_id = ldh[request['destination_port_id']]['trade_id']
+        request['origin_trade_id']=origin_trade_id
+        request['destination_trade_id']=destination_trade_id
+        get_estimated_rate=fcl_freight_rate_vyuh.get_eligible_estimated_rate(request)
+        if get_estimated_rate:
+            get_estimated_rate = get_estimated_rate['line_items']
+            avg_price=(get_estimated_rate['lower_price']+get_estimated_rate['upper_price'])/2
 
-    request['origin_trade_id']=origin_trade_id
-    request['destination_trade_id']=destination_trade_id
-    
-    # get_upper_lower_rates=get_eligible_estimated_rate(request)
-    # avg_price=(get_upper_lower_rates['lower_rate']+get_upper_lower_rates['upper_rate'])/2
+            avg_price = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_estimated_rate['currency'], "to_currency":'USD'})['price']
 
-    conversion = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_upper_lower_rates['currency'], "to_currency":'USD'})['price']
-
-    return conversion + price_delta
+        rate['line_items'][0]['price'] = avg_price + price_delta
+    return fcl_freight_rate_vyuh.rates
     
 def insert_rates_to_rms(create_params, request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
@@ -57,10 +59,11 @@ def insert_rates_to_rms(create_params, request):
 
     for loc in locations_description:
         ldh[loc['id']] = loc
-      
+
+    create_params = get_final_price(min_price,create_params,request,ldh)
     for create_param in create_params:
-        price = create_param['line_items'][0]['price']
-        final_bas_price_to_rms = get_final_price(min_price, price, ldh, request)
+        # price = create_param['line_items'][0]['price']
+        final_bas_price_to_rms = create_param['line_items'][0]['price']
         create_param['line_items'][0]['price'] = final_bas_price_to_rms + (5 - final_bas_price_to_rms%10) if final_bas_price_to_rms%10 <= 5 else (final_bas_price_to_rms + (10 - final_bas_price_to_rms%10))
         rate_card_id = create_fcl_freight_rate_data(create_param)['id'] 
         create_param['creation_id'] = rate_card_id
