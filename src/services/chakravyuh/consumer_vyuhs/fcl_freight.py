@@ -25,9 +25,7 @@ class FclFreightVyuh():
         ]
 
         estimated_rate = FclFreightRateEstimation.select(
-            FclFreightRateEstimation.lower_rate,
-            FclFreightRateEstimation.upper_rate,
-            FclFreightRateEstimation.currency,
+            FclFreightRateEstimation.line_items
         ).where(
             # FclFreightRateEstimation.origin_location_id << origin_location_ids,
             # FclFreightRateEstimation.destination_location_id << destination_location_ids,
