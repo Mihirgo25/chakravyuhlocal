@@ -4,6 +4,7 @@ from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Query, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from services.chakravyuh.migrating_estimated_rates import migration_of_countries
 
 chakravyuh_router = APIRouter()
 
@@ -16,3 +17,9 @@ def create_fcl_estimated_rates(request: CreateFclEstimatedRate, resp: dict = Dep
         request.performed_by_type = resp["setters"]["performed_by_type"]
     estimated_rate = create_fcl_freight_rate_estimation(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content=jsonable_encoder(estimated_rate))
+
+
+@chakravyuh_router.post("/migrating")
+def migration():
+    migration_of_countries()
+
