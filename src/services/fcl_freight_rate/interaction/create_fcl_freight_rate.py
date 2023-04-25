@@ -34,7 +34,7 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions
+    from celery_worker import delay_fcl_functions, extend_fcl_freight_rates
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
@@ -142,6 +142,11 @@ def create_fcl_freight_rate(request):
     
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+
+    if row["mode"] == 'manual':
+        rate_obj = request | row
+        print(rate_obj)
+        extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     return {"id": freight.id}
 

@@ -117,7 +117,7 @@ class FclFreightRateFreeDay(BaseModel):
         return False
 
     def validate_free_limit(self):
-        if self.free_limit:
+        if self.free_limit != None:
             return True
         return False
 
