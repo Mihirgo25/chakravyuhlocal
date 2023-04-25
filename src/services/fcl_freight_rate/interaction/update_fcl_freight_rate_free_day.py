@@ -24,6 +24,7 @@ def execute_transaction_code(request):
 
     free_day.updated_at = datetime.datetime.now()
     free_day.update_special_attributes()
+    free_day.rate_not_available_entry = False
 
     try:
         free_day.save()
