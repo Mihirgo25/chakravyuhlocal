@@ -1,18 +1,23 @@
 
+from configs.fcl_freight_rate_constants import EXTENSION_ENABLED_MODES
 class FclFreightVyuh():
     def __init__(self, rate):
         self.rate = rate
     
     def get_missing_or_outdated_rates(self):
-        
-        return []
+        from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import get_fcl_freight_cluster_objects
+        from services.chakravyuh.interaction.get_fcl_freight_relevant_vessel_extensions import get_fcl_freight_relevant_vessel_extensions
+        from services.envision.interaction.get_fcl_freight_relevant_envision_extensions import get_fcl_freight_relevant_envision_extensions
 
-    def get_single_rate_delta(self, rate):
-        return { "code": "BAS", "unit": "per_container", "price": 0, "currency": "USD" }
-    
-    def get_delta_for_all_missing_rates(self, to_create_rates):
-        for missing_rate in to_create_rates:
-            missing_rate['delta'] = self.get_single_rate_delta(missing_rate)
+        extension_rule_set_rates = get_fcl_freight_cluster_objects(self.rate)
+
+        service_lane_rates = []
+        if self.rate['vessel_number']:
+            service_lane_rates = get_fcl_freight_relevant_vessel_extensions()
+
+        envision_cluster_rates = get_fcl_freight_relevant_envision_extensions()
+
+        return []
     
     def build_rate_object(self, rate_to_create):
         return {
@@ -27,10 +32,12 @@ class FclFreightVyuh():
 
 
     def extend_rate(self):
-        rates_to_create = self.get_missing_or_outdated_rates()
-        rates_to_create_with_delta = self.get_delta_for_all_missing_rates(rates_to_create)
+        if self.rate['mode'] not in EXTENSION_ENABLED_MODES:
+            return True
 
-        for rate_to_create in rates_to_create_with_delta:
+        rates_to_create = self.get_missing_or_outdated_rates()
+
+        for rate_to_create in rates_to_create:
             self.create_fcl_freight_rate(rate_to_create)
 
         return True

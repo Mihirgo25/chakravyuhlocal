@@ -186,3 +186,5 @@ DEFAULT_LOCAL_AGENT_IDS = {
 SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f1-d136-4f26-ad8f-2e1545cc772a', 'a2a447b4-0ce5-4d3c-afa9-2f81b313aecd','9ee49704-f5a7-4f17-9e25-c5c3b5ec3d1d']
 #Maersk, cma, hapag, msc, oocl
 # maersk = 'c3649537-0c4b-4614-b313-98540cffcf40'
+
+EXTENSION_ENABLED_MODES = ['manual']
