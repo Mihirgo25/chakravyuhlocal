@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 from peewee import *
 from typing import List
+from dateutil.relativedelta import relativedelta
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
@@ -337,6 +338,19 @@ class CreateFclFreightRateFeedback(BaseModel):
   feedback_type: str
   booking_params: dict = {}
   cogo_entity_id: str = None
+  origin_port_id: str = None
+  origin_trade_id: str = None
+  origin_country_id: str = None
+  origin_continent_id: str = None
+  destination_port_id: str = None
+  destination_continent_id: str = None
+  destination_trade_id: str = None
+  destination_country_id: str = None
+  commodity: str = None
+  container_size: str = None
+  container_type: str = None
+  service_provider_id: str = None
+
 
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str
@@ -465,8 +479,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   rate_sheet_id: str = None
   performed_by_id: str = None
   performed_by_type: str = None
-  sourced_by_id: str
-  procured_by_id: str
+  sourced_by_id: str = None
+  procured_by_id: str = None
   trade_type: str
   location_id: str
   free_days_type: str
@@ -480,8 +494,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   free_limit: int
   remarks: list[str] = None
   slabs: list[Slab] = None
-  validity_start: datetime = datetime.now().date()
-  validity_end: datetime = (datetime.now() + timedelta(days=90)).date()
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = (datetime.now() + timedelta(days=90))
 
 class DeleteFclFreightRateFreeDayRequest(BaseModel):
   fcl_freight_rate_free_day_request_id: str
@@ -492,12 +506,13 @@ class UpdateFclFreightRateFreeDay(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
-  procured_by_id: str
-  sourced_by_id: str
+  procured_by_id: str = None
+  sourced_by_id: str = None
   id: str
   free_limit: int = None
-  # validity_start: datetime = datetime.now()
-  # validity_end: datetime = datetime.now() + timedelta(months=3)
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = datetime.now() + relativedelta(months=3)
+  hs_code: str = None
   remarks: list[str] = None
   slabs: list[Slab] = None
 class CreateFclFreightRateRequest(BaseModel):
@@ -511,7 +526,7 @@ class CreateFclFreightRateRequest(BaseModel):
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
   preferred_storage_free_days: int = None
-  cargo_readiness_date: datetime = None
+  cargo_readiness_date: date = None
   preferred_shipping_line_ids: list[str] = []
   remarks: list[str] = []
   booking_params: dict = {}
@@ -811,8 +826,8 @@ class CreateBulkOperation(BaseModel):
 
 class UpdateFclFreightRateTask(BaseModel):
   id: str
-  performed_by_id: str
-  performed_by_type: str
+  performed_by_id: str=None
+  performed_by_type: str=None
   rate: LocalData = None
   status: str = None
   closing_remarks: str = None

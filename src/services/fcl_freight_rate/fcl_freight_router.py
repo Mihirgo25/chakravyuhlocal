@@ -4,8 +4,10 @@ from typing import Union, List
 import json
 from fastapi.encoders import jsonable_encoder
 from params import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
+import sentry_sdk
+from fastapi import HTTPException
 
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local_agent import create_fcl_freight_rate_local_agent
@@ -78,10 +80,13 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day_requ
 from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fcl_freight_rates
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
+from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
+from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 
 fcl_freight_router = APIRouter()
 
@@ -95,8 +100,11 @@ def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodity
     try:
         data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_commodity_surcharge")
 def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRateCommoditySurcharge, resp: dict = Depends(authorize_token)):
@@ -108,8 +116,11 @@ def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRa
     try:
         rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    except Exception:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local_agent")
@@ -122,8 +133,11 @@ def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalA
     try:
         data = create_fcl_freight_rate_local_agent(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate")
 def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depends(authorize_token)):
@@ -135,8 +149,11 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_feedback")
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
@@ -148,8 +165,11 @@ def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback,
     try:
         rate_id = create_fcl_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_not_available")
 def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotAvailable, resp: dict = Depends(authorize_token)):
@@ -160,9 +180,14 @@ def create_fcl_freight_rate_not_available_data(request: CreateFclFreightRateNotA
         request.performed_by_type = resp["setters"]["performed_by_type"]
     data = create_fcl_freight_rate_not_available(request)
     if data:
-        return JSONResponse(status_code = 200, content = {'success': True})
-    else:
-        raise
+        try:
+            return JSONResponse(status_code = 200, content = {'success': True})
+        except HTTPException as e:
+            raise
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    return JSONResponse(status_code=400, content={ "success": False, 'error': 'No data available' })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local")
@@ -175,8 +200,11 @@ def create_fcl_freight_rate_local_data(request: PostFclFreightRateLocal, resp: d
     try:
         data = create_fcl_freight_rate_local(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_task")
 def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: dict = Depends(authorize_token)):
@@ -188,8 +216,11 @@ def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: d
     try:
         data = create_fcl_freight_rate_task(request.dict(exclude_none = False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_request")
 def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, resp: dict = Depends(authorize_token)):
@@ -199,10 +230,13 @@ def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, r
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
-        data = create_fcl_freight_rate_request(request)
+        data = create_fcl_freight_rate_request(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_local_request")
 def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLocalRequest, resp: dict = Depends(authorize_token)):
@@ -214,8 +248,11 @@ def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLoca
     try:
         data = create_fcl_freight_rate_local_request(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_weight_slabs_configuration")
 def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConfiguration, resp: dict = Depends(authorize_token)):
@@ -227,8 +264,11 @@ def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConf
     try:
         data = create_fcl_weight_slabs_configuration(request.dict(exclude_none = False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate")
 def get_fcl_freight_rate_data(
@@ -265,8 +305,55 @@ def get_fcl_freight_rate_data(
         data = get_fcl_freight_rate(request)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+    
+@fcl_freight_router.get("/get_fcl_freight_rate_for_lcl")
+def get_fcl_freight_rate_for_lcl_func(
+    origin_port_id: str = None,
+    origin_main_port_id: str = None,
+    destination_port_id: str = None,
+    destination_main_port_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None,
+    importer_exporter_id: str = None,
+    origin_country_id: str = None,
+    destination_country_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        request = {
+            'origin_port_id':origin_port_id,
+            'origin_main_port_id':origin_main_port_id,
+            'destination_port_id':destination_port_id,
+            'destination_main_port_id' : destination_main_port_id,
+            'origin_country_id':origin_country_id,
+            'destination_country_id':destination_country_id,
+            'container_size' : container_size,
+            'container_type' : container_type,
+            'commodity' : commodity,
+            'shipping_line_id' : shipping_line_id,
+            'service_provider_id': service_provider_id,
+            'importer_exporter_id': importer_exporter_id,
+        }
+
+        data = get_fcl_freight_rate_for_lcl(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_local")
 def get_fcl_freight_local_data(
@@ -297,8 +384,11 @@ def get_fcl_freight_local_data(
         data = get_fcl_freight_rate_local(request)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content = data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_local_rate_cards")
 def get_fcl_freight_local_rate_cards_data(
@@ -316,7 +406,7 @@ def get_fcl_freight_local_rate_cards_data(
     include_confirmed_inventory_rates: bool =False,
     additional_services: List[str] | None= Query(None),
     include_destination_dpd: bool = False,
-    cargo_weight_per_container: int = None,
+    cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -348,8 +438,11 @@ def get_fcl_freight_local_rate_cards_data(
     try:
         data = get_fcl_freight_local_rate_cards(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_cards")
 def get_fcl_freight_rate_cards_data(
@@ -375,9 +468,15 @@ def get_fcl_freight_rate_cards_data(
     additional_services: str = None,
     ignore_omp_dmp_sl_sps: str = None,
     include_destination_dpd: bool = False,
-    cargo_weight_per_container: int = None,
+    cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token)
 ):
+    try:
+        validity_start = datetime.fromisoformat(validity_start).date()
+        validity_end = datetime.fromisoformat(validity_end).date()
+    except:
+        validity_start =  datetime.now().date()
+        validity_end = (datetime.now() + timedelta(days=30)).date()
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
@@ -389,8 +488,8 @@ def get_fcl_freight_rate_cards_data(
         ignore_omp_dmp_sl_sps = json.loads(ignore_omp_dmp_sl_sps)
     else:
         ignore_omp_dmp_sl_sps = []
-    validity_start = datetime.strptime(validity_start,'%Y-%m-%d')
-    validity_end = datetime.strptime(validity_end,'%Y-%m-%d')
+    # validity_start = datetime.strptime(validity_start,'%Y-%m-%d')
+    # validity_end = datetime.strptime(validity_end,'%Y-%m-%d')
     request = {
         'origin_port_id' : origin_port_id,
         'origin_country_id' : origin_country_id,
@@ -420,8 +519,11 @@ def get_fcl_freight_rate_cards_data(
     try:
         data = get_fcl_freight_rate_cards(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_addition_frequency")
 def get_fcl_freight_rate_addition_frequency_data(
@@ -435,8 +537,11 @@ def get_fcl_freight_rate_addition_frequency_data(
     try:
         data = get_fcl_freight_rate_addition_frequency( group_by, filters, sort_type)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_suggestions")
 def get_fcl_freight_rate_suggestions_data(
@@ -452,8 +557,11 @@ def get_fcl_freight_rate_suggestions_data(
     try:
         data = get_fcl_freight_rate_suggestions(validity_start, validity_end, searched_origin_port_id, searched_destination_port_id, filters)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_visibility")
 def get_fcl_freight_rate_visibility_data(
@@ -486,8 +594,11 @@ def get_fcl_freight_rate_visibility_data(
     try:
         data = get_fcl_freight_rate_visibility(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_dashboard_fcl_freight_rates")
 def list_dashboard_fcl_freight_rates_data(resp: dict = Depends(authorize_token)):
@@ -496,8 +607,11 @@ def list_dashboard_fcl_freight_rates_data(resp: dict = Depends(authorize_token))
     try:
         data = list_dashboard_fcl_freight_rates()
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.get("/list_fcl_freight_rate_audits")
@@ -517,8 +631,11 @@ def list_fcl_freight_audits_data(
     try:
         data = list_fcl_freight_rate_audits(filters, page_limit, page, sort_by, sort_type, pagination_data_required, user_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_bulk_operations")
 def list_fcl_freight_rate_bulk_operations_data(
@@ -532,8 +649,11 @@ def list_fcl_freight_rate_bulk_operations_data(
     try:
         data = list_fcl_freight_rate_bulk_operations(filters, page_limit, page)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_free_day_requests")
 def list_fcl_freight_rate_free_day_requests_data(
@@ -550,8 +670,11 @@ def list_fcl_freight_rate_free_day_requests_data(
     try:
         data = list_fcl_freight_rate_free_day_requests(filters, page_limit, page, is_stats_required, performed_by_id)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rates")
 def list_fcl_freight_rates_data(
@@ -570,8 +693,11 @@ def list_fcl_freight_rates_data(
     try:
         data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.get("/list_fcl_freight_rate_locals")
@@ -589,8 +715,11 @@ def list_fcl_freight_rate_locals_data(
     try:
         data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_local_agents")
 def list_fcl_freight_rate_local_agent_data(
@@ -608,8 +737,11 @@ def list_fcl_freight_rate_local_agent_data(
     try:
         data = list_fcl_freight_rate_local_agents(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
         return JSONResponse(status_code = 200, content = data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_tasks")
 def list_fcl_freight_rate_tasks_data(
@@ -627,8 +759,11 @@ def list_fcl_freight_rate_tasks_data(
     try:
         data = list_fcl_freight_rate_tasks(filters, page_limit, page, sort_by, sort_type, stats_required, pagination_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_requests")
 def list_fcl_freight_rate_requests_data(
@@ -644,8 +779,11 @@ def list_fcl_freight_rate_requests_data(
     try:
         data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_local_requests")
 def list_fcl_freight_rate_local_requests_data(
@@ -661,8 +799,11 @@ def list_fcl_freight_rate_local_requests_data(
     try:
         data = list_fcl_freight_rate_local_requests(filters, page_limit, page, is_stats_required, performed_by_id)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_seasonal_surcharges")
 def list_fcl_freight_rate_seasonal_surcharges_data(
@@ -678,13 +819,17 @@ def list_fcl_freight_rate_seasonal_surcharges_data(
     try:
         data = list_fcl_freight_rate_seasonal_surcharges(filters, page_limit, page, pagination_data_required)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.get("/list_fcl_freight_rate_feedbacks")
 def list_fcl_freight_rate_feedbacks_data(
     filters: str = None,
+    spot_search_details_required: bool = False,
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
@@ -695,10 +840,13 @@ def list_fcl_freight_rate_feedbacks_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_fcl_freight_rate_feedbacks(filters, page_limit, page, performed_by_id, is_stats_required)
+        data = list_fcl_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.get("/list_fcl_freight_commodity_clusters")
@@ -717,8 +865,11 @@ def list_fcl_freight_rate_commodity_clusters_data(
     try:
         data = list_fcl_freight_commodity_clusters(filters, page_limit, page, pagination_data_required, sort_by, sort_type)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_commodity_surcharges")
 def list_fcl_freight_rate_commodity_surcharges_data(
@@ -734,8 +885,11 @@ def list_fcl_freight_rate_commodity_surcharges_data(
     try:
         data = list_fcl_freight_rate_commodity_surcharges(filters, page_limit, page, pagination_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_dislikes")
 def list_fcl_freight_rate_dislikes_data(
@@ -749,8 +903,11 @@ def list_fcl_freight_rate_dislikes_data(
     try:
         data = list_fcl_freight_rate_dislikes(filters, page_limit, page)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_local_suggestions")
 def list_fcl_freight_local_suggestions_data(
@@ -771,8 +928,11 @@ def list_fcl_freight_local_suggestions_data(
     try:
         data = list_fcl_freight_rate_local_suggestions(service_provider_id, filters, page_limit, page, sort_by, sort_type, pagination_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
-        return JSONResponse(status_code=500, content={"success": False})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_free_days")
 def list_fcl_freight_rate_free_days_data(
@@ -789,8 +949,11 @@ def list_fcl_freight_rate_free_days_data(
     try:
         data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_weight_limits")
 def list_fcl_freight_rate_weight_limits_data(
@@ -803,11 +966,14 @@ def list_fcl_freight_rate_weight_limits_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    data = list_fcl_freight_rate_weight_limits(filters, page_limit, page, pagination_data_required)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = list_fcl_freight_rate_weight_limits(filters, page_limit, page, pagination_data_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_weight_slabs_configuration")
 def list_fcl_weight_slabs_configuration_data(
@@ -823,8 +989,11 @@ def list_fcl_weight_slabs_configuration_data(
     try:
         data = list_fcl_weight_slabs_configuration(filters, page_limit, page, pagination_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/update_fcl_freight_rate")
 def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(authorize_token)):
@@ -836,8 +1005,11 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
     try:
         data = update_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/update_fcl_freight_rate_local")
@@ -850,8 +1022,11 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
     try:
         data = update_fcl_freight_rate_local(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/update_fcl_freight_rate_local_agent")
 def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalAgent, resp: dict = Depends(authorize_token)):
@@ -865,8 +1040,11 @@ def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalA
         data = update_fcl_freight_rate_local_agent(request.__dict__)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/update_fcl_weight_slabs_configuration")
 def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConfiguration, resp: dict = Depends(authorize_token)):
@@ -879,8 +1057,11 @@ def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConf
         data = update_fcl_weight_slabs_configuration(request.dict(exclude_none=True))
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/update_fcl_freight_rate_platform_prices")
 def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePlatformPrices, resp: dict = Depends(authorize_token)):
@@ -889,11 +1070,14 @@ def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePl
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = update_fcl_freight_rate_platform_prices(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = update_fcl_freight_rate_platform_prices(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/delete_fcl_freight_rate")
 def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends(authorize_token)):
@@ -905,8 +1089,11 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends
     try:
         delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_extension_rule_set")
 def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtensionRuleSet, resp: dict = Depends(authorize_token)):
@@ -915,15 +1102,31 @@ def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtens
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/extend_create_fcl_freight_rate")
-def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate):
-    return extend_create_fcl_freight_rate_data(request)
+def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = extend_create_fcl_freight_rate_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
 
 @fcl_freight_router.post("/update_fcl_freight_rate_extension_rule_set")
 def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExtensionRuleSet, resp: dict = Depends(authorize_token)):
@@ -933,11 +1136,14 @@ def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExte
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
 
-    # try:
-    data = update_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = update_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_fcl_freight_rate_extension_rule_sets")
 def list_fcl_freight_rate_extension_rule_set(
@@ -955,8 +1161,11 @@ def list_fcl_freight_rate_extension_rule_set(
         data =  list_fcl_freight_rate_extension_rule_set_data(filters, page_limit, page, sort_by, sort_type)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=data)
-    except:
+    except HTTPException as e:
         raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.get("/get_fcl_freight_rate_extension")
@@ -973,12 +1182,15 @@ def get_fcl_freight_rate_extension(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    data = get_fcl_freight_rate_extension_data(service_provider_id, shipping_line_id, origin_port_id, destination_port_id, commodity, container_size, container_type)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code=200, content=data)
-    # except:
-    #     return JSONResponse(status_code=500, content={'success':False})
+    try:
+        data = get_fcl_freight_rate_extension_data(service_provider_id, shipping_line_id, origin_port_id, destination_port_id, commodity, container_size, container_type)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/update_fcl_freight_rate_task")
@@ -988,9 +1200,13 @@ def update_fcl_freight_rate_task(request: UpdateFclFreightRateTask, resp: dict =
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-
-    return JSONResponse(status_code=200, content=update_fcl_freight_rate_task_data(request.dict(exclude_none=False)))
-
+    try:
+        return JSONResponse(status_code=200, content=update_fcl_freight_rate_task_data(request.dict(exclude_none=False)))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/delete_fcl_freight_rate_request")
@@ -1000,11 +1216,14 @@ def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, resp:
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    delete_rate = delete_fcl_freight_rate_request(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        delete_rate = delete_fcl_freight_rate_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/delete_fcl_freight_rate_feedback")
 def delete_fcl_freight_rates_feedback(request: DeleteFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
@@ -1013,11 +1232,14 @@ def delete_fcl_freight_rates_feedback(request: DeleteFclFreightRateFeedback, res
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    delete_rate = delete_fcl_freight_rate_feedback(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        delete_rate = delete_fcl_freight_rate_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/delete_fcl_freight_rate_local_request")
 def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalRequest, resp: dict = Depends(authorize_token)):
@@ -1026,11 +1248,14 @@ def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalReq
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    delete_rate = delete_fcl_freight_rate_local_request(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        delete_rate = delete_fcl_freight_rate_local_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/delete_fcl_freight_rate_local")
 def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, resp: dict = Depends(authorize_token)):
@@ -1039,11 +1264,14 @@ def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, resp: dic
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    delete_rate = delete_fcl_freight_rate_local(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        delete_rate = delete_fcl_freight_rate_local(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/delete_fcl_freight_rate_free_day_request")
 def delete_fcl_freight_rates_free_day_request(request: DeleteFclFreightRateFreeDayRequest, resp: dict = Depends(authorize_token)):
@@ -1052,11 +1280,14 @@ def delete_fcl_freight_rates_free_day_request(request: DeleteFclFreightRateFreeD
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    delete_rate = delete_fcl_freight_rate_free_day_request(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        delete_rate = delete_fcl_freight_rate_free_day_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_weight_limit")
@@ -1066,11 +1297,14 @@ def create_fcl_freight_rate_weight_limit_data(request: CreateFclFreightRateWeigh
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_weight_limit")
 def get_fcl_freight_rate_weight_limit_data(
@@ -1092,11 +1326,14 @@ def get_fcl_freight_rate_weight_limit_data(
         'shipping_line_id': shipping_line_id,
         'service_provider_id':service_provider_id
     }
-    # try:
-    data = get_fcl_freight_rate_weight_limit(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_rate_weight_limit(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/update_fcl_freight_rate_weight_limit")
 def update_fcl_freight_rate_weight_limit_data(request: UpdateFclFreightRateWeightLimit, resp: dict = Depends(authorize_token)):
@@ -1105,11 +1342,14 @@ def update_fcl_freight_rate_weight_limit_data(request: UpdateFclFreightRateWeigh
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = update_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = update_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_free_day")
 def create_fcl_freight_rate_free_day_data(request: CreateFclFreightRateFreeDay, resp: dict = Depends(authorize_token)):
@@ -1121,8 +1361,11 @@ def create_fcl_freight_rate_free_day_data(request: CreateFclFreightRateFreeDay, 
     try:
         data = create_fcl_freight_rate_free_day(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
     except Exception as e:
-        raise e
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_free_day")
 def get_fcl_freight_rate_free_day_data(
@@ -1149,12 +1392,15 @@ def get_fcl_freight_rate_free_day_data(
         'service_provider_id':service_provider_id,
         'importer_exporter_id':importer_exporter_id
     }
-    # try:
-    data = get_fcl_freight_rate_free_day(request)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code=200, content= data)
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_rate_free_day(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content= data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/update_fcl_freight_rate_free_day")
@@ -1164,17 +1410,20 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay, 
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_stats")
 def get_fcl_freight_rate_stats_data(
     validity_start: datetime,
     validity_end: datetime,
-    stats_types: Union[List[str],None]= Query(None),
+    stats_types: str =None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -1184,13 +1433,16 @@ def get_fcl_freight_rate_stats_data(
     request = {
         'validity_start':validity_start,
         'validity_end':validity_end,
-        'stats_types':stats_types
+        'stats_types':json.loads(stats_types)
     }
-    # try:
-    data = get_fcl_freight_rate_stats(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_rate_stats(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_seasonal_surcharge")
 def get_fcl_freight_rate_seasonal_surcharge_data(
@@ -1215,11 +1467,14 @@ def get_fcl_freight_rate_seasonal_surcharge_data(
         'shipping_line_id':shipping_line_id,
         'service_provider_id':service_provider_id
     }
-    # try:
-    data = get_fcl_freight_rate_seasonal_surcharge(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_rate_seasonal_surcharge(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_commodity_surcharge")
 def get_fcl_freight_rate_commodity_surcharge_data(
@@ -1244,11 +1499,14 @@ def get_fcl_freight_rate_commodity_surcharge_data(
         'shipping_line_id':shipping_line_id,
         'service_provider_id':service_provider_id
     }
-    # try:
-    data = get_fcl_freight_rate_commodity_surcharge(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = get_fcl_freight_rate_commodity_surcharge(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_commodity_cluster")
 def get_fcl_freight_commodity_cluster_data(
@@ -1258,12 +1516,15 @@ def get_fcl_freight_commodity_cluster_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    data = get_fcl_freight_commodity_cluster(id)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code = 200, content = data)
-    # except:
-    #     return JSONResponse(status_code = 500, content = {'success' : False})
+    try:
+        data = get_fcl_freight_commodity_cluster(id)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code = 200, content = data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post('/update_fcl_freight_commodity_cluster')
 def update_fcl_freight_commodity_cluster_data(request:UpdateFclFreightCommodityCluster, resp: dict = Depends(authorize_token)):
@@ -1272,12 +1533,15 @@ def update_fcl_freight_commodity_cluster_data(request:UpdateFclFreightCommodityC
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = update_fcl_freight_commodity_cluster(request)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code=200, content = data)
-    # except:
-    #     return JSONResponse(status_code=500, content = {'success':False})
+    try:
+        data = update_fcl_freight_commodity_cluster(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content = data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post('/update_fcl_freight_commodity_surcharge')
 def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateCommoditySurcharge, resp: dict = Depends(authorize_token)):
@@ -1286,11 +1550,14 @@ def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateComm
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = update_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content = jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content = {'success':False})
+    try:
+        data = update_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content = jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_seasonal_surcharge")
@@ -1300,11 +1567,14 @@ def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSea
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_bulk_operation")
@@ -1314,12 +1584,14 @@ def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation, res
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
-    return JSONResponse(content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
-
+    try:
+        data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+        return JSONResponse(content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_freight_router.post("/create_fcl_freight_rate_free_day_request")
@@ -1329,43 +1601,52 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_fcl_freight_rate_free_day_request(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        data = create_fcl_freight_rate_free_day_request(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@fcl_freight_router.post("/create_fcl_rate_sheet")
-def create_rate_sheets(request: CreateRateSheet):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-        # request.performed_by_id = resp["setters"]["performed_by_id"]
-        # request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
-
-
-
-@fcl_freight_router.post("/update_fcl_rate_sheet")
-def update_rate_sheets(request: UpdateRateSheet):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-    #     request.performed_by_id = resp["setters"]["performed_by_id"]
-    #     request.performed_by_type = resp["setters"]["performed_by_type"]
-
-    # try:
-    rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+@fcl_freight_router.post("/create_fcl_freight_rate_sheet")
+def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
-@fcl_freight_router.get("/list_fcl_rate_sheets")
+
+@fcl_freight_router.post("/update_fcl_freight_rate_sheet")
+def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    try:
+        rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+@fcl_freight_router.get("/list_fcl_freight_rate_sheets")
 def list_rates_sheets(
     filters: str = None,
     stats_required: bool = True,
@@ -1373,18 +1654,58 @@ def list_rates_sheets(
     page_limit: int = 10,
     sort_by: str = 'created_at',
     sort_type: str = 'desc',
-    pagination_data_required:  bool = True
-    # resp: dict = Depends(authorize_token)
+    pagination_data_required:  bool = True,
+    resp: dict = Depends(authorize_token)
 ):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
 
-    # try:
-    response = list_rate_sheets(
-        filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
-    )
-    return JSONResponse(status_code=200, content=response)
-    # except:
-    #     return JSONResponse(status_code=500, content={"success": False})
+    try:
+        response = list_rate_sheets(
+            filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
+@fcl_freight_router.get("/list_fcl_freight_rate_sheet_stats")
+def list_rates_sheet_stat(
+    filters: str = None,
+    service_provider_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheet_stats(
+            filters, service_provider_id
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.get('/get_eligible_fcl_freight_rate_free_day')
+def get_eligible_freight_rate_free_day_func(
+    filters: str = None,
+    sort_by_specificity_type: bool = False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        resp = get_eligible_fcl_freight_rate_free_day(filters,sort_by_specificity_type = sort_by_specificity_type)
+        return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

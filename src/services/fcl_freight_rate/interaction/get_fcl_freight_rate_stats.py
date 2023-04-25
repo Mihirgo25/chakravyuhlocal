@@ -24,7 +24,7 @@ def get_tech_ops_dashboard_stats(request):
             'completed_at', FclFreightRateTask.completed_at
         )).alias("tats")
         ).where(FclFreightRateTask.status == 'completed').where(
-        FclFreightRateTask.completed_at >= request['validity_start'] and FclFreightRateTask.completed_at <= (request['validity_end'] + timedelta(days = 1))
+        FclFreightRateTask.completed_at >= request['validity_start'].date(), FclFreightRateTask.completed_at <= (request['validity_end'].date() + timedelta(days = 1))
         ).group_by(FclFreightRateTask.completed_by_id)
 
     stats = list(tasks.dicts())

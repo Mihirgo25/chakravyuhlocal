@@ -24,7 +24,7 @@ possible_hash_filters = {
 }
 
 def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True, user_data_required = False):
-    query = get_query(sort_by, sort_type, page, page_limit)
+    query = get_query(sort_by, sort_type)
     
     if filters:
         if type(filters) != dict:
@@ -48,23 +48,25 @@ def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_b
 
     return {'list': data } | (pagination_data)
 
-def get_query(sort_by, sort_type, page, page_limit):
-    query = FclFreightRateAudit.select().order_by(eval("FclFreightRateAudit.{}.{}()".format(sort_by,sort_type))).paginate(page, page_limit)
+def get_query(sort_by, sort_type):
+    query = FclFreightRateAudit.select().order_by(eval("FclFreightRateAudit.{}.{}()".format(sort_by,sort_type)))
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required, user_data_required):
     if not pagination_data_required:
         return {'get_pagination_data':{}} 
 
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(query.count()/page_limit),
-      'total_count': query.count(),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return {'get_pagination_data':params}
 
 def get_data(query, page, page_limit, pagination_data_required, user_data_required):
+    query = query.paginate(page, page_limit)
     data = []
     for item in query.dicts():
         try:
@@ -96,13 +98,17 @@ def apply_hash_filters(query, filters):
 
 def apply_hash_indirect_filters(query, filter, filters):
     filter = 'fcl_freight_rate'
-    indirect_filters = {key:value for key,value in filters[filter].items() if key in possible_hash_filters[filter]['indirect']}
-    for indirect_filter in indirect_filters:
-        query = eval("apply_{}_{}_filter(query,filters)".format(filter,indirect_filter))
+    if 'fcl_freight_rate' in filters and filters['fcl_freight_rate']:
+        to_apply = filters[filter] or {}
+        indirect_filters = {key:value for key,value in to_apply.items() if key in possible_hash_filters[filter]['indirect']}
+        for indirect_filter in indirect_filters:
+            query = eval("apply_{}_{}_filter(query,filters)".format(filter,indirect_filter))
+            return query
+    else:
         return query
 
 def apply_created_at_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateAudit.created_at > filters['created_at_greater_than'])
+    query = query.where(FclFreightRateAudit.created_at.cast('date') > datetime.fromisoformat(filters['validity_created_at_greater_than']).date())
     return query
 
 def apply_fcl_freight_rate_filter(query, filters):
@@ -111,8 +117,7 @@ def apply_fcl_freight_rate_filter(query, filters):
 
 def apply_fcl_freight_rate_direct_filter(query, filters):
     direct_filters = {key:value for key,value in filters['fcl_freight_rate'].items() if key in possible_hash_filters['fcl_freight_rate']['direct']}
-    for direct_filter in direct_filters:
-        query = query.where(attrgetter(direct_filter)(FclFreightRate) == direct_filters[direct_filter])
+    query = get_filters(direct_filters, query, FclFreightRate)
     return query
 
 def apply_fcl_freight_rate_seasonal_surcharge_filter(query, filters):
@@ -121,8 +126,7 @@ def apply_fcl_freight_rate_seasonal_surcharge_filter(query, filters):
 
 def apply_fcl_freight_rate_seasonal_surcharge_direct_filter(query, filters):
     direct_filters = {key:value for key,value in filters['fcl_freight_rate_seasonal_surcharge'].items() if key in possible_hash_filters['fcl_freight_rate_seasonal_surcharge']['direct']}
-    for direct_filter in direct_filters:
-        query = query.where(attrgetter(direct_filter)(FclFreightRateSeasonalSurcharge) == direct_filters[direct_filter])
+    query = get_filters(direct_filters, query, FclFreightRateSeasonalSurcharge)
     return query
 
 def apply_fcl_freight_rate_validity_start_less_than_equal_to_filter(query, filters):

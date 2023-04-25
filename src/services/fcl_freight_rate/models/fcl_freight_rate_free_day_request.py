@@ -32,7 +32,6 @@ class FclFreightRateFreeDayRequest(BaseModel):
     service_provider = BinaryJSONField(null=True)
     source = CharField(index=True, null=True)
     source_id = UUIDField(index=True, null = True)
-    spot_search = BinaryJSONField(null=True)
     performed_by_id = UUIDField(index=True, null = True)
     performed_by = BinaryJSONField(null=True)
     performed_by_type = CharField(index=True, null=True)
@@ -50,6 +49,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     created_at = DateTimeField(index=True, default = datetime.datetime.now)
     updated_at = DateTimeField(default = datetime.datetime.now)
+    code = CharField(null=True)
+    preferred_total_days = IntegerField(null=True)
+    specificity_type = CharField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -61,7 +63,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
     def send_closed_notifications_to_sales_agent(self):
       locations_data = maps.list_locations({'filters' : {'id': self.location_id}})['list']
       location_name = {data['id']:data['display_name'] for data in locations_data}
-      importer_exporter_id = common.get_spot_search({'filters':{'id': self.source_id}})['detail']['importer_exporter_id']
+      importer_exporter_id = spot_search.get_spot_search({'filters':{'id': self.source_id}})['detail']['importer_exporter_id']
       data = {
         'user_id': self.performed_by_id,
         'type': 'platform_notification',
@@ -76,7 +78,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
           'spot_search_id': self.source_id,
           'importer_exporter_id': importer_exporter_id }
       }
-      # common.create_communication(data)
+      common.create_communication(data)
 
     def validate_source(self):
       if self.source in REQUEST_SOURCES:
@@ -84,15 +86,9 @@ class FclFreightRateFreeDayRequest(BaseModel):
       return False
 
     def set_location(self):
-      self.location = {key:value for key, value in maps.list_locations({'filters' : {'id': self.location_id}})['list'] if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-
-    # def validate_source_id(self):
-    #   data = common.list_spot_searches({'filters':{'id':self.source_id}})
-    #   if ('list' in data) and (len(data['list']) > 0):
-    #     data = data['list'][0]
-    #     if data.get('source_type',None) == 'spot_search':
-    #       return True
-    #   return False
+      location = maps.list_locations({'filters' : {'id': self.location_id}})
+      if 'list' in location and location['list']:
+        self.location= {key:value for key,value in location['list'][0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def validate_performed_by(self):
         data = get_user(self.performed_by_id)
@@ -101,7 +97,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
         return False
 
     def validate_performed_by_org(self):
-      data = get_organization(id=self.performed_by_id)
+      data = get_organization(id=self.performed_by_org_id)
       if (len(data) > 0):
           data = data[0]
           if data.get('account_type',None) == 'importer_exporter':
@@ -115,6 +111,6 @@ class FclFreightRateFreeDayRequest(BaseModel):
       data = get_shipping_line(id=self.shipping_line_id)
       if len(data) > 0:
         data = data[0]
-        if data.get('account_type',None) == 'shipping_line':
+        if data.get('operator_type',None) == 'shipping_line':
           return True
       return False

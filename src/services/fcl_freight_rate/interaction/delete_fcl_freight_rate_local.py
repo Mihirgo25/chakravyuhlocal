@@ -7,18 +7,14 @@ def delete_fcl_freight_rate_local(request):
     object_type = 'Fcl_Freight_Rate_Local' 
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
     db.execute_sql(query)
-    with db.atomic() as transaction:
-        try:
-            return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     object = find_object(request)
 
     if not object:
-        raise HTTPException(status_code=404, detail="Freight rate local id not found")
+        raise HTTPException(status_code=400, detail="Freight rate local id not found")
 
     for key, value in delete_params.items():
         setattr(object, key, value)

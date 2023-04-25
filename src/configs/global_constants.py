@@ -47,6 +47,13 @@ POTENTIAL_CONVERSION_RATIO = 0.1
 
 FREE_DAYS_TYPES = ['detention', 'demurrage', 'plugin']
 
+DEFAULT_MAX_WEIGHT_LIMIT = {
+    '20': 18,
+    '40': 30,
+    '40HC':32.5,
+    '45HC': 32.68
+}
+
 HAZ_CLASSES = [
     "gases-2.1",
     "gases-2.2",

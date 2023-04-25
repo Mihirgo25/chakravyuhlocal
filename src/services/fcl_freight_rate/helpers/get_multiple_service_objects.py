@@ -4,10 +4,11 @@ from database.rails_db import get_organization,get_shipping_line,get_user
 def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'shipping_line_id') and freight_object.shipping_line_id:
         shipping_line = get_shipping_line(id=str(freight_object.shipping_line_id))
-        try:
-            freight_object.shipping_line = shipping_line[0]
-        except:
-            freight_object.shipping_line_detail = shipping_line[0]
+        if len(shipping_line or []) > 0:
+            try:
+                freight_object.shipping_line = shipping_line[0]
+            except:
+                freight_object.shipping_line_detail = shipping_line[0]
             
     user_list =[]
     if hasattr(freight_object,'procured_by_id') and freight_object.procured_by_id:
@@ -40,7 +41,7 @@ def get_multiple_service_objects(freight_object):
     if hasattr(freight_object,'service_provider_id') and freight_object.service_provider_id:
         organization_list.append(freight_object.service_provider_id)
     if hasattr(freight_object,'performed_by_org_id') and freight_object.performed_by_org_id:
-        user_list.append(freight_object.performed_by_org_id)
+        organization_list.append(freight_object.performed_by_org_id)
     if organization_list:
         organization_data = get_organization(id=organization_list)
         for organization in organization_data:
@@ -56,10 +57,6 @@ def get_multiple_service_objects(freight_object):
     #     rate_sheet_data['serial_id'] = str(rate_sheet_data['serial_id'])
     #     freight_object.rate_sheet = rate_sheet_data
 
-    if hasattr(freight_object,'source_id'):
-        spot_search_data = spot_search.list_spot_searches({'filters':{'id':str(freight_object.source_id)}})
-        if spot_search_data:
-            spot_search_data = spot_search_data['list'][0]
-            freight_object.spot_search = {key:value for key,value in spot_search_data.items() if key in ['id','importer_exporter_id','importer_exporter','service_details']}
 
     freight_object.save()
+

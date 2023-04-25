@@ -9,7 +9,7 @@ possible_direct_filters = ['origin_port_id', 'origin_country_id', 'origin_trade_
 possible_indirect_filters = []
 
 def list_fcl_freight_rate_commodity_surcharges(filters = {}, page_limit =10, page = 1, pagination_data_required = True):
-    query = get_query(page, page_limit)
+    query = get_query()
 
     if filters:
         if type(filters) != dict:
@@ -20,11 +20,13 @@ def list_fcl_freight_rate_commodity_surcharges(filters = {}, page_limit =10, pag
         query = get_filters(direct_filters, query, FclFreightRateCommoditySurcharge)
         query = apply_indirect_filters(query, indirect_filters)
 
+    pagination_data = get_pagination_data(query,page, page_limit, pagination_data_required)
+    query = query.paginate(page, page_limit)
     data = jsonable_encoder(list(query.dicts()))
-    pagination_data = get_pagination_data(data,page, page_limit, pagination_data_required)
+
     return { 'list': data } | (pagination_data)
 
-def get_query(page, page_limit):
+def get_query():
     query = FclFreightRateCommoditySurcharge.select(
             FclFreightRateCommoditySurcharge.id,
             FclFreightRateCommoditySurcharge.origin_location_id,
@@ -41,17 +43,18 @@ def get_query(page, page_limit):
             FclFreightRateCommoditySurcharge.origin_location,
             FclFreightRateCommoditySurcharge.destination_location,
             FclFreightRateCommoditySurcharge.service_provider
-    ).order_by(FclFreightRateCommoditySurcharge.updated_at.desc()).paginate(page, page_limit)
+    ).order_by(FclFreightRateCommoditySurcharge.updated_at.desc())
     return query
 
-def get_pagination_data(data, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
         return {}
-    
+        
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
     return params

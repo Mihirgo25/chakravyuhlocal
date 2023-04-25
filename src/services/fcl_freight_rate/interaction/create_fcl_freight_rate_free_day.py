@@ -3,22 +3,21 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from fastapi import HTTPException
 from datetime import datetime, timedelta
-from celery_worker import update_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day(request):
-    with db.atomic() as transaction:
+    with db.atomic():
         return execute_transaction_code(request)
 
 
 def execute_transaction_code(request):
-    request["validity_start"] = (request.get('validity_start') or datetime.now().date())
-    request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)).date())
+    from celery_worker import update_multiple_service_objects
+    request["validity_start"] = (request.get('validity_start') or datetime.now())
+    request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)))
     free_day = get_free_day_object(request)
-
-    free_day.validate_validity_object(request['validity_start'], request['validity_end'])
-
-    free_day.validate_before_save()
+    if 'rate_sheet_validation' not in request:
+        free_day.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
+        free_day.validate_before_save()
 
     free_day.update_special_attributes()
 
@@ -70,7 +69,7 @@ def get_free_day_object(request):
     if not free_day:
         free_day = FclFreightRateFreeDay(**row)
 
-    extra_fields = ['previous_days_applicable','free_limit','remarks','slabs']
+    extra_fields = ['previous_days_applicable','free_limit','remarks','slabs','validity_start','validity_end']
     for field in extra_fields:
         if field in request:
             setattr(free_day, field, request[field])

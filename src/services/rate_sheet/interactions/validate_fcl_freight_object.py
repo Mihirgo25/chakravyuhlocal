@@ -1,17 +1,14 @@
 import services.rate_sheet.interactions.validate_fcl_freight_object as validate_rate_sheet
 from micro_services.client import *
-from operator import attrgetter
 import uuid
 from fastapi import HTTPException
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import get_free_day_object as get_free_day_objects
-# from services.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, SPECIFICITY_TYPE
-
+from libs.common_validations import validate_shipping_line
 from database.rails_db import get_shipping_line, get_organization
 
 # validate_validity_object
@@ -39,46 +36,31 @@ def get_freight_object(object):
         rate_object.set_locations()
         rate_object.set_origin_location_ids()
         rate_object.set_destination_location_ids()
-        rate_object.set_platform_prices()
-        rate_object.set_is_best_price()
-        rate_object.set_last_rate_available_date()
-        rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], '', object['payment_term'])
+        rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], False, object['payment_term'])
     except:
-        validation['error']+='Invalid location'
-    try:
-        if not rate_object.validate_origin_main_port_id():
-            validation['error']+='Invalid origin main port'
-        if not rate_object.validate_destination_main_port_id():
-            validation['error']+='Invalid destination main port'
-        if not rate_object.validate_container_size():
-            validation['error']+='Invalid container '
-        if not rate_object.validate_container_type():
-            validation['error']+='Invalid container type'
-        if not rate_object.validate_commodity():
-            validation['error']+='Invalid commodity '
-    except:
-        validation['error']+='Invalid Ports'
+        validation['error']+=' Invalid location'
     try:
         rate_object.validate_before_save()
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' + str(e.detail)
     try:
         rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' + str(e.detail)
     for line_item in object['line_items']:
         if line_item['unit'] not in VALID_UNITS:
-            validation['error'] =  "unit is_invalid"
+            validation['error'] =  ' ' + "unit is_invalid"
     if object['schedule_type'] and object['schedule_type'] not in SCHEDULE_TYPES:
-        validation['error'] += f"is invalid, valid schedule types are {SCHEDULE_TYPES}"
+        validation['error'] += ' ' + f"{object['schedule_type']} is invalid, valid schedule types are {SCHEDULE_TYPES}"
 
     if object['payment_term'] and object['payment_term'] not in PAYMENT_TERM:
-        validation['error']+=  f"is invalid, valid payment terms are {PAYMENT_TERM}"
+        validation['error']+=  ' ' + f"{object['payment_term']} is invalid, valid payment terms are {PAYMENT_TERM}"
     try:
         rate_object.validate_line_items(object['line_items'])
     except HTTPException as e:
-        validation['error']+=str(e.detail)
-
+        validation['error']+=' ' + str(e.detail)
+    if not validate_shipping_line(rate_object):
+         validation['error']+=' Invalid shipping line'
     return validation
 
 def get_local_object(object):
@@ -86,23 +68,13 @@ def get_local_object(object):
     validation['error'] = ''
     res = object
     local = FclFreightRateLocal(**res)
-    if not local.validate_trade_type():
-        validation['error']+='Invalid trade type'
-    if not local.validate_main_port_id():
-        validation['error']+='Invalid origin main port'
-    if not local.validate_container_size():
-        validation['error']+='duplicate line items present '
-    if not local.validate_container_type():
-        validation['error']+='Invalid container type'
-    if not local.validate_commodity():
-        validation['error']+='Invalid commodity '
     try:
         local.validate_before_save()
     except HTTPException as e:
-        validation['error'] += str(e.detail)
+        validation['error'] += ' ' + str(e.detail)
     for line_item in object.get('data').get('line_items'):
         if line_item['unit'] not in VALID_UNITS:
-            validation['error']+= "unit is_invalid"
+            validation['error']+= ' ' + "unit is_invalid"
 
     return validation
 
@@ -111,16 +83,22 @@ def get_free_day_object(object):
     validation['error'] = ''
     res = object
     free_day = get_free_day_objects(res)
-    free_day.validate_validity_object(object['validity_start'], object['validity_end'])
-    free_day.validate_before_save()
+    try:
+        free_day.validate_validity_object(object.get('validity_start'), object.get('validity_end'))
+    except HTTPException as e:
+        validation['error'] += ' ' + str(e.detail)
+    try:
+        free_day.validate_before_save()
+    except HTTPException as e:
+        validation['error'] += ' ' +str(e.detail)
     if not is_valid_uuid(free_day.location_id):
-        validation['error'] += 'location is invalid'
+        validation['error'] += ' location {} is invalid'.format(free_day.location_id)
     if not is_valid_uuid(free_day.shipping_line_id):
-        validation['error'] += 'shipping is invalid'
+        validation['error'] += ' shipping {} is  invalid'.format(free_day.shipping_line_id)
     # if free_day.specificity_type in SPECIFICITY_TYPE:
     #     validation['error'] += 'specificity_type is invalid'
 
-    return free_day
+    return validation
 
 
 

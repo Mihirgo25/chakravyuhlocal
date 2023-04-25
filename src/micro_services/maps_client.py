@@ -15,8 +15,10 @@ class MapsApiClient:
 
     def list_locations(self, data={}):
         if APP_ENV == "production":
-            if 'filters' in data:
-                data['filters'] = json.dumps(data['filters'])
+            keys = ['filters', 'includes']
+            for key in keys:
+                if key in data:
+                    data[key] = json.dumps(data[key])
             return self.client.request('GET', 'list_locations', {}, data)
         return self.client.request('GET', 'list_locations', data, {})
 
@@ -29,3 +31,11 @@ class MapsApiClient:
 
     def get_location_cluster(self,data={}):
         return self.client.request('GET','get_location_cluster',{}, data)
+    
+    def list_locations_mapping(self, data = {}):
+        if APP_ENV == "production":
+            return self.client.request('GET','list_locations_mapping',{}, data)
+        return self.client.request('GET','list_locations_mapping',{}, data)
+
+    def get_sea_route(self, data = {}):
+        return self.client.request('GET','get_sea_route',{}, data)

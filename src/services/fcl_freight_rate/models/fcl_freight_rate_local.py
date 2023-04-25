@@ -70,11 +70,11 @@ class FclFreightRateLocal(BaseModel):
         table_name = 'fcl_freight_rate_locals'
 
     def validate_main_port_id(self):
-        if self.port and self.port['is_icd']==False:
-            if not self.main_port_id or self.main_port_id == self.port_id:
-                return True
-            return False
-        elif self.port and self.port['is_icd']==True:
+        # if self.port and self.port['is_icd']==False:
+        #     if not self.main_port_id or self.main_port_id == self.port_id:
+        #         return True
+        #     return False
+        if self.port and self.port['is_icd']==True:
             if self.main_port_id:
                 if not self.main_port or self.main_port['is_icd'] == True:
                     return False
@@ -119,6 +119,9 @@ class FclFreightRateLocal(BaseModel):
         if not self.validate_container_type():
             raise HTTPException(status_code=422, detail='container_type is not valid')
 
+        if not self.validate_commodity():
+            raise HTTPException(status_code=422, detail='commodity is not valid')
+
         if not self.local_data_instance.validate_duplicate_charge_codes():
             raise HTTPException(status_code=499, detail='duplicate line items present')
 
@@ -127,7 +130,9 @@ class FclFreightRateLocal(BaseModel):
         if invalid_charge_codes:
             raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
 
-    def update_special_attributes(self, new_free_days: dict = {}):
+    def update_special_attributes(self, new_free_days: dict = {}, rate_sheet_validation: bool = False):
+        if rate_sheet_validation:
+            self.local_data_instance = FclFreightRateLocalData(self.data)
         self.update_line_item_messages()
         self.update_free_days_special_attributes(new_free_days)
 
@@ -229,13 +234,14 @@ class FclFreightRateLocal(BaseModel):
         if self.demurrage_id:
             free_day_ids.append(str(self.demurrage_id))
         if self.detention_id:
-            free_day_ids.append(str(self.demurrage_id))
+            free_day_ids.append(str(self.detention_id))
         if self.plugin_id:
             free_day_ids.append(str(self.plugin_id))
 
         free_days_charges = {}
+        free_days_new = []  
 
-      
+
         if len(free_day_ids):
             free_days_query = FclFreightRateFreeDay.select(
               FclFreightRateFreeDay.location_id,
@@ -249,17 +255,17 @@ class FclFreightRateLocal(BaseModel):
             free_days_new = jsonable_encoder(list(free_days_query.dicts()))
 
         for free_day_charge in free_days_new:
-          free_day_charge[free_day_charge["id"]] = free_day_charge
+          free_days_charges[free_day_charge["id"]] = free_day_charge
 
-        
-        if self.detention_id and self.detention_id in free_day_charge:
-            self.data["detention"] = free_day_charge[self.detention_id]
 
-        if self.demurrage_id and self.demurrage_id in free_day_charge:
-            self.data["demurrage"] = free_day_charge[self.demurrage_id]
-        
-        if self.plugin_id and self.plugin_id in free_day_charge:
-            self.data["plugin"] = free_day_charge[self.plugin_id]
+        if self.detention_id and self.detention_id in free_days_charges:
+            self.data["detention"] = free_days_charges[self.detention_id]
+
+        if self.demurrage_id and self.demurrage_id in free_days_charges:
+            self.data["demurrage"] = free_days_charges[self.demurrage_id]
+
+        if self.plugin_id and self.plugin_id in free_days_charges:
+            self.data["plugin"] = free_days_charges[self.plugin_id]
 
         detail = self.data | {
             'id': self.id,

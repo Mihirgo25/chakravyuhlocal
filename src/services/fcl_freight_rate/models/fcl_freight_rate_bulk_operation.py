@@ -48,7 +48,7 @@ class FclFreightRateBulkOperation(BaseModel):
     
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
-            raise HTTPException(status_code=404,detail='Invalid action Name')
+            raise HTTPException(status_code=400,detail='Invalid action Name')
     
     def validate_extend_validity_data(self):
         data = self.data
@@ -101,10 +101,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        if data['markup_currency'] not in currencies:
-            raise HTTPException(status_code=499, detail='markup_currency is invalid')
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
         
@@ -130,11 +126,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        if data['markup_currency'] not in currencies:
-            raise HTTPException(status_code=499, detail='markup_currency is invalid')
-        
     def validate_update_free_days_limit_data(self):
         data = self.data
 
@@ -152,12 +143,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if any(index > 0 and slab.get('lower_limit', 0) <= slabs[index - 1].get('upper_limit', 0) for index, slab in enumerate(slabs)):
             raise HTTPException(status_code=499, detail='slabs is invalid')
 
-        currencies = slabs[0]['currency']
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        # if [x for x in currencies if x not in valid_currencies] != []:
-        #     raise HTTPException(status_code=499, detail='slabs.currency is invalid')
-
     def validate_add_freight_line_item_data(self):
         data = self.data
 
@@ -169,10 +154,6 @@ class FclFreightRateBulkOperation(BaseModel):
         
         if data['units'] not in code_config['units']:
             raise HTTPException(status_code=499, detail='unit is invalid')
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-
-        # if data['currency'] not in valid_currencies:
-        #     raise HTTPException(status_code=499, detail='currency is invalid')
         
         if data['validity_end'] < datetime.now():
             raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
@@ -236,11 +217,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
-        
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
 
-        # if data['currency'] not in valid_currencies:
-            raise HTTPException(status_code=499, detail='currency is invalid')
         
     def validate_extend_freight_rate_to_icds_data(self):
         data = self.data
@@ -249,11 +226,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data['markup_type'] not in markup_types:
             raise HTTPException(status_code=499, detail='markup_type is invalid')
-        
-        # valid_currencies = [t['iso_code'] for t in common.list_money_currencies()['list']]
-        
-        # if data['currency'] not in valid_currencies:
-        #     raise HTTPException(status_code=499, detail='currency is invalid')
+    
         
         if self.data['origin_port_ids'] or self.data['destination_port_ids']:
             rate_id = data['filters']['id']
@@ -288,6 +261,7 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
+        fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
         count = 0
@@ -362,6 +336,7 @@ class FclFreightRateBulkOperation(BaseModel):
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
+        fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
         count = 0
@@ -378,7 +353,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 'id': str(freight["id"]),
                 'performed_by_id': self.performed_by_id,
                 'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
-                'validity_end': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
+                'validity_end': datetime.strptime(data['validity_end'],"%Y-%m-%d"),
                 'bulk_operation_id': self.id,
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
@@ -432,6 +407,7 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
         count = 0
@@ -468,7 +444,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
                 
                 if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -541,7 +517,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = data['markup']
 
                 if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})
+                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -555,7 +531,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         markup = data['markup']
                     
                     if data['markup_type'].lower() == 'net':
-                        markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})
+                        markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
                     slab['price'] = slab['price'] + markup
                     if slab['price'] < 0:
@@ -619,6 +595,7 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
         count = 0
@@ -726,8 +703,9 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        fcl_freight_rates = list(fcl_freight_rates.dicts())
 
-        total_count = fcl_freight_rates.__sizeof__
+        total_count = len(fcl_freight_rates)
         count = 0
 
         for freight in fcl_freight_rates:
@@ -758,6 +736,7 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         weight_limit = {key: value for key, value in data.items() if key in ['free_limit', 'slabs']}
 
@@ -792,7 +771,7 @@ class FclFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
-
+        fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
         count = 0
@@ -856,7 +835,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 for container_type in data['container_types']:
                     create_fcl_freight_rate_data(create_params | ({ 'container_type': container_type, 'source': 'rms_upload' }))
 
-                create_audit(self,self.id)
+                create_audit(self.id)
 
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
@@ -870,9 +849,10 @@ class FclFreightRateBulkOperation(BaseModel):
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
-        fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list'][0]
-        print(fcl_freight_rate)
+        fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        fcl_freight_rate = list(fcl_freight_rate.dicts())
         if fcl_freight_rate:
+            fcl_freight_rate = fcl_freight_rate[0]
             validities = [k for k in fcl_freight_rate["validities"] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
         else:
             validities = None
@@ -903,11 +883,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
         for validity_object in validities:
             create_params['validity_start'] = validity_object['validity_start']
-            create_params['validity_end'] = validity_object['validity_end']
             create_params['line_items'] = validity_object['line_items']
-            validity_object["validity_start"]=datetime.strptime(validity_object['validity_start'], '%Y-%m-%d').date()
-            validity_object["validity_end"]=datetime.strptime(validity_object['validity_end'], '%Y-%m-%d').date()
-            create_params['validity_start'] = max(validity_object["validity_start"], datetime.now().date())
+            validity_object["validity_start"]=datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
+            validity_object["validity_end"]=datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
+            create_params['validity_end'] = validity_object['validity_end']
+            create_params['validity_start'] = max(validity_object["validity_start"], datetime.now())
 
             line_item = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']][0]
 
@@ -923,7 +903,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 markup = data['markup']
 
             if data['markup_type'].lower() == 'net':
-                markup = common.get_money_exchange_for_fcl({'from_currecy': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})
+                markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
             line_item['price'] = line_item['price'] + markup
             
@@ -949,15 +929,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         create_params['destination_main_port_id'] = fcl_freight_rate["destination_port_id"]
                     create_params['source'] = 'rms_upload'
                     create_fcl_freight_rate_data(create_params)
-def create_audit(self,id):
-    audit_data = {key: value for key,value in self if key not in ['id']}
-
+def create_audit(id):
     FclFreightRateAudit.create(
-        bulk_operation_id = self.get('bulk_operation_id'),
-        rate_sheet_id = self.get('rate_sheet_id'),
-        action_name = 'create',
-        performed_by_id = self['performed_by_id'],
-        data = audit_data,
-        object_id = id,
-        object_type = 'FclFreightRate'
+        bulk_operation_id = id
     )
