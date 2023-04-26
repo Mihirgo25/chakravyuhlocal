@@ -45,7 +45,7 @@ class FclWeightSlabsConfiguration(BaseModel):
 
         location_data = maps.list_locations({'filters':{'id':self.origin_location_id}})['list']
         if len(location_data) == 0:
-            raise HTTPException(status_code=422, detail="Invalid Origin location ID")
+            raise HTTPException(status_code=400, detail="Invalid Origin location ID")
         if self.origin_location_type not in ['seaport', 'country'] or self.origin_location_type != location_data[0]['type']:
             raise HTTPException(status_code= 422, detail='Invalid Origin Location Type')
 
@@ -85,7 +85,7 @@ class FclWeightSlabsConfiguration(BaseModel):
 
         shipping_line_data = get_shipping_line(id=self.shipping_line_id)
         if len(shipping_line_data) == 0:
-            raise HTTPException(status_code=422, detail="Invalid shipping line ID")
+            raise HTTPException(status_code=400, detail="Invalid shipping line ID")
 
     def validate_service_provider_id(self):
         if not self.service_provider_id:
@@ -93,7 +93,7 @@ class FclWeightSlabsConfiguration(BaseModel):
 
         service_provider_data = get_organization(id=self.service_provider_id)
         if len(service_provider_data) == 0:
-            raise HTTPException(status_code=422, detail="Invalid service provider ID")
+            raise HTTPException(status_code=400, detail="Invalid service provider ID")
 
     def validate_importer_exporter_id(self):
         if not self.importer_exporter_id:
@@ -101,25 +101,25 @@ class FclWeightSlabsConfiguration(BaseModel):
 
         importer_exporter_data = get_organization(id=self.importer_exporter_id)
         if len(importer_exporter_data) == 0:
-            raise HTTPException(status_code=422, detail="Invalid importer exporter ID")
+            raise HTTPException(status_code=400, detail="Invalid importer exporter ID")
 
     def validate_container_size(self):
         if not self.container_size:
             return
 
         if self.container_size not in CONTAINER_SIZES:
-            raise HTTPException(status_code=422, detail="Invalid container size")
+            raise HTTPException(status_code=400, detail="Invalid container size")
 
     def validate_status(self):
         if self.status not in ['inactive', 'active']:
-            raise HTTPException(status_code=422, detail="Invalid status")
+            raise HTTPException(status_code=400, detail="Invalid status")
 
     def validate_trade_type(self):
         if not self.trade_type:
             return
 
         if self.trade_type not in ['import', 'export']:
-            raise HTTPException(status_code=422, detail="Invalid trade type")
+            raise HTTPException(status_code=400, detail="Invalid trade type")
 
     def validate(self):
         self.validate_origin_location()

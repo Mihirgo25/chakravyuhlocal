@@ -108,27 +108,27 @@ class FclFreightRateLocal(BaseModel):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
         if not self.validate_main_port_id():
-            raise HTTPException(status_code=422, detail='main_port_id is not valid')
+            raise HTTPException(status_code=400, detail='main_port_id is not valid')
 
         if not self.validate_trade_type():
-            raise HTTPException(status_code=422, detail='trade_type is not valid')
+            raise HTTPException(status_code=400, detail='trade_type is not valid')
 
         if not self.validate_container_size():
-            raise HTTPException(status_code=422, detail='container_size is not valid')
+            raise HTTPException(status_code=400, detail='container_size is not valid')
 
         if not self.validate_container_type():
-            raise HTTPException(status_code=422, detail='container_type is not valid')
+            raise HTTPException(status_code=400, detail='container_type is not valid')
 
         if not self.validate_commodity():
-            raise HTTPException(status_code=422, detail='commodity is not valid')
+            raise HTTPException(status_code=400, detail='commodity is not valid')
 
         if not self.local_data_instance.validate_duplicate_charge_codes():
-            raise HTTPException(status_code=499, detail='duplicate line items present')
+            raise HTTPException(status_code=400, detail='duplicate line items present')
 
         invalid_charge_codes = self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
         if invalid_charge_codes:
-            raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
+            raise HTTPException(status_code=400, detail=f"{invalid_charge_codes} are invalid line items")
 
     def update_special_attributes(self, new_free_days: dict = {}, rate_sheet_validation: bool = False):
         if rate_sheet_validation:

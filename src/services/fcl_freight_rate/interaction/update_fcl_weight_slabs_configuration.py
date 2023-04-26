@@ -29,7 +29,7 @@ def execute_transaction_code(request):
     updated_configuration = FclWeightSlabsConfiguration.get(**{'id' : request['id']})
     
     if not updated_configuration:
-        raise HTTPException(status_code=499,detail='Weight Slab Not Found')
+        raise HTTPException(status_code=400,detail='Weight Slab Not Found')
     request['updated_at'] = datetime.now()
     request['price'] = request.get('slabs')[0].get('price')
     request['currency'] = request.get('slabs')[0].get('currency')
