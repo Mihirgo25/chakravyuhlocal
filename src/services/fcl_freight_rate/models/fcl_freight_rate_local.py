@@ -278,7 +278,10 @@ class FclFreightRateLocal(BaseModel):
             'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
             'is_detention_slabs_missing': self.is_detention_slabs_missing,
             'is_demurrage_slabs_missing': self.is_demurrage_slabs_missing,
-            'is_plugin_slabs_missing': self.is_plugin_slabs_missing
+            'is_plugin_slabs_missing': self.is_plugin_slabs_missing,
+            'updated_at': self.updated_at,
+            'procured_by_id': self.procured_by_id,
+            'procured_by': self.procured_by
         }
 
         for item in detail.get('line_items',[]):
