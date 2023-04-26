@@ -131,7 +131,7 @@ def create_fcl_freight_rate(request):
     try:
         freight.save()
     except Exception as e:
-        raise HTTPException(status_code=499, detail="rate did not save")
+        raise HTTPException(status_code=400, detail="rate did not save")
     
     create_audit(request, freight.id)
     
