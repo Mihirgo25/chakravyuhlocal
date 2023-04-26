@@ -22,7 +22,7 @@ def execute_transaction_code(request):
     rate = FclFreightRate.select().where(FclFreightRate.id == request['rate_id']).first()
 
     if not rate:
-        raise HTTPException(status_code=499, detail='{} is invalid'.format(request['rate_id']))
+        raise HTTPException(status_code=400, detail='{} is invalid'.format(request['rate_id']))
 
     row = {
         'fcl_freight_rate_id': request['rate_id'],
