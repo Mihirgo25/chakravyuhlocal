@@ -194,15 +194,15 @@ def process_fcl_freight_local(params, converted_file, update):
         result = chardet.detect(f.read())
         encoding = result['encoding']
     with open(original_path, mode='rt', encoding=encoding) as file:
+        csv_writer = csv.writer(edit_file)
+        input_file = csv.DictReader(file)
+        headers = input_file.fieldnames
 
         if len(headers)!=len(set(valid_headers)&set(headers)):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
-
-        csv_writer = csv.writer(edit_file)
-        input_file = csv.DictReader(file)
-        headers = input_file.fieldnames
+        
         for row in input_file:
             total_lines += 1
         set_total_line(converted_file, total_lines)
