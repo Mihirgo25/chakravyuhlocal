@@ -70,6 +70,20 @@ class FclFreightVyuh():
             )
         )
 
+        trade_trade = query.where(
+            FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id"),
+            FclFreightRateEstimation.destination_location_id
+            == request.get("destination_trade_id")
+        )
+
+        port_trade = query.where(
+            ((FclFreightRateEstimation.origin_location_id== request.get("origin_port_id")) & (FclFreightRateEstimation.destination_location_id== request.get("destination_trade_id")))| (
+                (FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id"))& (FclFreightRateEstimation.destination_location_id == request.get("destination_port_id"))))
+
+        country_trade = query.where(
+            ((FclFreightRateEstimation.origin_location_id== request.get("origin_country_id")) & (FclFreightRateEstimation.destination_location_id== request.get("destination_trade_id")))| (
+                (FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id"))& (FclFreightRateEstimation.destination_location_id == request.get("destination_country_id"))))
+
         count_query = (
             query.select(
                 fn.count(FclFreightRateEstimation.id)
@@ -123,6 +137,48 @@ class FclFreightVyuh():
                 )
                 .over()
                 .alias("port_country"),
+                fn.count(FclFreightRateEstimation.id).filter((FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id")) &
+            (FclFreightRateEstimation.destination_location_id== request.get("destination_trade_id"))).over().alias("trade_trade"),
+                fn.count(FclFreightRateEstimation.id).filter(   (
+                        (
+                            FclFreightRateEstimation.origin_location_id
+                            == request.get("origin_trade_id")
+                        )
+                        & (
+                            FclFreightRateEstimation.destination_location_id
+                            == request.get("destination_country_id")
+                        )
+                    )
+                    | (
+                        (
+                            FclFreightRateEstimation.origin_location_id
+                            == request.get("origin_country_id")
+                        )
+                        & (
+                            FclFreightRateEstimation.destination_location_id
+                            == request.get("destination_trade_id")
+                        )
+                    )).over().alias("country_trade"),
+                fn.count(FclFreightRateEstimation.id).filter(   (
+                        (
+                            FclFreightRateEstimation.origin_location_id
+                            == request.get("origin_port_id")
+                        )
+                        & (
+                            FclFreightRateEstimation.destination_location_id
+                            == request.get("destination_trade_id")
+                        )
+                    )
+                    | (
+                        (
+                            FclFreightRateEstimation.origin_location_id
+                            == request.get("origin_trade_id")
+                        )
+                        & (
+                            FclFreightRateEstimation.destination_location_id
+                            == request.get("destination_port_id")
+                        )
+                    )).over().alias("port_trade")
             )
         ).limit(1)
         try:
@@ -159,6 +215,34 @@ class FclFreightVyuh():
                 return country_country_result
             else:
                 return country_country.dicts().get()
+        
+        if result['port_trade']==1:
+            return country_country.dicts().get()
+        elif result['port_trade']>1:
+            port_trade_result = self.add_shipping_line_commodity(port_trade,request)
+            if port_trade_result:
+                return port_trade_result
+            else:
+                return port_trade.dicts().get()
+        
+        if result['country_trade']==1:
+            return country_trade.dicts().get()
+        elif result['country_trade']>1:
+            country_trade_result = self.add_shipping_line_commodity(country_trade,request)
+            if country_trade_result:
+                return country_trade_result
+            else:
+                return country_trade_result.dicts().get()
+        
+
+        if result['trade_trade']==1:
+            return trade_trade.dicts().get()
+        elif result['trade_trade']>1:
+            trade_trade_result = self.add_shipping_line_commodity(trade_trade,request)
+            if trade_trade_result:
+                return trade_trade_result
+            else:
+                return trade_trade_result.dicts().get()
 
         return {}
 

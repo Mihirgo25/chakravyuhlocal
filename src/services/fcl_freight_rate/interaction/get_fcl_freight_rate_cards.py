@@ -12,6 +12,7 @@ from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
+from services.chakravyuh.interaction.get_local_rates_from_vyuh import get_local_rates_from_vyuh
 import sentry_sdk
 
 def initialize_freight_query(requirements, prediction_required = False):
@@ -162,6 +163,22 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['origin_main_port_id']
     if trade_type == 'import' and rate['destination_main_port_id']:
         main_port_id = rate['destination_main_port_id']
+
+    if len(local_rates) == 0:
+        local_params = {
+            'port_id' : port_id,
+            'trade_type' : trade_type,
+            'container_size' : rate.get('container_size'),
+            'container_type' : rate.get('container_type'),
+            'commodity' : rate.get('commodity'),
+            'shipping_line_id':rate.get('shipping_line_id')
+        }
+        if local_type == 'origin_local':
+            local_params['country_id'] = rate.get('origin_country_id')
+        else:
+            local_params['country_id'] = rate.get('destination_country_id')
+        local_rates = get_local_rates_from_vyuh(local_params)
+
     for local_rate in local_rates:
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:
             matching_locals[local_rate["service_provider_id"]] = local_rate

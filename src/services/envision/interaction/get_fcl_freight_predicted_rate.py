@@ -30,10 +30,10 @@ def get_final_price(min_price,create_params, request, ldh):
         request['destination_trade_id']=destination_trade_id
         get_estimated_rate=fcl_freight_rate_vyuh.get_eligible_estimated_rate(request)
         if get_estimated_rate:
-            get_estimated_rate = get_estimated_rate['line_items']
+            get_estimated_rate = get_estimated_rate['line_items'][0]
             avg_price=(get_estimated_rate['lower_price']+get_estimated_rate['upper_price'])/2
-
-            avg_price = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_estimated_rate['currency'], "to_currency":'USD'})['price']
+            if get_estimated_rate['currency']!='USD':
+                avg_price = common.get_money_exchange_for_fcl({"price":avg_price, "from_currency":get_estimated_rate['currency'], "to_currency":'USD'})['price']
 
         rate['line_items'][0]['price'] = avg_price + price_delta
     return fcl_freight_rate_vyuh.rates
