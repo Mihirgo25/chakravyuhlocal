@@ -41,13 +41,13 @@ class FclFreightRateExtensionRuleSet(BaseModel):
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
         if self.line_item_charge_code and self.gri_currency and (self.gri_rate or self.gri_rate == 0):
             if not self.line_item_charge_code in fcl_freight_charges_dict.keys():
-                raise HTTPException(status_code=499, detail="charge code not in list")
+                raise HTTPException(status_code=400, detail="charge code not in list")
             else:
                 return
         elif not self.line_item_charge_code and not self.gri_currency and not (self.gri_rate or self.gri_rate == 0):
             return
         else:
-            raise HTTPException(status_code=499, detail="all fields charge_code, gri_rate, gri_currency are necessary")
+            raise HTTPException(status_code=400, detail="all fields charge_code, gri_rate, gri_currency are necessary")
 
     def validate_cluster_id(self):
         if self.cluster_type == 'commodity' and list_fcl_freight_commodity_clusters(filters={'id': self.cluster_id})['list']:
@@ -56,7 +56,7 @@ class FclFreightRateExtensionRuleSet(BaseModel):
             return
         elif self.cluster_type == 'container' and self.cluster_id in CONTAINER_CLUSTERS.keys():
             return
-        raise HTTPException(status_code=499, detail="Validate Cluster id error")
+        raise HTTPException(status_code=400, detail="Validate Cluster id error")
 
     def validate_all(self):
         self.gri_fields()
