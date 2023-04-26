@@ -63,7 +63,7 @@ def execute_transaction_code(request):
     seasonal_surcharge.procured_by_id = request['procured_by_id']
 
     if not seasonal_surcharge.save():
-        raise HTTPException(status_code=422, detail="Seasonal Surcharge not saved")
+        raise HTTPException(status_code=400, detail="Seasonal Surcharge not saved")
 
     seasonal_surcharge.update_freight_objects()
 

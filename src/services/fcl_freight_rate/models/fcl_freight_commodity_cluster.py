@@ -29,4 +29,4 @@ class FclFreightCommodityCluster(BaseModel):
         for container_type, commodity_names in self.commodities.items():
             for commodity_name in commodity_names:
                 if commodity_name not in FREIGHT_CONTAINER_COMMODITY_MAPPINGS[container_type]:
-                    raise HTTPException(status_code=422, detail="Invalid commodities")
+                    raise HTTPException(status_code=400, detail="Invalid commodities")

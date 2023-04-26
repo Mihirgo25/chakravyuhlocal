@@ -56,14 +56,14 @@ def get_cluster_objects(rate_object):
         try:
             clusters['origin_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations']
         except:
-            raise HTTPException(status_code=499, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
+            raise HTTPException(status_code=400, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
 
 
     if 'destination_location_cluster' in clusters and clusters['destination_location_cluster']:
         try:
             clusters['destination_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['destination_location_cluster']['cluster_id']})['locations']
         except:
-            raise HTTPException(status_code=499, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
+            raise HTTPException(status_code=400, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
 
     if 'commodity_cluster' in clusters and clusters['commodity_cluster']:
         clusters['commodity_cluster']['cluster_items'] = get_fcl_freight_commodity_cluster(clusters['commodity_cluster']['cluster_id'])['commodities']

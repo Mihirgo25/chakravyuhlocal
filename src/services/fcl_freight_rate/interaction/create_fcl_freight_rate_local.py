@@ -73,7 +73,7 @@ def execute_transaction_code(request):
         new_free_days['demurrage'] = {'slabs': [] } | (request['data']['demurrage'] or {})
 
     if 'plugin' in request['data']:
-        new_free_days['plugin'] = {'slabs': [] } | (request['data']['demurrage'] or {})
+        new_free_days['plugin'] = {'slabs': [] } | (request['data']['plugin'] or {})
 
     if request['data'].get('line_items'):
         fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data']['line_items'] }

@@ -128,41 +128,41 @@ class FclFreightRateFreeDay(BaseModel):
                 try:
                     Slab.validate(slab)
                 except:
-                    raise HTTPException(status_code=422, detail=f"Incorrect Slab: {slab}")
+                    raise HTTPException(status_code=400, detail=f"Incorrect Slab: {slab}")
         if not self.validate_location_ids():
-            raise HTTPException(status_code=422, detail="Invalid location")
+            raise HTTPException(status_code=400, detail="Invalid location")
 
         if not self.validate_specificity_type():
-            raise HTTPException(status_code=422, detail="Invalid specificity type")
+            raise HTTPException(status_code=400, detail="Invalid specificity type")
 
         if not validate_shipping_line(self):
-            raise HTTPException(status_code=422, detail="Invalid shipping line")
+            raise HTTPException(status_code=400, detail="Invalid shipping line")
 
 
         # if not self.validate_service_provider():
-        #     raise HTTPException(status_code=422, detail="Invalid service provider")
+        #     raise HTTPException(status_code=400, detail="Invalid service provider")
 
         # if not self.validate_importer_exporter():
-        #     raise HTTPException(status_code=422, detail="Invalid importer-exporter")
+        #     raise HTTPException(status_code=400, detail="Invalid importer-exporter")
 
         if not self.validate_free_days_type():
-            raise HTTPException(status_code=422, detail="Invalid free day type")
+            raise HTTPException(status_code=400, detail="Invalid free day type")
 
 
         if not self.validate_trade_type():
-            raise HTTPException(status_code=422, detail="Invalid trade type")
+            raise HTTPException(status_code=400, detail="Invalid trade type")
 
 
         if not self.validate_container_size():
-            raise HTTPException(status_code=422, detail="incorrect container size")
+            raise HTTPException(status_code=400, detail="incorrect container size")
 
 
         if not self.validate_container_type():
-            raise HTTPException(status_code=422, detail="Invalid container type")
+            raise HTTPException(status_code=400, detail="Invalid container type")
 
 
         if not self.validate_free_limit():
-            raise HTTPException(status_code=422, detail="Empty free limit")
+            raise HTTPException(status_code=400, detail="Empty free limit")
 
 
     def update_special_attributes(self):
