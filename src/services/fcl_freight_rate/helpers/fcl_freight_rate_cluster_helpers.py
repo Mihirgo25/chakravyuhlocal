@@ -56,14 +56,14 @@ def get_cluster_objects(rate_object):
         try:
             clusters['origin_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['origin_location_cluster']['cluster_id']})['locations']
         except:
-            raise HTTPException(status_code=499, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
+            raise HTTPException(status_code=400, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
 
 
     if 'destination_location_cluster' in clusters and clusters['destination_location_cluster']:
         try:
             clusters['destination_location_cluster']['cluster_items'] = maps.get_location_cluster({'id': clusters['destination_location_cluster']['cluster_id']})['locations']
         except:
-            raise HTTPException(status_code=499, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
+            raise HTTPException(status_code=400, detail= f"No cluster with {clusters['origin_location_cluster']['cluster_id']} found")
 
     if 'commodity_cluster' in clusters and clusters['commodity_cluster']:
         clusters['commodity_cluster']['cluster_items'] = get_fcl_freight_commodity_cluster(clusters['commodity_cluster']['cluster_id'])['commodities']
@@ -147,7 +147,7 @@ def add_mandatory_line_items(param,request):
     return param
 
 def check_rate_existence(updated_param):
-    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
+    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.origin_main_port_id == updated_param.get('origin_main_port_id'), FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.destination_main_port_id == updated_param.get('destination_main_port_id'), FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
     if system_rate:
         return True
     else:

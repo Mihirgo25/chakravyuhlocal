@@ -18,7 +18,7 @@ def migration_of_countries():
         row['destination_location_type']='country'
         row['container_type'] = 'standard'
         row['commodity'] = 'general'
-        row['line_items'] = {'code':'BAS','unit':'per_container','lower_price':value,'upper_price':value,'remarks':[],'currency':'USD'}
+        row['line_items'] = [{'code':'BAS','unit':'per_container','lower_price':value,'upper_price':value,'remarks':[],'currency':'USD'}]
         final.append(row)
     
     for key,value in TRADE_LANE_PRICES.items():
@@ -31,9 +31,9 @@ def migration_of_countries():
         row['container_size'] = locations_size[2]
         row['origin_location_type'] = 'trade'
         row['destination_location_type']='trade'
-        row['container_type'] = 'general'
-        row['commodity'] = 'standard'
-        row['line_items'] = {'code':'BAS','unit':'per_container','lower_price':value,'upper_price':value,'remarks':[],'currency':'USD'}
+        row['container_type'] = 'standard'
+        row['commodity'] = 'general'
+        row['line_items'] = [{'code':'BAS','unit':'per_container','lower_price':value,'upper_price':value,'remarks':[],'currency':'USD'}]
         final.append(row)
     
     with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:

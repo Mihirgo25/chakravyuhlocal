@@ -53,20 +53,20 @@ class FclFreightRateBulkOperation(BaseModel):
     def validate_extend_validity_data(self):
         data = self.data
         if data['validity_end'] < data['source_date']:
-            raise HTTPException(status_code=499, detail='validity_end cannot be less than source date')
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than source date')
         
         if data['validity_end'].date() < datetime.now().date():
-            raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than current date')
         
         if data['validity_end'].date() > (datetime.now() +timedelta(days=60)).date():
-            raise HTTPException(status_code=499, detail='validity_end cannot be greater than 60 days')
+            raise HTTPException(status_code=400, detail='validity_end cannot be greater than 60 days')
         data['source_date'] = data['source_date'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
 
     def validate_delete_freight_rate_data(self):
         data = self.data
         if data['validity_end'] < data['validity_start']:
-            raise HTTPException(status_code=499, detail='validity_end cannot be less than validity start')
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
 
@@ -78,25 +78,25 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
 
         if float(data['markup']) == 0:
-            raise HTTPException(status_code=499, detail='markup cannot be 0')
+            raise HTTPException(status_code=400, detail='markup cannot be 0')
     
         markup_types = ['net', 'percent']
 
         if data['markup_type'] not in markup_types:
-            raise HTTPException(status_code=499, detail='markup_type is invalid')
+            raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         if data['validity_end'].date() < datetime.now().date():
-            raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than current date')
         
         if data['validity_end'].date() < data['validity_start'].date():
-            raise HTTPException(status_code=499, detail='validity_end cannot be less than validity start')
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         charge_codes = fcl_freight_charges_dict.keys()
 
         if data['line_item_code'] not in charge_codes:
-            raise HTTPException(status_code=499, detail='line_item_code is invalid')
+            raise HTTPException(status_code=400, detail='line_item_code is invalid')
         
         if str(data['markup_type']).lower() == 'percent':
             return
@@ -109,19 +109,19 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
 
         if float(data['markup']) == 0:
-            raise HTTPException(status_code=499, detail='markup cannot be 0')
+            raise HTTPException(status_code=400, detail='markup cannot be 0')
         
         markup_types = ['net', 'percent']
 
         if data['markup_type'] not in markup_types:
-            raise HTTPException(status_code=499, detail='markup_type is invalid')
+            raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         charge_codes = fcl_freight_charges_dict.keys()
 
         if data['line_item_code'] not in charge_codes:
-            raise HTTPException(status_code=499, detail='line_item_code is invalid')
+            raise HTTPException(status_code=400, detail='line_item_code is invalid')
         
         if str(data['markup_type']).lower() == 'percent':
             return
@@ -130,18 +130,18 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
 
         if int(data['free_limit']) <= 0:
-            raise HTTPException(status_code=499, detail='free_limit cannot be less than or equal to 0')
+            raise HTTPException(status_code=400, detail='free_limit cannot be less than or equal to 0')
         
         slabs = sorted(data.get('slabs', []), key=lambda slab: slab.get('lower_limit', 0))
 
         if any(slab.get('upper_limit', 0) <= slab.get('lower_limit', 0) for slab in slabs):
-            raise HTTPException(status_code=499, detail='slabs is invalid')
+            raise HTTPException(status_code=400, detail='slabs is invalid')
 
         if slabs[0] and (int(slabs[0]['lower_limit']) <= int(data['free_limit'])):
-            raise HTTPException(status_code=499, detail='slabs lower limit should be greater than free limit')
+            raise HTTPException(status_code=400, detail='slabs lower limit should be greater than free limit')
 
         if any(index > 0 and slab.get('lower_limit', 0) <= slabs[index - 1].get('upper_limit', 0) for index, slab in enumerate(slabs)):
-            raise HTTPException(status_code=499, detail='slabs is invalid')
+            raise HTTPException(status_code=400, detail='slabs is invalid')
 
     def validate_add_freight_line_item_data(self):
         data = self.data
@@ -150,16 +150,16 @@ class FclFreightRateBulkOperation(BaseModel):
 
         code_config = fcl_freight_charges_dict[data['code']]
         if not code_config:
-            raise HTTPException(status_code=499, detail='code is invalid')
+            raise HTTPException(status_code=400, detail='code is invalid')
         
         if data['units'] not in code_config['units']:
-            raise HTTPException(status_code=499, detail='unit is invalid')
+            raise HTTPException(status_code=400, detail='unit is invalid')
         
         if data['validity_end'] < datetime.now():
-            raise HTTPException(status_code=499, detail='validity_end cannot be less than current date')
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than current date')
         
         if data['validity_end'] < data['validity_start']:
-            raise HTTPException(status_code=499, detail='validity_end cannot be less than validity start')
+            raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
         
@@ -167,38 +167,38 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
 
         if data['free_days_type'] not in FREE_DAYS_TYPES:
-            raise HTTPException(status_code=499, detail='free_days_type is invalid')
+            raise HTTPException(status_code=400, detail='free_days_type is invalid')
         
         if int(data['free_limit']) <= 0:
-            raise HTTPException(status_code=499, detail='free_limit cannot be less than or equal to 0')
+            raise HTTPException(status_code=400, detail='free_limit cannot be less than or equal to 0')
         
         slabs = sorted(data.get('slabs', []), key=lambda slab: slab.get('lower_limit', 0))
 
         if any(slab.get('upper_limit', 0) <= slab.get('lower_limit', 0) for slab in slabs):
-            raise HTTPException(status_code=499, detail='slabs is invalid')
+            raise HTTPException(status_code=400, detail='slabs is invalid')
 
         if len(slabs)>0 and (int(slabs[0]['lower_limit']) <= int(data['free_limit'])):
-            raise HTTPException(status_code=499, detail='slabs lower limit should be greater than free limit')
+            raise HTTPException(status_code=400, detail='slabs lower limit should be greater than free limit')
 
         if any(index > 0 and slab.get('lower_limit', 0) <= slabs[index - 1].get('upper_limit', 0) for index, slab in enumerate(slabs)):
-            raise HTTPException(status_code=499, detail='slabs is invalid')
+            raise HTTPException(status_code=400, detail='slabs is invalid')
 
     def validate_update_weight_limit_data(self):
         data = self.data
 
         if int(data['free_limit']) <= 0:
-            raise HTTPException(status_code=499, detail='free_limit cannot be less than or equal to 0')
+            raise HTTPException(status_code=400, detail='free_limit cannot be less than or equal to 0')
         
         slabs = sorted(data.get('slabs', []), key=lambda slab: slab.get('lower_limit', 0))
 
         if any(slab.get('upper_limit', 0) <= slab.get('lower_limit', 0) for slab in slabs):
-            raise HTTPException(status_code=499, detail='slabs is invalid')
+            raise HTTPException(status_code=400, detail='slabs is invalid')
 
         if len(slabs)>0 and (int(slabs[0]['lower_limit']) <= int(data['free_limit'])):
-            raise HTTPException(status_code=499, detail='slabs lower limit should be greater than free limit')\
+            raise HTTPException(status_code=400, detail='slabs lower limit should be greater than free limit')\
 
         if any(index > 0 and slab.get('lower_limit', 0) <= slabs[index - 1].get('upper_limit', 0) for index, slab in enumerate(slabs)):
-            raise HTTPException(status_code=499, detail='slabs is invalid')
+            raise HTTPException(status_code=400, detail='slabs is invalid')
 
     def validate_extend_freight_rate_data(self):
         data = self.data
@@ -206,17 +206,17 @@ class FclFreightRateBulkOperation(BaseModel):
 
 
         if  [x for x in data['commodities'] if x not in ALL_COMMODITIES]!=[]:
-            raise HTTPException(status_code=499, detail='commodities is invalid')
+            raise HTTPException(status_code=400, detail='commodities is invalid')
         
         if  [x for x in data['container_sizes'] if x not in CONTAINER_SIZES]!=[]:
-            raise HTTPException(status_code=499, detail='container_sizes is invalid')
+            raise HTTPException(status_code=400, detail='container_sizes is invalid')
         if  [x for x in data['container_types'] if x not in CONTAINER_TYPES]!=[]:
-            raise HTTPException(status_code=499, detail='container_types is invalid')
+            raise HTTPException(status_code=400, detail='container_types is invalid')
         
         markup_types = ['net', 'percent']
 
         if data['markup_type'] not in markup_types:
-            raise HTTPException(status_code=499, detail='markup_type is invalid')
+            raise HTTPException(status_code=400, detail='markup_type is invalid')
 
         
     def validate_extend_freight_rate_to_icds_data(self):
@@ -225,13 +225,13 @@ class FclFreightRateBulkOperation(BaseModel):
         markup_types = ['net', 'percent']
 
         if data['markup_type'] not in markup_types:
-            raise HTTPException(status_code=499, detail='markup_type is invalid')
+            raise HTTPException(status_code=400, detail='markup_type is invalid')
     
         
         if self.data['origin_port_ids'] or self.data['destination_port_ids']:
             rate_id = data['filters']['id']
             if not rate_id:
-                raise HTTPException(status_code=499, detail='rate_id is not present')
+                raise HTTPException(status_code=400, detail='rate_id is not present')
             
             if not isinstance(rate_id, str):
                 rate_id = rate_id[0]
@@ -242,10 +242,10 @@ class FclFreightRateBulkOperation(BaseModel):
             
             # destination_icd_location = [t for t in locations if t['id']== rate.destination_port_id][0]['icd_ports']['id']
             # if [t for t in self.data['origin_port_ids']if t not in  origin_icd_location] != [None]:
-            #     raise HTTPException(status_code=499, detail='origin_icd_port_id is invalid')
+            #     raise HTTPException(status_code=400, detail='origin_icd_port_id is invalid')
             
             # if [t for t in self.data['destination_port_ids']if t not in  destination_icd_location] != None:
-            #     raise HTTPException(status_code=499, detail='destination_icd_port_id is invalid')
+            #     raise HTTPException(status_code=400, detail='destination_icd_port_id is invalid')
             
 
 
