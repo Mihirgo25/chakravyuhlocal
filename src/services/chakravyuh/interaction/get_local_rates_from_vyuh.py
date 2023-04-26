@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from configs.global_constants import HAZ_CLASSES
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
-from consumer_vyuhs.fcl_freight_local import FclFreightLocalVyuh
+from services.chakravyuh.consumer_vyuhs.fcl_freight_local import FclFreightLocalVyuh
 from micro_services.client import maps
 
 def get_local_rates_from_vyuh(request):        
