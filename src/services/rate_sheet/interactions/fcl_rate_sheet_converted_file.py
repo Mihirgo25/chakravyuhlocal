@@ -415,6 +415,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
     file_path = original_path
     edit_file = open(get_file_path(converted_file), 'w')
     last_row = []
+    invalidated = False
     with open(file_path, 'rb') as f:
         result = chardet.detect(f.read())
         encoding = result['encoding']
