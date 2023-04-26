@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from services.chakravyuh.migrating_estimated_rates import migration_of_countries
+from services.chakravyuh.migrated_estimated_local_rates import migrate_estimated_local_rates
 
 chakravyuh_router = APIRouter()
 
@@ -32,4 +33,8 @@ def create_fcl_local_estimated_rates(request: CreateFclLocalEstimatedRate, resp:
 @chakravyuh_router.post("/migrating")
 def migration():
     migration_of_countries()
+@chakravyuh_router.post("/migrat_locals")
+def migration_locals():
+    migrate_estimated_local_rates()
+
 
