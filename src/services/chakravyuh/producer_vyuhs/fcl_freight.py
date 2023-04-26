@@ -5,6 +5,17 @@ from configs.global_constants import DEAFULT_RATE_PRODUCER_METHOD
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
 class FclFreightVyuh():
+    '''
+        Rate Producer class to extend rates to nearby clusters and combination of rates
+
+        It Takes 3 sources into account for rate extensions
+            a. Existing Extension Rule Sets
+
+            b. Clusters Created by Cogo Envision using predections
+
+            c. Service lanes from CogoMaps
+    '''
+    
     def __init__(self, rate):
         self.rate = rate
         self.validity_start = rate['validity_start']
@@ -36,11 +47,9 @@ class FclFreightVyuh():
 
         return extension_rule_set_rates + service_lane_rates + envision_cluster_rates
     
-    def get_eligible_validities_to_create(self, requirement):
+    def get_existing_system_rates(self, requirement):
         from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-
         next_two_days = (datetime.now() - timedelta(days=2)).date()
-
         existing_system_rates_query = FclFreightRate.select(
             FclFreightRate.id,
             FclFreightRate.mode,
@@ -59,8 +68,143 @@ class FclFreightVyuh():
             FclFreightRate.last_rate_available_date > next_two_days,
            ~FclFreightRate.rate_not_available_entry
         )
-        
         existing_system_rates = jsonable_encoder(list(existing_system_rates_query.dicts()))
+        return existing_system_rates
+    
+    def get_validities_to_create_for_minimum(self, current_rate_price, rate_validity, to_add_validity_start, to_add_validity_end):
+        validities_to_create = []
+        line_items = rate_validity['line_items']
+        current_validity_price = self.get_prices_sum(line_items, 'USD')
+        validity_start = datetime.fromisoformat(rate_validity['validity_start']).date()
+        validity_end = datetime.fromisoformat(rate_validity['validity_end']).date()
+        if current_rate_price > current_validity_price:
+            if (to_add_validity_start < validity_start and to_add_validity_end < validity_start) or (to_add_validity_start > validity_end and to_add_validity_end > validity_end):
+                """
+                Case 1: No overlap
+                  ---------- 
+                              -----------
+                            OR
+                              -----------
+                  ----------
+                """
+                validities_to_create.append({
+                    'validity_start': to_add_validity_start,
+                    'validity_end': to_add_validity_end
+                })
+            if validity_start > to_add_validity_start and validity_end < to_add_validity_end:
+                """
+                Case 2: 
+                Current Validity :     -------------
+                New Validity     :  ---------------------
+                """
+                start_validity = {
+                    'validity_start': to_add_validity_start,
+                    'validity_end': validity_start
+                }
+                end_validity = {
+                    'validity_start': validity_end,
+                    'validity_end': to_add_validity_end
+                }
+                validities_to_create =  validities_to_create + [start_validity, end_validity]
+            elif validity_start > to_add_validity_start and validity_end > to_add_validity_end:
+                """
+                Case 3: 
+                Current Validity :     -------------
+                New Validity     :  ---------
+                """
+                validities_to_create.append(                                    {
+                    'validity_start': to_add_validity_start,
+                    'validity_end': validity_start
+                    })
+            elif validity_end > to_add_validity_start and validity_end < to_add_validity_end:
+                """
+                Case 4: 
+                Current Validity :     -------------
+                New Validity     :           ---------------
+                """
+                validities_to_create.append({
+                    'validity_start': validity_end,
+                    'validity_end': to_add_validity_end
+                })
+
+            elif current_rate_price < current_validity_price: # Always overide with new price of its smaller
+                validities_to_create.append({
+                    'validity_start': to_add_validity_start,
+                    'validity_end': to_add_validity_end
+                })
+        return validities_to_create
+    
+    def get_validities_to_create_for_maximum(self, current_rate_price, rate_validity, to_add_validity_start, to_add_validity_end):
+        validities_to_create = []
+        line_items = rate_validity['line_items']
+        current_validity_price = self.get_prices_sum(line_items, 'USD')
+        validity_start = datetime.fromisoformat(rate_validity['validity_start']).date()
+        validity_end = datetime.fromisoformat(rate_validity['validity_end']).date()
+        if current_rate_price < current_validity_price: # Check conditions when new price is lower
+            if (to_add_validity_start < validity_start and to_add_validity_end < validity_start) or (to_add_validity_start > validity_end and to_add_validity_end > validity_end):
+                '''
+                Case 1: No overlap
+                  ---------- 
+                              -----------
+                            OR
+                              -----------
+                  ----------
+                '''
+                validities_to_create.append({
+                    'validity_start': to_add_validity_start,
+                    'validity_end': to_add_validity_end
+                })
+            elif validity_start > to_add_validity_start and validity_end < to_add_validity_end:
+                """
+                Case 2: 
+                Current Validity :     -------------
+                New Validity     :  ---------------------
+                """
+                start_validity = {
+                    'validity_start': to_add_validity_start,                                    
+                    'validity_end': validity_start
+                }
+                end_validity = {
+                    'validity_start': validity_end,
+                    'validity_end': to_add_validity_end
+                }
+                validities_to_create =  validities_to_create + [start_validity, end_validity]
+            
+            elif validity_start > to_add_validity_start and validity_end > to_add_validity_end:
+                """
+                Case 3: 
+                Current Validity :     -------------
+                New Validity     :  ---------
+                """
+                validities_to_create.append(
+                    {
+                    'validity_start': to_add_validity_start,
+                    'validity_end': validity_start
+                    }
+                )
+            elif validity_end > to_add_validity_start and validity_end < to_add_validity_end:
+                """
+                Case 4: 
+                Current Validity :     -------------
+                New Validity     :           ---------------
+                """
+                validities_to_create.append({
+                    'validity_start': validity_end,
+                    'validity_end': to_add_validity_end
+                })
+            
+        elif current_rate_price > current_validity_price: # Always overide with new price of its greater
+            validities_to_create.append({
+                'validity_start': to_add_validity_start,
+                'validity_end': to_add_validity_end
+            })
+
+        return validities_to_create
+
+    
+    def get_eligible_validities_to_create(self, requirement):
+
+        existing_system_rates = self.get_existing_system_rates(requirement)
 
         to_add_validity_start = self.validity_start
         to_add_validity_end = self.validity_end
@@ -76,137 +220,34 @@ class FclFreightVyuh():
 
         validities_to_create = []
 
-
         for esr in existing_system_rates:
             rate_validities = esr['validities'] or []
             if rate_validities and esr['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID and esr['shipping_line_id'] == requirement['shipping_line_id'] and not esr['cogo_entity_id']:
                 cogo_freight_rates_for_current_sl.append(esr)
 
                 for rate_validity in rate_validities:
-                    line_items = rate_validity['line_items']
-                    current_validity_price = self.get_prices_sum(line_items, 'USD')
-                    validity_start = datetime.fromisoformat(rate_validity['validity_start']).date()
-                    validity_end = datetime.fromisoformat(rate_validity['validity_end']).date()
                     if DEAFULT_RATE_PRODUCER_METHOD == 'minimum':
-                        if current_rate_price > current_validity_price:
-                            if (to_add_validity_start < validity_start and to_add_validity_end < validity_start) or (to_add_validity_start > validity_end and to_add_validity_end > validity_end):
-                                """
-                                Case 1: No overlap
-                                  ---------- 
-                                              -----------
-                                            OR
-                                              -----------
-                                  ----------
-                                """
-                                validities_to_create.append({
-                                    'validity_start': to_add_validity_start,
-                                    'validity_end': to_add_validity_end
-                                })
-                            if validity_start > to_add_validity_start and validity_end < to_add_validity_end:
-                                """
-                                Case 2: 
-                                Current Validity :     -------------
-                                New Validity     :  ---------------------
-                                """
-                                start_validity = {
-                                    'validity_start': to_add_validity_start,
-                                    'validity_end': validity_start
-                                }
-                                end_validity = {
-                                    'validity_start': validity_end,
-                                    'validity_end': to_add_validity_end
-                                }
-                                validities_to_create =  validities_to_create + [start_validity, end_validity]
-                            elif validity_start > to_add_validity_start and validity_end > to_add_validity_end:
-                                """
-                                Case 3: 
-                                Current Validity :     -------------
-                                New Validity     :  ---------
-                                """
-                                validities_to_create.append(                                    {
-                                    'validity_start': to_add_validity_start,
-                                    'validity_end': validity_start
-                                    })
-                            elif validity_end > to_add_validity_start and validity_end < to_add_validity_end:
-                                """
-                                Case 4: 
-                                Current Validity :     -------------
-                                New Validity     :           ---------------
-                                """
-                                validities_to_create.append({
-                                    'validity_start': validity_end,
-                                    'validity_end': to_add_validity_end
-                                })
-
-                        elif current_rate_price < current_validity_price: # Always overide with new price of its smaller
-                            validities_to_create.append({
-                                'validity_start': to_add_validity_start,
-                                'validity_end': to_add_validity_end
-                            })
+                        validities_to_create = self.get_validities_to_create_for_minimum(
+                            current_rate_price,
+                            rate_validity,
+                            to_add_validity_start,
+                            to_add_validity_end
+                        )
                     if DEAFULT_RATE_PRODUCER_METHOD == 'maximum':
-                        if current_rate_price < current_validity_price: # Check conditions when new price is lower
-                            if (to_add_validity_start < validity_start and to_add_validity_end < validity_start) or (to_add_validity_start > validity_end and to_add_validity_end > validity_end):
-                                '''
-                                Case 1: No overlap
-                                  ---------- 
-                                              -----------
-                                            OR
-                                              -----------
-                                  ----------
-                                '''
-                                validities_to_create.append({
-                                    'validity_start': to_add_validity_start,
-                                    'validity_end': to_add_validity_end
-                                })
-                            elif validity_start > to_add_validity_start and validity_end < to_add_validity_end:
-                                """
-                                Case 2: 
-                                Current Validity :     -------------
-                                New Validity     :  ---------------------
-                                """
-                                start_validity = {
-                                    'validity_start': to_add_validity_start,                                    
-                                    'validity_end': validity_start
-                                }
-                                end_validity = {
-                                    'validity_start': validity_end,
-                                    'validity_end': to_add_validity_end
-                                }
-                                validities_to_create =  validities_to_create + [start_validity, end_validity]
-                            
-                            elif validity_start > to_add_validity_start and validity_end > to_add_validity_end:
-                                """
-                                Case 3: 
-                                Current Validity :     -------------
-                                New Validity     :  ---------
-                                """
-                                validities_to_create.append(
-                                    {
-                                    'validity_start': to_add_validity_start,
-                                    'validity_end': validity_start
-                                    }
-                                )
-                            elif validity_end > to_add_validity_start and validity_end < to_add_validity_end:
-                                """
-                                Case 4: 
-                                Current Validity :     -------------
-                                New Validity     :           ---------------
-                                """
-                                validities_to_create.append({
-                                    'validity_start': validity_end,
-                                    'validity_end': to_add_validity_end
-                                })
+                        validities_to_create = self.get_validities_to_create_for_maximum(
+                            current_rate_price,
+                            rate_validity,
+                            to_add_validity_start,
+                            to_add_validity_end
+                        )
 
-                        elif current_rate_price > current_validity_price: # Always overide with new price of its greater
-                            validities_to_create.append({
-                                'validity_start': to_add_validity_start,
-                                'validity_end': to_add_validity_end
-                            })
-
-                break # there will always be a single rate matching this combination
+                break # There will always be a single rate matching this combination
         return validities_to_create
     
     def create_fcl_freight_rate(self, rate_to_create):
+        '''
+            Creates rates for single combination of rate extension
+        '''
         from celery_worker import create_fcl_freight_rate_delay
         validity_start = self.validity_start
         validity_end = self.validity_end
@@ -225,6 +266,9 @@ class FclFreightVyuh():
 
 
     def extend_rate(self):
+        '''
+            Rate producer function to extend rates to nearby clusters and combination of rates
+        '''
         if self.rate['mode'] not in EXTENSION_ENABLED_MODES:
             return True
 
