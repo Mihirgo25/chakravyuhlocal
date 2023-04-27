@@ -7,8 +7,9 @@ from fastapi import HTTPException
 
 from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
 from services.ftl_freight_rate.interaction.create_truck import create_truck_data
+from services.ftl_freight_rate.interaction.update_truck import update_truck_data
 
-from services.ftl_freight_rate.ftl_params import CreateTruck
+from services.ftl_freight_rate.ftl_params import *
 
 ftl_freight_router = APIRouter()
 
@@ -42,6 +43,22 @@ def create_truck(request: CreateTruck, resp: dict = Depends(authorize_token)):
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_truck_data(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@ftl_freight_router.post("/update_truck")
+def create_truck(request: UpdateTruck, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = update_truck_data(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
