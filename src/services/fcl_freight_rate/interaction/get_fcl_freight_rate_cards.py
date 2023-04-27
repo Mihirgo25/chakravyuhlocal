@@ -18,6 +18,10 @@ import sentry_sdk
 def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
     FclFreightRate.id,
+    FclFreightRate.origin_continent_id,
+    FclFreightRate.origin_trade_id,
+    FclFreightRate.destination_continent_id,
+    FclFreightRate.destination_trade_id,
     FclFreightRate.validities,
     FclFreightRate.container_size,
     FclFreightRate.container_type,
@@ -843,9 +847,10 @@ def get_fcl_freight_rate_cards(requirements):
             freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
         freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
-        freight_rates = build_response_list(freight_rates, requirements)
+        
         fcl_freight_vyuh = FclFreightVyuh(freight_rates)
         freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+        freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates
         }
