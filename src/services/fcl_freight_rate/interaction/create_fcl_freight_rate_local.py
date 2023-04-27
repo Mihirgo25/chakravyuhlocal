@@ -91,7 +91,7 @@ def execute_transaction_code(request):
     try:
       fcl_freight_local.save()
     except Exception as e:
-      raise HTTPException(status_code=403, detail=str(e))
+      raise HTTPException(status_code=400, detail=str(e))
 
 
     create_audit(request, fcl_freight_local.id)
