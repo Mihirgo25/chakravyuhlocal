@@ -4,13 +4,13 @@ from peewee import fn
 class FclFreightVyuh():
     def __init__(self, rates: list = []):
         self.rates = rates
+        self.require
     
     def check_fulfilment_ratio(self):
         return 100
 
-    def apply_dynamic_pricing(self):
-        print(self.rates)
-        return self.rates
+    def set_dynamic_pricing(self):
+        return True
 
     def get_eligible_estimated_rate(self,request):
         origin_location_ids = [
@@ -290,3 +290,9 @@ class FclFreightVyuh():
         if result["shipping_line"] > 1 and result["commodity"] == 0:
             return shipping_line.dicts().get()
         return {}
+    def get_rate_estimation_params():
+        print('kl')
+
+    def apply_dynamic_pricing(self):
+        
+        return self.rates
