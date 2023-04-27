@@ -33,7 +33,8 @@ def create_fcl_local_estimated_rates(request: CreateFclLocalEstimatedRate, resp:
 @chakravyuh_router.post("/migrating")
 def migration():
     migration_of_countries()
-@chakravyuh_router.post("/migrat_locals")
+    
+@chakravyuh_router.post("/migrate_locals")
 def migration_locals():
     migrate_estimated_local_rates()
 

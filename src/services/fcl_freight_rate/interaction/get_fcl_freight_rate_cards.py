@@ -170,7 +170,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
             'trade_type' : trade_type,
             'container_size' : rate.get('container_size'),
             'container_type' : rate.get('container_type'),
-            'commodity' : rate.get('commodity'),
+            'commodity' : rate.get('commodity') if rate.get('commodity') in HAZ_CLASSES else None,
             'shipping_line_id':rate.get('shipping_line_id')
         }
         if local_type == 'origin_local':
@@ -403,7 +403,7 @@ def add_local_objects(freight_query_result, response_object, request):
     } if 'origin_local' in freight_query_result and freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
-        response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id'),
+        response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id')
         if freight_query_result['destination_local'].get('service_provider_id'):
             response_object['destination_local']['service_provider_id'] = freight_query_result['destination_local']['service_provider_id']
         else:

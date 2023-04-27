@@ -19,6 +19,7 @@ class FclFreightLocalVyuh():
             FclFreightRateLocalEstimation.trade_type == request.get('trade_type'),
             FclFreightRateLocalEstimation.container_size == request.get("container_size"),
             FclFreightRateLocalEstimation.container_type == request.get("container_type"),
+            FclFreightRateLocalEstimation.commodity == request.get('commodity')
         )
         estimated_rate = self.get_most_eligible_local_estimated_rate(estimated_rate_query, request)
         return estimated_rate
@@ -31,15 +32,22 @@ class FclFreightLocalVyuh():
         else:
             locations_description = []
 
+        if len(locations_description) > 0:
+            trade_id =  locations_description[0].get('trade_id')
+            continent_id = locations_description[0].get('continent_id')
+        else:
+            trade_id = None
+            continent_id = None
+
         country_wise_query = query.where(
             FclFreightRateLocalEstimation.location_id == request['country_id']
         )
         trade_wise_query = query.where(
-            FclFreightRateLocalEstimation.location_id == locations_description[0].get('trade_id')
+            FclFreightRateLocalEstimation.location_id == trade_id
         )
 
         continent_wise_query = query.where(
-            FclFreightRateLocalEstimation.location_id == locations_description[0].get('continent_id')
+            FclFreightRateLocalEstimation.location_id == continent_id
         )
         count_query = (
             query.select(
@@ -54,7 +62,7 @@ class FclFreightLocalVyuh():
                 fn.count(FclFreightRateLocalEstimation.id)
                 .filter(
                     (
-                        FclFreightRateLocalEstimation.location_id == locations_description[0].get('trade_id')
+                        FclFreightRateLocalEstimation.location_id == trade_id
                     )
                 )
                 .over()
@@ -62,7 +70,7 @@ class FclFreightLocalVyuh():
                 fn.count(FclFreightRateLocalEstimation.id)
                 .filter(
                     (
-                        FclFreightRateLocalEstimation.location_id == locations_description[0].get('continent_id')
+                        FclFreightRateLocalEstimation.location_id == continent_id
                     )
                 )
                 .over()
