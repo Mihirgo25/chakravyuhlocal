@@ -32,6 +32,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     destination_location = BinaryJSONField(null=True)
     destination_location_type = CharField(null=True)
     destination_port_id = UUIDField(index=True, null=True)
+    destination_port = BinaryJSONField(null=True)
     destination_trade_id = UUIDField(index=True, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_continent_id = UUIDField(index=True, null=True)
@@ -41,6 +42,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     origin_location = BinaryJSONField(null=True)
     origin_location_type = CharField(null=True)
     origin_port_id = UUIDField(index=True, null=True)
+    origin_port = BinaryJSONField(null=True)
     origin_trade_id = UUIDField(index=True, null=True)
     price = IntegerField(index=True, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
@@ -55,7 +57,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateSeasonalSurcharge, self).save(*args, **kwargs)
@@ -63,40 +65,37 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     class Meta:
         table_name = 'fcl_freight_rate_seasonal_surcharges'
 
-    def validate_origin_location(self):
-        origin_location = maps.list_locations({'filters' : {'id': str(self.origin_location_id)}})['list']
-        if origin_location:
-            origin_location = origin_location[0]
-            if origin_location.get('type') in LOCATION_TYPES:
-                self.origin_port_id = origin_location.get('id', None)
-                self.origin_country_id = origin_location.get('country_id', None)
-                self.origin_trade_id = origin_location.get('trade_id', None)
-                self.origin_continent_id = origin_location.get('continent_id', None)
-                self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
-                self.origin_location = {key:value for key,value in origin_location.items() if key in ['id','name','display_name','port_code','type']}
-            else:
-                raise HTTPException(status_code=400, detail="Origin location type is not valid")
-        else:
-            raise HTTPException(status_code=400, detail="Origin location is not valid")
+    def validate_location(self):
+        locations = maps.list_locations({'filters':{'id': [str(self.origin_location_id), str(self.destination_location_id)]}})['list']
 
-    def validate_destination_location(self):
-        destination_location = maps.list_locations({'filters' : {'id': str(self.destination_location_id)}})['list']
-        if destination_location:
-            destination_location = destination_location[0]
-            if destination_location.get('type') in LOCATION_TYPES:
-                self.destination_port_id = destination_location.get('id', None)
-                self.destination_country_id = destination_location.get('country_id', None)
-                self.destination_trade_id = destination_location.get('trade_id', None)
-                self.destination_continent_id = destination_location.get('continent_id', None)
-                self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
-                self.destination_location = {key:value for key,value in destination_location.items() if key in ['id','name','display_name','port_code','type']}
+        for location in locations:
+            if str(location['id'])==str(self.origin_location_id):
+                origin_location = location
+                if origin_location.get('type') in LOCATION_TYPES:
+                    self.origin_port_id = origin_location.get('id', None)
+                    self.origin_country_id = origin_location.get('country_id', None)
+                    self.origin_trade_id = origin_location.get('trade_id', None)
+                    self.origin_continent_id = origin_location.get('continent_id', None)
+                    self.origin_location_type = 'port' if origin_location.get('type') == 'seaport' else origin_location.get('type')
+                    self.origin_location = {key:value for key,value in origin_location.items() if key in ['id','name','display_name','port_code','type']}
+                else:
+                    raise HTTPException(status_code=400, detail="Origin location type is not valid")
+            elif str(location['id'])==str(self.destination_location_id):
+                destination_location = location
+                if destination_location.get('type') in LOCATION_TYPES:
+                    self.destination_port_id = destination_location.get('id', None)
+                    self.destination_country_id = destination_location.get('country_id', None)
+                    self.destination_trade_id = destination_location.get('trade_id', None)
+                    self.destination_continent_id = destination_location.get('continent_id', None)
+                    self.destination_location_type = 'port' if destination_location.get('type') == 'seaport' else destination_location.get('type')
+                    self.destination_location = {key:value for key,value in destination_location.items() if key in ['id','name','display_name','port_code','type']}
+                else:
+                    raise HTTPException(status_code=400, detail="Destination location type is not valid")
             else:
-                raise HTTPException(status_code=400, detail="Destination location type is not valid")
-        else:
-            raise HTTPException(status_code=400, detail="Destination location is not valid")
+                raise HTTPException(status_code=400, detail="Location not found")
 
     def validate_shipping_line(self):
-        shipping_line = get_shipping_line(str(self.shipping_line_id))
+        shipping_line = get_shipping_line(id=str(self.shipping_line_id))
         if shipping_line:
             shipping_line = shipping_line[0]
             shipping_line['id'] = str(shipping_line['id'])
@@ -107,7 +106,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             raise HTTPException(status_code=400, detail="Shipping line is not valid")
 
     def validate_service_provider(self):
-        service_provider = get_service_provider(str(self.service_provider_id))
+        service_provider = get_organization(id=str(self.service_provider_id))
         if service_provider:
             service_provider = service_provider[0]
             service_provider['id'] = str(service_provider['id'])
@@ -126,18 +125,18 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         if self.container_type and self.container_type in CONTAINER_TYPES:
             return True
         return False
-    
+
     def validate_code(self):
         fcl_freight_seasonal_charges = FCL_FREIGHT_SEASONAL_CHARGES
 
         if self.code and self.code in fcl_freight_seasonal_charges:
             return True
         return False
-    
+
     def validate_validity(self):
         if self.validity_start and self.validity_end:
             if self.validity_start > self.validity_end:
-                raise HTTPException(status_code=499, detail="Validity start date should be less than validity end date")
+                raise HTTPException(status_code=400, detail="Validity start date should be less than validity end date")
 
     def is_active(self):
         if self.validity_start and self.validity_end:
@@ -169,17 +168,16 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
                 "remarks": self.remarks
             }
         }
-    
+
     def validate(self):
-        self.validate_origin_location()
-        self.validate_destination_location()
+        self.validate_location()
         self.validate_shipping_line()
         self.validate_service_provider()
         if not self.validate_container_size():
-            raise HTTPException(status_code=499, detail="Invalid container size")
+            raise HTTPException(status_code=400, detail="Invalid container size")
         if not self.validate_container_type():
-            raise HTTPException(status_code=499, detail="Invalid container type")
+            raise HTTPException(status_code=400, detail="Invalid container type")
         if not self.validate_code():
-            raise HTTPException(status_code=499, detail="Invalid code")
+            raise HTTPException(status_code=400, detail="Invalid code")
         self.validate_validity()
         return True

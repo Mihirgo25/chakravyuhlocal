@@ -24,12 +24,8 @@ def create_fcl_freight_rate_commodity_surcharge(request):
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
 
-    with db.atomic() as transaction:
-        try:
-          return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     row = {
@@ -63,7 +59,7 @@ def execute_transaction_code(request):
     commodity_surcharge.procured_by_id = request.get('procured_by_id')
 
     if not commodity_surcharge.save():
-        raise HTTPException(status_code=422, detail="Commodity Surcharge not saved")
+        raise HTTPException(status_code=500, detail="Commodity Surcharge not saved")
  
     update_freight_objects_for_commodity_surcharge.apply_async(kwargs={'surcharge_object':commodity_surcharge},queue='low')
 

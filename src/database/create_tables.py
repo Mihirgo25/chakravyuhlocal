@@ -9,16 +9,17 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclF
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
-from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
-from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
+from database.temp_audit_table import TempAudit
+from services.envision.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([])
+        db.create_tables([FclRatePredictionFeedback])
         db.close()
         print("created table")
     except:

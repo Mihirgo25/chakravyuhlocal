@@ -1,6 +1,7 @@
 from configs.env import RUBY_AUTHTOKEN,RUBY_AUTHSCOPE,RUBY_AUTHSCOPEID
 from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
+from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 
 class CommonApiClient:
     def __init__(self):
@@ -12,38 +13,17 @@ class CommonApiClient:
             "Accept": "application/json",
         })
 
-    def list_operators(self,data={}):
-        return self.client.request('GET','list_operators',data)
-
-    def list_partners(self, data):
-        return self.client.request('GET', 'list_partners', data)
-
-    def create_sailing_schedule_port_pair_coverage(self, data = {}):
-        return self.client.request('POST','create_sailing_schedule_port_pair_coverage',data)
-
     def get_money_exchange_for_fcl(self, data = {}):
-        return self.client.request('GET','get_money_exchange_for_fcl', data)
-
-    def list_spot_searches(self, data = {}):
-        return self.client.request('GET', 'list_spot_searches', data)
-
-    def list_checkouts(self, data = {}):
-        return self.client.request('GET', 'list_checkouts', data)
-
-    def get_spot_search(self, data = {}):
-        return self.client.request('GET', 'get_spot_search', data)
+        resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
+        if isinstance(resp,dict) and resp.get('status_code') and resp.get('status_code')==408:
+            resp = get_money_exchange_for_fcl_fallback(**data)
+        return resp
 
     def create_communication(self, data = {}):
-        return self.client.request('POST','create_communication',data)
+        return self.client.request('POST','communication/create_communication',data, timeout=60)
 
-    def bulk_update_shipment_quotations(self, data = {}):
-        return self.client.request('GET','bulk_update_shipment_quotations',data)
+    def fcl_freight_rates_to_cogo_assured(self,data={}):
+        return self.client.request('POST','update_fcl_rates_to_cogo_assured',data, timeout=60)
 
-    def get_shipment(self, data = {}):
-        return self.client.request('GET','get_shipment',data)
-
-    def list_money_currencies(self,data={}):
-        return self.client.request('GET','list_money_currencies',data)
-    
-    def list_users(self, data = {}):
-        return self.client.request('GET', 'list_users', data)
+    def update_contract_service_task(self, data={}):
+        return self.client.request('POST', 'update_contract_service_task', data)

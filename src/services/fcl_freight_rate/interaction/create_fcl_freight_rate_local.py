@@ -3,7 +3,6 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
-from celery_worker import fcl_freight_local_data_updation
 
 
 def create_audit(request, fcl_freight_local_id):
@@ -19,21 +18,19 @@ def create_audit(request, fcl_freight_local_id):
         sourced_by_id = request.get('sourced_by_id'),
         procured_by_id = request.get('procured_by_id'),
         object_id = fcl_freight_local_id,
+        source = request.get('source'),
         object_type = 'FclFreightRateLocal'
     )
 
 def create_fcl_freight_rate_local(request):
-    object_type = 'Fcl_Freight_Rate_Local' 
-    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
+    object_type = 'Fcl_Freight_Rate_Local'
+    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    with db.atomic() as transaction:
-        try:
-          return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    from celery_worker import fcl_freight_local_data_updation
     if not request.get('source'):
         request['source'] = 'rms_upload'
 
@@ -53,8 +50,8 @@ def execute_transaction_code(request):
     fcl_freight_local = FclFreightRateLocal.select().where(
         FclFreightRateLocal.port_id == request.get('port_id'),
         FclFreightRateLocal.trade_type ==request.get('trade_type'),
-        ((FclFreightRateLocal.main_port_id == request.get('main_port_id')) if request.get('main_port_id') else (FclFreightRateLocal.id.is_null(False))),
-        FclFreightRateLocal.container_size==request.get('container_size'),
+        FclFreightRateLocal.main_port_id == request.get('main_port_id'),
+        FclFreightRateLocal.container_size== request.get('container_size'),
         FclFreightRateLocal.container_type==request.get('container_type'),
         FclFreightRateLocal.commodity == request.get('commodity'),
         FclFreightRateLocal.shipping_line_id==request.get('shipping_line_id'),
@@ -64,29 +61,45 @@ def execute_transaction_code(request):
         fcl_freight_local = FclFreightRateLocal(**row)
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
+        fcl_freight_local.data={}
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
-    fcl_freight_local.data = request.get('data')
+
+    new_free_days = {}
+
+    if 'detention' in request['data']:
+        new_free_days['detention'] = {'slabs': [] } | (request['data']['detention'] or {})
+
+    if 'demurrage' in request['data']:
+        new_free_days['demurrage'] = {'slabs': [] } | (request['data']['demurrage'] or {})
+
+    if 'plugin' in request['data']:
+        new_free_days['plugin'] = {'slabs': [] } | (request['data']['plugin'] or {})
 
     if request['data'].get('line_items'):
-        fcl_freight_local.data = fcl_freight_local.data | {'line_items': request['data']['line_items']}
+        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data']['line_items'] }
+    if 'rate_sheet_validation' not in request:
+        fcl_freight_local.validate_before_save()
+        fcl_freight_local.update_special_attributes(new_free_days)
+    else:
+        fcl_freight_local.update_special_attributes(new_free_days, True)
 
-    fcl_freight_local.validate_before_save()
-    
-    local_updations(fcl_freight_local, request)
+    fcl_freight_local.rate_not_available_entry = False
+    fcl_freight_local.update_freight_objects()
+    create_free_days(fcl_freight_local, request)
 
     try:
       fcl_freight_local.save()
     except Exception as e:
-      raise HTTPException(status_code=403, detail='fcl freight rate local did not save')
-    
+      raise HTTPException(status_code=403, detail=str(e))
+
 
     create_audit(request, fcl_freight_local.id)
-    
+
     fcl_freight_local_data_updation.apply_async(kwargs={"local_object":fcl_freight_local,"request":request},queue='low')
 
-    return {"id": fcl_freight_local.id}
+    return {"id": fcl_freight_local.id }
 
-def local_updations(fcl_freight_local,request):
+def create_free_days(fcl_freight_local,request):
     if request['data'].get('detention'):
         detention_obj = {}
         detention_obj['location_id'] = request['port_id']
@@ -98,7 +111,7 @@ def local_updations(fcl_freight_local,request):
         detention_obj = detention_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         detention = create_fcl_freight_rate_free_day(detention_obj)
-        fcl_freight_local.detention_id = detention['id'] 
+        fcl_freight_local.detention_id = detention['id']
 
     if request['data'].get('demurrage'):
         demurrage_obj = {}
@@ -127,11 +140,7 @@ def local_updations(fcl_freight_local,request):
         plugin = create_fcl_freight_rate_free_day(plugin_obj)
         fcl_freight_local.plugin_id = plugin['id']
 
-
-    fcl_freight_local.update_special_attributes()
-    fcl_freight_local.update_freight_objects()
     return True
 
 
 
-  

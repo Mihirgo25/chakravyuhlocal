@@ -1,13 +1,13 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_weight_limit import FclFreightRateWeightLimit
 from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from math import ceil 
-import concurrent.futures, json
+import json
 
 possible_direct_filters = ['origin_port_id', 'origin_country_id', 'origin_trade_id','origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'container_size', 'container_type', 'is_slabs_missing']
 possible_indirect_filters = []
 
 def list_fcl_freight_rate_weight_limits(filters = {}, page_limit = 10, page = 1, pagination_data_required = True):
-  query = get_query(page, page_limit)
+  query = FclFreightRateWeightLimit.select().order_by(FclFreightRateWeightLimit.updated_at.desc(nulls = 'LAST'))
 
   if filters:
     if type(filters) != dict:
@@ -16,23 +16,13 @@ def list_fcl_freight_rate_weight_limits(filters = {}, page_limit = 10, page = 1,
     query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateWeightLimit)
     query = apply_indirect_filters(query, filters)
 
-  # with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-  #     futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required) for method_name in ['get_data', 'get_pagination_data']]
-  #     results = {}
-  #     for future in futures:
-  #         result = future.result()
-  #         results.update(result)
-      
-  data = get_data(query)['get_data']
-  pagination_data = get_pagination_data(data, page, page_limit, pagination_data_required)['get_pagination_data']
-
-  return { 'list': data } | (pagination_data)
-
-def get_query(page, page_limit):
-    query = FclFreightRateWeightLimit.select().order_by(FclFreightRateWeightLimit.updated_at.desc(nulls = 'LAST')).paginate(page, page_limit)
-    return query
+  pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+  query = query.paginate(page, page_limit)
+  data = get_data(query)
   
-def get_data(query):#, page, page_limit, pagination_data_required):
+  return { 'list': data } | (pagination_data)
+  
+def get_data(query):
   query = query.select(
         FclFreightRateWeightLimit.id,
         FclFreightRateWeightLimit.origin_location_id,
@@ -52,20 +42,21 @@ def get_data(query):#, page, page_limit, pagination_data_required):
         )
 
   data = list(query.dicts())
-  return {'get_data':data}
+  return data
 
 
-def get_pagination_data(data, page, page_limit, pagination_data_required):
+def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
-        return {'get_pagination_data':{}} 
+        return {}
 
+    total_count = query.count()
     params = {
       'page': page,
-      'total': ceil(len(data)/page_limit),
-      'total_count': len(data),
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
       'page_limit': page_limit
     }
-    return {'get_pagination_data':params}
+    return params
 
 def apply_indirect_filters(query, filters):
     for key in filters:

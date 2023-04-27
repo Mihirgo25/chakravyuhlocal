@@ -1,13 +1,13 @@
 from operator import attrgetter
 
 
-def get_filters(filters: dict, query, model, ilike_string: str):
+def get_filters(filters: dict, query, model):
     filter_keys = list(filters.keys())
 
     for filter_key in filter_keys:
         filter_value = filters[filter_key]
 
-        if isinstance(filter_value, str):
+        if isinstance(filter_value, str) or isinstance(filter_value, int):
             if filter_value != "":
                 query = query.where(attrgetter(filter_key)(model) == filter_value)
         elif isinstance(filter_value, bool):

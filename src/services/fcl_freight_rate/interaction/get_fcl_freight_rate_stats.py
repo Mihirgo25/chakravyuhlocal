@@ -8,7 +8,7 @@ def get_fcl_freight_rate_stats(request):
     response = {}
     for stats_type in request["stats_types"]:
         try:
-            response[stats_type] = eval(f"get_{stats_type}_stats({request})")
+            response[stats_type] = eval(f"get_{stats_type}_stats(request)")
         except:
             response[stats_type] = None
 
@@ -24,7 +24,7 @@ def get_tech_ops_dashboard_stats(request):
             'completed_at', FclFreightRateTask.completed_at
         )).alias("tats")
         ).where(FclFreightRateTask.status == 'completed').where(
-        FclFreightRateTask.completed_at >= datetime.strptime(request['validity_start'],'%Y-%m-%d') and FclFreightRateTask.completed_at <= datetime.strptime(request['validity_end'],'%Y-%m-%d') + timedelta(days = 1)
+        FclFreightRateTask.completed_at >= request['validity_start'].date(), FclFreightRateTask.completed_at <= (request['validity_end'].date() + timedelta(days = 1))
         ).group_by(FclFreightRateTask.completed_by_id)
 
     stats = list(tasks.dicts())

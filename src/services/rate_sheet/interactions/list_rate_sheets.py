@@ -6,16 +6,16 @@ import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
 from micro_services.client import *
-
+from database.rails_db import get_organization ,get_user
+from datetime import datetime, timedelta
 from peewee import *
 from database.db_session import rd
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_last_line
-from datetime import datetime
+from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_current_processing_line
+from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_processed_percent
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'agent_id', 'service_provider_id', 'status', 'service_name', 'serial_id', 'cogo_entity_id']
 POSSIBLE_INDIRECT_FILTERS = ['performed_by_id', 'partner_id']
 
-processed_percent_hash = "total_line"
 
 
 
@@ -28,7 +28,7 @@ def is_valid_uuid(val):
 
 
 def apply_direct_filters(query, filters):
-    query = get_filters(filters, query, RateSheet, "")
+    query = get_filters(filters, query, RateSheet)
     return query
 
 
@@ -56,7 +56,14 @@ def get_direct_indirect_filters(filters):
     indirect_filters = {}
     for key, val in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS:
-            direct_filters[key] = val
+            if key == "serial_id":
+                try:
+                    val = int(val)
+                    direct_filters[key] = val
+                except:
+                    direct_filters[key] = 0
+            else:
+                direct_filters[key] = val
         if key in POSSIBLE_INDIRECT_FILTERS:
             indirect_filters[key] = val
     for type in [
@@ -86,43 +93,29 @@ def get_direct_indirect_filters(filters):
 def apply_pagination(query, page, page_limit):
     offset = (page - 1) * page_limit
     total_count = query.count()
+    query =query.order_by(SQL("updated_at desc"))
     query = query.offset(offset).limit(page_limit)
     return query, total_count
-
-def processed_percent_key(id):
-  return f"rate_sheet_converted_file_processed_percent_{id}"
-
-def set_processed_percent(processed_percent, id):
-    if rd:
-        rd.hset(processed_percent_hash, processed_percent_key(id), processed_percent)
-        rd.expire(processed_percent_key(id), 864000)
-    return
-
-def get_processed_percent(id):
-    if rd:
-        try:
-            cached_response = rd.hget(processed_percent_hash, processed_percent_key(id))
-            return int(cached_response)
-        except:
-            return 0
-    return
-
-def delete_processed_percent(id):
-    if rd:
-        rd.delete(processed_percent_hash, processed_percent_key(id))
 
 
 
 def detail(data):
     for d in data:
-        d['processed_percent'] = get_processed_percent(d['id'])
-        d['converted_files'] = []
-        if d.get('converted_file'):
-            for converted_file in d.get('converted_file'):
-                for converted_file_json in converted_file:
-                    converted_file_json['total_lines'] = get_total_line(converted_file)
-                    converted_file_json['last_line'] = get_last_line(converted_file)
-                d['converted_files'].append(converted_file)
+
+        total_percentage = 0
+        if d['converted_files']:
+            for converted_file in d['converted_files']:
+                try:
+                    total_percentage += converted_file.get('valid_rates_count')/converted_file.get('rates_count')*100
+                except:
+                    total_percentage += 0
+                converted_file['total_lines'] = get_total_line(converted_file)
+                converted_file['last_line'] = get_current_processing_line(converted_file)
+            d['completed_percent'] = total_percentage/len(d['converted_files'])
+            if d['status'] == 'processing':
+                d['processed_percent'] = get_processed_percent(d)
+            else:
+                d['processed_percent'] = d['completed_percent']
     return data
 
 
@@ -130,15 +123,7 @@ def add_service_objects(data):
     if len(data) == 0:
         return data
     objects_organizations_hash = {}
-    objects_organizations = {
-        "filters": {"id": []},
-        "fields": ['id', 'business_name', 'short_name', 'logo_url']
-    }
     objects_user_hash = {}
-    objects_user = {
-        "filters": {"id": []},
-        "fields": ['id', 'name', 'email']
-    }
     org_ids = []
     user_ids = []
     for cluster in data:
@@ -153,25 +138,28 @@ def add_service_objects(data):
             continue
 
     if len(org_ids):
-        objects_organizations['filters']['id'] = org_ids
-        list_organizations = organization.list_organizations(
-            objects_organizations
-        )
-        for org in list_organizations['list']:
+        list_organizations = get_organization(id=org_ids)
+        for org in list_organizations:
             objects_organizations_hash[org['id']] =org
 
     if len(user_ids):
-        objects_user['filters']['id'] = user_ids
-        list_user = common.list_users(objects_user)
-        # for user_obj in list_user['list']:
-        #     objects_user_hash[user_obj['id']] =user_obj
-
+        objects_user = []
+        for id in user_ids:
+            if is_valid_uuid(id):
+                objects_user.append(id)
+        list_user = get_user(objects_user)
+        for user_obj in list_user:
+            objects_user_hash[user_obj['id']] =user_obj
     for object in data:
-        object['service_provider'] = objects_organizations_hash.get(object.get('service_provider_id'))
-        object['procured_by'] = objects_organizations_hash.get(object.get('procured_by_id'))
-        object['sourced_by'] = objects_organizations_hash.get(object.get('sourced_by_id'))
-        object['performed_by'] = objects_organizations_hash.get(object.get('performed_by_id'))
-
+        service_provider = {}
+        if objects_organizations_hash.get(object.get('service_provider_id')):
+            for key, val in objects_organizations_hash.get(object.get('service_provider_id')).items():
+                if key in ['id', 'business_name', 'short_name', 'logo_url']:
+                    service_provider[key] = val
+        object['service_provider'] = service_provider
+        object['procured_by'] = objects_user_hash.get(str(object.get('procured_by_id')))
+        object['sourced_by'] = objects_user_hash.get(str(object.get('sourced_by_id')))
+        object['performed_by'] = objects_user_hash.get(str(object.get('performed_by_id')))
     return data
 
 
@@ -186,6 +174,8 @@ def get_final_data(query):
     for object in final_data:
         # assumption here
         rates_count_sum=0
+        object['updated_at'] = datetime.fromisoformat(object['updated_at']) +timedelta(hours=5, minutes=30)
+
         if 'converted_files' in object:
             if object.get('converted_files'):
                 for obj in object.get('converted_files'):
@@ -212,12 +202,11 @@ def add_pagination_data(
     return response
 
 
-def list_rate_sheets(filters, stats_required, page, page_limit, sort_by, sort_type, pagination_data_required):
+def list_rate_sheets(filters, stats_required= None, page=1, page_limit=10, sort_by=None, sort_type=None, pagination_data_required=True):
     response = {"success": False, "status_code": 200}
-
     if filters is None:
         filters = {}
-    else:
+    if isinstance(filters, str):
         filters = json.loads(filters)
 
     query = RateSheet.select()
@@ -228,14 +217,15 @@ def list_rate_sheets(filters, stats_required, page, page_limit, sort_by, sort_ty
             query, indirect_filters
         )
 
-
-    query, total_count = apply_pagination(query, page, page_limit)
-
-    final_data = get_final_data(query)
-
-    response = add_pagination_data(
-        response, page, total_count, page_limit, final_data, pagination_data_required
-    )
+    if pagination_data_required:
+        query, total_count = apply_pagination(query, page, page_limit)
+    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+        futures = executor.submit(get_final_data, query)
+        final_data = futures.result()
+    if pagination_data_required:
+        response = add_pagination_data(
+            response, page, total_count, page_limit, final_data, pagination_data_required
+        )
 
     return response
 

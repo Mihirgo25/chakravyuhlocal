@@ -18,16 +18,16 @@ def all_fields_present(request):
     return False
 
 def find_object(request):
-    row = {
-        'location_id' : request['location_id'],
-        'trade_type' : request['trade_type'],
-        'free_days_type' : request['free_days_type'],
-        'container_type' : request['container_type'],
-        'container_size' : request['container_size'],
-        'shipping_line_id' : request['shipping_line_id'],
-        'service_provider_id' : request['service_provider_id'],
-        'importer_exporter_id' : request.get('importer_exporter_id')
-    }
+    # row = {
+    #     'location_id' : request['location_id'],
+    #     'trade_type' : request['trade_type'],
+    #     'free_days_type' : request['free_days_type'],
+    #     'container_type' : request['container_type'],
+    #     'container_size' : request['container_size'],
+    #     'shipping_line_id' : request['shipping_line_id'],
+    #     'service_provider_id' : request['service_provider_id'],
+    #     'importer_exporter_id' : request.get('importer_exporter_id')
+    # }
     
     try:
         # objects = FclFreightRateFreeDay.get(**row)
@@ -41,5 +41,5 @@ def find_object(request):
             FclFreightRateFreeDay.importer_exporter_id == request['importer_exporter_id']
         ).first()
     except:
-        raise HTTPException(status_code=403, detail="no free day entry with the given id exists")
+        raise HTTPException(status_code=400, detail="no free day entry with the given id exists")
     return objects

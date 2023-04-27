@@ -33,5 +33,5 @@ def find_object(request):
     try:
         objects = FclFreightRateCommoditySurcharge.get(**row)
     except:
-        raise HTTPException(status_code=403, detail="no commodity surcharge entry with the given id exists")
+        raise HTTPException(status_code=400, detail="no commodity surcharge entry with the given id exists")
     return objects

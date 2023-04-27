@@ -1,33 +1,35 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
+from libs.get_filters import get_filters
+from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
-from operator import attrgetter
 from peewee import fn
 from datetime import datetime
 import json
 from micro_services.client import *
-from libs.locations import list_locations
+from database.rails_db import get_partner_user_experties
+
 possible_direct_filters = ['feedback_type', 'continent', 'status']
 
 possible_indirect_filters = ['relevant_supply_agent', 'trade_lane', 'shipping_line', 'validity_start_greater_than', 'validity_end_less_than', 'service_provider_id']
 
 def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
-    query = get_query(page, page_limit)
+    query = get_query()
 
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
+        
+        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+  
+        query = get_filters(direct_filters, query, FclFreightRateFeedback)
+        query = apply_indirect_filters(query, indirect_filters)
 
-        query = apply_direct_filters(query, filters, possible_direct_filters, FclFreightRateFeedback)
-        query = apply_indirect_filters(query, filters)
+    pagination_data = get_pagination_data(query, page, page_limit)
+    query = query.paginate(page,page_limit)
 
     data = get_data(query)
-
-
-    pagination_data = get_pagination_data(data, page, page_limit)
-
     return { 'list': data } | (pagination_data)
     
 def get_data(query):
@@ -57,7 +59,7 @@ def get_data(query):
         item['unsatisfactory_destination_detention'] = unsatisfactory_destination_detention_count
         item['unsatisfactory_rate'] = unsatisfactory_rate_count
         data.append(item)
-    locations_data = list_locations({'id':locations,'page_limit':100})['list']
+    locations_data = maps.list_locations({'filters':{'id':locations,'page_limit':100}})['list']
     location_match = {}
     for location in locations_data:
         location_match[location['id']] = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name']}
@@ -70,9 +72,9 @@ def get_data(query):
            
     return data 
 
-def get_query(page, page_limit):
+def get_query():
     query = FclFreightRateFeedback.select(FclFreightRateFeedback, FclFreightRate.origin_trade_id, FclFreightRate.destination_trade_id, FclFreightRate.shipping_line).join(FclFreightRate, on = (FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id)
-    ).where(FclFreightRateFeedback.feedback_type == 'disliked').paginate(page,page_limit)
+    ).where(FclFreightRateFeedback.feedback_type == 'disliked')
     return query
 
 def apply_indirect_filters(query, filters):
@@ -114,27 +116,28 @@ def apply_shipping_line_filter(query, filters):
     )
     
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at >= datetime.strptime(filters['validity_start_greater_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at <= datetime.strptime(filters['validity_end_less_than'], '%Y-%m-%d'))
+    query = query.where(FclFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):
-    page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-    expertises = partner.list_partner_user_expertises({'filters': {'service_type': 'fcl_freight', 'partner_user_id': filters['relevant_supply_agent']}, 'page_limit': page_limit})['list']
+    expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
     query = query.where((FclFreightRate.origin_port_id << origin_port_id) | (FclFreightRate.origin_country_id << origin_port_id) | (FclFreightRate.origin_continent_id << origin_port_id) | (FclFreightRate.origin_trade_id << origin_port_id))
     query = query.where((FclFreightRate.destination_port_id << destination_port_id) | (FclFreightRate.destination_country_id << destination_port_id) | (FclFreightRate.destination_continent_id << destination_port_id) | (FclFreightRate.destination_trade_id << destination_port_id))
     return query
 
-def get_pagination_data(data, page, page_limit):
+def get_pagination_data(query, page, page_limit):
+  total_count = query.count()
+  
   pagination_data = {
     'page': page,
-    'total': ceil(len(data)/page_limit),
-    'total_count': len(data),
+    'total': ceil(total_count/page_limit),
+    'total_count': total_count,
     'page_limit': page_limit
     }
   

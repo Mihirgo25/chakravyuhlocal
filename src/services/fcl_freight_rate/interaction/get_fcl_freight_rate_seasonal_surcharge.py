@@ -37,5 +37,5 @@ def find_object(request):
     try:
         objects = FclFreightRateSeasonalSurcharge.get(**row)
     except:
-        raise HTTPException(status_code=403, detail="no seasonal surcharge entry with the given id exists")
+        raise HTTPException(status_code=400, detail="no seasonal surcharge entry with the given id exists")
     return objects

@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta,date
 from peewee import *
 from typing import List
+from dateutil.relativedelta import relativedelta
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
@@ -13,7 +14,7 @@ class UpdateLineItem(BaseModel):
   unit: str
   price: float
   currency: str
-  remarks: list[str] = []
+  remarks: list[str] = None
 
 class FreeDay(BaseModel):
   free_limit: float
@@ -134,7 +135,7 @@ class CreateFclWeightSlabsConfiguration(BaseModel):
 class UpdateFclFreightRate(BaseModel):
   id: str
   procured_by_id: str = None
-  sourced_by_id: str = None 
+  sourced_by_id: str = None
   performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
@@ -171,7 +172,7 @@ class PostFclFreightRateLocal(BaseModel):
     service_provider_id: str
     selected_suggested_rate_id: str = None
     source: str = None
-    data: Data
+    data: Data = {}
 
 class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
@@ -193,9 +194,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   line_item_charge_code: str = None
   service_provider_id: str = None
   shipping_line_id: str = None
-  status: str
   trade_type: str = None
-  updated_at: datetime
   performed_by_id: str = None
   performed_by_type: str = None
 
@@ -338,6 +337,22 @@ class CreateFclFreightRateFeedback(BaseModel):
   preferred_shipping_line_ids: list[str] = []
   feedback_type: str
   booking_params: dict = {}
+  cogo_entity_id: str = None
+  origin_port_id: str = None
+  origin_trade_id: str = None
+  origin_country_id: str = None
+  origin_continent_id: str = None
+  destination_port_id: str = None
+  destination_continent_id: str = None
+  destination_trade_id: str = None
+  destination_country_id: str = None
+  commodity: str = None
+  container_size: str = None
+  container_type: str = None
+  service_provider_id: str = None
+  attachment_file_urls: List[str] =[]
+  commodity_description:str=None
+
 
 class CreateFclFreightRateNotAvailable(BaseModel):
     origin_port_id: str
@@ -418,22 +433,6 @@ class CreateFclFreightRateTask(BaseModel):
   performed_by_type: str = None
   rate: LocalData = None
 
-class CreateFclFreightRateTask(BaseModel):
-  service: str
-  port_id: str
-  main_port_id: str = None
-  container_size: str
-  container_type: str
-  commodity: str
-  trade_type: str
-  shipping_line_id: str
-  source: str
-  task_type: str
-  shipment_id: str = None
-  performed_by_id: str = None
-  performed_by_type: str = None
-  rate: LocalData = {}
-
 class DeleteFclFreightRateRequest(BaseModel):
   fcl_freight_rate_request_ids: List[str]
   closing_remarks: List[str] = []
@@ -482,8 +481,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   rate_sheet_id: str = None
   performed_by_id: str = None
   performed_by_type: str = None
-  sourced_by_id: str
-  procured_by_id: str
+  sourced_by_id: str = None
+  procured_by_id: str = None
   trade_type: str
   location_id: str
   free_days_type: str
@@ -497,6 +496,8 @@ class CreateFclFreightRateFreeDay(BaseModel):
   free_limit: int
   remarks: list[str] = None
   slabs: list[Slab] = None
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = (datetime.now() + timedelta(days=90))
 
 class DeleteFclFreightRateFreeDayRequest(BaseModel):
   fcl_freight_rate_free_day_request_id: str
@@ -507,12 +508,13 @@ class UpdateFclFreightRateFreeDay(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
-  procured_by_id: str
-  sourced_by_id: str
+  procured_by_id: str = None
+  sourced_by_id: str = None
   id: str
   free_limit: int = None
-  # validity_start: datetime = datetime.now()
-  # validity_end: datetime = datetime.now() + timedelta(months=3)
+  validity_start: datetime = datetime.now()
+  validity_end: datetime = datetime.now() + relativedelta(months=3)
+  hs_code: str = None
   remarks: list[str] = None
   slabs: list[Slab] = None
 class CreateFclFreightRateRequest(BaseModel):
@@ -526,7 +528,7 @@ class CreateFclFreightRateRequest(BaseModel):
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
   preferred_storage_free_days: int = None
-  cargo_readiness_date: datetime = None
+  cargo_readiness_date: date = None
   preferred_shipping_line_ids: list[str] = []
   remarks: list[str] = []
   booking_params: dict = {}
@@ -544,6 +546,9 @@ class CreateFclFreightRateRequest(BaseModel):
   origin_port_id: str
   origin_trade_id: str = None
   container_type: str = None
+  attachment_file_urls:List[str]=[]
+  commodity_description:str=None
+
 
 class CreateFclFreightRateLocalRequest(BaseModel):
   source: str
@@ -735,15 +740,15 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
 
 class ExtendValidty(BaseModel):
   filters:dict={}
-  source_date:str
-  validity_end:str
+  source_date:datetime
+  validity_end:datetime
   sourced_by_ids:dict=None
   procured_by_ids:dict=None
 
 class DeleteFreightRate(BaseModel):
   filters:dict={}
-  validity_start:str
-  validity_end:str
+  validity_start: datetime
+  validity_end: datetime
 
 class AddFreightRateMarkup(BaseModel):
   filters:dict={}
@@ -751,8 +756,8 @@ class AddFreightRateMarkup(BaseModel):
   markup_type:str
   markup_currency:str=None
   line_item_code:str='BAS'
-  validity_start:str
-  validity_end:str
+  validity_start:datetime
+  validity_end:datetime
 
 class AddLocalRateMarkup(BaseModel):
   filters:dict={}
@@ -765,20 +770,20 @@ class ExtendFreightRateToIcds(BaseModel):
   filters: dict={}
   markup_type : str
   markup : float
-  markup_currency:str
-  line_item_code : str
-  origin_port_ids : List[str]
-  destination_port_ids : List[str]
+  markup_currency:str = None
+  line_item_code : str = 'BAS'
+  origin_port_ids : List[str] = []
+  destination_port_ids : List[str] = []
 
 class ExtendFreightRate(BaseModel):
-  filters: dict={}
-  commodities : List[str]
-  container_sizes : List[str]
-  container_types:List[str]
+  filters: dict = {}
+  commodities : List[str] = []
+  container_sizes : List[str] = []
+  container_types:List[str] = []
   markup_type : str
   markup : float
-  markup_currency:str
-  line_item_code : str
+  markup_currency : str = None
+  line_item_code : str = 'BAS '
 class UpdateWeightLimit(BaseModel):
   filters: dict={}
   free_limit : int
@@ -790,21 +795,18 @@ class UpdateFreeDays(BaseModel):
   slabs : List[Slab] = None
 
 class AddFreightLineItem(BaseModel):
-  filters : dict={}
+  filters : dict = {}
   code : str
-  units : str
+  unit : str
   price : float
   currency : str
-  validity_start : str
-  validity_end : str
+  validity_start : datetime
+  validity_end : datetime
 class UpdateFreeDaysLimit(BaseModel):
   filters: dict={}
   free_limit : int
   slabs : List[Slab] = None
-  lower_limit : int
-  upper_limit : int
-  price : float
-  currency : str
+
 class DeleteLocalRate(BaseModel):
   filters : dict={}
 
@@ -827,9 +829,11 @@ class CreateBulkOperation(BaseModel):
   extend_freight_rate:ExtendFreightRate=None
   extend_freight_rate_to_icds:ExtendFreightRateToIcds=None
 
-
-
-
-
-
-
+class UpdateFclFreightRateTask(BaseModel):
+  id: str
+  performed_by_id: str=None
+  performed_by_type: str=None
+  rate: LocalData = None
+  status: str = None
+  closing_remarks: str = None
+  validate_closing_remarks: str = None

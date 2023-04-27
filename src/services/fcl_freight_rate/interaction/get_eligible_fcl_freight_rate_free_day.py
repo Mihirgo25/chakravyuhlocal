@@ -14,7 +14,7 @@ def get_most_eligible_free_days(data, filters):
     free_days = data[0] if data else None
     return free_days
 
-def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
+def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_specificity_type = False):
     if not filters:
         return {}
 
@@ -23,8 +23,24 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
 
     if not all_fields_present(filters):
         return {}
+    
+    all_service_provider_ids = []
 
-    all_service_provider_ids = filters["service_provider_id"] + filters["local_service_provider_ids"]
+    if isinstance(filters['service_provider_id'],str):
+        all_service_provider_ids += [filters["service_provider_id"]]
+    else:
+        all_service_provider_ids += filters["service_provider_id"]
+
+    if 'local_service_provider_ids' in filters:
+        all_service_provider_ids+=filters["local_service_provider_ids"]
+
+    all_service_provider_ids = list(set(all_service_provider_ids))
+
+    if isinstance(filters['shipping_line_id'],str):
+        filters['shipping_line_id'] = [filters['shipping_line_id']]
+        
+    if isinstance(filters['location_id'],str):
+        filters['location_id'] = [filters['location_id']]
     
     query = FclFreightRateFreeDay.select(
         FclFreightRateFreeDay.id,
@@ -43,7 +59,7 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
         FclFreightRateFreeDay.rate_not_available_entry
     ).where(
         ((FclFreightRateFreeDay.rate_not_available_entry.is_null(True)) | (~FclFreightRateFreeDay.rate_not_available_entry)),
-        FclFreightRateFreeDay.location_id == filters['location_id'],
+        FclFreightRateFreeDay.location_id.in_(filters['location_id']),
         FclFreightRateFreeDay.trade_type == filters['trade_type'],
         FclFreightRateFreeDay.free_days_type == filters['free_days_type'],
         FclFreightRateFreeDay.container_size == filters['container_size'],
@@ -52,14 +68,20 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates):
         FclFreightRateFreeDay.service_provider_id << all_service_provider_ids
     )
     if 'importer_exporter_id' in filters:
-        query = query.where(FclFreightRateFreeDay.importer_exporter_id == filters['importer_exporter_id'])
-
+        query = query.where(((FclFreightRateFreeDay.importer_exporter_id == filters['importer_exporter_id']) | (FclFreightRateFreeDay.importer_exporter_id == None)))
+    
     if 'free_limit' in filters:
         query = query.where(FclFreightRateFreeDay.free_limit == filters['free_limit'])
 
-    # if 'validity_start' in filters and 'validity_end' in filters:
-    #     query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'] and FclFreightRateFreeDay.validity_end >= filters['validity_end'])
+    if 'validity_start' in filters and 'validity_end' in filters:
+        query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'] and FclFreightRateFreeDay.validity_end >= filters['validity_end'])
+        
     data = jsonable_encoder(list(query.dicts()))
+    
+    if sort_by_specificity_type:
+        return sorted(data, key=lambda t: [
+            0 if t['specificity_type'] == 'rate_specific' else 
+            1 if t['specificity_type'] == 'shipping_line' else 2])
 
     if freight_rates:
         group_by_rate = {}

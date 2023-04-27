@@ -1,14 +1,26 @@
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
 from database.db_session import db
 from fastapi import HTTPException
+from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
+
+def create_audit(request, new_configuration_id):
+
+    data = {key:str(value) for key, value in request.items() if key not in ['performed_by_id'] and not value == None}
+
+    FclServiceAudit.create(
+        action_name = 'create',
+        performed_by_id = request['performed_by_id'],
+        data = data,
+        object_id = new_configuration_id,
+        object_type = 'FclWeightSlabsConfiguration'
+    )
 
 def create_fcl_weight_slabs_configuration(request):
-    with db.atomic() as transaction:
-        try:
-            return execute_transaction_code(request)
-        except Exception as e:
-            transaction.rollback()
-            return e
+    object_type = 'Fcl_Weight_Slabs_Configuration'
+    query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
+    db.execute_sql(query)
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     params = {key:value for key,value in request.items() if key != 'slabs'}
@@ -56,5 +68,5 @@ def execute_transaction_code(request):
 
     if new_configuration.validate():
         new_configuration.save()
-
+    create_audit(request,new_configuration.id)
     return {'id' : new_configuration.id}
