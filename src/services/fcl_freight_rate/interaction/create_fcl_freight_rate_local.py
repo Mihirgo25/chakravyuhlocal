@@ -42,9 +42,7 @@ def execute_transaction_code(request):
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
         'shipping_line_id' : request.get('shipping_line_id'),
-        'service_provider_id' : request.get('service_provider_id'),
-        "sourced_by_id": request.get("sourced_by_id"),
-        "procured_by_id": request.get("procured_by_id"),
+        'service_provider_id' : request.get('service_provider_id')
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
@@ -62,6 +60,9 @@ def execute_transaction_code(request):
         fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
         fcl_freight_local.data={}
+        
+    fcl_freight_local.sourced_by_id = request.get("sourced_by_id")
+    fcl_freight_local.procured_by_id = request.get("procured_by_id")
     fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
 
     new_free_days = {}
