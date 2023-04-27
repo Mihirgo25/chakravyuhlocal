@@ -14,7 +14,7 @@ def get_cluster_objects(rate_object):
 
     param = {}
     for data in port_codes:
-        param[data['id']] = data['port_code']
+        param[data['id']] = data.get('port_code')
 
     port_codes = param
 
