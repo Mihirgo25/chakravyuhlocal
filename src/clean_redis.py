@@ -10,6 +10,7 @@ import os
 import pandas as pd
 from math import ceil
 from database.rails_db import get_ff_mlo
+from celery_worker import rate_extension_delay
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
@@ -64,7 +65,6 @@ def delete_rates():
         print('l')  
 
 def rate_extension():
-    from celery_worker import rate_extension_delay
     eligible_sp = get_ff_mlo()
     rates = FclFreightRate.select().where(FclFreightRate.last_rate_available_date == '2023-04-30', FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', FclFreightRate.service_provider_id.in_(eligible_sp), ~FclFreightRate.rate_not_available_entry, FclFreightRate.mode == 'manual')
     for rate in rates.iterator():
