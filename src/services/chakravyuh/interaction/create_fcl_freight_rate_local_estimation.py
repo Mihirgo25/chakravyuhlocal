@@ -25,6 +25,7 @@ def create_fcl_local_estimated_rate(request):
             FclFreightRateLocalEstimation.location_id == request.get("location_id"),
             FclFreightRateLocalEstimation.container_size == request.get("container_size"),
             FclFreightRateLocalEstimation.container_type == request.get("container_type"),
+            FclFreightRateLocalEstimation.commodity == request.get("commodity"),
             FclFreightRateLocalEstimation.shipping_line_id == request.get('shipping_line_id'),
             FclFreightRateLocalEstimation.trade_type == request.get("trade_type"),
         )
