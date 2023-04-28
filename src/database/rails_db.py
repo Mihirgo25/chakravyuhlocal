@@ -276,7 +276,7 @@ def get_ff_mlo():
     conn = get_connection()
     with conn:
         with conn.cursor() as cur:
-            sql = 'select organizations.id from organizations where account_type = %s and status = %s and ARRAY[%s, %s]::varchar[] && organizations.category_types'
+            sql = 'select organizations.id from organizations where organizations.account_type = %s and organizations.status = %s and ARRAY[%s, %s]::varchar[] && organizations.category_types'
             cur.execute(sql, ('service_provider', 'active', 'shipping_line', 'freight_forwarder',))
             result = cur.fetchall()
             result = [str(x[0]) for x in result]
