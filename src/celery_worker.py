@@ -19,7 +19,11 @@ from services.envision.interaction.create_fcl_freight_rate_prediction_feedback i
 
 # Rate Producers
 
-from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh
+from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
+
+# Dynamic Pricing
+
+from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -321,8 +325,19 @@ def create_fcl_freight_rate_feedback_for_prediction(self, result):
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def extend_fcl_freight_rates(self, rate):
     try:
-        fcl_freight_vyuh = FclFreightVyuh(rate=rate)
+        fcl_freight_vyuh = FclFreightVyuhProducer(rate=rate)
         fcl_freight_vyuh.extend_rate()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
+        fcl_freight_vyuh.set_dynamic_pricing()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
