@@ -22,7 +22,7 @@ def create_audit(request):
     )
 def update_fcl_freight_rate_task_data(request):
     if not validate_closing_remarks(request):
-        raise HTTPException(status_code = 409, detail = f"{request['closing_remarks']} is invalid")
+        raise HTTPException(status_code = 400, detail = f"{request['closing_remarks']} is invalid")
     
     with db.atomic():
         object_type = 'Fcl_Freight_Rate_Task'

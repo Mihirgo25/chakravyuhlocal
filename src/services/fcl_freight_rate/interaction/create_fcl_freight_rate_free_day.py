@@ -45,8 +45,6 @@ def get_free_day_object(request):
         'service_provider_id' : request['service_provider_id'],
         'specificity_type' : request['specificity_type'],
         'importer_exporter_id' : request.get('importer_exporter_id'),
-        'sourced_by_id' : request.get('sourced_by_id'),
-        'procured_by_id' : request.get('procured_by_id'),
         'validity_start' : request.get('validity_start'),
         'validity_end' : request.get('validity_end')
     }
@@ -68,6 +66,8 @@ def get_free_day_object(request):
     free_day = free_day.first()
     if not free_day:
         free_day = FclFreightRateFreeDay(**row)
+    free_day.sourced_by_id = request.get("sourced_by_id")
+    free_day.procured_by_id = request.get("procured_by_id")
 
     extra_fields = ['previous_days_applicable','free_limit','remarks','slabs','validity_start','validity_end']
     for field in extra_fields:
