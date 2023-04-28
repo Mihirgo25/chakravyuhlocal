@@ -4,12 +4,15 @@ from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
 from services.chakravyuh.consumer_vyuhs.fcl_freight_local import FclFreightLocalVyuh
 from micro_services.client import maps
 
-def get_local_rates_from_vyuh(request):        
-    location_data = maps.list_locations_mapping({'location_id':request['port_id'],'type':['main_ports']})
-    if location_data and isinstance(location_data, dict):
-        location_data = location_data['list']
+def get_local_rates_from_vyuh(request):
+    if request.get('main_port_id'):
+        main_port_id = request['main_port_id']
     else:
-        location_data = []
+        location_data = maps.list_locations_mapping({'location_id':request['port_id'],'type':['main_ports']})
+        if location_data and isinstance(location_data, dict):
+            main_port_id = location_data['list'][0].get('id') if len(location_data['list']) > 0 else None
+        else:
+            main_port_id = None
 
     fcl_freight_local_vyuh = FclFreightLocalVyuh()
     local_freight_rates = fcl_freight_local_vyuh.get_eligible_local_estimated_rate(request)
@@ -26,7 +29,7 @@ def get_local_rates_from_vyuh(request):
         local_freight_create_params = {
             'trade_type': request.get('trade_type'),
             'port_id': request.get('port_id'),
-            'main_port_id': location_data[0].get('id') if len(location_data) > 0 else None,
+            'main_port_id': main_port_id,
             'container_size': request.get('container_size'),
             'container_type': request.get('container_type'),
             'commodity': request.get('commodity') if request.get('commodity') in HAZ_CLASSES else None,

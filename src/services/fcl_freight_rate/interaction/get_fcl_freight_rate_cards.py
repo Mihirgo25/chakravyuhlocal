@@ -171,6 +171,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
     if len(local_rates) == 0:
         local_params = {
             'port_id' : port_id,
+            'main_port_id':main_port_id,
             'trade_type' : trade_type,
             'container_size' : rate.get('container_size'),
             'container_type' : rate.get('container_type'),
@@ -405,6 +406,7 @@ def add_local_objects(freight_query_result, response_object, request):
         'source': freight_query_result['origin_local']['source'] if freight_query_result['origin_local'].get('source') else response_object['source'],
         'line_items': []
     } if 'origin_local' in freight_query_result and freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
+
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
         response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id')
@@ -418,6 +420,12 @@ def add_local_objects(freight_query_result, response_object, request):
         else:
             response_object['destination_local']['source'] = response_object['source']
         response_object['destination_local']['line_items'] = []
+    else:
+        response_object['destination_local'] = {
+             'line_items': [], 
+             'service_provider_id': response_object['service_provider_id'], 
+             'source':  response_object['source'] 
+             }
 
 
     for line_item in ((freight_query_result.get('origin_local') or {}).get('line_items',[]) or []):
