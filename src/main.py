@@ -13,6 +13,7 @@ from libs.migration import fcl_freight_migration, create_partition_table, fcl_lo
 # from migrate import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
+from services.nandi.nandi_router import nandi_router
 from micro_services.client import *
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -29,7 +30,7 @@ app = FastAPI(docs_url=docs_url,debug=True)
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
 app.include_router(prefix = "/chakravyuh", router=chakravyuh_router)
-
+app.include_router(prefix="/nandi", router=nandi_router)
 
 app.add_middleware(
     CORSMiddleware,
