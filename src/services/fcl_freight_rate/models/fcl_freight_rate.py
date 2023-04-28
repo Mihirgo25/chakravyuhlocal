@@ -301,31 +301,31 @@ class FclFreightRate(BaseModel):
       if 'destination_local' in self.dirty_fields and self.destination_local:
         if not self.destination_local_instance.validate_duplicate_charge_codes():
             raise HTTPException(status_code=400,detail="Duplicate line items in Destination Local")
-        invalid_charge_codes = self.destination_local_instance.validate_invalid_charge_codes(self.possible_origin_local_charge_codes())
+        invalid_charge_codes = self.destination_local_instance.validate_invalid_charge_codes(self.possible_destination_local_charge_codes())
         if invalid_charge_codes:
             raise HTTPException(status_code=400,detail=f"{invalid_charge_codes} are invalid Destination Local line items")
 
     def validate_validity_object(self, validity_start, validity_end):
       if not validity_start:
-        raise HTTPException(status_code=499, detail="validity_start is invalid")
+        raise HTTPException(status_code=400, detail="validity_start is invalid")
 
       if not validity_end:
-        raise HTTPException(status_code=499, detail="validity_end is invalid")
+        raise HTTPException(status_code=400, detail="validity_end is invalid")
 
       if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
-        raise HTTPException(status_code=499, detail="validity_end can not be greater than 60 days from current date")
+        raise HTTPException(status_code=400, detail="validity_end can not be greater than 60 days from current date")
 
       if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
-        raise HTTPException(status_code=499, detail="validity_start can not be less than 15 days from current date")
+        raise HTTPException(status_code=400, detail="validity_start can not be less than 15 days from current date")
 
       if validity_end < validity_start:
-        raise HTTPException(status_code=499, detail="validity_end can not be lesser than validity_start")
+        raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
 
     def validate_line_items(self, line_items):
       codes = [item['code'] for item in line_items]
 
       if len(set(codes)) != len(codes):
-        raise HTTPException(status_code=499, detail="line_items contains duplicates")
+        raise HTTPException(status_code=400, detail="line_items contains duplicates")
 
 
       fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
@@ -333,7 +333,7 @@ class FclFreightRate(BaseModel):
       invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict.keys()]
 
       if invalid_line_items:
-          raise HTTPException(status_code=499, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
+          raise HTTPException(status_code=400, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
 
       fcl_freight_currencies = FCL_FREIGHT_CURRENCIES
 
@@ -341,7 +341,7 @@ class FclFreightRate(BaseModel):
       line_item_currencies = [item['currency'] for item in line_items]
 
       if any(currency not in currencies for currency in line_item_currencies):
-        raise HTTPException(status_code=499, detail='line_item_currency is invalid')
+        raise HTTPException(status_code=400, detail='line_item_currency is invalid')
 
       mandatory_codes = []
 
@@ -365,7 +365,7 @@ class FclFreightRate(BaseModel):
           mandatory_codes.append(str(code))
 
       if len([code for code in mandatory_codes if code not in codes]) > 0:
-          raise HTTPException(status_code=499, detail="line_items does not contain all mandatory_codes {}".format(", ".join([code for code in mandatory_codes if code not in codes])))
+          raise HTTPException(status_code=400, detail="line_items does not contain all mandatory_codes {}".format(", ".join([code for code in mandatory_codes if code not in codes])))
 
     def get_platform_price(self, validity_start, validity_end, price, currency):
       freight_rates = FclFreightRate.select(FclFreightRate.validities, FclFreightRate.id).where(
@@ -525,31 +525,31 @@ class FclFreightRate(BaseModel):
         self.weight_limit['slabs'] = sorted(self.weight_limit['slabs'], key=lambda x: x['lower_limit'])
 
         if self.weight_limit['slabs'] and self.weight_limit['free_limit']!=0 and (self.weight_limit['free_limit'] >= self.weight_limit['slabs'][0]['lower_limit']):
-          raise HTTPException(status_code=499, detail="slabs lower limit should be greater than free limit")
+          raise HTTPException(status_code=400, detail="slabs lower limit should be greater than free limit")
 
         for index, weight_limit_slab in enumerate(self.weight_limit['slabs']):
           if (weight_limit_slab['upper_limit'] <= weight_limit_slab['lower_limit']) or (index != 0 and weight_limit_slab['lower_limit'] <= self.weight_limit['slabs'][index - 1]['upper_limit']):
-            raise HTTPException(status_code=499, detail="slabs are not valid")
+            raise HTTPException(status_code=400, detail="slabs are not valid")
 
       self.origin_local_instance = FclFreightRateLocalData(self.origin_local)
       self.destination_local_instance = FclFreightRateLocalData(self.destination_local)
 
       if not self.validate_container_size():
-        raise HTTPException(status_code=499, detail="incorrect container size")
+        raise HTTPException(status_code=400, detail="incorrect container size")
       if not self.validate_container_type():
-        raise HTTPException(status_code=499, detail="incorrect container type")
+        raise HTTPException(status_code=400, detail="incorrect container type")
       if not self.validate_commodity():
-        raise HTTPException(status_code=499, detail="incorrect commodity")
+        raise HTTPException(status_code=400, detail="incorrect commodity")
 
       self.set_omp_dmp_sl_sp()
       self.validate_origin_local()
       self.validate_destination_local()
 
       if not self.validate_origin_main_port_id():
-        raise HTTPException(status_code=499, detail="origin main port id is required")
+        raise HTTPException(status_code=400, detail="origin main port id is required")
 
       if not self.validate_destination_main_port_id():
-        raise HTTPException(status_code=499, detail="destination main port id is required")
+        raise HTTPException(status_code=400, detail="destination main port id is required")
 
     def possible_origin_local_charge_codes(self):
       self.port = self.origin_port

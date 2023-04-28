@@ -4,7 +4,7 @@ from micro_services.client import *
 from math import ceil
 from peewee import fn, SQL
 import concurrent.futures, json
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
@@ -33,7 +33,11 @@ def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
     spot_search_hash = {}
     data = list(query.dicts())
     spot_search_ids = list(set([str(row['source_id']) for row in data]))
-    spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids }})['list']
+    try:
+        spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
+    except:
+        spot_search_data = []
+
     for search in spot_search_data:
         spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
@@ -45,7 +49,7 @@ def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, perf
 
 
 
-    return { 'list': jsonable_encoder(data) } | (pagination_data) | (stats)
+    return { 'list': json_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
     return query.select().order_by(FclFreightRateRequest.created_at.desc()).paginate(page, page_limit)

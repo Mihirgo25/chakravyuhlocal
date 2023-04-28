@@ -4,6 +4,7 @@ from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING
 from playhouse.shortcuts import model_to_dict
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
+from libs.json_encoder import json_encoder
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 import concurrent.futures, json
@@ -14,7 +15,7 @@ from database.rails_db import get_organization
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id', 'relevant_service_provider_id']
 
-def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
+def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = FclFreightRateFeedback.select()
 
     if filters:
@@ -27,14 +28,13 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
         query = apply_indirect_filters(query, indirect_filters)
 
     # query = get_join_query(query)
-    query = query.select()
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
     pagination_data = get_pagination_data(query, page, page_limit)
 
     query = get_page(query, page, page_limit)
-    data = get_data(query,spot_search_details_required)
+    data = get_data(query,spot_search_details_required,booking_details_required) 
 
-    return {'list': data } | (pagination_data) | (stats)
+    return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
     query = query.order_by(FclFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
@@ -143,7 +143,52 @@ def apply_similar_id_filter(query, filters):
 
     return query
 
-def get_data(query, spot_search_details_required):
+def get_data(query, spot_search_details_required, booking_details_required):
+    if not booking_details_required:
+        query = query.select(
+            FclFreightRateFeedback.id,
+            FclFreightRateFeedback.cogo_entity_id,
+            FclFreightRateFeedback.closed_by_id,
+            FclFreightRateFeedback.closed_by,
+            FclFreightRateFeedback.closing_remarks,
+            FclFreightRateFeedback.created_at,
+            FclFreightRateFeedback.fcl_freight_rate_id,
+            FclFreightRateFeedback.feedback_type,
+            FclFreightRateFeedback.feedbacks,
+            FclFreightRateFeedback.outcome,
+            FclFreightRateFeedback.outcome_object_id,
+            FclFreightRateFeedback.performed_by_id,
+            FclFreightRateFeedback.performed_by,
+            FclFreightRateFeedback.performed_by_org_id,
+            FclFreightRateFeedback.performed_by_org,
+            FclFreightRateFeedback.performed_by_type,
+            FclFreightRateFeedback.preferred_detention_free_days,
+            FclFreightRateFeedback.preferred_freight_rate,
+            FclFreightRateFeedback.preferred_freight_rate_currency,
+            FclFreightRateFeedback.preferred_shipping_line_ids,
+            FclFreightRateFeedback.preferred_shipping_lines,
+            FclFreightRateFeedback.remarks,
+            FclFreightRateFeedback.serial_id,
+            FclFreightRateFeedback.source,
+            FclFreightRateFeedback.source_id,
+            FclFreightRateFeedback.status,
+            FclFreightRateFeedback.updated_at,
+            FclFreightRateFeedback.validity_id,
+            FclFreightRateFeedback.origin_port_id,
+            FclFreightRateFeedback.origin_continent_id,
+            FclFreightRateFeedback.origin_trade_id,
+            FclFreightRateFeedback.origin_country_id,
+            FclFreightRateFeedback.destination_port_id,
+            FclFreightRateFeedback.destination_continent_id,
+            FclFreightRateFeedback.destination_trade_id,
+            FclFreightRateFeedback.destination_country_id,
+            FclFreightRateFeedback.commodity,
+            FclFreightRateFeedback.container_size,
+            FclFreightRateFeedback.container_type,
+            FclFreightRateFeedback.service_provider_id,
+            FclFreightRateFeedback.origin_port,
+            FclFreightRateFeedback.destination_port
+        )
     data = list(query.dicts())
     # fcl_freight_rate_ids = [row['fcl_freight_rate_id'] for row in data]
 
@@ -151,7 +196,7 @@ def get_data(query, spot_search_details_required):
     # fcl_freight_rate_mappings = {k['id']: k for k in fcl_freight_rates}
     service_provider_ids = []
     for item in data:
-        if 'rate_card' in item['booking_params'] and item['booking_params']['rate_card'] and 'service_rates' in item['booking_params']['rate_card']:
+        if 'booking_params' in item and 'rate_card' in item['booking_params'] and item['booking_params']['rate_card'] and 'service_rates' in item['booking_params']['rate_card']:
             service_rates = item['booking_params']['rate_card']['service_rates'] or {}
             rates = service_rates.values()
             for rate in rates:
@@ -176,9 +221,10 @@ def get_data(query, spot_search_details_required):
         # object['container_size'] = rate.get('container_size')
         # object['container_type'] = rate.get('container_type')
         # object['commodity'] = rate.get('commodity')
-        object['containers_count'] = object['booking_params'].get('containers_count', None)
-        object['bls_count'] = object['booking_params'].get('bls_count', None)
-        object['inco_term'] = object['booking_params'].get('inco_term', None)
+        if 'booking_params' in object:
+            object['containers_count'] = object['booking_params'].get('containers_count', None)
+            object['bls_count'] = object['booking_params'].get('bls_count', None)
+            object['inco_term'] = object['booking_params'].get('inco_term', None)
         # try:
         #     price_currency = [t for t in object['validities'] if t['id'] == object.get('validity_id')][0]
         #     object['price'] = price_currency['price']
@@ -187,11 +233,11 @@ def get_data(query, spot_search_details_required):
         #     object['price'] = None
         #     object['currency'] = None
 
-        if object['booking_params'].get('rate_card', {}).get('service_rates', {}):
-            for key, value in object['booking_params']['rate_card']['service_rates'].items():
-                service_provider = value.get('service_provider_id', None)
-                if service_provider:
-                    value['service_provider'] = service_providers_hash[service_provider]
+            if object['booking_params'].get('rate_card', {}).get('service_rates', {}):
+                for key, value in object['booking_params']['rate_card']['service_rates'].items():
+                    service_provider = value.get('service_provider_id', None)
+                    if service_provider:
+                        value['service_provider'] = service_providers_hash.get(service_provider)
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
         new_data.append(object)

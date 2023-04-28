@@ -86,7 +86,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
       return False
 
     def set_location(self):
-      location = maps.list_locations({'filters' : {'id': self.location_id}})
+      location = maps.list_locations({'filters' : {'id': str(self.location_id)}})
       if 'list' in location and location['list']:
         self.location= {key:value for key,value in location['list'][0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
