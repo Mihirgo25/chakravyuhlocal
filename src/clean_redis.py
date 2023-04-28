@@ -65,22 +65,26 @@ def delete_rates():
 
 def rate_extension():
     eligible_sp = get_ff_mlo()
-    rates = FclFreightRate.select().where(FclFreightRate.last_rate_available_date == '2023-04-30', FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', FclFreightRate.service_provider_id.in_(eligible_sp), ~FclFreightRate.rate_not_available_entry, FclFreightRate.mode == 'manual')
+    rates = FclFreightRate.select().where(FclFreightRate.last_rate_available_date == '2023-04-30', FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', FclFreightRate.service_provider_id.in_(eligible_sp), ~FclFreightRate.rate_not_available_entry, FclFreightRate.mode == 'manual').order_by(FclFreightRate.id.asc())
+    total_count = rates.count()
+    batch_size = 5000
     count = 0
-    for rate in rates.iterator():
-        validities = rate.validities
-        for validity in validities:
-            if validity['validity_end'] == '2023-04-30':
-                validity['validity_end'] = '2023-05-31'
-                for item in validity['line_items']:
-                    if item['code'] == 'BAS':
-                        item['price'] = int(ceil((item['price']*1.07)/10)*10)
-        rate.validities = validities               
-        rate.last_rate_available_date = '2023-05-31'
-        rate.save()
-        rate.set_platform_prices()
-        count += 1
-        print(count)
+    for offset in range(0, total_count, batch_size):
+        batch_rates = rate.offset(offset).limit(batch_size)
+        for rate in batch_rates.execute():
+            validities = rate.validities
+            for validity in validities:
+                if validity['validity_end'] == '2023-04-30':
+                    validity['validity_end'] = '2023-05-31'
+                    for item in validity['line_items']:
+                        if item['code'] == 'BAS':
+                            item['price'] = int(ceil((item['price']*1.07)/10)*10)
+            rate.validities = validities               
+            rate.last_rate_available_date = '2023-05-31'
+            rate.save()
+            rate.set_platform_prices()
+            count += 1
+            print(count)
                         
 
         
