@@ -42,9 +42,9 @@ class FclFreightRateLocalAgent(BaseModel):
             service_provider_data['id'] = str(service_provider_data['id'])
             self.service_provider = service_provider_data
             if service_provider_data.get('account_type') != 'service_provider':
-                raise HTTPException(status_code=422, detail="Invalid Account Type - Not Service Provider")
+                raise HTTPException(status_code=400, detail="Invalid Account Type - Not Service Provider")
         else:
-            raise HTTPException(status_code=422, detail="Service Provider Id Invalid")
+            raise HTTPException(status_code=400, detail="Service Provider Id Invalid")
         return True
 
     def set_location_ids_and_type(self):
@@ -59,18 +59,18 @@ class FclFreightRateLocalAgent(BaseModel):
                 self.location_type = 'port' if location_data.get('type') == 'seaport' else location_data.get('type')
                 self.location = {key:value for key,value in location_data.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
         else:
-            raise HTTPException(status_code=422, detail="location Id Invalid")
+            raise HTTPException(status_code=400, detail="location Id Invalid")
 
 
     def validate_trade_type(self):
       if not (self.trade_type and self.trade_type in TRADE_TYPES):
-            raise HTTPException(status_code=422, detail="Invalid trade_type")
+            raise HTTPException(status_code=400, detail="Invalid trade_type")
 
 
     def validate_status(self):
 
         if self.status not in STATUSES:
-            raise HTTPException(status_code=422, detail="Invalid status")
+            raise HTTPException(status_code=400, detail="Invalid status")
         return True
 
 
@@ -87,7 +87,7 @@ class FclFreightRateLocalAgent(BaseModel):
         # if not self.id and freight_weight_limit_cnt==0:
         #     return True
         if freight_weight_limit_cnt != 0:
-            raise HTTPException(status_code=422, detail="Location_id and trade_type are not unique")
+            raise HTTPException(status_code=400, detail="Location_id and trade_type are not unique")
 
 
     def validate(self):

@@ -108,27 +108,27 @@ class FclFreightRateLocal(BaseModel):
         self.local_data_instance = FclFreightRateLocalData(self.data)
 
         if not self.validate_main_port_id():
-            raise HTTPException(status_code=422, detail='main_port_id is not valid')
+            raise HTTPException(status_code=400, detail='main_port_id is not valid')
 
         if not self.validate_trade_type():
-            raise HTTPException(status_code=422, detail='trade_type is not valid')
+            raise HTTPException(status_code=400, detail='trade_type is not valid')
 
         if not self.validate_container_size():
-            raise HTTPException(status_code=422, detail='container_size is not valid')
+            raise HTTPException(status_code=400, detail='container_size is not valid')
 
         if not self.validate_container_type():
-            raise HTTPException(status_code=422, detail='container_type is not valid')
+            raise HTTPException(status_code=400, detail='container_type is not valid')
 
         if not self.validate_commodity():
-            raise HTTPException(status_code=422, detail='commodity is not valid')
+            raise HTTPException(status_code=400, detail='commodity is not valid')
 
         if not self.local_data_instance.validate_duplicate_charge_codes():
-            raise HTTPException(status_code=499, detail='duplicate line items present')
+            raise HTTPException(status_code=400, detail='duplicate line items present')
 
         invalid_charge_codes = self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
         if invalid_charge_codes:
-            raise HTTPException(status_code=499, detail=f"{invalid_charge_codes} are invalid line items")
+            raise HTTPException(status_code=400, detail=f"{invalid_charge_codes} are invalid line items")
 
     def update_special_attributes(self, new_free_days: dict = {}, rate_sheet_validation: bool = False):
         if rate_sheet_validation:
@@ -231,16 +231,19 @@ class FclFreightRateLocal(BaseModel):
 
         free_day_ids = []
 
-        if self.demurrage_id:
-            free_day_ids.append(str(self.demurrage_id))
-        if self.detention_id:
-            free_day_ids.append(str(self.detention_id))
-        if self.plugin_id:
-            free_day_ids.append(str(self.plugin_id))
+        detention_id = str(self.detention_id or '')
+        demurrage_id = str(self.demurrage_id or '')
+        plugin_id = str(self.plugin_id or '')
+
+        if demurrage_id:
+            free_day_ids.append(demurrage_id)
+        if detention_id:
+            free_day_ids.append(detention_id)
+        if plugin_id:
+            free_day_ids.append(plugin_id)
 
         free_days_charges = {}
         free_days_new = []  
-
 
         if len(free_day_ids):
             free_days_query = FclFreightRateFreeDay.select(
@@ -249,7 +252,8 @@ class FclFreightRateLocal(BaseModel):
               FclFreightRateFreeDay.slabs,
               FclFreightRateFreeDay.free_days_type,
               FclFreightRateFreeDay.specificity_type,
-              FclFreightRateFreeDay.is_slabs_missing
+              FclFreightRateFreeDay.is_slabs_missing,
+              FclFreightRateFreeDay.free_limit
             ).where(FclFreightRateFreeDay.id << free_day_ids, (~FclFreightRateFreeDay.rate_not_available_entry | FclFreightRateFreeDay.rate_not_available_entry.is_null(True)))
 
             free_days_new = jsonable_encoder(list(free_days_query.dicts()))
@@ -257,15 +261,14 @@ class FclFreightRateLocal(BaseModel):
         for free_day_charge in free_days_new:
           free_days_charges[free_day_charge["id"]] = free_day_charge
 
+        if detention_id and detention_id in free_days_charges:
+            self.data["detention"] = free_days_charges[detention_id]
 
-        if self.detention_id and self.detention_id in free_days_charges:
-            self.data["detention"] = free_days_charges[self.detention_id]
+        if demurrage_id and demurrage_id in free_days_charges:
+            self.data["demurrage"] = free_days_charges[demurrage_id]
 
-        if self.demurrage_id and self.demurrage_id in free_days_charges:
-            self.data["demurrage"] = free_days_charges[self.demurrage_id]
-
-        if self.plugin_id and self.plugin_id in free_days_charges:
-            self.data["plugin"] = free_days_charges[self.plugin_id]
+        if plugin_id and plugin_id in free_days_charges:
+            self.data["plugin"] = free_days_charges[plugin_id]
 
         detail = self.data | {
             'id': self.id,
@@ -275,10 +278,13 @@ class FclFreightRateLocal(BaseModel):
             'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
             'is_detention_slabs_missing': self.is_detention_slabs_missing,
             'is_demurrage_slabs_missing': self.is_demurrage_slabs_missing,
-            'is_plugin_slabs_missing': self.is_plugin_slabs_missing
+            'is_plugin_slabs_missing': self.is_plugin_slabs_missing,
+            'updated_at': self.updated_at,
+            'procured_by_id': self.procured_by_id,
+            'procured_by': self.procured_by
         }
 
-        for item in detail['line_items']:
+        for item in detail.get('line_items',[]):
             line_item_name = fcl_freight_local_charges_dict[item['code']]['name'] if item['code'] in fcl_freight_local_charges_dict else item['code']
             item.update({'name': line_item_name})
 

@@ -22,7 +22,7 @@ def execute_transaction_code(request):
     rate = FclFreightRate.select().where(FclFreightRate.id == request['rate_id']).first()
 
     if not rate:
-        raise HTTPException(status_code=499, detail='{} is invalid'.format(request['rate_id']))
+        raise HTTPException(status_code=400, detail='{} is invalid'.format(request['rate_id']))
 
     row = {
         'fcl_freight_rate_id': request['rate_id'],
@@ -111,7 +111,9 @@ def get_create_params(request):
         'commodity': request.get('commodity'),
         'container_size': request.get('container_size'),
         'container_type': request.get('container_type'),
-        'service_provider_id': request.get('service_provider_id')
+        'service_provider_id': request.get('service_provider_id'),
+        'attachment_file_urls':request.get('attachment_file_urls'),
+        'commodity_description':request.get('commodity_description')
     }
     loc_ids = []
 

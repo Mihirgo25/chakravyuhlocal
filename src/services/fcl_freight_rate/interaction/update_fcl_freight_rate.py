@@ -33,7 +33,7 @@ def validate_freight_params(request):
     keys = ['validity_start', 'validity_end', 'line_items']
     for key in keys:
       if not request.get(key):
-        HTTPException(status_code=499, detail="{key} is blank")
+        HTTPException(status_code=400, detail="{key} is blank")
 
 def execute_transaction_code(request):
   validate_freight_params(request)
@@ -41,7 +41,7 @@ def execute_transaction_code(request):
   freight_object = FclFreightRate.select().where(FclFreightRate.id == request["id"]).first()
 
   if not freight_object:
-    raise HTTPException(status_code=499, detail="rate does not exist")
+    raise HTTPException(status_code=400, detail="rate does not exist")
   
   freight_object.set_locations()
 
