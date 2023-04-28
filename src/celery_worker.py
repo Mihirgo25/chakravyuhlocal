@@ -313,21 +313,5 @@ def create_fcl_freight_rate_feedback_for_prediction(self, result):
             pass
         else:
             raise self.retry(exc= exc)
-        
-@celery.task(bind = True, retry_backoff=True,max_retries=5)
-def rate_extension_delay(self, rate):
-    validities = rate.validities
-    for validity in validities:
-        if validity['validity_end'] == '2023-04-30':
-            validity['validity_end'] = '2023-05-31'
-            for item in validity['line_items']:
-                if item['code'] == 'BAS':
-                    item['price'] = roundup(item['price']*1.07)
-    rate.validities = validities               
-    rate.last_rate_available_date = '2023-05-31'
-    rate.save()
-    rate.set_platform_prices()
-    
-def roundup(price):
-    return int(ceil(price/10)*10) 
+
 

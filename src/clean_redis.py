@@ -67,8 +67,21 @@ def delete_rates():
 def rate_extension():
     eligible_sp = get_ff_mlo()
     rates = FclFreightRate.select().where(FclFreightRate.last_rate_available_date == '2023-04-30', FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', FclFreightRate.service_provider_id.in_(eligible_sp), ~FclFreightRate.rate_not_available_entry, FclFreightRate.mode == 'manual')
+    count = 0
     for rate in rates.iterator():
-        rate_extension_delay.apply_async(kwargs={'rate':rate}, queue='critical')
+        validities = rate.validities
+        for validity in validities:
+            if validity['validity_end'] == '2023-04-30':
+                validity['validity_end'] = '2023-05-31'
+                for item in validity['line_items']:
+                    if item['code'] == 'BAS':
+                        item['price'] = int(ceil((item['price']*1.07)/10)*10)
+        rate.validities = validities               
+        rate.last_rate_available_date = '2023-05-31'
+        rate.save()
+        rate.set_platform_prices()
+        count += 1
+        print(count)
                         
 
         
