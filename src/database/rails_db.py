@@ -271,3 +271,14 @@ def get_organization_service_experties(service, supply_agent_id, account_type = 
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+    
+def get_ff_mlo():
+    conn = get_connection()
+    with conn:
+        with conn.cursor() as cur:
+            sql = 'select organizations.id from organizations where account_type = %s and status = %s and ARRAY[%s, %s]::varchar[] && organizations.category_types'
+            cur.execute(sql, ('service_provider', 'active', 'shipping_line', 'freight_forwarder',))
+            result = cur.fetchall()
+            result = [str(x[0]) for x in result]
+    conn.close()
+    return result
