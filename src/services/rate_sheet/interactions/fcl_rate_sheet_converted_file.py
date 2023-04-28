@@ -15,6 +15,7 @@ import dateutil.parser as parser
 from database.rails_db import get_shipping_line, get_organization
 from services.rate_sheet.helpers import *
 import chardet
+from libs.parse_numeric import parse_numeric
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
 csv_options = {
@@ -41,7 +42,7 @@ def get_processed_percent(params):
     if rd:
         try:
             cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
-            return float(cached_response)
+            return parse_numeric(cached_response)
         except:
             return 0
 
@@ -202,7 +203,7 @@ def process_fcl_freight_local(params, converted_file, update):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
-        
+
         for row in input_file:
             total_lines += 1
         set_total_line(converted_file, total_lines)
@@ -325,7 +326,7 @@ def create_fcl_freight_local_rate(
             line_item = {
             'code': t.get('code'),
             'unit': t.get('unit'),
-            'price': float(t.get('price')),
+            'price': parse_numeric(t.get('price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
@@ -339,7 +340,7 @@ def create_fcl_freight_local_rate(
             for key, val in slab.items():
                 if key in keys_to_float:
                     if val:
-                        slab[key] = float(val)
+                        slab[key] = parse_numeric(val)
             object['data']['line_items'][-1]['slabs'].append(slab)
 
     request_params = object
@@ -551,7 +552,7 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     for key, val in object.items():
         if key in keys_to_float:
             if val:
-                object[key] = float(val)
+                object[key] = parse_numeric(val)
     location = get_location(rows[0]['location'], rows[0]['location_type'])
     object['location'] = location
     object['location_id'] = location['id']
@@ -572,7 +573,7 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
         for key, val in slab.items():
             if key in keys_to_float:
                 if val:
-                    slab[key] = float(val)
+                    slab[key] = parse_numeric(val)
         if object['slabs']:
             object['slabs'].append(slab)
     object['rate_sheet_id'] = params['rate_sheet_id']
@@ -1235,7 +1236,7 @@ def create_fcl_freight_freight_rate(
             line_item = {
             'code': t.get('code'),
             'unit': t.get('unit'),
-            'price': float(t.get('price')),
+            'price': parse_numeric(t.get('price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
@@ -1245,20 +1246,20 @@ def create_fcl_freight_freight_rate(
             if 'weight_limit' not in object:
                 object['weight_limit'] = {}
             if not object['weight_limit'].get('free_limit') and t.get('weight_free_limit'):
-                object['weight_limit']['free_limit'] = float(t.get('weight_free_limit'))
+                object['weight_limit']['free_limit'] = parse_numeric(t.get('weight_free_limit'))
             if 'slabs' not in object.get('weight_limit'):
                 object['weight_limit']['slabs'] = []
             if t.get('weight_lower_limit'):
                 if t.get('weight_upper_limit') and t.get('weight_limit_price'):
                     weight_slab = {
-                        'lower_limit': float(t.get('weight_lower_limit')),
-                        'upper_limit': float(t.get('weight_upper_limit')),
-                        'price': float(t.get('weight_limit_price')),
+                        'lower_limit': parse_numeric(t.get('weight_lower_limit')),
+                        'upper_limit': parse_numeric(t.get('weight_upper_limit')),
+                        'price': parse_numeric(t.get('weight_limit_price')),
                         'currency': t.get('weight_limit_currency')
                     }
                 else:
                     weight_slab = {
-                        'lower_limit': float(t.get('weight_lower_limit')),
+                        'lower_limit': parse_numeric(t.get('weight_lower_limit')),
                         'currency': t.get('weight_limit_currency')
                     }
                 object['weight_limit']['slabs'].append(weight_slab)
@@ -1268,20 +1269,20 @@ def create_fcl_freight_freight_rate(
             if 'destination_local' not in object:
                 object['destination_local'] = {'detention': {}}
             if not object['destination_local']['detention'].get('free_limit') and t.get('destination_detention_free_limit'):
-                object['destination_local']['detention']['free_limit'] = float(t.get('destination_detention_free_limit'))
+                object['destination_local']['detention']['free_limit'] = parse_numeric(t.get('destination_detention_free_limit'))
             if 'slabs' not in object['destination_local']['detention']:
                 object['destination_local']['detention']['slabs'] = []
             if t.get('destination_detention_lower_limit'):
                 if t.get('destination_detention_price') and t.get('destination_detention_upper_limit'):
                     slab = {
-                        'lower_limit': float(t.get('destination_detention_lower_limit')),
-                        'upper_limit': float(t.get('destination_detention_upper_limit')),
-                        'price': float(t.get('destination_detention_price')),
+                        'lower_limit': parse_numeric(t.get('destination_detention_lower_limit')),
+                        'upper_limit': parse_numeric(t.get('destination_detention_upper_limit')),
+                        'price': parse_numeric(t.get('destination_detention_price')),
                         'currency': t.get('destination_detention_currency')
                     }
                 else:
                     slab = {
-                        'lower_limit': float(t.get('destination_detention_lower_limit')),
+                        'lower_limit': parse_numeric(t.get('destination_detention_lower_limit')),
                         'currency': t.get('destination_detention_currency')
                     }
                 object['destination_local']['detention']['slabs'].append(slab)
@@ -1296,7 +1297,7 @@ def create_fcl_freight_freight_rate(
     object["is_extended"] = False
     for line_items in object['line_items']:
         if line_items['price']:
-            line_items['price'] = float(line_items['price'])
+            line_items['price'] = parse_numeric(line_items['price'])
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
