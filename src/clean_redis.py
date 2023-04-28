@@ -70,7 +70,7 @@ def rate_extension():
     batch_size = 5000
     count = 0
     for offset in range(0, total_count, batch_size):
-        batch_rates = rate.offset(offset).limit(batch_size)
+        batch_rates = rates.offset(offset).limit(batch_size)
         for rate in batch_rates.execute():
             validities = rate.validities
             for validity in validities:
