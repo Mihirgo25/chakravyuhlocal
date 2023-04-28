@@ -10,7 +10,6 @@ import os
 import pandas as pd
 from math import ceil
 from database.rails_db import get_ff_mlo
-from celery_worker import rate_extension_delay
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
