@@ -65,12 +65,14 @@ def delete_rates():
 
 def rate_extension():
     eligible_sp = get_ff_mlo()
-    rates = FclFreightRate.select().where(FclFreightRate.last_rate_available_date == '2023-04-30', FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', FclFreightRate.service_provider_id.in_(eligible_sp), ~FclFreightRate.rate_not_available_entry, FclFreightRate.mode == 'manual').order_by(FclFreightRate.id.asc())
-    total_count = rates.count()
-    batch_size = 5000
+    rates = FclFreightRate.select().where(FclFreightRate.last_rate_available_date == '2023-04-30', FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', FclFreightRate.service_provider_id.in_(eligible_sp), ~FclFreightRate.rate_not_available_entry, FclFreightRate.mode == 'manual')
+    limit_size = 5000
     count = 0
-    for offset in range(0, total_count, batch_size):
-        batch_rates = rates.offset(offset).limit(batch_size)
+    while True:
+        batch_rates = rates.limit(limit_size)
+        if not batch_rates.exists():
+            break
+        
         for rate in batch_rates.execute():
             validities = rate.validities
             for validity in validities:
