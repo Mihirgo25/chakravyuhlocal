@@ -34,7 +34,7 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions, extend_fcl_freight_rates
+    from celery_worker import delay_fcl_functions, extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
@@ -66,6 +66,8 @@ def create_fcl_freight_rate(request):
         freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
+
+    current_validities = freight.validities
     freight.set_locations()
     freight.set_origin_location_ids()
     freight.set_destination_location_ids()
@@ -143,10 +145,14 @@ def create_fcl_freight_rate(request):
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
 
+    rate_obj = request | row | { 'origin_location_ids': freight.origin_location_ids, 'destination_location_id': freight.destination_location_ids }
+
     if row["mode"] == 'manual':
-        rate_obj = request | row
+        
         print(rate_obj)
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
+    
+    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
     return {"id": freight.id}
 

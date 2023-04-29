@@ -7,7 +7,6 @@ import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps,common
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
-from configs.trade_lane import TRADE_LANE_PRICES
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 def calculate_port_distance(cord1, cord2):
     coords_1 = cord1

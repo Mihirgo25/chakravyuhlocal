@@ -9,26 +9,24 @@ class BaseModel(Model):
         database = db
 
 
-class FclFreightRateEstimation(BaseModel):
+class CustomerTransformation(BaseModel):
     id = BigAutoField(primary_key=True)
     origin_location_id = UUIDField(index=True, null=False)
     destination_location_id = UUIDField(index=True, null=False)
     origin_location_type = TextField(null=False, index=True)
     destination_location_type = TextField(null=False, index=True)
-    shipping_line_id = UUIDField(null=True, index=True)
-    container_size = TextField(null=False, index=True)
-    container_type = TextField(null=False, index=True)
-    commodity = TextField(null=True)
-    schedule_type = TextField(null=False)
-    payment_term = TextField(null=False)
+    service_type = TextField(index=True, null=False, index=True)
+    customer_id = TextField(index=True, null=True)
+    net_profit = FloatField(default=0)
     line_items = BinaryJSONField(default=[])
+    date = DateTimeField(default=datetime.datetime.now().date())
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     status = TextField(default="active", null=False)
 
     class Meta:
-        table_name = "fcl_freight_rate_estimations"
+        table_name = "customer_transformations"
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
-        return super(FclFreightRateEstimation, self).save(*args, **kwargs)
+        return super(CustomerTransformation, self).save(*args, **kwargs)

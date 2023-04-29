@@ -147,12 +147,12 @@ def add_mandatory_line_items(param,request):
     return param
 
 def check_rate_existence(updated_param):
-    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.origin_main_port_id == updated_param.get('origin_main_port_id'), FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.destination_main_port_id == updated_param.get('destination_main_port_id'), FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
+    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
     if system_rate:
         return True
     else:
         return False
-    
+
 def get_money_exchange(from_currency, to_currency, gri_rate):
     if not gri_rate:
         return 0
@@ -212,7 +212,7 @@ def get_fcl_freight_cluster_objects(request):
         containers = data['container_cluster']['cluster_items']
     except:
         containers = [request['container_size']]
-    
+
     location_ids = origin_locations + destination_locations
     icd_data = get_in_batches(method=get_locations, to_batch_params=location_ids, BATCH_SIZE=500)
 
