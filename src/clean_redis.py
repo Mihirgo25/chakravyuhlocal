@@ -10,6 +10,7 @@ import os
 import pandas as pd
 from math import ceil
 from database.rails_db import get_ff_mlo
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
@@ -87,7 +88,27 @@ def rate_extension():
             rate.set_platform_prices()
             count += 1
             print(count)
-                        
+            
+def correct_local():
+    rates = FclFreightRateLocal.select().where(FclFreightRateLocal.is_line_items_error_messages_present, ~FclFreightRateLocal.rate_not_available_entry, FclFreightRateLocal.updated_at >= '2023-04-26')
+    count = 0
+    for rate in rates.execute():
+        data = rate.data
+        line_items = data['line_items']
+        if line_items[0]['location_id'] == '74a37f17-b9d7-4cec-82c4-38a8eda8f914':
+            print(rate.id)
+            for item in line_items:
+                item['location_id'] = None
+            data['line_items'] = line_items
+            rate.data = data
+            rate.is_line_items_error_messages_present = False
+            rate.line_items_error_messages = None
+            if rate.main_port_id == '74a37f17-b9d7-4cec-82c4-38a8eda8f914':
+                rate.main_port_id = None
+                rate.main_port = None
+            rate.save()
+            count += 1
+            print(count)
 
         
         
