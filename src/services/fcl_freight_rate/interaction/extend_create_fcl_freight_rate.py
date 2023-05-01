@@ -74,7 +74,7 @@ def get_fcl_freight_cluster_objects(request):
     except:
         containers = [request['container_size']]
 
-    icd_data = maps.list_locations({'filters':{ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT}})['list']
+    icd_data = maps.list_locations({'filters':{ 'id': origin_locations + destination_locations }, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
 
     new_data = {}
     for t in icd_data:
