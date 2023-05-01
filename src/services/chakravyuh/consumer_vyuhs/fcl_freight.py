@@ -1,5 +1,4 @@
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
-from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 import random
@@ -13,28 +12,10 @@ class FclFreightVyuh():
             'country': 2,
             'trade': 3,
         }
-    
-    def get_location_details(self):
-        origin_port_id = self.requirements['origin_port_id']
-        destination_port_id = self.requirements['destination_port_id']
-        locations_description = maps.list_locations({'filters': {'id': [origin_port_id, destination_port_id] }})
 
-        if locations_description and isinstance(locations_description, dict):
-            locations_description = locations_description['list']
-        else:
-            locations_description = []
-        locations_hash = {}
-        for loc in locations_description:
-            locations_hash[loc['id']] = loc
-
-        return locations_hash
-
-    def get_probable_rate_transformations(self):
-        location_details = self.get_location_details()
-        origin_details = location_details[self.requirements['origin_port_id']]
-        destination_details = location_details[self.requirements['destination_port_id']]
-        origin_location_ids = [origin_details['id'], origin_details['country_id'], origin_details['trade_id']]
-        destination_location_ids = [destination_details['id'], destination_details['country_id'], destination_details['trade_id']]
+    def get_probable_rate_transformations(self, first_rate: dict={}):
+        origin_location_ids = [first_rate['origin_port_id'], first_rate['origin_country_id'], first_rate['origin_trade_id']]
+        destination_location_ids = [first_rate['destination_port_id'], first_rate['destination_country_id'], first_rate['destination_trade_id']]
 
         shipping_line_ids = []
 
@@ -133,7 +114,14 @@ class FclFreightVyuh():
 
     def apply_dynamic_pricing(self):
 
-        probable_transformations = self.get_probable_rate_transformations()
+        if len(self.freight_rates) == 0:
+            return self.freight_rates
+        
+        print(self.freight_rates)
+        
+        first_rate = self.freight_rates[0]
+
+        probable_transformations = self.get_probable_rate_transformations(first_rate)
 
         probable_customer_transformations = self.get_probable_customer_transformations()
 
