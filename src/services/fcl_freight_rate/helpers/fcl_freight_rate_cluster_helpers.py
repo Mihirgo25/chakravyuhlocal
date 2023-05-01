@@ -163,7 +163,7 @@ def get_money_exchange(from_currency, to_currency, gri_rate):
     return 0
 
 def get_locations(location_ids: list = [], BATCH_SIZE = 500):
-    locations = maps.list_locations({'filters':{ 'id': location_ids , 'page_limit': BATCH_SIZE }})['list']
+    locations = maps.list_locations({'filters':{ 'id': location_ids },  'page_limit': BATCH_SIZE})['list']
     return locations or []
 
 def get_fcl_freight_cluster_objects(request):
