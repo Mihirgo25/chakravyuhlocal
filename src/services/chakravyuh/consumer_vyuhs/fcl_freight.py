@@ -75,27 +75,37 @@ class FclFreightVyuh():
             upper_limit = common.get_money_exchange_for_fcl({"price": upper_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
         
         if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
-            line_item['price'] = random.randrange(start=lower_limit, stop=upper_limit)
+            line_item['price'] = random.randrange(start=lower_limit, stop=(upper_limit + 1))
         
         return line_item
 
     
     def apply_rate_transformation(self, rate, probable_transformations):
         probable_transformation_to_apply = self.get_most_eligible_rate_transformation(probable_transformations)
-        line_items = rate['line_items']
 
-        transformation_items = probable_transformation_to_apply['line_items']
+        validities = rate['validities'] or []
 
-        new_lineitems = []
-        for line_item in line_items:
-            transformed_line_item = self.get_lineitem(code=line_item['code'], items=transformation_items)
-            if transformed_line_item:
-                adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
-                new_lineitems.append(adjusted_lineitem)
-            else:
-                new_lineitems.append(line_item)
+        new_validities = []
+
+        for validity in validities:
+
+            line_items = validity['line_items']
+
+            transformation_items = probable_transformation_to_apply['line_items']
+
+            new_lineitems = []
+            for line_item in line_items:
+                transformed_line_item = self.get_lineitem(code=line_item['code'], items=transformation_items)
+                if transformed_line_item:
+                    adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
+                    new_lineitems.append(adjusted_lineitem)
+                else:
+                    new_lineitems.append(line_item)
         
-        rate['line_items'] = new_lineitems
+            validity['line_items'] = new_lineitems
+            new_validities.append(validity)
+        
+        rate['validities'] = new_validities
 
         return rate
 
@@ -117,7 +127,6 @@ class FclFreightVyuh():
         if len(self.freight_rates) == 0:
             return self.freight_rates
         
-        print(self.freight_rates)
         
         first_rate = self.freight_rates[0]
 

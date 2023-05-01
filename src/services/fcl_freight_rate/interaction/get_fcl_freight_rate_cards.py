@@ -14,6 +14,7 @@ from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 from services.chakravyuh.interaction.get_local_rates_from_vyuh import get_local_rates_from_vyuh
 import sentry_sdk
+import traceback
 
 def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
@@ -59,8 +60,6 @@ def initialize_freight_query(requirements, prediction_required = False):
 
     if allow_entity_ids:
         freight_query = freight_query.where(((FclFreightRate.cogo_entity_id << allow_entity_ids) | (FclFreightRate.cogo_entity_id.is_null(True))))
-    else:
-        freight_query = freight_query.where(FclFreightRate.cogo_entity_id == None)
 
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
 
@@ -833,11 +832,9 @@ def get_fcl_freight_rate_cards(requirements):
     """
     try:
         initial_query = initialize_freight_query(requirements)
-        print(initial_query, 'ff')
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
-        print(freight_rates)
-        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+        # freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
         # if len(freight_rates) == 0:
         #     get_fcl_freight_predicted_rate(requirements)
@@ -860,11 +857,11 @@ def get_fcl_freight_rate_cards(requirements):
         fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
         freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         freight_rates = build_response_list(freight_rates, requirements)
-        print('kl')
         return {
             "list" : freight_rates
         }
     except Exception as e:
+        traceback.print_exc()
         sentry_sdk.capture_exception(e)
         print(e, 'Error In Fcl Freight Rate Cards')
         return {
