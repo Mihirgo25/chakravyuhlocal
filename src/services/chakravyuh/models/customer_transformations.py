@@ -15,7 +15,7 @@ class CustomerTransformation(BaseModel):
     destination_location_id = UUIDField(index=True, null=False)
     origin_location_type = TextField(null=False, index=True)
     destination_location_type = TextField(null=False, index=True)
-    service_type = TextField(index=True, null=False, index=True)
+    service_type = TextField(index=True, null=False)
     customer_id = TextField(index=True, null=True)
     net_profit = FloatField(default=0)
     line_items = BinaryJSONField(default=[])
