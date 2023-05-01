@@ -2,6 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
+# from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
 from configs.global_constants import HAZ_CLASSES
 
 def create_audit(request, freight_id):
@@ -34,7 +35,7 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions, extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
+    from celery_worker import delay_fcl_functions
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
@@ -67,7 +68,6 @@ def create_fcl_freight_rate(request):
         for key in list(row.keys()):
             setattr(freight, key, row[key])
 
-    current_validities = freight.validities
     freight.set_locations()
     freight.set_origin_location_ids()
     freight.set_destination_location_ids()
@@ -144,17 +144,29 @@ def create_fcl_freight_rate(request):
     
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
-
-    rate_obj = request | row | { 'origin_location_ids': freight.origin_location_ids, 'destination_location_id': freight.destination_location_ids }
-
-    if row["mode"] == 'manual':
-        
-        print(rate_obj)
-        extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
-    
-    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+     
+    current_validities = freight.validities
+    adjust_dynamic_pricing(request, row, freight, current_validities)
 
     return {"id": freight.id}
+
+def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validities):
+    from celery_worker import extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
+    rate_obj = request | row | { 
+        'origin_location_ids': freight.origin_location_ids,
+        'destination_location_ids': freight.destination_location_ids,
+        'id': freight.id,
+        'origin_country_id': freight.origin_country_id,
+        'destination_country_id': freight.destination_country_id,
+        'origin_trade_id': freight.origin_trade_id,
+        'destination_trade_id': freight.destination_trade_id
+    }
+    if row["mode"] == 'manual':
+        extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
+    # Testing Purposes
+    # fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=rate_obj, current_validities=current_validities)
+    # fcl_freight_vyuh.set_dynamic_pricing()
+    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
 def get_flash_booking_rate_line_items(request):
     line_items = request.get("line_items")
