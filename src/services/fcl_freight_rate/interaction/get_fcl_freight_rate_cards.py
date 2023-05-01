@@ -834,12 +834,12 @@ def get_fcl_freight_rate_cards(requirements):
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
-        # freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
-        # if len(freight_rates) == 0:
-        #     get_fcl_freight_predicted_rate(requirements)
-        #     initial_query = initialize_freight_query(requirements, True)
-        #     freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        if len(freight_rates) == 0:
+            get_fcl_freight_predicted_rate(requirements)
+            initial_query = initialize_freight_query(requirements, True)
+            freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
