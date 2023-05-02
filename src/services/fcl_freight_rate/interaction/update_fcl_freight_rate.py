@@ -36,6 +36,8 @@ def validate_freight_params(request):
         HTTPException(status_code=400, detail="{key} is blank")
 
 def execute_transaction_code(request):
+  from celery_worker import update_multiple_service_objects
+
   validate_freight_params(request)
 
   freight_object = FclFreightRate.select().where(FclFreightRate.id == request["id"]).first()
@@ -76,6 +78,9 @@ def execute_transaction_code(request):
     freight_object.set_platform_prices()
     freight_object.set_is_best_price()
     freight_object.set_last_rate_available_date()
+
+  freight_object.sourced_by_id = request.get("sourced_by_id")
+  freight_object.procured_by_id = request.get("procured_by_id")
   
   freight_object.validate_before_save()
 
@@ -84,13 +89,15 @@ def execute_transaction_code(request):
   except:
       raise HTTPException(status_code=500, detail='rate did not update')
   
-  freight_object.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
+  freight_object.create_fcl_freight_free_days(new_free_days, request.get('performed_by_id'), request.get('sourced_by_id'), request.get('procured_by_id'))
 
   freight_object.update_special_attributes()
 
   freight_object.update_platform_prices_for_other_service_providers()
 
   freight_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
+
+  update_multiple_service_objects.apply_async(kwargs={'object':freight_object},queue='low')
 
   create_audit(request, freight_object.id)
 

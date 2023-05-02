@@ -29,6 +29,7 @@ def create_audit(request, fcl_freight_local_id):
     )
 
 def execute_transaction_code(request):
+  from celery_worker import update_multiple_service_objects
 
   fcl_freight_local = FclFreightRateLocal.get_by_id(request['id'])
 
@@ -132,6 +133,9 @@ def execute_transaction_code(request):
       plugin = create_fcl_freight_rate_free_day(plugin_obj)
       fcl_freight_local.plugin_id = plugin['id']
 
+  fcl_freight_local.sourced_by_id = request.get("sourced_by_id")
+  fcl_freight_local.procured_by_id = request.get("procured_by_id")
+
   fcl_freight_local.validate_before_save()
 
   try:
@@ -140,6 +144,8 @@ def execute_transaction_code(request):
     raise HTTPException(status_code=500, detail='fcl freight rate local did not save')
 
   fcl_freight_local.update_special_attributes()
+
+  update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_local},queue='low')
 
   create_audit(request, fcl_freight_local.id)
 
