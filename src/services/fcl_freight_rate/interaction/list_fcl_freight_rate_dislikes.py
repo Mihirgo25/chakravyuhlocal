@@ -59,7 +59,7 @@ def get_data(query):
         item['unsatisfactory_destination_detention'] = unsatisfactory_destination_detention_count
         item['unsatisfactory_rate'] = unsatisfactory_rate_count
         data.append(item)
-    locations_data = maps.list_locations({'filters':{'id':locations,'page_limit':100}})['list']
+    locations_data = maps.list_locations({'filters':{'id':locations},'page_limit': 100})['list']
     location_match = {}
     for location in locations_data:
         location_match[location['id']] = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name']}
