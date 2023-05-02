@@ -97,7 +97,7 @@ def execute_transaction_code(request):
 
   freight_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
 
-  update_multiple_service_objects.apply_async(kwargs={'object':freight_object},queue='low')
+  update_multiple_service_objects.apply_async(kwargs={'object':freight_object},queue='critical')
 
   create_audit(request, freight_object.id)
 
