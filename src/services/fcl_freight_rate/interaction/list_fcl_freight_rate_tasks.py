@@ -36,7 +36,7 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
     
     stats = get_stats(filters, stats_required)
 
-    return {'list': data } | (pagination_data) | (stats)
+    return {'list': json_encoder(data) } | (pagination_data) | (stats)
   
 
 def get_query(sort_by, sort_type):
@@ -95,12 +95,10 @@ def get_data(query, filters):
         container_types.append(object['container_type'])
         trade_types.append(object['trade_type']) 
         shipping_line_ids.append(object['shipping_line_id'])
-        new_data.append(object)
 
-    if filters and 'status' in filters and filters['status'] == 'completed':
-        fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
+        if filters and 'status' in filters and filters['status'] == 'completed':
+            fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
 
-        for object in new_data:
             rate = object['completion_data'].get('rate')
 
             rate['total_price'] = 0
@@ -128,8 +126,8 @@ def get_data(query, filters):
                 object['remark'] = 'Delayed' 
 
             del object['completion_data']
-    
-    return json_encoder(new_data)
+        new_data.append(object)
+    return new_data
 
 
 def apply_indirect_filters(query, filters):
