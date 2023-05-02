@@ -35,9 +35,17 @@ def fcl_freight_objects_updation():
         FclFreightRate.sourced_by.is_null(True) |
         FclFreightRate.procured_by.is_null(True)
     )
-
-    for object in rates_to_update.iterator():
-        delay_func(object)
+    limit_size = 2000
+    count=0
+    while True:
+        batch = rates_to_update.limit(limit_size)
+        if not batch.exists():
+            break
+        
+        for object in batch.execute():
+            delay_func(object)
+            count += 1
+            print(count)
     print('Done')
     
     
