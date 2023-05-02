@@ -12,6 +12,8 @@ def update_fcl_freight_rate_weight_limit(request):
     return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    from celery_worker import update_multiple_service_objects
+
     weight_limit = FclFreightRateWeightLimit.get_by_id(request['id'])
     if request.get('free_limit'):
         weight_limit.free_limit = request.get('free_limit')
@@ -23,10 +25,16 @@ def execute_transaction_code(request):
     weight_limit.updated_at = datetime.now()
    
     weight_limit.update_special_attributes()
+
+    weight_limit.sourced_by_id = request.get("sourced_by_id")
+    weight_limit.procured_by_id = request.get("procured_by_id")
+
     try:
         weight_limit.save()
     except:
         raise HTTPException(status_code=500, detail='fcl freight rate local did not save')
+
+    update_multiple_service_objects.apply_async(kwargs={'object':weight_limit},queue='low')
 
     create_audit(request, weight_limit.id)
 

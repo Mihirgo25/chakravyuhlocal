@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import json
 from peewee import SQL
 from micro_services.client import common
+from libs.json_encoder import json_encoder
 
 possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
@@ -127,8 +128,8 @@ def get_data(query, filters):
                 object['remark'] = 'Delayed' 
 
             del object['completion_data']
-       
-    return new_data
+    
+    return json_encoder(new_data)
 
 
 def apply_indirect_filters(query, filters):
