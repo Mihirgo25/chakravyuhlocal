@@ -145,7 +145,7 @@ def execute_transaction_code(request):
 
   fcl_freight_local.update_special_attributes()
 
-  update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_local},queue='low')
+  update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_local},queue='critical')
 
   create_audit(request, fcl_freight_local.id)
 

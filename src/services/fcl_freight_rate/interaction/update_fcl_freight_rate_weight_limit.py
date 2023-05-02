@@ -34,7 +34,7 @@ def execute_transaction_code(request):
     except:
         raise HTTPException(status_code=500, detail='fcl freight rate local did not save')
 
-    update_multiple_service_objects.apply_async(kwargs={'object':weight_limit},queue='low')
+    update_multiple_service_objects.apply_async(kwargs={'object':weight_limit},queue='critical')
 
     create_audit(request, weight_limit.id)
 

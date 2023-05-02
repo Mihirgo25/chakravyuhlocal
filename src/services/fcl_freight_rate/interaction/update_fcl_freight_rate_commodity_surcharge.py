@@ -44,7 +44,7 @@ def execute_transaction_code(request):
     fcl_freight_rate_commodity_surcharge.sourced_by_id = request.get("sourced_by_id")
     fcl_freight_rate_commodity_surcharge.procured_by_id = request.get("procured_by_id")
 
-    update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_rate_commodity_surcharge},queue='low')
+    update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_rate_commodity_surcharge},queue='critical')
 
     create_audit(request)
 
