@@ -58,7 +58,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
 
 def get_data(query, filters):
     new_data = []
-    port_ids, main_port_ids, container_sizes, container_types, commodities, trade_types, shipping_line_ids = [],[], [],[], [],[], []
+    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
     data_list = list(query.dicts())
 
     for object in data_list:
@@ -84,21 +84,7 @@ def get_data(query, filters):
             object['purchase_invoice_rate'] = None
         del object['job_data']
 
-        port_ids.append(object['port_id'])
-        if object['main_port_id']:
-            main_port_ids.append(object['main_port_id']) 
-        
-        if object['commodity']:
-            commodities.append(object['commodity'])
-            
-        container_sizes.append(object['container_size']) 
-        container_types.append(object['container_type'])
-        trade_types.append(object['trade_type']) 
-        shipping_line_ids.append(object['shipping_line_id'])
-
         if filters and 'status' in filters and filters['status'] == 'completed':
-            fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
-
             rate = object['completion_data'].get('rate')
 
             rate['total_price'] = 0
