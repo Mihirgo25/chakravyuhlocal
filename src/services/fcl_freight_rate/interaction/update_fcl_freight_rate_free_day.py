@@ -12,6 +12,7 @@ def update_fcl_freight_rate_free_day(request):
     return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    from celery_worker import update_multiple_service_objects
 
     free_day = FclFreightRateFreeDay.get_by_id(request['id'])
 
@@ -22,14 +23,18 @@ def execute_transaction_code(request):
     if request.get('slabs'):
         free_day.slabs = request.get('slabs')
 
-    free_day.updated_at = datetime.datetime.now()
     free_day.update_special_attributes()
     free_day.rate_not_available_entry = False
+
+    free_day.sourced_by_id = request.get("sourced_by_id")
+    free_day.procured_by_id = request.get("procured_by_id")
 
     try:
         free_day.save()
     except:
         raise HTTPException(status_code=500, detail='fcl freight rate local did not save')
+
+    update_multiple_service_objects.apply_async(kwargs={'object':free_day},queue='critical')
 
     create_audit(request, free_day.id)
 
