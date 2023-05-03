@@ -14,9 +14,10 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class Truck(BaseModel):
+    truck_company = TextField(null=True)
     name = CharField(null=False)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    id = BigAutoField(primary_key=True)
+    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     length = FloatField(null=True)
     breadth = FloatField(null=True)
     height = FloatField(null=True)
@@ -26,13 +27,12 @@ class Truck(BaseModel):
     capacity_unit = TextField(null=True)
     vehicle_weight = FloatField(null=True)
     fuel_type = TextField(null=True)
-    truck_company = TextField(null=True)
     avg_speed = FloatField(null=True)
     no_of_tyres = IntegerField(null=True)
     engine_type = TextField(null=True)
-    country_id = UUIDField(null=False)
-    country = BinaryJSONField(null=False)
-    axels = IntegerField(null=False)
+    country_id = UUIDField(null=True)
+    country = BinaryJSONField(null=True)
+    axels = IntegerField(null=True)
     truck_type = TextField(null=True)
     body_type = TextField(null=True)
     status = TextField(null=True)
