@@ -27,6 +27,8 @@ def update_fcl_freight_rate_commodity_surcharge(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    from celery_worker import update_multiple_service_objects
+
     fcl_freight_rate_commodity_surcharge = FclFreightRateCommoditySurcharge.get_by_id(request['id'])
 
     if not fcl_freight_rate_commodity_surcharge:
@@ -38,6 +40,11 @@ def execute_transaction_code(request):
 
     if not fcl_freight_rate_commodity_surcharge.save():
         raise HTTPException(status_code=500, detail="Commodity Surcharge not updated")
+
+    fcl_freight_rate_commodity_surcharge.sourced_by_id = request.get("sourced_by_id")
+    fcl_freight_rate_commodity_surcharge.procured_by_id = request.get("procured_by_id")
+
+    update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_rate_commodity_surcharge},queue='critical')
 
     create_audit(request)
 

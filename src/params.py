@@ -155,7 +155,7 @@ class UpdateFclFreightRate(BaseModel):
   validity_end: datetime = None
   schedule_type: str = 'transhipment'
   payment_term: str = 'prepaid'
-  line_items: list[UpdateLineItem] = None
+  line_items: list[UpdateLineItem] = []
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
