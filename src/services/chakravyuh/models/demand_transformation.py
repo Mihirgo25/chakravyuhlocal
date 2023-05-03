@@ -9,7 +9,7 @@ class BaseModel(Model):
         database = db
 
 
-class CustomerTransformation(BaseModel):
+class DemandTransformation(BaseModel):
     id = BigAutoField(primary_key=True)
     origin_location_id = UUIDField(index=True, null=False)
     destination_location_id = UUIDField(index=True, null=False)
@@ -25,8 +25,8 @@ class CustomerTransformation(BaseModel):
     status = TextField(default="active", null=False)
 
     class Meta:
-        table_name = "customer_transformations"
+        table_name = "demand_transformations"
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
-        return super(CustomerTransformation, self).save(*args, **kwargs)
+        return super(DemandTransformation, self).save(*args, **kwargs)

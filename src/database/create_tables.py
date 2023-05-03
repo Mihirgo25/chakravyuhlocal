@@ -1,12 +1,12 @@
 from database.db_session import db
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
-from services.chakravyuh.models.customer_transformations import CustomerTransformation
+from services.chakravyuh.models.demand_transformation import DemandTransformation
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRateEstimation, FclFreightRateEstimationAudit, CustomerTransformation])
+        db.create_tables([FclFreightRateEstimation, FclFreightRateEstimationAudit, DemandTransformation])
         db.close()
         print("created table")
     except:
