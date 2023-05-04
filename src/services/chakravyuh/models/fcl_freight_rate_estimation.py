@@ -32,3 +32,6 @@ class FclFreightRateEstimation(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(FclFreightRateEstimation, self).save(*args, **kwargs)
+    
+    def set_line_items(self, line_items):
+        print("here")

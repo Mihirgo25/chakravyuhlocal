@@ -2,6 +2,7 @@ from peewee import *
 from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
+from services.chakravyuh.models.demand_transformation_audit import DemandTransformationAudit
 
 
 class BaseModel(Model):
@@ -22,7 +23,10 @@ class DemandTransformation(BaseModel):
     date = DateTimeField(default=datetime.datetime.now().date())
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    status = TextField(default="active", null=False)
+    realised_volume = IntegerField(default=0)
+    realised_revenue = FloatField(default=0)
+    realised_currency = CharField(default='USD')
+    status = CharField(default="active", null=False)
 
     class Meta:
         table_name = "demand_transformations"
@@ -30,3 +34,19 @@ class DemandTransformation(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(DemandTransformation, self).save(*args, **kwargs)
+    
+    def set_line_items(self, request_line_items):
+        new_line_items = []
+        for item in self.line_items:
+            for req_item in request_line_items:
+                if item['code'] == req_item['code']:
+                    new_line_items.append(req_item)
+                else:
+                    new_line_items.append(item)
+        
+        self.line_items = new_line_items
+            
+    
+    def create_audit(self, param):
+        audit = DemandTransformationAudit.create(**param)
+        return audit

@@ -189,8 +189,7 @@ class FclFreightVyuh():
 
         matching_line_items = self.get_eligible_rate_lineitems(current_available_rates, line_item_code)
 
-        lower_limit = 100000
-        upper_limit = -100000
+        all_prices = []
 
         for matching_lineitem in matching_line_items:
             price = matching_lineitem['price']
@@ -198,16 +197,22 @@ class FclFreightVyuh():
             if matching_lineitem['currency'] != self.target_currency:
                 converted_price = common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": matching_lineitem['currency'], "to_currency": self.target_currency })['price']
             
-            if converted_price < lower_limit:
-                lower_limit = converted_price
-            if converted_price > upper_limit:
-                upper_limit = converted_price
+            all_prices.append(converted_price)
+        
+        size = len(all_prices)
+        mean = sum(all_prices) / size
+        variance = sum([((x - mean) ** 2) for x in all_prices]) / size
+        std_dev = variance ** 0.5
+        lower_limit = mean - 2 * std_dev # -2 sigma
+        upper_limit = mean + 2 * std_dev # 2 sigma
         
         return {
             'code': line_item_code,
             'currency': self.target_currency,
             'upper_limit': upper_limit,
             'lower_limit': lower_limit,
+            'average': mean,
+            'size': size,
             'unit': line_item['unit']
         }
     

@@ -11,16 +11,6 @@ class Slab(BaseModel):
   price: float
   currency: str
 
-class EstimatedLineItems(BaseModel):
-  location_id: str = None
-  code: str
-  unit: str
-  lower_price: float
-  upper_price: float
-  currency: str
-  remarks: list[str] = None
-  slabs: list[Slab] = None
-
 class UpdateLineItem(BaseModel):
   code: str
   unit: str
@@ -849,29 +839,3 @@ class UpdateFclFreightRateTask(BaseModel):
   status: str = None
   closing_remarks: str = None
   validate_closing_remarks: str = None
-
-class CreateFclEstimatedRate(BaseModel):
-  performed_by_id: str=None
-  performed_by_type: str=None
-  origin_location_id : str
-  destination_location_id : str
-  origin_location_type: str
-  destination_location_type : str
-  shipping_line_id : str=None
-  container_size: str
-  container_type: str
-  commodity: str=None
-  line_items: List[EstimatedLineItems]
-
-class CreateFclLocalEstimatedRate(BaseModel):
-  performed_by_id: str = None
-  performed_by_type: str = None
-  location_id: str 
-  location_type: str 
-  container_size: str 
-  container_type: str 
-  commodity: str = None
-  trade_type: str
-  shipping_line_id: str
-  line_items: List[EstimatedLineItems] = None
-  local_currency: str
