@@ -27,7 +27,8 @@ def create_fcl_estimated_rate(request):
             FclFreightRateEstimation.destination_location_id
             == request.get("destination_location_id"),
             FclFreightRateEstimation.container_size == request.get("container_size"),
-            FclFreightRateEstimation.container_type == request.get("container_type")
+            FclFreightRateEstimation.container_type == request.get("container_type"),
+            FclFreightRateEstimation.commodity == request.get("commodity")
         )
         .first()
     )

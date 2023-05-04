@@ -12,19 +12,19 @@ class BaseModel(Model):
 class FclFreightRateEstimation(BaseModel):
     id = BigAutoField(primary_key=True)
     origin_location_id = UUIDField(index=True, null=False)
+    origin_location_type = CharField(null=False, index=True)
     destination_location_id = UUIDField(index=True, null=False)
-    origin_location_type = TextField(null=False, index=True)
-    destination_location_type = TextField(null=False, index=True)
+    destination_location_type = CharField(null=False, index=True)
     shipping_line_id = UUIDField(null=True, index=True)
-    container_size = TextField(null=False, index=True)
-    container_type = TextField(null=False, index=True)
-    commodity = TextField(null=True)
-    schedule_type = TextField(null=True)
-    payment_term = TextField(null=True)
+    container_size = CharField(null=False, index=True)
+    container_type = CharField(null=False, index=True)
+    commodity = CharField(null=True)
+    schedule_type = CharField(null=True)
+    payment_term = CharField(null=True)
     line_items = BinaryJSONField(default=[])
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    status = TextField(default="active", null=False)
+    status = CharField(default="active", null=False)
 
     class Meta:
         table_name = "fcl_freight_rate_estimations"
@@ -34,4 +34,4 @@ class FclFreightRateEstimation(BaseModel):
         return super(FclFreightRateEstimation, self).save(*args, **kwargs)
     
     def set_line_items(self, line_items):
-        print("here")
+        print('set_line_items')

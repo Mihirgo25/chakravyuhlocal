@@ -17,6 +17,7 @@ class EstimatedLineItems(BaseModel):
     lower_price: float
     upper_price: float
     average: float
+    size: int
     currency: str
     remarks: list[str] = []
     slabs: list[Slab] = None
