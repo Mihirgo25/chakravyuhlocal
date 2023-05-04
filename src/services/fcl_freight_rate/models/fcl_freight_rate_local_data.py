@@ -16,9 +16,9 @@ class FclFreightRateLocalData(BaseModel):
                 if data[key]:
                     new_data[key] = data[key]
                     if isinstance(data[key], list):
-                        for items in new_data[key]:
-                            if 'remarks' in items and items.get('remarks'):
-                                    items['remarks'] = list(filter(None, items['remarks']))
+                        for item in new_data[key]:
+                            if 'remarks' in item and item.get('remarks'):
+                                item['remarks'] = list(filter(None, item['remarks']))
 
             super().__init__(**new_data)
         else:
