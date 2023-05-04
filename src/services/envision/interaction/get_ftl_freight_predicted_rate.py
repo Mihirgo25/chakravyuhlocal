@@ -1,4 +1,4 @@
-from services.envision.additional_service_prediction import get_distance
+from libs.additional_service import get_distance
 from configs.definitions import ROOT_DIR
 import os
 import joblib

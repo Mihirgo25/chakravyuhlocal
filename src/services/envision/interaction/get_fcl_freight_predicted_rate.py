@@ -8,7 +8,7 @@ from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
-from services.envision.additional_service_prediction import get_distance
+from libs.additional_service import get_distance
 
 def get_final_price(min_price, price, ldh, request):
     price_delta = price - min_price
