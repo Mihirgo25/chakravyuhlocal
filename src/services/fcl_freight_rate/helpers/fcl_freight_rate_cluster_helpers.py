@@ -172,7 +172,7 @@ def get_fcl_freight_cluster_objects(request):
     data = get_cluster_objects(request)
 
     if not data:
-        return
+        return []
     if request.get('rate_sheet_id'):
         cluster_objects = []
         for key, value in data.items():
