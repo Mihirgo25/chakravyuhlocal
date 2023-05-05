@@ -43,7 +43,7 @@ def get_fcl_freight_cluster_objects(request):
         required_mandatory_codes = get_required_mandatory_codes(cluster_objects)
         mandatory_codes = []
         for required_mandatory_code in required_mandatory_codes:
-            for mandatory_code in required_mandatory_code['mandatory_codes']:
+            for mandatory_code in required_mandatory_code.get('mandatory_codes'):
                 mandatory_codes.append(mandatory_code)
         common_line_items = list(set([i['code'] for i in request['line_items'] if i is not None]).intersection(set(mandatory_codes)))
         mandatory_codes = list(set(mandatory_codes))
@@ -62,8 +62,8 @@ def get_fcl_freight_cluster_objects(request):
 
     if data.get('commodity_cluster'):
         commodities = data['commodity_cluster']['cluster_items']
-        if commodities[request['container_type']]:
-            commodities[request['container_type']] = commodities[request['container_type']]
+        if commodities.get(request['container_type']):
+            commodities[request['container_type']] = list(set(commodities[request['container_type']] + [request['commodity']]))
         else:
             commodities[request['container_type']] = [request['commodity']]
     else:
@@ -74,7 +74,7 @@ def get_fcl_freight_cluster_objects(request):
     except:
         containers = [request['container_size']]
 
-    icd_data = maps.list_locations({'filters':{ 'id': origin_locations + destination_locations , 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT}})['list']
+    icd_data = maps.list_locations({'filters':{ 'id': origin_locations + destination_locations}, 'page_limit': MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
 
     new_data = {}
     for t in icd_data:
@@ -109,7 +109,7 @@ def get_fcl_freight_cluster_objects(request):
 
                         for cluster in ['origin_location_cluster', 'destination_location_cluster', 'commodity_cluster', 'container_cluster']:
                             if data.get(cluster) and data[cluster]['line_item_charge_code'] and (data[cluster]['gri_rate'] or data[cluster]['gri_rate'] == 0) and data[cluster]['gri_currency']:
-                                if (cluster == 'origin_location_cluster' and updated_param.get('origin_port_id') and updated_param['origin_location_port'] == request['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param.get('destination_port_id') and updated_param['destination_port_id'] == request['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param[commodity] == request[commodity]) or (cluster == 'container_cluster' and updated_param['container_size'] == request['container_size']) or (updated_param.get('origin_port_id') and updated_param.get('destination_port_id') and updated_param['origin_port_id'] == updated_param['destination_port_id']):
+                                if (cluster == 'origin_location_cluster' and updated_param.get('origin_port_id') and updated_param['origin_location_port'] == request['origin_port_id']) or (cluster == 'destination_location_cluster' and updated_param.get('destination_port_id') and updated_param['destination_port_id'] == request['destination_port_id']) or  (cluster == 'commodity_cluster' and updated_param['commodity'] == request['commodity']) or (cluster == 'container_cluster' and updated_param['container_size'] == request['container_size']) or (updated_param.get('origin_port_id') and updated_param.get('destination_port_id') and updated_param['origin_port_id'] == updated_param['destination_port_id']):
                                     continue
                                 line_item = [t for t in updated_param['line_items'] if t['code'] == data[cluster]['line_item_charge_code']]
 

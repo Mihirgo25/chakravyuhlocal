@@ -12,7 +12,7 @@ def update_fcl_freight_rate_extension_rule_set_data(request):
 def execute_transaction_code(request):
     
     fcl_rule_set = FclFreightRateExtensionRuleSet.get_by_id(request['id'])
-    get_update_params = {key:value for key,value in request.items() if key not in ['id','performed_by_id']}
+    get_update_params = {key:value for key,value in request.items() if key not in ['id','performed_by_id', 'performed_by_type']}
     FclFreightRateExtensionRuleSet.update(get_update_params).where(FclFreightRateExtensionRuleSet.id == fcl_rule_set).execute()
     create_audit(get_update_params, request['id'], request['performed_by_id'])
     return {'id' : fcl_rule_set.id}

@@ -29,6 +29,7 @@ def create_audit(request, fcl_freight_local_id):
     )
 
 def execute_transaction_code(request):
+  from celery_worker import update_multiple_service_objects
 
   fcl_freight_local = FclFreightRateLocal.get_by_id(request['id'])
 
@@ -42,19 +43,19 @@ def execute_transaction_code(request):
       update_obj = {}
       update_obj['id'] = fcl_freight_local.detention_id
       update_obj = update_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'procured_by_id', 'sourced_by_id')})
-      update_obj = update_obj | ({key: value for key, value in request['data']['detention'].items() if key in ('free_limit', 'slabs', 'remarks')})
+      update_obj = update_obj | ({key: value for key, value in request['data'].get('detention',{}).items() if key in ('free_limit', 'slabs', 'remarks')})
 
       update_fcl_freight_rate_free_day(update_obj)
 
     else:
       fcl_freight_local.data['detention'] = None
       detention_obj = {}
-      detention_obj['location_id'] = request.get('port_id')
-      detention_obj['free_day_type'] = 'detention'
+      detention_obj['location_id'] = fcl_freight_local.port_id
+      detention_obj['free_days_type'] = 'detention'
       detention_obj['specificity_type'] = 'shipping_line'
       detention_obj['previous_days_applicable'] = False
 
-      detention_obj = detention_obj | ({key: value for key, value in request['data']['detention'].items() if key in ('free_limit', 'slabs', 'remarks')})
+      detention_obj = detention_obj | ({key: value for key, value in request['data'].get('detention',{}).items() if key in ('free_limit', 'slabs', 'remarks')})
       detention_obj = detention_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id')})
 
       detention_obj = detention_obj | ({
@@ -74,19 +75,19 @@ def execute_transaction_code(request):
       update_obj = {}
       update_obj['id'] = fcl_freight_local.demurrage_id
       update_obj = update_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'procured_by_id', 'sourced_by_id')})
-      update_obj = update_obj | ({key: value for key, value in request['data']['demurrage'].items() if key in ('free_limit', 'slabs', 'remarks')})
+      update_obj = update_obj | ({key: value for key, value in request['data'].get('demurrage',{}).items() if key in ('free_limit', 'slabs', 'remarks')})
       
       update_fcl_freight_rate_free_day(update_obj)
 
     else:
       fcl_freight_local.data['demurrage'] = None
       demurrage_obj = {}
-      demurrage_obj['location_id'] = request.get('port_id')
-      demurrage_obj['free_day_type'] = 'demurrage'
+      demurrage_obj['location_id'] = fcl_freight_local.port_id
+      demurrage_obj['free_days_type'] = 'demurrage'
       demurrage_obj['specificity_type'] = 'shipping_line'
       demurrage_obj['previous_days_applicable'] = False
 
-      demurrage_obj = demurrage_obj | ({key: value for key, value in request['data']['demurrage'].items() if key in ('free_limit', 'slabs', 'remarks')})
+      demurrage_obj = demurrage_obj | ({key: value for key, value in request['data'].get('demurrage',{}).items() if key in ('free_limit', 'slabs', 'remarks')})
       demurrage_obj = demurrage_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id')})
 
       demurrage_obj = demurrage_obj | ({
@@ -106,19 +107,19 @@ def execute_transaction_code(request):
       update_obj = {}
       update_obj['id'] = fcl_freight_local.plugin_id
       update_obj = update_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'procured_by_id', 'sourced_by_id')})
-      update_obj = update_obj | ({key: value for key, value in request['data']['plugin'].items() if key in ('free_limit', 'slabs', 'remarks')})
+      update_obj = update_obj | ({key: value for key, value in request['data'].get('plugin',{}).items() if key in ('free_limit', 'slabs', 'remarks')})
       
       update_fcl_freight_rate_free_day(update_obj)
 
     else:
       fcl_freight_local.data['plugin'] = None
       plugin_obj = {}
-      plugin_obj['location_id'] = request.get('port_id')
-      plugin_obj['free_day_type'] = 'plugin'
+      plugin_obj['location_id'] = fcl_freight_local.port_id
+      plugin_obj['free_days_type'] = 'plugin'
       plugin_obj['specificity_type'] = 'shipping_line'
       plugin_obj['previous_days_applicable'] = False
 
-      plugin_obj = plugin_obj | ({key: value for key, value in request['data']['plugin'].items() if key in ('free_limit', 'slabs', 'remarks')})
+      plugin_obj = plugin_obj | ({key: value for key, value in request['data'].get('plugin',{}).items() if key in ('free_limit', 'slabs', 'remarks')})
       plugin_obj = plugin_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id')})
 
       plugin_obj = plugin_obj | ({
@@ -132,6 +133,9 @@ def execute_transaction_code(request):
       plugin = create_fcl_freight_rate_free_day(plugin_obj)
       fcl_freight_local.plugin_id = plugin['id']
 
+  fcl_freight_local.sourced_by_id = request.get("sourced_by_id")
+  fcl_freight_local.procured_by_id = request.get("procured_by_id")
+
   fcl_freight_local.validate_before_save()
 
   try:
@@ -140,6 +144,8 @@ def execute_transaction_code(request):
     raise HTTPException(status_code=500, detail='fcl freight rate local did not save')
 
   fcl_freight_local.update_special_attributes()
+
+  update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_local},queue='critical')
 
   create_audit(request, fcl_freight_local.id)
 

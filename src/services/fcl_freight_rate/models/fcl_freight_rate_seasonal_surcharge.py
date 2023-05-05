@@ -136,7 +136,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
     def validate_validity(self):
         if self.validity_start and self.validity_end:
             if self.validity_start > self.validity_end:
-                raise HTTPException(status_code=499, detail="Validity start date should be less than validity end date")
+                raise HTTPException(status_code=400, detail="Validity start date should be less than validity end date")
 
     def is_active(self):
         if self.validity_start and self.validity_end:
@@ -174,10 +174,10 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
         self.validate_shipping_line()
         self.validate_service_provider()
         if not self.validate_container_size():
-            raise HTTPException(status_code=499, detail="Invalid container size")
+            raise HTTPException(status_code=400, detail="Invalid container size")
         if not self.validate_container_type():
-            raise HTTPException(status_code=499, detail="Invalid container type")
+            raise HTTPException(status_code=400, detail="Invalid container type")
         if not self.validate_code():
-            raise HTTPException(status_code=499, detail="Invalid code")
+            raise HTTPException(status_code=400, detail="Invalid code")
         self.validate_validity()
         return True
