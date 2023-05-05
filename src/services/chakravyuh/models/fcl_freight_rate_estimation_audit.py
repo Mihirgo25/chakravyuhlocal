@@ -2,7 +2,6 @@ from peewee import *
 from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
-from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from configs.env import DEFAULT_USER_ID
 
 
@@ -13,7 +12,7 @@ class BaseModel(Model):
 
 class FclFreightRateEstimationAudit(BaseModel):
     id = BigAutoField(primary_key=True, index=True)
-    object_id = ForeignKeyField(FclFreightRateEstimation, backref='estimation')
+    object_id = UUIDField(index=True)
     action_name = TextField()
     source = TextField()
     data = BinaryJSONField()

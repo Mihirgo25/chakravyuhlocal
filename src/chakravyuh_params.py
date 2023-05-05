@@ -23,7 +23,7 @@ class EstimatedLineItems(BaseModel):
     remarks: list[str] = []
     slabs: list[Slab] = None
     
-class DemandLineItems(BaseException):
+class DemandLineItems(BaseModel):
     code: str
     unit: str
     lower_price: float
