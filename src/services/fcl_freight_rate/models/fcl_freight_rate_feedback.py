@@ -150,34 +150,34 @@ class FclFreightRateFeedback(BaseModel):
 
     def validate_before_save(self):
         # if not self.validate_source():
-        #     raise HTTPException(status_code=422, detail="incorrect source")
+        #     raise HTTPException(status_code=400, detail="incorrect source")
 
         # if not self.validate_source_id():
-        #     raise HTTPException(status_code=422, detail="incorrect source id")
+        #     raise HTTPException(status_code=400, detail="incorrect source id")
 
         # if not self.validate_fcl_freight_rate_id():
-        #     raise HTTPException(status_code=422, detail="incorrect fcl freight rate id")
+        #     raise HTTPException(status_code=400, detail="incorrect fcl freight rate id")
 
         # if not self.validate_performed_by_org_id():
-        #     raise HTTPException(status_code=422, detail="incorrect performed by org id")
+        #     raise HTTPException(status_code=400, detail="incorrect performed by org id")
 
         # if len(self.feedbacks) != 0:
         #     if not self.validate_feedbacks():
-        #         raise HTTPException(status_code=422, detail="incorrect feedbacks")
+        #         raise HTTPException(status_code=400, detail="incorrect feedbacks")
 
         # if not self.validate_preferred_freight_rate_currency():
-        #     raise HTTPException(status_code=422, detail='invalid currency')
+        #     raise HTTPException(status_code=400, detail='invalid currency')
 
         # if self.preferred_detention_free_days:
         #     if not self.validate_preferred_detention_free_days():
-        #         raise HTTPException(status_code=422, detail="incorrect preferred detention free days")
+        #         raise HTTPException(status_code=400, detail="incorrect preferred detention free days")
 
         if self.preferred_shipping_line_ids:
             if not self.validate_preferred_shipping_line_ids():
-                raise HTTPException(status_code=422, detail="incorrect preferred shipping line ids")
+                raise HTTPException(status_code=400, detail="incorrect preferred shipping line ids")
 
         # if not self.validate_feedback_type():
-        #     raise HTTPException(status_code=422, detail="incorrect feedback type")
+        #     raise HTTPException(status_code=400, detail="incorrect feedback type")
 
         return True
 
