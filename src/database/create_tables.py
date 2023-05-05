@@ -15,11 +15,13 @@ from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from database.temp_audit_table import TempAudit
 from services.envision.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
+from services.rail_rate.models.commodity_mapping import CommodityMapping
+from services.rail_rate.models.rail_rates_india import RailRatesIndia
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclRatePredictionFeedback])
+        db.create_tables([CommodityMapping])
         db.close()
         print("created table")
     except:

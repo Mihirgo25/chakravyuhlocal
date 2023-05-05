@@ -23,6 +23,7 @@ def validate_fcl_freight_object(module, object):
             response['valid'] = True
     except Exception as e:
         response['error'] = e
+    print(response)
     return response
 
 def get_freight_object(object):
