@@ -35,18 +35,6 @@ class DemandTransformation(BaseModel):
         self.updated_at = datetime.datetime.now()
         return super(DemandTransformation, self).save(*args, **kwargs)
     
-    def set_line_items(self, request_line_items):
-        new_line_items = []
-        for item in self.line_items:
-            for req_item in request_line_items:
-                if item['code'] == req_item['code']:
-                    new_line_items.append(req_item)
-                else:
-                    new_line_items.append(item)
-        
-        self.line_items = new_line_items
-            
-    
     def create_audit(self, param):
         audit = DemandTransformationAudit.create(**param)
         return audit

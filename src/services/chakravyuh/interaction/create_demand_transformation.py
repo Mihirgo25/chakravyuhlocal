@@ -20,7 +20,6 @@ def transaction(request):
         demand.net_profit += request.get('net_profit')
         demand.realised_revenue += request.get('realised_revenue')
         demand.realised_volume += request.get('realised_volume')
-        demand.set_line_items(request.get('line_items', []))
         
     try:
         demand.save()

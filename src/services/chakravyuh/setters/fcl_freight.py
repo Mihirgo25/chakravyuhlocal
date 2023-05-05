@@ -212,6 +212,7 @@ class FclFreightVyuh():
             'upper_limit': upper_limit,
             'lower_limit': lower_limit,
             'average': mean,
+            'stand_dev': std_dev,
             'size': size,
             'unit': line_item['unit']
         }
