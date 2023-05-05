@@ -1,5 +1,6 @@
 from services.envision.models.ftl_rate_prediction_feedback import FtlRatePredictionFeedback
 from database.db_session import db
+from libs.logger import logger
 
 def create_ftl_freight_rate_feedback(result):
     for feedback in result:
@@ -22,8 +23,9 @@ def create_ftl_freight_rate_feedback(result):
                 new_rate = FtlRatePredictionFeedback.create(**row)
                 feedback['id'] = new_rate.id
 
-            except:
-                transaction.rollback()
-                return {'success' : False}
+                return feedback
 
-    return {'success':True, 'data':feedback}
+            except Exception as e:
+                logger.error(e,exc_info=True)
+                transaction.rollback()
+                return "Creation Failed"

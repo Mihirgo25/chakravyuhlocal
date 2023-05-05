@@ -32,10 +32,9 @@ def create_air_freight_rate_feedback(result):
             for val in result:
                 if "predicted_price" in val:
                     val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.datetime.now()))
+            return result
 
         except Exception as e:
+            logger.error(e,exc_info=True)
             transaction.rollback()
-            return {"success": False}
-
-    response = {"success": True, "data": result}
-    return response
+            return "Creation Failed"

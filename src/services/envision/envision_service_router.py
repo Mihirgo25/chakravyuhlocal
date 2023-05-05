@@ -28,11 +28,11 @@ def get_ftl_freight_predicted_rate(request: FtlFreightRate):
         result.append(param)
         data = create_ftl_freight_rate_feedback(result)
     except:
-        return JSONResponse(status_code = 500, content = jsonable_encoder({'success':False, 'data':data}))
-    if data.get('success'):
-        return JSONResponse(status_code = 200, content=jsonable_encoder(data))
-    else:
         return JSONResponse(status_code = 500, content = jsonable_encoder(data))
+    if data == 'Creation Failed':
+        return JSONResponse(status_code = 500, content=jsonable_encoder(data))
+    else:
+        return JSONResponse(status_code = 200, content=jsonable_encoder(data))
 
 @envision_router.post("/get_haulage_freight_predicted_rate")
 def get_haulage_freight_predicted_rate(request: HaulageFreightRate):
@@ -47,11 +47,11 @@ def get_haulage_freight_predicted_rate(request: HaulageFreightRate):
         result.append(param)
         data = create_haulage_freight_rate_feedback(result)
     except:
-        return JSONResponse(status_code = 500, content = jsonable_encoder({'success':False, 'data':data}))
-    if data.get('success'):
-        return JSONResponse(status_code = 200, content=jsonable_encoder(data))
-    else:
         return JSONResponse(status_code = 500, content = jsonable_encoder(data))
+    if data == 'Creation Failed':
+        return JSONResponse(status_code = 500, content=jsonable_encoder(data))
+    else:
+        return JSONResponse(status_code = 200, content=jsonable_encoder(data))
 
 @envision_router.post("/get_air_freight_predicted_rate")
 def get_air_freight_predicted_rate(request: AirFreightRate):
@@ -66,8 +66,8 @@ def get_air_freight_predicted_rate(request: AirFreightRate):
         result.append(param)
         data = create_air_freight_rate_feedback(result)
     except:
-        return JSONResponse(status_code = 500, content = jsonable_encoder({'success':False, 'data':data}))
-    if data.get('success'):
-        return JSONResponse(status_code = 200, content=jsonable_encoder(data))
-    else:
         return JSONResponse(status_code = 500, content = jsonable_encoder(data))
+    if data == 'Creation Failed':
+        return JSONResponse(status_code = 500, content=jsonable_encoder(data))
+    else:
+        return JSONResponse(status_code = 200, content=jsonable_encoder(data))

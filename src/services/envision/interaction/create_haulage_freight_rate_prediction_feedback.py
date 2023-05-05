@@ -1,5 +1,6 @@
 from services.envision.models.haulage_rate_prediction_feedback import HaulageRatePredictionFeedback
 from database.db_session import db
+from libs.logger import logger
 
 def create_haulage_freight_rate_feedback(result):
     for feedback in result:
@@ -21,8 +22,9 @@ def create_haulage_freight_rate_feedback(result):
                 new_rate = HaulageRatePredictionFeedback.create(**row)
                 feedback['id'] = new_rate.id
                 
-            except:
+                return feedback
+
+            except Exception as e:
+                logger.error(e,exc_info=True)
                 transaction.rollback()
-                return {'success' : False}
-    
-    return {'success':True, 'data':feedback}
+                return "Creation Failed"
