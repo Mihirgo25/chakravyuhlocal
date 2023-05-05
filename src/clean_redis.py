@@ -11,6 +11,7 @@ import pandas as pd
 from math import ceil
 from database.rails_db import get_ff_mlo
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
@@ -117,6 +118,21 @@ def correct_local():
             rate.save()
             count += 1
             print(count)
+            
+def delete_fcl_locals():
+    file_path = os.path.join(ROOT_DIR, 'Wrong Locals.xlsx')
+    ids = pd.read_excel(file_path)['id'].to_list()
+    ids = list(set(ids))
+    for idx, id in enumerate(ids):
+        obj = {
+            "id": str(id),
+            "performed_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "sourced_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "procured_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "performed_by_type": "agent"
+        }
+        delete_fcl_freight_rate_local(obj)
+        print(idx, id)
 
         
         
