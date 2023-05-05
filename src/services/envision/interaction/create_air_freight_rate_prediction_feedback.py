@@ -22,19 +22,20 @@ def create_air_freight_rate_feedback(result):
                     "predicted_price": feedback["predicted_price"] if "predicted_price" in feedback else None,
                     "actual_price": feedback["actual_price"] if "actual_price" in feedback else None,
                     "actual_price_currency": feedback["actual_price_currency"] if "actual_price_currency" in feedback else None
-                    }    
+                    }
 
                 new_rate = AirFreightRatePredictionFeedback.create(**row)
                 feedback['id'] = new_rate.id
-                    
+
             c = CurrencyConverter(fallback_on_missing_rate=True, fallback_on_wrong_date=True)
 
             for val in result:
                 if "predicted_price" in val:
                     val["predicted_price"] = round(c.convert(val["predicted_price"], "USD", val["currency"], date=datetime.datetime.now()))
-            return result
 
         except Exception as e:
-            logger.error(e,exc_info=True)
             transaction.rollback()
-            return "Creation Failed"
+            return {"success": False}
+
+    response = {"success": True, "data": result}
+    return response

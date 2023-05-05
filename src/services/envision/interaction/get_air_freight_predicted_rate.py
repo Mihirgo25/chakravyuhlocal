@@ -9,7 +9,7 @@ def predict_air_freight_rate(request):
     if type(request) == dict:
         result = request
     else:
-        result = request.__dict__ 
+        result = request.__dict__
     weight = result['weight']
     packages_count = result['packages_count']
     volume = result['volume']
@@ -19,8 +19,8 @@ def predict_air_freight_rate(request):
     date = result['date']
 
     airline_path = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models")
-    airline_ranks = pickle.load(open(os.path.join(airline_path,"airline_ranks.pkl"), 'rb'))   
-    
+    airline_ranks = pickle.load(open(os.path.join(airline_path,"airline_ranks.pkl"), 'rb'))
+
     ranks = airline_ranks[airline_id]
 
     input = {"filters":{"id":[origin_airport_id, destination_airport_id]}}
@@ -37,11 +37,10 @@ def predict_air_freight_rate(request):
     except:
         Distance = 250
 
-    
-    MODEL_PATH = os.path.join(ROOT_DIR, "projects", "cogo_envision", "pred_model", "air_freight_prediction_model.pkl")
+
+    MODEL_PATH = os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "air_freight_prediction_model.pkl")
     model = pickle.load(open(MODEL_PATH, 'rb'))
     data = [weight, packages_count, volume, ranks, Distance]
     model_result = model.predict([data])
     result["predicted_price"] = round(model_result[0])
-
     return result

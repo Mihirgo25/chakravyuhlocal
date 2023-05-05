@@ -54,17 +54,17 @@ def get_haulage_freight_predicted_rate(request: HaulageFreightRate):
         return JSONResponse(status_code = 500, content = jsonable_encoder(data))
 
 @envision_router.post("/get_air_freight_predicted_rate")
-def get_haulage_freight_predicted_rate(request: AirFreightRate):
+def get_air_freight_predicted_rate(request: AirFreightRate):
     result = []
     try:
-            for param in request.params:
-                try:
-                    param = predict_air_freight_rate(param)
-                except:
-                    param = param.__dict__
-                    param["predicted_price"] = None
-            result.append(param)
-            data = create_haulage_freight_rate_feedback(result)
+        for param in request.params:
+            try:
+                param = predict_air_freight_rate(param)
+            except:
+                param = param.__dict__
+                param["predicted_price"] = None
+        result.append(param)
+        data = create_air_freight_rate_feedback(result)
     except:
         return JSONResponse(status_code = 500, content = jsonable_encoder({'success':False, 'data':data}))
     if data.get('success'):
