@@ -17,11 +17,12 @@ from database.temp_audit_table import TempAudit
 from services.envision.models.fcl_rate_prediction_feedback import FclRatePredictionFeedback
 from services.envision.models.haulage_rate_prediction_feedback import HaulageRatePredictionFeedback
 from services.envision.models.ftl_rate_prediction_feedback import FtlRatePredictionFeedback
+from services.envision.models.air_rate_prediction_feedback import AirFreightRatePredictionFeedback
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([HaulageRatePredictionFeedback, FtlRatePredictionFeedback])
+        db.create_tables([HaulageRatePredictionFeedback, FtlRatePredictionFeedback, AirFreightRatePredictionFeedback])
         db.close()
         print("created table")
     except:

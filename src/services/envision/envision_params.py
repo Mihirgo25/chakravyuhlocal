@@ -25,3 +25,17 @@ class HaulageFreightData(BaseModel):
 
 class HaulageFreightRate(BaseModel):
     params: list[HaulageFreightData]
+
+class AirFreightData(BaseModel):
+    origin_airport_id: str
+    destination_airport_id: str
+    airline_id: str
+    packages_count: int = 1
+    volume: float = 1
+    weight: float
+    date: str = None
+    currency: str = "USD"
+
+
+class AirFreightRate(BaseModel):
+    params: list[AirFreightData]
