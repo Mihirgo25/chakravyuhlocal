@@ -102,7 +102,7 @@ class FclFreightVyuh():
         current_date =  datetime.now().date()
         rate_validities = rate['validities'] or []
         for validity in rate_validities:
-            if current_date >= datetime.fromisoformat(validity['validity_start']).date() and current_date <= datetime.fromisoformat(validity['validity_end']).date():
+            if current_date <= datetime.fromisoformat(validity['validity_end']).date():
                 matching_validity = validity
                 break
         return matching_validity    
