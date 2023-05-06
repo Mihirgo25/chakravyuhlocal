@@ -181,7 +181,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
             local_params['country_id'] = rate.get('origin_country_id')
         else:
             local_params['country_id'] = rate.get('destination_country_id')
-        local_rates = get_local_rates_from_vyuh(local_params)
+        # local_rates = get_local_rates_from_vyuh(local_params)
 
     for local_rate in local_rates:
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:

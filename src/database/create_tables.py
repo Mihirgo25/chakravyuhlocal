@@ -6,7 +6,7 @@ from services.chakravyuh.models.demand_transformation import DemandTransformatio
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRateEstimation, FclFreightRateEstimationAudit, DemandTransformation])
+        db.create_tables([FclFreightRateEstimation, FclFreightRateEstimationAudit])
         db.close()
         print("created table")
     except:
