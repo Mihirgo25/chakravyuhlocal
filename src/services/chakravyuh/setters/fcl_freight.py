@@ -203,14 +203,14 @@ class FclFreightVyuh():
         mean = sum(all_prices) / size
         variance = sum([((x - mean) ** 2) for x in all_prices]) / size
         std_dev = variance ** 0.5
-        lower_limit = mean - 2 * std_dev # -2 sigma
-        upper_limit = mean + 2 * std_dev # 2 sigma
+        lower_limit = mean - 1 * std_dev # -1 sigma
+        upper_limit = mean + 1 * std_dev # 1 sigma
         
         return {
             'code': line_item_code,
             'currency': self.target_currency,
-            'upper_limit': upper_limit,
-            'lower_limit': lower_limit,
+            'upper_limit': round(upper_limit),
+            'lower_limit': round(lower_limit),
             'average': mean,
             'stand_dev': std_dev,
             'size': size,
@@ -288,6 +288,9 @@ class FclFreightVyuh():
         '''
             
         '''     
+        if self.new_rate['mode'] == 'predicted':
+            return False
+        
         affected_transformations = self.get_transformations_to_be_affected()
 
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
