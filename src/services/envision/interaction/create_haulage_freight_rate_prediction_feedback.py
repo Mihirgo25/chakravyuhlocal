@@ -22,7 +22,7 @@ def create_haulage_freight_rate_feedback(result):
                 new_rate = HaulageRatePredictionFeedback.create(**row)
                 feedback['id'] = new_rate.id
             return result
-        except Exception as e:
-            logger.error(e,exc_info=True)
+        
+        except:
             transaction.rollback()
-            return "Creation Failed"
+            

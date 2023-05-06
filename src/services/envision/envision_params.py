@@ -13,6 +13,8 @@ class FtlFreightData(BaseModel):
 
 class FtlFreightRate(BaseModel):
     params: list[FtlFreightData]
+    performed_by_id: str = None
+    performed_by_type: str = None
 
 class HaulageFreightData(BaseModel):
     origin_location_id: str
@@ -25,6 +27,8 @@ class HaulageFreightData(BaseModel):
 
 class HaulageFreightRate(BaseModel):
     params: list[HaulageFreightData]
+    performed_by_id: str = None
+    performed_by_type: str = None
 
 class AirFreightData(BaseModel):
     origin_airport_id: str
@@ -39,3 +43,5 @@ class AirFreightData(BaseModel):
 
 class AirFreightRate(BaseModel):
     params: list[AirFreightData]
+    performed_by_id: str = None
+    performed_by_type: str = None

@@ -1,14 +1,14 @@
 from configs.definitions import ROOT_DIR
 from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
 from configs.global_constants import HAZ_CLASSES
-import pickle, joblib, os, geopy.distance
+import pickle, joblib, os
 from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from configs.rate_averages import AVERAGE_RATES
 from configs.trade_lane import TRADE_LANE_PRICES
-from libs.additional_service import get_distance
+from libs.get_distance import get_distance
 
 def get_final_price(min_price, price, ldh, request):
     price_delta = price - min_price

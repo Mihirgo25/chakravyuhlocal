@@ -1,4 +1,4 @@
-from libs.additional_service import get_distance
+from libs.get_distance import get_distance
 from configs.definitions import ROOT_DIR
 import os
 import joblib
@@ -13,8 +13,8 @@ def predict_ftl_freight_rate(request):
         result = request.__dict__
     origin_location_id = result.get('origin_location_id')
     destination_location_id = result['destination_location_id']
-    origin_region_id = result['origin_region_id']
-    destination_region_id = result['destination_region_id']
+    origin_region_id = result['origin_region_id'] if result['origin_region_id'] is not None else DEFAULT_REGION_ID_PREDICTION
+    destination_region_id = result['destination_region_id'] if result['destination_region_id'] is not None else DEFAULT_REGION_ID_PREDICTION
     truck_type = result['truck_type']
     tyre = PREDICTION_TRUCK_TYPES[truck_type]['tyre']
     weight = PREDICTION_TRUCK_TYPES[truck_type]['weight']

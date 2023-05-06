@@ -72,6 +72,8 @@ REGION_ID_GDP = {
     '866e9c29-d305-4343-a04f-184304df037f' : 110, # Ladakh
 }
 
+DEFAULT_REGION_ID_PREDICTION = "d25f8326-5d9f-416b-bbe8-81a84e466716"
+
 SERVICE_PROVIDER_ID = "536abfe7-eab8-4a43-a4c3-6ff318ce01b5" #cogoxpress
 
 SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8" #rishi agrawal

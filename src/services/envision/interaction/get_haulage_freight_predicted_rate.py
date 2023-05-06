@@ -1,4 +1,4 @@
-from libs.additional_service import get_distance
+from libs.get_distance import get_distance
 from configs.definitions import ROOT_DIR
 import os
 import joblib

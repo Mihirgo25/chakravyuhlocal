@@ -70,7 +70,7 @@ def startup():
         db.connect()
     # run_migration()
     # insert()
-    create_table()
+    # create_table()
     # fcl_freight_migration()
     # create_partition_table()
     # fcl_local_migration()
