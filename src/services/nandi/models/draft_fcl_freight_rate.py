@@ -9,7 +9,7 @@ class BaseModel(Model):
         only_save_dirty = True
         
 class DraftFclFreightRate(BaseModel):
-    id = BigAutoField(primary_key=True)
+    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     rate_id = UUIDField(index=True, null=False)
     data = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     source = CharField(null=False)

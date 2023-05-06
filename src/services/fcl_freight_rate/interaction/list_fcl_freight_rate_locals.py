@@ -18,7 +18,7 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
             filters = json.loads(filters)
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, FclFreightRateLocal)
         query = apply_indirect_filters(query, indirect_filters)
 
@@ -142,7 +142,7 @@ def apply_location_ids_filter(query, filters):
 def apply_commodity_filter(query, filters):
     if isinstance(filters['commodity'],str):
         filters['commodity'] = [filters['commodity']]
-    if 'general' in filters['commodity']:
+    if filters['commodity'] and 'general' in filters['commodity']:
         query = query.where((FclFreightRateLocal.commodity == None) | (FclFreightRateLocal.commodity.in_(filters['commodity'])))
     else:
         query = query.where(FclFreightRateLocal.commodity.in_(filters['commodity']))

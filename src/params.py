@@ -86,6 +86,7 @@ class PostFclFreightRate(BaseModel):
   mode: str = None
   source: str = 'rms_upload'
   is_extended: bool = None
+  rate_not_available_entry: bool = False
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None
@@ -185,6 +186,7 @@ class PostFclFreightRateLocal(BaseModel):
     selected_suggested_rate_id: str = None
     source: str = None
     data: Data = {}
+    rate_not_available_entry: bool = False
 
 class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
@@ -875,3 +877,49 @@ class CreateFclLocalEstimatedRate(BaseModel):
   shipping_line_id: str
   line_items: List[EstimatedLineItems] = None
   local_currency: str
+
+class CreateDraftFclFreightRate(BaseModel):
+  performed_by_id: str = None
+  performed_by_type: str = None
+  rate_id : str
+  data : List[StandardLineItem]=None
+  source : str
+  status : str = 'pending'
+  invoice_url : str = None
+  invoice_date : datetime = None
+  shipment_serial_id : str = None
+
+class UpdateDraftFclFreightRate(BaseModel):
+  performed_by_id: str = None
+  performed_by_type: str = None
+  id : str
+  rate_id : str = None
+  data : List[StandardLineItem]=None
+  source : str = None
+  status : str = 'pending'
+  invoice_url : str = None
+  invoice_date : datetime = None
+  shipment_serial_id : str = None
+
+class CreateDraftFclFreightRateLocal(BaseModel):
+  performed_by_id: str = None
+  performed_by_type: str = None
+  rate_id : str
+  data: Data = {}
+  source : str
+  status : str = 'pending'
+  invoice_url : str = None
+  invoice_date : datetime = None
+  shipment_serial_id : str = None
+
+class UpdateDraftFclFreightRateLocal(BaseModel):
+  performed_by_id: str = None
+  performed_by_type: str = None
+  id : str
+  rate_id : str = None
+  data : Data = {}
+  source : str = None
+  status : str = 'pending'
+  invoice_url : str = None
+  invoice_date : datetime = None
+  shipment_serial_id : str = None

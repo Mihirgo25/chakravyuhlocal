@@ -42,7 +42,8 @@ def execute_transaction_code(request):
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
         'shipping_line_id' : request.get('shipping_line_id'),
-        'service_provider_id' : request.get('service_provider_id')
+        'service_provider_id' : request.get('service_provider_id'),
+        "rate_not_available_entry": request.get("rate_not_available_entry")
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
@@ -57,7 +58,6 @@ def execute_transaction_code(request):
 
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
-        fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
         fcl_freight_local.data={}
         
@@ -84,7 +84,8 @@ def execute_transaction_code(request):
     else:
         fcl_freight_local.update_special_attributes(new_free_days, True)
 
-    fcl_freight_local.rate_not_available_entry = False
+    if not request.get("rate_not_available_entry"):
+        fcl_freight_local.rate_not_available_entry = False
     fcl_freight_local.update_freight_objects()
     create_free_days(fcl_freight_local, request)
 

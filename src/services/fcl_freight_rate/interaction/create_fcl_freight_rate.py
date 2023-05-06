@@ -49,7 +49,8 @@ def create_fcl_freight_rate(request):
         "sourced_by_id": request.get("sourced_by_id"),
         "procured_by_id": request.get("procured_by_id"),
         "mode": request.get("mode", "manual"),
-        "accuracy":request.get("accuracy", 100)
+        "accuracy":request.get("accuracy", 100),
+        "rate_not_available_entry": request.get("rate_not_available_entry")
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
@@ -135,7 +136,7 @@ def create_fcl_freight_rate(request):
     
     create_audit(request, freight.id)
     
-    if not request.get('importer_exporter_id'):
+    if not request.get('importer_exporter_id') and not request.get("rate_not_available_entry"):
       freight.delete_rate_not_available_entry()
     
     freight.update_platform_prices_for_other_service_providers()
