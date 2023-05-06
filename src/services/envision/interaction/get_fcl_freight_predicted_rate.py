@@ -6,10 +6,7 @@ from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
-def calculate_port_distance(cord1, cord2):
-    coords_1 = cord1
-    coords_2 = cord2
-    return geopy.distance.geodesic(coords_1, coords_2).km
+from libs.get_distance import get_distance
     
 def insert_rates_to_rms(create_params):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data    
