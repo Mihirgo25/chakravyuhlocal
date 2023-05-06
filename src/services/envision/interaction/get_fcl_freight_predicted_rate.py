@@ -1,7 +1,7 @@
 from configs.definitions import ROOT_DIR
 from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
 from configs.global_constants import HAZ_CLASSES
-import pickle, joblib, os, geopy.distance
+import pickle, joblib, os
 from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
@@ -68,7 +68,7 @@ def get_fcl_freight_predicted_rate(request):
                 ports_distance = ports_distance['length']['length']
             else:
                 port_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "seaports_dict.pkl") , "rb"))
-                ports_distance = calculate_port_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
+                ports_distance = get_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
             with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
                 futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
             data_for_feedback.extend(futures)

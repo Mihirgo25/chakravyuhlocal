@@ -12,6 +12,7 @@ from libs.migration import fcl_freight_migration, create_partition_table, fcl_lo
 # from db_migration import run_migration
 # from migrate import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
+from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from micro_services.client import *
 sentry_sdk.init(
@@ -28,6 +29,7 @@ app = FastAPI(docs_url=docs_url,debug=True)
 
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
+app.include_router(prefix="/fcl_freight_rate", router=envision_router)
 app.include_router(prefix = "/chakravyuh", router=chakravyuh_router)
 
 
