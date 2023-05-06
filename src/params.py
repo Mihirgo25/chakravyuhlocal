@@ -11,16 +11,6 @@ class Slab(BaseModel):
   price: float
   currency: str
 
-class EstimatedLineItems(BaseModel):
-  location_id: str = None
-  code: str
-  unit: str
-  lower_price: float
-  upper_price: float
-  currency: str
-  remarks: list[str] = None
-  slabs: list[Slab] = None
-
 class UpdateLineItem(BaseModel):
   code: str
   unit: str
@@ -156,7 +146,7 @@ class UpdateFclFreightRate(BaseModel):
   validity_end: datetime = None
   schedule_type: str = 'transhipment'
   payment_term: str = 'prepaid'
-  line_items: list[UpdateLineItem] = None
+  line_items: list[UpdateLineItem] = []
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
@@ -851,75 +841,3 @@ class UpdateFclFreightRateTask(BaseModel):
   status: str = None
   closing_remarks: str = None
   validate_closing_remarks: str = None
-
-class CreateFclEstimatedRate(BaseModel):
-  performed_by_id: str=None
-  performed_by_type: str=None
-  origin_location_id : str
-  destination_location_id : str
-  origin_location_type: str
-  destination_location_type : str
-  shipping_line_id : str=None
-  container_size: str
-  container_type: str
-  commodity: str=None
-  line_items: List[EstimatedLineItems]
-
-class CreateFclLocalEstimatedRate(BaseModel):
-  performed_by_id: str = None
-  performed_by_type: str = None
-  location_id: str 
-  location_type: str 
-  container_size: str 
-  container_type: str 
-  commodity: str = None
-  trade_type: str
-  shipping_line_id: str
-  line_items: List[EstimatedLineItems] = None
-  local_currency: str
-
-class CreateDraftFclFreightRate(BaseModel):
-  performed_by_id: str = None
-  performed_by_type: str = None
-  rate_id : str
-  data : List[StandardLineItem]=None
-  source : str
-  status : str = 'pending'
-  invoice_url : str = None
-  invoice_date : datetime = None
-  shipment_serial_id : str = None
-
-class UpdateDraftFclFreightRate(BaseModel):
-  performed_by_id: str = None
-  performed_by_type: str = None
-  id : str
-  rate_id : str = None
-  data : List[StandardLineItem]=None
-  source : str = None
-  status : str = 'pending'
-  invoice_url : str = None
-  invoice_date : datetime = None
-  shipment_serial_id : str = None
-
-class CreateDraftFclFreightRateLocal(BaseModel):
-  performed_by_id: str = None
-  performed_by_type: str = None
-  rate_id : str
-  data: Data = {}
-  source : str
-  status : str = 'pending'
-  invoice_url : str = None
-  invoice_date : datetime = None
-  shipment_serial_id : str = None
-
-class UpdateDraftFclFreightRateLocal(BaseModel):
-  performed_by_id: str = None
-  performed_by_type: str = None
-  id : str
-  rate_id : str = None
-  data : Data = {}
-  source : str = None
-  status : str = 'pending'
-  invoice_url : str = None
-  invoice_date : datetime = None
-  shipment_serial_id : str = None
