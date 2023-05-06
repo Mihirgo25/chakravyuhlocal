@@ -50,7 +50,9 @@ def create_fcl_freight_rate(request):
         "sourced_by_id": request.get("sourced_by_id"),
         "procured_by_id": request.get("procured_by_id"),
         "mode": request.get("mode", "manual"),
-        "accuracy":request.get("accuracy", 100)
+        "accuracy":request.get("accuracy", 100),
+        "payment_term": request.get("payment_term", "prepaid"),
+        "schedule_type": request.get("schedule_type", "transhipment")
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
@@ -161,7 +163,7 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'origin_trade_id': freight.origin_trade_id,
         'destination_trade_id': freight.destination_trade_id
     }
-    if row["mode"] == 'manual':
+    if row["mode"] == 'manual' and not request.get("is_extended"):
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
     # Testing Purposes
     # fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=rate_obj, current_validities=current_validities)

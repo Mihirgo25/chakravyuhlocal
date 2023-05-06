@@ -835,11 +835,13 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+        is_predicted = False
 
         if len(freight_rates) == 0:
             get_fcl_freight_predicted_rate(requirements)
             initial_query = initialize_freight_query(requirements, True)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
+            is_predicted = True
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
@@ -854,8 +856,10 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
         
-        fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
-        freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+        if is_predicted:
+            fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
+            freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+        
         freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates

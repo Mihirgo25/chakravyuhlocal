@@ -75,10 +75,7 @@ class FclFreightVyuh():
             upper_limit = common.get_money_exchange_for_fcl({"price": upper_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
         
         if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
-            old_avg = tranformed_lineitem['average']
-            new_avg = (old_avg + line_item['price']) /(tranformed_lineitem['size'] + 1)
-            if line_item['price'] < new_avg:
-                line_item['price'] = (new_avg / old_avg) * line_item['price']
+            line_item['price'] = random.randrange(start=int(lower_limit), stop=int(upper_limit + 1))
         
         return line_item
 
