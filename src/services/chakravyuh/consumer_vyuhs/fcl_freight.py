@@ -1,298 +1,147 @@
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
-from peewee import fn
+from fastapi.encoders import jsonable_encoder
+from micro_services.client import common
+import random
 
 class FclFreightVyuh():
-    def __init__(self, rates: list = []):
-        self.rates = rates
-        self.require
+    def __init__(self, freight_rates: list = [], requirements: dict = {}):
+        self.freight_rates = freight_rates
+        self.requirements = requirements
+        self.locaton_type_priority = {
+            'seaport': 1,
+            'country': 2,
+            'trade': 3,
+        }
+
+    def get_probable_rate_transformations(self, first_rate: dict={}):
+        origin_location_ids = [first_rate['origin_port_id'], first_rate['origin_country_id'], first_rate['origin_trade_id']]
+        destination_location_ids = [first_rate['destination_port_id'], first_rate['destination_country_id'], first_rate['destination_trade_id']]
+
+        shipping_line_ids = []
+
+        for freight_rate in self.freight_rates:
+            shipping_line_ids.append(freight_rate['shipping_line_id'])
+
+
+        transformation_query = FclFreightRateEstimation.select().where(
+            FclFreightRateEstimation.origin_location_id << origin_location_ids,
+            FclFreightRateEstimation.destination_location_id << destination_location_ids,
+            FclFreightRateEstimation.container_size == self.requirements['container_size'],
+            FclFreightRateEstimation.container_type == self.requirements['container_type'],
+            ((FclFreightRateEstimation.commodity.is_null(True)) | (FclFreightRateEstimation.commodity == self.requirements['commodity'])),
+            ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id << shipping_line_ids)),
+        )
+        transformations = jsonable_encoder(list(transformation_query.dicts()))
+        return transformations
     
-    def check_fulfilment_ratio(self):
-        return 100
+    def get_probable_customer_transformations(self):
+        return []
+    
+    def get_most_eligible_customer_transformation(self, probable_customer_transformations):
+        return probable_customer_transformations[0]
 
-    def set_dynamic_pricing(self):
-        return True
+    
+    def apply_customer_transformation(self, rate, probable_customer_transformations):
+        customer_transformation_to_apply = self.get_most_eligible_customer_transformation(probable_customer_transformations)
+        return rate
+    
+    def sort_items(self, item: dict = {}):
+        priority = 0
+        priority = priority + self.locaton_type_priority[item['origin_location_type']]
+        if not item.get('shipping_line_id'):
+            priority = priority + 1
+        return priority
+    
+    def get_most_eligible_rate_transformation(self, probable_transformations: list =[]):
+        probable_transformations.sort(key = self.sort_items)
+        return probable_transformations[0]
+    
+    def get_lineitem(self, code: str, items: list = []):
+        line_item = None
+        for item in items:
+            if item['code'] == code:
+                line_item = item
+                break
 
-    def get_eligible_estimated_rate(self,request):
-        origin_location_ids = [
-            request.get("origin_port_id"),
-            request.get("origin_country_id"),
-            request.get("origin_trade_id"),
-        ]
-        destination_location_ids = [
-            request.get("destination_port_id"),
-            request.get("destination_country_id"),
-            request.get("destination_trade_id"),
-        ]
+        return line_item 
+    
+    def get_line_item_price(self, line_item, tranformed_lineitem):
+        lower_limit = tranformed_lineitem['lower_limit']
+        upper_limit = tranformed_lineitem['upper_limit']
+        currency = tranformed_lineitem['currency']
 
-        estimated_rate = FclFreightRateEstimation.select(
-            FclFreightRateEstimation.line_items
-        ).where(
-            # FclFreightRateEstimation.origin_location_id << origin_location_ids,
-            # FclFreightRateEstimation.destination_location_id << destination_location_ids,
-            FclFreightRateEstimation.container_size == request["container_size"],
-            FclFreightRateEstimation.container_type == request["container_type"],
-        )
-
-        estimated_rate = self.get_most_eligible(estimated_rate, request)
-        return estimated_rate
-
-    def get_most_eligible(self,query, request):
-        port_port = query.where(
-            FclFreightRateEstimation.origin_location_id == request.get("origin_port_id"),
-            FclFreightRateEstimation.destination_location_id
-            == request.get("destination_port_id"),
-        )
-        country_country = query.where(
-            FclFreightRateEstimation.origin_location_id == request.get("origin_country_id"),
-            FclFreightRateEstimation.destination_location_id
-            == request.get("destination_country_id"),
-        )
-        port_country = query.where(
-            (
-                (
-                    FclFreightRateEstimation.origin_location_id
-                    == request.get("origin_port_id")
-                )
-                & (
-                    FclFreightRateEstimation.destination_location_id
-                    == request.get("destination_country_id")
-                )
-            )
-            | (
-                (
-                    FclFreightRateEstimation.origin_location_id
-                    == request.get("origin_country_id")
-                )
-                & (
-                    FclFreightRateEstimation.destination_location_id
-                    == request.get("destination_port_id")
-                )
-            )
-        )
-
-        trade_trade = query.where(
-            FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id"),
-            FclFreightRateEstimation.destination_location_id
-            == request.get("destination_trade_id")
-        )
-
-        port_trade = query.where(
-            ((FclFreightRateEstimation.origin_location_id== request.get("origin_port_id")) & (FclFreightRateEstimation.destination_location_id== request.get("destination_trade_id")))| (
-                (FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id"))& (FclFreightRateEstimation.destination_location_id == request.get("destination_port_id"))))
-
-        country_trade = query.where(
-            ((FclFreightRateEstimation.origin_location_id== request.get("origin_country_id")) & (FclFreightRateEstimation.destination_location_id== request.get("destination_trade_id")))| (
-                (FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id"))& (FclFreightRateEstimation.destination_location_id == request.get("destination_country_id"))))
-
-        count_query = (
-            query.select(
-                fn.count(FclFreightRateEstimation.id)
-                .filter(
-                    (
-                        FclFreightRateEstimation.origin_location_id
-                        == request.get("origin_port_id")
-                    )
-                    & (
-                        FclFreightRateEstimation.destination_location_id
-                        == request.get("destination_port_id")
-                    )
-                )
-                .over()
-                .alias("port_port"),
-                fn.count(FclFreightRateEstimation.id)
-                .filter(
-                    (
-                        FclFreightRateEstimation.origin_location_id
-                        == request.get("origin_country_id")
-                    )
-                    & (
-                        FclFreightRateEstimation.destination_location_id
-                        == request.get("destination_country_id")
-                    )
-                )
-                .over()
-                .alias("country_country"),
-                fn.count(FclFreightRateEstimation.id)
-                .filter(
-                    (
-                        (
-                            FclFreightRateEstimation.origin_location_id
-                            == request.get("origin_port_id")
-                        )
-                        & (
-                            FclFreightRateEstimation.destination_location_id
-                            == request.get("destination_country_id")
-                        )
-                    )
-                    | (
-                        (
-                            FclFreightRateEstimation.origin_location_id
-                            == request.get("origin_country_id")
-                        )
-                        & (
-                            FclFreightRateEstimation.destination_location_id
-                            == request.get("destination_port_id")
-                        )
-                    )
-                )
-                .over()
-                .alias("port_country"),
-                fn.count(FclFreightRateEstimation.id).filter((FclFreightRateEstimation.origin_location_id == request.get("origin_trade_id")) &
-            (FclFreightRateEstimation.destination_location_id== request.get("destination_trade_id"))).over().alias("trade_trade"),
-                fn.count(FclFreightRateEstimation.id).filter(   (
-                        (
-                            FclFreightRateEstimation.origin_location_id
-                            == request.get("origin_trade_id")
-                        )
-                        & (
-                            FclFreightRateEstimation.destination_location_id
-                            == request.get("destination_country_id")
-                        )
-                    )
-                    | (
-                        (
-                            FclFreightRateEstimation.origin_location_id
-                            == request.get("origin_country_id")
-                        )
-                        & (
-                            FclFreightRateEstimation.destination_location_id
-                            == request.get("destination_trade_id")
-                        )
-                    )).over().alias("country_trade"),
-                fn.count(FclFreightRateEstimation.id).filter(   (
-                        (
-                            FclFreightRateEstimation.origin_location_id
-                            == request.get("origin_port_id")
-                        )
-                        & (
-                            FclFreightRateEstimation.destination_location_id
-                            == request.get("destination_trade_id")
-                        )
-                    )
-                    | (
-                        (
-                            FclFreightRateEstimation.origin_location_id
-                            == request.get("origin_trade_id")
-                        )
-                        & (
-                            FclFreightRateEstimation.destination_location_id
-                            == request.get("destination_port_id")
-                        )
-                    )).over().alias("port_trade")
-            )
-        ).limit(1)
-        try:
-            result = count_query.dicts().get()
-        except:
-            return {}
-
-        if result["port_port"] == 1:
-            return port_port.dicts().get()
-        elif result["port_port"] > 1:
-            port_port_result = self.add_shipping_line_commodity(port_port, request)
-            if port_port_result:
-                return port_port_result
-            else:
-                return port_port.dicts().get()
-
-        if result["port_country"] == 1:
-            try:
-                return port_country.dicts().get()
-            except Exception as e:
-                print(e)
-        elif result["port_country"] > 1:
-            port_country_result = self.add_shipping_line_commodity(port_country, request)
-            if port_country_result:
-                return port_country_result
-            else:
-                return port_country.dicts().get()
-
-        if result["country_country"] == 1:
-            return country_country.dicts().get()
-        elif result["country_country"] > 1:
-            country_country_result = self.add_shipping_line_commodity(port_country, request)
-            if country_country_result:
-                return country_country_result
-            else:
-                return country_country.dicts().get()
+        if line_item['currency'] != currency:
+            lower_limit = common.get_money_exchange_for_fcl({"price": lower_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
+            upper_limit = common.get_money_exchange_for_fcl({"price": upper_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
         
-        if result['port_trade']==1:
-            return country_country.dicts().get()
-        elif result['port_trade']>1:
-            port_trade_result = self.add_shipping_line_commodity(port_trade,request)
-            if port_trade_result:
-                return port_trade_result
-            else:
-                return port_trade.dicts().get()
+        if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
+            line_item['price'] = random.randrange(start=int(lower_limit), stop=int(upper_limit + 1))
         
-        if result['country_trade']==1:
-            return country_trade.dicts().get()
-        elif result['country_trade']>1:
-            country_trade_result = self.add_shipping_line_commodity(country_trade,request)
-            if country_trade_result:
-                return country_trade_result
-            else:
-                return country_trade_result.dicts().get()
+        return line_item
+
+    
+    def apply_rate_transformation(self, rate, probable_transformations):
+        probable_transformation_to_apply = self.get_most_eligible_rate_transformation(probable_transformations)
+
+        validities = rate['validities'] or []
+
+        new_validities = []
+
+        for validity in validities:
+
+            line_items = validity['line_items']
+
+            transformation_items = probable_transformation_to_apply['line_items']
+
+            new_lineitems = []
+            for line_item in line_items:
+                transformed_line_item = self.get_lineitem(code=line_item['code'], items=transformation_items)
+                if transformed_line_item:
+                    adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
+                    new_lineitems.append(adjusted_lineitem)
+                else:
+                    new_lineitems.append(line_item)
         
+            validity['line_items'] = new_lineitems
+            new_validities.append(validity)
+        
+        rate['validities'] = new_validities
 
-        if result['trade_trade']==1:
-            return trade_trade.dicts().get()
-        elif result['trade_trade']>1:
-            trade_trade_result = self.add_shipping_line_commodity(trade_trade,request)
-            if trade_trade_result:
-                return trade_trade_result
-            else:
-                return trade_trade_result.dicts().get()
+        return rate
 
-        return {}
+    def apply_transformation(self, rate, probable_transformations, probable_customer_transformations):
+        rate_specific_transformations = []
+        for pt in probable_transformations:
+            if (not pt['shipping_line_id'] or pt['shipping_line_id'] == rate['shipping_line_id']):
+                rate_specific_transformations.append(pt)
+        new_rate = rate
+        if len(rate_specific_transformations) > 0:
+            new_rate = self.apply_rate_transformation(rate=rate, probable_transformations=rate_specific_transformations)
+        if len(probable_customer_transformations) > 0:
+            new_rate = self.apply_customer_transformation(rate=new_rate, probable_customer_transformations=probable_customer_transformations)
 
-
-    def add_shipping_line_commodity(self,query, request):
-        shipping_line = query.where(
-            FclFreightRateEstimation.shipping_line_id == request.get("shipping_line_id")
-        )
-        shipping_line_commodity = shipping_line.where(
-            FclFreightRateEstimation.commodity == request.get("commodity")
-        )
-
-        count_query = (
-            query.select(
-                fn.count(FclFreightRateEstimation.id)
-                .filter(
-                    FclFreightRateEstimation.shipping_line_id
-                    == request.get("shipping_line_id")
-                )
-                .over()
-                .alias("shipping_line"),
-                fn.count(FclFreightRateEstimation.id)
-                .filter(
-                    (
-                        FclFreightRateEstimation.shipping_line_id
-                        == request.get("shipping_line_id")
-                    )
-                    & (
-                        FclFreightRateEstimation.shipping_line_id
-                        == request.get("commodity")
-                    )
-                )
-                .over()
-                .alias("commodity"),
-            )
-        ).limit(1)
-        result = count_query.dicts().get()
-
-        if result["shipping_line"] == 1:
-            return shipping_line.dicts().get()
-
-        if result["shipping_line"] > 1 and result["commodity"] >= 1:
-            return shipping_line_commodity.dicts().get()
-
-        if result["shipping_line"] > 1 and result["commodity"] == 0:
-            return shipping_line.dicts().get()
-        return {}
-    def get_rate_estimation_params():
-        print('kl')
+        return new_rate
 
     def apply_dynamic_pricing(self):
+
+        if len(self.freight_rates) == 0:
+            return self.freight_rates
         
-        return self.rates
+        
+        first_rate = self.freight_rates[0]
+
+        probable_transformations = self.get_probable_rate_transformations(first_rate)
+
+        probable_customer_transformations = self.get_probable_customer_transformations()
+
+        new_freight_rates = []
+
+        for freight_rate in self.freight_rates:
+            new_freight_rate = self.apply_transformation(
+                rate=freight_rate, 
+                probable_transformations=probable_transformations,
+                probable_customer_transformations=probable_customer_transformations,
+            )
+            new_freight_rates.append(new_freight_rate)
+        
+        return new_freight_rates

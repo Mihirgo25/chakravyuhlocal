@@ -15,6 +15,11 @@ class FclFreightRateLocalData(BaseModel):
             for key in data.keys():
                 if data[key]:
                     new_data[key] = data[key]
+                    if isinstance(data[key], list) and key == 'line_items':
+                        for item in new_data[key]:
+                            if 'remarks' in item and item.get('remarks'):
+                                item['remarks'] = list(filter(None, item['remarks']))
+
             super().__init__(**new_data)
         else:
             super().__init__()
@@ -23,7 +28,7 @@ class FclFreightRateLocalData(BaseModel):
         if len(set([(t.code, t.location_id) for t in self.line_items])) == len(self.line_items):
             return True
         return False
-    
+
     def validate_invalid_charge_codes(self, possible_charge_codes):
         invalid_line_items = [str(t.code) for t in self.line_items if str(t.code) not in possible_charge_codes]
         return invalid_line_items
@@ -46,7 +51,7 @@ class FclFreightRateLocalData(BaseModel):
         grouped_charge_codes = {}
         for line_item in self.line_items:
             grouped_charge_codes[line_item.code] = line_item.__dict__
-        
+
 
         for code, line_items in grouped_charge_codes.items():
             code_config = fcl_freight_local_charges_dict[code]

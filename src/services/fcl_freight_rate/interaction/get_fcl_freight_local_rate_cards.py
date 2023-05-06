@@ -37,7 +37,7 @@ def initialize_local_query(request):
     service_provider_ids = [default_lsp]
     local_agents = get_local_agent_ids(request)
     if local_agents:
-        service_provider_ids.append(get_local_agent_ids(request))
+        service_provider_ids.append(local_agents)
     if request['service_provider_id']:
         service_provider_ids.append(request['service_provider_id'])
 

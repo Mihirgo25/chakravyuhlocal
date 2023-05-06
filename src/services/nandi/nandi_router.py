@@ -3,7 +3,7 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from params import *
+from nandi_params import *
 from services.nandi.interactions.create_draft_fcl_freight_rate import create_draft_fcl_freight_rate_data
 from services.nandi.interactions.create_draft_fcl_freight_rate_local import create_draft_fcl_freight_rate_local_data
 from services.nandi.interactions.update_draft_fcl_freight_rate import update_draft_fcl_freight_rate_data
