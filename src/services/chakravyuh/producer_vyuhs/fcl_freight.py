@@ -257,7 +257,7 @@ class FclFreightVyuh():
             validities_to_create = self.get_eligible_validities_to_create(rate_to_create)
         
         for validity in validities_to_create:
-            freight_rate_object = rate_to_create | validity
+            freight_rate_object = rate_to_create | validity | { 'mode': 'rate_extension' }
 
             create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
             
