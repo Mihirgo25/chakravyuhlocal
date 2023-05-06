@@ -12,7 +12,6 @@ from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
-from services.chakravyuh.interaction.get_local_rates_from_vyuh import get_local_rates_from_vyuh
 import sentry_sdk
 import traceback
 
