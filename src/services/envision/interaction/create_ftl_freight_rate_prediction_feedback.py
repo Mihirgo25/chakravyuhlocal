@@ -26,4 +26,5 @@ def create_ftl_freight_rate_feedback(result):
         
         except:
             transaction.rollback()
+            raise
     

@@ -25,4 +25,4 @@ def create_haulage_freight_rate_feedback(result):
         
         except:
             transaction.rollback()
-            
+            raise

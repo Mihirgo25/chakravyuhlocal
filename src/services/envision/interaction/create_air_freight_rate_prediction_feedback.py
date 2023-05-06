@@ -36,4 +36,5 @@ def create_air_freight_rate_feedback(result):
 
         except:
             transaction.rollback()
+            raise
 
