@@ -167,22 +167,6 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
     if trade_type == 'import' and rate['destination_main_port_id']:
         main_port_id = rate['destination_main_port_id']
 
-    if len(local_rates) == 0:
-        local_params = {
-            'port_id' : port_id,
-            'main_port_id':main_port_id,
-            'trade_type' : trade_type,
-            'container_size' : rate.get('container_size'),
-            'container_type' : rate.get('container_type'),
-            'commodity' : rate.get('commodity') if rate.get('commodity') in HAZ_CLASSES else None,
-            'shipping_line_id':rate.get('shipping_line_id')
-        }
-        if local_type == 'origin_local':
-            local_params['country_id'] = rate.get('origin_country_id')
-        else:
-            local_params['country_id'] = rate.get('destination_country_id')
-        # local_rates = get_local_rates_from_vyuh(local_params)
-
     for local_rate in local_rates:
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:
             matching_locals[local_rate["service_provider_id"]] = local_rate
@@ -419,12 +403,6 @@ def add_local_objects(freight_query_result, response_object, request):
         else:
             response_object['destination_local']['source'] = response_object['source']
         response_object['destination_local']['line_items'] = []
-    else:
-        response_object['destination_local'] = {
-             'line_items': [], 
-             'service_provider_id': response_object['service_provider_id'], 
-             'source':  response_object['source'] 
-             }
 
 
     for line_item in ((freight_query_result.get('origin_local') or {}).get('line_items',[]) or []):
