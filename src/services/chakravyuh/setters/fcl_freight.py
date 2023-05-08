@@ -6,11 +6,10 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
 
 class FclFreightVyuh():
-    def __init__(self, new_rate: dict = {}, current_validities: dict = [], what_to_create={}):
+    def __init__(self, new_rate: dict = {}, current_validities: dict = []):
         self.new_rate = jsonable_encoder(new_rate)
         self.current_validities = current_validities
         self.target_currency = 'USD'
-        self.what_to_create = what_to_create
     
     def create_audits(self, data= {}):
         FclFreightRateEstimationAudit.create(**data)
@@ -184,9 +183,7 @@ class FclFreightVyuh():
 
     
     def get_lower_and_upper_limit_for_transformation_line_item(self, line_item: dict, affected_transformation):
-        print(datetime.now(), '7')
         current_available_rates = self.get_available_rates_of_transormation(affected_transformation)
-        print(datetime.now(), '8')
         
         line_item_code = line_item['code']
 
@@ -238,7 +235,6 @@ class FclFreightVyuh():
     def adjust_price_for_tranformation(self, affected_transformation, new: bool=False):
         transformation_id = affected_transformation.get('id')
         adjusted_line_items = self.get_adjusted_line_items_to_add(affected_transformation, new)
-        print(datetime.now(), '5')
 
         if len(adjusted_line_items) == 0:
             # Return If no line_items to create
@@ -259,7 +255,7 @@ class FclFreightVyuh():
                 'action_name': 'update',
                 'source': 'system'
             }
-            # self.create_audits(data=data)
+            self.create_audits(data=data)
             return transformation
         else:
             payload = affected_transformation | {
@@ -278,14 +274,13 @@ class FclFreightVyuh():
                 payment_term=payload['payment_term'],
                 schedule_type=payload['schedule_type']
             )
-            print(datetime.now(), '6')
             data = {
                 'data': payload,
                 'object_id': transformation.id,
                 'action_name': 'create',
                 'source': 'system'
             }
-            # self.create_audits(data=data)
+            self.create_audits(data=data)
             return transformation
 
 
@@ -301,13 +296,10 @@ class FclFreightVyuh():
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
 
         for affected_transformation in affected_transformations:
-            print('Again')
-            # self.adjust_price_for_tranformation(affected_transformation)
+            self.adjust_price_for_tranformation(affected_transformation)
         
         for new_transformation in new_transformations_to_add:
-            if (new_transformation['origin_location_type'] == 'seaport' and self.what_to_create['seaport']) or (new_transformation['origin_location_type'] == 'country' and self.what_to_create['country']) or (new_transformation['origin_location_type'] == 'trade' and self.what_to_create['trade']):
-                print(datetime.now(), '4')
-                self.adjust_price_for_tranformation(new_transformation, True)
+            self.adjust_price_for_tranformation(new_transformation, True)
 
 
         return True
