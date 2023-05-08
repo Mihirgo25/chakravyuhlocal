@@ -121,7 +121,7 @@ class FclFreightVyuh():
             line_items = validity['line_items']
             new_lineitems = []
             for line_item in line_items:
-                if line_item['code'] == 'BAS':
+                if line_item['code'] == 'BAS' and line_item['price'] < 2000:
                     transformed_line_item = self.default_transformed_lineitem
                     adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
                     new_lineitems.append(adjusted_lineitem)
