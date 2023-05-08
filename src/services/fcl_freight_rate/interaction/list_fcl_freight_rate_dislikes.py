@@ -20,9 +20,9 @@ def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
+        
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-
+  
         query = get_filters(direct_filters, query, FclFreightRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
 
@@ -31,7 +31,7 @@ def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
 
     data = get_data(query)
     return { 'list': data } | (pagination_data)
-
+    
 def get_data(query):
     data = []
     result = list(query.dicts())
@@ -54,7 +54,7 @@ def get_data(query):
                 unsatisfactory_destination_detention_count+=1
             if feedback == 'unsatisfactory_rate':
                 unsatisfactory_rate_count += 1
-
+        
         item['unpreferred_shipping_lines'] = unpreferred_shipping_lines_count
         item['unsatisfactory_destination_detention'] = unsatisfactory_destination_detention_count
         item['unsatisfactory_rate'] = unsatisfactory_rate_count
@@ -63,14 +63,14 @@ def get_data(query):
     location_match = {}
     for location in locations_data:
         location_match[location['id']] = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name']}
-
+    
     for i in range(0,len(data)):
         if data[i].get('origin_trade_id'):
             data[i]['origin_trade'] = location_match[str(data[i]['origin_trade_id'])]
         if data[i].get('destination_trade_id'):
              data[i]['destination_trade'] = location_match[str(data[i]['destination_trade_id'])]
-
-    return data
+           
+    return data 
 
 def get_query():
     query = FclFreightRateFeedback.select(FclFreightRateFeedback, FclFreightRate.origin_trade_id, FclFreightRate.destination_trade_id, FclFreightRate.shipping_line).join(FclFreightRate, on = (FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id)
@@ -98,7 +98,7 @@ def apply_trade_lane_filter(query, filters):
         FclFreightRate.origin_trade_id,
         FclFreightRate.destination_trade_id
     )
-
+    
 def apply_service_provider_id_filter(query, filters):
     query = query.where(FclFreightRate.service_provider_id == filters['service_provider_id'])
     return query
@@ -114,7 +114,7 @@ def apply_shipping_line_filter(query, filters):
     ).where(FclFreightRateFeedback.feedbacks.cast('VARCHAR') != '{}').group_by(
         FclFreightRate.shipping_line_id
     )
-
+    
 def apply_validity_start_greater_than_filter(query, filters):
     query = query.where(FclFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
     return query
@@ -133,12 +133,12 @@ def apply_relevant_supply_agent_filter(query, filters):
 
 def get_pagination_data(query, page, page_limit):
   total_count = query.count()
-
+  
   pagination_data = {
     'page': page,
     'total': ceil(total_count/page_limit),
     'total_count': total_count,
     'page_limit': page_limit
     }
-
+  
   return pagination_data
