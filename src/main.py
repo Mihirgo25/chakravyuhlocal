@@ -11,6 +11,8 @@ from database.create_tables import create_table
 from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
+from scheduler import scheduler
+from scheduler_test import scheduler_trending
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.envision.envision_service_router import envision_router
 from micro_services.client import *
@@ -44,12 +46,12 @@ if APP_ENV != 'production':
         url = request.headers.get('dev_server_url')
         if url:
             common.reset_context_var(url)
-            organization.reset_context_var(url) 
-            partner.reset_context_var(url)    
-            maps.reset_context_var(url)  
-            spot_search.reset_context_var(url) 
-            checkout.reset_context_var(url) 
-            shipment.reset_context_var(url) 
+            organization.reset_context_var(url)
+            partner.reset_context_var(url)
+            maps.reset_context_var(url)
+            spot_search.reset_context_var(url)
+            checkout.reset_context_var(url)
+            shipment.reset_context_var(url)
         response = await call_next(request)
         return response
     app.middleware('http')(set_client_base_url)
@@ -75,6 +77,7 @@ def startup():
     # create_partition_table()
     # fcl_local_migration()
     # free_day()
+    scheduler.start()
 
 
 
@@ -82,6 +85,7 @@ def startup():
 def shutdown():
     if not db.is_closed():
         db.close()
+    scheduler.stop()
 
 @app.get("/")
 def read_root():

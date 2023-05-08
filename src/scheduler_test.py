@@ -4,9 +4,10 @@ from schedule import every
 from micro_services.client import *
 from services.ftl_freight_rate.models.fuel_data import FuelData
 
-@scheduler.add(every(1).second, name="trending_redis")
+@scheduler.add(every(4).seconds)
 def scheduler_trending():
     print('yes')
+    return {}
     # fuel_data = scrap_data_for_india()['data']
     # location_names = map(lambda data:data['location_name'],fuel_data)
     # location_types = map(lambda data:data['location_types'],fuel_data)
