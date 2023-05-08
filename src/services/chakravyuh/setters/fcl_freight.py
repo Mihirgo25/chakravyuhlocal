@@ -6,10 +6,11 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
 
 class FclFreightVyuh():
-    def __init__(self, new_rate: dict = {}, current_validities: dict = {}):
+    def __init__(self, new_rate: dict = {}, current_validities: dict = [], what_to_create={}):
         self.new_rate = jsonable_encoder(new_rate)
         self.current_validities = current_validities
         self.target_currency = 'USD'
+        self.what_to_create = what_to_create
     
     def create_audits(self, data= {}):
         FclFreightRateEstimationAudit.create(**data)
@@ -255,7 +256,7 @@ class FclFreightVyuh():
                 'action_name': 'update',
                 'source': 'system'
             }
-            self.create_audits(data=data)
+            # self.create_audits(data=data)
             return transformation
         else:
             payload = affected_transformation | {
@@ -280,7 +281,7 @@ class FclFreightVyuh():
                 'action_name': 'create',
                 'source': 'system'
             }
-            self.create_audits(data=data)
+            # self.create_audits(data=data)
             return transformation
 
 
@@ -299,7 +300,8 @@ class FclFreightVyuh():
             self.adjust_price_for_tranformation(affected_transformation)
         
         for new_transformation in new_transformations_to_add:
-            self.adjust_price_for_tranformation(new_transformation, True)
+            if (new_transformation['origin_location_type'] == 'seaport' and self.what_to_create['seaport']) or (new_transformation['origin_location_type'] == 'country' and self.what_to_create['country']) or (new_transformation['origin_location_type'] == 'trade' and self.what_to_create['trade']):
+                self.adjust_price_for_tranformation(new_transformation, True)
 
 
         return True
