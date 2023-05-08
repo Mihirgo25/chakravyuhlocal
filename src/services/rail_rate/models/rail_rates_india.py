@@ -17,11 +17,13 @@ class RailRatesIndia(BaseModel):
     load_type = CharField(index=True)
     class_type = CharField(index=True)
     base_rate = IntegerField()
+    country_code = CharField(index=True)
+    currency = CharField(index=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        table_name = 'rail_rates_india'
+        table_name = 'rail_rates_india1'
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

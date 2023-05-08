@@ -16,13 +16,13 @@ class CommodityMapping(BaseModel):
     commodity_name = CharField(index=True)
     base_class = CharField(index=True)
     commodity_type = CharField(index=True)
-    packing_condition = CharField(index=True)
-    risk_rate = CharField(index=True)
+    # packing_condition = CharField(index=True)
+    # risk_rate = CharField(index=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        table_name = 'commodity_mapping'
+        table_name = 'commodity_mapping1'
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
