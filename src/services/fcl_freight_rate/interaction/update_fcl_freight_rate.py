@@ -36,6 +36,8 @@ def validate_freight_params(request):
         HTTPException(status_code=400, detail="{key} is blank")
 
 def execute_transaction_code(request):
+  from celery_worker import update_multiple_service_objects
+
   validate_freight_params(request)
 
   freight_object = FclFreightRate.select().where(FclFreightRate.id == request["id"]).first()
@@ -76,6 +78,9 @@ def execute_transaction_code(request):
     freight_object.set_platform_prices()
     freight_object.set_is_best_price()
     freight_object.set_last_rate_available_date()
+
+  freight_object.sourced_by_id = request.get("sourced_by_id")
+  freight_object.procured_by_id = request.get("procured_by_id")
   
   freight_object.validate_before_save()
 
@@ -84,7 +89,7 @@ def execute_transaction_code(request):
   except:
       raise HTTPException(status_code=500, detail='rate did not update')
   
-  freight_object.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
+  freight_object.create_fcl_freight_free_days(new_free_days, request.get('performed_by_id'), request.get('sourced_by_id'), request.get('procured_by_id'))
 
   freight_object.update_special_attributes()
 
@@ -92,8 +97,40 @@ def execute_transaction_code(request):
 
   freight_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
 
+  update_multiple_service_objects.apply_async(kwargs={'object':freight_object},queue='critical')
+
   create_audit(request, freight_object.id)
+
+  current_validities = freight_object.validities
+  adjust_dynamic_pricing(request, freight_object, current_validities)
 
   return {
     'id': freight_object.id
   }
+
+def adjust_dynamic_pricing(request, freight: FclFreightRate, current_validities):
+    from celery_worker import extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
+    rate_obj = request | { 
+        'origin_port_id': freight.origin_port_id,
+        'destination_port_id': freight.destination_port_id,
+        'mode': 'manual',
+        'schedule_type': request.get('schedule_type'),
+        'payment_term': request.get('payment_term'),
+        'line_items': request.get('line_items') or [],
+        'origin_location_ids': freight.origin_location_ids,
+        'destination_location_ids': freight.destination_location_ids,
+        'id': freight.id,
+        'origin_country_id': freight.origin_country_id,
+        'destination_country_id': freight.destination_country_id,
+        'origin_trade_id': freight.origin_trade_id,
+        'destination_trade_id': freight.destination_trade_id,
+        'validities': freight.validities,
+        'shipping_line_id': freight.shipping_line_id,
+        'commodity': freight.commodity,
+        'container_size': freight.container_size,
+        'container_type': freight.container_type
+    }
+    if rate_obj["mode"] == 'manual' and not request.get("is_extended"):
+        extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
+
+    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import json
 from peewee import SQL
 from micro_services.client import common
+from libs.json_encoder import json_encoder
 
 possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
@@ -35,7 +36,7 @@ def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by
     
     stats = get_stats(filters, stats_required)
 
-    return {'list': data } | (pagination_data) | (stats)
+    return {'list': json_encoder(data) } | (pagination_data) | (stats)
   
 
 def get_query(sort_by, sort_type):
@@ -57,7 +58,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
 
 def get_data(query, filters):
     new_data = []
-    port_ids, main_port_ids, container_sizes, container_types, commodities, trade_types, shipping_line_ids = [],[], [],[], [],[], []
+    fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
     data_list = list(query.dicts())
 
     for object in data_list:
@@ -83,23 +84,7 @@ def get_data(query, filters):
             object['purchase_invoice_rate'] = None
         del object['job_data']
 
-        port_ids.append(object['port_id'])
-        if object['main_port_id']:
-            main_port_ids.append(object['main_port_id']) 
-        
-        if object['commodity']:
-            commodities.append(object['commodity'])
-            
-        container_sizes.append(object['container_size']) 
-        container_types.append(object['container_type'])
-        trade_types.append(object['trade_type']) 
-        shipping_line_ids.append(object['shipping_line_id'])
-        new_data.append(object)
-
-    if filters and 'status' in filters and filters['status'] == 'completed':
-        fcl_freight_local_charges = FCL_FREIGHT_LOCAL_CHARGES
-
-        for object in new_data:
+        if filters and 'status' in filters and filters['status'] == 'completed':
             rate = object['completion_data'].get('rate')
 
             rate['total_price'] = 0
@@ -127,7 +112,7 @@ def get_data(query, filters):
                 object['remark'] = 'Delayed' 
 
             del object['completion_data']
-       
+        new_data.append(object)
     return new_data
 
 
