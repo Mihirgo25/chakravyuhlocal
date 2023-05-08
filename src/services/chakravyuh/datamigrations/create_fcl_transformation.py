@@ -36,10 +36,10 @@ def create_fcl_transformation():
     c = 0
 
     OFFSET = 0
-    BATCH_SIZE = 2000
+    BATCH_SIZE = 1000
 
-    while OFFSET <= total_rates and OFFSET == 0:
-        limited_rates_query = rates.offset(OFFSET).limit(2000)
+    while OFFSET <= total_rates:
+        limited_rates_query = rates.offset(OFFSET).limit(1000)
         OFFSET = OFFSET + BATCH_SIZE
 
         limited_rates = jsonable_encoder(list(limited_rates_query.dicts()))
