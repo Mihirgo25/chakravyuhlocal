@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import Union, List
 import json
+import traceback
 from fastapi.encoders import jsonable_encoder
 from params import *
 from datetime import datetime, timedelta
@@ -87,7 +88,6 @@ from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
-
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
@@ -152,8 +152,9 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
     except HTTPException as e:
         raise
     except Exception as e:
+        # raise
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
 @fcl_freight_router.post("/create_fcl_freight_rate_feedback")
 def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback, resp: dict = Depends(authorize_token)):
@@ -1626,8 +1627,8 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-
+    
+    
 
 @fcl_freight_router.post("/update_fcl_freight_rate_sheet")
 def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):

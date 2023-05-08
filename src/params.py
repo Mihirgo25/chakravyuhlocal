@@ -3,6 +3,8 @@ from datetime import datetime, timedelta,date
 from peewee import *
 from typing import List
 from dateutil.relativedelta import relativedelta
+
+
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
