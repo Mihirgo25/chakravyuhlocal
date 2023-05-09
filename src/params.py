@@ -74,6 +74,7 @@ class PostFclFreightRate(BaseModel):
   mode: str = None
   source: str = 'rms_upload'
   is_extended: bool = None
+  # rate_type = CharField(choices=['market_place', 'cogo_assured', 'promotional', 'spot_time'], default='market_place')
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None

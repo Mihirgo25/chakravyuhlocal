@@ -96,13 +96,18 @@ class FclFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True)
-
+    rate_type = CharField(default='market_place', choices=['market_place', 'cogo_assured', 'promotional', 'spot_time'])
+    tags = CharField(null=True)
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRate, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rates_temp'
+
+    def validate_rate_type(self):
+        if self.rate_type is not None and self.rate_type not in ['market_place', 'cogo_assured', 'promotional', 'spot_time']:
+          raise HTTPException(status_code=400, detail='Invalid rate_type parameter')
 
     def set_locations(self):
 
