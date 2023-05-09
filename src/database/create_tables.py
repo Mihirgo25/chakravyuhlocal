@@ -1,11 +1,11 @@
 from database.db_session import db
-from services.ftl_freight_rate.models.truck import Truck
+from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
 
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([Truck])
+        db.create_tables([FtlServiceAudit])
         db.close()
         print("created table")
     except:
