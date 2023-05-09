@@ -286,8 +286,10 @@ class FclFreightVyuh():
 
     def set_dynamic_pricing(self):
         '''
-            
-        '''     
+          Main Function to set dynamic pricing bounds  
+        '''  
+        from celery_worker import transform_dynamic_pricing
+
         if self.new_rate['mode'] == 'predicted':
             return False
         
@@ -296,10 +298,10 @@ class FclFreightVyuh():
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
 
         for affected_transformation in affected_transformations:
-            self.adjust_price_for_tranformation(affected_transformation)
+            transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
         for new_transformation in new_transformations_to_add:
-            self.adjust_price_for_tranformation(new_transformation, True)
+            transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
 
         return True
