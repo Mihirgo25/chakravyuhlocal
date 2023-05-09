@@ -1,5 +1,7 @@
 from database.db_session import db
+from services.chakravyuh.models.fcl_freight_rate_local_estimation_audit import FclFreightRateLocalEstimationAudit
 from services.chakravyuh.models.fcl_freight_rate_local_estimation import FclFreightRateLocalEstimation
+from fastapi.exceptions import HTTPException
 
 
 def create_fcl_freight_rate_local_estimation(request):
@@ -40,6 +42,29 @@ def create_fcl_local_estimated_rate(request):
     rate.line_items = request.get("line_items")
     rate.status = 'active'
 
-    rate.save()
+    try:
+        rate.save()
+    except Exception as e:
+        return HTTPException(status_code=400, detail=str(e))
 
-    return {'id':rate.id}
+    audit_params(request, rate)
+    
+    return {
+        "id": rate.id
+    }
+        
+
+def audit_params(request, rate):
+    data = {
+        "line_items": request.get("line_items")
+    }
+    
+    id = FclFreightRateLocalEstimationAudit.create(
+        action_name="create",
+        performed_by_id = request.get("performed_by_id"),
+        data = data,
+        object_id=rate.id,
+        source = "spot_rates"
+    )
+
+    return id

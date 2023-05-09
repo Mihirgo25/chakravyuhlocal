@@ -22,7 +22,16 @@ class EstimatedLineItems(BaseModel):
     currency: str
     remarks: list[str] = []
     slabs: list[Slab] = None
-    
+
+class EstimatedLocalLineItems(BaseModel):
+    code: str
+    unit: str
+    lower_price: float
+    upper_price: float
+    currency: str
+    remarks: list[str] = []
+    slabs: list[Slab] = None
+
 class DemandLineItems(BaseModel):
     code: str
     unit: str
@@ -58,7 +67,7 @@ class PostFclLocalEstimatedRate(BaseModel):
     commodity: str = None
     trade_type: str
     shipping_line_id: str
-    line_items: List[EstimatedLineItems] = []
+    line_items: List[EstimatedLocalLineItems]
     local_currency: str
     
 class PostDemandTransformation(BaseModel):
