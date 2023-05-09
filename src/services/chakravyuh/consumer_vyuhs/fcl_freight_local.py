@@ -45,32 +45,10 @@ class FclFreightLocalVyuh():
         local_freight_rates = []
 
         for param in request:
-            local_freight_eligible_rate = self.get_most_eligible_rate_transformation(local_freight_line_items)
+            local_freight_param = self.get_create_fcl_freight_rate_local(param, local_freight_line_items)
+            if local_freight_param:
+                local_freight_rates.append(local_freight_param)
 
-            if local_freight_eligible_rate:
-                local_freight_eligible_rate = self.set_local_line_items(local_freight_eligible_rate)
-
-                local_freight_create_params = {
-                    'trade_type': param.get('trade_type'),
-                    'port_id': param.get('port_id'),
-                    'main_port_id':param.get('main_port_id'),
-                    'container_size': param.get('container_size'),
-                    'container_type': param.get('container_type'),
-                    'commodity': param.get('commodity') if param.get('commodity') in HAZ_CLASSES else None,
-                    'shipping_line_id': param.get('shipping_line_id'),
-                    'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
-                    'data': local_freight_eligible_rate,
-                    'line_items':local_freight_eligible_rate.get('line_items'),
-                    'source':'predicted',
-                    'shipping_line_id':param.get('shipping_line_id')
-                }
-                local_freight_create_params['id'] = create_fcl_freight_rate_local(local_freight_create_params).get('id')
-                print(local_freight_create_params, 'local params')
-            else:
-                local_freight_create_params = {}
-            
-            local_freight_rates.append(local_freight_create_params)
-        
         return local_freight_rates
 
     def sort_items(self, item: dict = {}):
@@ -95,3 +73,29 @@ class FclFreightLocalVyuh():
             line_items.append(line_item)
         local_rate['line_items'] = line_items
         return local_rate
+
+    def get_create_fcl_freight_rate_local(self, param, local_freight_line_items):
+        local_freight_eligible_rate = self.get_most_eligible_rate_transformation(local_freight_line_items)
+
+        if local_freight_eligible_rate:
+            local_freight_eligible_rate = self.set_local_line_items(local_freight_eligible_rate)
+
+            local_freight_create_params = {
+                'trade_type': param.get('trade_type'),
+                'port_id': param.get('port_id'),
+                'main_port_id':param.get('main_port_id'),
+                'container_size': param.get('container_size'),
+                'container_type': param.get('container_type'),
+                'commodity': param.get('commodity') if param.get('commodity') in HAZ_CLASSES else None,
+                'shipping_line_id': param.get('shipping_line_id'),
+                'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
+                'data': local_freight_eligible_rate,
+                'line_items':local_freight_eligible_rate.get('line_items'),
+                'source':'predicted',
+                'shipping_line_id':param.get('shipping_line_id')
+            }
+            local_freight_create_params['id'] = create_fcl_freight_rate_local(local_freight_create_params).get('id')
+        else:
+            local_freight_create_params = None
+        
+        return local_freight_create_params
