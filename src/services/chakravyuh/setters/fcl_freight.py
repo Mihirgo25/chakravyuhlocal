@@ -6,7 +6,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
 
 class FclFreightVyuh():
-    def __init__(self, new_rate: dict = {}, current_validities: dict = {}):
+    def __init__(self, new_rate: dict = {}, current_validities: dict = []):
         self.new_rate = jsonable_encoder(new_rate)
         self.current_validities = current_validities
         self.target_currency = 'USD'
@@ -184,7 +184,7 @@ class FclFreightVyuh():
     
     def get_lower_and_upper_limit_for_transformation_line_item(self, line_item: dict, affected_transformation):
         current_available_rates = self.get_available_rates_of_transormation(affected_transformation)
-
+        
         line_item_code = line_item['code']
 
         matching_line_items = self.get_eligible_rate_lineitems(current_available_rates, line_item_code)
@@ -286,8 +286,10 @@ class FclFreightVyuh():
 
     def set_dynamic_pricing(self):
         '''
-            
-        '''     
+          Main Function to set dynamic pricing bounds  
+        '''  
+        from celery_worker import transform_dynamic_pricing
+
         if self.new_rate['mode'] == 'predicted':
             return False
         
@@ -296,10 +298,11 @@ class FclFreightVyuh():
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
 
         for affected_transformation in affected_transformations:
-            self.adjust_price_for_tranformation(affected_transformation)
+            if affected_transformation['origin_location_type'] not in ['trade', 'country']:
+                transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
         for new_transformation in new_transformations_to_add:
-            self.adjust_price_for_tranformation(new_transformation, True)
+            transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
 
         return True

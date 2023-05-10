@@ -334,6 +334,17 @@ def extend_fcl_freight_rates(self, rate):
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind=True, retry_backoff=True,max_retries=3)
+def transform_dynamic_pricing(self, new_rate, current_validities, affected_transformation, new):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
+        fcl_freight_vyuh.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=new)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
     try:
