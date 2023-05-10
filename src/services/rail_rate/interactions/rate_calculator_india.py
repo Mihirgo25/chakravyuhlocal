@@ -1,4 +1,4 @@
-from services.rail_rate.models.rail_rates_india import RailRatesIndia
+from services.rail_rate.models.rail_rates import RailRates
 import geopy.distance
 from micro_services.client import maps
 
@@ -19,8 +19,8 @@ def rate_calculator(origin_location, destination_location, commodity, load_type,
         if d["id"] == destination_location:
             destination_location = (d["latitude"], d["longitude"])
     ports_distance = get_distance(origin_location,destination_location)
-    query = RailRatesIndia.select().where(RailRatesIndia.distance <= ports_distance, RailRatesIndia.distance >=ports_distance-50)
-    
+    query = RailRates.select().where(RailRates.distance <= ports_distance, RailRates.distance >=ports_distance-50)
+
 
     # what is other logic
 
