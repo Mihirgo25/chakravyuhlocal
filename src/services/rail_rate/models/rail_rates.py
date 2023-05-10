@@ -16,6 +16,7 @@ class RailRates(BaseModel):
     distance = FloatField(index=True)
     load_type = CharField(index=True)
     class_type = CharField(index=True)
+    commodity_type = CharField(index=True, null=True)
     base_rate = IntegerField()
     country_code = CharField(index=True)
     currency = CharField(index=True)

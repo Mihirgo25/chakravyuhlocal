@@ -4,7 +4,7 @@ from micro_services.client import maps
 import services.rail_rate.interactions.rate_calculator_domestic as rate_calculator_domestic
 from configs.rails_constants import DEFAULT_PERMISSIBLE_CARRYING_CAPACITY
 
-POSSIBLE_LOCATION_CATEGORY = ["china"]
+POSSIBLE_LOCATION_CATEGORY = ["india", "china", "europe", "north_america"]
 
 
 def get_distance(origin_location, destination_location):
