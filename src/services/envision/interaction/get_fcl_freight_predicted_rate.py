@@ -1,78 +1,22 @@
 from configs.definitions import ROOT_DIR
 from configs.fcl_freight_rate_constants import SHIPPING_LINES_FOR_PREDICTION, DEFAULT_WEIGHT_LIMITS_FOR_PREDICTION, DEFAULT_SERVICE_PROVIDER_ID
 from configs.global_constants import HAZ_CLASSES
-import pickle, joblib, os, geopy.distance
+import pickle, joblib, os
 from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
-from configs.rate_averages import AVERAGE_RATES
-from configs.trade_lane import TRADE_LANE_PRICES
-
-def calculate_port_distance(cord1, cord2):
-    coords_1 = cord1
-    coords_2 = cord2
-    return geopy.distance.geodesic(coords_1, coords_2).km
-
-def get_final_price(min_price, price, ldh, request):
-    price_delta = price - min_price
-
-    avg_price = AVERAGE_RATES['default']
-
-    origin_trade_id = (ldh.get(request['origin_port_id']) or {}).get('trade_id') or ''
-    destination_trade_id = (ldh.get(request['destination_port_id']) or {}).get('trade_id') or ''
-
-    modified_container_size = '40'
-
-    if request['container_size'] == '20':
-        modified_container_size = '20'
-
-    key = '{}:{}:{}'.format(request['origin_country_id'], request['destination_country_id'], modified_container_size)
-    trade_key = '{}:{}:{}'.format(origin_trade_id, destination_trade_id, modified_container_size)
-    reverse_trade_key = '{}:{}:{}'.format(destination_trade_id, origin_trade_id, modified_container_size)
-
-    if key in AVERAGE_RATES:
-        avg_price = AVERAGE_RATES[key] + price_delta
-    elif trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
-    elif reverse_trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[reverse_trade_key] + price_delta
-    elif price > 1500 and price < avg_price:
-        return price
-    else:
-        avg_price = AVERAGE_RATES['default'] + price
-
-    return avg_price
+from libs.get_distance import get_distance
     
-def insert_rates_to_rms(create_params, request):
-    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
-    locations_description = maps.list_locations({'filters': {'id': [request['origin_port_id'],request['destination_port_id']]}})
-
-    if locations_description and isinstance(locations_description, dict):
-        locations_description = locations_description['list']
-    else:
-        locations_description = []
-
-    ldh = {}
-
-    min_price = 10000000000
+def insert_rates_to_rms(create_params):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data    
 
     for create_param in create_params:
-        price = create_param['line_items'][0]['price']
-        if price < min_price:
-            min_price = price
-    
-
-    for loc in locations_description:
-        ldh[loc['id']] = loc
-      
-    for create_param in create_params:
-        price = create_param['line_items'][0]['price']
-        final_bas_price_to_rms = get_final_price(min_price, price, ldh, request)
+        final_bas_price_to_rms = create_param['line_items'][0]['price']
         create_param['line_items'][0]['price'] = final_bas_price_to_rms + (5 - final_bas_price_to_rms%10) if final_bas_price_to_rms%10 <= 5 else (final_bas_price_to_rms + (10 - final_bas_price_to_rms%10))
         rate_card_id = create_fcl_freight_rate_data(create_param)['id'] 
         create_param['creation_id'] = rate_card_id
-        create_param['predicted_price'] = price
+        create_param['predicted_price'] = final_bas_price_to_rms
 
     return create_params
 
@@ -121,7 +65,7 @@ def get_fcl_freight_predicted_rate(request):
                 ports_distance = ports_distance['length']['length']
             else:
                 port_dict = joblib.load(open(os.path.join(ROOT_DIR, "services", "envision", "prediction_based_models", "seaports_dict.pkl") , "rb"))
-                ports_distance = calculate_port_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
+                ports_distance = get_distance(port_dict.get(request['origin_port_id']), port_dict.get(request['destination_port_id']))
             with concurrent.futures.ThreadPoolExecutor(max_workers = len(all_shipping_lines)) as executor:
                 futures = [executor.submit(predict_rates, origin_port_id, destination_port_id, shipping_line_id, request, ports_distance) for shipping_line_id in all_shipping_lines]
             data_for_feedback.extend(futures)
@@ -133,7 +77,7 @@ def get_fcl_freight_predicted_rate(request):
     if request.get('is_source_lcl'):
         return data_for_feedback
     
-    data_for_feedback = insert_rates_to_rms(data_for_feedback, request)
+    data_for_feedback = insert_rates_to_rms(data_for_feedback)
 
     create_fcl_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':data_for_feedback}, queue = 'low')
 
