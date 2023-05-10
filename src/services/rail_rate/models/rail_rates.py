@@ -27,4 +27,4 @@ class RailRates(BaseModel):
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
-      return super(RailRatesIndia, self).save(*args, **kwargs)
+      return super(RailRates, self).save(*args, **kwargs)
