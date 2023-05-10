@@ -11,11 +11,17 @@ from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
+from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
+import traceback
 
 def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
     FclFreightRate.id,
+    FclFreightRate.origin_continent_id,
+    FclFreightRate.origin_trade_id,
+    FclFreightRate.destination_continent_id,
+    FclFreightRate.destination_trade_id,
     FclFreightRate.validities,
     FclFreightRate.container_size,
     FclFreightRate.container_type,
@@ -53,8 +59,6 @@ def initialize_freight_query(requirements, prediction_required = False):
 
     if allow_entity_ids:
         freight_query = freight_query.where(((FclFreightRate.cogo_entity_id << allow_entity_ids) | (FclFreightRate.cogo_entity_id.is_null(True))))
-    else:
-        freight_query = freight_query.where(FclFreightRate.cogo_entity_id == None)
 
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
 
@@ -161,6 +165,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['origin_main_port_id']
     if trade_type == 'import' and rate['destination_main_port_id']:
         main_port_id = rate['destination_main_port_id']
+
     for local_rate in local_rates:
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:
             matching_locals[local_rate["service_provider_id"]] = local_rate
@@ -383,9 +388,10 @@ def add_local_objects(freight_query_result, response_object, request):
         'source': freight_query_result['origin_local']['source'] if freight_query_result['origin_local'].get('source') else response_object['source'],
         'line_items': []
     } if 'origin_local' in freight_query_result and freight_query_result['origin_local'] else { 'line_items': [], 'service_provider_id': response_object['service_provider_id'], 'source':  response_object['source'] }
+
     response_object['destination_local'] = {}
     if freight_query_result.get('destination_local'):
-        response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id'),
+        response_object['destination_local']['id'] =  freight_query_result['destination_local'].get('id')
         if freight_query_result['destination_local'].get('service_provider_id'):
             response_object['destination_local']['service_provider_id'] = freight_query_result['destination_local']['service_provider_id']
         else:
@@ -805,13 +811,14 @@ def get_fcl_freight_rate_cards(requirements):
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
-
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+        is_predicted = False
 
         if len(freight_rates) == 0:
             get_fcl_freight_predicted_rate(requirements)
             initial_query = initialize_freight_query(requirements, True)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
+            is_predicted = True
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
@@ -825,11 +832,17 @@ def get_fcl_freight_rate_cards(requirements):
             freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
         freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
+        
+        if is_predicted:
+            fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
+            freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+        
         freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates
         }
     except Exception as e:
+        traceback.print_exc()
         sentry_sdk.capture_exception(e)
         print(e, 'Error In Fcl Freight Rate Cards')
         return {
