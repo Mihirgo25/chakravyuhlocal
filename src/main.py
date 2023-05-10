@@ -11,6 +11,8 @@ from database.create_tables import create_table
 from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
+# from services.rail_rate.interactions.insert import insert
+# /Users/cogoport/ocean-rms/src/services/rail_rate/interactions/insert.py
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from micro_services.client import *
 sentry_sdk.init(
@@ -68,7 +70,7 @@ def startup():
         db.connect()
     # run_migration()
     # insert()
-    create_table()
+    # create_table()
     # fcl_freight_migration()
     # create_partition_table()
     # fcl_local_migration()
