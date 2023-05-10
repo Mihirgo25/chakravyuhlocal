@@ -3,6 +3,8 @@ from datetime import datetime, timedelta,date
 from peewee import *
 from typing import List
 from dateutil.relativedelta import relativedelta
+
+
 class Slab(BaseModel):
   lower_limit: float
   upper_limit: float
@@ -143,7 +145,7 @@ class UpdateFclFreightRate(BaseModel):
   validity_end: datetime = None
   schedule_type: str = 'transhipment'
   payment_term: str = 'prepaid'
-  line_items: list[UpdateLineItem] = None
+  line_items: list[UpdateLineItem] = []
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
