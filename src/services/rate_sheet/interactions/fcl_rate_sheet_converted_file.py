@@ -107,6 +107,9 @@ def append_in_final_csv(csv, row):
 
 
 def get_location_id(q, country_code = None, service_provider_id = None):
+    if not q:
+        return None
+    
     pincode_filters =  {"type": "pincode", "postal_code": q, "status": "active"}
     if country_code is not None:
         pincode_filters['country_code'] = country_code
