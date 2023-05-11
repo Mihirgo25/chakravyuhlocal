@@ -207,7 +207,7 @@ class FclFreightVyuh():
             price = matching_lineitem['price']
             converted_price = price
             if matching_lineitem['currency'] != self.target_currency:
-                converted_price = common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": matching_lineitem['currency'], "to_currency": self.target_currency })['price']
+                converted_price = common.get_money_exchange_for_fcl({"price": price, "from_currency": matching_lineitem['currency'], "to_currency": self.target_currency })['price']
             
             all_prices.append(converted_price)
         
@@ -263,6 +263,7 @@ class FclFreightVyuh():
 
         for line_item in line_items:
             if line_item['code'] == 'BAS':
+                print(line_item)
                 new_line_item = self.get_lower_and_upper_limit_for_transformation_line_item(line_item, affected_transformation)
                 new_line_item = self.new_sigma_values(line_item, new_line_item)
                 new_line_items.append(new_line_item)
