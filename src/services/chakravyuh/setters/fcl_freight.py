@@ -11,6 +11,7 @@ class FclFreightVyuh():
         self.new_rate = jsonable_encoder(new_rate)
         self.current_validities = current_validities
         self.target_currency = 'USD'
+        self.ff_mlo = get_ff_mlo()
     
     def create_audits(self, data= {}):
         FclFreightRateEstimationAudit.create(**data)
@@ -109,7 +110,6 @@ class FclFreightVyuh():
         return matching_validity    
     
     def get_available_rates_of_transormation(self, affected_transformation):
-        ff_mlo = get_ff_mlo()
         current_date =  datetime.now().date()
         rates_query = FclFreightRate.select(
             FclFreightRate.id, 
@@ -125,7 +125,7 @@ class FclFreightVyuh():
             FclFreightRate.destination_trade_id
         ).where(
             FclFreightRate.id != self.new_rate['id'],
-            FclFreightRate.service_provider_id.in_(ff_mlo),
+            FclFreightRate.service_provider_id.in_(self.ff_mlo),
             FclFreightRate.container_size == affected_transformation['container_size'],
             FclFreightRate.container_type == affected_transformation['container_type'],
             ~FclFreightRate.rate_not_available_entry,
@@ -320,8 +320,7 @@ class FclFreightVyuh():
           Main Function to set dynamic pricing bounds  
         '''  
         from celery_worker import transform_dynamic_pricing
-        ff_mlo = get_ff_mlo()
-        if self.new_rate['mode'] == 'predicted' or self.new_rate["service_provider_id"] not in ff_mlo:
+        if self.new_rate['mode'] == 'predicted' or self.new_rate["service_provider_id"] not in self.ff_mlo:
             return False
         
         affected_transformations = self.get_transformations_to_be_affected()
