@@ -294,7 +294,7 @@ class FclFreightVyuh():
                 'action_name': 'update',
                 'source': 'system'
             }
-            self.create_audits(data=data)
+            # self.create_audits(data=data)
             return transformation
         else:
             payload = affected_transformation | {
@@ -320,7 +320,7 @@ class FclFreightVyuh():
                 'action_name': 'create',
                 'source': 'system'
             }
-            self.create_audits(data=data)
+            # self.create_audits(data=data)
             return transformation
 
 
