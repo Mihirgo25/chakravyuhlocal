@@ -263,7 +263,6 @@ class FclFreightVyuh():
 
         for line_item in line_items:
             if line_item['code'] == 'BAS':
-                print(line_item)
                 new_line_item = self.get_lower_and_upper_limit_for_transformation_line_item(line_item, affected_transformation)
                 new_line_item = self.new_sigma_values(line_item, new_line_item)
                 new_line_items.append(new_line_item)
