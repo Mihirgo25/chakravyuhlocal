@@ -2,6 +2,7 @@ from peewee import *
 from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS
 
 class BaseModel(Model):
     class Meta:
@@ -21,4 +22,14 @@ class RateProperties(BaseModel):
 
     class Meta:
         db_table = "rate_properties"
+
+    # def validate_rate_id(self):
+    #     if self.rate_id and self.rate_id in :
+    #         return True
+    #   return False
+
+    def validate_value_props(self):
+      if self.value_props and self.value_props in VALUE_PROPOSITIONS:
+        return True
+      return False
 

@@ -1,8 +1,24 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_properties import RateProperties
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
+from datetime import datetime
+
+
+def add_rate_properties(request,freight_id):
+    RateProperties.create(
+        rate_id = freight_id,
+        created_at = request["validity_start"],
+        updated_at = datetime.now(),
+        value_props = request["value_props"],
+        t_n_c = request["t_n_c"],
+        available_inventory = request["available_inventory"],
+        used_inventory = request.get("used_inventory"),
+        shipment_count = request["shipment_count"],
+        volume_count=request["volume_count"]
+    )
 
 def create_audit(request, freight_id):
 
@@ -50,7 +66,7 @@ def create_fcl_freight_rate(request):
         "procured_by_id": request.get("procured_by_id"),
         "mode": request.get("mode", "manual"),
         "accuracy":request.get("accuracy", 100),
-        "rate_type":request.get("rate_type")
+        "rate_type":request.get("rate_type"),
     }
     ##here seee init_key
     # init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["destination_port_id"]) or ""}:{str(row["rate_type"])}'
@@ -71,8 +87,7 @@ def create_fcl_freight_rate(request):
     freight.set_locations()
     freight.set_origin_location_ids()
     freight.set_destination_location_ids()
-
-
+    freight.validate_rate_type()
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
 
@@ -134,7 +149,11 @@ def create_fcl_freight_rate(request):
         freight.save()
     except Exception as e:
         raise HTTPException(status_code=400, detail="rate did not save")
-    
+    if row['rate_type']=='cogo_assured':
+        try:
+            add_rate_properties(request,freight.id)
+        except Exception as e:
+            print(e)
     create_audit(request, freight.id)
     
     if not request.get('importer_exporter_id'):
