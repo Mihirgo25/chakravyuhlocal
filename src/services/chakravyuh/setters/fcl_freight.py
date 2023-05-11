@@ -198,7 +198,7 @@ class FclFreightVyuh():
             price = matching_lineitem['price']
             converted_price = price
             if matching_lineitem['currency'] != self.target_currency:
-                converted_price = common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": matching_lineitem['currency'], "to_currency": self.target_currency })['price']
+                converted_price = common.get_money_exchange_for_fcl({"price": price, "from_currency": matching_lineitem['currency'], "to_currency": self.target_currency })['price']
             
             all_prices.append(converted_price)
         
