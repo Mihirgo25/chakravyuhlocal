@@ -278,14 +278,19 @@ def get_ff_mlo():
     ff_mlo = rd.get('ff_mlo')
     if ff_mlo:
         return json.loads(ff_mlo)
-    
-    conn = get_connection()
-    with conn:
-        with conn.cursor() as cur:
-            sql = 'select organizations.id from organizations where organizations.account_type = %s and organizations.status = %s and ARRAY[%s, %s]::varchar[] && organizations.category_types and not (%s = ANY(organizations.category_types))'
-            cur.execute(sql, ('service_provider', 'active', 'shipping_line', 'freight_forwarder', 'nvocc',))
-            result = cur.fetchall()
-            result = [str(x[0]) for x in result]
-    conn.close()
-    rd.set('ff_mlo', json.dumps(result), ex=86400)
-    return result
+    result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                sql = 'select organizations.id from organizations where organizations.account_type = %s and organizations.status = %s and ARRAY[%s, %s]::varchar[] && organizations.category_types and not (%s = ANY(organizations.category_types))'
+                cur.execute(sql, ('service_provider', 'active', 'shipping_line', 'freight_forwarder', 'nvocc',))
+                result = cur.fetchall()
+                result = [str(x[0]) for x in result]
+                cur.close()
+        conn.close()
+        rd.set('ff_mlo', json.dumps(result), ex=86400)
+        return result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return result
