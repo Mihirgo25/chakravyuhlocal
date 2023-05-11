@@ -68,15 +68,13 @@ def create_truck(request: UpdateTruck, resp: dict = Depends(authorize_token)):
     
 @ftl_freight_router.post("/create_fuel_data")
 def create_fuel_datas(request: CreateFuelData,resp: dict = Depends(authorize_token)):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-        # print(request)
-    data = create_fuel_data(request.dict(exclude_none=False))
-    print(data)
-    return JSONResponse(status_code=200, content='sucess')
-# except HTTPException as e:
-#     raise
-# except Exception as e:
-#     sentry_sdk.capture_exception(e)
-#     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = create_fuel_data(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

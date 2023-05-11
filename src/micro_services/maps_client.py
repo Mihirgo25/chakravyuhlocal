@@ -22,9 +22,9 @@ class MapsApiClient:
             return self.client.request('GET', 'list_locations', {}, data)
         from configs.env import RUBY_ADDRESS_URL
         self.client.url.set('https://api.cogoport.com/location')
-        response =  self.client.request('GET', 'list_locations',{},data)
+        # response =  self.client.request('GET', 'list_locations',{},data,timeout= 100)
         self.client.url.set(RUBY_ADDRESS_URL)
-        return response
+        # return response
 
     def list_location_cluster(self,data={}):
         if APP_ENV == "production":
