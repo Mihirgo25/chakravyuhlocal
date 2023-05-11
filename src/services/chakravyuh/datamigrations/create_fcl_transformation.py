@@ -23,7 +23,8 @@ def create_fcl_transformation():
         FclFreightRate.origin_trade_id,
         FclFreightRate.destination_trade_id,
         FclFreightRate.validities,
-        FclFreightRate.mode
+        FclFreightRate.mode,
+        FclFreightRate.service_provider_id,
     ).where(
         FclFreightRate.last_rate_available_date > current_date,
         ~FclFreightRate.rate_not_available_entry
