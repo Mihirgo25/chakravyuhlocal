@@ -18,11 +18,13 @@ from services.envision.models.fcl_rate_prediction_feedback import FclRatePredict
 from services.envision.models.haulage_rate_prediction_feedback import HaulageRatePredictionFeedback
 from services.envision.models.ftl_rate_prediction_feedback import FtlRatePredictionFeedback
 from services.envision.models.air_rate_prediction_feedback import AirFreightRatePredictionFeedback
+from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
+
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([HaulageRatePredictionFeedback, FtlRatePredictionFeedback, AirFreightRatePredictionFeedback])
+        db.create_tables([HaulageRatePredictionFeedback, FtlRatePredictionFeedback, AirFreightRatePredictionFeedback,FtlServiceAudit])
         db.close()
         print("created table")
     except:
