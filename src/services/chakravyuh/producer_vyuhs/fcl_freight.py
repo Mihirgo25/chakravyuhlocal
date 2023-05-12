@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from configs.global_constants import DEAFULT_RATE_PRODUCER_METHOD
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
+from configs.env import DEFAULT_USER_ID
+
 class FclFreightVyuh():
     '''
         Rate Producer class to extend rates to nearby clusters and combination of rates
@@ -257,7 +259,7 @@ class FclFreightVyuh():
             validities_to_create = self.get_eligible_validities_to_create(rate_to_create)
         
         for validity in validities_to_create:
-            freight_rate_object = rate_to_create | validity | { 'mode': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID }
+            freight_rate_object = rate_to_create | validity | { 'mode': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
 
             create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
             
