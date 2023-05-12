@@ -141,7 +141,7 @@ def create_fcl_freight_rate(request):
     
     if 'rate_sheet_validation' not in request:
         freight.validate_before_save()
-
+    
     freight.create_fcl_freight_free_days(new_free_days, request['performed_by_id'], request['sourced_by_id'], request['procured_by_id'])
 
     freight.update_special_attributes()
@@ -193,4 +193,11 @@ def get_flash_booking_rate_line_items(request):
             "slabs": []
         })
     return line_items
+def validities_for_cogo_assured(request):
+    input_param = {
+        "container_size": request["container_size"],
+        "price": request["line_items"][0]["price"],
+        "currency": request["line_items"][0]["currency"]
+    }
+    # opt = func()
 
