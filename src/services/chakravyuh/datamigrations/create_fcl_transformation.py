@@ -76,4 +76,4 @@ def create_fcl_transformation():
             created_transformations[keyP] = True
             created_transformations[keyC] = True
             created_transformations[keyT] = True
-            print(c, len(created_transformations.keys()), 'Done')
+            print(c, 'Done')
