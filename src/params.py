@@ -43,7 +43,7 @@ class StandardLineItem(BaseModel):
   currency: str
   remarks: list[str] = None
   slabs: list[Slab] = []
-
+  
 class PostFclFreightRate(BaseModel):
   origin_main_port_id: str = None
   origin_port_id: str

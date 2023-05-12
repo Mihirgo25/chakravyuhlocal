@@ -83,7 +83,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surc
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.get_rate_properties import get_rate_props
 from services.fcl_freight_rate.interaction.update_rate_properties import update_rate_props
-
+from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_rates import get_cogo_assured_suggested_rates
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
@@ -1729,6 +1729,23 @@ def get_eligible_freight_rate_free_day_func(
     try:
         resp = get_eligible_fcl_freight_rate_free_day(filters,sort_by_specificity_type = sort_by_specificity_type)
         return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get("/get_cogo_assured_suggested_rates")
+def get_fcl_freight_rate_suggestions_data(
+    rate_params: str,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        rate_params = eval(rate_params)
+        data = get_cogo_assured_suggested_rates(rate_params)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
