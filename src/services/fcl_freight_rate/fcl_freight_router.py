@@ -81,6 +81,8 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
+from services.fcl_freight_rate.interaction.get_rate_properties import get_rate_props
+from services.fcl_freight_rate.interaction.update_rate_properties import update_rate_props
 
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
@@ -1028,6 +1030,16 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+@fcl_freight_router.post("/update_rate_properties")
+def update_rate_properties(request: UpdateRateProperties,resp: dict=Depends(authorize_token)):
+    try:
+        data = update_rate_props(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500,content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/update_fcl_freight_rate_local_agent")
 def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalAgent, resp: dict = Depends(authorize_token)):
@@ -1438,6 +1450,18 @@ def get_fcl_freight_rate_stats_data(
     }
     try:
         data = get_fcl_freight_rate_stats(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+@fcl_freight_router.get("/get_rate_properties")
+def get_rate_properties(rate_id:str=None):
+    r_id = rate_id
+    try:
+        data = get_rate_props(r_id)
+        data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise

@@ -187,4 +187,4 @@ SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f
 #Maersk, cma, hapag, msc, oocl
 # maersk = 'c3649537-0c4b-4614-b313-98540cffcf40'
 
-VALUE_PROPOSITIONS = ['Confirmed space & inventory','Standard Local Charges','Competitive Price','Fixed Exchange Rate','Priority Booking']
+VALUE_PROPOSITIONS =  ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']

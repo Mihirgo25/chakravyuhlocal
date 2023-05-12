@@ -79,7 +79,7 @@ class PostFclFreightRate(BaseModel):
   used_inventory: int = 0
   shipment_count: int = 0
   volume_count: int = 0
-  value_props: dict = {}
+  value_props: List[dict] = []
   t_n_c: list = []
 
 
@@ -845,3 +845,12 @@ class UpdateFclFreightRateTask(BaseModel):
   status: str = None
   closing_remarks: str = None
   validate_closing_remarks: str = None
+
+class UpdateRateProperties(BaseModel):
+  rate_id:str
+  available_inventory: int = 100
+  used_inventory: int = 0
+  shipment_count: int = 0
+  volume_count: int = 0
+  value_props: List[dict] = []
+  t_n_c: list = []

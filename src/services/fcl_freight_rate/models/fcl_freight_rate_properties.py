@@ -3,6 +3,7 @@ from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS
+from fastapi import HTTPException
 
 class BaseModel(Model):
     class Meta:
@@ -10,7 +11,7 @@ class BaseModel(Model):
 
 class RateProperties(BaseModel):
     id = BigAutoField(index=True,primary_key=True)
-    rate_id = UUIDField(index=True)
+    rate_id = UUIDField(index=True,unique=True)
     created_at = DateTimeField(null=True)
     updated_at = DateTimeField(null=True)
     value_props = BinaryJSONField(null=True)
@@ -28,8 +29,19 @@ class RateProperties(BaseModel):
     #         return True
     #   return False
 
+    # def validate_value_props(self):
+    #   if self.value_props and self.value_props in VALUE_PROPOSITIONS:
+    #     return True
+    #   return False
     def validate_value_props(self):
-      if self.value_props and self.value_props in VALUE_PROPOSITIONS:
-        return True
-      return False
+      value_props = self.value_props
+      print(value_props)
+      for prop in value_props:
+        name = prop.get('name')
+        print(name)
+        if name not in VALUE_PROPOSITIONS:
+            raise HTTPException(status_code=400, detail='Invalid rate_type parameter')
+        
+      return True
+
 

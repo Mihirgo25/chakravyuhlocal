@@ -1,13 +1,15 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from services.fcl_freight_rate.models.fcl_freight_rate_properties import RateProperties
+from services.fcl_freight_rate.models.fcl_freight_rate_properties import *
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 
 
 def add_rate_properties(request,freight_id):
+    rp = RateProperties.select().where(RateProperties.rate_id == freight_id).first()
+    rp.validate_value_props()
     RateProperties.create(
         rate_id = freight_id,
         created_at = request["validity_start"],
@@ -19,6 +21,7 @@ def add_rate_properties(request,freight_id):
         shipment_count = request["shipment_count"],
         volume_count=request["volume_count"]
     )
+
 
 def create_audit(request, freight_id):
 
