@@ -39,13 +39,14 @@ def create_fcl_transformation():
     OFFSET = 0
     BATCH_SIZE = 1000
 
+    created_transformations = {}
+
     while OFFSET <= total_rates:
         limited_rates_query = rates.offset(OFFSET).limit(1000)
         OFFSET = OFFSET + BATCH_SIZE
 
         limited_rates = jsonable_encoder(list(limited_rates_query.dicts()))
 
-        created_transformations = {}
         for rate in limited_rates:
             current_validities = rate['validities'] or []
             new_validity = current_validities[0]
