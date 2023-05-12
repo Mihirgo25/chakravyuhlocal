@@ -59,7 +59,7 @@ def create_fcl_transformation():
             keyC = '{}:{}:{}:{}'.format(new_rate['origin_country_id'], new_rate['destination_country_id'], new_rate['container_size'], new_rate['container_type'])
             keyT = '{}:{}:{}:{}'.format(new_rate['origin_trade_id'], new_rate['destination_trade_id'], new_rate['container_size'], new_rate['container_type'])
             what_to_create = {
-                'seaport': False,
+                'seaport': True,
                 'country': True,
                 'trade': True
             }
