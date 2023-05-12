@@ -58,7 +58,7 @@ def create_fcl_transformation():
             keyC = '{}:{}:{}:{}'.format(new_rate['origin_country_id'], new_rate['destination_country_id'], new_rate['container_size'], new_rate['container_type'])
             keyT = '{}:{}:{}:{}'.format(new_rate['origin_trade_id'], new_rate['destination_trade_id'], new_rate['container_size'], new_rate['container_type'])
             what_to_create = {
-                'seaport': True,
+                'seaport': False,
                 'country': True,
                 'trade': True
             }
@@ -72,7 +72,7 @@ def create_fcl_transformation():
             fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities, what_to_create=what_to_create)
             fcl_freight_vyuh.set_dynamic_pricing()
             c = c+1
-            print(c, 'Done')
             created_transformations[keyP] = True
             created_transformations[keyC] = True
             created_transformations[keyT] = True
+            print(c, len(created_transformations.keys()), 'Done')
