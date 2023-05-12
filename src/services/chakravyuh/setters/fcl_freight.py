@@ -4,12 +4,14 @@ from micro_services.client import common
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
+from database.rails_db import get_ff_mlo
 
 class FclFreightVyuh():
     def __init__(self, new_rate: dict = {}, current_validities: dict = []):
         self.new_rate = jsonable_encoder(new_rate)
         self.current_validities = current_validities
         self.target_currency = 'USD'
+        self.ff_mlo = get_ff_mlo()
     
     def create_audits(self, data= {}):
         FclFreightRateEstimationAudit.create(**data)
@@ -123,6 +125,7 @@ class FclFreightVyuh():
             FclFreightRate.destination_trade_id
         ).where(
             FclFreightRate.id != self.new_rate['id'],
+            FclFreightRate.service_provider_id.in_(self.ff_mlo),
             FclFreightRate.container_size == affected_transformation['container_size'],
             FclFreightRate.container_type == affected_transformation['container_type'],
             ~FclFreightRate.rate_not_available_entry,
@@ -195,7 +198,7 @@ class FclFreightVyuh():
             price = matching_lineitem['price']
             converted_price = price
             if matching_lineitem['currency'] != self.target_currency:
-                converted_price = common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": matching_lineitem['currency'], "to_currency": self.target_currency })['price']
+                converted_price = common.get_money_exchange_for_fcl({"price": price, "from_currency": matching_lineitem['currency'], "to_currency": self.target_currency })['price']
             
             all_prices.append(converted_price)
         
@@ -216,6 +219,31 @@ class FclFreightVyuh():
             'size': size,
             'unit': line_item['unit']
         }
+        
+    def new_sigma_values(self, old_item, new_item):
+        if 'average' not in old_item:
+            return new_item
+        
+        size = new_item['size']
+        old_mean = old_item['average']
+        new_mean = new_item['average']
+        exp_average = old_mean * 0.8 + new_mean * 0.2
+        old_variance = new_item['stand_dev'] ** 2
+        new_variance = ((size - 1) * old_variance + size * (new_mean - old_mean) ** 2) / size
+        std_dev = new_variance ** 0.5
+        lower_limit = exp_average - 1 * std_dev # -1 sigma
+        upper_limit = exp_average + 1 * std_dev # 1 sigma
+        
+        return {
+            'code': new_item['code'],
+            'currency': new_item['currency'],
+            'upper_limit': round(upper_limit),
+            'lower_limit': round(lower_limit),
+            'average': exp_average,
+            'stand_dev': std_dev,
+            'size': size,
+            'unit': new_item['unit']
+        }
     
     def get_adjusted_line_items_to_add(self, affected_transformation: dict = {}, new:bool = False):
         line_items = affected_transformation['line_items'] or []
@@ -227,6 +255,7 @@ class FclFreightVyuh():
         for line_item in line_items:
             if line_item['code'] == 'BAS':
                 new_line_item = self.get_lower_and_upper_limit_for_transformation_line_item(line_item, affected_transformation)
+                new_line_item = self.new_sigma_values(line_item, new_line_item)
                 new_line_items.append(new_line_item)
 
         return new_line_items
@@ -250,6 +279,7 @@ class FclFreightVyuh():
             data = {
                 'data': {
                     'line_items': adjusted_line_items,
+                    'actual_line_items': self.new_rate.get('line_items')
                 },
                 'object_id': transformation_id,
                 'action_name': 'update',
@@ -259,7 +289,8 @@ class FclFreightVyuh():
             return transformation
         else:
             payload = affected_transformation | {
-                'line_items': adjusted_line_items
+                'line_items': adjusted_line_items,
+                'actual_line_items': self.new_rate.get('line_items')
             }
             transformation = FclFreightRateEstimation.create(
                 origin_location_id = payload['origin_location_id'],
@@ -289,8 +320,7 @@ class FclFreightVyuh():
           Main Function to set dynamic pricing bounds  
         '''  
         from celery_worker import transform_dynamic_pricing
-
-        if self.new_rate['mode'] == 'predicted':
+        if self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
             return False
         
         affected_transformations = self.get_transformations_to_be_affected()
