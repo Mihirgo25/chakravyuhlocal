@@ -282,7 +282,7 @@ class FclFreightVyuh():
         if transformation_id:
             transformation = FclFreightRateEstimation.update(
                 line_items = adjusted_line_items,
-                updated_at = datetime.now
+                updated_at = datetime.now()
             ).where(
                 FclFreightRateEstimation.id == transformation_id
             ).execute()
