@@ -281,7 +281,8 @@ class FclFreightVyuh():
         
         if transformation_id:
             transformation = FclFreightRateEstimation.update(
-                line_items = adjusted_line_items
+                line_items = adjusted_line_items,
+                updated_at = datetime.now
             ).where(
                 FclFreightRateEstimation.id == transformation_id
             ).execute()
@@ -339,12 +340,12 @@ class FclFreightVyuh():
 
         for affected_transformation in affected_transformations:
             if self.what_to_create[affected_transformation['origin_location_type']]:
-                # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
-                transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
+                self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=True)
+                # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
         for new_transformation in new_transformations_to_add:
-            # self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
-            transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
+            self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
+            # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
 
         return True
