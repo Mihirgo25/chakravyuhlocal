@@ -3,12 +3,17 @@ from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 def get_fcl_freight_rate_local(request):
     details = {}
 
-    if all_fields_present(request):
+    if request['id']:
+        object = FclFreightRateLocal.get_by_id(request['id'])
+        if object:
+            details = object.detail()
+    elif all_fields_present(request):
         object = find_object(request)
         if object:
           details = object.detail()
     else:
       object=None
+
     if not object:
       object = FclFreightRateLocal()
       for key in list(request.keys()):
@@ -17,7 +22,7 @@ def get_fcl_freight_rate_local(request):
 
 
 def find_object(request):
- 
+
   object = FclFreightRateLocal.select().where(
     FclFreightRateLocal.port_id == request.get("port_id"),
     FclFreightRateLocal.main_port_id == request.get("main_port_id"),

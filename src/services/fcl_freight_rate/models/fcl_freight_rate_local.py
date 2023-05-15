@@ -281,7 +281,9 @@ class FclFreightRateLocal(BaseModel):
             'is_plugin_slabs_missing': self.is_plugin_slabs_missing,
             'updated_at': self.updated_at,
             'procured_by_id': self.procured_by_id,
-            'procured_by': self.procured_by
+            'procured_by': self.procured_by,
+            'sourced_by': self.sourced_by,
+            'sourced_by_id': self.sourced_by_id
         }
 
         for item in detail.get('line_items',[]):

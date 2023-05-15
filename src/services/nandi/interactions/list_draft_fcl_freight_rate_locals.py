@@ -4,7 +4,7 @@ from libs.get_applicable_filters import get_applicable_filters
 import json
 from fastapi.encoders import jsonable_encoder
 
-possible_direct_filters = ["id", "rate_id", "source", "status", "shipment_serial_id"]
+possible_direct_filters = ["id", "commodity", "container_size", "container_type", "port_id", "shipping_line_id", "trade_type", "rate_id", "source", "status", "shipment_serial_id"]
 possible_indirect_filters = []
 
 def list_draft_fcl_freight_rate_locals(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False):

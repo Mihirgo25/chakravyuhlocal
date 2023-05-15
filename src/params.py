@@ -187,6 +187,7 @@ class UpdateFclFreightRateLocal(BaseModel):
     bulk_operation_id: str = None
     selected_suggested_rate_id: str = None
     data: Data
+    rate_not_available_entry: bool = False
 
 class PostFclFreightRateExtensionRuleSet(BaseModel):
   cluster_id: str

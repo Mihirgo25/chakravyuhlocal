@@ -12,10 +12,10 @@ def execute_transaction_code(request):
     if not draft_freight_local:
         raise HTTPException(status_code=400, detail="rate does not exist")
 
-    required_fields = ['rate_id', 'data', 'source', 'status', 'invoice_url', 'invoice_date']
+    required_fields = ['data', 'source', 'status']
 
     for key in required_fields:
-      if request[key]:
+      if request.get(key):
           setattr(draft_freight_local, key, request[key])
 
     try:
