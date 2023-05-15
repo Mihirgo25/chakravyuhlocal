@@ -35,10 +35,8 @@ class RateProperties(BaseModel):
     #   return False
     def validate_value_props(self):
       value_props = self.value_props
-      print(value_props)
       for prop in value_props:
         name = prop.get('name')
-        print(name)
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')
         

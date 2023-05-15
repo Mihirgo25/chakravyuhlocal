@@ -2,14 +2,14 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_properties import *
+from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_rates import add_suggested_validities
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 
 
 def add_rate_properties(request,freight_id):
-    rp = RateProperties.select().where(RateProperties.rate_id == freight_id).first()
-    rp.validate_value_props()
+    validate_value_props(request["value_props"])
     RateProperties.create(
         rate_id = freight_id,
         created_at = request["validity_start"],
@@ -21,6 +21,8 @@ def add_rate_properties(request,freight_id):
         shipment_count = request["shipment_count"],
         volume_count=request["volume_count"]
     )
+    # rp = RateProperties.select().where(RateProperties.rate_id == freight_id).first()
+    # rp.validate_value_props()
 
 
 def create_audit(request, freight_id):
@@ -72,8 +74,7 @@ def create_fcl_freight_rate(request):
         "rate_type":request.get("rate_type"),
     }
     ##here seee init_key
-    # init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["destination_port_id"]) or ""}:{str(row["rate_type"])}'
-    init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["destination_port_id"]) or ""}'
+    init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["destination_port_id"]) or ""}:{str(row["rate_type"])}'
     freight = (
         FclFreightRate.select()
         .where(
@@ -125,16 +126,18 @@ def create_fcl_freight_rate(request):
     line_items = request.get("line_items")
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
-
-    freight.set_validities(
-        request["validity_start"].date(),
-        request["validity_end"].date(),
-        line_items,
-        request.get("schedule_type"),
-        False,
-        request.get("payment_term"),
-    )
-
+    valids = validities_for_cogo_assured(request)
+    print('here')
+    for val in valids:
+                line_items[0]['price'] = val['price']
+                freight.set_validities(
+                    val["validity_start"].date(),
+                    val["validity_end"].date(),
+                    line_items,
+                    request.get("schedule_type"),
+                    False,
+                    request.get("payment_term"),
+                 )
     freight.set_platform_prices()
     freight.set_is_best_price()
     freight.set_last_rate_available_date()
@@ -199,5 +202,22 @@ def validities_for_cogo_assured(request):
         "price": request["line_items"][0]["price"],
         "currency": request["line_items"][0]["currency"]
     }
-    # opt = func()
+    opt = add_suggested_validities(input_param)
+    v = opt['validities']
+    mp_v = v.pop(0)
+    if request['rate_type']=='cogo_assured':
+        return v
+    else:
+        return [mp_v]
+        
+
+def validate_value_props(v_props):
+    for prop in v_props:
+        name = prop.get('name')
+        # print(name)
+        if name not in VALUE_PROPOSITIONS:
+            raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
+    return True
+
+
 
