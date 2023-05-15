@@ -17,6 +17,14 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 
+# Rate Producers
+
+from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
+
+# Dynamic Pricing
+
+from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
+
 CELERY_CONFIG = {
     "enable_utc": True,
     "task_serializer": "pickle",
@@ -24,7 +32,8 @@ CELERY_CONFIG = {
     "result_serializer": "pickle",
     "accept_content": ['application/json', 'application/x-python-serialize'],
     "task_acks_late": True,
-    "result_expires": 60*60*1
+    "result_expires": 60*30,
+    "celeryd_prefetch_multiplier": 1
 }
 
 if APP_ENV == 'development':
@@ -34,19 +43,18 @@ celery = Celery(__name__)
 registry.enable("pickle")
 celery.conf.broker_url = CELERY_REDIS_URL
 celery.conf.result_backend = CELERY_REDIS_URL
+celery.conf.broker_transport_options = {
+    'queue_order_strategy': 'priority',
+    'visibility_timeout': 14400
+}
 celery.conf.critical_queues = [Queue('critical', Exchange('critical'), routing_key='critical',
-          queue_arguments={'x-max-priority': 9})]
-celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
-          queue_arguments={'x-max-priority': 6})]
+          queue_arguments={'x-max-priority': 4})]
 celery.conf.communication_queues = [Queue('communication', Exchange('communication'), routing_key='communication',
-          queue_arguments={'x-max-priority': 6})]
+          queue_arguments={'x-max-priority': 4})]
+celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
+          queue_arguments={'x-max-priority': 2})]
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
-          queue_arguments={'x-max-priority': 3})]
-celery.conf.critical_default_priority = 9
-celery.conf.fcl_freight_rate_default_priority = 6
-celery.conf.communication_queues_default_priority = 6
-celery.conf.low_default_priority = 3
-celery.conf.broker_transport_options = {'visibility_timeout': 14400}
+          queue_arguments={'x-max-priority': 2})]
 
 celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
@@ -315,3 +323,35 @@ def create_fcl_freight_rate_feedback_for_prediction(self, result):
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def extend_fcl_freight_rates(self, rate):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhProducer(rate=rate)
+        fcl_freight_vyuh.extend_rate()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind=True, retry_backoff=True,max_retries=3)
+def transform_dynamic_pricing(self, new_rate, current_validities, affected_transformation, new):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
+        fcl_freight_vyuh.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=new)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
+    try:
+        fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
+        fcl_freight_vyuh.set_dynamic_pricing()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

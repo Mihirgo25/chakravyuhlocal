@@ -778,7 +778,7 @@ VC:
   tags: ['additional_service']
 CMF:
   name: "Container Maintenance Fee"
-  units: ['per_shipment', 'per_container']
+  units: ['per_container']
   trade_types: ['export', 'import']
   condition: true
   tags: []

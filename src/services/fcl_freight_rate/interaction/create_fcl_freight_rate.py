@@ -73,7 +73,8 @@ def create_fcl_freight_rate(request):
         "procured_by_id": request.get("procured_by_id"),
         "mode": request.get("mode", "manual"),
         "accuracy":request.get("accuracy", 100),
-        "rate_type":request.get("rate_type"),
+        "payment_term": request.get("payment_term", "prepaid"),
+        "schedule_type": request.get("schedule_type", "transhipment")
     }
     ##here seee init_key
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["destination_port_id"]) or ""}:{str(row["rate_type"])}'
@@ -90,6 +91,7 @@ def create_fcl_freight_rate(request):
         freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
+
     freight.set_locations()
     freight.set_origin_location_ids()
     freight.set_destination_location_ids()
@@ -170,8 +172,28 @@ def create_fcl_freight_rate(request):
     
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+     
+    current_validities = freight.validities
+    adjust_dynamic_pricing(request, row, freight, current_validities)
 
     return {"id": freight.id}
+
+def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validities):
+    from celery_worker import extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
+    rate_obj = request | row | { 
+        'origin_location_ids': freight.origin_location_ids,
+        'destination_location_ids': freight.destination_location_ids,
+        'id': freight.id,
+        'origin_country_id': freight.origin_country_id,
+        'destination_country_id': freight.destination_country_id,
+        'origin_trade_id': freight.origin_trade_id,
+        'destination_trade_id': freight.destination_trade_id,
+        'service_provider_id': freight.service_provider_id
+    }
+    if row["mode"] == 'manual' and not request.get("is_extended"):
+        extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
+
+    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
 def get_flash_booking_rate_line_items(request):
     line_items = request.get("line_items")
