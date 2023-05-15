@@ -274,6 +274,7 @@ def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConf
 
 @fcl_freight_router.get("/get_fcl_freight_rate")
 def get_fcl_freight_rate_data(
+    id: str = None,
     origin_port_id: str = None,
     origin_main_port_id: str = None,
     destination_port_id: str = None,
@@ -290,6 +291,7 @@ def get_fcl_freight_rate_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     request = {
+        'id':id,
         'origin_port_id':origin_port_id,
         'origin_main_port_id':origin_main_port_id,
         'destination_port_id':destination_port_id,

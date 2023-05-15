@@ -9,18 +9,20 @@ from datetime import datetime
 
 
 def add_rate_properties(request,freight_id):
-    validate_value_props(request["value_props"])
-    RateProperties.create(
-        rate_id = freight_id,
-        created_at = datetime.now(),
-        updated_at = datetime.now(),
-        value_props = request["value_props"],
-        t_n_c = request["t_n_c"],
-        available_inventory = request["available_inventory"],
-        used_inventory = request.get("used_inventory"),
-        shipment_count = request["shipment_count"],
-        volume_count=request["volume_count"]
-    )
+    # validate_value_props(request["value_props"])
+    rp = RateProperties.select().where(RateProperties.rate_id == freight_id).first()
+    if not rp :
+        RateProperties.create(
+            rate_id = freight_id,
+            created_at = datetime.now(),
+            updated_at = datetime.now(),
+            value_props = request["value_props"],
+            t_n_c = request["t_n_c"],
+            available_inventory = request["available_inventory"],
+            used_inventory = request.get("used_inventory"),
+            shipment_count = request["shipment_count"],
+            volume_count=request["volume_count"]
+        )
     # rp = RateProperties.select().where(RateProperties.rate_id == freight_id).first()
     # rp.validate_value_props()
 
@@ -127,7 +129,6 @@ def create_fcl_freight_rate(request):
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
     valids = validities_for_cogo_assured(request)
-    print('here')
     for val in valids:
                 line_items[0]['price'] = val['price']
                 freight.set_validities(
