@@ -489,6 +489,8 @@ def get_fcl_freight_rate_cards_data(
         ignore_omp_dmp_sl_sps = json.loads(ignore_omp_dmp_sl_sps)
     else:
         ignore_omp_dmp_sl_sps = []
+    if not importer_exporter_id:
+        importer_exporter_id = None
     # validity_start = datetime.strptime(validity_start,'%Y-%m-%d')
     # validity_end = datetime.strptime(validity_end,'%Y-%m-%d')
     request = {
@@ -516,7 +518,7 @@ def get_fcl_freight_rate_cards_data(
         'ignore_omp_dmp_sl_sps' : ignore_omp_dmp_sl_sps,
         'cogo_entity_id' : cogo_entity_id
     }
-
+    print(request)
     try:
         data = get_fcl_freight_rate_cards(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
