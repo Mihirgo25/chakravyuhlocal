@@ -2,7 +2,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
-# from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
 from configs.global_constants import HAZ_CLASSES
 
 def create_audit(request, freight_id):
@@ -162,13 +161,12 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'origin_country_id': freight.origin_country_id,
         'destination_country_id': freight.destination_country_id,
         'origin_trade_id': freight.origin_trade_id,
-        'destination_trade_id': freight.destination_trade_id
+        'destination_trade_id': freight.destination_trade_id,
+        'service_provider_id': freight.service_provider_id
     }
     if row["mode"] == 'manual' and not request.get("is_extended"):
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
-    # Testing Purposes
-    # fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=rate_obj, current_validities=current_validities)
-    # fcl_freight_vyuh.set_dynamic_pricing()
+
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
 def get_flash_booking_rate_line_items(request):

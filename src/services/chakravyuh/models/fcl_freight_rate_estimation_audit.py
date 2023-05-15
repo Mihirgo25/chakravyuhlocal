@@ -12,7 +12,7 @@ class BaseModel(Model):
 
 class FclFreightRateEstimationAudit(BaseModel):
     id = BigAutoField(primary_key=True, index=True)
-    object_id = UUIDField(index=True)
+    object_id = BigIntegerField(index=True)
     action_name = TextField()
     source = TextField()
     data = BinaryJSONField()

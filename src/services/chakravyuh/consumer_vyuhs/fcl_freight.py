@@ -12,6 +12,11 @@ class FclFreightVyuh():
             'country': 2,
             'trade': 3,
         }
+        self.default_transformed_lineitem = {
+            'lower_limit': 2000,
+            'upper_limit': 2500,
+            'currency': 'USD',
+        }
 
     def get_probable_rate_transformations(self, first_rate: dict={}):
         origin_location_ids = [first_rate['origin_port_id'], first_rate['origin_country_id'], first_rate['origin_trade_id']]
@@ -108,6 +113,25 @@ class FclFreightVyuh():
         rate['validities'] = new_validities
 
         return rate
+    
+    def apply_default_transformation(self, rate):
+        validities = rate['validities'] or []
+        new_validities = []
+        for validity in validities:
+            line_items = validity['line_items']
+            new_lineitems = []
+            for line_item in line_items:
+                if line_item['code'] == 'BAS' and line_item['price'] < 2000:
+                    transformed_line_item = self.default_transformed_lineitem
+                    adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
+                    new_lineitems.append(adjusted_lineitem)
+                else:
+                    new_lineitems.append(line_item)
+            
+            validity['line_items'] = new_lineitems
+            new_validities.append(validity)
+        rate['validities'] = new_validities
+        return rate
 
     def apply_transformation(self, rate, probable_transformations, probable_customer_transformations):
         rate_specific_transformations = []
@@ -117,6 +141,9 @@ class FclFreightVyuh():
         new_rate = rate
         if len(rate_specific_transformations) > 0:
             new_rate = self.apply_rate_transformation(rate=rate, probable_transformations=rate_specific_transformations)
+        else:
+            new_rate = self.apply_default_transformation(rate=rate)
+            
         if len(probable_customer_transformations) > 0:
             new_rate = self.apply_customer_transformation(rate=new_rate, probable_customer_transformations=probable_customer_transformations)
 
