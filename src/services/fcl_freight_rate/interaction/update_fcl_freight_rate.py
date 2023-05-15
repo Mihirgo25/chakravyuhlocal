@@ -101,6 +101,37 @@ def execute_transaction_code(request):
 
   create_audit(request, freight_object.id)
 
+  current_validities = freight_object.validities
+  adjust_dynamic_pricing(request, freight_object, current_validities)
+
   return {
     'id': freight_object.id
   }
+
+def adjust_dynamic_pricing(request, freight: FclFreightRate, current_validities):
+    from celery_worker import extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
+    rate_obj = request | { 
+        'origin_port_id': freight.origin_port_id,
+        'destination_port_id': freight.destination_port_id,
+        'mode': 'manual',
+        'schedule_type': request.get('schedule_type'),
+        'payment_term': request.get('payment_term'),
+        'line_items': request.get('line_items') or [],
+        'origin_location_ids': freight.origin_location_ids,
+        'destination_location_ids': freight.destination_location_ids,
+        'id': freight.id,
+        'origin_country_id': freight.origin_country_id,
+        'destination_country_id': freight.destination_country_id,
+        'origin_trade_id': freight.origin_trade_id,
+        'destination_trade_id': freight.destination_trade_id,
+        'validities': freight.validities,
+        'shipping_line_id': freight.shipping_line_id,
+        'commodity': freight.commodity,
+        'container_size': freight.container_size,
+        'container_type': freight.container_type,
+        'service_provider_id': freight.service_provider_id
+    }
+    if rate_obj["mode"] == 'manual' and not request.get("is_extended"):
+        extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
+
+    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
