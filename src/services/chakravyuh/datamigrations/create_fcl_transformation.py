@@ -23,7 +23,8 @@ def create_fcl_transformation():
         FclFreightRate.origin_trade_id,
         FclFreightRate.destination_trade_id,
         FclFreightRate.validities,
-        FclFreightRate.mode
+        FclFreightRate.mode,
+        FclFreightRate.service_provider_id,
     ).where(
         FclFreightRate.last_rate_available_date > current_date,
         ~FclFreightRate.rate_not_available_entry
@@ -36,15 +37,16 @@ def create_fcl_transformation():
     c = 0
 
     OFFSET = 0
-    BATCH_SIZE = 1000
+    BATCH_SIZE = 5000
+
+    created_transformations = {}
 
     while OFFSET <= total_rates:
-        limited_rates_query = rates.offset(OFFSET).limit(1000)
+        limited_rates_query = rates.offset(OFFSET).limit(5000)
         OFFSET = OFFSET + BATCH_SIZE
 
         limited_rates = jsonable_encoder(list(limited_rates_query.dicts()))
 
-        created_transformations = {}
         for rate in limited_rates:
             current_validities = rate['validities'] or []
             new_validity = current_validities[0]
@@ -71,7 +73,7 @@ def create_fcl_transformation():
             fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities, what_to_create=what_to_create)
             fcl_freight_vyuh.set_dynamic_pricing()
             c = c+1
-            print(c, 'Done')
             created_transformations[keyP] = True
             created_transformations[keyC] = True
             created_transformations[keyT] = True
+            print(c, 'Done')
