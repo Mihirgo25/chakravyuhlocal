@@ -23,6 +23,7 @@ class HaulageFreightRateRuleSet(BaseModel):
     commodity_type = CharField(index=True, null=True)
     wagon_type = CharField(index=True, null=True)
     base_rate = IntegerField()
+    base_rate_unit = CharField(index=True, null=True)
     country_code = CharField(index=True)
     currency = CharField(index=True)
     transit_time = IntegerField(null=True)

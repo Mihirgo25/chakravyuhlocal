@@ -22,7 +22,7 @@ def get_distance(origin_location, destination_location):
     return geopy.distance.geodesic(coords_1, coords_2).km
 
 
-def rate_calculator(
+def haulage_rate_calculator(
     origin_location,
     destination_location,
     commodity,
@@ -98,4 +98,6 @@ def get_india_rates(query, commodity, load_type, container_count, ports_distance
 
 
 def get_china_rates(query, commodity, load_type, container_count, ports_distance):
+    final_data = {}
+    final_data["distance"] = ports_distance
     return
