@@ -8,6 +8,13 @@ from configs.definitions import FCL_FREIGHT_CHARGES
 def get_fcl_freight_rate(request):
   details = {}
 
+  if request['rate_type'] == 'cogo_assured':
+    object=find_cogo_assured_rate(request)
+    return object
+  else:
+    del request['id']
+    del request['rate_type']
+
   if all_fields_present(request):
     object = find_object(request)
     fcl_object = object
@@ -59,12 +66,14 @@ def find_object(object_params):
   query = FclFreightRate.select()
   for key in object_params:
     query = query.where(attrgetter(key)(FclFreightRate) == object_params[key])
-  
   object = query.first()
   
   return object
 
 def all_fields_present(object_params):
-  if (object_params['origin_port_id'] is not None) and (object_params['destination_port_id'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None):
+  if ((object_params['origin_port_id'] is not None) and (object_params['destination_port_id'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None)) :
     return True
   return False
+def find_cogo_assured_rate(object_params):
+  object = FclFreightRate.select().where(FclFreightRate.id==object_params['id']).dicts().get()
+  return object

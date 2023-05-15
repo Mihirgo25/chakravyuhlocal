@@ -83,7 +83,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surc
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.get_rate_properties import get_rate_props
 from services.fcl_freight_rate.interaction.update_rate_properties import update_rate_props
-from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_rates import get_cogo_assured_suggested_rates
+from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_fcl_rates import get_cogo_assured_suggested_fcl_rates
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
@@ -286,6 +286,7 @@ def get_fcl_freight_rate_data(
     service_provider_id: str = None,
     importer_exporter_id: str = None,
     cogo_entity_id: str = None,
+    rate_type:str="market_place",
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -302,7 +303,8 @@ def get_fcl_freight_rate_data(
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
         'importer_exporter_id': importer_exporter_id,
-        'cogo_entity_id': cogo_entity_id
+        'cogo_entity_id': cogo_entity_id,
+        'rate_type':rate_type
     }
 
     try:
@@ -1737,7 +1739,7 @@ def get_eligible_freight_rate_free_day_func(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@fcl_freight_router.get("/get_cogo_assured_suggested_rates")
+@fcl_freight_router.get("/get_cogo_assured_suggested_fcl_rates")
 def get_fcl_freight_rate_suggestions_data(
     rate_params: str,
     resp: dict = Depends(authorize_token)
@@ -1746,10 +1748,29 @@ def get_fcl_freight_rate_suggestions_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         rate_params = eval(rate_params)
-        data = get_cogo_assured_suggested_rates(rate_params)
+        data = get_cogo_assured_suggested_fcl_rates(rate_params)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.get("/add_market_place")
+def add_market_place():
+    chunk_size = 5000  
+    total_rows = FclFreightRates.select().count()
+    total_chunks = (total_rows // chunk_size) + 1
+
+    for chunk in range(total_chunks):
+        offset = chunk * chunk_size
+
+        query = (
+            FclFreightRates.update(init_key=FclFreightRates.init_key.concat(':market_place'))
+            .where(FclFreightRates.init_key != '')
+            .limit(chunk_size)
+            .offset(offset)
+        )
+        query.execute()
+
+    return {"message": "Market place added to init_key column for all rows."}

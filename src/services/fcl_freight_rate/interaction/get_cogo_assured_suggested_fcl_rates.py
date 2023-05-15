@@ -4,7 +4,7 @@ from micro_services.client import common
 import random
 from configs.cogo_assured_rate_constants import *
 
-def get_cogo_assured_suggested_rates(rate_params):
+def get_cogo_assured_suggested_fcl_rates(rate_params):
     params = []
     for rate_param in rate_params:
         params.append(add_suggested_validities(rate_param))
