@@ -6,39 +6,7 @@ from datetime import datetime, timedelta
 import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
-from configs.rate_averages import AVERAGE_RATES
-from configs.trade_lane import TRADE_LANE_PRICES
 from libs.get_distance import get_distance
-
-def get_final_price(min_price, price, ldh, request):
-    price_delta = price - min_price
-
-    avg_price = AVERAGE_RATES['default']
-
-    origin_trade_id = (ldh.get(request['origin_port_id']) or {}).get('trade_id') or ''
-    destination_trade_id = (ldh.get(request['destination_port_id']) or {}).get('trade_id') or ''
-
-    modified_container_size = '40'
-
-    if request['container_size'] == '20':
-        modified_container_size = '20'
-
-    key = '{}:{}:{}'.format(request['origin_country_id'], request['destination_country_id'], modified_container_size)
-    trade_key = '{}:{}:{}'.format(origin_trade_id, destination_trade_id, modified_container_size)
-    reverse_trade_key = '{}:{}:{}'.format(destination_trade_id, origin_trade_id, modified_container_size)
-
-    if key in AVERAGE_RATES:
-        avg_price = AVERAGE_RATES[key] + price_delta
-    elif trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[trade_key] + price_delta
-    elif reverse_trade_key in TRADE_LANE_PRICES:
-        avg_price = TRADE_LANE_PRICES[reverse_trade_key] + price_delta
-    elif price > 1500 and price < avg_price:
-        return price
-    else:
-        avg_price = AVERAGE_RATES['default'] + price
-
-    return avg_price
     
 def insert_rates_to_rms(create_params, request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data

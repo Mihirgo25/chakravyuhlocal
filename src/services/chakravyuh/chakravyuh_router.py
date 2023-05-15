@@ -5,7 +5,6 @@ from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from services.chakravyuh.migrating_estimated_rates import migration_of_countries
 from services.chakravyuh.migrated_estimated_local_rates import migrate_estimated_local_rates
 from services.chakravyuh.interaction.create_demand_transformation import create_demand_transformation
 from services.chakravyuh.interaction.create_revenue_target import create_revenue_target
@@ -51,11 +50,6 @@ def create_revenue_target_func(request: PostRevenueTarget, resp:dict = Depends(a
         request.performed_by_type = resp["setters"]["performed_by_type"]
     target = create_revenue_target(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content=jsonable_encoder(target))
-    
-
-@chakravyuh_router.post("/migrating")
-def migration():
-    migration_of_countries()
     
 @chakravyuh_router.post("/migrate_locals")
 def migration_locals():

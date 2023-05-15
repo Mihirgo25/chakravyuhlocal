@@ -1,8 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
-from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY
+from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
 from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS
-from services.chakravyuh.interaction.get_local_rates_from_vyuh import get_local_rates_from_vyuh
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from fastapi.encoders import jsonable_encoder
 
@@ -16,9 +15,6 @@ def get_fcl_freight_local_rate_cards(request):
         local_query = initialize_local_query(request)
 
         local_query_results = jsonable_encoder(list(local_query.dicts()))
-
-        if len(local_query_results) == 0:
-            local_query_results = get_local_rates_from_vyuh(request)
 
         rate_list = build_response_list(local_query_results, request)
 
@@ -80,7 +76,7 @@ def build_response_object(result, request):
       'service_provider_id': result['service_provider_id'],
       'main_port_id': result['main_port_id'],
       'shipping_line_id': result['shipping_line_id'],
-      'source': 'predicted' if result.get('source') == 'predicted' else 'spot_rates',
+      'source': 'predicted' if result['service_provider_id'] in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates',
       'tags': []
     }
 

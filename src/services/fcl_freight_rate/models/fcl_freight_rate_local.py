@@ -11,6 +11,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFrei
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from micro_services.client import *
 from database.rails_db import get_shipping_line
+import concurrent.futures
+from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -257,9 +259,43 @@ class FclFreightRateLocal(BaseModel):
             ).where(FclFreightRateFreeDay.id << free_day_ids, (~FclFreightRateFreeDay.rate_not_available_entry | FclFreightRateFreeDay.rate_not_available_entry.is_null(True)))
 
             free_days_new = jsonable_encoder(list(free_days_query.dicts()))
+        else:
+            common_filters = {
+                'location_id': self.location_ids,
+                'trade_type': self.trade_type,
+                'container_size': self.container_size,
+                'container_type': self.container_type,
+                'shipping_line_id': str(self.shipping_line_id),
+                'service_provider_id': str(self.service_provider_id)
+            }
+            detention_filters = common_filters | {
+                'free_days_type': 'detention'
+            }
+            demurrage_filters = common_filters | {
+                'free_days_type': 'demurrage'
+            }
+            plugin_filters = common_filters | {
+                'free_days_type': 'plugin'
+            }
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers = 3) as executor:
+                futures = [
+                    executor.submit(get_eligible_fcl_freight_rate_free_day, detention_filters),
+                    executor.submit(get_eligible_fcl_freight_rate_free_day, demurrage_filters),
+                    executor.submit(get_eligible_fcl_freight_rate_free_day, plugin_filters)
+                ]
+                for i in range(0,len(futures)):
+                    free_days_new.append(futures[i].result())
 
         for free_day_charge in free_days_new:
-          free_days_charges[free_day_charge["id"]] = free_day_charge
+            if free_day_charge:
+                free_days_charges[free_day_charge["id"]] = free_day_charge
+                if free_day_charge['free_days_type']=='detention':
+                    detention_id = free_day_charge['id']
+                if free_day_charge['free_days_type']=='demurrage':
+                    demurrage_id = free_day_charge['id']
+                if free_day_charge['free_days_type']=='plugin':
+                    plugin_id = free_day_charge['id']
 
         if detention_id and detention_id in free_days_charges:
             self.data["detention"] = free_days_charges[detention_id]
