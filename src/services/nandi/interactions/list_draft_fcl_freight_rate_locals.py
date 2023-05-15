@@ -2,7 +2,7 @@ from services.nandi.models.draft_fcl_freight_rate_local import DraftFclFreightRa
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from peewee import fn, SQL
 
 possible_direct_filters = ["id", "commodity", "container_size", "container_type", "port_id", "shipping_line_id", "trade_type", "rate_id", "source", "status", "shipment_serial_id"]
@@ -21,7 +21,7 @@ def list_draft_fcl_freight_rate_locals(filters = {}, page_limit = 10, page = 1, 
 
             stats = get_stats(filters, is_stats_required) or {}
             data = get_data(query)
-            return { 'list': jsonable_encoder(data) } | (stats)
+            return { 'list': json_encoder(data) } | (stats)
 
 def get_query(sort_by, sort_type):
     query = DraftFclFreightRateLocal.select().order_by(eval("DraftFclFreightRateLocal.{}.{}()".format(sort_by, sort_type)))
