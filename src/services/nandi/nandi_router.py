@@ -60,13 +60,12 @@ def list_draft_fcl_freight_rate_data(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    return_query: bool = False,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_draft_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query)
+        data = list_draft_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -81,13 +80,12 @@ def list_draft_fcl_freight_rate_locals_data(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    return_query: bool = False,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_draft_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
+        data = list_draft_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise

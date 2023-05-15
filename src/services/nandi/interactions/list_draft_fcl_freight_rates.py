@@ -7,7 +7,7 @@ from fastapi.encoders import jsonable_encoder
 possible_direct_filters = ["id", "rate_id", "source", "status", "shipment_serial_id"]
 possible_indirect_filters = []
 
-def list_draft_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False):
+def list_draft_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc'):
     query = get_query(sort_by, sort_type)
 
     if filters:
@@ -16,9 +16,6 @@ def list_draft_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_b
 
             direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
             query = get_filters(direct_filters, query, DraftFclFreightRate)
-
-            if return_query:
-                return {'list': query} 
 
             data = get_data(query)
             return { 'list': data }
