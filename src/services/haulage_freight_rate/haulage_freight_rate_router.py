@@ -17,20 +17,13 @@ def get_haulage_freight_rate(
     destination_location: str = None,
     commodity: str = None,
     load_type: str = None,
-    container_count = None,
+    container_count: int = None,
+    wagon_type: str = None,
     resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request = {
-        'origin_location':origin_location,
-        'destination_location':destination_location,
-        'commodity':commodity,
-        'load_type' : load_type,
-        'container_count' : container_count
-    }
-
     try:
-        data = haulage_rate_calculator(request)
+        data = haulage_rate_calculator(origin_location, destination_location, commodity, load_type, container_count, wagon_type)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content = data)
     except HTTPException as e:

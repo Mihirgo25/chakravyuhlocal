@@ -6,11 +6,13 @@ from services.chakravyuh.models.demand_transformation_audit import DemandTransfo
 from services.chakravyuh.models.revenue_target import RevenueTarget
 from services.chakravyuh.models.revenue_target_audit import RevenueTargetAudit
 from services.chakravyuh.models.fcl_freight_rate_local_estimation import FclFreightRateLocalEstimation
-
+from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
+from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
+from services.haulage_freight_rate.models.wagon_types import WagonTypes
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRateEstimation, FclFreightRateEstimationAudit, DemandTransformation, RevenueTarget, RevenueTargetAudit, FclFreightRateLocalEstimation, DemandTransformationAudit])
+        db.create_tables([HaulageFreightRateRuleSet, HaulageFreightRate, WagonTypes])
         db.close()
         print("created table")
     except:
