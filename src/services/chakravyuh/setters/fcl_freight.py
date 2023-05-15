@@ -300,8 +300,8 @@ class FclFreightVyuh():
         tfs_query = FclFreightRateEstimation.select().where(
             FclFreightRateEstimation.origin_location_id == actual_transformation['origin_location_id'],
             FclFreightRateEstimation.destination_location_id == actual_transformation['destination_location_id'],
-            FclFreightRate.container_type << container_types,
-            FclFreightRate.container_size << container_sizes
+            FclFreightRateEstimation.container_type << container_types,
+            FclFreightRateEstimation.container_size << container_sizes
         )
 
         already_created_tfs = jsonable_encoder(list(tfs_query.dicts())) or []
@@ -339,20 +339,20 @@ class FclFreightVyuh():
                 pst['container_size']
                 )
 
-            derived_key = already_created_tfs_hash.get(key)
+            derived = already_created_tfs_hash.get(key)
             if key not in already_created_tfs_hash or derived:
                 if derived:
-                    pst['id'] = derived_key
+                    pst['id'] = derived
 
                 not_created_tfs.append(pst)
         
         return not_created_tfs
     
     def get_relative_price(self, actual_transformation: dict, related_transformation: dict, line_item:dict):
-        related_container_type = related_transformation['container_type']
-        related_container_size = related_transformation['container_size']
-        actual_container_size = actual_transformation['container_size'],
-        actual_container_type = actual_transformation['container_type']
+        related_container_type = str(related_transformation['container_type'])
+        related_container_size = str(related_transformation['container_size'])
+        actual_container_size = str(actual_transformation['container_size'])
+        actual_container_type = str(actual_transformation['container_type'])
 
         container_size_factor = CONTAINER_SIZE_FACTORS[actual_container_size]
         container_type_factor = CONTAINR_TYPE_FACTORS[actual_container_type]
@@ -376,7 +376,7 @@ class FclFreightVyuh():
             'stand_dev': std_dev,
             'size': line_item['size'],
             'unit': line_item['unit'],
-            'derived': True
+            'derived': actual_transformation['id']
         }
 
     
@@ -392,14 +392,16 @@ class FclFreightVyuh():
         return new_lineitems
 
     def adjust_price_for_related_transformations(self, actual_transformation):
-        container_sizes = ['20', '40', '40HC', '45HC'] - actual_transformation['container_size']
-        container_types = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank'] - actual_transformation['container_type']   
+        container_sizes = ['20', '40', '40HC', '45HC']
+        container_sizes.remove(actual_transformation['container_size']) 
+        container_types = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank'] 
+        container_types.remove(actual_transformation['container_type'])  
 
-        related_transformations_to_add = self.get_related_transformations_to_add(actual_transformation=actual_transformation, container_sizes=container_sizes, container_types=container_types)
+        related_transformations_to_add = self.get_related_transformations_to_add(actual_transformation, container_sizes, container_types)
 
         for rtf in related_transformations_to_add:
             # Insert price element to transformations
-            rtf['line_items'] = self.relative_price_to_add()
+            rtf['line_items'] = self.relative_price_to_add(actual_transformation, rtf)
             self.adjust_price_for_tranformation(affected_transformation=rtf, new=False, is_relative=True)
 
 
@@ -459,6 +461,7 @@ class FclFreightVyuh():
                 'action_name': 'create',
                 'source': 'system'
             }
+            affected_transformation['id'] = str(transformation.id)
             self.create_audits(data=data)
         
         if not is_relative:
@@ -488,12 +491,12 @@ class FclFreightVyuh():
 
         for affected_transformation in affected_transformations:
             if self.what_to_create[affected_transformation['origin_location_type']]:
-                self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=True)
-                # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
+                # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=True)
+                transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
         for new_transformation in new_transformations_to_add:
-            self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
-            # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
+            # self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
+            transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
 
         return True
