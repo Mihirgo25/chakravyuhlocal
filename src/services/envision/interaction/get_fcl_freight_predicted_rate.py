@@ -10,25 +10,6 @@ from libs.get_distance import get_distance
     
 def insert_rates_to_rms(create_params, request):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
-    locations_description = maps.list_locations({'filters': {'id': [request['origin_port_id'],request['destination_port_id']]}})
-
-    if locations_description and isinstance(locations_description, dict):
-        locations_description = locations_description['list']
-    else:
-        locations_description = []
-
-    ldh = {}
-
-    min_price = 10000000000
-
-    for create_param in create_params:
-        price = create_param['line_items'][0]['price']
-        if price < min_price:
-            min_price = price
-    
-
-    for loc in locations_description:
-        ldh[loc['id']] = loc
       
     for create_param in create_params:
         final_bas_price_to_rms = create_param['line_items'][0]['price']
