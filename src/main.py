@@ -79,7 +79,6 @@ def startup():
     # create_partition_table()
     # fcl_local_migration()
     # free_day()
-    scheduler.start()
 
 
 
@@ -88,7 +87,6 @@ def startup():
 def shutdown():
     if not db.is_closed():
         db.close()
-    scheduler.stop()
 
 @app.get("/")
 def read_root():
