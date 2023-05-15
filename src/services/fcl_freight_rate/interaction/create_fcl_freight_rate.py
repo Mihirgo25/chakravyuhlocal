@@ -160,7 +160,8 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'origin_country_id': freight.origin_country_id,
         'destination_country_id': freight.destination_country_id,
         'origin_trade_id': freight.origin_trade_id,
-        'destination_trade_id': freight.destination_trade_id
+        'destination_trade_id': freight.destination_trade_id,
+        'service_provider_id': freight.service_provider_id
     }
     if row["mode"] == 'manual' and not request.get("is_extended"):
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
