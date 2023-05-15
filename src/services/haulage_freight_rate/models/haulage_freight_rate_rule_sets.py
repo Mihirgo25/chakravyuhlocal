@@ -27,6 +27,13 @@ class HaulageFreightRateRuleSet(BaseModel):
     country_code = CharField(index=True)
     currency = CharField(index=True)
     transit_time = IntegerField(null=True)
+    pollution_fee = FloatField(null=True)
+    climate_change_fee = FloatField(null=True)
+    noise_pollution_fee = FloatField(null=True)
+    indirect_pollution_fee = FloatField(null=True)
+    railway_electrification_surcharge = FloatField(null=True)
+    railway_loading_surcharge = FloatField(null=True)
+    container_usage_surcharge = FloatField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
 

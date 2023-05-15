@@ -5,12 +5,12 @@ from micro_services.client import maps
 import services.haulage_freight_rate.interactions.rate_calculator as rate_calculator
 from configs.rails_constants import DEFAULT_PERMISSIBLE_CARRYING_CAPACITY
 from configs.rails_constants import DESTINATION_TERMINAL_CHARGES_INDIA
+from libs.get_distance import get_distance
+
+POSSIBLE_LOCATION_CATEGORY = ["india", "china", "europe", "north_america", "generalized"]
 
 
-POSSIBLE_LOCATION_CATEGORY = ["india", "china", "europe", "north_america"]
-
-
-def get_distance(origin_location, destination_location, data):
+def get_distances(origin_location, destination_location, data):
     for d in data:
         if d["id"] == origin_location:
             origin_location = (d["latitude"], d["longitude"])
@@ -18,7 +18,7 @@ def get_distance(origin_location, destination_location, data):
             destination_location = (d["latitude"], d["longitude"])
     coords_1 = origin_location
     coords_2 = destination_location
-    return geopy.distance.geodesic(coords_1, coords_2).km
+    return get_distance(coords_1, coords_2)
 
 
 def haulage_rate_calculator(
@@ -34,14 +34,21 @@ def haulage_rate_calculator(
     input = {"filters": {"id": [origin_location, destination_location]}}
     location_category = ''
     data = maps.list_locations(input)['list']
-    if data[0]['country_code'] == 'IN' and data[0]['country_code'] == 'IN':
+
+
+    if data[0]['country_code'] != data[1]['country_code']:
+        location_category = 'generalized'
+
+
+    if data[0]['country_code'] == 'IN' and data[1]['country_code'] == 'IN':
         location_category = 'india'
+
+
     if location_category not in POSSIBLE_LOCATION_CATEGORY:
         return response
-    #check intermodal
 
 
-    ports_distance = get_distance(origin_location, destination_location, data)
+    ports_distance = get_distances(origin_location, destination_location, data)
 
     if not container_count:
         load_type = "Wagon Load"
@@ -103,6 +110,11 @@ def get_india_rates(query, commodity, load_type, container_count, ports_distance
         final_data["base_price"] = price + surcharge + other_charges
         final_data['currency'] = 'INR'
     return final_data
+
+def get_generalized_rates(query, commodity, load_type, container_count, ports_distance):
+    final_data = {}
+    final_data["distance"] = ports_distance
+    return
 
 
 def get_china_rates(query, commodity, load_type, container_count, ports_distance):
