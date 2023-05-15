@@ -1,10 +1,12 @@
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from micro_services.client import common
+import sentry_sdk
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
 from database.rails_db import get_ff_mlo
+from configs.transformation_constants import CONTAINR_TYPE_FACTORS, CONTAINER_SIZE_FACTORS
 
 class FclFreightVyuh():
     def __init__(self,
@@ -259,7 +261,13 @@ class FclFreightVyuh():
         line_items = affected_transformation['line_items'] or []
         new_line_items = []
 
-        if new:
+        derived = False
+
+        for line_item in line_items:
+            if 'derived' in line_item:
+                derived = True
+
+        if new or derived:
             line_items = self.new_rate['line_items'] or []
 
         for line_item in line_items:
@@ -270,10 +278,140 @@ class FclFreightVyuh():
 
         return new_line_items
     
+    def get_related_transformations_to_add(self, actual_transformation: dict, container_sizes: list = [], container_types:list = []):
+        possible_transformations = []
+
+        for cs in container_sizes:
+            for ct in container_types:
+                possible_transformations.append({
+                    'origin_location_id': actual_transformation['origin_location_id'],
+                    'destination_location_id': actual_transformation['destination_location_id'],
+                    'origin_location_type': actual_transformation['origin_location_type'],
+                    'destination_location_type': actual_transformation['destination_location_type'],
+                    'container_type': ct,
+                    'container_size': cs,
+                    'line_items': [],
+                    'shipping_line_id': None,
+                    'commodity': None,
+                    'payment_term': None,
+                    'schedule_type': None
+                })
+
+        tfs_query = FclFreightRateEstimation.select().where(
+            FclFreightRateEstimation.origin_location_id == actual_transformation['origin_location_id'],
+            FclFreightRateEstimation.destination_location_id == actual_transformation['destination_location_id'],
+            FclFreightRate.container_type << container_types,
+            FclFreightRate.container_size << container_sizes
+        )
+
+        already_created_tfs = jsonable_encoder(list(tfs_query.dicts())) or []
+
+        already_created_tfs_hash = {}
+
+        for act in already_created_tfs:
+            key = '{}:{}:{}:{}:{}:{}'.format(
+                act['origin_location_id'],
+                act['origin_location_type'],
+                act['destination_location_id'], 
+                act['destination_location_type'],
+                act['container_type'],
+                act['container_size']
+                )
+            line_items = act['line_items'] or []
+
+            derived = None
+
+            for line_item in line_items:
+                if 'derived' in line_item:
+                    derived = act['id']
+
+            already_created_tfs_hash[key] = derived
+
+        not_created_tfs = []
+
+        for pst in possible_transformations:
+            key = '{}:{}:{}:{}:{}:{}'.format(
+                pst['origin_location_id'],
+                pst['origin_location_type'],
+                pst['destination_location_id'], 
+                pst['destination_location_type'],
+                pst['container_type'],
+                pst['container_size']
+                )
+
+            derived_key = already_created_tfs_hash.get(key)
+            if key not in already_created_tfs_hash or derived:
+                if derived:
+                    pst['id'] = derived_key
+
+                not_created_tfs.append(pst)
+        
+        return not_created_tfs
     
-    def adjust_price_for_tranformation(self, affected_transformation, new: bool=False):
+    def get_relative_price(self, actual_transformation: dict, related_transformation: dict, line_item:dict):
+        related_container_type = related_transformation['container_type']
+        related_container_size = related_transformation['container_size']
+        actual_container_size = actual_transformation['container_size'],
+        actual_container_type = actual_transformation['container_type']
+
+        container_size_factor = CONTAINER_SIZE_FACTORS[actual_container_size]
+        container_type_factor = CONTAINR_TYPE_FACTORS[actual_container_type]
+        standard_rate_factor = 1 / container_size_factor
+        standard_rate_factor = standard_rate_factor / container_type_factor
+        realted_csf = CONTAINER_SIZE_FACTORS[related_container_size]
+        realted_ctf = CONTAINR_TYPE_FACTORS[related_container_type]
+
+        price = line_item['average']
+        std_dev = line_item['stand_dev']
+        related_rate_average = price * standard_rate_factor * realted_csf * realted_ctf
+        lower_limit = related_rate_average - 1 * std_dev # -1 sigma
+        upper_limit = related_rate_average + 1 * std_dev # 1 sigma
+        
+        return {
+            'code': line_item['code'],
+            'currency': self.target_currency,
+            'upper_limit': round(upper_limit),
+            'lower_limit': round(lower_limit),
+            'average': related_rate_average,
+            'stand_dev': std_dev,
+            'size': line_item['size'],
+            'unit': line_item['unit'],
+            'derived': True
+        }
+
+    
+    def relative_price_to_add(self, actual_transformation: dict, related_transformation: dict):
+        line_items = actual_transformation['line_items'] or []
+
+        new_lineitems = []
+
+        for line_item in line_items:
+            related_lineitem = self.get_relative_price(actual_transformation, related_transformation, line_item)
+            new_lineitems.append(related_lineitem)
+        
+        return new_lineitems
+
+    def adjust_price_for_related_transformations(self, actual_transformation):
+        container_sizes = ['20', '40', '40HC', '45HC'] - actual_transformation['container_size']
+        container_types = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank'] - actual_transformation['container_type']   
+
+        related_transformations_to_add = self.get_related_transformations_to_add(actual_transformation=actual_transformation, container_sizes=container_sizes, container_types=container_types)
+
+        for rtf in related_transformations_to_add:
+            # Insert price element to transformations
+            rtf['line_items'] = self.relative_price_to_add()
+            self.adjust_price_for_tranformation(affected_transformation=rtf, new=False, is_relative=True)
+
+
+    
+    
+    def adjust_price_for_tranformation(self, affected_transformation, new: bool=False, is_relative: bool = False):
         transformation_id = affected_transformation.get('id')
-        adjusted_line_items = self.get_adjusted_line_items_to_add(affected_transformation, new)
+        if is_relative:
+            adjusted_line_items = affected_transformation['line_items']
+        else:
+            adjusted_line_items = self.get_adjusted_line_items_to_add(affected_transformation, new)
+        
 
         if len(adjusted_line_items) == 0:
             # Return If no line_items to create
@@ -297,7 +435,6 @@ class FclFreightVyuh():
                 'source': 'system'
             }
             self.create_audits(data=data)
-            return transformation
         else:
             payload = affected_transformation | {
                 'line_items': adjusted_line_items,
@@ -323,7 +460,18 @@ class FclFreightVyuh():
                 'source': 'system'
             }
             self.create_audits(data=data)
-            return transformation
+        
+        if not is_relative:
+            actual_transformation = affected_transformation
+            actual_transformation['line_items'] = adjusted_line_items
+            try:
+                self.adjust_price_for_related_transformations(actual_transformation=actual_transformation)
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
+        
+        return True
+
+
 
 
     def set_dynamic_pricing(self):
