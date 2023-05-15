@@ -6,7 +6,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 
 # define filters
-possible_direct_filters = ['id','name']
+possible_direct_filters = ['id','truck_company','truck_name','created_at','milage','milage_unit','capacity','capacity_unit','vehicle_weight','vehicle_weight_unit','fuel_type','avg_speed','no_of_wheels','engine_type','country_id','axels','truck_type','body_type','status','horse_power','updated_at']
 possible_indirect_filters = []
 
 def list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_data_required):
