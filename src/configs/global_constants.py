@@ -91,3 +91,7 @@ CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'i
 PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
 
 TRADE_TYPES = ['import', 'export', 'domestic']
+
+ALLOWED_RATE_PRODUCER_METHODS = ['minimum', 'maximum', 'latest']
+
+DEAFULT_RATE_PRODUCER_METHOD = 'latest'

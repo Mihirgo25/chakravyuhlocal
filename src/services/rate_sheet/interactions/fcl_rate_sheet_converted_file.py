@@ -15,6 +15,7 @@ import dateutil.parser as parser
 from database.rails_db import get_shipping_line, get_organization
 from services.rate_sheet.helpers import *
 import chardet
+from libs.parse_numeric import parse_numeric
 ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
 csv_options = {
@@ -41,7 +42,7 @@ def get_processed_percent(params):
     if rd:
         try:
             cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
-            return float(cached_response)
+            return parse_numeric(cached_response)
         except:
             return 0
 
@@ -107,6 +108,9 @@ def append_in_final_csv(csv, row):
 
 
 def get_location_id(q, country_code = None, service_provider_id = None):
+    if not q:
+        return None
+    
     pincode_filters =  {"type": "pincode", "postal_code": q, "status": "active"}
     if country_code is not None:
         pincode_filters['country_code'] = country_code
@@ -174,6 +178,7 @@ def get_importer_exporter_id(importer_exporter_name):
 
 
 def process_fcl_freight_local(params, converted_file, update):
+    valid_headers = ["trade_type", "port", "main_port", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency", "remark1", "remark2", "remark3"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
 
@@ -188,6 +193,7 @@ def process_fcl_freight_local(params, converted_file, update):
     edit_file = open(get_file_path(converted_file), 'w')
     file_path = original_path
     last_row = []
+    invalidated = False
     with open(file_path, 'rb') as f:
         result = chardet.detect(f.read())
         encoding = result['encoding']
@@ -195,6 +201,12 @@ def process_fcl_freight_local(params, converted_file, update):
         csv_writer = csv.writer(edit_file)
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
+
+        if len(set(valid_headers)&set(headers))!=len(headers):
+            error_file = ['invalid header']
+            csv_writer.writerow(error_file)
+            invalidated = True
+
         for row in input_file:
             total_lines += 1
         set_total_line(converted_file, total_lines)
@@ -204,6 +216,8 @@ def process_fcl_freight_local(params, converted_file, update):
         next(file)
         is_previous_rate_valid = True
         for row in input_file:
+            if invalidated:
+                break
             index += 1
             if not ''.join(list(row.values())).strip():
                 continue
@@ -266,7 +280,7 @@ def process_fcl_freight_local(params, converted_file, update):
                 is_previous_rate_valid = False
                 rows = []
 
-    if rows and is_previous_rate_valid:
+    if rows and is_previous_rate_valid and not invalidated:
         create_fcl_freight_local_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
@@ -277,6 +291,8 @@ def process_fcl_freight_local(params, converted_file, update):
         total = converted_file.get('rates_count')
         percent_completed = (valid / total) * 100
     except:
+        valid = 0
+        total = 0
         percent_completed = 0
     converted_file['percent'] = percent_completed
     set_processed_percent(percent_completed, params)
@@ -313,7 +329,7 @@ def create_fcl_freight_local_rate(
             line_item = {
             'code': t.get('code'),
             'unit': t.get('unit'),
-            'price': float(t.get('price')),
+            'price': parse_numeric(t.get('price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
@@ -327,7 +343,7 @@ def create_fcl_freight_local_rate(
             for key, val in slab.items():
                 if key in keys_to_float:
                     if val:
-                        slab[key] = float(val)
+                        slab[key] = parse_numeric(val)
             object['data']['line_items'][-1]['slabs'].append(slab)
 
     request_params = object
@@ -388,6 +404,8 @@ def write_fcl_freight_free_day_object(rows, csv, params,  converted_file, last_r
 
 
 def process_fcl_freight_free_day(params, converted_file, update):
+    valid_headers = ["location_type", "location", "trade_type", "free_days_type", "container_size", "container_type", "shipping_line", "importer_exporter", "free_limit", "lower_limit", "upper_limit", "price", "currency", "specificity_type", "previous_days_applicable", "validity_start", "validity_end", "remark1", "remark2", "remark3"]
+
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -401,6 +419,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
     file_path = original_path
     edit_file = open(get_file_path(converted_file), 'w')
     last_row = []
+    invalidated = False
     with open(file_path, 'rb') as f:
         result = chardet.detect(f.read())
         encoding = result['encoding']
@@ -408,6 +427,12 @@ def process_fcl_freight_free_day(params, converted_file, update):
         csv_writer = csv.writer(edit_file)
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
+
+        if len(set(valid_headers)&set(headers))!=len(headers):
+            error_file = ['invalid header']
+            csv_writer.writerow(error_file)
+            invalidated = True
+
         for row in input_file:
             total_lines += 1
         set_total_line(converted_file, total_lines)
@@ -417,6 +442,8 @@ def process_fcl_freight_free_day(params, converted_file, update):
         next(file)
         is_previous_rate_valid = True
         for row in input_file:
+            if invalidated:
+                break
             index += 1
             if not ''.join(list(row.values())).strip():
                 continue
@@ -485,7 +512,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
                     converted_file['rates_count']+=1
                 is_previous_rate_valid = False
                 rows = []
-    if rows and is_previous_rate_valid:
+    if rows and is_previous_rate_valid and not invalidated:
         create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     set_current_processing_line(total_lines, converted_file)
     try:
@@ -493,6 +520,8 @@ def process_fcl_freight_free_day(params, converted_file, update):
         total = converted_file.get('rates_count')
         percent_completed = (valid / total) * 100
     except:
+        valid = 0
+        total = 0
         percent_completed = 0
     edit_file.flush()
     converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
@@ -526,7 +555,7 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     for key, val in object.items():
         if key in keys_to_float:
             if val:
-                object[key] = float(val)
+                object[key] = parse_numeric(val)
     location = get_location(rows[0]['location'], rows[0]['location_type'])
     object['location'] = location
     object['location_id'] = location['id']
@@ -547,7 +576,7 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
         for key, val in slab.items():
             if key in keys_to_float:
                 if val:
-                    slab[key] = float(val)
+                    slab[key] = parse_numeric(val)
         if object['slabs']:
             object['slabs'].append(slab)
     object['rate_sheet_id'] = params['rate_sheet_id']
@@ -848,6 +877,7 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_ro
     return object_validity
 
 def process_fcl_freight_freight(params, converted_file, update):
+    valid_headers = ["origin_port", "origin_main_port", "destination_port", "destination_main_port", "container_size", "container_type", "commodity", "shipping_line", "validity_start", "validity_end", "code", "unit", "price", "currency", "extend_rates", "weight_free_limit", "weight_lower_limit", "weight_upper_limit", "weight_limit_price", "weight_limit_currency", "destination_detention_free_limit", "destination_detention_lower_limit", "destination_detention_upper_limit", "destination_detention_price", "destination_detention_currency", "schedule_type", "remark1", "remark2", "remark3", "payment_term"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -861,6 +891,7 @@ def process_fcl_freight_freight(params, converted_file, update):
     file_path = original_path
     edit_file = open(get_file_path(converted_file), 'w')
     last_row = []
+    invalidated = False
     with open(file_path, 'rb') as f:
         result = chardet.detect(f.read())
         encoding = result['encoding']
@@ -870,6 +901,12 @@ def process_fcl_freight_freight(params, converted_file, update):
         csv_writer = csv.writer(edit_file)
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
+
+        if len(set(valid_headers)&set(headers))!=len(headers):
+            error_file = ['invalid header']
+            csv_writer.writerow(error_file)
+            invalidated = True
+
         for row in input_file:
             total_lines += 1
         # Set Initial Rate Sheets count
@@ -880,6 +917,8 @@ def process_fcl_freight_freight(params, converted_file, update):
         next(file)
         is_previous_rate_valid = True
         for row in input_file:
+            if invalidated:
+                break
             index += 1
             if not ''.join(list(row.values())).strip():
                 continue
@@ -1142,7 +1181,7 @@ def process_fcl_freight_freight(params, converted_file, update):
                     converted_file['rates_count']+=1
                 is_previous_rate_valid = False
                 rows = []
-    if rows and is_previous_rate_valid:
+    if rows and is_previous_rate_valid and not invalidated:
         create_fcl_freight_freight_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, '')
     set_current_processing_line(total_lines, converted_file)
     try:
@@ -1150,6 +1189,8 @@ def process_fcl_freight_freight(params, converted_file, update):
         total = converted_file.get('rates_count')
         percent_completed = (valid / total) * 100
     except:
+        valid = 0
+        total = 0
         percent_completed = 0
     percent=  ((get_current_processing_line(converted_file) / total_lines)* 100)
     converted_file['percent'] = percent_completed
@@ -1198,7 +1239,7 @@ def create_fcl_freight_freight_rate(
             line_item = {
             'code': t.get('code'),
             'unit': t.get('unit'),
-            'price': float(t.get('price')),
+            'price': parse_numeric(t.get('price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
@@ -1208,20 +1249,20 @@ def create_fcl_freight_freight_rate(
             if 'weight_limit' not in object:
                 object['weight_limit'] = {}
             if not object['weight_limit'].get('free_limit') and t.get('weight_free_limit'):
-                object['weight_limit']['free_limit'] = float(t.get('weight_free_limit'))
+                object['weight_limit']['free_limit'] = parse_numeric(t.get('weight_free_limit'))
             if 'slabs' not in object.get('weight_limit'):
                 object['weight_limit']['slabs'] = []
             if t.get('weight_lower_limit'):
                 if t.get('weight_upper_limit') and t.get('weight_limit_price'):
                     weight_slab = {
-                        'lower_limit': float(t.get('weight_lower_limit')),
-                        'upper_limit': float(t.get('weight_upper_limit')),
-                        'price': float(t.get('weight_limit_price')),
+                        'lower_limit': parse_numeric(t.get('weight_lower_limit')),
+                        'upper_limit': parse_numeric(t.get('weight_upper_limit')),
+                        'price': parse_numeric(t.get('weight_limit_price')),
                         'currency': t.get('weight_limit_currency')
                     }
                 else:
                     weight_slab = {
-                        'lower_limit': float(t.get('weight_lower_limit')),
+                        'lower_limit': parse_numeric(t.get('weight_lower_limit')),
                         'currency': t.get('weight_limit_currency')
                     }
                 object['weight_limit']['slabs'].append(weight_slab)
@@ -1231,20 +1272,20 @@ def create_fcl_freight_freight_rate(
             if 'destination_local' not in object:
                 object['destination_local'] = {'detention': {}}
             if not object['destination_local']['detention'].get('free_limit') and t.get('destination_detention_free_limit'):
-                object['destination_local']['detention']['free_limit'] = float(t.get('destination_detention_free_limit'))
+                object['destination_local']['detention']['free_limit'] = parse_numeric(t.get('destination_detention_free_limit'))
             if 'slabs' not in object['destination_local']['detention']:
                 object['destination_local']['detention']['slabs'] = []
             if t.get('destination_detention_lower_limit'):
                 if t.get('destination_detention_price') and t.get('destination_detention_upper_limit'):
                     slab = {
-                        'lower_limit': float(t.get('destination_detention_lower_limit')),
-                        'upper_limit': float(t.get('destination_detention_upper_limit')),
-                        'price': float(t.get('destination_detention_price')),
+                        'lower_limit': parse_numeric(t.get('destination_detention_lower_limit')),
+                        'upper_limit': parse_numeric(t.get('destination_detention_upper_limit')),
+                        'price': parse_numeric(t.get('destination_detention_price')),
                         'currency': t.get('destination_detention_currency')
                     }
                 else:
                     slab = {
-                        'lower_limit': float(t.get('destination_detention_lower_limit')),
+                        'lower_limit': parse_numeric(t.get('destination_detention_lower_limit')),
                         'currency': t.get('destination_detention_currency')
                     }
                 object['destination_local']['detention']['slabs'].append(slab)
@@ -1259,7 +1300,7 @@ def create_fcl_freight_freight_rate(
     object["is_extended"] = False
     for line_items in object['line_items']:
         if line_items['price']:
-            line_items['price'] = float(line_items['price'])
+            line_items['price'] = parse_numeric(line_items['price'])
     request_params = object
     if 'extend_rates' in rows[0]:
         request_params["is_extended"] = True
