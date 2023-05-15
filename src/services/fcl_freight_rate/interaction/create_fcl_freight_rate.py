@@ -12,7 +12,7 @@ def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
     RateProperties.create(
         rate_id = freight_id,
-        created_at = request["validity_start"],
+        created_at = datetime.now(),
         updated_at = datetime.now(),
         value_props = request["value_props"],
         t_n_c = request["t_n_c"],

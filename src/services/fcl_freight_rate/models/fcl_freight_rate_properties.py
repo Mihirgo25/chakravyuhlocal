@@ -14,7 +14,7 @@ class RateProperties(BaseModel):
     rate_id = UUIDField(index=True,unique=True)
     created_at = DateTimeField(null=True)
     updated_at = DateTimeField(null=True)
-    value_props = BinaryJSONField(null=True)
+    value_props = BinaryJSONField(default=[{"name": "confirmed_space_and_inventory", "free_limit": None}])
     t_n_c = ArrayField(null=True)
     available_inventory = IntegerField(default=100)
     used_inventory = IntegerField(default=0)

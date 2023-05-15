@@ -79,7 +79,7 @@ class PostFclFreightRate(BaseModel):
   used_inventory: int = 0
   shipment_count: int = 0
   volume_count: int = 0
-  value_props: List[dict] = [{"name": "confirmed_space_and_inventory", "free_limit": None}]
+  value_props: List[dict] = []
   t_n_c: list = []
 
 
