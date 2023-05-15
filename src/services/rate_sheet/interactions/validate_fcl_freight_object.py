@@ -85,6 +85,8 @@ def get_local_object(object):
     for line_item in object.get('data').get('line_items'):
         if line_item['unit'] not in VALID_UNITS:
             validation['error']+= ' ' + "unit is_invalid"
+    if not validate_shipping_line(local):
+         validation['error']+=' Invalid shipping line'
 
     return validation
 

@@ -15,6 +15,7 @@ from libs.migration import fcl_freight_migration, create_partition_table, fcl_lo
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.ftl_freight_rate.ftl_freight_router import ftl_freight_router
 from services.envision.envision_service_router import envision_router
+from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from micro_services.client import *
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -33,6 +34,7 @@ app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
 app.include_router(prefix = "/ftl_freight_rate", router=ftl_freight_router)
 
 app.include_router(prefix="/fcl_freight_rate", router=envision_router)
+app.include_router(prefix = "/chakravyuh", router=chakravyuh_router)
 
 
 app.add_middleware(
