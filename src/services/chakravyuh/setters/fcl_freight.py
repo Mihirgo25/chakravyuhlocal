@@ -491,7 +491,7 @@ class FclFreightVyuh():
 
         for affected_transformation in affected_transformations:
             if self.what_to_create[affected_transformation['origin_location_type']]:
-                # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=True)
+                # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
                 transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
         for new_transformation in new_transformations_to_add:
