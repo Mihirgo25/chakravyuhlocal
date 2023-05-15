@@ -7,11 +7,20 @@ from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFrei
 from database.rails_db import get_ff_mlo
 
 class FclFreightVyuh():
-    def __init__(self, new_rate: dict = {}, current_validities: dict = []):
+    def __init__(self,
+                new_rate: dict = {}, 
+                current_validities: dict = [], 
+                what_to_create: dict = {
+                'seaport': True,
+                'country': False,
+                'trade': False
+                }
+            ):
         self.new_rate = jsonable_encoder(new_rate)
         self.current_validities = current_validities
         self.target_currency = 'USD'
         self.ff_mlo = get_ff_mlo()
+        self.what_to_create = what_to_create
     
     def create_audits(self, data= {}):
         FclFreightRateEstimationAudit.create(**data)
@@ -129,7 +138,8 @@ class FclFreightVyuh():
             FclFreightRate.container_size == affected_transformation['container_size'],
             FclFreightRate.container_type == affected_transformation['container_type'],
             ~FclFreightRate.rate_not_available_entry,
-            FclFreightRate.last_rate_available_date >= current_date
+            FclFreightRate.last_rate_available_date >= current_date,
+            FclFreightRate.mode != 'predicted'
         )
 
         if affected_transformation['origin_location_type'] == 'seaport':
@@ -328,10 +338,12 @@ class FclFreightVyuh():
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
 
         for affected_transformation in affected_transformations:
-            if affected_transformation['origin_location_type'] not in ['trade', 'country']:
+            if self.what_to_create[affected_transformation['origin_location_type']]:
+                # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
                 transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
         for new_transformation in new_transformations_to_add:
+            # self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
             transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
 
