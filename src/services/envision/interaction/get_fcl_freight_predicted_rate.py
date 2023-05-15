@@ -8,8 +8,8 @@ from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from libs.get_distance import get_distance
     
-def insert_rates_to_rms(create_params, request):
-    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+def insert_rates_to_rms(create_params):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data    
       
     for create_param in create_params:
         final_bas_price_to_rms = create_param['line_items'][0]['price']
