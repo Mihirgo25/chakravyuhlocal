@@ -13,7 +13,7 @@ from services.chakravyuh.interaction.create_demand_transformation import create_
 from services.chakravyuh.interaction.create_revenue_target import create_revenue_target
 
 # list apis
-from services.chakravyuh.interaction import list_fcl_freight_rate_estimations
+from services.chakravyuh.interaction.list_fcl_freight_rate_estimations import list_fcl_freight_rate_estimations
 
 chakravyuh_router = APIRouter()
 
