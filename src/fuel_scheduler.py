@@ -16,7 +16,6 @@ def scheduler_trending():
     list_of_countries = ['india','usa']
     
     for country in list_of_countries:
-        print(country)
         list_fuel_data = getattr(fuel_scheduler, "get_scrapped_data_for_{}".format(country))()
         
         process_fuel_data(list_fuel_data)
@@ -49,7 +48,6 @@ def process_fuel_data(list_fuel_data):
                 )
             }
             location_data = maps.list_locations(input)["list"]
-            print(location_data)
             fuel_data_mapping = get_fuel_data_mapping(
                 fuel_data, location_data
             )
