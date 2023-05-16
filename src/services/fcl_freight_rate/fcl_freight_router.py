@@ -1729,9 +1729,9 @@ def get_fcl_freight_weight_slabs(
     service_provider_id: str = None,
     cargo_weight_per_container: int = 0,
     resp: dict = Depends(authorize_token),
-    from_checkout: bool = False
+    rates: List[str] | None= Query(None)
 
-):
+):  
     request = {
         'origin_port_id' : origin_port_id,
         'origin_country_id' : origin_country_id,
@@ -1745,15 +1745,14 @@ def get_fcl_freight_weight_slabs(
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
         'cargo_weight_per_container': cargo_weight_per_container,
-        'cogo_entity_id' : cogo_entity_id, 
-        'from_checkout' : from_checkout
+        'cogo_entity_id' : cogo_entity_id
     }
 
     if resp["status_code"] != 200:
         return JSONResponse(status_code = resp["status_code"], content = resp)
 
     try:
-        resp = get_fcl_freight_weight_slabs_for_rates(request, rates = [])
+        resp = get_fcl_freight_weight_slabs_for_rates(request, rates)
         return JSONResponse(status_code=200, content=resp)
     except HTTPException as e:
         raise
