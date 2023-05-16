@@ -11,7 +11,7 @@ from services.haulage_freight_rate.interactions.rate_calculator import haulage_r
 
 haulage_freight_router = APIRouter()
 
-@haulage_freight_router.get("/haulage_freight_rate_calculator")
+@haulage_freight_router.get("/get_haulage_freight_rate_calculator")
 def get_haulage_freight_rate(
     origin_location: str = None,
     destination_location: str = None,
