@@ -1748,6 +1748,11 @@ def get_fcl_freight_weight_slabs(
         'cogo_entity_id' : cogo_entity_id
     }
 
+    if not rates:
+        rates = []
+    else:
+        rates = list(filter(None, rates))
+
     if resp["status_code"] != 200:
         return JSONResponse(status_code = resp["status_code"], content = resp)
 
