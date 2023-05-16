@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_properties import *
-from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_fcl_rates import add_suggested_validities
+from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_fcl_freight_rates import add_suggested_validities
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
