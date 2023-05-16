@@ -2122,3 +2122,9 @@ AHFR:
   trade_types: ['import', 'export']
   condition: true
   tags: ['additional_service']
+THC0:
+  name: "Terminal Handling Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
