@@ -19,6 +19,7 @@ from services.envision.models.haulage_rate_prediction_feedback import HaulageRat
 from services.envision.models.ftl_rate_prediction_feedback import FtlRatePredictionFeedback
 from services.envision.models.air_rate_prediction_feedback import AirFreightRatePredictionFeedback
 from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
+from services.ftl_freight_rate.models.truck import Truck
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
 from services.chakravyuh.models.demand_transformation import DemandTransformation
@@ -30,7 +31,7 @@ from services.chakravyuh.models.fcl_freight_rate_local_estimation import FclFrei
 def create_table():
     # db.connect()
     try:
-        db.create_tables([HaulageRatePredictionFeedback, FtlRatePredictionFeedback, AirFreightRatePredictionFeedback,FtlServiceAudit])
+        db.create_tables([FtlServiceAudit,Truck])
         db.close()
         print("created table")
     except:
