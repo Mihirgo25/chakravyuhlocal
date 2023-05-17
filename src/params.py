@@ -54,8 +54,8 @@ class PostFclFreightRate(BaseModel):
   container_size: str
   container_type: str
   commodity: str
-  shipping_line_id: str
-  service_provider_id: str
+  shipping_line_id: str = None
+  service_provider_id: str = None
   importer_exporter_id: str = None
   validity_start: datetime
   validity_end: datetime
@@ -71,7 +71,7 @@ class PostFclFreightRate(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   procured_by_id: str = None
-  sourced_by_id: str
+  sourced_by_id: str = None
   cogo_entity_id: str = None
   mode: str = None
   source: str = 'rms_upload'
@@ -83,6 +83,7 @@ class PostFclFreightRate(BaseModel):
   volume_count: int = 0
   value_props: List[dict] = []
   t_n_c: list = []
+  validities:List[dict] = None
 
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):

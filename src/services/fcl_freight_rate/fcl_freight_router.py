@@ -148,6 +148,11 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
+    if request.rate_type == 'cogo_assured' :
+        request.shipping_line_id = "e6da6a42-cc37-4df2-880a-525d81251547"
+        request.service_provider_id="5dc403b3-c1bd-4871-b8bd-35543aaadb36"
+        request.sourced_by_id="7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+        
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
@@ -1740,7 +1745,7 @@ def get_eligible_freight_rate_free_day_func(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@fcl_freight_router.get("/get_cogo_assured_suggested_fcl_rates")
+@fcl_freight_router.get("/get_cogo_assured_suggested_fcl_freight_rates")
 def get_fcl_freight_rate_suggestions_data(
     rate_params: str,
     resp: dict = Depends(authorize_token)

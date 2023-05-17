@@ -66,6 +66,7 @@ def find_object(object_params):
   query = FclFreightRate.select()
   for key in object_params:
     query = query.where(attrgetter(key)(FclFreightRate) == object_params[key])
+  # print(query.first())
   object = query.first()
   
   return object
@@ -74,6 +75,17 @@ def all_fields_present(object_params):
   if ((object_params['origin_port_id'] is not None) and (object_params['destination_port_id'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None)) :
     return True
   return False
+def remove_empty_values(request):
+    return  dict(filter(lambda item: item[1], request.items()))
+
 def find_cogo_assured_rate(object_params):
-  object = FclFreightRate.select().where(FclFreightRate.id==object_params['id']).dicts().get()
+  try:
+    object = FclFreightRate.select().where(FclFreightRate.id==object_params['id']).dicts().get()
+  except:
+    clean_request = remove_empty_values(object_params)
+    object = find_object(clean_request)
+    # print(object)
+    if object:
+      return object.__data__
   return object
+  

@@ -3,4 +3,4 @@ from fastapi import HTTPException
 
 def get_rate_props(rate_id):
     rp = RateProperties.select().where(RateProperties.rate_id == rate_id).first()
-    return rp
+    return rp.__data__

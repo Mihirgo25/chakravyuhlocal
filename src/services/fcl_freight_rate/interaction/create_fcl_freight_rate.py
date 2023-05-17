@@ -77,7 +77,6 @@ def create_fcl_freight_rate(request):
         "schedule_type": request.get("schedule_type", "transhipment"),
         "rate_type":request.get("rate_type")
     }
-    ##here seee init_key
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["destination_port_id"]) or ""}:{str(row["rate_type"])}'
     freight = (
         FclFreightRate.select()
@@ -131,17 +130,17 @@ def create_fcl_freight_rate(request):
     line_items = request.get("line_items")
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
-    valids = validities_for_cogo_assured(request)
-    for val in valids:
-                line_items[0]['price'] = val['price']
-                freight.set_validities(
-                    val["validity_start"].date(),
-                    val["validity_end"].date(),
-                    line_items,
-                    request.get("schedule_type"),
-                    False,
-                    request.get("payment_term"),
-                 )
+    if row['rate_type']=='cogo_assured' and request.get("validities"):
+        create_line_items_cogo_assured(request.get("validities"))
+    else:
+        freight.set_validities(
+                        request["validity_start"].date(),
+                        request["validity_end"].date(),
+                        line_items,
+                        request.get("schedule_type"),
+                        False,
+                        request.get("payment_term"),
+                    )
     freight.set_platform_prices()
     freight.set_is_best_price()
     freight.set_last_rate_available_date()
@@ -161,9 +160,28 @@ def create_fcl_freight_rate(request):
         raise HTTPException(status_code=400, detail="rate did not save")
     if row['rate_type']=='cogo_assured':
         try:
+            # valids = validities_for_cogo_assured(request)
+            # for val in valids:
+            #     line_items[0]['price'] = val['price']
+            #     freight.set_validities(
+            #         val["validity_start"].date(),
+            #         val["validity_end"].date(),
+            #         line_items,
+            #         request.get("schedule_type"),
+            #         False,
+            #         request.get("payment_term"),
+            #      )
             add_rate_properties(request,freight.id)
         except Exception as e:
             print(e)
+    elif row['rate_type']=='market_place': 
+        cogo_id = FclFreightRate.select().where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured').first()
+         # print(FclFreightRate.select().where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured')) # print('$$$$',cogo_id) 
+        if not cogo_id: 
+            params = request
+            params['rate_type'] = 'cogo_assured' 
+            params['validities'] = validities_for_cogo_assured(params)
+            cogo_freight_id = create_fcl_freight_rate_data(params)
     create_audit(request, freight.id)
     
     if not request.get('importer_exporter_id'):
@@ -228,13 +246,8 @@ def validities_for_cogo_assured(request):
     }
     opt = add_suggested_validities(input_param)
     v = opt['validities']
-    mp_v = v.pop(0)
-    if request['rate_type']=='cogo_assured':
-        return v
-    else:
-        return [mp_v]
-        
-
+    # mp_v = v.pop(0)
+    return v
 def validate_value_props(v_props):
     for prop in v_props:
         name = prop.get('name')
@@ -243,5 +256,18 @@ def validate_value_props(v_props):
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
 
+def create_line_items_cogo_assured(validities):
+    for validity in validities:
+        updated_validity = {k: v for k, v in validity.items() if k not in ["validity_start", "validity_end"]}
+        updated_validity["code"] = "BAS"
+        updated_validity["unit"] = "per_container"
+        freight.set_validities(
+                    validity["validity_start"].date(),
+                    validity["validity_end"].date(),
+                    updated_validity,
+                    request.get("schedule_type"),
+                    False,
+                    request.get("payment_term"),
+                 )
 
 
