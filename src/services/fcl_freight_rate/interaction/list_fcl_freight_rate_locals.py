@@ -140,9 +140,6 @@ def apply_location_ids_filter(query, filters):
     return query
 
 def apply_commodity_filter(query, filters):
-    if not filters['commodity']:
-        query  = query.where(FclFreightRateLocal.commodity.is_null(True))
-        return query
     if isinstance(filters['commodity'],str):
         filters['commodity'] = [filters['commodity']]
     if 'general' in filters['commodity']:

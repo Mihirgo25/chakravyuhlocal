@@ -3,11 +3,7 @@ from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 def get_fcl_freight_rate_local(request):
     details = {}
 
-    if request['id']:
-        object = FclFreightRateLocal.get_by_id(request['id'])
-        if object:
-            details = object.detail()
-    elif all_fields_present(request):
+    if all_fields_present(request):
         object = find_object(request)
         if object:
           details = object.detail()
@@ -22,21 +18,24 @@ def get_fcl_freight_rate_local(request):
 
 
 def find_object(request):
+  if request.get('id'):
+     object = FclFreightRateLocal.get_by_id(request['id'])
 
-  object = FclFreightRateLocal.select().where(
-    FclFreightRateLocal.port_id == request.get("port_id"),
-    FclFreightRateLocal.main_port_id == request.get("main_port_id"),
-    FclFreightRateLocal.trade_type == request.get("trade_type"),
-    FclFreightRateLocal.container_size == request.get("container_size"),
-    FclFreightRateLocal.container_type == request.get('container_type'),
-    FclFreightRateLocal.commodity == request.get("commodity"),
-    FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
-    FclFreightRateLocal.service_provider_id == request.get("service_provider_id")
-  ).first()
+  else:
+    object = FclFreightRateLocal.select().where(
+      FclFreightRateLocal.port_id == request.get("port_id"),
+      FclFreightRateLocal.main_port_id == request.get("main_port_id"),
+      FclFreightRateLocal.trade_type == request.get("trade_type"),
+      FclFreightRateLocal.container_size == request.get("container_size"),
+      FclFreightRateLocal.container_type == request.get('container_type'),
+      FclFreightRateLocal.commodity == request.get("commodity"),
+      FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
+      FclFreightRateLocal.service_provider_id == request.get("service_provider_id")
+    ).first()
   
   return object
 
 def all_fields_present(object_params):
-    if (object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None):
+    if ((object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None)) or (object_params['id'] is not None):
         return True
     return False

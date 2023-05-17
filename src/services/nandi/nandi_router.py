@@ -10,6 +10,8 @@ from services.nandi.interactions.update_draft_fcl_freight_rate import update_dra
 from services.nandi.interactions.update_draft_fcl_freight_rate_local import update_draft_fcl_freight_rate_local_data
 from services.nandi.interactions.list_draft_fcl_freight_rates import list_draft_fcl_freight_rates
 from services.nandi.interactions.list_draft_fcl_freight_rate_locals import list_draft_fcl_freight_rate_locals
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+import copy
 
 nandi_router = APIRouter()
 
@@ -93,3 +95,21 @@ def list_draft_fcl_freight_rate_locals_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@nandi_router.post("/create_fcl_freight_rate_local_for_draft")
+def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    request = request.dict(exclude_none=False)
+    params = copy.deepcopy(request)
+    del params['source']
+
+    fcl_freight_local = create_fcl_freight_rate_local(params)
+    if 'id' in fcl_freight_local:
+        request['rate_id'] = fcl_freight_local['id']
+        draft_freight_local = create_draft_fcl_freight_rate_local_data(request)
+    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
