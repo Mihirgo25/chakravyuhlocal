@@ -82,6 +82,11 @@ class FclFreightVyuh():
         if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
             line_item['price'] = random.randrange(start=int(lower_limit), stop=int(upper_limit + 1))
         
+        if line_item['price'] >= 200:
+            line_item['price'] = round(line_item['price']/5) * 5
+        else:
+            line_item['price'] = round(line_item['price'])
+        
         return line_item
 
     
