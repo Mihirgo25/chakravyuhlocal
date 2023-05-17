@@ -11,6 +11,7 @@ from services.nandi.interactions.update_draft_fcl_freight_rate_local import upda
 from services.nandi.interactions.list_draft_fcl_freight_rates import list_draft_fcl_freight_rates
 from services.nandi.interactions.list_draft_fcl_freight_rate_locals import list_draft_fcl_freight_rate_locals
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 import copy
 
 nandi_router = APIRouter()
@@ -112,4 +113,22 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
     if 'id' in fcl_freight_local:
         request['rate_id'] = fcl_freight_local['id']
         draft_freight_local = create_draft_fcl_freight_rate_local_data(request)
+    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+
+@nandi_router.post("/create_fcl_freight_rate_for_draft")
+def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    request = request.dict(exclude_none=False)
+    params = copy.deepcopy(request)
+    params['source'] = 'rms_upload'
+
+    fcl_freight = create_fcl_freight_rate_data(params)
+    if 'id' in fcl_freight:
+        request['rate_id'] = fcl_freight['id']
+        draft_freight_local = create_draft_fcl_freight_rate_data(request)
     return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
