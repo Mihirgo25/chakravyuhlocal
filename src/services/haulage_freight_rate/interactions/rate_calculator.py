@@ -27,7 +27,8 @@ def haulage_rate_calculator(
     commodity,
     load_type=None,
     container_count=None,
-    wagon_type=None
+    wagon_type=None,
+    container_type=None
 ):
     response = {"success": False, "status_code": 200}
     #check country
@@ -43,6 +44,9 @@ def haulage_rate_calculator(
     if data[0]['country_code'] == 'IN' and data[1]['country_code'] == 'IN':
         location_category = 'india'
 
+    if data[0]['country_code'] == 'CN' and data[1]['country_code'] == 'CN':
+        location_category = 'china'
+
 
     if location_category not in POSSIBLE_LOCATION_CATEGORY:
         return response
@@ -56,14 +60,14 @@ def haulage_rate_calculator(
     query = HaulageFreightRateRuleSet.select(HaulageFreightRateRuleSet.base_rate)
 
     final_data = getattr(rate_calculator, "get_{}_rates".format(location_category))(
-        query, commodity, load_type, container_count, ports_distance, wagon_type
+        query, commodity, load_type, container_count, ports_distance, wagon_type, container_type
     )
     response["success"] = True
     response["list"] = final_data
     return response
 
 
-def get_india_rates(query, commodity, load_type, container_count, ports_distance, wagon_type):
+def get_india_rates(query, commodity, load_type, container_count, ports_distance, wagon_type, container_type):
     final_data = {}
     final_data["distance"] = ports_distance
     if not container_count:
@@ -111,13 +115,13 @@ def get_india_rates(query, commodity, load_type, container_count, ports_distance
         final_data['currency'] = 'INR'
     return final_data
 
-def get_generalized_rates(query, commodity, load_type, container_count, ports_distance):
+def get_generalized_rates(query, commodity, load_type, container_count, ports_distance, container_type):
     final_data = {}
     final_data["distance"] = ports_distance
     return
 
 
-def get_china_rates(query, commodity, load_type, container_count, ports_distance):
+def get_china_rates(query, commodity, load_type, container_count, ports_distance, container_type):
     final_data = {}
     final_data["distance"] = ports_distance
     return
