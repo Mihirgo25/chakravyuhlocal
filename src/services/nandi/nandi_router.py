@@ -12,7 +12,8 @@ from services.nandi.interactions.list_draft_fcl_freight_rates import list_draft_
 from services.nandi.interactions.list_draft_fcl_freight_rate_locals import list_draft_fcl_freight_rate_locals
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
-import copy
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate import get_fcl_freight_rate
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_local import get_fcl_freight_rate_local
 
 nandi_router = APIRouter()
 
@@ -106,13 +107,22 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
         request.performed_by_type = resp["setters"]["performed_by_type"]
 
     request = request.dict(exclude_none=False)
-    params = copy.deepcopy(request)
-    del params['source']
+    get_local_params = {
+        'port_id': request.get('port_id'),
+        'main_port_id': request.get('main_port_id'),
+        'container_size': request.get('container_size'),
+        'container_type': request.get('container_type'),
+        'commodity': request.get('commodity'),
+        'shipping_line_id': request.get('shipping_line_id'),
+        'service_provider_id': request.get('service_provider_id'),
+        'trade_type': request.get('trade_type') 
+    }
+    fcl_freight_local = get_fcl_freight_rate_local(get_local_params)
+    if 'id' not in fcl_freight_local:
+        fcl_freight_local = create_fcl_freight_rate_local(request)
 
-    fcl_freight_local = create_fcl_freight_rate_local(params)
-    if 'id' in fcl_freight_local:
-        request['rate_id'] = fcl_freight_local['id']
-        draft_freight_local = create_draft_fcl_freight_rate_local_data(request)
+    request['rate_id'] = fcl_freight_local.get('id')
+    draft_freight_local = create_draft_fcl_freight_rate_local_data(request)
     return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
 
 @nandi_router.post("/create_fcl_freight_rate_for_draft")
@@ -124,11 +134,21 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
         request.performed_by_type = resp["setters"]["performed_by_type"]
 
     request = request.dict(exclude_none=False)
-    params = copy.deepcopy(request)
-    params['source'] = 'rms_upload'
-
-    fcl_freight = create_fcl_freight_rate_data(params)
-    if 'id' in fcl_freight:
-        request['rate_id'] = fcl_freight['id']
-        draft_freight_local = create_draft_fcl_freight_rate_data(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+    get_fcl_params = {
+        'origin_port_id': request.get('origin_port_id'),
+        'origin_main_port_id': request.get('origin_main_port_id'),
+        'destination_port_id': request.get('destination_port_id'),
+        'destination_main_port_id': request.get('destination_main_port_id'),
+        'container_size': request.get('container_size'),
+        'container_type': request.get('container_type'),
+        'commodity': request.get('commodity'),
+        'shipping_line_id': request.get('shipping_line_id'),
+        'service_provider_id': request.get('service_provider_id'),
+        'importer_exporter_id': request.get('importer_exporter_id')
+    }
+    fcl_freight = get_fcl_freight_rate(get_fcl_params)
+    if 'freight' not in fcl_freight:
+        fcl_freight = create_fcl_freight_rate_data(request)
+    request['rate_id'] = fcl_freight['freight'].get('id')
+    draft_freight = create_draft_fcl_freight_rate_data(request)
+    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
