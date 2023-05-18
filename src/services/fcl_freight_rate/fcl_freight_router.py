@@ -152,6 +152,7 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
         request.shipping_line_id = "e6da6a42-cc37-4df2-880a-525d81251547"
         request.service_provider_id="5dc403b3-c1bd-4871-b8bd-35543aaadb36"
         request.sourced_by_id="7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+        request.procured_by_id="d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
         
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
