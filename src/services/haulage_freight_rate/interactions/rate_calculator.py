@@ -1,8 +1,6 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import (
     HaulageFreightRateRuleSet,
 )
-from services.haulage_freight_rate.models.wagon_types import WagonTypes
-import geopy.distance
 from micro_services.client import maps
 import services.haulage_freight_rate.interactions.rate_calculator as rate_calculator
 from configs.rails_constants import (
@@ -38,7 +36,7 @@ def get_distances(origin_location, destination_location, data):
     return get_distance(coords_1, coords_2)
 
 
-def get_container_and_commodity_type(commodity, container_type):
+def get_container_and_commodity_type(commodity, container_type, location_category):
     commodity = CONTAINER_TYPE_CLASS_MAPPINGS[container_type][0]
     permissable_carrying_capacity = WAGON_MAPPINGS[WAGON_COMMODITY_MAPPING[commodity]][
         0
@@ -114,7 +112,7 @@ def haulage_rate_calculator(
         load_type = "Train Load"
 
     commodity, permissable_carrying_capacity = get_container_and_commodity_type(
-        commodity, container_type
+        commodity, container_type, location_category
     )
 
     haulage_freight_rate = list_haulage_freight_rate(
