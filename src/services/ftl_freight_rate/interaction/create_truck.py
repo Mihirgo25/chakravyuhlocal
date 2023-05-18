@@ -15,9 +15,6 @@ def create_audit(request, truck_id):
     )
 
 def create_truck_data(request):
-    # object_type = 'CreateTruck'
-    # query = "create table if not exists ftl_services_audits_{} partition of ftl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
-    # db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
 
@@ -25,12 +22,12 @@ def create_truck_data(request):
     
 def execute_transaction_code(request):
     
-    truck = Truck.select().where((Truck.name == request['name']) and 
+    truck = Truck.select().where((Truck.truck_name == request['name']) and 
                                  (Truck.horse_power == request['horse_power']) and
                                  (Truck.country_id == request['country_id']) and
                                  (Truck.engine_type == request['engine_type']) and
                                  (Truck.fuel_type == request['fuel_type']) and
-                                 (Truck.no_of_tyres == request['no_of_tyres'])).first()
+                                 (Truck.no_of_wheels == request['no_of_tyres'])).first()
 
     if not truck:
        truck = Truck(**request)

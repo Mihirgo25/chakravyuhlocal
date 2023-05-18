@@ -1,4 +1,3 @@
-from enum import unique
 from typing import Text
 from peewee import * 
 from database.db_session import db
