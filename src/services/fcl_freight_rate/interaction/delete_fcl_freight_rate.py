@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import *
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
-
+from datetime import datetime
 def delete_fcl_freight_rate(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -14,6 +14,11 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail="Rate id not found")
     if request['procured_by_id'] is None or request['sourced_by_id']is None:
         raise HTTPException(status_code=400, detail="procured or souurced by id is null")
+    if request['rate_type'] == "cogo_assured" and (request['validity_start']==request['validity_end']):
+        validity_start = object.validities[0]['validity_start']
+        validity_end = object.validities[-1]['validity_end']
+        request['validity_start'] = datetime.strptime(validity_start , '%Y-%m-%d')
+        request['validity_end'] = datetime.strptime(validity_end , '%Y-%m-%d')
     object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
     object.set_platform_prices()
     object.set_is_best_price()
