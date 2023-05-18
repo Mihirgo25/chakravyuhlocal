@@ -77,8 +77,8 @@ def execute_transaction_code(request):
 
   if request.get('validity_start'):
     freight_object.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
-    if request['rate_type']=='cogo_assured' and request["validities"]:
-      create_line_items_cogo_assured(request.get("validities"),freight_object,request)
+    if row['rate_type']=='cogo_assured' and ('code' not in request['line_items'][0]):
+      create_line_items_cogo_assured(request.get("line_items"),freight,request)
     else:
       freight_object.validate_line_items(request.get('line_items'))
       freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), request.get('line_items'), request.get('schedule_type'), False, request.get('payment_term'))
