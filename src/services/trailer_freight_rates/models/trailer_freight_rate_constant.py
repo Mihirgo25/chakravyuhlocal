@@ -1,29 +1,30 @@
 from peewee import *
 from database.db_session import db
-import uuid
 import datetime
 
 
 class BaseModel(Model):
     class Meta:
         database = db
+        only_save_dirty = True
 
-class TrailerFreightRateCharges(Model):
-    id = UUIDField(primary_key=True)
-    country_code = CharField()
-    distance = FloatField(null=True)
-    insurance = FloatField(null=True)
-    toll = FloatField(null=True)
+class TrailerFreightRateCharges(BaseModel):
+    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    country_code = CharField(index=True)
+    currency_code = CharField()
+    nh_toll = FloatField(null=True)
+    tyre = FloatField(null=True)
     driver = FloatField(null=True)
     document = FloatField(null=True)
-    fuel = FloatField(null=True)
     handling = FloatField(null=True)
-    food = FloatField(null=True)
+    maintanance = FloatField(null=True)
     misc = FloatField(null=True)
-
+    status = CharField(null=True)
+    created_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        table_name = 'country_basic_trailer_rates'
+        table_name = 'trailer_freight_rate_charges'
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

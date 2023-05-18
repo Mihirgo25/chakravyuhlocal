@@ -8,8 +8,8 @@ class BaseModel(Model):
     class Meta:
         database = db
 
-class TrailerFreightRates(BaseModel):
-    base_rate = IntegerField()
+class BasicTrailerRate(BaseModel):
+    base_rate = IntegerField(null=True)
     commodity = CharField(null=True, index=True)
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
@@ -27,12 +27,14 @@ class TrailerFreightRates(BaseModel):
     origin_location_id = UUIDField(null=True,index= True)
     trailer_type = CharField(null=True)
     transit_time = IntegerField(null=True)
+    weight = FloatField(null=True)
+    status = CharField(default='active')
     updated_at = DateTimeField(default=datetime.datetime.now)
     
 
     class Meta:
-        table_name = 'trailer_freight_rates'
+        table_name = 'basic_trailer_rates'
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
-      return super(TrailerFreightRates, self).save(*args, **kwargs)
+      return super(BasicTrailerRate, self).save(*args, **kwargs)
