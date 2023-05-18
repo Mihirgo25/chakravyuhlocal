@@ -122,7 +122,7 @@ def create_fcl_freight_rate(request):
         }
     else:
         freight.destination_local = { "line_items": [] }
-    if row['rate_type']=='cogo_assured' and request.get("validities"):
+    if row['rate_type']=='cogo_assured' and ('code' not in request['line_items'][0]):
         create_line_items_cogo_assured(request.get("validities"),freight,request)
     else:
         if 'rate_sheet_validation' not in request:
@@ -169,7 +169,7 @@ def create_fcl_freight_rate(request):
         if not cogo_id: 
             params = request
             params['rate_type'] = 'cogo_assured' 
-            params['validities'] = validities_for_cogo_assured(params)
+            params['line_items'] = validities_for_cogo_assured(params)
             cogo_freight_id = create_fcl_freight_rate_data(params)
     create_audit(request, freight.id)
     

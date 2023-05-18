@@ -42,6 +42,7 @@ class StandardLineItem(BaseModel):
   code: str
   unit: str
   price: float
+  market_price:float = None 
   currency: str
   remarks: list[str] = None
   slabs: list[Slab] = []
@@ -83,7 +84,6 @@ class PostFclFreightRate(BaseModel):
   volume_count: int = 0
   value_props: List[dict] = []
   t_n_c: list = []
-  validities:List[dict] = None
 
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):
