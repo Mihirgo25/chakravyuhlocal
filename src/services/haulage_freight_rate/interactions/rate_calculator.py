@@ -3,8 +3,12 @@ from services.haulage_freight_rate.models.wagon_types import WagonTypes
 import geopy.distance
 from micro_services.client import maps
 import services.haulage_freight_rate.interactions.rate_calculator as rate_calculator
-from configs.rails_constants import DESTINATION_TERMINAL_CHARGES_INDIA, CONTAINER_TYPE_CLASS_MAPPINGS, DEFAULT_PERMISSIBLE_CARRYING_CAPACITY
+from configs.rails_constants import DESTINATION_TERMINAL_CHARGES_INDIA, CONTAINER_TYPE_CLASS_MAPPINGS, DEFAULT_PERMISSIBLE_CARRYING_CAPACITY, WAGON_CONTAINER_TYPE_MAPPINGS
 from libs.get_distance import get_distance
+from playhouse.postgres_ext import SQL
+from playhouse.shortcuts import model_to_dict
+
+
 
 POSSIBLE_LOCATION_CATEGORY = ["india", "china", "europe", "north_america", "generalized"]
 
@@ -85,7 +89,7 @@ def haulage_rate_calculator(
     query = HaulageFreightRateRuleSet.select(HaulageFreightRateRuleSet.base_price)
 
     final_data = getattr(rate_calculator, "get_{}_rates".format(location_category))(
-        query, commodity, load_type, container_count, location_pair_distance, container_type
+        query, commodity, load_type, container_count, location_pair_distance, container_type, cargo_weight_per_container
     )
 
     response["success"] = True
@@ -93,7 +97,7 @@ def haulage_rate_calculator(
     return response
 
 
-def get_india_rates(query, commodity, load_type, container_count, location_pair_distance, container_type):
+def get_india_rates(query, commodity, load_type, container_count, location_pair_distance, container_type, cargo_weight_per_container):
     final_data = {}
     final_data["distance"] = location_pair_distance
     if not container_count:
@@ -102,41 +106,40 @@ def get_india_rates(query, commodity, load_type, container_count, location_pair_
     if container_count > 50:
         full_rake_count = container_count / 50
         remaining_wagons_count = container_count % 50
-        rake_price = query = query.where(
-            HaulageFreightRateRuleSet.distance <= location_pair_distance,
-            HaulageFreightRateRuleSet.distance >= location_pair_distance - 150,
+        rake_price = query.where(
+            HaulageFreightRateRuleSet.distance >= location_pair_distance ,
             HaulageFreightRateRuleSet.commodity_class_type == commodity,
             HaulageFreightRateRuleSet.train_load_type == "Train Load",
-        )
-        wagon_price = query = query.where(
-            HaulageFreightRateRuleSet.distance <= location_pair_distance,
-            HaulageFreightRateRuleSet.distance >= location_pair_distance - 150,
+        ).order_by(SQL("base_price ASC")).first()
+        wagon_price = query.where(
+            HaulageFreightRateRuleSet.distance >= location_pair_distance,
             HaulageFreightRateRuleSet.commodity_class_type == commodity,
             HaulageFreightRateRuleSet.train_load_type == "Wagon Load",
-        )
-        rake_price_per_tonne = rake_price.dicts().get()
-        wagon_price_per_tonne = wagon_price.dicts().get()
+        ).order_by(SQL("base_price ASC")).first()
+        rake_price_per_tonne = model_to_dict(rake_price)['base_price']
+        wagon_price_per_tonne = model_to_dict(wagon_price)['base_price']
         final_rake_price = rake_price_per_tonne * full_rake_count * 50 * DEFAULT_PERMISSIBLE_CARRYING_CAPACITY
         final_wagon_price = wagon_price_per_tonne * remaining_wagons_count * DEFAULT_PERMISSIBLE_CARRYING_CAPACITY
         final_data["base_price"] = final_rake_price + final_wagon_price
 
     else:
         query = query.where(
-            HaulageFreightRateRuleSet.distance <= location_pair_distance,
-            HaulageFreightRateRuleSet.distance >= location_pair_distance - 150,
+            HaulageFreightRateRuleSet.distance >= location_pair_distance ,
             HaulageFreightRateRuleSet.commodity_class_type == commodity,
             HaulageFreightRateRuleSet.train_load_type == load_type,
-        )
-        price_per_tonne = query.dicts().get()['base_price']
+        ).order_by(SQL("base_price ASC")).first()
+        price = model_to_dict(query)
+        price_per_tonne = price['base_price']
         # permissible_carrying_capacity = WagonTypes.select(WagonTypes.permissible_carrying_capacity).where(WagonTypes.wagon_code == wagon_type)
         # price = float(price_per_tonne) * container_count * int(permissible_carrying_capacity.dicts().get()['permissible_carrying_capacity'])
         # else:
-        price = float(price_per_tonne) * container_count * DEFAULT_PERMISSIBLE_CARRYING_CAPACITY
+        indicative_price = float(price_per_tonne) * container_count * DEFAULT_PERMISSIBLE_CARRYING_CAPACITY
 
-        surcharge = 0.15*price
-        development_charges = 0.05*price
+        surcharge = 0.15*indicative_price
+        development_charges = 0.05*indicative_price
         other_charges = development_charges + DESTINATION_TERMINAL_CHARGES_INDIA
-        final_data["base_price"] = price + surcharge + other_charges
+        gst_charges = indicative_price*0.05
+        final_data["base_price"] = indicative_price + surcharge + other_charges + gst_charges
         final_data['currency'] = 'INR'
     return final_data
 
