@@ -88,6 +88,11 @@ from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
+from services.chakravyuh.usa_rail_pricing import create_rail_haulage_rates
+from services.haulage_freight_rate.interactions.rate_calculator import get_north_america_rates
+from services.haulage_freight_rate.interactions.rate_calculator import get_europe_rates
+from services.chakravyuh.europe_rail_pricing import create_europe_rail_haulage_rates
+
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
@@ -1705,6 +1710,73 @@ def get_eligible_freight_rate_free_day_func(
 
     try:
         resp = get_eligible_fcl_freight_rate_free_day(filters,sort_by_specificity_type = sort_by_specificity_type)
+        return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_freight_router.get('/rail_data')
+def update_rail_rates(
+    city: str = None,
+    state_code: str = None,
+    resp: dict = Depends(authorize_token)
+    ):
+    
+    try:
+        resp = create_rail_haulage_rates(city,state_code)
+        return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get('/get_price')
+def get_price_usa(
+    commodity: str = None,
+    load_type: str = "Wagon Load",
+    container_count: int = 1,
+    ports_distance: int = 0,
+    resp: dict = Depends(authorize_token)
+    ):
+
+    try:
+        resp = get_north_america_rates(commodity, load_type, container_count, ports_distance)
+        return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get('/rail_data_europe')
+def update_rail_rates_europe(
+    resp: dict = Depends(authorize_token)
+    ):
+    
+    try:
+        resp = create_europe_rail_haulage_rates()
+        return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.get('/get_price_europe')
+def get_price_europe(
+    commodity: str = "default",
+    load_type: str = "Wagon Load",
+    container_count: int = 1,
+    ports_distance: int = 0,
+    wagon_type: str = "2 axles",
+    resp: dict = Depends(authorize_token)
+    ):
+    try:
+        resp = get_europe_rates(commodity, load_type, container_count, ports_distance,wagon_type)
         return JSONResponse(status_code=200, content=resp)
     except HTTPException as e:
         raise
