@@ -168,6 +168,7 @@ def create_fcl_freight_rate(request):
          # print(FclFreightRate.select().where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured')) # print('$$$$',cogo_id) 
         if not cogo_id: 
             params = request
+
             params['rate_type'] = 'cogo_assured' 
             params['line_items'] = validities_for_cogo_assured(params)
             cogo_freight_id = create_fcl_freight_rate_data(params)
