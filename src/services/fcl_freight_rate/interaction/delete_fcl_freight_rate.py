@@ -12,7 +12,8 @@ def execute_transaction_code(request):
 
     if not object:
         raise HTTPException(status_code=400, detail="Rate id not found")
-
+    if request['procured_by_id'] is None or request['sourced_by_id']is None:
+        raise HTTPException(status_code=400, detail="procured or souurced by id is null")
     object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
     object.set_platform_prices()
     object.set_is_best_price()

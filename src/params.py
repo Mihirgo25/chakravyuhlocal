@@ -315,16 +315,17 @@ class GetFclFreightLocalRateCards(BaseModel):
     rates: List[str] = []
     service_provider_id: str = None
 
-class DeleteFclFreightRate(BaseModel):
+class   DeleteFclFreightRate(BaseModel):
     id: str
     performed_by_id: str = None
     performed_by_type: str = None
     validity_start: datetime
     validity_end: datetime
     bulk_operation_id: str = None
-    sourced_by_id: str
-    procured_by_id: str
+    sourced_by_id: str = None
+    procured_by_id: str = None
     payment_term: str = 'prepaid'
+    rate_type:str = 'market_place'
 
 class DeleteFclFreightRateFeedback(BaseModel):
     fcl_freight_rate_feedback_ids: List[str]

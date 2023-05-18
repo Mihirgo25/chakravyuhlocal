@@ -90,6 +90,7 @@ from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
+from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
@@ -1113,6 +1114,9 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
+    if request.rate_type == 'cogo_assured' :
+        request.sourced_by_id="7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+        request.procured_by_id="d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
     try:
         delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
@@ -1769,18 +1773,13 @@ def get_fcl_freight_rate_suggestions_data(
 @fcl_freight_router.get("/add_market_place")
 def add_market_place():
     chunk_size = 5000  
-    total_rows = FclFreightRates.select().count()
+    total_rows = FclFreightRate.select().count()
     total_chunks = (total_rows // chunk_size) + 1
 
     for chunk in range(total_chunks):
         offset = chunk * chunk_size
-
-        query = (
-            FclFreightRates.update(init_key=FclFreightRates.init_key.concat(':market_place'))
-            .where(FclFreightRates.init_key != '')
-            .limit(chunk_size)
-            .offset(offset)
-        )
+        subquery = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.rate_type == 'market_place').limit(chunk_size).offset(offset)
+        query = FclFreightRate.update(init_key=FclFreightRate.init_key.concat(':market_place')).where(FclFreightRate.id.in_(subquery),FclFreightRate.init_key.endswith(':market_place') == False)
+        print(query)
         query.execute()
-
     return {"message": "Market place added to init_key column for all rows."}

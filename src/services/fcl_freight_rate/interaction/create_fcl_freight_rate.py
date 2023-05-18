@@ -77,7 +77,7 @@ def create_fcl_freight_rate(request):
         "schedule_type": request.get("schedule_type", "transhipment"),
         "rate_type":request.get("rate_type")
     }
-    init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["destination_port_id"]) or ""}:{str(row["rate_type"])}'
+    init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["rate_type"])}'
     freight = (
         FclFreightRate.select()
         .where(
@@ -133,7 +133,7 @@ def create_fcl_freight_rate(request):
         line_items = request.get("line_items")
         if source == "flash_booking":
             line_items = get_flash_booking_rate_line_items(request)
-            freight.set_validities(
+        freight.set_validities(
                             request["validity_start"].date(),
                             request["validity_end"].date(),
                             line_items,
@@ -160,17 +160,6 @@ def create_fcl_freight_rate(request):
         raise HTTPException(status_code=400, detail="rate did not save")
     if row['rate_type']=='cogo_assured':
         try:
-            # valids = validities_for_cogo_assured(request)
-            # for val in valids:
-            #     line_items[0]['price'] = val['price']
-            #     freight.set_validities(
-            #         val["validity_start"].date(),
-            #         val["validity_end"].date(),
-            #         line_items,
-            #         request.get("schedule_type"),
-            #         False,
-            #         request.get("payment_term"),
-            #      )
             add_rate_properties(request,freight.id)
         except Exception as e:
             print(e)
