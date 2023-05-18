@@ -16,15 +16,13 @@ def get_haulage_freight_rate(
     origin_location: str = None,
     destination_location: str = None,
     commodity: str = None,
-    load_type: str = None,
     container_count: int = None,
-    wagon_type: str = None,
     container_type: str = None,
     resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = haulage_rate_calculator(origin_location, destination_location, commodity, load_type, container_count, wagon_type, container_type)
+        data = haulage_rate_calculator(origin_location, destination_location, commodity, container_count, container_type)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content = data)
     except HTTPException as e:
@@ -32,3 +30,4 @@ def get_haulage_freight_rate(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
