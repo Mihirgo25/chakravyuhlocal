@@ -79,3 +79,8 @@ SERVICE_PROVIDER_ID = "536abfe7-eab8-4a43-a4c3-6ff318ce01b5" #cogoxpress
 SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8" #rishi agrawal
 
 PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1" #kshitij sharma
+
+
+USA_FUEL_DATA_LINK = 'https://gasprices.aaa.com/state-gas-price-averages/'
+
+INDIA_FUEL_DATA_LINK = 'https://www.livemint.com/fuel-prices/'

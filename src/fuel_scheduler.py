@@ -1,9 +1,11 @@
 from scheduler import scheduler
 from schedule import every
+from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK,INDIA_FUEL_DATA_LINK
 import json
 import requests
 import pdb
 import time
+import copy
 from bs4 import BeautifulSoup
 from micro_services.client import *
 from services.ftl_freight_rate.models.fuel_data import FuelData
@@ -11,8 +13,8 @@ from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_d
 import fuel_scheduler as fuel_scheduler
 
 
-@scheduler.add(every(10).seconds)
-def scheduler_trending():
+@scheduler.add(every().day.at("00:00"))
+def fuel_scheduler():
     list_of_countries = ['india','usa']
     
     for country in list_of_countries:
@@ -73,15 +75,13 @@ def get_scrapped_data_for_india():
 
     for fuel_type in fuel_types:
         for location_type in location_types.keys():
-            url = "https://www.livemint.com/fuel-prices/{}-{}-wise".format(
+            url = INDIA_FUEL_DATA_LINK+"{}-{}-wise".format(
                 fuel_type, location_type
             )
             r = requests.get(url)
             df = BeautifulSoup(r.text, "lxml")
             div = df.find("div", {"id": fuel_type + location_types[location_type][0]})
             ul = div.find_all("ul")[1:]
-            
-            print(fuel_type,"As")
             for x in ul:
                 data = {}
                 fuel_price = x.find("strong").text
@@ -97,8 +97,36 @@ def get_scrapped_data_for_india():
     return fuel_data_for_india
 
 def get_scrapped_data_for_usa():
-    return []    
-
+    url= USA_FUEL_DATA_LINK
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
+    html = response.content
+    scrapper = BeautifulSoup(html, 'html.parser')
+    table_body = scrapper.find("tbody")
+    table_list = table_body.findAll('td')
+    fuel_data_for_usa = []
+    start = 0
+    while start < (len(table_list)):
+        region_name = table_list[start].a.text
+        region_name = region_name.replace('\n','').replace(' ','')
+        fuel_data = {}
+        fuel_data['location_name'] = region_name
+        fuel_data["currency"]= "USD"
+        fuel_data["fuel_unit"]= "gallon"
+        fuel_data["location_type"]= "region"
+        for fuel_type in ['petrol','diesel']:
+            if fuel_type == 'petrol':
+                fuel_data["fuel_type"] = fuel_type    
+                fuel_data['fuel_price'] = table_list[start+1].text.replace(" ", "")            
+            else:
+                fuel_data["fuel_type"] = fuel_type    
+                fuel_data['fuel_price'] = table_list[start+4].text.replace(" ", "")
+            copy_of_fuel_data = {key: value[:] for key, value in fuel_data.items()}
+            fuel_data_for_usa.append(copy_of_fuel_data)
+        start+=5    
+    return fuel_data_for_usa
 
 def check_fuel_price(fuel_price):
     digit_count = 0

@@ -1,4 +1,3 @@
-from micro_services.client import maps
 from fastapi import HTTPException
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from database.db_session import db
