@@ -7,12 +7,12 @@ from services.chakravyuh.models.revenue_target import RevenueTarget
 from services.chakravyuh.models.revenue_target_audit import RevenueTargetAudit
 from services.chakravyuh.models.fcl_freight_rate_local_estimation import FclFreightRateLocalEstimation
 from services.trailer_freight_rates.models.trailer_freight_rate_constant import TrailerFreightRateCharges
-from services.trailer_freight_rates.models.basic_trailer_rates import BasicTrailerRate
+from services.trailer_freight_rates.models.trailer_freight_rate import TrailerFreightRate
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([TrailerFreightRateCharges, BasicTrailerRate])
+        db.create_tables([TrailerFreightRateCharges, TrailerFreightRate])
         db.close()
         print("created table")
     except:

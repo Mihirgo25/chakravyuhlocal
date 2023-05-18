@@ -21,7 +21,7 @@ class TrailerRateCalculator(BaseModel):
     destination_location_id: str
     container_size: str
     container_type: str
-    trailer_type: str
-    commodity: str
+    trailer_type: str=None
+    commodity: str=None
     containers_count: int
-    weight: float=None
+    cargo_weight_per_container: float=None

@@ -9,8 +9,8 @@ class BaseModel(Model):
         database = db
 
 class BasicTrailerRate(BaseModel):
-    base_rate = IntegerField(null=True)
-    commodity = CharField(null=True, index=True)
+    base_rate = FloatField(null=True)
+    commodity = CharField(null=True)
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
     containers_count = IntegerField(null=True, )
@@ -27,7 +27,7 @@ class BasicTrailerRate(BaseModel):
     origin_location_id = UUIDField(null=True,index= True)
     trailer_type = CharField(null=True)
     transit_time = IntegerField(null=True)
-    weight = FloatField(null=True)
+    cargo_weight_per_container = FloatField(null=True)
     status = CharField(default='active')
     updated_at = DateTimeField(default=datetime.datetime.now)
     

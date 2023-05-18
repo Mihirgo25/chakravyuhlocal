@@ -6,7 +6,6 @@ from database.db_session import db
 from micro_services.client import maps
 from libs.get_distance import get_distance
 from playhouse.shortcuts import model_to_dict
-from configs.fuel_price import fuel_prices
 from configs.trailer_freight_rate_constants import *
 
 def calculate_trailer_rate(request):
@@ -18,26 +17,24 @@ def execute_transaction_code(request):
     origin_location_id = request.get('origin_location_id')
     destination_location_id = request.get('destination_location_id')
     container_size = request.get('container_size')
-    weight = request.get('weight') if request.get('weight') is not None else DEFAULT_MAX_WEIGHT_LIMIT.get(container_size)
+    cargo_weight_per_container = request.get('cargo_weight_per_container') if request.get('cargo_weight_per_container') is not None else DEFAULT_MAX_WEIGHT_LIMIT.get(container_size)
+    # basic_rate = BasicTrailerRate.select().where(
+    #             (BasicTrailerRate.container_size == container_size),
+    #             (BasicTrailerRate.container_type == request["container_type"]),
+    #             (BasicTrailerRate.origin_location_id == origin_location_id),
+    #             (BasicTrailerRate.destination_location_id == destination_location_id),
+    #             (BasicTrailerRate.cargo_weight_per_container == cargo_weight_per_container),
+    #             (BasicTrailerRate.containers_count == request["containers_count"]),
+    #             (BasicTrailerRate.status == 'active')
+    #             ).first()
 
-    basic_rate = BasicTrailerRate.select().where(
-                (BasicTrailerRate.container_size == container_size),
-                (BasicTrailerRate.container_type == request["container_type"]),
-                (BasicTrailerRate.commodity == request["commodity"]),
-                (BasicTrailerRate.origin_location_id == origin_location_id),
-                (BasicTrailerRate.destination_location_id == destination_location_id),
-                (BasicTrailerRate.weight == weight),
-                (BasicTrailerRate.containers_count == request["containers_count"]),
-                (BasicTrailerRate.status == 'active')
-                ).first()
-
-    if basic_rate:
-        print("yes")
-        return {'base_rate' : basic_rate.base_rate, 
-                'currency' : basic_rate.currency, 
-                'distance' : basic_rate.distance,
-                'transit_time' : basic_rate.transit_time
-                }
+    # if basic_rate:
+    #     print("yes")
+    #     return {'base_rate' : basic_rate.base_rate, 
+    #             'currency' : basic_rate.currency, 
+    #             'distance' : basic_rate.distance,
+    #             'transit_time' : basic_rate.transit_time
+    #             }
         # raise HTTPException(status_code=404, detail="Data not found")
 
     input = {"filters":{"id":[origin_location_id, destination_location_id]}}
@@ -54,21 +51,24 @@ def execute_transaction_code(request):
             destination_location = (d["latitude"], d["longitude"])
             destination_country_code = d.get('country_code')
 
-    if origin_country_code==destination_country_code:
-        raise HTTPException(status_code=404, detail="Origin and destination country cannot be same")
+    if origin_country_code!=destination_country_code:
+        raise HTTPException(status_code=404, detail="Origin and destination country should be same")
     
-    try:
-        distance = get_distance(origin_location,destination_location)
-        print("distance", distance)
-    except:
-        distance = 250
+    if origin_country_code and destination_country_code not in CALCULATION_COUNTRY_CODES:
+        origin_country_code = destination_country_code = DEFAULT_CALCULATION_COUNTRY_CODE
+
+    # try:
+    #     distance = get_distance(origin_location,destination_location)
+    #     print("distance", distance)
+    # except:
+    distance = 10
     transit_time = (distance//250) * 24
     if transit_time == 0:
         transit_time = 12
-    fuel_used = fuel_consumption(distance,weight)
+    fuel_used = fuel_consumption(distance,cargo_weight_per_container)
     print("fuel_uesd", fuel_used)
     # fuel_charge = get_fuel_charge()
-    fuel_cost = fuel_used * fuel_prices[destination_country_code] #use fuel charge with currency
+    fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[destination_country_code] #use fuel charge with currency
     print("fuel cost", fuel_cost)
     constants = TrailerFreightRateCharges.select().where(
                 (TrailerFreightRateCharges.country_code == destination_country_code),
@@ -105,7 +105,7 @@ def execute_transaction_code(request):
         'base_rate' : total_cost,
         'currency' : constants_data.get('currency_code'),
         'distance' : distance,
-        'weight' : weight,
+        'cargo_weight_per_container' : cargo_weight_per_container,
         'country_code' : destination_country_code,
         'containers_count' : request.get('containers_count'),
         'transit_time' : transit_time
