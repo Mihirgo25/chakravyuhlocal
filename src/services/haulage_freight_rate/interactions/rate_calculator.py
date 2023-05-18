@@ -1,6 +1,9 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import (
     HaulageFreightRateRuleSet,
 )
+from services.haulage_freight_rate.models.haulage_freight_rate import (
+    HaulageFreightRate,
+)
 from micro_services.client import maps
 import services.haulage_freight_rate.interactions.rate_calculator as rate_calculator
 from configs.rails_constants import (
@@ -10,6 +13,7 @@ from configs.rails_constants import (
     WAGON_CONTAINER_TYPE_MAPPINGS,
     WAGON_COMMODITY_MAPPING,
     WAGON_MAPPINGS,
+    SERVICE_PROVIDER_ID,
 )
 from libs.get_distance import get_distance
 from playhouse.postgres_ext import SQL
@@ -83,6 +87,49 @@ def apply_surcharges(indicative_price):
     gst_charges = indicative_price * 0.05
     final_price = indicative_price + surcharge + other_charges + gst_charges
     return final_price
+
+
+def build_ftl_freight_rate(
+    origin_location_id,
+    destination_location_id,
+    base_price,
+    total_distance,
+    currency,
+    location_data_mapping,
+    truck_and_commodity_data,
+):
+    line_items_data = [
+        {
+            "code": "BAS",
+            "unit": "per_truck",
+            "price": base_price,
+            "remarks": [],
+            "currency": currency,
+        }
+    ]
+
+    create_params = {
+        "origin_location_id": origin_location_id,
+        "destination_location_id": destination_location_id,
+        "origin_country_id": location_data_mapping[origin_location_id]["country_id"],
+        "destination_country_id": location_data_mapping[destination_location_id][
+            "country_id"
+        ],
+        "distance": total_distance,
+        "line_items": line_items_data,
+        "truck_type": truck_and_commodity_data["truck_type"],
+        "commodity_type": truck_and_commodity_data["commodity_type"],
+        "commodity_weight": truck_and_commodity_data["commodity_weight"],
+        "service_provider_id": SERVICE_PROVIDER_ID,
+        "origin_city_id": location_data_mapping[origin_location_id]["city_id"],
+        "destination_city_id": location_data_mapping[destination_location_id][
+            "city_id"
+        ],
+    }
+
+    HaulageFreightRate.create(**create_params)
+
+    return
 
 
 def haulage_rate_calculator(
@@ -242,38 +289,54 @@ def get_china_rates(
     final_data["distance"] = location_pair_distance
     return
 
+
 def get_north_america_rates(commodity, load_type, container_count, ports_distance):
     final_data = {}
     final_data["distance"] = ports_distance
-    final_data['currency'] = 'USD'
-    final_data['country_code'] = 'US'
+    final_data["currency"] = "USD"
+    final_data["country_code"] = "US"
 
-    wagon_lower_limit = HaulageFreightRateRuleSet.select().where(
+    wagon_lower_limit = (
+        HaulageFreightRateRuleSet.select()
+        .where(
             HaulageFreightRateRuleSet.commodity_class_type == commodity,
             HaulageFreightRateRuleSet.distance <= ports_distance,
             HaulageFreightRateRuleSet.train_load_type == load_type,
             HaulageFreightRateRuleSet.currency == "USD",
-            HaulageFreightRateRuleSet.country_code == "US"
-        ).order_by(HaulageFreightRateRuleSet.distance.desc()).execute()
-    
-    wagon_upper_limit = HaulageFreightRateRuleSet.select().where(
+            HaulageFreightRateRuleSet.country_code == "US",
+        )
+        .order_by(HaulageFreightRateRuleSet.distance.desc())
+        .execute()
+    )
+
+    wagon_upper_limit = (
+        HaulageFreightRateRuleSet.select()
+        .where(
             HaulageFreightRateRuleSet.commodity_class_type == commodity,
             HaulageFreightRateRuleSet.distance >= ports_distance,
             HaulageFreightRateRuleSet.train_load_type == load_type,
             HaulageFreightRateRuleSet.currency == "USD",
-            HaulageFreightRateRuleSet.country_code == "US"
-        ).order_by(HaulageFreightRateRuleSet.distance).execute()
-   
+            HaulageFreightRateRuleSet.country_code == "US",
+        )
+        .order_by(HaulageFreightRateRuleSet.distance)
+        .execute()
+    )
 
     wagon_price_lower_limit = [model_to_dict(item) for item in wagon_lower_limit]
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
     if len(wagon_price_lower_limit) == 0 or len(wagon_price_upper_limit) == 0:
         if len(wagon_price_lower_limit) == 0:
-            price = (wagon_price_upper_limit[0]["base_price"]/wagon_price_upper_limit["distance"])*ports_distance
+            price = (
+                wagon_price_upper_limit[0]["base_price"]
+                / wagon_price_upper_limit["distance"]
+            ) * ports_distance
 
         else:
-            price = (wagon_price_lower_limit[0]["base_price"]/wagon_price_lower_limit["distance"])*ports_distance
+            price = (
+                wagon_price_lower_limit[0]["base_price"]
+                / wagon_price_lower_limit["distance"]
+            ) * ports_distance
 
     else:
         limit1 = limit2 = ports_distance
@@ -285,38 +348,44 @@ def get_north_america_rates(commodity, load_type, container_count, ports_distanc
         else:
             price = wagon_price_lower_limit[0]["base_price"]
 
-    price = price*container_count
-    surcharge = 0.15*price
-    development_charges = 0.05*price
+    price = price * container_count
+    surcharge = 0.15 * price
+    development_charges = 0.05 * price
     final_data["base_price"] = price + surcharge + development_charges
 
     return final_data
 
-def get_europe_rates(commodity, load_type, container_count, ports_distance,wagon_type):
+
+def get_europe_rates(commodity, load_type, container_count, ports_distance, wagon_type):
     final_data = {}
     final_data["distance"] = ports_distance
-    final_data['currency'] = 'EUR'
-    final_data['country_code'] = 'EU'
+    final_data["currency"] = "EUR"
+    final_data["country_code"] = "EU"
 
-    wagon_upper_limit = HaulageFreightRateRuleSet.select().where(
+    wagon_upper_limit = (
+        HaulageFreightRateRuleSet.select()
+        .where(
             HaulageFreightRateRuleSet.commodity_class_type == commodity,
             HaulageFreightRateRuleSet.distance >= ports_distance,
             HaulageFreightRateRuleSet.train_load_type == load_type,
             HaulageFreightRateRuleSet.wagon_type == wagon_type,
             HaulageFreightRateRuleSet.currency == "EUR",
-            HaulageFreightRateRuleSet.country_code == "EU"
-        ).order_by(HaulageFreightRateRuleSet.distance).execute()
-    
+            HaulageFreightRateRuleSet.country_code == "EU",
+        )
+        .order_by(HaulageFreightRateRuleSet.distance)
+        .execute()
+    )
+
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
     if len(wagon_price_upper_limit) == 0:
         final_data["base_price"] = 0
         return final_data
-    
+
     price = wagon_price_upper_limit[0]["base_price"]
-    price = price*container_count
-    surcharge = 0.15*price
-    development_charges = 0.05*price
+    price = price * container_count
+    surcharge = 0.15 * price
+    development_charges = 0.05 * price
     final_data["base_price"] = price + surcharge + development_charges
 
     return final_data
