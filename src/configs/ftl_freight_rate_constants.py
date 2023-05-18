@@ -116,7 +116,7 @@ TRUCK_TYPES_MAPPING = {
     'open_40ft_low_bed_trailor_20_25_30ton': {'tyre': 22,'weight': 30, 'volume': 2560, 'mileage': 3.2,'mileage_unit':'kmpl','truck_type':'medium_truck'}
 }
 TRUCK_TYPES_MILEAGE_MAPPING = {
-    'small_truck':{'weight_lower_limit':0.5,'weight_upper_limit':1.8,'mileage':19},
+    'small_truck':{'weight_lower_limit':0,'weight_upper_limit':1.8,'mileage':19},
     'light_truck':{'weight_lower_limit':2,'weight_upper_limit':7,'mileage':7},
     'medium_truck':{'weight_lower_limit':8,'weight_upper_limit':14,'mileage':5.2},
     'heavy_truck':{'weight_lower_limit':15,'weight_upper_limit':30,'mileage':3.5},
@@ -141,3 +141,7 @@ HAZ_CLASSES = [
   ]
 CONSUMER_DURABLE_COMMODITIES = ["fmcg", "fmcg_consumer_durables", "consumer_durables", "consumer_durables_equipments", "consumer_durables_equipments_machinery", "fmcg_consumer_durables", "equipments_plant_machinery"]
 
+DISTANCE_FACTOR = {
+    'km':1,
+    'mi':0.621371
+}

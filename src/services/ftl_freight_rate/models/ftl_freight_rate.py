@@ -40,6 +40,7 @@ class FtlFreightRate(BaseModel):
     validity_end = DateTimeField(null= True)
     detention_free_time = CharField(null = True)
     minimum_chargeable_weight = FloatField(null=True)
+    source = CharField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     

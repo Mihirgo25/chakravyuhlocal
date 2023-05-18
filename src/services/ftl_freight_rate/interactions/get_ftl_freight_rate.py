@@ -23,11 +23,13 @@ def get_ftl_freight_rate(
     commodity_weight: None,
     commodity_type: None,
 ):
+    from celery_worker import build_ftl_freight_rate_delay
     if not truck_type or not commodity_weight:
         raise HTTPException(
             status_code=500, detail="either truck type or commodity_weight is required"
         )
-
+    ids = [origin_location_id, destination_location_id]
+    location_data_mapping = get_location_data_mapping(ids)
     truck_and_commodity_data =  get_truck_and_commodity_data(truck_type,commodity_weight)
     if truck_type:
         truck_type = truck_and_commodity_data['truck_type']
@@ -44,26 +46,28 @@ def get_ftl_freight_rate(
     result = {}
     
     if ftl_freight_rate:
-        return {"data": ftl_freight_rate}
+        return [{"base_rate": ftl_freight_rate['line_items']['price'],"distance":ftl_freight_rate['distance']}]
     
     path_data = get_path_from_valhala(origin_location_id, destination_location_id)
     location_data = path_data["set_of_location"]
     total_path_distance = path_data['total_distance']
     average_fuel_price = get_average_fuel_price(location_data)
-    applicable_rule_set = get_applicable_rule_set(origin_location_id,destination_location_id,truck_and_commodity_data)
+    applicable_rule_set = get_applicable_rule_set(origin_location_id,destination_location_id,truck_and_commodity_data,location_data_mapping)
     basic_freight_charges = average_fuel_price*total_path_distance
+    currency = 'INR'
     for data in applicable_rule_set:
+        currency = data['currency']
         if data['process_type'] in BASIC_CHARGE_LIST:
-            if data['process_unit'] == 'km': 
-                basic_freight_charges += (data['process_val']*total_path_distance)
-            else:
-                basic_freight_charges += (data['process_val']*total_path_distance*0.621371)
+            process_unit = data['process_unit']
+            if data['process_type'] == 'driver':
+                basic_freight_charges += (data['process_val']*total_path_distance*DISTANCE_FACTOR[process_unit]*get_driver_charges_factor(total_path_distance))
     
     if commodity_type in HAZ_CLASSES:
         basic_freight_charges += 0.1*basic_freight_charges
     
     result["base_rate"] = basic_freight_charges
     result["distance"] = total_path_distance
+    build_ftl_freight_rate_delay(origin_location_id,destination_location_id,basic_freight_charges,total_path_distance,currency,location_data_mapping,truck_and_commodity_data)
     return result
     
 def list_ftl_freight_rate(
@@ -87,15 +91,8 @@ def get_path_from_valhala(origin_location_id, destination_location_id):
     return {}
 
 
-def get_applicable_rule_set(origin_location_id, destination_location_id,truck_and_commodity_data):
-    location_mapping = {}
-    ids = [origin_location_id, destination_location_id]
+def get_applicable_rule_set(origin_location_id, destination_location_id,truck_and_commodity_data,location_mapping):
     truck_type = truck_and_commodity_data['truck_type']
-    location_data = maps.list_locations({'filters': {'id': ids}})
-    
-    for data in location_data:
-        location_mapping[data['id']] = data['country_id']
-        
     ftl_freight_rate_rule_set = FtlFreightRateRuleSet.select().where(
             FtlFreightRateRuleSet.location_id
             << list(
@@ -150,3 +147,35 @@ def get_truck_and_commodity_data(truck_type, commodity_weight):
                 break
             
     return data
+def build_ftl_freight_rate(origin_location_id,destination_location_id,base_price,total_distance,currency,location_data_mapping,truck_and_commodity_data):
+    line_items_data = [{"code": "BAS", "unit": "per_truck", "price":base_price, "remarks": [], "currency": currency}]
+    create_params = {
+        'origin_location_id':origin_location_id,
+        'destination_location_id':destination_location_id,
+        'origin_country_id':location_data_mapping[origin_location_id]['country_id'],
+        'destination_country_id':location_data_mapping[destination_location_id]['country_id'],
+        'distance':total_distance,
+        'line_items':line_items_data,
+        'truck_type':truck_and_commodity_data['truck_type'],
+        'commodity_type':truck_and_commodity_data['commodity_type'],
+        'commodity_weight':truck_and_commodity_data['commodity_weight'],
+        'service_provider_id':SERVICE_PROVIDER_ID,
+        'origin_city_id':location_data_mapping[origin_location_id]['city_id'],
+        'destination_city_id':location_data_mapping[destination_location_id]['city_id'],
+    }
+    FtlFreightRate.create(**create_params)
+    return
+    
+def get_location_data_mapping(ids:list):
+    location_data = maps.list_locations({'filters': {'id': ids}})
+    location_mapping = {}
+    for data in location_data:
+        location_mapping[data['id']] = data
+    return location_mapping
+def get_driver_charges_factor(total_distance):
+    if total_distance <= 300:
+        return 2.0
+    elif total_distance>300 and total_distance< 1000:
+        return 1.5
+    else 
+        return 1.2
