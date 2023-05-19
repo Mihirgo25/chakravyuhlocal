@@ -128,7 +128,7 @@ def build_haulage_freight_rate(
         "performed_by_id": COGO_ENVISION_ID,
         "procured_by_id": COGO_ENVISION_ID,
         "sourced_by_id": COGO_ENVISION_ID,
-        "transport_modes": "rail",
+        "transport_modes": ["rail"],
         "transport_modes_keyword": "rail",
         "line_items": line_items_data,
         "trip_type": DEFAULT_TRIP_TYPE,
@@ -253,7 +253,6 @@ def get_india_rates(
                 HaulageFreightRateRuleSet.train_load_type == "Train Load",
             )
             .order_by(SQL("base_price ASC"))
-            .first()
         )
         wagon_price = (
             query.where(
@@ -262,10 +261,12 @@ def get_india_rates(
                 HaulageFreightRateRuleSet.train_load_type == "Wagon Load",
             )
             .order_by(SQL("base_price ASC"))
-            .first()
         )
-        rake_price_per_tonne = model_to_dict(rake_price)["base_price"] if rake_price is not None else None
-        wagon_price_per_tonne = model_to_dict(wagon_price)["base_price"] if wagon_price is not None else None
+        if rake_price.count()==0 or wagon_price.count()==0 :
+            raise HTTPException(status_code=400, detail="rates not present")
+        rake_price_per_tonne = model_to_dict(rake_price.first())["base_price"]
+        wagon_price_per_tonne = model_to_dict(wagon_price.first())["base_price"]
+
         if not rake_price_per_tonne or not wagon_price_per_tonne:
             raise HTTPException(status_code=400, details="rates not present")
 
@@ -291,11 +292,11 @@ def get_india_rates(
                 HaulageFreightRateRuleSet.train_load_type == load_type,
             )
             .order_by(SQL("base_price ASC"))
-            .first()
         )
-        if not query:
-            raise HTTPException(status_code=400, details="rates not present")
-        price = model_to_dict(query)
+        if query.count()==0:
+            raise HTTPException(status_code=400, detail="rates not present")
+
+        price = model_to_dict(query.first())
         price_per_tonne = price["base_price"]
         currency = price["currency"]
         # permissible_carrying_capacity = WagonTypes.select(WagonTypes.permissible_carrying_capacity).where(WagonTypes.wagon_code == wagon_type)
@@ -333,11 +334,10 @@ def get_china_rates(
             HaulageFreightRateRuleSet.train_load_type == load_type,
         )
         .order_by(SQL("base_price ASC"))
-        .first()
     )
-    if not query:
-        raise HTTPException(status_code=400, details="rates not present")
-    price = model_to_dict(query)
+    if query.count()==0:
+        raise HTTPException(status_code=400, detail="rates not present")
+    price = model_to_dict(query.first())
     currency = price["currency"]
     price_per_container = float(price["base_price"])
     running_base_price_per_carton_km = float(price["running_base_price"])
