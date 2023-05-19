@@ -65,10 +65,9 @@ def get_fuel_data_list(scrapped_fuel_data, list_location_data):
         fuel_data = {}
         fuel_data["location_id"] = location_data["id"]
         fuel_data["location_type"] = location_data["type"]
-        for key, values in scrapped_fuel_data.items():
+        for key, value in scrapped_fuel_data.items():
             if key not in ["id", "location_name"]:
-                fuel_data[key] = values
-        print(fuel_data)
+                fuel_data[key] = value
         list_data.append(copy.deepcopy(fuel_data))
     return list_data
 
