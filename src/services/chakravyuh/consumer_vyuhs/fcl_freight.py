@@ -35,6 +35,7 @@ class FclFreightVyuh():
             FclFreightRateEstimation.container_type == self.requirements['container_type'],
             ((FclFreightRateEstimation.commodity.is_null(True)) | (FclFreightRateEstimation.commodity == self.requirements['commodity'])),
             ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id << shipping_line_ids)),
+            FclFreightRateEstimation.status == 'active'
         )
         transformations = jsonable_encoder(list(transformation_query.dicts()))
         return transformations
@@ -81,6 +82,11 @@ class FclFreightVyuh():
         
         if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
             line_item['price'] = random.randrange(start=int(lower_limit), stop=int(upper_limit + 1))
+        
+        if line_item['price'] >= 200:
+            line_item['price'] = round(line_item['price']/5) * 5
+        else:
+            line_item['price'] = round(line_item['price'])
         
         return line_item
 
