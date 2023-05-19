@@ -41,7 +41,7 @@ class HaulageFreightRate(BaseModel):
     detention_free_time = IntegerField(index=True, null=True)
     transit_time = IntegerField(index=True, null=True)
     haulage_type = CharField(index=True, null=True, default='merchant')
-    transport_modes = BinaryJSONField(index=True, null=True)
+    transport_modes = ArrayField(index=True, null=True)
     destination_country_id = UUIDField(null=True)
     transport_modes_keyword = CharField(index=True, null=True)
     distance = FloatField(null=True, index=True)

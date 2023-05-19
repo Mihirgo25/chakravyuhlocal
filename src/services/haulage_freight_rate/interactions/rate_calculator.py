@@ -22,6 +22,7 @@ from configs.global_constants import COGO_ENVISION_ID
 from libs.get_distance import get_distance
 from playhouse.postgres_ext import SQL
 from playhouse.shortcuts import model_to_dict
+from fastapi import HTTPException
 
 
 POSSIBLE_LOCATION_CATEGORY = [
@@ -70,10 +71,8 @@ def get_transit_time(distance):
 
 def get_country_filter(origin_location, destination_location):
     input = {"filters": {"id": [origin_location, destination_location]}}
-    location_category = ""
+    location_category = "generalized"
     locations_data = maps.list_locations(input)["list"]
-    if locations_data[0]["country_code"] != locations_data[1]["country_code"]:
-        location_category = "generalized"
 
     if (
         locations_data[0]["country_code"] == "IN"
@@ -156,6 +155,7 @@ def haulage_rate_calculator(request):
     container_type = request.container_type
     cargo_weight_per_container = request.cargo_weight_per_container
     container_size = request.container_size
+
     response = {"success": False, "status_code": 200}
 
     locations_data, location_category = get_country_filter(
@@ -221,7 +221,7 @@ def haulage_rate_calculator(request):
         container_size,
         container_type,
     )
-    create_haulage_freight_rate(params)
+    create_haulage_freight_rate_delay(params)
     response["success"] = True
     response["list"] = [final_data]
     return response
@@ -264,8 +264,11 @@ def get_india_rates(
             .order_by(SQL("base_price ASC"))
             .first()
         )
-        rake_price_per_tonne = model_to_dict(rake_price)["base_price"]
-        wagon_price_per_tonne = model_to_dict(wagon_price)["base_price"]
+        rake_price_per_tonne = model_to_dict(rake_price)["base_price"] if rake_price is not None else None
+        wagon_price_per_tonne = model_to_dict(wagon_price)["base_price"] if wagon_price is not None else None
+        if not rake_price_per_tonne or not wagon_price_per_tonne:
+            raise HTTPException(status_code=400, details="rates not present")
+
         currency = model_to_dict(wagon_price)["currency"]
         final_rake_price = (
             float(rake_price_per_tonne)
@@ -290,6 +293,8 @@ def get_india_rates(
             .order_by(SQL("base_price ASC"))
             .first()
         )
+        if not query:
+            raise HTTPException(status_code=400, details="rates not present")
         price = model_to_dict(query)
         price_per_tonne = price["base_price"]
         currency = price["currency"]
@@ -330,6 +335,8 @@ def get_china_rates(
         .order_by(SQL("base_price ASC"))
         .first()
     )
+    if not query:
+        raise HTTPException(status_code=400, details="rates not present")
     price = model_to_dict(query)
     currency = price["currency"]
     price_per_container = float(price["base_price"])
@@ -454,4 +461,4 @@ def get_generalized_rates(
 ):
     final_data = {}
     final_data["distance"] = location_pair_distance
-    return
+    raise HTTPException(status_code=400, details="rates not present")
