@@ -6,12 +6,11 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 from services.haulage_freight_rate.haulage_params import HaulageFreightRate
-from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.haulage_freight_rate.interactions.rate_calculator import haulage_rate_calculator
 
 haulage_freight_router = APIRouter()
 
-@haulage_freight_router.post("/get_haulage_freight_rate_calculator")
+@haulage_freight_router.post("/get_estimated_haulage_freight_rate")
 def get_haulage_freight_rate(
     request: HaulageFreightRate,
     resp: dict = Depends(authorize_token)):
