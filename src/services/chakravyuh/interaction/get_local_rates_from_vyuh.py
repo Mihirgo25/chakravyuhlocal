@@ -9,14 +9,19 @@ import pandas as pd, os
 import copy
 
 def get_local_rates_from_vyuh(local_rate_param, line_items = []):
-    ports_data = get_locations([local_rate_param.get('country_id')])
+    ports_data = get_locations(local_rate_param.get('country_id'))
     icd_ports, combined_ids = [], []
     for data in ports_data:
         if data.get('is_icd') == True:
             icd_ports.append(str(data.get('id')))
         elif data.get('is_icd') == False:
             combined_ids.append(str(data.get('id')) + ':')
-    main_ports_data = maps.list_locations_mapping({'location_id':icd_ports,'type':['main_ports']})['list']
+
+    main_ports_icd_mapping = maps.list_locations_mapping({'location_id':icd_ports,'type':['main_ports']})
+    if isinstance(main_ports_icd_mapping, dict) and main_ports_icd_mapping.get('list'):
+        main_ports_data = main_ports_icd_mapping['list']
+    else:
+        main_ports_data = []
 
     for port in main_ports_data:
         combined_ids.append(str(port['icd_port_id'])+':'+str(port['id']))
@@ -24,12 +29,15 @@ def get_local_rates_from_vyuh(local_rate_param, line_items = []):
     query_result = get_search_query(local_rate_param)
     mapping_from_query = [str(row['port_id'])+':'+str(row['main_port_id'] or '') for row in query_result]
     final_list = list(set(combined_ids).difference(set(mapping_from_query)))
-
-    local_rates = create_fcl_freight_local_in_delay(local_rate_param, line_items, final_list)
+    
+    if final_list:
+        local_rates = create_fcl_freight_local_in_delay(local_rate_param, line_items, final_list)
+    else:
+        local_rates = []
     return local_rates
 
-def get_locations(location_ids: list = []):
-    locations = maps.list_locations({'filters':{'country_id': location_ids, 'status':'active', "type":"seaport" },'page_limit':10000})
+def get_locations(location_id):
+    locations = maps.list_locations({'filters':{'country_id': location_id, 'status':'active', "type":"seaport" },'page_limit':10000})
     if isinstance(locations, dict) and locations.get('list'):
         return locations['list']
     else:
