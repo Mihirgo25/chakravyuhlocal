@@ -9,10 +9,10 @@ from micro_services.client import *
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
 from configs.global_constants import COUNTRY_CODES_MAPPING
-import services.ftl_freight_rate.fuel_scheduler as fuel_schedulers
+import services.ftl_freight_rate.scheduler.fuel_scheduler as fuel_schedulers
 
 
-@scheduler.add(every().day.at("01:00"))
+@scheduler.add(every().day.at("18:55"))
 def fuel_scheduler():
     list_of_countries = ["india", "usa"]
 
@@ -22,7 +22,6 @@ def fuel_scheduler():
         )()
         process_fuel_data(list_fuel_data, country)
         time.sleep(5)
-
 
 def process_fuel_data(list_fuel_data, country):
     batch_size = 50
