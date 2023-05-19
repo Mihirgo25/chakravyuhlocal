@@ -78,7 +78,7 @@ def create_fcl_freight_local_in_delay(param, line_items, final_list):
         return []
 
 def get_line_items_from_sheet(param):
-    FILE_PATH = os.path.join(ROOT_DIR, "services", "chakravyuh", "std_local_updt_3.csv")
+    FILE_PATH = os.path.join(ROOT_DIR, "libs", "local_rates_country_level.csv")
     estimated_rates = pd.read_csv(FILE_PATH)
     commodity = param.get('commodity') if param.get('commodity') in HAZ_CLASSES else 'None'
     container_size = param.get('container_size')
