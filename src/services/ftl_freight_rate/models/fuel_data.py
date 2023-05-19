@@ -1,7 +1,7 @@
 from peewee import *
 from database.db_session import db
 import datetime
-
+import uuid
 
 class BaseModel(Model):
     class Meta:
