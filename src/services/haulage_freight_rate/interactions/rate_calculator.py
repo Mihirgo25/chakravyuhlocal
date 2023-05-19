@@ -4,6 +4,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import 
 from services.haulage_freight_rate.models.haulage_freight_rate import (
     HaulageFreightRate,
 )
+import datetime
 from micro_services.client import maps
 import services.haulage_freight_rate.interactions.rate_calculator as rate_calculator
 from configs.rails_constants import (
@@ -14,7 +15,10 @@ from configs.rails_constants import (
     WAGON_COMMODITY_MAPPING,
     WAGON_MAPPINGS,
     SERVICE_PROVIDER_ID,
+    DEFAULT_HAULAGE_TYPE,
+    DEFAULT_TRIP_TYPE,
 )
+from configs.global_constants import COGO_ENVISION_ID
 from libs.get_distance import get_distance
 from playhouse.postgres_ext import SQL
 from playhouse.shortcuts import model_to_dict
@@ -89,21 +93,22 @@ def apply_surcharges(indicative_price):
     return final_price
 
 
-def build_ftl_freight_rate(
+def build_haulage_freight_rate(
     origin_location_id,
     destination_location_id,
     base_price,
-    total_distance,
+    distance,
     currency,
-    location_data_mapping,
-    truck_and_commodity_data,
+    container_size,
+    container_type,
 ):
     line_items_data = [
         {
-            "code": "BAS",
-            "unit": "per_truck",
+            "code": "IHI",
+            "unit": "per_container",
             "price": base_price,
             "remarks": [],
+            "slabs": [],
             "currency": currency,
         }
     ]
@@ -111,20 +116,20 @@ def build_ftl_freight_rate(
     create_params = {
         "origin_location_id": origin_location_id,
         "destination_location_id": destination_location_id,
-        "origin_country_id": location_data_mapping[origin_location_id]["country_id"],
-        "destination_country_id": location_data_mapping[destination_location_id][
-            "country_id"
-        ],
-        "distance": total_distance,
-        "line_items": line_items_data,
-        "truck_type": truck_and_commodity_data["truck_type"],
-        "commodity_type": truck_and_commodity_data["commodity_type"],
-        "commodity_weight": truck_and_commodity_data["commodity_weight"],
+        "container_size": container_size,
+        "container_type": container_type,
         "service_provider_id": SERVICE_PROVIDER_ID,
-        "origin_city_id": location_data_mapping[origin_location_id]["city_id"],
-        "destination_city_id": location_data_mapping[destination_location_id][
-            "city_id"
-        ],
+        "haulage_type": DEFAULT_HAULAGE_TYPE,
+        "performed_by_id": COGO_ENVISION_ID,
+        "procured_by_id": COGO_ENVISION_ID,
+        "sourced_by_id": COGO_ENVISION_ID,
+        "transport_modes": "rail",
+        "transport_modes_keyword": "rail",
+        "line_items": line_items_data,
+        "trip_type": DEFAULT_TRIP_TYPE,
+        "distance": distance,
+        "validity_start": datetime.datetime.now(),
+        "validity_end": datetime.datetime.now() + datetime.timedelta(days=60),
     }
 
     HaulageFreightRate.create(**create_params)
@@ -132,14 +137,14 @@ def build_ftl_freight_rate(
     return
 
 
-def haulage_rate_calculator(
-    origin_location,
-    destination_location,
-    commodity,
-    container_count=None,
-    container_type=None,
-    cargo_weight_per_container=None,
-):
+def haulage_rate_calculator(request):
+    origin_location = request.origin_location
+    destination_location = request.destination_location
+    commodity = request.commodity
+    container_count = request.container_count
+    container_type = request.container_type
+    cargo_weight_per_container = request.cargo_weight_per_container
+    container_size = request.container_size
     response = {"success": False, "status_code": 200}
 
     locations_data, location_category = get_country_filter(
@@ -190,6 +195,16 @@ def haulage_rate_calculator(
         container_type,
         cargo_weight_per_container,
         permissable_carrying_capacity,
+    )
+
+    build_haulage_freight_rate(
+        origin_location,
+        destination_location,
+        final_data["base_price"],
+        location_pair_distance,
+        final_data["currency"],
+        container_size,
+        container_type,
     )
 
     response["success"] = True

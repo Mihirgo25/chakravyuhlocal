@@ -95,3 +95,5 @@ TRADE_TYPES = ['import', 'export', 'domestic']
 ALLOWED_RATE_PRODUCER_METHODS = ['minimum', 'maximum', 'latest']
 
 DEAFULT_RATE_PRODUCER_METHOD = 'latest'
+
+COGO_ENVISION_ID = '2dbe768e-929d-4e54-baf0-309ef68c978b'

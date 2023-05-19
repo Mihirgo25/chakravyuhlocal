@@ -5,24 +5,20 @@ from params import *
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
-
+from services.haulage_freight_rate.haulage_params import HaulageFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_commodity_cluster import create_fcl_freight_commodity_cluster
 from services.haulage_freight_rate.interactions.rate_calculator import haulage_rate_calculator
 
 haulage_freight_router = APIRouter()
 
-@haulage_freight_router.get("/get_haulage_freight_rate_calculator")
+@haulage_freight_router.post("/get_haulage_freight_rate_calculator")
 def get_haulage_freight_rate(
-    origin_location: str = None,
-    destination_location: str = None,
-    commodity: str = None,
-    container_count: int = None,
-    container_type: str = None,
+    request: HaulageFreightRate,
     resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = haulage_rate_calculator(origin_location, destination_location, commodity, container_count, container_type)
+        data = haulage_rate_calculator(request)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content = data)
     except HTTPException as e:
