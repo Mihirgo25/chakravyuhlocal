@@ -23,6 +23,7 @@ from libs.get_distance import get_distance
 from playhouse.postgres_ext import SQL
 from playhouse.shortcuts import model_to_dict
 from fastapi import HTTPException
+from micro_services.client import maps
 
 
 POSSIBLE_LOCATION_CATEGORY = [
@@ -81,7 +82,12 @@ def get_haulage_freight_rate(
 
 
 def get_railway_route(origin_location, destination_location):
-    return
+    input = {"origin_location_id": origin_location, "destination_location_id": destination_location}
+    try:
+        data = maps.get_distance_matrix_valhalla(input)
+    except:
+        data = None
+    return data
 
 def get_transit_time(distance):
     transit_time = (distance//250) * 24
