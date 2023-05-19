@@ -146,10 +146,10 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
 
     all_rate_locals = jsonable_encoder(list(all_rate_locals_query.dicts()))
 
-    ports = list(set([data.get('port_id') for data in all_rate_locals]))
+    rate_port_ids = list(set([data.get('port_id') for data in all_rate_locals]))
 
-    if len(ports) < 2: #checking for origin and destination ids
-        rate_locals = get_local_rate_from_country(requirements, ports)
+    if len(rate_port_ids) < 2: #checking for origin and destination ids
+        rate_locals = get_local_rate_from_country(requirements, rate_port_ids)
         all_rate_locals.extend(list(filter(None,rate_locals)))
     
     all_formatted_locals = []
@@ -690,7 +690,7 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 
-def get_local_rate_from_country(requirements, ports):
+def get_local_rate_from_country(requirements, rate_port_ids):
     common_params = {
         'container_size':requirements.get('container_size'),
         'container_type':requirements.get('container_type'),
@@ -712,8 +712,8 @@ def get_local_rate_from_country(requirements, ports):
     }
 
     all_rate_locals = []
-    if len(ports) == 1:
-        if ports[0] == requirements.get('origin_port_id'):
+    if len(rate_port_ids) == 1:
+        if rate_port_ids[0] == requirements.get('origin_port_id'):
             param = destination_local
         else:
             param = origin_local

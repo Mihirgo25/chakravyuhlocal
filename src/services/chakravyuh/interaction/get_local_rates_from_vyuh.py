@@ -2,11 +2,11 @@ from celery_worker import fcl_freight_rates_local_creation_in_delay
 from configs.global_constants import HAZ_CLASSES
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SHIPPING_LINE_ID
 from rms_utils.get_in_batches import get_in_batches
+from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from micro_services.client import maps
 from configs.definitions import ROOT_DIR
-import pandas as pd, os
-import copy
+import pandas as pd, os, copy
 
 def get_local_rates_from_vyuh(local_rate_param, line_items = []):
     ports_data = get_locations(local_rate_param.get('country_id'))
@@ -58,6 +58,9 @@ def create_fcl_freight_local_in_delay(param, line_items, final_list):
         'container_type': param.get('container_type'),
         'commodity': param.get('commodity') if param.get('commodity') in HAZ_CLASSES else None,
         'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
+        'performed_by_id': DEFAULT_USER_ID,
+        'procured_by_id': DEFAULT_USER_ID,
+        'sourced_by_id': DEFAULT_USER_ID,
         'source':'predicted',
         'shipping_line_id' : param.get('shipping_line_id') if param.get('shipping_line_id') else DEFAULT_SHIPPING_LINE_ID,
         }
