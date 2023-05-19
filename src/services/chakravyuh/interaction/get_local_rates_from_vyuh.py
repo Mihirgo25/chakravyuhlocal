@@ -72,7 +72,7 @@ def create_fcl_freight_local_in_delay(param, line_items, final_list):
             if port_id == param.get('port_id'):
                 return_params.append(creation_param)
             final_params.append(creation_param)
-        # fcl_freight_rates_local_creation_in_delay.apply_async(kwargs={'local_rate_params':final_params}, queue = 'critical')
+        fcl_freight_rates_local_creation_in_delay.apply_async(kwargs={'local_rate_params':final_params}, queue = 'low')
         return return_params
     else:
         return []
