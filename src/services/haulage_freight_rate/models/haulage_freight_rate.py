@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 import uuid
 import datetime
-from playhouse.postgres_ext import *
+from playhouse.postgres_ext import BinaryJSONField, ArrayField
 
 
 
