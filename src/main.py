@@ -7,12 +7,19 @@ from configs.env import APP_ENV, SENTRY_DSN
 from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
+
 # from database.create_tables import create_table
-from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
+from libs.migration import (
+    fcl_freight_migration,
+    create_partition_table,
+    fcl_local_migration,
+    free_day,
+)
+
 # from db_migration import run_migration
 # from migrate import insert
 from scheduler import scheduler
-from fuel_scheduler import scheduler_trending
+from fuel_scheduler import fuel_scheduler
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.ftl_freight_rate.ftl_freight_router import ftl_freight_router
 from services.envision.envision_service_router import envision_router
@@ -35,8 +42,7 @@ app = FastAPI(docs_url=docs_url, debug=True)
 app.include_router(prefix="/fcl_freight_rate", router=fcl_freight_router)
 app.include_router(prefix="/fcl_freight_rate", router=envision_router)
 app.include_router(prefix="/ftl_freight_rate", router=ftl_freight_router)
-app.include_router(prefix = "/chakravyuh", router=chakravyuh_router)
-
+app.include_router(prefix="/chakravyuh", router=chakravyuh_router)
 
 
 app.add_middleware(
