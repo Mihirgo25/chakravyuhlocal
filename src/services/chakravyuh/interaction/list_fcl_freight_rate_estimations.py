@@ -27,7 +27,7 @@ def apply_indirect_filters(query, filters):
 
 
 def list_fcl_freight_rate_estimations(filters, page_limit, page, sort_by, sort_type):
-  query = FclFreightRateEstimation.select().order_by(eval('FclFreightRateEstimation.{}.{}()'.format(sort_by,sort_type)))
+  query = FclFreightRateEstimation.select().where(FclFreightRateEstimation.status == 'active').order_by(eval('FclFreightRateEstimation.{}.{}()'.format(sort_by,sort_type)))
 
   if filters:
     if type(filters) != dict:

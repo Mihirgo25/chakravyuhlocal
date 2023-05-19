@@ -35,8 +35,8 @@ def fcl_freight_objects_updation():
 
 
 def update_transformation_objects():
-    origins = FclFreightRateEstimation.select(FclFreightRateEstimation.origin_location_id.distinct()).where(FclFreightRateEstimation.origin_location.is_null(True))
-    destinatons = FclFreightRateEstimation.select(FclFreightRateEstimation.destination_location_id.distinct()).where(FclFreightRateEstimation.destination_location.is_null(True))
+    origins = FclFreightRateEstimation.select(FclFreightRateEstimation.origin_location_id.distinct()).where(FclFreightRateEstimation.origin_location.is_null(True), FclFreightRateEstimation.status == 'active')
+    destinatons = FclFreightRateEstimation.select(FclFreightRateEstimation.destination_location_id.distinct()).where(FclFreightRateEstimation.destination_location.is_null(True), FclFreightRateEstimation.status == 'active')
     limit_size = 50
     origin_count = 0
     while True:
