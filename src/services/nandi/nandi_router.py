@@ -24,8 +24,14 @@ def create_draft_fcl_freight_rate(request: CreateDraftFclFreightRate, resp: dict
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    draft_freight = create_draft_fcl_freight_rate_data(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+    try:
+        draft_freight = create_draft_fcl_freight_rate_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @nandi_router.post("/create_draft_fcl_freight_rate_local")
 def create_draft_fcl_freight_rate_local(request: CreateDraftFclFreightRateLocal, resp: dict = Depends(authorize_token)):
@@ -34,8 +40,14 @@ def create_draft_fcl_freight_rate_local(request: CreateDraftFclFreightRateLocal,
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    draft_freight_local = create_draft_fcl_freight_rate_local_data(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+    try:
+        draft_freight_local = create_draft_fcl_freight_rate_local_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @nandi_router.post("/update_draft_fcl_freight_rate")
 def update_draft_fcl_freight_rate(request: UpdateDraftFclFreightRate, resp: dict = Depends(authorize_token)):
@@ -44,8 +56,14 @@ def update_draft_fcl_freight_rate(request: UpdateDraftFclFreightRate, resp: dict
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    draft_freight = update_draft_fcl_freight_rate_data(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+    try:
+        draft_freight = update_draft_fcl_freight_rate_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @nandi_router.post("/update_draft_fcl_freight_rate_local")
 def update_draft_fcl_freight_rate_local(request: UpdateDraftFclFreightRateLocal, resp: dict = Depends(authorize_token)):
@@ -54,8 +72,14 @@ def update_draft_fcl_freight_rate_local(request: UpdateDraftFclFreightRateLocal,
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-    draft_freight = update_draft_fcl_freight_rate_local_data(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+    try:
+        draft_freight_local = update_draft_fcl_freight_rate_local_data(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @nandi_router.get("/list_draft_fcl_freight_rates")
 def list_draft_fcl_freight_rate_data(
@@ -105,25 +129,30 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        request = request.dict(exclude_none=False)
+        get_local_params = {
+            'port_id': request.get('port_id'),
+            'main_port_id': request.get('main_port_id'),
+            'container_size': request.get('container_size'),
+            'container_type': request.get('container_type'),
+            'commodity': request.get('commodity'),
+            'shipping_line_id': request.get('shipping_line_id'),
+            'service_provider_id': request.get('service_provider_id'),
+            'trade_type': request.get('trade_type') 
+        }
+        fcl_freight_local = get_fcl_freight_rate_local(get_local_params)
+        if 'id' not in fcl_freight_local:
+            fcl_freight_local = create_fcl_freight_rate_local(request)
 
-    request = request.dict(exclude_none=False)
-    get_local_params = {
-        'port_id': request.get('port_id'),
-        'main_port_id': request.get('main_port_id'),
-        'container_size': request.get('container_size'),
-        'container_type': request.get('container_type'),
-        'commodity': request.get('commodity'),
-        'shipping_line_id': request.get('shipping_line_id'),
-        'service_provider_id': request.get('service_provider_id'),
-        'trade_type': request.get('trade_type') 
-    }
-    fcl_freight_local = get_fcl_freight_rate_local(get_local_params)
-    if 'id' not in fcl_freight_local:
-        fcl_freight_local = create_fcl_freight_rate_local(request)
-
-    request['rate_id'] = fcl_freight_local.get('id')
-    draft_freight_local = create_draft_fcl_freight_rate_local_data(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+        request['rate_id'] = fcl_freight_local.get('id')
+        draft_freight_local = create_draft_fcl_freight_rate_local_data(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @nandi_router.post("/create_fcl_freight_rate_for_draft")
 def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict = Depends(authorize_token)):
@@ -132,23 +161,28 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-
-    request = request.dict(exclude_none=False)
-    get_fcl_params = {
-        'origin_port_id': request.get('origin_port_id'),
-        'origin_main_port_id': request.get('origin_main_port_id'),
-        'destination_port_id': request.get('destination_port_id'),
-        'destination_main_port_id': request.get('destination_main_port_id'),
-        'container_size': request.get('container_size'),
-        'container_type': request.get('container_type'),
-        'commodity': request.get('commodity'),
-        'shipping_line_id': request.get('shipping_line_id'),
-        'service_provider_id': request.get('service_provider_id'),
-        'importer_exporter_id': request.get('importer_exporter_id')
-    }
-    fcl_freight = get_fcl_freight_rate(get_fcl_params)
-    if 'freight' not in fcl_freight:
-        fcl_freight = create_fcl_freight_rate_data(request)
-    request['rate_id'] = fcl_freight['freight'].get('id')
-    draft_freight = create_draft_fcl_freight_rate_data(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+    try:
+        request = request.dict(exclude_none=False)
+        get_fcl_params = {
+            'origin_port_id': request.get('origin_port_id'),
+            'origin_main_port_id': request.get('origin_main_port_id'),
+            'destination_port_id': request.get('destination_port_id'),
+            'destination_main_port_id': request.get('destination_main_port_id'),
+            'container_size': request.get('container_size'),
+            'container_type': request.get('container_type'),
+            'commodity': request.get('commodity'),
+            'shipping_line_id': request.get('shipping_line_id'),
+            'service_provider_id': request.get('service_provider_id'),
+            'importer_exporter_id': request.get('importer_exporter_id')
+        }
+        fcl_freight = get_fcl_freight_rate(get_fcl_params)
+        if 'freight' not in fcl_freight:
+            fcl_freight = create_fcl_freight_rate_data(request)
+        request['rate_id'] = fcl_freight['freight'].get('id')
+        draft_freight = create_draft_fcl_freight_rate_data(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
