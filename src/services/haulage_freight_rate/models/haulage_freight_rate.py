@@ -21,7 +21,7 @@ class HaulageFreightRate(BaseModel):
     destination_location_id = UUIDField(null=True)
     destination_cluster_id = UUIDField(null=True)
     destination_city_id = UUIDField(null=True)
-    container_size = IntegerField(index=True, null=True)
+    container_size = CharField(index=True, null=True)
     commodity_type = CharField(index=True, null=True)
     commodity = CharField(index=True, null=True)
     importer_exporter_id = UUIDField(null=True)

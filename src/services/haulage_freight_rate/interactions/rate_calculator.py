@@ -188,8 +188,7 @@ def haulage_rate_calculator(request):
     # route_distance = route_data['distance']
     # replace location_pair_distance with route_distance once route comes from vahalla
 
-    query = HaulageFreightRateRuleSet.select(HaulageFreightRateRuleSet.base_price)
-
+    query = HaulageFreightRateRuleSet.select(HaulageFreightRateRuleSet.base_price, HaulageFreightRateRuleSet.running_base_price, HaulageFreightRateRuleSet.currency)
     final_data = getattr(rate_calculator, "get_{}_rates".format(location_category))(
         query,
         commodity,
@@ -199,6 +198,7 @@ def haulage_rate_calculator(request):
         container_type,
         cargo_weight_per_container,
         permissable_carrying_capacity,
+        container_size
     )
 
     params = build_haulage_freight_rate(
@@ -225,6 +225,7 @@ def get_india_rates(
     container_type,
     cargo_weight_per_container,
     permissable_carrying_capacity,
+    container_size
 ):
     final_data = {}
     final_data["distance"] = location_pair_distance
@@ -254,6 +255,7 @@ def get_india_rates(
         )
         rake_price_per_tonne = model_to_dict(rake_price)["base_price"]
         wagon_price_per_tonne = model_to_dict(wagon_price)["base_price"]
+        currency = model_to_dict(wagon_price)["currency"]
         final_rake_price = (
             float(rake_price_per_tonne)
             * full_rake_count
@@ -279,6 +281,7 @@ def get_india_rates(
         )
         price = model_to_dict(query)
         price_per_tonne = price["base_price"]
+        currency = price['currency']
         # permissible_carrying_capacity = WagonTypes.select(WagonTypes.permissible_carrying_capacity).where(WagonTypes.wagon_code == wagon_type)
         # price = float(price_per_tonne) * container_count * int(permissible_carrying_capacity.dicts().get()['permissible_carrying_capacity'])
         # else:
@@ -288,16 +291,8 @@ def get_india_rates(
         )
         final_data["base_price"] = apply_surcharges(indicative_price)
 
-    final_data["currency"] = "INR"
+    final_data["currency"] = currency
     return final_data
-
-
-def get_generalized_rates(
-    query, commodity, load_type, container_count, location_pair_distance, container_type
-):
-    final_data = {}
-    final_data["distance"] = location_pair_distance
-    return
 
 
 def get_china_rates(
@@ -309,18 +304,20 @@ def get_china_rates(
     container_type,
     cargo_weight_per_container,
     permissable_carrying_capacity,
+    container_size
 ):
     final_data = {}
     final_data["distance"] = location_pair_distance
-    query = query.where(HaulageFreightRateRuleSet.container_type == container_type, HaulageFreightRateRuleSet.train_load_type == load_type).order_by(SQL("base_price ASC")).first()
+    query = query.where(HaulageFreightRateRuleSet.container_type == container_size, HaulageFreightRateRuleSet.train_load_type == load_type).order_by(SQL("base_price ASC")).first()
     price = model_to_dict(query)
-    price_per_container = price["base_price"]
-    running_base_price_per_carton_km = price["running_base_price"]
+    currency =  price['currency']
+    price_per_container = float(price["base_price"])
+    running_base_price_per_carton_km = float(price["running_base_price"])
     base_price = price_per_container * container_count
     running_base_price = running_base_price_per_carton_km * cargo_weight_per_container * location_pair_distance
     indicative_price = base_price + running_base_price
     final_data["base_price"] = apply_surcharges(indicative_price)
-    final_data["currency"] = "INR"
+    final_data["currency"] = currency
     return final_data
 
 
@@ -423,3 +420,11 @@ def get_europe_rates(commodity, load_type, container_count, ports_distance, wago
     final_data["base_price"] = price + surcharge + development_charges
 
     return final_data
+
+
+def get_generalized_rates(
+    query, commodity, load_type, container_count, location_pair_distance, container_type
+):
+    final_data = {}
+    final_data["distance"] = location_pair_distance
+    return
