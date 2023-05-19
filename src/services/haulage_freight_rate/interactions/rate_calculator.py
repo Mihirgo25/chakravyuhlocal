@@ -238,7 +238,7 @@ def haulage_rate_calculator(request):
         containers_count,
         commodity
     )
-    create_haulage_freight_rate_delay(params)
+    create_haulage_freight_rate_delay.apply_async(kwargs = {'params' : params} , queue='low')
     response["success"] = True
     response["list"] = [final_data]
     return response

@@ -359,9 +359,9 @@ def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
 
 
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
-def create_haulage_freight_rate_delay(self, request):
+def create_haulage_freight_rate_delay(self, params):
     try:
-        return create_haulage_freight_rate(request)
+        return create_haulage_freight_rate(params)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
