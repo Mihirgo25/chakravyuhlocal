@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
 # from database.create_tables import create_table
-from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
+# from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
