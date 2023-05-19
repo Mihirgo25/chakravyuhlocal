@@ -1,8 +1,6 @@
 from scheduler import scheduler
 from schedule import every
 from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS
-import json
-import copy
 import requests
 import time
 import copy

@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from peewee import *
     
 class CreateFuelData(BaseModel):
     location_id: str 

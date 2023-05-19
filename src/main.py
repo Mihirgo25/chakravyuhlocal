@@ -41,7 +41,7 @@ app = FastAPI(docs_url=docs_url, debug=True)
 
 app.include_router(prefix="/fcl_freight_rate", router=fcl_freight_router)
 app.include_router(prefix="/fcl_freight_rate", router=envision_router)
-app.include_router(prefix="/ftl_freight_rate", router=ftl_freight_router)
+app.include_router(prefix="/fcl_freight_rate", router=ftl_freight_router)
 app.include_router(prefix="/chakravyuh", router=chakravyuh_router)
 
 

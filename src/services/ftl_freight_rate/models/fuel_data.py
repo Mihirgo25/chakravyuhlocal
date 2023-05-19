@@ -1,6 +1,5 @@
 from peewee import *
 from database.db_session import db
-from playhouse.postgres_ext import *
 import datetime
 
 
@@ -18,7 +17,7 @@ class FuelData(BaseModel):
     currency = CharField(null=False)
     fuel_unit = CharField(null=False)
     fuel_type = CharField(null=False, index=True)
-    fuel_price = DecimalField(null=False)
+    fuel_price = DecimalField(null=False,max_digits = 10, decimal_places= 6)
     created_at = DateTimeField(null=False, default=datetime.datetime.now())
     updated_at = DateTimeField(null=False, default=datetime.datetime.now())
 
