@@ -9,7 +9,7 @@ from micro_services.client import *
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
 from configs.global_constants import COUNTRY_CODES_MAPPING
-import fuel_scheduler as fuel_schedulers
+import services.ftl_freight_rate.fuel_scheduler as fuel_schedulers
 
 
 @scheduler.add(every().day.at("01:00"))
