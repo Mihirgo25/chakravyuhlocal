@@ -91,6 +91,7 @@ from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from database.rails_db import migrate_cogo_assured_fcl_to_rms_table
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
@@ -1784,54 +1785,7 @@ def add_market_place():
         query.execute()
     return {"message": "Market place added to init_key column for all rows."}
     
-
-
-
-from celery_worker import create_fcl_freight_rate_delay
-from playhouse.shortcuts import model_to_dict
-
 @fcl_freight_router.get("/migrate_cogo_assured_fcl_to_rms_table")
-def migrate_cogo_assured_fcl_to_rms_table():
-    chunk_size = 5000  
-    total_rows = CogoAssuredFclFreightRate.select().count()
-    total_chunks = (total_rows // chunk_size) + 1
-
-    for chunk in range(total_chunks):
-        offset = chunk * chunk_size
-        query = (CogoAssuredFclFreightRate.select(CogoAssuredRate.origin_location_id.alias('origin_port_id'),
-                 CogoAssuredRate.origin_port_id.alias('origin_main_port_id'),
-                 CogoAssuredRate.destination_location_id.alias('destination_port_id'),
-                 CogoAssuredRate.destination_port_id.alias('destination_main_port_id'),
-                 CogoAssuredFclFreightRate.container_size,
-                 CogoAssuredFclFreightRate.container_type,
-                 CogoAssuredFclFreightRate.commodity,
-                 CogoAssuredFclFreightRate.shipping_line_id,
-                 CogoAssuredFclFreightRate.service_provider_id,
-                 CogoAssuredFclFreightRate.validity_start,
-                 CogoAssuredFclFreightRate.validity_end,
-                 CogoAssuredFclFreightRate.validities,
-                 CogoAssuredFclFreightRate.weight_limit,
-                 CogoAssuredFclFreightRate.origin_detention,
-                 CogoAssuredFclFreightRate.origin_demurrage,
-                 CogoAssuredFclFreightRate.origin_plugin,
-                 CogoAssuredFclFreightRate.destination_detention,
-                 CogoAssuredFclFreightRate.destination_demurrage,
-                 CogoAssuredFclFreightRate.destination_plugin,
-                 CogoAssuredFclFreightRate.inventory.alias('available_inventory'),
-                 CogoAssuredFclFreightRate.booked_inventory.alias('used_inventory'),
-                 CogoAssuredRate.value_props,
-                 CogoAssuredRate.terms_and_conditions.alias('t_n_c'))
-         .join(CogoAssuredRate, on=(CogoAssuredFclFreightRate.cogo_assured_rate_id == CogoAssuredRate.id))
-         .where(CogoAssuredRate.status == 'active')).limit(chunk_size).offset(offset)
-        
-        params = [model_to_dict(item) for item in query]
-
-        for param in params:
-            param['rate_type']='cogo_assured'
-            param['origin_local'] = {'line_items':[],'detention':param['origin_detention'],'demurrage':param['origin_demurrage'],'plugin':param['origin_plugin']}
-            param['destination_local'] = {'line_items':[],'detention':param['destination_detention'],'demurrage':param['destination_demurrage'],'plugin':param['destination_plugin']}
-            param['performed_by_id'] = '039a0141-e6f3-43b0-9c51-144b22b9fc84'
-            param['procured_by_id'] = 'd862bb07-02fb-4adc-ae20-d6e0bda7b9c1'
-            param['sourced_by_id'] = '7f6f97fd-c17b-4760-a09f-d70b6ad963e8'
-            create_fcl_freight_rate_delay.apply_async(kwargs = {'request':param}, queue = 'cogo_assured')
-    return {"message": "Creating rates in delay"}
+def migrate_cogo_assured_fcl_to_rms_table_func():
+    result = migrate_cogo_assured_fcl_to_rms_table()
+    return result
