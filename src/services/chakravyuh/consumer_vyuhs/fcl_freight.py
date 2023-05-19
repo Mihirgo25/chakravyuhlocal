@@ -35,6 +35,7 @@ class FclFreightVyuh():
             FclFreightRateEstimation.container_type == self.requirements['container_type'],
             ((FclFreightRateEstimation.commodity.is_null(True)) | (FclFreightRateEstimation.commodity == self.requirements['commodity'])),
             ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id << shipping_line_ids)),
+            FclFreightRateEstimation.status == 'active'
         )
         transformations = jsonable_encoder(list(transformation_query.dicts()))
         return transformations

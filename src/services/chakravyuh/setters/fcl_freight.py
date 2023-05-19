@@ -36,11 +36,30 @@ class FclFreightVyuh():
             ((FclFreightRateEstimation.schedule_type.is_null(True)) | (FclFreightRateEstimation.schedule_type == self.new_rate['schedule_type'])),
             ((FclFreightRateEstimation.payment_term.is_null(True)) | (FclFreightRateEstimation.payment_term == self.new_rate['payment_term'])),
             ((FclFreightRateEstimation.commodity.is_null(True)) | (FclFreightRateEstimation.commodity == self.new_rate['commodity'])),
-            ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id == self.new_rate['shipping_line_id']))
+            ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id == self.new_rate['shipping_line_id'])),
+            FclFreightRateEstimation.status == 'active'
         )
 
         price_estimations = jsonable_encoder(list(price_estimations_query.dicts()))
         return price_estimations
+    
+    def get_transformation(self, payload):
+        created_tf = FclFreightRateEstimation.select(FclFreightRateEstimation.id).where(
+                FclFreightRateEstimation.origin_location_id == payload['origin_location_id'],
+                FclFreightRateEstimation.destination_location_id == payload['destination_location_id'],
+                FclFreightRateEstimation.container_size == payload['container_size'],
+                FclFreightRateEstimation.container_type == payload['container_type'],
+                FclFreightRateEstimation.schedule_type.is_null(True),
+                FclFreightRateEstimation.payment_term.is_null(True),
+                FclFreightRateEstimation.commodity.is_null(True),
+                FclFreightRateEstimation.shipping_line_id.is_null(True),
+                FclFreightRateEstimation.status == 'active'
+            ).limit(1)
+
+        price_estimations = jsonable_encoder(list(created_tf.dicts()))
+        if len(price_estimations):
+            return price_estimations[0]
+        return None
     
     def get_transformations_to_be_added(self, already_added_tranformations: list = []):
         must_have_transformations = [
@@ -419,6 +438,11 @@ class FclFreightVyuh():
             # Return If no line_items to create
             return
         
+        if not transformation_id and new:
+            tf = self.get_transformation(affected_transformation)
+            if tf:
+                transformation_id = tf['id']
+ 
         if transformation_id:
             transformation = FclFreightRateEstimation.update(
                 line_items = adjusted_line_items,
