@@ -47,14 +47,20 @@ def get_most_relevant_slabs(data, direct_filters):
 
 def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
 
-    origin_locations = [requirements["origin_port_id"], requirements["origin_country_id"], None]
-    destination_locations = [requirements["destination_port_id"], requirements["destination_country_id"], None]
+    origin_locations = [requirements["origin_port_id"], requirements["origin_country_id"]]
+    destination_locations = [requirements["destination_port_id"], requirements["destination_country_id"]]
 
     service_provider_ids = []
     shipping_line_ids = []
-    for rate in rates:
-        service_provider_ids.append(rate["service_provider_id"])
-        shipping_line_ids.append(rate["shipping_line_id"])
+
+    if len(rates) == 0:
+        service_provider_ids.append(requirements.get('service_provider_id'))
+        shipping_line_ids.append(requirements.get('shipping_line_id'))
+
+    else:
+        for rate in rates:
+            service_provider_ids.append(rate["service_provider_id"])
+            shipping_line_ids.append(rate["shipping_line_id"])
 
     service_provider_ids.append(None)
     shipping_line_ids.append(None)
@@ -91,15 +97,14 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
     ).where(
         FclWeightSlabsConfiguration.origin_location_id << origin_locations,
         FclWeightSlabsConfiguration.destination_location_id << destination_locations,
-        FclWeightSlabsConfiguration.origin_location_type << ['seaport', 'country', None],
-        FclWeightSlabsConfiguration.destination_location_type << ['seaport', 'country', None],
-        FclWeightSlabsConfiguration.shipping_line_id << shipping_line_ids,
-        FclWeightSlabsConfiguration.service_provider_id << service_provider_ids,
-        FclWeightSlabsConfiguration.is_cogo_assured == False,
-        FclWeightSlabsConfiguration.container_size << [requirements['container_size'], None],
-        FclWeightSlabsConfiguration.commodity << [requirements['commodity'], None],
+        ((FclWeightSlabsConfiguration.origin_location_type << ['seaport', 'country']) | (FclWeightSlabsConfiguration.origin_location_type.is_null(True))),
+        ((FclWeightSlabsConfiguration.destination_location_type << ['seaport', 'country']) | (FclWeightSlabsConfiguration.destination_location_type.is_null(True))),
+        ((FclWeightSlabsConfiguration.shipping_line_id << shipping_line_ids) | (FclWeightSlabsConfiguration.shipping_line_id.is_null(True))),
+        ((FclWeightSlabsConfiguration.service_provider_id << service_provider_ids) | (FclWeightSlabsConfiguration.service_provider_id.is_null(True))),
+        ((FclWeightSlabsConfiguration.container_size == requirements['container_size']) | (FclWeightSlabsConfiguration.container_size.is_null(True))),
+        ((FclWeightSlabsConfiguration.commodity == requirements['commodity']) | (FclWeightSlabsConfiguration.commodity.is_null(True))),
         # FclWeightSlabsConfiguration.container_type << [requirements['container_type'], None],
-        FclWeightSlabsConfiguration.organization_category << all_categories,
+        ((FclWeightSlabsConfiguration.organization_category << all_categories) | (FclWeightSlabsConfiguration.organization_category.is_null(True)))
     )
 
     if 'importer_exporter_id' in requirements:
@@ -107,8 +112,28 @@ def get_fcl_freight_weight_slabs_for_rates(requirements, rates):
 
     weight_slabs = jsonable_encoder(list(weight_slabs_query.dicts()))
 
-
     if len(weight_slabs) > 0:
+        
+        if len(rates) == 0:
+            category = service_providers_to_category.get(requirements["service_provider_id"],{}).get('category_types') or []
+
+            direct_filters = {
+                "origin_location_id": origin_locations,
+                "destination_location_id": destination_locations,
+                "origin_location_type": ['seaport', 'country', None],
+                "destination_location_type": ['seaport', 'country', None],
+                "importer_exporter_id": [requirements["importer_exporter_id"], None],
+                "container_size": [requirements["container_size"], None],
+                "commodity": [requirements["commodity"], None],
+                "container_type": [requirements["container_type"], None],
+                "is_cogo_assured": [False, None],
+                "shipping_line_id": [requirements["shipping_line_id"], None],
+                "service_provider_id": [requirements["service_provider_id"], None],
+                "organization_category": category + [None]
+            }
+
+            slabs = get_most_relevant_slabs(weight_slabs, direct_filters)
+            return slabs
 
         group_by_rate = {}
 
