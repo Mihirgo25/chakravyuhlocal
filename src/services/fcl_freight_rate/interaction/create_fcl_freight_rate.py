@@ -52,7 +52,7 @@ def create_fcl_freight_rate(request):
         "accuracy":request.get("accuracy", 100),
         "payment_term": request.get("payment_term", "prepaid"),
         "schedule_type": request.get("schedule_type", "transhipment"),
-        "rate_not_available_entry": request.get("rate_not_available_entry")
+        "rate_not_available_entry": request.get("rate_not_available_entry", False)
     }
 
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
