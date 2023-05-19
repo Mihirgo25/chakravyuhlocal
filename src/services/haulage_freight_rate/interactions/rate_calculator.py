@@ -42,6 +42,9 @@ def get_distances(origin_location, destination_location, data):
             destination_location = (d["latitude"], d["longitude"])
     coords_1 = origin_location
     coords_2 = destination_location
+    route_distance = get_railway_route(origin_location, destination_location)
+    if route_distance:
+        return route_distance
     return get_distance(coords_1, coords_2)
 
 
@@ -122,7 +125,7 @@ def build_haulage_freight_rate(
 ):
     line_items_data = [
         {
-            "code": "IHI",
+            "code": "BAS",
             "unit": "per_container",
             "price": base_price,
             "remarks": [],
@@ -205,10 +208,6 @@ def haulage_rate_calculator(request):
         commodity, container_type, location_category
     )
 
-
-    route_data = get_railway_route(origin_location, destination_location)
-    # route_distance = route_data['distance']
-    # replace location_pair_distance with route_distance once route comes from vahalla
 
     query = HaulageFreightRateRuleSet.select(
         HaulageFreightRateRuleSet.base_price,
@@ -316,9 +315,6 @@ def get_india_rates(
         price = model_to_dict(query.first())
         price_per_tonne = price["base_price"]
         currency = price["currency"]
-        # permissible_carrying_capacity = WagonTypes.select(WagonTypes.permissible_carrying_capacity).where(WagonTypes.wagon_code == wagon_type)
-        # price = float(price_per_tonne) * containers_count * int(permissible_carrying_capacity.dicts().get()['permissible_carrying_capacity'])
-        # else:
 
         indicative_price = (
             float(price_per_tonne) * containers_count * permissable_carrying_capacity
