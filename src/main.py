@@ -11,6 +11,7 @@ from database.create_tables import create_table
 from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
+from services.haulage_freight_rate.interactions.insert import insert_china, insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
@@ -32,7 +33,7 @@ app = FastAPI(docs_url=docs_url,debug=True)
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
 app.include_router(prefix="/fcl_freight_rate", router=envision_router)
 app.include_router(prefix = "/chakravyuh", router=chakravyuh_router)
-app.include_router(prefix = "/haulage_freight_rate", router=haulage_freight_router)
+app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -72,11 +73,13 @@ def startup():
     if db.is_closed():
         db.connect()
     # run_migration()
+    # insert_china()
     # insert()
     # create_table()
     # fcl_freight_migration()
     # create_partition_table()
-    # fcl_local_migration()
+    # fcl_local_
+    # migration()
     # free_day()
 
 
