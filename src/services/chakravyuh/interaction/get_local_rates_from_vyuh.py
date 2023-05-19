@@ -60,7 +60,6 @@ def create_fcl_freight_local_in_delay(param, line_items, final_list):
         'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
         'source':'predicted',
         'shipping_line_id' : param.get('shipping_line_id') if param.get('shipping_line_id') else DEFAULT_SHIPPING_LINE_ID,
-        'performed_by_id':'4ed1f0e6-17c6-4058-9610-bf59657398bd'
         }
 
         for port in final_list:
