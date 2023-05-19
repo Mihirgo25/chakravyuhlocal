@@ -335,14 +335,6 @@ def get_india_rates(
     return final_data
 
 
-def get_generalized_rates(
-    query, commodity, load_type, container_count, location_pair_distance, container_type
-):
-    final_data = {}
-    final_data["distance"] = location_pair_distance
-    return
-
-
 def get_china_rates(
     query,
     commodity,
