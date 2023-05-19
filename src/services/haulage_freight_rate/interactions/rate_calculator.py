@@ -132,13 +132,16 @@ def build_haulage_freight_rate(
         "validity_end": datetime.datetime.now() + datetime.timedelta(days=60),
     }
 
-    HaulageFreightRate.create(**create_params)
+    return create_params
 
+
+def create_haulage_freight_rate(create_params):
+    HaulageFreightRate.create(**create_params)
     return
 
 
 def haulage_rate_calculator(request):
-    from celery_worker import build_haulage_freight_rate_delay
+    from celery_worker import create_haulage_freight_rate_delay
     origin_location = request.origin_location
     destination_location = request.destination_location
     commodity = request.commodity
@@ -198,7 +201,7 @@ def haulage_rate_calculator(request):
         permissable_carrying_capacity,
     )
 
-    build_haulage_freight_rate_delay(
+    params = build_haulage_freight_rate(
         origin_location,
         destination_location,
         final_data["base_price"],
@@ -207,7 +210,7 @@ def haulage_rate_calculator(request):
         container_size,
         container_type,
     )
-
+    create_haulage_freight_rate(params)
     response["success"] = True
     response["list"] = final_data
     return response
@@ -298,11 +301,27 @@ def get_generalized_rates(
 
 
 def get_china_rates(
-    query, commodity, load_type, container_count, location_pair_distance, container_type
+    query,
+    commodity,
+    load_type,
+    container_count,
+    location_pair_distance,
+    container_type,
+    cargo_weight_per_container,
+    permissable_carrying_capacity,
 ):
     final_data = {}
     final_data["distance"] = location_pair_distance
-    return
+    query = query.where(HaulageFreightRateRuleSet.container_type == container_type, HaulageFreightRateRuleSet.train_load_type == load_type).order_by(SQL("base_price ASC")).first()
+    price = model_to_dict(query)
+    price_per_container = price["base_price"]
+    running_base_price_per_carton_km = price["running_base_price"]
+    base_price = price_per_container * container_count
+    running_base_price = running_base_price_per_carton_km * cargo_weight_per_container * location_pair_distance
+    indicative_price = base_price + running_base_price
+    final_data["base_price"] = apply_surcharges(indicative_price)
+    final_data["currency"] = "INR"
+    return final_data
 
 
 def get_north_america_rates(commodity, load_type, container_count, ports_distance):
