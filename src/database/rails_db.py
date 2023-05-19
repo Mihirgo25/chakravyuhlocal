@@ -308,8 +308,7 @@ def migrate_cogo_assured_fcl_to_rms_table():
                 sql = 'select count(*) from cogo_assured_fcl_freight_rates left join cogo_assured_rates on cogo_assured_fcl_freight_rates.cogo_assured_rate_id = cogo_assured_rates.id where cogo_assured_rates.status = %s'
                 cur.execute(sql, ( status,))
                 result = cur.fetchall()
-                total_rows = result
-                total_rows = 500
+                total_rows = result[0][0]
                 total_chunks = (total_rows // chunk_size) + 1
                 for chunk in range(total_chunks):
                     offset = chunk * chunk_size
@@ -346,8 +345,11 @@ def migrate_cogo_assured_fcl_to_rms_table():
                         result['sourced_by_id'] = '7f6f97fd-c17b-4760-a09f-d70b6ad963e8'
                         result['shipment_count'] = 0
                         result['volume_count'] = 0
-                        id = create_fcl_freight_rate(result)
-                        print(id)
+                        try:
+                            id = create_fcl_freight_rate(result)
+                            print(id)
+                        except Exception as e:
+                            print(e)
                 cur.close()
         conn.close()
         return {"message": "Created rates in fcl with tag cogo_assured"}
