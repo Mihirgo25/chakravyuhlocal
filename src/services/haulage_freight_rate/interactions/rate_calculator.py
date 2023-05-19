@@ -388,7 +388,6 @@ def get_north_america_rates(commodity, load_type, containers_count, ports_distan
             HaulageFreightRateRuleSet.country_code == "US",
         )
         .order_by(HaulageFreightRateRuleSet.distance.desc())
-        .execute()
     )
 
     wagon_upper_limit = (
@@ -401,14 +400,13 @@ def get_north_america_rates(commodity, load_type, containers_count, ports_distan
             HaulageFreightRateRuleSet.country_code == "US",
         )
         .order_by(HaulageFreightRateRuleSet.distance)
-        .execute()
     )
 
     wagon_price_lower_limit = [model_to_dict(item) for item in wagon_lower_limit]
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
-    if len(wagon_price_lower_limit) == 0 or len(wagon_price_upper_limit) == 0:
-        if len(wagon_price_lower_limit) == 0:
+    if wagon_price_lower_limit or wagon_price_upper_limit:
+        if wagon_price_lower_limit:
             price = (
                 wagon_price_upper_limit[0]["base_price"]
                 / wagon_price_upper_limit["distance"]
@@ -431,9 +429,7 @@ def get_north_america_rates(commodity, load_type, containers_count, ports_distan
             price = wagon_price_lower_limit[0]["base_price"]
 
     price = price * containers_count
-    surcharge = 0.15 * price
-    development_charges = 0.05 * price
-    final_data["base_price"] = price + surcharge + development_charges
+    final_data["base_price"] = apply_surcharges(price)
 
     return final_data
 
@@ -455,20 +451,17 @@ def get_europe_rates(commodity, load_type, containers_count, ports_distance, wag
             HaulageFreightRateRuleSet.country_code == "EU",
         )
         .order_by(HaulageFreightRateRuleSet.distance)
-        .execute()
     )
 
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
-    if len(wagon_price_upper_limit) == 0:
+    if wagon_price_upper_limit:
         final_data["base_price"] = 0
         return final_data
 
     price = wagon_price_upper_limit[0]["base_price"]
     price = price * containers_count
-    surcharge = 0.15 * price
-    development_charges = 0.05 * price
-    final_data["base_price"] = price + surcharge + development_charges
+    final_data["base_price"] = apply_surcharges(price)
 
     return final_data
 
