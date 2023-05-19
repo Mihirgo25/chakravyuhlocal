@@ -138,6 +138,7 @@ def build_haulage_freight_rate(
 
 
 def haulage_rate_calculator(request):
+    from celery_worker import build_haulage_freight_rate_delay
     origin_location = request.origin_location
     destination_location = request.destination_location
     commodity = request.commodity
@@ -197,7 +198,7 @@ def haulage_rate_calculator(request):
         permissable_carrying_capacity,
     )
 
-    build_haulage_freight_rate(
+    build_haulage_freight_rate_delay(
         origin_location,
         destination_location,
         final_data["base_price"],
@@ -222,7 +223,6 @@ def get_india_rates(
     cargo_weight_per_container,
     permissable_carrying_capacity,
 ):
-    print(permissable_carrying_capacity)
     final_data = {}
     final_data["distance"] = location_pair_distance
     if not container_count:
