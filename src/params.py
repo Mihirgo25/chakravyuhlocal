@@ -76,6 +76,7 @@ class PostFclFreightRate(BaseModel):
   mode: str = None
   source: str = 'rms_upload'
   is_extended: bool = None
+  rate_not_available_entry: bool = False
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None
@@ -175,6 +176,7 @@ class PostFclFreightRateLocal(BaseModel):
     selected_suggested_rate_id: str = None
     source: str = None
     data: Data = {}
+    rate_not_available_entry: bool = False
 
 class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
@@ -185,6 +187,7 @@ class UpdateFclFreightRateLocal(BaseModel):
     bulk_operation_id: str = None
     selected_suggested_rate_id: str = None
     data: Data
+    rate_not_available_entry: bool = False
 
 class PostFclFreightRateExtensionRuleSet(BaseModel):
   cluster_id: str
