@@ -18,7 +18,7 @@ from configs.rails_constants import (
 from libs.get_distance import get_distance
 from playhouse.postgres_ext import SQL
 from playhouse.shortcuts import model_to_dict
-
+from fastapi import HTTPException
 
 POSSIBLE_LOCATION_CATEGORY = [
     "india",
@@ -27,6 +27,13 @@ POSSIBLE_LOCATION_CATEGORY = [
     "north_america",
     "generalized",
 ]
+
+def apply_surcharges_for_usa_europe(price):
+    surcharge = 0.15 * price
+    development_charges = 0.05 * price
+    final_price = price + surcharge + development_charges
+
+    return final_price
 
 
 def get_distances(origin_location, destination_location, data):
@@ -296,19 +303,6 @@ def get_north_america_rates(commodity, load_type, container_count, ports_distanc
     final_data["currency"] = "USD"
     final_data["country_code"] = "US"
 
-    wagon_lower_limit = (
-        HaulageFreightRateRuleSet.select()
-        .where(
-            HaulageFreightRateRuleSet.commodity_class_type == commodity,
-            HaulageFreightRateRuleSet.distance <= ports_distance,
-            HaulageFreightRateRuleSet.train_load_type == load_type,
-            HaulageFreightRateRuleSet.currency == "USD",
-            HaulageFreightRateRuleSet.country_code == "US",
-        )
-        .order_by(HaulageFreightRateRuleSet.distance.desc())
-        .execute()
-    )
-
     wagon_upper_limit = (
         HaulageFreightRateRuleSet.select()
         .where(
@@ -319,39 +313,17 @@ def get_north_america_rates(commodity, load_type, container_count, ports_distanc
             HaulageFreightRateRuleSet.country_code == "US",
         )
         .order_by(HaulageFreightRateRuleSet.distance)
-        .execute()
     )
 
-    wagon_price_lower_limit = [model_to_dict(item) for item in wagon_lower_limit]
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
-    if len(wagon_price_lower_limit) == 0 or len(wagon_price_upper_limit) == 0:
-        if len(wagon_price_lower_limit) == 0:
-            price = (
-                wagon_price_upper_limit[0]["base_price"]
-                / wagon_price_upper_limit["distance"]
-            ) * ports_distance
+    if not wagon_price_upper_limit:
+        raise HTTPException(status_code=400, details="rates not present")
 
-        else:
-            price = (
-                wagon_price_lower_limit[0]["base_price"]
-                / wagon_price_lower_limit["distance"]
-            ) * ports_distance
 
-    else:
-        limit1 = limit2 = ports_distance
-        limit1 = ports_distance - wagon_price_lower_limit[0]["distance"]
-        limit2 = wagon_price_upper_limit[0]["distance"] - ports_distance
-
-        if limit1 >= limit2:
-            price = wagon_price_upper_limit[0]["base_price"]
-        else:
-            price = wagon_price_lower_limit[0]["base_price"]
-
+    price = wagon_price_upper_limit[0]["base_price"]
     price = price * container_count
-    surcharge = 0.15 * price
-    development_charges = 0.05 * price
-    final_data["base_price"] = price + surcharge + development_charges
+    final_data["base_price"] = apply_surcharges_for_usa_europe(float(price))
 
     return final_data
 
@@ -373,19 +345,14 @@ def get_europe_rates(commodity, load_type, container_count, ports_distance, wago
             HaulageFreightRateRuleSet.country_code == "EU",
         )
         .order_by(HaulageFreightRateRuleSet.distance)
-        .execute()
     )
-
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
-    if len(wagon_price_upper_limit) == 0:
-        final_data["base_price"] = 0
-        return final_data
+    if not wagon_price_upper_limit:
+        raise HTTPException(status_code=400, details="rates not present")
 
     price = wagon_price_upper_limit[0]["base_price"]
     price = price * container_count
-    surcharge = 0.15 * price
-    development_charges = 0.05 * price
-    final_data["base_price"] = price + surcharge + development_charges
+    final_data["base_price"] = apply_surcharges_for_usa_europe(float(price))
 
     return final_data
