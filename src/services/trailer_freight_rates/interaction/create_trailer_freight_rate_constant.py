@@ -14,9 +14,9 @@ def execute_transaction_code(request):
                 (TrailerFreightRateCharges.status == 'active')).first()
 
     if data:
-        for k, v in request.items():
-            setattr(data, k, v)
-        data.save()
+        # for k, v in request.items():
+        #     setattr(data, k, v)
+        # data.save()
         return {'id' : data.id}
     
     data=TrailerFreightRateCharges.create(**request)
