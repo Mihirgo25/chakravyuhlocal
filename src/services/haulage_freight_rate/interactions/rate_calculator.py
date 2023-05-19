@@ -53,10 +53,21 @@ def get_container_and_commodity_type(commodity, container_type, location_categor
     return commodity, permissable_carrying_capacity
 
 
-def list_haulage_freight_rate(
+def get_haulage_freight_rate(
     origin_location, destination_location, commodity, containers_count, container_type
 ):
-    return
+    haulage_freight_rate = HaulageFreightRate.select(HaulageFreightRate.line_items).where(HaulageFreightRate.origin_location_id == origin_location, HaulageFreightRate.destination_location_id ==destination_location, HaulageFreightRate.commodity == commodity, HaulageFreightRate.containers_count == containers_count, HaulageFreightRate.container_type == container_type)
+    print(haulage_freight_rate.count())
+    if haulage_freight_rate.count()==0:
+        return None
+    rate = model_to_dict(haulage_freight_rate)
+    final_data = {}
+    final_data["base_price"] = rate['line_items']['price']
+    distance = rate['distance']
+    final_data["currency"] = rate['line_items']['currency']
+    final_data["upper_limit"] = 10
+    final_data["transit_time"] = get_transit_time(distance)
+    return [final_data]
 
 
 def get_railway_route(origin_location, destination_location):
@@ -106,6 +117,8 @@ def build_haulage_freight_rate(
     currency,
     container_size,
     container_type,
+    containers_count,
+    commodity
 ):
     line_items_data = [
         {
@@ -123,6 +136,8 @@ def build_haulage_freight_rate(
         "destination_location_id": destination_location_id,
         "container_size": container_size,
         "container_type": container_type,
+        "containers_count": containers_count,
+        "commodity": commodity,
         "service_provider_id": SERVICE_PROVIDER_ID,
         "haulage_type": DEFAULT_HAULAGE_TYPE,
         "performed_by_id": COGO_ENVISION_ID,
@@ -136,7 +151,6 @@ def build_haulage_freight_rate(
         "validity_start": datetime.datetime.now(),
         "validity_end": datetime.datetime.now() + datetime.timedelta(days=60),
     }
-
     return create_params
 
 
@@ -158,6 +172,19 @@ def haulage_rate_calculator(request):
 
     response = {"success": False, "status_code": 200}
 
+    haulage_freight_rate = get_haulage_freight_rate(
+        origin_location,
+        destination_location,
+        commodity,
+        containers_count,
+        container_type,
+    )
+
+    if haulage_freight_rate:
+        response["success"] = True
+        response["list"] = haulage_freight_rate
+        return response
+
     locations_data, location_category = get_country_filter(
         origin_location, destination_location
     )
@@ -178,18 +205,6 @@ def haulage_rate_calculator(request):
         commodity, container_type, location_category
     )
 
-    haulage_freight_rate = list_haulage_freight_rate(
-        origin_location,
-        destination_location,
-        commodity,
-        containers_count,
-        container_type,
-    )
-
-    if haulage_freight_rate:
-        response["success"] = True
-        response["list"] = haulage_freight_rate
-        return response
 
     route_data = get_railway_route(origin_location, destination_location)
     # route_distance = route_data['distance']
@@ -220,6 +235,8 @@ def haulage_rate_calculator(request):
         final_data["currency"],
         container_size,
         container_type,
+        containers_count,
+        commodity
     )
     create_haulage_freight_rate_delay(params)
     response["success"] = True

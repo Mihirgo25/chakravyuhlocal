@@ -27,6 +27,7 @@ class HaulageFreightRate(BaseModel):
     importer_exporter_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
     containers_count =  IntegerField(index=True, null=True)
+    container_type = CharField(index=True, null=True)
     weight_slabs = BinaryJSONField(index=True, null=True)
     line_items = BinaryJSONField(index=True, null=True)
     is_best_price = BooleanField(index=True, null=True)
