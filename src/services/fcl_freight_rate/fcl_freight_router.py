@@ -359,6 +359,7 @@ def get_fcl_freight_rate_for_lcl_func(
 
 @fcl_freight_router.get("/get_fcl_freight_rate_local")
 def get_fcl_freight_local_data(
+    id: str = None,
     port_id: str = None,
     main_port_id: str = None,
     trade_type: str = None,
@@ -372,6 +373,7 @@ def get_fcl_freight_local_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     request = {
+        'id':id,
         'port_id':port_id,
         'main_port_id':main_port_id,
         'trade_type':trade_type,
