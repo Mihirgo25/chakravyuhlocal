@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
@@ -12,6 +12,7 @@ from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
+from services.chakravyuh.interaction.get_local_rates_from_vyuh import get_local_rates_from_vyuh
 import sentry_sdk
 import traceback
 
@@ -132,7 +133,7 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.container_size  == container_size,
         FclFreightRateLocal.container_type == container_type,
         FclFreightRateLocal.commodity == commodity,
-        FclFreightRateLocal.shipping_line_id << shipping_line_ids,
+        # FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id << list(service_provider_ids.keys()),
         (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
         (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
@@ -145,6 +146,12 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
 
     all_rate_locals = jsonable_encoder(list(all_rate_locals_query.dicts()))
 
+    ports = list(set([data.get('port_id') for data in all_rate_locals]))
+
+    if len(ports) < 2: #checking for origin and destination ids
+        rate_locals = get_local_rate_from_country(requirements, ports)
+        all_rate_locals.extend(list(filter(None,rate_locals)))
+    
     all_formatted_locals = []
     for local_charge in all_rate_locals:
         new_local_obj = local_charge | {
@@ -167,7 +174,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['destination_main_port_id']
 
     for local_rate in local_rates:
-        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:
+        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (shipping_line_id == local_rate['shipping_line_id'] or local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID):
             matching_locals[local_rate["service_provider_id"]] = local_rate
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
@@ -683,7 +690,48 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 
+def get_local_rate_from_country(requirements, ports):
+    common_params = {
+        'container_size':requirements.get('container_size'),
+        'container_type':requirements.get('container_type'),
+        'commodity':requirements.get('commodity'),
+        'service_provider_id':requirements.get('service_provider_id'),
+        'shipping_line_id':requirements.get('shipping_line_id')
+    }
 
+    origin_local = common_params | {
+        'port_id':requirements.get('origin_port_id'),
+        'country_id':requirements.get('origin_country_id'),
+        'trade_type':'export'
+    }        
+
+    destination_local = common_params | {
+        'port_id':requirements.get('destination_port_id'),
+        'country_id':requirements.get('destination_country_id'),
+        'trade_type':'import'
+    }
+
+    all_rate_locals = []
+    if len(ports) == 1:
+        if ports[0] == requirements.get('origin_port_id'):
+            param = destination_local
+        else:
+            param = origin_local
+
+        local_rate = get_local_rates_from_vyuh(param, line_items=[])
+        all_rate_locals.extend(local_rate)
+
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 2) as executor:
+            futures = [
+                executor.submit(get_local_rates_from_vyuh, origin_local, line_items=[]),
+                executor.submit(get_local_rates_from_vyuh, destination_local, line_items=[]),
+            ]
+
+        for i in range(0,len(futures)):
+            all_rate_locals.extend(futures[i].result())
+
+    return all_rate_locals
 
 def get_fcl_freight_rate_cards(requirements):
     """
