@@ -33,6 +33,13 @@ POSSIBLE_LOCATION_CATEGORY = [
     "generalized",
 ]
 
+def apply_surcharges_for_usa_europe(price):
+    surcharge = 0.15 * price
+    development_charges = 0.05 * price
+    final_price = price + surcharge + development_charges
+
+    return final_price
+
 
 def get_distances(origin_location, destination_location, data):
     for d in data:
@@ -328,6 +335,14 @@ def get_india_rates(
     return final_data
 
 
+def get_generalized_rates(
+    query, commodity, load_type, container_count, location_pair_distance, container_type
+):
+    final_data = {}
+    final_data["distance"] = location_pair_distance
+    return
+
+
 def get_china_rates(
     query,
     commodity,
@@ -368,23 +383,11 @@ def get_china_rates(
     return final_data
 
 
-def get_north_america_rates(commodity, load_type, containers_count, ports_distance):
+def get_north_america_rates(commodity, load_type, container_count, ports_distance):
     final_data = {}
     final_data["distance"] = ports_distance
     final_data["currency"] = "USD"
     final_data["country_code"] = "US"
-
-    wagon_lower_limit = (
-        HaulageFreightRateRuleSet.select()
-        .where(
-            HaulageFreightRateRuleSet.commodity_class_type == commodity,
-            HaulageFreightRateRuleSet.distance <= ports_distance,
-            HaulageFreightRateRuleSet.train_load_type == load_type,
-            HaulageFreightRateRuleSet.currency == "USD",
-            HaulageFreightRateRuleSet.country_code == "US",
-        )
-        .order_by(HaulageFreightRateRuleSet.distance.desc())
-    )
 
     wagon_upper_limit = (
         HaulageFreightRateRuleSet.select()
@@ -398,39 +401,20 @@ def get_north_america_rates(commodity, load_type, containers_count, ports_distan
         .order_by(HaulageFreightRateRuleSet.distance)
     )
 
-    wagon_price_lower_limit = [model_to_dict(item) for item in wagon_lower_limit]
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
-    if wagon_price_lower_limit or wagon_price_upper_limit:
-        if wagon_price_lower_limit:
-            price = (
-                wagon_price_upper_limit[0]["base_price"]
-                / wagon_price_upper_limit["distance"]
-            ) * ports_distance
+    if not wagon_price_upper_limit:
+        raise HTTPException(status_code=400, details="rates not present")
 
-        else:
-            price = (
-                wagon_price_lower_limit[0]["base_price"]
-                / wagon_price_lower_limit["distance"]
-            ) * ports_distance
 
-    else:
-        limit1 = limit2 = ports_distance
-        limit1 = ports_distance - wagon_price_lower_limit[0]["distance"]
-        limit2 = wagon_price_upper_limit[0]["distance"] - ports_distance
-
-        if limit1 >= limit2:
-            price = wagon_price_upper_limit[0]["base_price"]
-        else:
-            price = wagon_price_lower_limit[0]["base_price"]
-
-    price = price * containers_count
-    final_data["base_price"] = apply_surcharges(price)
+    price = wagon_price_upper_limit[0]["base_price"]
+    price = price * container_count
+    final_data["base_price"] = apply_surcharges_for_usa_europe(float(price))
 
     return final_data
 
 
-def get_europe_rates(commodity, load_type, containers_count, ports_distance, wagon_type):
+def get_europe_rates(commodity, load_type, container_count, ports_distance, wagon_type):
     final_data = {}
     final_data["distance"] = ports_distance
     final_data["currency"] = "EUR"
@@ -448,16 +432,14 @@ def get_europe_rates(commodity, load_type, containers_count, ports_distance, wag
         )
         .order_by(HaulageFreightRateRuleSet.distance)
     )
-
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
-    if wagon_price_upper_limit:
-        final_data["base_price"] = 0
-        return final_data
+    if not wagon_price_upper_limit:
+        raise HTTPException(status_code=400, details="rates not present")
 
     price = wagon_price_upper_limit[0]["base_price"]
-    price = price * containers_count
-    final_data["base_price"] = apply_surcharges(price)
+    price = price * container_count
+    final_data["base_price"] = apply_surcharges_for_usa_europe(float(price))
 
     return final_data
 
