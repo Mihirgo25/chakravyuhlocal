@@ -6,7 +6,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate import (
 )
 import datetime
 from micro_services.client import maps
-import services.haulage_freight_rate.interactions.rate_calculator as rate_calculator
+import services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation as get_haulage_freight_rate_estimation
 from configs.rails_constants import (
     DESTINATION_TERMINAL_CHARGES_INDIA,
     CONTAINER_TYPE_CLASS_MAPPINGS,
@@ -99,7 +99,6 @@ def get_country_filter(origin_location, destination_location):
     input = {"filters": {"id": [origin_location, destination_location]}}
     location_category = "generalized"
     locations_data = maps.list_locations(input)["list"]
-
     if (
         locations_data[0]["country_code"] == "IN"
         and locations_data[1]["country_code"] == "IN"
@@ -226,7 +225,7 @@ def haulage_rate_calculator(request):
         HaulageFreightRateRuleSet.running_base_price,
         HaulageFreightRateRuleSet.currency,
     )
-    final_data = getattr(rate_calculator, "get_{}_rates".format(location_category))(
+    final_data = getattr(get_haulage_freight_rate_estimation, "get_{}_rates".format(location_category))(
         query,
         commodity,
         load_type,
@@ -269,8 +268,8 @@ def get_india_rates(
     final_data = {}
     final_data["distance"] = location_pair_distance
     if not containers_count:
-        containers_count = 50
-        load_type = "Train Load"
+        containers_count = 1
+        load_type = "Wagon Load"
     if containers_count > 50:
         full_rake_count = containers_count / 50
         remaining_wagons_count = containers_count % 50
@@ -296,7 +295,7 @@ def get_india_rates(
         wagon_price_per_tonne = model_to_dict(wagon_price.first())["base_price"]
 
         if not rake_price_per_tonne or not wagon_price_per_tonne:
-            raise HTTPException(status_code=400, details="rates not present")
+            raise HTTPException(status_code=400, detail="rates not present")
 
         currency = model_to_dict(wagon_price)["currency"]
         final_rake_price = (
@@ -360,6 +359,7 @@ def get_china_rates(
         )
         .order_by(SQL("base_price ASC"))
     )
+
     if query.count()==0:
         raise HTTPException(status_code=400, detail="rates not present")
     price = model_to_dict(query.first())
@@ -401,7 +401,7 @@ def get_north_america_rates(commodity, load_type, container_count, ports_distanc
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
     if not wagon_price_upper_limit:
-        raise HTTPException(status_code=400, details="rates not present")
+        raise HTTPException(status_code=400, detail="rates not present")
 
 
     price = wagon_price_upper_limit[0]["base_price"]
@@ -432,7 +432,7 @@ def get_europe_rates(commodity, load_type, container_count, ports_distance, wago
     wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
 
     if not wagon_price_upper_limit:
-        raise HTTPException(status_code=400, details="rates not present")
+        raise HTTPException(status_code=400, detail="rates not present")
 
     price = wagon_price_upper_limit[0]["base_price"]
     price = price * container_count
@@ -442,8 +442,16 @@ def get_europe_rates(commodity, load_type, container_count, ports_distance, wago
 
 
 def get_generalized_rates(
-    query, commodity, load_type, containers_count, location_pair_distance, container_type
+    query,
+    commodity,
+    load_type,
+    containers_count,
+    location_pair_distance,
+    container_type,
+    cargo_weight_per_container,
+    permissable_carrying_capacity,
+    container_size,
 ):
     final_data = {}
     final_data["distance"] = location_pair_distance
-    raise HTTPException(status_code=400, details="rates not present")
+    raise HTTPException(status_code=400, detail="rates not present")

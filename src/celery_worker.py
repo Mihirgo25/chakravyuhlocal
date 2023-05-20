@@ -11,7 +11,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
-from services.haulage_freight_rate.interactions.rate_calculator import create_haulage_freight_rate
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation import create_haulage_freight_rate
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
