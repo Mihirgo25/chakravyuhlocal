@@ -8,12 +8,13 @@ from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
 # from database.create_tables import create_table
-from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
+# from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
-from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
+from services.nandi.nandi_router import nandi_router
+from services.envision.envision_service_router import envision_router
 from micro_services.client import *
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -30,7 +31,8 @@ app = FastAPI(docs_url=docs_url,debug=True)
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
 app.include_router(prefix="/fcl_freight_rate", router=envision_router)
-app.include_router(prefix = "/chakravyuh", router=chakravyuh_router)
+app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router)
+app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
 
 
 app.add_middleware(
@@ -89,6 +91,6 @@ def shutdown():
 def read_root():
     return "WELCOME TO OCEAN RMS"
 
-@app.get('/fcl_freight_rate/health_check')
+@app.get('/fcl_freight_rate/health')
 def get_health_check():
-    return JSONResponse(status_code=200, content={ "status": 'healthy' })
+    return JSONResponse(status_code=200, content={ "status": 'ok' })

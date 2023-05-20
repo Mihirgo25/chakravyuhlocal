@@ -82,6 +82,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rates import list_fc
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_surcharge import create_fcl_freight_rate_commodity_surcharge
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
+from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
@@ -358,6 +359,7 @@ def get_fcl_freight_rate_for_lcl_func(
 
 @fcl_freight_router.get("/get_fcl_freight_rate_local")
 def get_fcl_freight_local_data(
+    id: str = None,
     port_id: str = None,
     main_port_id: str = None,
     trade_type: str = None,
@@ -371,6 +373,7 @@ def get_fcl_freight_local_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     request = {
+        'id':id,
         'port_id':port_id,
         'main_port_id':main_port_id,
         'trade_type':trade_type,
@@ -489,6 +492,8 @@ def get_fcl_freight_rate_cards_data(
         ignore_omp_dmp_sl_sps = json.loads(ignore_omp_dmp_sl_sps)
     else:
         ignore_omp_dmp_sl_sps = []
+    if not importer_exporter_id:
+        importer_exporter_id = None
     # validity_start = datetime.strptime(validity_start,'%Y-%m-%d')
     # validity_end = datetime.strptime(validity_end,'%Y-%m-%d')
     request = {
@@ -1705,6 +1710,58 @@ def get_eligible_freight_rate_free_day_func(
 
     try:
         resp = get_eligible_fcl_freight_rate_free_day(filters,sort_by_specificity_type = sort_by_specificity_type)
+        return JSONResponse(status_code=200, content=resp)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.get('/get_fcl_freight_weight_slabs_for_rates')
+def get_fcl_freight_weight_slabs(
+    origin_port_id: str,
+    origin_country_id: str,
+    destination_port_id: str,
+    destination_country_id: str,
+    container_size: str,
+    container_type: str,
+    trade_type: str = None,
+    cogo_entity_id: str = None,
+    importer_exporter_id: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    service_provider_id: str = None,
+    cargo_weight_per_container: int = 0,
+    resp: dict = Depends(authorize_token),
+    rates: List[str] | None= Query(None)
+
+):  
+    request = {
+        'origin_port_id' : origin_port_id,
+        'origin_country_id' : origin_country_id,
+        'destination_port_id': destination_port_id,
+        'destination_country_id': destination_country_id,
+        'container_size' : container_size,
+        'container_type' : container_type,
+        'commodity' : commodity,
+        'importer_exporter_id' : importer_exporter_id,
+        'trade_type' : trade_type,
+        'shipping_line_id' : shipping_line_id,
+        'service_provider_id': service_provider_id,
+        'cargo_weight_per_container': cargo_weight_per_container,
+        'cogo_entity_id' : cogo_entity_id
+    }
+
+    if not rates:
+        rates = []
+    else:
+        rates = list(filter(None, rates))
+
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code = resp["status_code"], content = resp)
+
+    try:
+        resp = get_fcl_freight_weight_slabs_for_rates(request, rates)
         return JSONResponse(status_code=200, content=resp)
     except HTTPException as e:
         raise

@@ -128,7 +128,8 @@ def adjust_dynamic_pricing(request, freight: FclFreightRate, current_validities)
         'shipping_line_id': freight.shipping_line_id,
         'commodity': freight.commodity,
         'container_size': freight.container_size,
-        'container_type': freight.container_type
+        'container_type': freight.container_type,
+        'service_provider_id': freight.service_provider_id
     }
     if rate_obj["mode"] == 'manual' and not request.get("is_extended"):
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
