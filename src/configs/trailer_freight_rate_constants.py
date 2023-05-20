@@ -25,7 +25,7 @@ DEFAULT_SERVICE_PROVIDER_ID = "6cc6b696-60f6-480b-bcbe-92cc8e642531"
 
 CONTAINER_SIZE_FACTORS = {
     '20': 1,
-    '40': 1.1,
-    '40HC': 1.15,
-    '45HC': 1.2
+    '40': 1.4,
+    '40HC': 1.8,
+    '45HC': 2
 }

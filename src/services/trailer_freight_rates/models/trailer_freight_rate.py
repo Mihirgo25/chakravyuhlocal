@@ -14,16 +14,16 @@ class TrailerFreightRate(BaseModel):
         constraints=[SQL("DEFAULT uuid_generate_v4()")],
         default=uuid.uuid4,
     )
-    origin_location_id = UUIDField(null=True)
+    origin_location_id = UUIDField(null=True, index=True)
     origin_cluster_id = UUIDField(null=True)
     origin_city_id = UUIDField(null=True)
-    destination_location_id = UUIDField(null=True)
+    destination_location_id = UUIDField(null=True, index=True)
     destination_cluster_id = UUIDField(null=True)
     destination_city_id = UUIDField(null=True)
-    container_size = IntegerField(index=True, null=True)
+    container_size = CharField(index=True, null=True)
     commodity = CharField(index=True, null=True)
     importer_exporter_id = UUIDField(null=True)
-    service_provider_id = UUIDField(null=True)
+    service_provider_id = UUIDField(null=True, index=True)
     containers_count =  IntegerField(index=True, null=True)
     weight_slabs = BinaryJSONField(index=True, null=True)
     line_items = BinaryJSONField(index=True, null=True)
@@ -34,8 +34,8 @@ class TrailerFreightRate(BaseModel):
     line_items_info_messages = BinaryJSONField(index=True, null=True)
     rate_not_available_entry = BooleanField(index=True, null=True)
     trip_type = CharField(index=True, null=True)
-    validity_start = DateTimeField(default=datetime.datetime.now)
-    validity_end = DateTimeField(default=datetime.datetime.now() - datetime.timedelta(30))
+    validity_start = DateTimeField(default=datetime.datetime.now, index=True)
+    validity_end = DateTimeField(default=datetime.datetime.now() - datetime.timedelta(30), index=True)
     detention_free_time = IntegerField(index=True, null=True)
     transit_time = IntegerField(index=True, null=True)
     trailer_type = CharField(index=True, null=True)
@@ -50,6 +50,11 @@ class TrailerFreightRate(BaseModel):
     destination_location_ids = ArrayField(UUIDField, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now())
+    cogo_entity_id = UUIDField(index=True, null=True)
+    sourced_by_id = UUIDField(null=True, index=True)
+    procured_by_id = UUIDField(null=True, index=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
 
     class Meta:
         table_name = 'trailer_freight_rates'
