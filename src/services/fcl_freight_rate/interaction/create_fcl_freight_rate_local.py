@@ -30,9 +30,16 @@ def create_fcl_freight_rate_local(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    from celery_worker import fcl_freight_local_data_updation
+    from celery_worker import fcl_freight_local_data_updation, create_country_wise_locals_in_delay
     if not request.get('source'):
         request['source'] = 'rms_upload'
+
+    if request.get('country_id') and not request.get('port_id'):
+        create_country_wise_locals_in_delay.apply_async(kwargs={"request":request},queue='low')
+        return {"message":"Creating rates in delay"}
+
+    elif not request.get('country_id') and not request.get('port_id'):
+        raise HTTPException(status_code=400, detail='both port_id and country_id are not present')
 
     row = {
         'port_id' : request.get('port_id'),

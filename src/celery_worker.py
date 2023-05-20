@@ -11,6 +11,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+from services.chakravyuh.interaction.get_local_rates_from_vyuh import add_local_rates_on_country
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
@@ -362,6 +363,16 @@ def fcl_freight_rates_local_creation_in_delay(self, local_rate_params):
         with concurrent.futures.ThreadPoolExecutor(max_workers = len(local_rate_params)) as executor:
             futures = [executor.submit(create_fcl_freight_rate_local, param) for param in local_rate_params]
 
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff = True, max_retries = 3)
+def create_country_wise_locals_in_delay(self, request):
+    try:
+        add_local_rates_on_country(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

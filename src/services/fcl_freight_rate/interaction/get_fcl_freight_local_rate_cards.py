@@ -1,8 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
-from services.chakravyuh.interaction.get_local_rates_from_vyuh import get_local_rates_from_vyuh
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
-from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS
+from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, DEFAULT_SHIPPING_LINE_ID
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from fastapi.encoders import jsonable_encoder
 
@@ -16,9 +15,6 @@ def get_fcl_freight_local_rate_cards(request):
         local_query = initialize_local_query(request)
 
         local_query_results = jsonable_encoder(list(local_query.dicts()))
-
-        if len(local_query_results) == 0:
-            local_query_results = get_local_rates_from_vyuh(request, line_items=[])
     
         rate_list = build_response_list(local_query_results, request)
 
@@ -35,6 +31,7 @@ def initialize_local_query(request):
         default_lsp = DEFAULT_LOCAL_AGENT_IDS[country_id]["value"]
     
     service_provider_ids = [default_lsp]
+    shipping_line_ids = [request['shipping_line_id'], DEFAULT_SHIPPING_LINE_ID]
     local_agents = get_local_agent_ids(request)
     if local_agents:
         service_provider_ids.append(local_agents)
@@ -52,15 +49,16 @@ def initialize_local_query(request):
         FclFreightRateLocal.container_type == request['container_type'], 
         FclFreightRateLocal.trade_type == request['trade_type'],
         ~ FclFreightRateLocal.is_line_items_error_messages_present,
-        FclFreightRateLocal.service_provider_id.in_(service_provider_ids))
+        FclFreightRateLocal.shipping_line_id << shipping_line_ids)
+        # FclFreightRateLocal.service_provider_id.in_(service_provider_ids))
 
     if request['commodity'] in HAZ_CLASSES:
         query = query.where(FclFreightRateLocal.commodity == request['commodity'])
     else:
         query = query.where(FclFreightRateLocal.commodity == None)
     
-    if request['shipping_line_id']:
-        query = query.where(FclFreightRateLocal.shipping_line_id == request['shipping_line_id'])
+    # if request['shipping_line_id']:
+    #     query = query.where(FclFreightRateLocal.shipping_line_id == request['shipping_line_id'])
 
     return query
 

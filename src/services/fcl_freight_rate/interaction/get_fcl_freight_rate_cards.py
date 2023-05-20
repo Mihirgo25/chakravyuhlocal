@@ -12,7 +12,6 @@ from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl
 from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
-from services.chakravyuh.interaction.get_local_rates_from_vyuh import get_local_rates_from_vyuh
 import sentry_sdk
 import traceback
 
@@ -145,12 +144,6 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         all_rate_locals_query = all_rate_locals_query.where((FclFreightRateLocal.main_port_id.is_null(True) | FclFreightRateLocal.main_port_id << main_port_ids))
 
     all_rate_locals = jsonable_encoder(list(all_rate_locals_query.dicts()))
-
-    rate_port_ids = list(set([data.get('port_id') for data in all_rate_locals]))
-
-    if len(rate_port_ids) < 2: #checking for origin and destination ids
-        rate_locals = get_local_rate_from_country(requirements, rate_port_ids)
-        all_rate_locals.extend(list(filter(None,rate_locals)))
     
     all_formatted_locals = []
     for local_charge in all_rate_locals:
@@ -174,7 +167,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['destination_main_port_id']
 
     for local_rate in local_rates:
-        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (shipping_line_id == local_rate['shipping_line_id'] or local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID):
+        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:
             matching_locals[local_rate["service_provider_id"]] = local_rate
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
