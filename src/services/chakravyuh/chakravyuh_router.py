@@ -7,7 +7,6 @@ import sentry_sdk
 from fastapi import HTTPException
 
 from services.chakravyuh.interaction.create_fcl_freight_rate_estimation import create_fcl_freight_rate_estimation
-from services.chakravyuh.migrated_estimated_local_rates import migrate_estimated_local_rates
 from services.chakravyuh.interaction.create_demand_transformation import create_demand_transformation
 from services.chakravyuh.interaction.create_revenue_target import create_revenue_target
 
