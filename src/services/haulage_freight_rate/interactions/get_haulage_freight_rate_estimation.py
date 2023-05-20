@@ -7,7 +7,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate import (
 import datetime
 from micro_services.client import maps
 import services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation as get_haulage_freight_rate_estimation
-from configs.rails_constants import (
+from configs.haulage_freight_rate_constants import (
     DESTINATION_TERMINAL_CHARGES_INDIA,
     CONTAINER_TYPE_CLASS_MAPPINGS,
     DEFAULT_PERMISSIBLE_CARRYING_CAPACITY,
