@@ -262,3 +262,10 @@ SERVICE_PROVIDER_ID = "536abfe7-eab8-4a43-a4c3-6ff318ce01b5"
 DEFAULT_HAULAGE_TYPE = 'merchant'
 
 DEFAULT_TRIP_TYPE = 'one_way'
+
+CONTAINER_SIZE_FACTORS = {
+    '20': 1,
+    '40': 1.1,
+    '40HC': 1.15,
+    '45HC': 1.2
+}

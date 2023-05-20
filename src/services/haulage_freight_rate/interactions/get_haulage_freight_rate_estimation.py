@@ -17,6 +17,7 @@ from configs.rails_constants import (
     SERVICE_PROVIDER_ID,
     DEFAULT_HAULAGE_TYPE,
     DEFAULT_TRIP_TYPE,
+    CONTAINER_SIZE_FACTORS
 )
 from configs.global_constants import COGO_ENVISION_ID
 from libs.get_distance import get_distance
@@ -349,7 +350,7 @@ def get_india_rates(
 
         indicative_price = (
             float(price_per_tonne) * containers_count * permissable_carrying_capacity
-        )
+        )* CONTAINER_SIZE_FACTORS[container_size]
         final_data["base_price"] = apply_surcharges(indicative_price)
 
     final_data["currency"] = currency
@@ -393,6 +394,7 @@ def get_china_rates(
         * float(location_pair_distance)
     )
     indicative_price = base_price + running_base_price
+
     final_data["base_price"] = apply_surcharges(indicative_price)
     final_data["currency"] = currency
     final_data["transit_time"] = get_transit_time(location_pair_distance)
