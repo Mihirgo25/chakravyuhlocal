@@ -75,8 +75,8 @@ def get_haulage_freight_rate(
     final_data["base_price"] = rate['line_items'][0]['price']
     distance = rate['distance']
     final_data["currency"] = rate['line_items'][0]['currency']
-    final_data["upper_limit"] = 10
     final_data["transit_time"] = get_transit_time(distance)
+    final_data['line_items'] = rate['line_items']
     return [final_data]
 
 
@@ -183,7 +183,7 @@ def build_haulage_freight_rate(
         "validity_start": datetime.datetime.now(),
         "validity_end": datetime.datetime.now() + datetime.timedelta(days=60),
     }
-    return create_params
+    return line_items_data, create_params
 
 
 def create_haulage_freight_rate(create_params):
@@ -258,7 +258,7 @@ def haulage_rate_calculator(request):
         container_size,
     )
 
-    params = build_haulage_freight_rate(
+    line_items_data, params = build_haulage_freight_rate(
         origin_location,
         destination_location,
         final_data["base_price"],
@@ -270,6 +270,7 @@ def haulage_rate_calculator(request):
         commodity,
         locations_data
     )
+    final_data['line_items'] = line_items_data
     create_haulage_freight_rate_delay.apply_async(kwargs = {'params' : params} , queue='low')
     response["success"] = True
     response["list"] = [final_data]
@@ -352,7 +353,7 @@ def get_india_rates(
         final_data["base_price"] = apply_surcharges(indicative_price)
 
     final_data["currency"] = currency
-    final_data["upper_limit"] = 10
+
     final_data["transit_time"] = get_transit_time(location_pair_distance)
 
     return final_data
@@ -394,7 +395,6 @@ def get_china_rates(
     indicative_price = base_price + running_base_price
     final_data["base_price"] = apply_surcharges(indicative_price)
     final_data["currency"] = currency
-    final_data["upper_limit"] = 10
     final_data["transit_time"] = get_transit_time(location_pair_distance)
     return final_data
 

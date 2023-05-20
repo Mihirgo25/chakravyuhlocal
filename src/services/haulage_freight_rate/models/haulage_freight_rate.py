@@ -30,7 +30,6 @@ class HaulageFreightRate(BaseModel):
     container_type = CharField(index=True, null=True)
     weight_slabs = BinaryJSONField(index=True, null=True)
     line_items = BinaryJSONField(index=True, null=True)
-    is_best_price = BooleanField(index=True, null=True)
     is_line_items_error_messages_present = BooleanField(index=True, null=True)
     is_line_items_info_messages_present = BooleanField(index=True, null=True)
     line_items_error_messages = BinaryJSONField(index=True, null=True)
