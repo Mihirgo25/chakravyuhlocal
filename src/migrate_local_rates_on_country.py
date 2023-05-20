@@ -6,8 +6,7 @@ def migrate_local_rates_on_country():
     """
     Name of the migration file - estimated_local_rates.csv
     """
-
-    FILE_PATH = os.path.join(ROOT_DIR, "services", "chakravyuh", "std_local_updt_3.csv")
+    FILE_PATH = os.path.join(ROOT_DIR, "local_rates_on_country.csv")
     estimated_rates = pd.read_csv(FILE_PATH)
     final_create_params = get_country_wise_locals_from_sheet(estimated_rates)
     response = create_fcl_locals(final_create_params)
