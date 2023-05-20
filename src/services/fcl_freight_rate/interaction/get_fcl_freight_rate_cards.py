@@ -97,7 +97,7 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
     commodity = requirements['commodity']
     commodity = commodity if commodity in HAZ_CLASSES else None
     main_port_ids = []
-    shipping_line_ids = []
+    shipping_line_ids = [DEFAULT_SHIPPING_LINE_ID]
 
     local_default_service_provider = get_default_local_agent()
     service_provider_ids = {}
@@ -167,7 +167,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['destination_main_port_id']
 
     for local_rate in local_rates:
-        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and shipping_line_id == local_rate['shipping_line_id']:
+        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (shipping_line_id == local_rate['shipping_line_id'] or local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID):
             matching_locals[local_rate["service_provider_id"]] = local_rate
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
@@ -682,49 +682,6 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     freight_rates = discard_no_free_day_rates(freight_rates, requirements)
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
-
-def get_local_rate_from_country(requirements, rate_port_ids):
-    common_params = {
-        'container_size':requirements.get('container_size'),
-        'container_type':requirements.get('container_type'),
-        'commodity':requirements.get('commodity'),
-        'service_provider_id':requirements.get('service_provider_id'),
-        'shipping_line_id':requirements.get('shipping_line_id')
-    }
-
-    origin_local = common_params | {
-        'port_id':requirements.get('origin_port_id'),
-        'country_id':requirements.get('origin_country_id'),
-        'trade_type':'export'
-    }        
-
-    destination_local = common_params | {
-        'port_id':requirements.get('destination_port_id'),
-        'country_id':requirements.get('destination_country_id'),
-        'trade_type':'import'
-    }
-
-    all_rate_locals = []
-    if len(rate_port_ids) == 1:
-        if rate_port_ids[0] == requirements.get('origin_port_id'):
-            param = destination_local
-        else:
-            param = origin_local
-
-        local_rate = get_local_rates_from_vyuh(param, line_items=[])
-        all_rate_locals.extend(local_rate)
-
-    else:
-        with concurrent.futures.ThreadPoolExecutor(max_workers = 2) as executor:
-            futures = [
-                executor.submit(get_local_rates_from_vyuh, origin_local, line_items=[]),
-                executor.submit(get_local_rates_from_vyuh, destination_local, line_items=[]),
-            ]
-
-        for i in range(0,len(futures)):
-            all_rate_locals.extend(futures[i].result())
-
-    return all_rate_locals
 
 def get_fcl_freight_rate_cards(requirements):
     """
