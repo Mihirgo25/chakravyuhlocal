@@ -48,7 +48,7 @@ def get_params_and_create_local(request, final_list):
 
     for port in final_list:
         port_id, main_port_id = port.split(':')
-        creation_param = local_freight_param | {'port_id': port_id, 'source':'predicted','data':request.get('data')}
+        creation_param = local_freight_param | {'port_id': port_id, 'data':request.get('data')}
         if main_port_id:
             creation_param['main_port_id'] = main_port_id
         else:
