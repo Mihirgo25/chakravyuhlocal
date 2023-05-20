@@ -122,8 +122,12 @@ def create_fcl_freight_rate(request):
         }
     else:
         freight.destination_local = { "line_items": [] }
-    if row['rate_type']=='cogo_assured' and ('code' not in request['line_items'][0]):
-        create_line_items_cogo_assured(request.get("line_items"),freight,request)
+    if row['rate_type']=='cogo_assured':
+        if ('code' not in request['line_items'][0]):
+            create_line_items_cogo_assured(request.get("line_items"),freight,request)
+        else:
+            create_validities_for_cogo_assured(request,freight)
+
     else:
         if 'rate_sheet_validation' not in request:
             freight.validate_validity_object(request["validity_start"], request["validity_end"])
@@ -168,7 +172,7 @@ def create_fcl_freight_rate(request):
          # print(FclFreightRate.select().where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured')) # print('$$$$',cogo_id) 
         if not cogo_id: 
             params = request
-
+            
             params['rate_type'] = 'cogo_assured' 
             params['line_items'] = validities_for_cogo_assured(params)
             cogo_freight_id = create_fcl_freight_rate_data(params)
@@ -249,8 +253,8 @@ def validate_value_props(v_props):
 def create_line_items_cogo_assured(validities,freight,request):
     line_items = []
     for validity in validities:
-        validity_start = datetime.strptime(validity['validity_start'].split('T')[0], '%Y-%m-%d').date()
-        validity_end = datetime.strptime(validity['validity_end'].split('T')[0], '%Y-%m-%d').date()
+        validity_start = validity['validity_start'].date()
+        validity_end = validity['validity_end'].date()
         updated_validity = {k: v for k, v in validity.items() if k not in ["validity_start", "validity_end"]}
         updated_validity["code"] = "BAS"
         updated_validity["unit"] = "per_container"
@@ -264,5 +268,19 @@ def create_line_items_cogo_assured(validities,freight,request):
                     request.get("payment_term"),
                  )
         request["line_items"] = line_items
+def create_validities_for_cogo_assured(request,freight):
+    for line_item in request['line_items']:
+        validity_start = line_item.pop("validity_start")
+        validity_end = line_item.pop("validity_end")
+        freight.set_validities(
+            validity_start.date(),
+            validity_end.date(),
+            [line_item],
+            request.get("schedule_type"),
+            False,
+            request.get("payment_term"),
+     )
+    
+
 
 

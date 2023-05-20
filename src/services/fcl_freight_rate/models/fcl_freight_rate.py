@@ -106,7 +106,7 @@ class FclFreightRate(BaseModel):
         table_name = 'fcl_freight_rates_temp'
 
     def validate_rate_type(self):
-        if self.rate_type is not None and self.rate_type not in ['market_place', 'cogo_assured', 'promotional', 'spot_time']:
+        if self.rate_type is not None and self.rate_type not in RATE_TYPES:
           raise HTTPException(status_code=400, detail='Invalid rate_type parameter')
 
     def set_locations(self):
@@ -328,8 +328,7 @@ class FclFreightRate(BaseModel):
 
     def validate_line_items(self, line_items):
       codes = [item['code'] for item in line_items]
-
-      if len(set(codes)) != len(codes):
+      if len(set(codes)) != len(codes) and (self.rate_type != "cogo_assured"):
         raise HTTPException(status_code=400, detail="line_items contains duplicates")
 
 
@@ -506,8 +505,7 @@ class FclFreightRate(BaseModel):
           new_validity.pop('_dirty')
           main_validities.append(new_validity)
         self.validities = main_validities
-
-
+        
     def delete_rate_not_available_entry(self):
       FclFreightRate.delete().where(
             FclFreightRate.origin_port_id == self.origin_port_id,

@@ -17,6 +17,9 @@ class UpdateLineItem(BaseModel):
   price: float
   currency: str
   remarks: list[str] = None
+  validity_start: date = None
+  validity_end: date = None
+
 
 class FreeDay(BaseModel):
   free_limit: float
@@ -31,6 +34,7 @@ class LineItem(BaseModel):
   currency: str
   remarks: list[str] = None
   slabs: list[Slab] = None
+  market_price: float = None
 
 class LocalData(BaseModel):
   line_items: list[LineItem]=None
@@ -46,6 +50,8 @@ class StandardLineItem(BaseModel):
   currency: str
   remarks: list[str] = None
   slabs: list[Slab] = []
+  validity_start: datetime = None
+  validity_end: datetime = None
   
 class PostFclFreightRate(BaseModel):
   origin_main_port_id: str = None
@@ -161,7 +167,6 @@ class UpdateFclFreightRate(BaseModel):
   source: str = 'rms_upload'
   is_extended: bool = None
   rate_type: str = "market_place"
-  validities: List[dict] = None
 
 class Data(BaseModel):
     line_items: list[LineItem] = []
