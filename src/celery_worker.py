@@ -358,18 +358,6 @@ def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff = True, max_retries = 3)
-def fcl_freight_rates_local_creation_in_delay(self, local_rate_params):
-    try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers = len(local_rate_params)) as executor:
-            futures = [executor.submit(create_fcl_freight_rate_local, param) for param in local_rate_params]
-
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, retry_backoff = True, max_retries = 3)
 def create_country_wise_locals_in_delay(self, request):
     try:
         add_local_rates_on_country(request)

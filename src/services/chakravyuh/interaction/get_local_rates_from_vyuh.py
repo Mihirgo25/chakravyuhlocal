@@ -2,7 +2,9 @@ from configs.global_constants import HAZ_CLASSES
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SHIPPING_LINE_ID
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from micro_services.client import maps
+import concurrent.futures
 
 def add_local_rates_on_country(request):
     ports_data = get_batch_wise(request.get('country_id') , BATCH_SIZE = 100)
@@ -30,7 +32,6 @@ def add_local_rates_on_country(request):
 
 
 def get_params_and_create_local(request, final_list):
-    from celery_worker import fcl_freight_rates_local_creation_in_delay
     final_params = []
 
     local_freight_param = {
@@ -54,8 +55,9 @@ def get_params_and_create_local(request, final_list):
             creation_param['main_port_id'] = None
       
         final_params.append(creation_param)
-    fcl_freight_rates_local_creation_in_delay.apply_async(kwargs={'local_rate_params':final_params}, queue = 'low')
 
+    with concurrent.futures.ThreadPoolExecutor(max_workers = len(final_params)) as executor:
+        futures = [executor.submit(create_fcl_freight_rate_local, param) for param in final_params]
 
 def get_search_query(local_rate_param):
     query = FclFreightRateLocal.select().where(
