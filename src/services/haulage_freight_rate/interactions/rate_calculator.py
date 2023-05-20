@@ -50,9 +50,9 @@ def get_distances(origin_location, destination_location, data):
             destination_location = (d["latitude"], d["longitude"])
     coords_1 = origin_location
     coords_2 = destination_location
-    route_distance = get_railway_route(origin_location, destination_location)
-    if route_distance:
-        return route_distance
+    # route_distance = get_railway_route(origin_location, destination_location)
+    # if route_distance:
+    #     return route_distance
     return get_distance(coords_1, coords_2)
 
 
@@ -68,7 +68,6 @@ def get_haulage_freight_rate(
     origin_location, destination_location, commodity, containers_count, container_type
 ):
     haulage_freight_rate = HaulageFreightRate.select(HaulageFreightRate.line_items).where(HaulageFreightRate.origin_location_id == origin_location, HaulageFreightRate.destination_location_id ==destination_location, HaulageFreightRate.commodity == commodity, HaulageFreightRate.containers_count == containers_count, HaulageFreightRate.container_type == container_type)
-    print(haulage_freight_rate.count())
     if haulage_freight_rate.count()==0:
         return None
     rate = model_to_dict(haulage_freight_rate)
@@ -85,7 +84,7 @@ def get_railway_route(origin_location, destination_location):
     input = {"origin_location_id": origin_location, "destination_location_id": destination_location}
     try:
         data = maps.get_distance_matrix_valhalla(input)
-    except:
+    except HTTPException as e:
         data = None
     return data
 
@@ -371,7 +370,7 @@ def get_china_rates(
     running_base_price = (
         running_base_price_per_carton_km
         * cargo_weight_per_container
-        * location_pair_distance
+        * float(location_pair_distance)
     )
     indicative_price = base_price + running_base_price
     final_data["base_price"] = apply_surcharges(indicative_price)
