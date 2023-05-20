@@ -113,11 +113,11 @@ def execute_transaction_code(request):
     }
     build_trailer_freight_rate_delay.apply_async(kwargs={'create_params' : create_params}, queue='low')
 
-    return{
+    return{'list':[{
         'base_price' : total_cost,
         'currency' : constants_data.get('currency_code'),
         'distance' : distance,
-        'transit_time' : transit_time
+        'transit_time' : transit_time}]
     }
 
 def get_path_from_valhala(origin_location_id, destination_location_id):
