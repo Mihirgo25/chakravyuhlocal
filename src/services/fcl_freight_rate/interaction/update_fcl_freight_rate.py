@@ -165,12 +165,11 @@ def create_line_items_cogo_assured(validities,freight,request):
         request["line_items"] = line_items
 def create_validities_for_cogo_assured(request,freight):
     for line_item in request['line_items']:
-        print(line_item)
         validity_start = line_item.pop("validity_start")
         validity_end = line_item.pop("validity_end")
         freight.set_validities(
-            validity_start,
-            validity_end,
+            validity_start.date(),
+            validity_end.date(),
             [line_item],
             request.get("schedule_type"),
             False,

@@ -1,5 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from playhouse.shortcuts import model_to_dict
 from configs.global_constants import HAZ_CLASSES
 from operator import attrgetter
 from configs.definitions import FCL_FREIGHT_CHARGES
@@ -85,7 +86,6 @@ def find_cogo_assured_rate(object_params):
     clean_request = remove_empty_values(object_params)
     object = find_object(clean_request)
     # print(object)
-    if object:
-      return object.__data__
+    return model_to_dict(object)
   return object
   

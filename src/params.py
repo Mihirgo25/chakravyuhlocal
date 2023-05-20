@@ -17,8 +17,8 @@ class UpdateLineItem(BaseModel):
   price: float
   currency: str
   remarks: list[str] = None
-  validity_start: date = None
-  validity_end: date = None
+  validity_start: datetime = None
+  validity_end: datetime = None
 
 
 class FreeDay(BaseModel):
