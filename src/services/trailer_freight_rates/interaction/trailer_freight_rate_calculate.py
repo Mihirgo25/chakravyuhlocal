@@ -123,30 +123,6 @@ def get_path_from_valhala(origin_location_id, destination_location_id):
     return {}
 
 def get_average_fuel_price(path_data):
-    # location_ids = []
-    # location_types = ["city", "district", "region"]
-    # for location_type in location_types:
-    #     location_ids += map(lambda x: x[location_type]["id"], path_data)
-
-    # location_ids = list(set(location_ids))
-    # all_fuel_price = FuelData.select(FuelData.fuel_price, FuelData.fuel_unit).where(
-    #     FuelData.location_id << location_ids,
-    #     FuelData.location_type << location_types,
-    #     FuelData.fuel_type == "diesel"
-    # )
-    # avg_fuel_price = 0.0
-    # for location_data in path_data:
-    #     for location_type in location_types:
-    #         fuel_data = list(filter(
-    #             lambda data: data["id"] == location_data[location_type]
-    #             and data["type"] == location_type,
-    #             all_fuel_price,
-    #         ))
-    #         if bool(fuel_data):
-    #             break
-    #     avg_fuel_price += fuel_data[0]["fuel_price"]
-
-    # return avg_fuel_price / len(location_ids)
     return {}
 
 def build_trailer_freight_rate(create_params):
