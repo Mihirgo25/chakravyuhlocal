@@ -83,10 +83,10 @@ def execute_transaction_code(request):
     total_cost = (fuel_cost + constants_cost) * CONTAINER_SIZE_FACTORS[container_size]
 
     if containers_count > 1:
-        total_cost = total_cost * (containers_count-0.2)
+        total_cost = total_cost * (containers_count-0.3)
 
     if container_type in ['refer', 'open_top', 'iso_tank', 'flat_rack', 'open_side']:
-        total_cost = total_cost + (total_cost * 0.5)
+        total_cost = total_cost + (total_cost * 0.4)
   
     line_items_data = [{"code": "BAS", "unit": "per_truck", "price": total_cost, "remarks": [], "currency": constants_data.get('currency_code')}]
     create_params = {
