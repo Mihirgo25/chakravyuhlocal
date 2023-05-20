@@ -11,6 +11,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
@@ -33,7 +34,8 @@ CELERY_CONFIG = {
     "result_serializer": "pickle",
     "accept_content": ['application/json', 'application/x-python-serialize'],
     "task_acks_late": True,
-    "result_expires": 60*60*1
+    "result_expires": 60*30,
+    "celeryd_prefetch_multiplier": 1
 }
 
 if APP_ENV == 'development':
@@ -43,19 +45,18 @@ celery = Celery(__name__)
 registry.enable("pickle")
 celery.conf.broker_url = CELERY_REDIS_URL
 celery.conf.result_backend = CELERY_REDIS_URL
+celery.conf.broker_transport_options = {
+    'queue_order_strategy': 'priority',
+    'visibility_timeout': 14400
+}
 celery.conf.critical_queues = [Queue('critical', Exchange('critical'), routing_key='critical',
-          queue_arguments={'x-max-priority': 9})]
-celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
-          queue_arguments={'x-max-priority': 6})]
+          queue_arguments={'x-max-priority': 4})]
 celery.conf.communication_queues = [Queue('communication', Exchange('communication'), routing_key='communication',
-          queue_arguments={'x-max-priority': 6})]
+          queue_arguments={'x-max-priority': 4})]
+celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
+          queue_arguments={'x-max-priority': 2})]
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
-          queue_arguments={'x-max-priority': 3})]
-celery.conf.critical_default_priority = 9
-celery.conf.fcl_freight_rate_default_priority = 6
-celery.conf.communication_queues_default_priority = 6
-celery.conf.low_default_priority = 3
-celery.conf.broker_transport_options = {'visibility_timeout': 14400}
+          queue_arguments={'x-max-priority': 2})]
 
 celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
@@ -351,6 +352,16 @@ def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
     try:
         fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
         fcl_freight_vyuh.set_dynamic_pricing()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff = True, max_retries = 3)
+def create_country_wise_locals_in_delay(self, request):
+    try:
+        add_local_rates_on_country(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

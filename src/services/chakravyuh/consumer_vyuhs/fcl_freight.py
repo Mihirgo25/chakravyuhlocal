@@ -28,13 +28,30 @@ class FclFreightVyuh():
             shipping_line_ids.append(freight_rate['shipping_line_id'])
 
 
-        transformation_query = FclFreightRateEstimation.select().where(
+        transformation_query = FclFreightRateEstimation.select(
+            FclFreightRateEstimation.origin_location_id,
+            FclFreightRateEstimation.origin_location_type,
+            FclFreightRateEstimation.destination_location_id,
+            FclFreightRateEstimation.destination_location_type,
+            FclFreightRateEstimation.shipping_line_id,
+            FclFreightRateEstimation.commodity,
+            FclFreightRateEstimation.container_size,
+            FclFreightRateEstimation.container_type,
+            FclFreightRateEstimation.created_at,
+            FclFreightRateEstimation.updated_at,
+            FclFreightRateEstimation.schedule_type,
+            FclFreightRateEstimation.payment_term,
+            FclFreightRateEstimation.line_items,
+            FclFreightRateEstimation.id,
+            FclFreightRateEstimation.status
+        ).where(
             FclFreightRateEstimation.origin_location_id << origin_location_ids,
             FclFreightRateEstimation.destination_location_id << destination_location_ids,
             FclFreightRateEstimation.container_size == self.requirements['container_size'],
             FclFreightRateEstimation.container_type == self.requirements['container_type'],
             ((FclFreightRateEstimation.commodity.is_null(True)) | (FclFreightRateEstimation.commodity == self.requirements['commodity'])),
             ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id << shipping_line_ids)),
+            FclFreightRateEstimation.status == 'active'
         )
         transformations = jsonable_encoder(list(transformation_query.dicts()))
         return transformations
@@ -81,6 +98,11 @@ class FclFreightVyuh():
         
         if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
             line_item['price'] = random.randrange(start=int(lower_limit), stop=int(upper_limit + 1))
+        
+        if line_item['price'] >= 200:
+            line_item['price'] = round(line_item['price']/5) * 5
+        else:
+            line_item['price'] = round(line_item['price'])
         
         return line_item
 
