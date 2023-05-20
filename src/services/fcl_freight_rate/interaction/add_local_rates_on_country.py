@@ -7,7 +7,7 @@ from micro_services.client import maps
 import concurrent.futures
 
 def add_local_rates_on_country(request):
-    ports_data = get_batch_wise(request.get('country_id') , BATCH_SIZE = 100)
+    ports_data = get_ports_of_country(request.get('country_id') , BATCH_SIZE = 50)
     icd_ports, combined_ids = [], []
     for data in ports_data:
         if data.get('is_icd') == True:
@@ -72,12 +72,12 @@ def get_search_query(local_rate_param):
         query = query.where(FclFreightRateLocal.shipping_line_id == local_rate_param['shipping_line_id'])
     return list(query.dicts())
 
-def get_batch_wise(location_id, BATCH_SIZE):
+def get_ports_of_country(location_id, BATCH_SIZE):
     locations_data = []
     for page_no in range(1,BATCH_SIZE):
         locations = maps.list_locations({'filters':{'country_id': location_id, 'status':'active', "type":"seaport"},'page':page_no, 'page_limit':BATCH_SIZE})['list']
         locations_data.extend(locations)
-        if len(locations) == 0:
+        if len(locations) < BATCH_SIZE:
             break
 
     return locations_data

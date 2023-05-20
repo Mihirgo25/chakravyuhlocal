@@ -39,7 +39,7 @@ def execute_transaction_code(request):
         return {"message":"Creating rates in delay"}
 
     elif not request.get('country_id') and not request.get('port_id'):
-        raise HTTPException(status_code=400, detail='both port_id and country_id are not present')
+        raise HTTPException(status_code=400, detail='Please select port or country')
 
     row = {
         'port_id' : request.get('port_id'),

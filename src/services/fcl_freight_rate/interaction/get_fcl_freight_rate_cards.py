@@ -155,6 +155,7 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
 
 def get_matching_local(local_type, rate, local_rates, default_lsp):
     matching_locals = {}
+    default_shipping_line_locals = {}
     trade_type = 'export'
     if local_type == 'destination_local':
         trade_type = 'import'
@@ -167,12 +168,20 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['destination_main_port_id']
 
     for local_rate in local_rates:
-        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (shipping_line_id == local_rate['shipping_line_id'] or local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID):
-            matching_locals[local_rate["service_provider_id"]] = local_rate
+        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
+            if shipping_line_id == local_rate['shipping_line_id']:
+                matching_locals[local_rate["service_provider_id"]] = local_rate
+            if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
+                default_shipping_line_locals[local_rate["service_provider_id"]] = local_rate
+                
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
     if rate["service_provider_id"] in matching_locals:
         return matching_locals[rate["service_provider_id"]]
+    if default_lsp in default_shipping_line_locals:
+        return default_shipping_line_locals[default_lsp]
+    if rate["service_provider_id"] in default_shipping_line_locals:
+        return default_shipping_line_locals[rate["service_provider_id"]]
     return None
 
 
