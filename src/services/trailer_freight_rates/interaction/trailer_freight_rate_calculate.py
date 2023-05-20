@@ -24,10 +24,6 @@ def execute_transaction_code(request):
     containers_count = request.get('containers_count')
     commodity = request.get('commodity')
 
-    # path_data = get_path_from_valhala(origin_location_id, destination_location_id)
-    # location_data = path_data["set_of_location"]
-    # total_path_distance = path_data['total_distance']
-    # average_fuel_price = get_average_fuel_price(location_data)
     input = {"filters":{"id":[origin_location_id, destination_location_id]}}
     data = maps.list_locations(input)
     if data:
@@ -118,12 +114,6 @@ def execute_transaction_code(request):
         'transit_time' : transit_time,
         'upper_limit' : cargo_weight_per_container}]
     }
-
-def get_path_from_valhala(origin_location_id, destination_location_id):
-    return {}
-
-def get_average_fuel_price(path_data):
-    return {}
 
 def build_trailer_freight_rate(create_params):
    TrailerFreightRate.create(**create_params)
