@@ -6,7 +6,7 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 from services.haulage_freight_rate.haulage_params import HaulageFreightRate
-from services.haulage_freight_rate.interactions.rate_calculator import haulage_rate_calculator
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation import haulage_rate_calculator
 
 haulage_freight_router = APIRouter()
 

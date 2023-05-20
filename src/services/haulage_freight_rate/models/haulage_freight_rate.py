@@ -53,7 +53,7 @@ class HaulageFreightRate(BaseModel):
     origin_location_ids = ArrayField(UUIDField, null=True)
     destination_location_ids = ArrayField(UUIDField, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
 
     class Meta:
         table_name = 'haulage_freight_rates'

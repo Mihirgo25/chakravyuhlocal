@@ -29,7 +29,7 @@ class WagonTypes(BaseModel):
     remarks = CharField(null=True)
     status = CharField(index=True, default='active')
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
 
     class Meta:
         table_name = 'wagon_types'
