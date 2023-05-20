@@ -106,24 +106,35 @@ def create_fcl_local(param):
         create_fcl_freight_rate_local(param)
     except HTTPException as e:
         exception_str = traceback.format_exc()
+        error_handling(param, exception_str)
+    except Exception as e:
+        exception_str = traceback.format_exc()
+        error_handling(param, exception_str)
 
-        e_path = 'error_file.json'
-        if not os.path.exists(e_path):
-            error_params = [{
+
+def error_handling(param, exception_str):
+    e_path = 'error_file.json'
+    if not os.path.exists(e_path):
+        error_params = [{
+            'param': param,
+            'error': str(exception_str),
+        }]
+
+        with open(e_path,"w") as outfile:
+            outfile.write(json.dumps(error_params))
+    else:
+        data = []
+        try:
+            with open(e_path, 'r+') as readfile:
+                # data = readfile.read()
+                data = json.load(readfile)
+        except json.JSONDecodeError:
+            pass
+            # data  = json.loads(file)
+        data.append({
                 'param': param,
                 'error': str(exception_str),
-            }]
-
-            with open(e_path,"w") as outfile:
-                outfile.write(json.dumps(error_params))
-        else:
-            data = None
-            with open(e_path, 'r+') as readfile:
-                data  = json.loads(readfile.read())
-                data.append({
-                    'param': param,
-                    'error': str(exception_str),
-                })
-            
-            with open(e_path,"w") as outfile:
-                outfile.write(json.dumps(data))
+        })
+        
+        with open(e_path,"w") as outfile:
+            outfile.write(json.dumps(data))
