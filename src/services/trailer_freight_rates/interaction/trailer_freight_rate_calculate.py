@@ -61,10 +61,8 @@ def execute_transaction_code(request):
     if transit_time == 0:
         transit_time = 12
     fuel_used = fuel_consumption(distance,cargo_weight_per_container)
-    print("fuel_uesd", fuel_used)
 
     fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[destination_country_code] #use fuel charge with currency
-    print("fuel cost", fuel_cost)
     constants = TrailerFreightRateCharges.select().where(
                 (TrailerFreightRateCharges.country_code == destination_country_code),
                 (TrailerFreightRateCharges.status == 'active')).first()
@@ -117,7 +115,8 @@ def execute_transaction_code(request):
         'base_price' : total_cost,
         'currency' : constants_data.get('currency_code'),
         'distance' : distance,
-        'transit_time' : transit_time}]
+        'transit_time' : transit_time,
+        'upper_limit' : cargo_weight_per_container}]
     }
 
 def get_path_from_valhala(origin_location_id, destination_location_id):

@@ -8,7 +8,7 @@ from services.trailer_freight_rates.interaction.trailer_freight_rate_calculate i
 
 trailer_router = APIRouter()
 
-@trailer_router.post("/calculate_trailer_freight_rate")
+@trailer_router.post("/get_estimated_trailer_freight_rate")
 def calculate_trailer_freight_rate(request: TrailerRateCalculator, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
