@@ -312,8 +312,8 @@ def get_fcl_freight_rate_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
-    
+
+
 @fcl_freight_router.get("/get_fcl_freight_rate_for_lcl")
 def get_fcl_freight_rate_for_lcl_func(
     origin_port_id: str = None,
@@ -1632,8 +1632,8 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
-    
+
+
 
 @fcl_freight_router.post("/update_fcl_freight_rate_sheet")
 def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
@@ -1735,7 +1735,7 @@ def get_fcl_freight_weight_slabs(
     resp: dict = Depends(authorize_token),
     rates: List[str] | None= Query(None)
 
-):  
+):
     request = {
         'origin_port_id' : origin_port_id,
         'origin_country_id' : origin_country_id,
