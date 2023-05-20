@@ -135,6 +135,7 @@ def execute_transaction_code(request):
 
   fcl_freight_local.sourced_by_id = request.get("sourced_by_id")
   fcl_freight_local.procured_by_id = request.get("procured_by_id")
+  fcl_freight_local.rate_not_available_entry = request.get("rate_not_available_entry")
 
   fcl_freight_local.validate_before_save()
 
