@@ -126,8 +126,7 @@ class FclFreightVyuh():
         lower_limit = int(lower_limit)
         upper_limit = int(upper_limit)
         
-        if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
-            line_item['price'] = self.apply_periodic_pricing(lower_limit, upper_limit)
+        line_item['price'] = self.apply_periodic_pricing(lower_limit, upper_limit)
         
         if line_item['price'] >= 200:
             line_item['price'] = round(line_item['price']/5) * 5
