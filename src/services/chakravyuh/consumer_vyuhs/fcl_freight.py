@@ -1,9 +1,7 @@
-from select import select
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 from datetime import datetime
-import random
 
 class FclFreightVyuh():
     def __init__(self, freight_rates: list = [], requirements: dict = {}):
