@@ -123,6 +123,9 @@ class FclFreightVyuh():
             lower_limit = common.get_money_exchange_for_fcl({"price": lower_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
             upper_limit = common.get_money_exchange_for_fcl({"price": upper_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
         
+        lower_limit = int(lower_limit)
+        upper_limit = int(upper_limit)
+        
         if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
             line_item['price'] = self.apply_periodic_pricing(lower_limit, upper_limit)
         
