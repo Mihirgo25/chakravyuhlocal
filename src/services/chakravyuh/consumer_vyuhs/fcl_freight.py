@@ -94,7 +94,7 @@ class FclFreightVyuh():
         minute = datetime_new.minute
         seconds = datetime_new.second
         price_range = upper_limit - lower_limit
-        total_price_points = price_range / 5
+        total_price_points = price_range / self.price_factor
 
         total_seconds_in_day = 24 * 60 * 60
 
@@ -107,7 +107,7 @@ class FclFreightVyuh():
 
         current_time_point = (total_seconds_passed / seconds_per_point) + 1
 
-        price_delta = current_time_point * 5
+        price_delta = current_time_point * self.price_factor
 
         final_price = lower_limit + price_delta
 
