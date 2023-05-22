@@ -25,7 +25,6 @@ def get_transit_time(distance):
 def get_country_filter(origin_location, destination_location):
     input = {"filters": {"id": [origin_location, destination_location]}}
     location_category = "generalized"
-    print(input)
     locations_data = maps.list_locations(input)["list"]
     if (
         locations_data[0]["country_code"] == "IN"
