@@ -330,7 +330,11 @@ def migrate_cogo_assured_fcl_to_rms_table():
                         for validity in param[9]:
                             new_validity = {key: value for key,value in validity.items() if key != 'id'}
                             result['line_items'].append(new_validity)
-                        result['weight_limit'] = param[10]
+                        if param[10]:
+                            if param[10].get('free_limit') and param[10].get('free_limit') != 0:
+                                result['weight_limit'] = None
+                        else:
+                            result['weight_limit'] = param[10] 
                         result['available_inventory'] = param[17]
                         result['used_inventory'] = param[18]
                         result['value_props'] = param[19]
