@@ -16,7 +16,7 @@ class FclFreightVyuh():
             'lower_limit': 2000,
             'upper_limit': 2500,
             'currency': 'USD',
-        },
+        }
         self.price_factor = 5
 
     def get_probable_rate_transformations(self, first_rate: dict={}):
