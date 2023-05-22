@@ -165,6 +165,7 @@ class UpdateFclFreightRate(BaseModel):
   source: str = 'rms_upload'
   is_extended: bool = None
   rate_type: str = "market_place"
+  validities : List[dict] = None
 
 class Data(BaseModel):
     line_items: list[LineItem] = []

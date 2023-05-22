@@ -79,11 +79,10 @@ def remove_empty_values(request):
     return  dict(filter(lambda item: item[1], request.items()))
 
 def find_cogo_assured_rate(object_params):
-  try:
-    object = FclFreightRate.select().where(FclFreightRate.id==object_params['id']).dicts().get()
-  except:
+  rate_list = list(FclFreightRate.select().where(FclFreightRate.id==object_params['id']).dicts())
+  if not len(rate_list):
     clean_request = remove_empty_values(object_params)
     object = find_object(clean_request)
-    return model_to_dict(object)
-  return object
+    return model_to_dict(object) if object else {}
+  return rate_list[0]
   

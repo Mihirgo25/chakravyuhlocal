@@ -81,7 +81,7 @@ def execute_transaction_code(request):
       freight_object.validate_line_items(request.get('line_items'))
       freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), request.get('line_items'), request.get('schedule_type'), False, request.get('payment_term'))
     elif request['rate_type'] == "cogo_assured":
-      freight.set_validities_for_cogo_assured_rates(request['validities'],request['rate_type'])
+      freight_object.set_validities_for_cogo_assured_rates(request['validities'])
     freight_object.set_platform_prices()
     freight_object.set_is_best_price()
     freight_object.set_last_rate_available_date()
@@ -142,34 +142,3 @@ def adjust_dynamic_pricing(request, freight: FclFreightRate, current_validities)
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
-def create_line_items_cogo_assured(validities,freight,request):
-    line_items = []
-    for validity in validities:
-        validity_start = datetime.strptime(validity['validity_start'].split('T')[0], '%Y-%m-%d').date()
-        validity_end = datetime.strptime(validity['validity_end'].split('T')[0], '%Y-%m-%d').date()
-        updated_validity = {k: v for k, v in validity.items() if k not in ["validity_start", "validity_end"]}
-        updated_validity["code"] = "BAS"
-        updated_validity["unit"] = "per_container"
-        line_items.append(updated_validity)
-        freight.set_validities(
-                    validity_start,
-                    validity_end,
-                    [updated_validity],
-                    request.get("schedule_type"),
-                    False,
-                    request.get("payment_term"),
-                 )
-        request["line_items"] = line_items
-def create_validities_for_cogo_assured(request,freight):
-    for line_item in request['line_items']:
-        validity_start = line_item.pop("validity_start")
-        validity_end = line_item.pop("validity_end")
-        freight.set_validities(
-            validity_start.date(),
-            validity_end.date(),
-            [line_item],
-            request.get("schedule_type"),
-            False,
-            request.get("payment_term"),
-     )
- 

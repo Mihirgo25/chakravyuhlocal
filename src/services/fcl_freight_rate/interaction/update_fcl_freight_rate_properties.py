@@ -12,7 +12,7 @@ def update_fcl_freight_rate_properties(request):
     
 def execute_transaction_code(request):
     try:
-        updated_properties = RateProperties.get(**{'rate_id' : request['rate_id']})
+        updated_properties = RateProperties.select().where(RateProperties.rate_id==request['rate_id']).first()
     except:
         raise HTTPException(status_code=400,detail='Rate Properties id Not Found')
 

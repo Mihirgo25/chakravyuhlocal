@@ -157,6 +157,8 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
         request.service_provider_id = DEFAULT_SERVICE_PROVIDER_ID
         request.sourced_by_id = DEFAULT_SOURCED_BY_ID
         request.procured_by_id = DEFAULT_PROCURED_BY_ID
+    if not request.shipping_line_id or not request.sourced_by_id or not request.service_provider_id:
+        raise  HTTPException(status_code=400, detail="One of the required parameters is empty") 
         
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))

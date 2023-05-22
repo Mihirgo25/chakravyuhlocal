@@ -32,7 +32,7 @@ def create_audit(request, freight_id):
     audit_data = {}
     audit_data["validity_start"] = request["validity_start"].isoformat()
     audit_data["validity_end"] = request["validity_end"].isoformat()
-    audit_data["line_items"] = request["line_items"]
+    audit_data["line_items"] = request["line_items"] if request["rate_type"] == "market_place" else request["validities"]
     audit_data["weight_limit"] = request.get("weight_limit")
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
@@ -130,7 +130,7 @@ def create_fcl_freight_rate(request):
     line_items = request.get("line_items")
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
-    if  row["rate_type"] != "cogo_assured":
+    if  row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request['validities'])
     else:
         freight.set_validities(
