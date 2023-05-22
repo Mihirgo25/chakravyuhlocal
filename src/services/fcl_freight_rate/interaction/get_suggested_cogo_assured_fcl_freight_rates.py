@@ -3,7 +3,6 @@ from math import ceil
 from micro_services.client import common
 import random
 from configs.cogo_assured_rate_constants import *
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 
 def get_suggested_cogo_assured_fcl_freight_rates(rate_param):
     data = add_suggested_validities(rate_param)

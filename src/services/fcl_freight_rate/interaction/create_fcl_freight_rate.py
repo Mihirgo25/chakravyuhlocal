@@ -163,21 +163,15 @@ def create_fcl_freight_rate(request):
         freight.save()
     except Exception as e:
         raise HTTPException(status_code=400, detail="rate did not save")
-    if row['rate_type']=='cogo_assured':
+
+    if row['rate_type'] == 'cogo_assured':
         try:
             add_rate_properties(request,freight.id)
         except Exception as e:
             print(e)
-
-    if row['rate_type']=='market_place':     
-        from celery_worker import create_fcl_freight_rate_delay
-        cogo_id = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured').first()
-        if not cogo_id: 
-            params = request
-            params['rate_type'] = 'cogo_assured' 
-            params['validities'] = validities_for_cogo_assured(params)
-            create_fcl_freight_rate_delay.apply_async(kwargs={'request':params},queue='fcl_freight_rate')
-
+    
+    adjust_cogoassured_price(row, request)    
+    
     create_audit(request, freight.id)
     
     if not request.get('importer_exporter_id') and not request.get("rate_not_available_entry"):
@@ -209,6 +203,33 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+
+def adjust_cogoassured_price(row, request):
+    from celery_worker import create_fcl_freight_rate_delay
+    if row['rate_type'] == 'cogo_assured':
+        return
+    
+    cogo_id = FclFreightRate.select(FclFreightRate.id).where(
+        FclFreightRate.origin_port_id == request.get('origin_port_id'),
+        FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),
+        FclFreightRate.destination_port_id == request.get('destination_port_id'),
+        FclFreightRate.container_size == request.get('container_size'),
+        FclFreightRate.commodity == request.get('commodity'),
+        FclFreightRate.shipping_line_id == request.get('shipping_line_id'),
+        FclFreightRate.service_provider_id == request.get('service_provider_id'),
+        FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),
+        FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),
+        FclFreightRate.destination_port_id == request.get('destination_port_id'),
+        FclFreightRate.rate_type == 'cogo_assured').first()
+
+    if not cogo_id: 
+        params = request
+        params['rate_type'] = 'cogo_assured' 
+        params['validities'] = validities_for_cogo_assured(params)
+        create_fcl_freight_rate_delay.apply_async(kwargs={'request':params},queue='fcl_freight_rate')
+    else:
+        print('Update Cogoassured id')
+
 
 def get_flash_booking_rate_line_items(request):
     line_items = request.get("line_items")
