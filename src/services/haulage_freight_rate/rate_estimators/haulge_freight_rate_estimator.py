@@ -67,13 +67,20 @@ class HaulageFreightRateEstimator:
             price = estimator.estimate()
             return price
 
-        if self.location_category == "China":
+        if self.location_category == "china":
             estimator = ChinaHaulageFreightRateEstimator(
-                origin_location_id=self.origin_location_id,
-                destination_location_id=self.destination_location_id,
+                query=query,
+                load_type=load_type,
+                distance=self.distance,
+                commodity=commodity,
+                container_type=self.container_type,
+                containers_count=self.containers_count,
+                cargo_weight_per_container=self.cargo_weight_per_container,
+                container_size=self.container_size,
+                permissable_carrying_capacity=permissable_carrying_capacity,
             )
             price = estimator.estimate()
-            return {"is_price_estimated": True, "price": price}
+            return price
 
         return {"is_price_estimated": False, "price": None}
 
