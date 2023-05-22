@@ -7,7 +7,7 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
-from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -81,7 +81,7 @@ def create_fcl_freight_rate(request):
         "payment_term": request.get("payment_term", "prepaid"),
         "schedule_type": request.get("schedule_type", "transhipment"),
         "rate_not_available_entry": request.get("rate_not_available_entry", False),
-        "rate_type":request.get("rate_type")
+        "rate_type": request.get("rate_type", DEFAULT_RATE_TYPE)
     }
     init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["rate_type"])}'
     freight = (
@@ -175,7 +175,7 @@ def create_fcl_freight_rate(request):
         except Exception as e:
             print(e)
     
-    adjust_cogoassured_price(row, request)    
+    # adjust_cogoassured_price(row, request)    
     
     create_audit(request, freight.id)
     
@@ -211,7 +211,7 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
 
 def adjust_cogoassured_price(row, request):
     from celery_worker import create_fcl_freight_rate_delay
-    if row['rate_type'] == 'cogo_assured':
+    if row['rate_type'] != DEFAULT_RATE_TYPE:
         return
     
     cogo_id = FclFreightRate.select(FclFreightRate.id).where(
