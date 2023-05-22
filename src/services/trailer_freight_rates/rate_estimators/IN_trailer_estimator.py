@@ -38,8 +38,23 @@ class INTrailerRateEstimator():
         
         fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[country_code] #use fuel charge with currency
 
+        my_class = INTrailerRateEstimator(self)
+        constants_cost = my_class.constants_cost(distance)
+        total_cost = fuel_cost + constants_cost
+
+        total_cost = my_class.variable_cost(total_cost, container_size, container_type, containers_count) 
+
+        return {'list':[{
+            'base_price' : total_cost,
+            'currency' : "INR",
+            'distance' : distance,
+            'transit_time' : transit_time,
+            'upper_limit' : cargo_weight_per_container}]
+            }
+
+    def constants_cost(self,distance):
         constants = TrailerFreightRateCharges.select().where(
-                (TrailerFreightRateCharges.country_code == country_code),
+                (TrailerFreightRateCharges.country_code == "IN"),
                 (TrailerFreightRateCharges.status == 'active')).first()
         constants_data = model_to_dict(constants)
 
@@ -52,7 +67,10 @@ class INTrailerRateEstimator():
         misc_rate = constants_data.get('misc')
 
         constants_cost = (handling_rate + nh_toll_rate + tyre_rate + driver_rate + document_rate + maintanance_rate + misc_rate) * distance
-        total_cost = (fuel_cost + constants_cost) * CONTAINER_SIZE_FACTORS[container_size]
+        return constants_cost
+    
+    def variable_cost(self, total_cost, container_size, container_type, containers_count):
+        total_cost = total_cost * CONTAINER_SIZE_FACTORS[container_size]
 
         if containers_count > 1:
             total_cost = total_cost * (containers_count-0.2)
@@ -60,12 +78,4 @@ class INTrailerRateEstimator():
         if container_type in ['refer', 'open_top', 'iso_tank', 'flat_rack', 'open_side']:
             total_cost = total_cost + (total_cost * 0.5)
 
-        return {'list':[{
-            'base_price' : total_cost,
-            'currency' : "INR",
-            'distance' : distance,
-            'transit_time' : transit_time,
-            'upper_limit' : cargo_weight_per_container}]
-            }
-
-    
+        return total_cost
