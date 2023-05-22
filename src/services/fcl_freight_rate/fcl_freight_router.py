@@ -1025,8 +1025,8 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     if request.rate_type == 'cogo_assured' :
-        request.sourced_by_id="7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
-        request.procured_by_id="d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+        request.sourced_by_id= DEFAULT_SOURCED_BY_ID
+        request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         data = update_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1123,8 +1123,8 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     if request.rate_type == 'cogo_assured' :
-        request.sourced_by_id="7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
-        request.procured_by_id="d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+        request.sourced_by_id= DEFAULT_SOURCED_BY_ID
+        request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
