@@ -10,7 +10,7 @@ def migrate_cogo_assured_fcl_to_rms_table():
         conn = get_connection()
         with conn:
             with conn.cursor() as cur:
-                chunk_size = 500
+                chunk_size = 5000
                 status = 'active'
                 sql = 'select count(*) from cogo_assured_fcl_freight_rates left join cogo_assured_rates on cogo_assured_fcl_freight_rates.cogo_assured_rate_id = cogo_assured_rates.id where cogo_assured_rates.status = %s'
                 cur.execute(sql, ( status,))
@@ -65,7 +65,7 @@ def migrate_cogo_assured_fcl_to_rms_table():
         sentry_sdk.capture_exception(e)
         return e
     
-def add_market_place():
+def add_market_place_to_init_key():
     chunk_size = 5000  
     total_rows = FclFreightRate.select().count()
     total_chunks = (total_rows // chunk_size) + 1

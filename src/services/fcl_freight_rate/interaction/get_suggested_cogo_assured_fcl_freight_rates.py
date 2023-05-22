@@ -55,16 +55,3 @@ def add_suggested_validities(rate_param):
         })
 
     return rate_param
-
-def add_market_place():
-    chunk_size = 5000  
-    total_rows = FclFreightRate.select().count()
-    total_chunks = (total_rows // chunk_size) + 1
-
-    for chunk in range(total_chunks):
-        offset = chunk * chunk_size
-        subquery = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.rate_type == 'market_place').limit(chunk_size).offset(offset)
-        query = FclFreightRate.update(init_key=FclFreightRate.init_key.concat(':market_place')).where(FclFreightRate.id.in_(subquery),FclFreightRate.init_key.endswith(':market_place') == False)
-        print(query)
-        query.execute()
-    return {"message": "Market place added to init_key column for all rows."}
