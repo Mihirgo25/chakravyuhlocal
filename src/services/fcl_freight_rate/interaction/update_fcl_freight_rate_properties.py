@@ -5,10 +5,11 @@ from database.db_session import db
 from datetime import datetime
 from fastapi import HTTPException
 
-def update_rate_props(request):
+def update_fcl_freight_rate_properties(request):
     object_type = 'Fcl_Rate_Properties'
     with db.atomic():
         return execute_transaction_code(request)
+    
 def execute_transaction_code(request):
     updated_properties = RateProperties.get(**{'rate_id' : request['rate_id']})
     if not updated_properties:

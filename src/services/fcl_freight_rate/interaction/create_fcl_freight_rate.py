@@ -1,11 +1,12 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from services.fcl_freight_rate.models.fcl_freight_rate_properties import *
+from services.fcl_freight_rate.models.fcl_freight_rate_properties import RateProperties
 from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import add_suggested_validities
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])

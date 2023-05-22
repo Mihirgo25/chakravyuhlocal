@@ -83,8 +83,8 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_sur
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
-from services.fcl_freight_rate.interaction.get_rate_properties import get_rate_props
-from services.fcl_freight_rate.interaction.update_rate_properties import update_rate_props
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_properties import get_fcl_freight_rate_properties
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_properties import update_fcl_freight_rate_properties
 from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
@@ -92,6 +92,7 @@ from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from configs.fcl_freight_rate_constants import DEFAULT_SHIPPING_LINE_ID, DEFAULT_PROCURED_BY_ID, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SOURCED_BY_ID
 
 fcl_freight_router = APIRouter()
 
@@ -152,10 +153,10 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     if request.rate_type == 'cogo_assured' :
-        request.shipping_line_id = "e6da6a42-cc37-4df2-880a-525d81251547"
-        request.service_provider_id="5dc403b3-c1bd-4871-b8bd-35543aaadb36"
-        request.sourced_by_id="7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
-        request.procured_by_id="d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+        request.shipping_line_id = DEFAULT_SHIPPING_LINE_ID
+        request.service_provider_id = DEFAULT_SERVICE_PROVIDER_ID
+        request.sourced_by_id = DEFAULT_SOURCED_BY_ID
+        request.procured_by_id = DEFAULT_PROCURED_BY_ID
         
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
@@ -1051,10 +1052,11 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-@fcl_freight_router.post("/update_rate_properties")
-def update_rate_properties(request: UpdateRateProperties,resp: dict=Depends(authorize_token)):
+    
+@fcl_freight_router.post("/update_fcl_freight_rate_properties")
+def update_fcl_freight_rate_properties_data(request: UpdateRateProperties,resp: dict=Depends(authorize_token)):
     try:
-        data = update_rate_props(request.dict(exclude_none=True))
+        data = update_fcl_freight_rate_properties(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
@@ -1480,12 +1482,11 @@ def get_fcl_freight_rate_stats_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-@fcl_freight_router.get("/get_rate_properties")
-def get_rate_properties(rate_id:str=None):
-    r_id = rate_id
+
+@fcl_freight_router.get("/get_fcl_freight_rate_properties")
+def get_fcl_freight_rate_properties_data(rate_id:str=None):
     try:
-        data = get_rate_props(r_id)
-        data = jsonable_encoder(data)
+        data = get_fcl_freight_rate_properties(rate_id)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise

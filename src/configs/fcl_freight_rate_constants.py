@@ -192,6 +192,12 @@ EXTENSION_ENABLED_MODES = ['manual']
 
 DEFAULT_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
 
+DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+
+DEFAULT_SERVICE_PROVIDER_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
+
+DEFAULT_SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+
 VALUE_PROPOSITIONS =  ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']
 
-RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_time']
+RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']

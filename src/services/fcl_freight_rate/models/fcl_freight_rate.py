@@ -96,7 +96,7 @@ class FclFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True)
-    rate_type = CharField(default='market_place', choices=RATE_TYPES)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
     tags = BinaryJSONField(null=True)
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

@@ -10,7 +10,7 @@ def get_fcl_freight_rate(request):
   details = {}
 
   if request['rate_type'] == 'cogo_assured':
-    object=find_cogo_assured_rate(request)
+    object = find_cogo_assured_rate(request)
     return object
   else:
     del request['id']
