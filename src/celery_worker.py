@@ -16,7 +16,6 @@ from celery.schedules import crontab
 from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
-from services.trailer_freight_rates.interaction.trailer_freight_rate_calculate import build_trailer_freight_rate
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -350,16 +349,6 @@ def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
     try:
         fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
         fcl_freight_vyuh.set_dynamic_pricing()
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-        
-@celery.task(bind = True, retry_backoff=True,max_retries=3)
-def build_trailer_freight_rate_delay(self, create_params):
-    try:
-        return build_trailer_freight_rate(create_params)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

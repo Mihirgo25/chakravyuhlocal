@@ -42,3 +42,6 @@ class MapsApiClient:
     
     def get_service_lane(self, data= {}):
         return self.client.request('GET','get_sea_route',{}, data)
+    
+    def get_distance_matrix_valhalla(self, data= {}):
+        return self.client.request('GET','get_distance_matrix_valhalla',{}, data)

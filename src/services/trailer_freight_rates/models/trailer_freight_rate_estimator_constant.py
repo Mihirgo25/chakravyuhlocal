@@ -24,7 +24,7 @@ class TrailerFreightRateCharges(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        table_name = 'trailer_freight_rate_charges'
+        table_name = 'trailer_freight_rate_estimate_charges'
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
