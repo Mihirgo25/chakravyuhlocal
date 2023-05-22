@@ -11,34 +11,30 @@ from configs.haulage_freight_rate_constants import (
     CONTAINER_SIZE_FACTORS,
     DESTINATION_TERMINAL_CHARGES_INDIA,
 )
-class UsaHaulageFreightRateEstimator():
-    def __init__(self, origin_location_id, destination_location_id):
-        self.origin_location_id = origin_location_id,
-        self.destination_location_id = destination_location_id
 
 
-    def apply_surcharges_for_usa_europe(self, price):
-        surcharge = 0.15 * price
-        development_charges = 0.05 * price
-        final_price = price + surcharge + development_charges
-
-        return final_price
-
+class EuropeHaulageFreightRateEstimator():
+    def __init__(self, *_, **__):
+        pass
 
     def estimate(self):
-        '''
-        Primary Function to estimate india prices
-        '''
-        print('Estimating India rates')
-        estimator_params = self.convert_general_params_to_estimation_params()
-        final_price = self.get_final_estimated_price(estimator_params=estimator_params)
+        """
+        Primary Function to estimate europe prices
+        """
+        instance = EuropeHaulageFreightRateEstimator()
+        final_price = instance.get_europe_rates(
+            commodity=self.commodity,
+            load_type=self.load_type,
+            containers_count=self.containers_count,
+            distance=self.distance,
+        )
         return final_price
 
-
-
-    def get_europe_rates(commodity, load_type, container_count, ports_distance, wagon_type):
+    def get_europe_rates(
+        self, commodity, load_type, containers_count, distance
+    ):
         final_data = {}
-        final_data["distance"] = ports_distance
+        final_data["distance"] = distance
         final_data["currency"] = "EUR"
         final_data["country_code"] = "EU"
 
@@ -46,9 +42,8 @@ class UsaHaulageFreightRateEstimator():
             HaulageFreightRateRuleSet.select()
             .where(
                 HaulageFreightRateRuleSet.commodity_class_type == commodity,
-                HaulageFreightRateRuleSet.distance >= ports_distance,
+                HaulageFreightRateRuleSet.distance >= distance,
                 HaulageFreightRateRuleSet.train_load_type == load_type,
-                HaulageFreightRateRuleSet.wagon_type == wagon_type,
                 HaulageFreightRateRuleSet.currency == "EUR",
                 HaulageFreightRateRuleSet.country_code == "EU",
             )
@@ -60,7 +55,15 @@ class UsaHaulageFreightRateEstimator():
             raise HTTPException(status_code=400, detail="rates not present")
 
         price = wagon_price_upper_limit[0]["base_price"]
-        price = price * container_count
-        final_data["base_price"] = apply_surcharges_for_usa_europe(float(price))
+        price = price * containers_count
+        final_data["base_price"] = self.apply_surcharges_for_europe(float(price))
 
         return final_data
+
+
+    def apply_surcharges_for_europe(self, price):
+        surcharge = 0.15 * price
+        development_charges = 0.05 * price
+        final_price = price + surcharge + development_charges
+
+        return final_price

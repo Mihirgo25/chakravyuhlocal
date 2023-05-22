@@ -18,7 +18,8 @@ class ChinaHaulageFreightRateEstimator():
         '''
         Primary Function to estimate china prices
         '''
-        final_price = self.get_china_rates(query=self.query,
+        instance = ChinaHaulageFreightRateEstimator()
+        final_price = instance.get_china_rates(query=self.query,
             commodity=self.commodity,
             load_type=self.load_type,
             containers_count=self.containers_count,

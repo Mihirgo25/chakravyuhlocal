@@ -20,7 +20,8 @@ class IndiaHaulageFreightRateEstimator:
         """
         Primary Function to estimate india prices
         """
-        final_price = self.get_india_rates(
+        instance = IndiaHaulageFreightRateEstimator()
+        final_price = instance.get_india_rates(
             query=self.query,
             commodity=self.commodity,
             load_type=self.load_type,

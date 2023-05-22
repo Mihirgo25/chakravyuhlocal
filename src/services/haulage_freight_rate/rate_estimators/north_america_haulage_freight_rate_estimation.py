@@ -9,39 +9,26 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
 )
 
 class NorthAmericaHaulageFreightRateEstimator():
-    def __init__(self, origin_location_id, destination_location_id):
-        self.origin_location_id = origin_location_id,
-        self.destination_location_id = destination_location_id
-
-    def convert_general_params_to_estimation_params(self):
-        return True
-
-    def get_final_estimated_price(self, estimator_params):
-        return 10
-
-
-    def apply_surcharges_for_north_america(self, price):
-        surcharge = 0.15 * price
-        development_charges = 0.05 * price
-        final_price = price + surcharge + development_charges
-
-        return final_price
-
+    def __init__(self, *_, **__): pass
 
     def estimate(self):
         '''
-        Primary Function to estimate india prices
+        Primary Function to estimate north america prices
         '''
-        print('Estimating India rates')
-        estimator_params = self.convert_general_params_to_estimation_params()
-        final_price = self.get_final_estimated_price(estimator_params=estimator_params)
+        instance = NorthAmericaHaulageFreightRateEstimator()
+        final_price = instance.get_north_america_rates(
+            commodity=self.commodity,
+            load_type=self.load_type,
+            containers_count=self.containers_count,
+            distance=self.distance,
+        )
         return final_price
 
 
 
-    def get_north_america_rates(self, commodity, load_type, container_count, ports_distance):
+    def get_north_america_rates(self, commodity, load_type, containers_count, distance):
         final_data = {}
-        final_data["distance"] = ports_distance
+        final_data["distance"] = distance
         final_data["currency"] = "USD"
         final_data["country_code"] = "US"
 
@@ -49,7 +36,7 @@ class NorthAmericaHaulageFreightRateEstimator():
             HaulageFreightRateRuleSet.select()
             .where(
                 HaulageFreightRateRuleSet.commodity_class_type == commodity,
-                HaulageFreightRateRuleSet.distance >= ports_distance,
+                HaulageFreightRateRuleSet.distance >= distance,
                 HaulageFreightRateRuleSet.train_load_type == load_type,
                 HaulageFreightRateRuleSet.currency == "USD",
                 HaulageFreightRateRuleSet.country_code == "US",
@@ -64,7 +51,15 @@ class NorthAmericaHaulageFreightRateEstimator():
 
 
         price = wagon_price_upper_limit[0]["base_price"]
-        price = price * container_count
+        price = price * containers_count
         final_data["base_price"] = self.apply_surcharges_for_north_america(float(price))
 
         return final_data
+
+    def apply_surcharges_for_north_america(self, price):
+        surcharge = 0.15 * price
+        development_charges = 0.05 * price
+        final_price = price + surcharge + development_charges
+
+        return final_price
+
