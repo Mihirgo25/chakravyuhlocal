@@ -12,27 +12,7 @@ from configs.haulage_freight_rate_constants import (
     DESTINATION_TERMINAL_CHARGES_INDIA,
 )
 class ChinaHaulageFreightRateEstimator():
-    def __init__(
-        self,
-        query,
-        load_type,
-        distance,
-        commodity,
-        containers_count,
-        container_type,
-        cargo_weight_per_container,
-        container_size,
-        permissable_carrying_capacity,
-    ):
-        self.query = query
-        self.load_type = load_type
-        self.distance = distance
-        self.commodity = commodity
-        self.container_type = container_type
-        self.containers_count = containers_count
-        self.cargo_weight_per_container = cargo_weight_per_container
-        self.container_size = container_size
-        self.permissable_carrying_capacity = permissable_carrying_capacity
+    def __init__(self, *_, **__): pass
 
     def estimate(self):
         '''
