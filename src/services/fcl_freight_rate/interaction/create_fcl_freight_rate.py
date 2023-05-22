@@ -6,7 +6,6 @@ from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freigh
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
-from celery_worker import create_fcl_freight_rate_delay
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -169,7 +168,8 @@ def create_fcl_freight_rate(request):
         except Exception as e:
             print(e)
 
-    if row['rate_type']=='market_place': 
+    if row['rate_type']=='market_place':     
+        from celery_worker import create_fcl_freight_rate_delay
         cogo_id = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured').first()
         if not cogo_id: 
             params = request

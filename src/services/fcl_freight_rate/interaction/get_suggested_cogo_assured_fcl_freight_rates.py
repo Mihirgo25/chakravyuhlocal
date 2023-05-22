@@ -15,7 +15,13 @@ def add_suggested_validities(rate_param):
         'validity_start': datetime.now(), 
         'validity_end': datetime.now() + timedelta(days=(6 - datetime.now().weekday())),
         'price': rate_param['price'],
-        'currency': rate_param['currency']
+        'currency': rate_param['currency'],
+        'line_items': [{
+            'code': 'BAS',
+            'unit': 'per_container',
+            'price': rate_param['price'],
+            'currency': rate_param['currency']
+        }]
     }]
 
     deviation = ceil(float(rate_param['validities'][0]['price']) * 0.05)

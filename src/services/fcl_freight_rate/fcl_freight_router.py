@@ -92,7 +92,7 @@ from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from database.rails_db import migrate_cogo_assured_fcl_to_rms_table
+
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
