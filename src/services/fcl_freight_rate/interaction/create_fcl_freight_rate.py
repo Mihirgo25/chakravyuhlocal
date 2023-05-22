@@ -32,11 +32,12 @@ def create_audit(request, freight_id):
     audit_data = {}
     audit_data["validity_start"] = request["validity_start"].isoformat()
     audit_data["validity_end"] = request["validity_end"].isoformat()
-    audit_data["line_items"] = request["line_items"] if request["rate_type"] == "market_place" else request["validities"]
+    audit_data["line_items"] = request.get("line_items")
     audit_data["weight_limit"] = request.get("weight_limit")
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
     audit_data["is_extended"] = request.get("is_extended")
+    audit_data['validities'] = request.get("validities")
 
     id = FclFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
@@ -122,15 +123,18 @@ def create_fcl_freight_rate(request):
         }
     else:
         freight.destination_local = { "line_items": [] }
-    if 'rate_sheet_validation' not in request and row['rate_type']=="market_place":
+
+    if 'rate_sheet_validation' not in request or row['rate_type'] != "cogo_assured":
         freight.validate_validity_object(request["validity_start"], request["validity_end"])
         freight.validate_line_items(request.get("line_items"))
 
     source = request.get("source")
     line_items = request.get("line_items")
+
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
-    if  row["rate_type"] == "cogo_assured":
+
+    if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request['validities'])
     else:
         freight.set_validities(
@@ -140,9 +144,10 @@ def create_fcl_freight_rate(request):
             request.get("schedule_type"),
             False,
             request.get("payment_term"),
-                        )
-    freight.set_platform_prices()
-    freight.set_is_best_price()
+        )
+        freight.set_platform_prices()
+        freight.set_is_best_price()
+
     freight.set_last_rate_available_date()
     
     if 'rate_sheet_validation' not in request:

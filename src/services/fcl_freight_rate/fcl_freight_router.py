@@ -157,8 +157,20 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
         request.service_provider_id = DEFAULT_SERVICE_PROVIDER_ID
         request.sourced_by_id = DEFAULT_SOURCED_BY_ID
         request.procured_by_id = DEFAULT_PROCURED_BY_ID
+
+    not_available_params = []
+    if not request.shipping_line_id:
+        not_available_params.append('Shipping line')
+    
+    if not request.sourced_by_id:
+        not_available_params.append('Sourced by')
+    
+    if not request.service_provider_id:
+        not_available_params.append('Service provider')
+
     if not request.shipping_line_id or not request.sourced_by_id or not request.service_provider_id:
-        raise  HTTPException(status_code=400, detail="One of the required parameters is empty") 
+        details = ' '.join(not_available_params) + ' not present'
+        raise  HTTPException(status_code=400, detail=details) 
         
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
@@ -299,7 +311,7 @@ def get_fcl_freight_rate_data(
     service_provider_id: str = None,
     importer_exporter_id: str = None,
     cogo_entity_id: str = None,
-    rate_type:str="market_place",
+    rate_type: str = "market_place",
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:

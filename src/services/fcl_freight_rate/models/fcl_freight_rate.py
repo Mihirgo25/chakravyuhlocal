@@ -379,7 +379,8 @@ class FclFreightRate(BaseModel):
             (FclFreightRate.container_type == self.container_type) &
             (FclFreightRate.commodity == self.commodity) &
             (FclFreightRate.shipping_line_id == self.shipping_line_id) &
-            (FclFreightRate.service_provider_id != self.service_provider_id)
+            (FclFreightRate.service_provider_id != self.service_provider_id) &
+            (FclFreightRate.rate_type == DEFAULT_RATE_TYPE)
             ).where(FclFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
 
       result = price
@@ -424,6 +425,7 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = self.validities[-1]['validity_end']
       else:
         self.last_rate_available_date = None
+
     def set_validities_for_cogo_assured_rates(self,validities):
       new_validities = []
       for validity in validities:
@@ -432,7 +434,9 @@ class FclFreightRate(BaseModel):
         validity["payment_term"] =  DEFAULT_PAYMENT_TERM
         validity["likes_count"] = 0
         validity["dislikes_count"] = 0
+
         new_validities.append(FclFreightRateValidity(**validity))
+
       new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).split('T')[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
       new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).split('T')[0], '%Y-%m-%d').date())
       
