@@ -5,6 +5,7 @@ from services.envision.interaction.get_haulage_freight_predicted_rate import fue
 from database.db_session import db
 from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
+from libs.get_distance import get_distance
 from configs.trailer_freight_rate_constants import *
 
 
@@ -26,10 +27,21 @@ class USTrailerRateEstimator():
         containers_count = self.containers_count
         cargo_weight_per_container = self.cargo_weight_per_container
 
-        input = [origin_location_id,destination_location_id]
+        input = {"filters":{"id":[origin_location_id, destination_location_id]}}
+        data = maps.list_locations(input)
+        if data:
+            data = data["list"]
+        for d in data:
+            if d["id"] == origin_location_id:
+                origin_location = (d["latitude"], d["longitude"])
+            if d["id"] == destination_location_id:
+                destination_location = (d["latitude"], d["longitude"])
+        try:
+            distance = get_distance(origin_location,destination_location)
+        except:
+            distance = 250
         # data = maps.get_distance_matrix_valhalla(input)
         
-        distance = 250
         transit_time = (distance//250) * 24
         if transit_time == 0:
             transit_time = 12
