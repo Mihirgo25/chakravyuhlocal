@@ -35,6 +35,6 @@ def update_fcl_freight_rate_platform_prices(request):
     freight_objects = freight_objects.execute()
 
     for freight in freight_objects:
-        freight.set_platform_prices()
+        freight.set_platform_prices(freight.rate_type)
         freight.set_is_best_price()
         freight.save()
