@@ -59,19 +59,19 @@ def get_country_filter(origin_location, destination_location):
 def build_line_item(
     origin_location_id, destination_location_id, base_price, currency, locations_data
 ):
-    origin_location_type = ""
-    destination_location_type = ""
+    origin_is_icd = ""
+    destination_is_icd = ""
     for data in locations_data:
         if data["id"] == origin_location_id:
-            origin_location_type = data["type"]
+            origin_is_icd = data["is_icd"]
         if data["id"] == destination_location_id:
-            destination_location_type = data["type"]
-    if origin_location_type == "seaport":
+            destination_is_icd = data["is_icd"]
+    if destination_is_icd:
         line_item_code = "IHI"
-    elif destination_location_type == "seaport":
+    elif origin_is_icd:
         line_item_code = "IHE"
     else:
-        line_item_code = "BAS"
+        line_item_code = "RAF"
     line_items_data = [
         {
             "code": line_item_code,
