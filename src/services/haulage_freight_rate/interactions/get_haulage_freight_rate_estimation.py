@@ -12,8 +12,8 @@ def haulage_rate_calculator(
     commodity,
     containers_count,
     container_type,
-    cargo_weight_per_container,
     container_size,
+    cargo_weight_per_container,
 ):
     response = {"success": False, "status_code": 200}
 
