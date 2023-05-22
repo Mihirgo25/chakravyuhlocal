@@ -3,10 +3,6 @@ from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import 
 )
 from fastapi import HTTPException
 from playhouse.shortcuts import model_to_dict
-
-# from services.haulage_freight_rate.rate_estimators.haulge_freight_rate_estimator import (
-#     HaulageFreightRateEstimator,
-# )
 from configs.haulage_freight_rate_constants import (
     CONTAINER_SIZE_FACTORS,
     DESTINATION_TERMINAL_CHARGES_INDIA,
@@ -39,12 +35,6 @@ class IndiaHaulageFreightRateEstimator:
         self.cargo_weight_per_container = cargo_weight_per_container
         self.container_size = container_size
         self.permissable_carrying_capacity = permissable_carrying_capacity
-
-    def convert_general_params_to_estimation_params(self):
-        return True
-
-    def get_final_estimated_price(self, estimator_params):
-        return 10
 
     def estimate(self):
         """

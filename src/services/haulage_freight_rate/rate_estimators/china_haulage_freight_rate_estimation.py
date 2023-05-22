@@ -34,14 +34,6 @@ class ChinaHaulageFreightRateEstimator():
         self.container_size = container_size
         self.permissable_carrying_capacity = permissable_carrying_capacity
 
-
-    def convert_general_params_to_estimation_params(self):
-        return True
-
-    def get_final_estimated_price(self, estimator_params):
-        return 10
-
-
     def estimate(self):
         '''
         Primary Function to estimate china prices
