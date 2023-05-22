@@ -83,11 +83,10 @@ def create_fcl_freight_rate(request):
         "rate_not_available_entry": request.get("rate_not_available_entry", False),
         "rate_type": request.get("rate_type", DEFAULT_RATE_TYPE)
     }
-    init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}:{str(row["rate_type"])}'
+    init_key = f'{str(request.get("origin_port_id"))}:{str(row["origin_main_port_id"] or "")}:{str(row["destination_port_id"])}:{str(row["destination_main_port_id"] or "")}:{str(row["container_size"])}:{str(row["container_type"])}:{str(row["commodity"])}:{str(row["shipping_line_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["cogo_entity_id"] or "")}'
     freight = (
         FclFreightRate.select()
         .where(
-            FclFreightRate.origin_port_id == request.get("origin_port_id"),
             FclFreightRate.init_key == init_key,
         )
         .first()
