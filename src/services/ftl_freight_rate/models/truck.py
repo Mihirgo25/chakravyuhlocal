@@ -1,5 +1,5 @@
 from typing import Text
-from peewee import * 
+from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
@@ -13,9 +13,10 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class Truck(BaseModel):
-    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    id = BigAutoField(primary_key=True)
     truck_company = TextField(null=True)
     truck_name = CharField(null=False)
+    display_name = CharField(null=False)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     mileage = FloatField(null=True)
     mileage_unit = CharField(null=True,index = True)
@@ -34,7 +35,8 @@ class Truck(BaseModel):
     status = TextField(null=True)
     horse_power = FloatField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
-    
+    data = BinaryJSONField(null=True)
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(Truck, self).save(*args, **kwargs)

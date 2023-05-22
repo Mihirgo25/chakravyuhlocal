@@ -40,7 +40,6 @@ def create_truck(request: CreateTruck, resp: dict = Depends(authorize_token)):
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_truck_data(request.dict())
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
