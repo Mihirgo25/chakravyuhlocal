@@ -15,7 +15,7 @@ class RateProperties(BaseModel):
     created_at = DateTimeField(null=True)
     updated_at = DateTimeField(null=True)
     value_props = BinaryJSONField(default=json.dumps([{"name": "confirmed_space_and_inventory", "free_limit": None}]))
-    t_n_c = ArrayField(null=True)
+    t_n_c = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     available_inventory = IntegerField(default=100)
     used_inventory = IntegerField(default=0)
     shipment_count = IntegerField(default=0)
@@ -24,16 +24,7 @@ class RateProperties(BaseModel):
     class Meta:
         db_table = "rate_properties"
 
-    # def validate_rate_id(self):
-    #     if self.rate_id and self.rate_id in :
-    #         return True
-    #   return False
-
-    # def validate_value_props(self):
-    #   if self.value_props and self.value_props in VALUE_PROPOSITIONS:
-    #     return True
-    #   return False
-    def validate_value_props(self):
+    def validate_value_properties(self):
       value_props = self.value_props
       for prop in value_props:
         name = prop.get('name')

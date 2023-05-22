@@ -105,9 +105,7 @@ class FclFreightRate(BaseModel):
     class Meta:
         table_name = 'fcl_freight_rates_temp'
 
-    def validate_rate_type(self):
-        if self.rate_type is not None and self.rate_type not in RATE_TYPES:
-          raise HTTPException(status_code=400, detail='Invalid rate_type parameter')
+
 
     def set_locations(self):
 
@@ -426,6 +424,31 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = self.validities[-1]['validity_end']
       else:
         self.last_rate_available_date = None
+    def set_validities_for_cogo_assured_rates(self,validities):
+      new_validities = []
+      for validity in validities:
+        validity['id'] = str(uuid.uuid4())
+        validity["schedule_type"] =  DEFAULT_SCHEDULE_TYPES
+        validity["payment_term"] =  DEFAULT_PAYMENT_TERM
+        validity["likes_count"] = 0
+        validity["dislikes_count"] = 0
+        new_validities.append(FclFreightRateValidity(**validity))
+      new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).split(' ')[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
+      new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).split(' ')[0], '%Y-%m-%d').date())
+      
+      main_validities=[]
+      for new_validity in new_validities:
+        new_validity.line_items = [dict(line_item) for line_item in new_validity.line_items]
+        new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).split(' ')[0], '%Y-%m-%d').date().isoformat()
+        new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).split(' ')[0], '%Y-%m-%d').date().isoformat()
+        new_validity = vars(new_validity)
+        new_validity['id'] = new_validity['__data__']['id']
+        new_validity.pop('__data__')
+        new_validity.pop('__rel__')
+        new_validity.pop('_dirty')
+        main_validities.append(new_validity)
+      self.validities = main_validities
+
 
     def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term):
         new_validities = []
@@ -627,8 +650,6 @@ class FclFreightRate(BaseModel):
         locations = maps.list_locations(obj)['list']
 
       return locations
-
-
 
     def update_local_references(self):
       commodity = self.commodity if self.commodity in HAZ_CLASSES else None

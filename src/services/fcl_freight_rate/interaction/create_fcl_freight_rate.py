@@ -96,7 +96,6 @@ def create_fcl_freight_rate(request):
     freight.set_locations()
     freight.set_origin_location_ids()
     freight.set_destination_location_ids()
-    freight.validate_rate_type()
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
 
@@ -123,28 +122,24 @@ def create_fcl_freight_rate(request):
         }
     else:
         freight.destination_local = { "line_items": [] }
-    if row['rate_type']=='cogo_assured':
-        if ('code' not in request['line_items'][0]):
-            create_line_items_cogo_assured(request.get("line_items"),freight,request)
-        else:
-            create_validities_for_cogo_assured(request,freight)
+    if 'rate_sheet_validation' not in request and row['rate_type']=="market_place":
+        freight.validate_validity_object(request["validity_start"], request["validity_end"])
+        freight.validate_line_items(request.get("line_items"))
 
+    source = request.get("source")
+    line_items = request.get("line_items")
+    if source == "flash_booking":
+        line_items = get_flash_booking_rate_line_items(request)
+    if  row["rate_type"] != "cogo_assured":
+        freight.set_validities_for_cogo_assured_rates(request['validities'])
     else:
-        if 'rate_sheet_validation' not in request:
-            freight.validate_validity_object(request["validity_start"], request["validity_end"])
-            freight.validate_line_items(request.get("line_items"))
-
-        source=request.get("source")
-        line_items = request.get("line_items")
-        if source == "flash_booking":
-            line_items = get_flash_booking_rate_line_items(request)
         freight.set_validities(
-                            request["validity_start"].date(),
-                            request["validity_end"].date(),
-                            line_items,
-                            request.get("schedule_type"),
-                            False,
-                            request.get("payment_term"),
+            request["validity_start"].date(),
+            request["validity_end"].date(),
+            line_items,
+            request.get("schedule_type"),
+            False,
+            request.get("payment_term"),
                         )
     freight.set_platform_prices()
     freight.set_is_best_price()
@@ -184,7 +179,7 @@ def create_fcl_freight_rate(request):
       freight.delete_rate_not_available_entry()
     
     freight.update_platform_prices_for_other_service_providers()
-    
+
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
      
@@ -252,41 +247,7 @@ def validate_value_props(v_props):
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
 
-def create_line_items_cogo_assured(validities,freight,request):
-    line_items = []
-    for validity in validities:
-        try:
-            validity_start = datetime.strptime(validity['validity_start'], '%Y-%m-%d').date()
-            validity_end = datetime.strptime(validity['validity_end'], '%Y-%m-%d').date()
-        except:
-            validity_start = validity['validity_start'].date()
-            validity_end = validity['validity_end'].date()
-        updated_validity = {k: v for k, v in validity.items() if k not in ["validity_start", "validity_end"]}
-        updated_validity["code"] = "BAS"
-        updated_validity["unit"] = "per_container"
-        line_items.append(updated_validity)
-        freight.set_validities(
-                    validity_start,
-                    validity_end,
-                    [updated_validity],
-                    request.get("schedule_type"),
-                    False,
-                    request.get("payment_term"),
-                 )
-        request["line_items"] = line_items
-def create_validities_for_cogo_assured(request,freight):
-    for line_item in request['line_items']:
-        validity_start = line_item.pop("validity_start")
-        validity_end = line_item.pop("validity_end")
-        freight.set_validities(
-            validity_start.date(),
-            validity_end.date(),
-            [line_item],
-            request.get("schedule_type"),
-            False,
-            request.get("payment_term"),
-     )
-    
 
+    
 
 

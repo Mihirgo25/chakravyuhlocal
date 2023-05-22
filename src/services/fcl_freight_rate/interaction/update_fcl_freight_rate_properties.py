@@ -11,18 +11,20 @@ def update_fcl_freight_rate_properties(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
-    updated_properties = RateProperties.get(**{'rate_id' : request['rate_id']})
-    if not updated_properties:
+    try:
+        updated_properties = RateProperties.get(**{'rate_id' : request['rate_id']})
+    except:
         raise HTTPException(status_code=400,detail='Rate Properties id Not Found')
+
     request['updated_at'] = datetime.now()
     for attr,value in request.items():
         setattr(updated_properties, attr, value)
-    updated_properties.validate_value_props()
+
+    updated_properties.validate_value_properties()
+
     if not updated_properties.save():
         raise HTTPException(status_code=500, detail="Rate Properties not saved")
+
     return {
     'rate_id': request['rate_id']
     }
-
-
-    

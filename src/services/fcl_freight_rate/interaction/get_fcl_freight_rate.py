@@ -67,7 +67,6 @@ def find_object(object_params):
   query = FclFreightRate.select()
   for key in object_params:
     query = query.where(attrgetter(key)(FclFreightRate) == object_params[key])
-  # print(query.first())
   object = query.first()
   
   return object
@@ -85,7 +84,6 @@ def find_cogo_assured_rate(object_params):
   except:
     clean_request = remove_empty_values(object_params)
     object = find_object(clean_request)
-    # print(object)
     return model_to_dict(object)
   return object
   
