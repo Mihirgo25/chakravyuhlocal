@@ -3,6 +3,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import 
 )
 from fastapi import HTTPException
 from playhouse.shortcuts import model_to_dict
+
 # from services.haulage_freight_rate.rate_estimators.haulge_freight_rate_estimator import (
 #     HaulageFreightRateEstimator,
 # )
@@ -11,19 +12,33 @@ from configs.haulage_freight_rate_constants import (
     DESTINATION_TERMINAL_CHARGES_INDIA,
 )
 from playhouse.postgres_ext import SQL
-from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import get_railway_route
+from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
+    get_transit_time,
+)
 
 
 class IndiaHaulageFreightRateEstimator:
-    def __init__(self, origin_location_id, destination_location_id, commodity, containers_count, container_type, cargo_weight_per_container, container_size, location_category):
-        self.origin_location_id = origin_location_id
-        self.destination_location_id = destination_location_id
+    def __init__(
+        self,
+        query,
+        load_type,
+        distance,
+        commodity,
+        containers_count,
+        container_type,
+        cargo_weight_per_container,
+        container_size,
+        permissable_carrying_capacity,
+    ):
+        self.query = query
+        self.load_type = load_type
+        self.distance = distance
         self.commodity = commodity
-        self.containers_count = containers_count
         self.container_type = container_type
+        self.containers_count = containers_count
         self.cargo_weight_per_container = cargo_weight_per_container
         self.container_size = container_size
-        self.location_category = location_category
+        self.permissable_carrying_capacity = permissable_carrying_capacity
 
     def convert_general_params_to_estimation_params(self):
         return True
@@ -35,7 +50,17 @@ class IndiaHaulageFreightRateEstimator:
         """
         Primary Function to estimate india prices
         """
-        final_price = self.get_india_rates(estimator_params=estimator_params)
+        final_price = self.get_india_rates(
+            query=self.query,
+            commodity=self.commodity,
+            load_type=self.load_type,
+            containers_count=self.containers_count,
+            location_pair_distance=self.distance,
+            container_type=self.container_type,
+            cargo_weight_per_container=self.cargo_weight_per_container,
+            permissable_carrying_capacity=self.permissable_carrying_capacity,
+            container_size=self.container_size,
+        )
         return final_price
 
     def apply_surcharges_for_india(self, indicative_price):
@@ -117,8 +142,6 @@ class IndiaHaulageFreightRateEstimator:
         final_data["base_price"] = self.apply_surcharges_for_india(indicative_price)
 
         final_data["currency"] = currency
-        final_data["transit_time"] = self.get_railway_route(
-            location_pair_distance
-        )
+        final_data["transit_time"] = get_transit_time(location_pair_distance)
 
         return final_data

@@ -11,12 +11,14 @@ from configs.haulage_freight_rate_constants import (
 )
 from libs.get_distance import get_distance
 
-from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import (
-    HaulageFreightRateRuleSet,
+from services.haulage_freight_rate.rate_estimators.haulge_freight_rate_estimator import (
+    HaulageFreightRateEstimator,
 )
-from services.haulage_freight_rate.rate_estimators.haulge_freight_rate_estimator import HaulageFreightRateEstimator
 
-from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import get_transit_time, get_country_filter
+from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
+    get_transit_time,
+    get_country_filter,
+)
 
 POSSIBLE_LOCATION_CATEGORY = [
     "india",
@@ -26,19 +28,32 @@ POSSIBLE_LOCATION_CATEGORY = [
     "generalized",
 ]
 
+
 def get_haulage_freight_rate(
-    origin_location, destination_location, containers_count, container_type, container_size
+    origin_location,
+    destination_location,
+    containers_count,
+    container_type,
+    container_size,
 ):
-    haulage_freight_rate = HaulageFreightRate.select(HaulageFreightRate.line_items, HaulageFreightRate.distance).where(HaulageFreightRate.origin_location_id == origin_location, HaulageFreightRate.destination_location_id ==destination_location, HaulageFreightRate.containers_count == containers_count, HaulageFreightRate.container_type == container_type, HaulageFreightRate.container_size == container_size)
-    if haulage_freight_rate.count()==0:
+    haulage_freight_rate = HaulageFreightRate.select(
+        HaulageFreightRate.line_items, HaulageFreightRate.distance
+    ).where(
+        HaulageFreightRate.origin_location_id == origin_location,
+        HaulageFreightRate.destination_location_id == destination_location,
+        HaulageFreightRate.containers_count == containers_count,
+        HaulageFreightRate.container_type == container_type,
+        HaulageFreightRate.container_size == container_size,
+    )
+    if haulage_freight_rate.count() == 0:
         return None
     rate = model_to_dict(haulage_freight_rate.first())
     final_data = {}
-    final_data["base_price"] = rate['line_items'][0]['price']
-    distance = rate['distance']
-    final_data["currency"] = rate['line_items'][0]['currency']
+    final_data["base_price"] = rate["line_items"][0]["price"]
+    distance = rate["distance"]
+    final_data["currency"] = rate["line_items"][0]["currency"]
     final_data["transit_time"] = get_transit_time(distance)
-    final_data['line_items'] = rate['line_items']
+    final_data["line_items"] = rate["line_items"]
     return [final_data]
 
 
@@ -55,20 +70,23 @@ def get_distances(origin_location, destination_location, data):
     #     return route_distance
     return get_distance(coords_1, coords_2)
 
-def build_line_item(origin_location_id, destination_location_id, base_price, currency, locations_data):
-    origin_location_type = ''
-    destination_location_type = ''
+
+def build_line_item(
+    origin_location_id, destination_location_id, base_price, currency, locations_data
+):
+    origin_location_type = ""
+    destination_location_type = ""
     for data in locations_data:
-        if data['id'] == origin_location_id:
-            origin_location_type = data['type']
-        if data['id'] == destination_location_id:
-            destination_location_type = data['type']
-    if origin_location_type == 'seaport':
-        line_item_code = 'IHI'
-    elif destination_location_type == 'seaport':
-        line_item_code = 'IHE'
+        if data["id"] == origin_location_id:
+            origin_location_type = data["type"]
+        if data["id"] == destination_location_id:
+            destination_location_type = data["type"]
+    if origin_location_type == "seaport":
+        line_item_code = "IHI"
+    elif destination_location_type == "seaport":
+        line_item_code = "IHE"
     else:
-        line_item_code = 'BAS'
+        line_item_code = "BAS"
     line_items_data = [
         {
             "code": line_item_code,
@@ -92,9 +110,15 @@ def build_haulage_freight_rate(
     container_type,
     containers_count,
     commodity,
-    locations_data
+    locations_data,
 ):
-    line_items_data = build_line_item(origin_location_id, destination_location_id, base_price, currency, locations_data)
+    line_items_data = build_line_item(
+        origin_location_id,
+        destination_location_id,
+        base_price,
+        currency,
+        locations_data,
+    )
 
     create_params = {
         "origin_location_id": origin_location_id,
@@ -124,9 +148,7 @@ def create_haulage_freight_rate(create_params):
     return
 
 
-
 def haulage_rate_calculator(request):
-
     origin_location = request.origin_location_id
     destination_location = request.destination_location_id
     commodity = request.commodity
@@ -147,16 +169,12 @@ def haulage_rate_calculator(request):
         origin_location, destination_location, locations_data
     )
 
-    if not containers_count:
-        containers_count = 1
-        load_type = "Wagon Load"
-
     haulage_freight_rate = get_haulage_freight_rate(
         origin_location,
         destination_location,
         containers_count,
         container_type,
-        container_size
+        container_size,
     )
 
     if haulage_freight_rate:
@@ -164,28 +182,14 @@ def haulage_rate_calculator(request):
         response["list"] = haulage_freight_rate
         return response
 
-
-    if containers_count:
-        load_type = "Wagon Load"
-    else:
-        load_type = "Train Load"
-
-
-
-    query = HaulageFreightRateRuleSet.select(
-        HaulageFreightRateRuleSet.base_price,
-        HaulageFreightRateRuleSet.running_base_price,
-        HaulageFreightRateRuleSet.currency,
-    )
     final_data_object = HaulageFreightRateEstimator(
-        query,
+        location_pair_distance,
         commodity,
-        load_type,
         containers_count,
         container_type,
         cargo_weight_per_container,
         container_size,
-        location_category
+        location_category,
     )
     final_data = final_data_object.estimate()
 
@@ -199,9 +203,9 @@ def haulage_rate_calculator(request):
         container_type,
         containers_count,
         commodity,
-        locations_data
+        locations_data,
     )
-    final_data['line_items'] = line_items_data
+    final_data["line_items"] = line_items_data
     create_haulage_freight_rate(params)
     response["success"] = True
     response["list"] = [final_data]
