@@ -15,8 +15,10 @@ class UpdateLineItem(BaseModel):
   code: str
   unit: str
   price: float
+  market_price: float = None 
   currency: str
   remarks: list[str] = None
+  slabs: list[Slab] = []
 
 
 class FreeDay(BaseModel):
@@ -30,6 +32,7 @@ class LineItem(BaseModel):
   unit: str
   price: float
   currency: str
+  market_price: float = None 
   remarks: list[str] = None
   slabs: list[Slab] = None
 
@@ -39,14 +42,6 @@ class LocalData(BaseModel):
   demurrage: FreeDay = None
   plugin: FreeDay = None
 
-class StandardLineItem(BaseModel):
-  code: str
-  unit: str
-  price: float
-  market_price:float = None 
-  currency: str
-  remarks: list[str] = None
-  slabs: list[Slab] = []
 
   
 class PostFclFreightRate(BaseModel):
@@ -65,7 +60,7 @@ class PostFclFreightRate(BaseModel):
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
-  line_items: List[StandardLineItem]=None
+  line_items: List[UpdateLineItem]=None
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
@@ -219,7 +214,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   performed_by_type: str = None
 
 class MandatoryCharges(BaseModel):
-  line_items: list[StandardLineItem] = []
+  line_items: list[UpdateLineItem] = []
   required_mandatory_codes: list[dict] = []
 
 class ExtendCreateFclFreightRate(BaseModel):
@@ -245,7 +240,7 @@ class ExtendCreateFclFreightRate(BaseModel):
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
-  line_items: List[StandardLineItem]
+  line_items: List[UpdateLineItem]
   weight_limit: FreeDay = None
   origin_local: Data = None
   destination_local: Data = None
