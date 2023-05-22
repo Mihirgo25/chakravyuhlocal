@@ -1,7 +1,7 @@
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
-import random
+from datetime import datetime
 
 class FclFreightVyuh():
     def __init__(self, freight_rates: list = [], requirements: dict = {}):
@@ -17,6 +17,7 @@ class FclFreightVyuh():
             'upper_limit': 2500,
             'currency': 'USD',
         }
+        self.price_factor = 5
 
     def get_probable_rate_transformations(self, first_rate: dict={}):
         origin_location_ids = [first_rate['origin_port_id'], first_rate['origin_country_id'], first_rate['origin_trade_id']]
@@ -28,7 +29,23 @@ class FclFreightVyuh():
             shipping_line_ids.append(freight_rate['shipping_line_id'])
 
 
-        transformation_query = FclFreightRateEstimation.select().where(
+        transformation_query = FclFreightRateEstimation.select(
+            FclFreightRateEstimation.origin_location_id,
+            FclFreightRateEstimation.origin_location_type,
+            FclFreightRateEstimation.destination_location_id,
+            FclFreightRateEstimation.destination_location_type,
+            FclFreightRateEstimation.shipping_line_id,
+            FclFreightRateEstimation.commodity,
+            FclFreightRateEstimation.container_size,
+            FclFreightRateEstimation.container_type,
+            FclFreightRateEstimation.created_at,
+            FclFreightRateEstimation.updated_at,
+            FclFreightRateEstimation.schedule_type,
+            FclFreightRateEstimation.payment_term,
+            FclFreightRateEstimation.line_items,
+            FclFreightRateEstimation.id,
+            FclFreightRateEstimation.status
+        ).where(
             FclFreightRateEstimation.origin_location_id << origin_location_ids,
             FclFreightRateEstimation.destination_location_id << destination_location_ids,
             FclFreightRateEstimation.container_size == self.requirements['container_size'],
@@ -71,6 +88,32 @@ class FclFreightVyuh():
 
         return line_item 
     
+    def apply_periodic_pricing(self, lower_limit, upper_limit):
+        datetime_new = datetime.now()
+        hour = datetime_new.hour
+        minute = datetime_new.minute
+        seconds = datetime_new.second
+        price_range = upper_limit - lower_limit
+        total_price_points = price_range / self.price_factor
+
+        total_seconds_in_day = 24 * 60 * 60
+
+        total_seconds_passed = (hour * 60 * 60) + (minute * 60) + seconds
+
+        if total_price_points < 1:
+            total_price_points = 1
+        
+        seconds_per_point = total_seconds_in_day / total_price_points
+
+        current_time_point = (total_seconds_passed / seconds_per_point) + 1
+
+        price_delta = current_time_point * self.price_factor
+
+        final_price = lower_limit + price_delta
+
+        return int(final_price)
+
+    
     def get_line_item_price(self, line_item, tranformed_lineitem):
         lower_limit = tranformed_lineitem['lower_limit']
         upper_limit = tranformed_lineitem['upper_limit']
@@ -80,8 +123,10 @@ class FclFreightVyuh():
             lower_limit = common.get_money_exchange_for_fcl({"price": lower_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
             upper_limit = common.get_money_exchange_for_fcl({"price": upper_limit, "from_currency": currency, "to_currency": line_item['currency'] })['price']
         
-        if line_item['price'] < lower_limit or line_item['price'] > upper_limit:
-            line_item['price'] = random.randrange(start=int(lower_limit), stop=int(upper_limit + 1))
+        lower_limit = int(lower_limit)
+        upper_limit = int(upper_limit)
+        
+        line_item['price'] = self.apply_periodic_pricing(lower_limit, upper_limit)
         
         if line_item['price'] >= 200:
             line_item['price'] = round(line_item['price']/5) * 5

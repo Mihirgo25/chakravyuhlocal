@@ -28,7 +28,23 @@ class FclFreightVyuh():
         FclFreightRateEstimationAudit.create(**data)
     
     def get_transformations_to_be_affected(self):
-        price_estimations_query = FclFreightRateEstimation.select().where(
+        price_estimations_query = FclFreightRateEstimation.select(
+            FclFreightRateEstimation.origin_location_id,
+            FclFreightRateEstimation.origin_location_type,
+            FclFreightRateEstimation.destination_location_id,
+            FclFreightRateEstimation.destination_location_type,
+            FclFreightRateEstimation.shipping_line_id,
+            FclFreightRateEstimation.commodity,
+            FclFreightRateEstimation.container_size,
+            FclFreightRateEstimation.container_type,
+            FclFreightRateEstimation.created_at,
+            FclFreightRateEstimation.updated_at,
+            FclFreightRateEstimation.schedule_type,
+            FclFreightRateEstimation.payment_term,
+            FclFreightRateEstimation.line_items,
+            FclFreightRateEstimation.id,
+            FclFreightRateEstimation.status
+        ).where(
             FclFreightRateEstimation.origin_location_id << self.new_rate['origin_location_ids'],
             FclFreightRateEstimation.destination_location_id << self.new_rate['destination_location_ids'],
             FclFreightRateEstimation.container_size == self.new_rate['container_size'],
@@ -316,7 +332,23 @@ class FclFreightVyuh():
                     'schedule_type': None
                 })
 
-        tfs_query = FclFreightRateEstimation.select().where(
+        tfs_query = FclFreightRateEstimation.select(
+            FclFreightRateEstimation.origin_location_id,
+            FclFreightRateEstimation.origin_location_type,
+            FclFreightRateEstimation.destination_location_id,
+            FclFreightRateEstimation.destination_location_type,
+            FclFreightRateEstimation.shipping_line_id,
+            FclFreightRateEstimation.commodity,
+            FclFreightRateEstimation.container_size,
+            FclFreightRateEstimation.container_type,
+            FclFreightRateEstimation.created_at,
+            FclFreightRateEstimation.updated_at,
+            FclFreightRateEstimation.schedule_type,
+            FclFreightRateEstimation.payment_term,
+            FclFreightRateEstimation.line_items,
+            FclFreightRateEstimation.id,
+            FclFreightRateEstimation.status
+        ).where(
             FclFreightRateEstimation.origin_location_id == actual_transformation['origin_location_id'],
             FclFreightRateEstimation.destination_location_id == actual_transformation['destination_location_id'],
             FclFreightRateEstimation.container_type << container_types,
@@ -427,6 +459,7 @@ class FclFreightVyuh():
     
     
     def adjust_price_for_tranformation(self, affected_transformation, new: bool=False, is_relative: bool = False):
+        from celery_worker import update_multiple_service_objects
         transformation_id = affected_transformation.get('id')
         if is_relative:
             adjusted_line_items = affected_transformation['line_items']
@@ -477,7 +510,7 @@ class FclFreightVyuh():
                 shipping_line_id=payload['shipping_line_id'],
                 commodity=payload['commodity'],
                 payment_term=payload['payment_term'],
-                schedule_type=payload['schedule_type']
+                schedule_type=payload['schedule_type'],
             )
             data = {
                 'data': payload,
@@ -487,6 +520,7 @@ class FclFreightVyuh():
             }
             affected_transformation['id'] = str(transformation.id)
             self.create_audits(data=data)
+            transformation.set_attribute_objects()
         
         if not is_relative:
             actual_transformation = affected_transformation
