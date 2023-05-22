@@ -6,7 +6,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 
 # define filters
-possible_direct_filters = ['id','truck_company','truck_name','created_at','mileage','mileage_unit','capacity','capacity_unit','vehicle_weight','vehicle_weight_unit','fuel_type','avg_speed','no_of_wheels','engine_type','country_id','axels','truck_type','body_type','status','horse_power','updated_at']
+possible_direct_filters = ['id','truck_company','truck_name','created_at','mileage','mileage_unit','capacity','capacity_unit','vehicle_weight','vehicle_weight_unit','fuel_type','avg_speed','no_of_wheels','engine_type','country_id','axels','truck_type','body_type','status','horse_power','updated_at','display_name']
 possible_indirect_filters = []
 
 def list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_data_required):
@@ -17,7 +17,7 @@ def list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_d
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-        
+
         # get applicable filters
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
         # direct filters
@@ -40,7 +40,7 @@ def get_query(sort_by, sort_type):
 # split data into pages
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
-        return {} 
+        return {}
 
     total_count = query.count()
     params = {
