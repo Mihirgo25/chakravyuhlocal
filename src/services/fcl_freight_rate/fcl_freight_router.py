@@ -85,7 +85,7 @@ from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_da
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_rate_properties import get_rate_props
 from services.fcl_freight_rate.interaction.update_rate_properties import update_rate_props
-from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_fcl_freight_rates import get_cogo_assured_suggested_fcl_rates
+from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
@@ -1811,38 +1811,25 @@ def get_fcl_freight_weight_slabs(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-@fcl_freight_router.get("/get_cogo_assured_suggested_fcl_freight_rates")
-def get_fcl_freight_rate_suggestions_data(
-    rate_params: str,
+@fcl_freight_router.get("/get_suggested_cogo_assured_fcl_freight_rates")
+def get_suggested_cogo_assured_fcl_freight_rates_data(
+    container_size: str,
+    price: int,
+    currency: str,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        rate_params = eval(rate_params)
-        data = get_cogo_assured_suggested_fcl_rates(rate_params)
+        rate_params = {
+            'container_size': container_size,
+            'price': price,
+            'currency': currency
+        }
+        data = get_suggested_cogo_assured_fcl_freight_rates(rate_params)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@fcl_freight_router.get("/add_market_place")
-def add_market_place():
-    chunk_size = 5000  
-    total_rows = FclFreightRate.select().count()
-    total_chunks = (total_rows // chunk_size) + 1
-
-    for chunk in range(total_chunks):
-        offset = chunk * chunk_size
-        subquery = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.rate_type == 'market_place').limit(chunk_size).offset(offset)
-        query = FclFreightRate.update(init_key=FclFreightRate.init_key.concat(':market_place')).where(FclFreightRate.id.in_(subquery),FclFreightRate.init_key.endswith(':market_place') == False)
-        print(query)
-        query.execute()
-    return {"message": "Market place added to init_key column for all rows."}
-    
-@fcl_freight_router.get("/migrate_cogo_assured_fcl_to_rms_table")
-def migrate_cogo_assured_fcl_to_rms_table_func():
-    result = migrate_cogo_assured_fcl_to_rms_table()
-    return result

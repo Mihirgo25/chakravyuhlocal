@@ -2,15 +2,15 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_properties import *
-from services.fcl_freight_rate.interaction.get_cogo_assured_suggested_fcl_freight_rates import add_suggested_validities
+from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import add_suggested_validities
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
-
+from celery_worker import create_fcl_freight_rate_delay
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
-    rp = RateProperties.select().where(RateProperties.rate_id == freight_id).first()
+    rp = RateProperties.select(RateProperties.id).where(RateProperties.rate_id == freight_id).first()
     if not rp :
         RateProperties.create(
             rate_id = freight_id,
@@ -168,15 +168,15 @@ def create_fcl_freight_rate(request):
             add_rate_properties(request,freight.id)
         except Exception as e:
             print(e)
-    elif row['rate_type']=='market_place': 
-        cogo_id = FclFreightRate.select().where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured').first()
-         # print(FclFreightRate.select().where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured')) # print('$$$$',cogo_id) 
+
+    if row['rate_type']=='market_place': 
+        cogo_id = FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.origin_port_id == request.get('origin_port_id'),FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.container_size == request.get('container_size'),FclFreightRate.commodity == request.get('commodity'),FclFreightRate.shipping_line_id == request.get('shipping_line_id'),FclFreightRate.service_provider_id == request.get('service_provider_id'),FclFreightRate.importer_exporter_id == request.get('importer_exporter_id'),FclFreightRate.cogo_entity_id == request.get('cogo_entity_id'),FclFreightRate.destination_port_id == request.get('destination_port_id'),FclFreightRate.rate_type == 'cogo_assured').first()
         if not cogo_id: 
             params = request
-            
             params['rate_type'] = 'cogo_assured' 
-            params['line_items'] = validities_for_cogo_assured(params)
-            cogo_freight_id = create_fcl_freight_rate_data(params)
+            params['validities'] = validities_for_cogo_assured(params)
+            create_fcl_freight_rate_delay.apply_async(kwargs={'request':params},queue='fcl_freight_rate')
+
     create_audit(request, freight.id)
     
     if not request.get('importer_exporter_id') and not request.get("rate_not_available_entry"):
@@ -233,16 +233,16 @@ def get_flash_booking_rate_line_items(request):
             "slabs": []
         })
     return line_items
+
 def validities_for_cogo_assured(request):
     input_param = {
         "container_size": request["container_size"],
         "price": request["line_items"][0]["price"],
         "currency": request["line_items"][0]["currency"]
     }
-    opt = add_suggested_validities(input_param)
-    v = opt['validities']
-    # mp_v = v.pop(0)
-    return v
+    validities = add_suggested_validities(input_param)
+    return validities['validities']
+
 def validate_value_props(v_props):
     for prop in v_props:
         name = prop.get('name')
