@@ -18,3 +18,5 @@ class TrailerFreightEstimator():
         if self.country_code == "IN":
             estimator = INTrailerRateEstimator
             return estimator.estimate(self)
+        
+        return {'list':[]}

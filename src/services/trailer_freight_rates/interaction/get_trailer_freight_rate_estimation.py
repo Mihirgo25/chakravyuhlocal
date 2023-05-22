@@ -8,7 +8,7 @@ def get_estimated_rate(request):
     container_size = request['container_size']
     container_type = request['container_type']
     containers_count = request['containers_count']
-    cargo_weight_per_container = request.get('cargo_weight_per_container') if request.get('cargo_weight_per_container') is not None else DEFAULT_MAX_WEIGHT_LIMIT.get(container_size)
+    cargo_weight_per_container = request['cargo_weight_per_container'] if request.get('cargo_weight_per_container') is not None else DEFAULT_MAX_WEIGHT_LIMIT.get(container_size)
     
     estimator = TrailerFreightEstimator(origin_location_id, destination_location_id, country_code)
     return estimator.estimate(container_size, container_type, containers_count, cargo_weight_per_container)

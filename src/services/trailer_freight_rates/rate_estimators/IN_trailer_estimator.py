@@ -55,14 +55,14 @@ class INTrailerRateEstimator():
         total_cost = (fuel_cost + constants_cost) * CONTAINER_SIZE_FACTORS[container_size]
 
         if containers_count > 1:
-            total_cost = total_cost * (containers_count-0.3)
+            total_cost = total_cost * (containers_count-0.2)
 
         if container_type in ['refer', 'open_top', 'iso_tank', 'flat_rack', 'open_side']:
-            total_cost = total_cost + (total_cost * 0.4)
+            total_cost = total_cost + (total_cost * 0.5)
 
         return {'list':[{
             'base_price' : total_cost,
-            'currency' : constants_data.get('currency_code'),
+            'currency' : "INR",
             'distance' : distance,
             'transit_time' : transit_time,
             'upper_limit' : cargo_weight_per_container}]
