@@ -7,7 +7,7 @@ from fastapi.encoders import jsonable_encoder
 
 trailer_router = APIRouter()
 
-@trailer_router.get("/get_trailer_freight_rate_estimate")
+@trailer_router.get("/get_estimated_trailer_freight_rate")
 def get_trailer_freight_rate_estimate(
     origin_location_id: str = None,
     destination_location_id: str = None,
