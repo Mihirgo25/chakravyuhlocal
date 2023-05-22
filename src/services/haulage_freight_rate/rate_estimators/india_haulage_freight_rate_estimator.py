@@ -14,7 +14,8 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
 
 
 class IndiaHaulageFreightRateEstimator:
-    def __init__(self, *_, **__): pass
+    def __init__(self, *_, **__):
+        pass
 
     def estimate(self):
         """

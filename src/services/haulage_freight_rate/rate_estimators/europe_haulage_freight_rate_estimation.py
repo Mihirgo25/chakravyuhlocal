@@ -13,7 +13,7 @@ from configs.haulage_freight_rate_constants import (
 )
 
 
-class EuropeHaulageFreightRateEstimator():
+class EuropeHaulageFreightRateEstimator:
     def __init__(self, *_, **__):
         pass
 
@@ -30,9 +30,7 @@ class EuropeHaulageFreightRateEstimator():
         )
         return final_price
 
-    def get_europe_rates(
-        self, commodity, load_type, containers_count, distance
-    ):
+    def get_europe_rates(self, commodity, load_type, containers_count, distance):
         final_data = {}
         final_data["distance"] = distance
         final_data["currency"] = "EUR"
@@ -59,7 +57,6 @@ class EuropeHaulageFreightRateEstimator():
         final_data["base_price"] = self.apply_surcharges_for_europe(float(price))
 
         return final_data
-
 
     def apply_surcharges_for_europe(self, price):
         surcharge = 0.15 * price

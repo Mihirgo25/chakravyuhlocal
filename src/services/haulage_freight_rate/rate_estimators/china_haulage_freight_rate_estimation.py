@@ -11,15 +11,19 @@ from configs.haulage_freight_rate_constants import (
     CONTAINER_SIZE_FACTORS,
     DESTINATION_TERMINAL_CHARGES_INDIA,
 )
-class ChinaHaulageFreightRateEstimator():
-    def __init__(self, *_, **__): pass
+
+
+class ChinaHaulageFreightRateEstimator:
+    def __init__(self, *_, **__):
+        pass
 
     def estimate(self):
-        '''
+        """
         Primary Function to estimate china prices
-        '''
+        """
         instance = ChinaHaulageFreightRateEstimator()
-        final_price = instance.get_china_rates(query=self.query,
+        final_price = instance.get_china_rates(
+            query=self.query,
             commodity=self.commodity,
             load_type=self.load_type,
             containers_count=self.containers_count,
@@ -27,10 +31,9 @@ class ChinaHaulageFreightRateEstimator():
             container_type=self.container_type,
             cargo_weight_per_container=self.cargo_weight_per_container,
             permissable_carrying_capacity=self.permissable_carrying_capacity,
-            container_size=self.container_size,)
+            container_size=self.container_size,
+        )
         return final_price
-
-
 
     def get_china_rates(
         self,
@@ -46,15 +49,12 @@ class ChinaHaulageFreightRateEstimator():
     ):
         final_data = {}
         final_data["distance"] = location_pair_distance
-        query = (
-            query.where(
-                HaulageFreightRateRuleSet.container_type == container_size,
-                HaulageFreightRateRuleSet.train_load_type == load_type,
-            )
-            .order_by(SQL("base_price ASC"))
-        )
+        query = query.where(
+            HaulageFreightRateRuleSet.container_type == container_size,
+            HaulageFreightRateRuleSet.train_load_type == load_type,
+        ).order_by(SQL("base_price ASC"))
 
-        if query.count()==0:
+        if query.count() == 0:
             raise HTTPException(status_code=400, detail="rates not present")
         price = model_to_dict(query.first())
         currency = price["currency"]

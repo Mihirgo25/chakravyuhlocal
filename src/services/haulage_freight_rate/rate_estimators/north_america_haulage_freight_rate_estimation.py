@@ -8,13 +8,15 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
     get_transit_time,
 )
 
-class NorthAmericaHaulageFreightRateEstimator():
-    def __init__(self, *_, **__): pass
+
+class NorthAmericaHaulageFreightRateEstimator:
+    def __init__(self, *_, **__):
+        pass
 
     def estimate(self):
-        '''
+        """
         Primary Function to estimate north america prices
-        '''
+        """
         instance = NorthAmericaHaulageFreightRateEstimator()
         final_price = instance.get_north_america_rates(
             commodity=self.commodity,
@@ -23,8 +25,6 @@ class NorthAmericaHaulageFreightRateEstimator():
             distance=self.distance,
         )
         return final_price
-
-
 
     def get_north_america_rates(self, commodity, load_type, containers_count, distance):
         final_data = {}
@@ -49,7 +49,6 @@ class NorthAmericaHaulageFreightRateEstimator():
         if not wagon_price_upper_limit:
             raise HTTPException(status_code=400, detail="rates not present")
 
-
         price = wagon_price_upper_limit[0]["base_price"]
         price = price * containers_count
         final_data["base_price"] = self.apply_surcharges_for_north_america(float(price))
@@ -62,4 +61,3 @@ class NorthAmericaHaulageFreightRateEstimator():
         final_price = price + surcharge + development_charges
 
         return final_price
-

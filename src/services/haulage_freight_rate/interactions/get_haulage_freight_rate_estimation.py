@@ -3,10 +3,8 @@ from services.haulage_freight_rate.rate_estimators.haulge_freight_rate_estimator
     HaulageFreightRateEstimator,
 )
 
-from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
-    get_country_filter,
-)
 from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import *
+
 
 def haulage_rate_calculator(request):
     origin_location_id = request.origin_location_id

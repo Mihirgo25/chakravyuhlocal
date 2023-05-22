@@ -10,6 +10,9 @@ from services.haulage_freight_rate.rate_estimators.europe_haulage_freight_rate_e
 from services.haulage_freight_rate.rate_estimators.north_america_haulage_freight_rate_estimation import (
     NorthAmericaHaulageFreightRateEstimator,
 )
+from services.haulage_freight_rate.rate_estimators.generalized_haulage_freight_rate_estimator import (
+    GeneralizedHaulageFreightRateEstimator
+)
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import (
     HaulageFreightRateRuleSet,
 )
@@ -65,7 +68,8 @@ class HaulageFreightRateEstimator:
             estimator = NorthAmericaHaulageFreightRateEstimator
 
         else:
-            return {"is_price_estimated": False, "price": None}
+            estimator = GeneralizedHaulageFreightRateEstimator
+
 
         price = estimator.estimate(self)
         line_items_data = build_line_item(
@@ -106,13 +110,9 @@ class HaulageFreightRateEstimator:
         (
             self.commodity,
             self.permissable_carrying_capacity,
-        ) = self.get_container_and_commodity_type(
-            self.commodity, self.container_type
-        )
+        ) = self.get_container_and_commodity_type(self.commodity, self.container_type)
 
-    def get_container_and_commodity_type(
-        self, commodity, container_type
-    ):
+    def get_container_and_commodity_type(self, commodity, container_type):
         commodity = CONTAINER_TYPE_CLASS_MAPPINGS[container_type][0]
         permissable_carrying_capacity = WAGON_MAPPINGS[
             WAGON_COMMODITY_MAPPING[commodity]

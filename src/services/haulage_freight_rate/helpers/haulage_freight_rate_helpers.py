@@ -14,6 +14,7 @@ def get_railway_route(origin_location_id, destination_location_id):
         data = None
     return data
 
+
 def get_transit_time(distance):
     transit_time = (distance // 250) * 24
     if transit_time == 0:
@@ -21,38 +22,38 @@ def get_transit_time(distance):
     return transit_time
 
 
-def get_country_filter( origin_location, destination_location):
-        input = {"filters": {"id": [origin_location, destination_location]}}
-        location_category = "generalized"
-        print(input)
-        locations_data = maps.list_locations(input)["list"]
-        if (
-            locations_data[0]["country_code"] == "IN"
-            and locations_data[1]["country_code"] == "IN"
-        ):
-            location_category = "india"
+def get_country_filter(origin_location, destination_location):
+    input = {"filters": {"id": [origin_location, destination_location]}}
+    location_category = "generalized"
+    print(input)
+    locations_data = maps.list_locations(input)["list"]
+    if (
+        locations_data[0]["country_code"] == "IN"
+        and locations_data[1]["country_code"] == "IN"
+    ):
+        location_category = "india"
 
-        if (
-            locations_data[0]["country_code"] == "CN"
-            and locations_data[1]["country_code"] == "CN"
-        ):
-            location_category = "china"
+    if (
+        locations_data[0]["country_code"] == "CN"
+        and locations_data[1]["country_code"] == "CN"
+    ):
+        location_category = "china"
 
-        if (
-            locations_data[0]["country_code"] in ["FR", "NO", "NL", "DE", "CH"]
-            and locations_data[1]["country_code"] in ["FR", "NO", "NL", "DE", "CH"]
-        ):
-            location_category = "europe"
+    if locations_data[0]["country_code"] in [
+        "FR",
+        "NO",
+        "NL",
+        "DE",
+        "CH",
+    ] and locations_data[1]["country_code"] in ["FR", "NO", "NL", "DE", "CH"]:
+        location_category = "europe"
 
-        if (
-            locations_data[0]["country_code"] in ["US", "CA", "MX"]
-            and locations_data[1]["country_code"] in ["US", "CA", "MX"]
-        ):
-            location_category = "north_america"
+    if locations_data[0]["country_code"] in ["US", "CA", "MX"] and locations_data[1][
+        "country_code"
+    ] in ["US", "CA", "MX"]:
+        location_category = "north_america"
 
-        return locations_data, location_category
-
-
+    return locations_data, location_category
 
 
 def build_line_item(
@@ -82,7 +83,6 @@ def build_line_item(
         }
     ]
     return line_items_data
-
 
 
 def get_distances(origin_location, destination_location, data):
