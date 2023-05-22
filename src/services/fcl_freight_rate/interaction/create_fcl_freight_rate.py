@@ -1,18 +1,19 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from services.fcl_freight_rate.models.fcl_freight_rate_properties import RateProperties
+from services.fcl_freight_rate.models.fcl_freight_rate_properties import FclFreightRateProperties
 from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import add_suggested_validities
 from database.db_session import db
+from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
-    rp = RateProperties.select(RateProperties.id).where(RateProperties.rate_id == freight_id).first()
+    rp = FclFreightRateProperties.select(FclFreightRateProperties.id).where(FclFreightRateProperties.rate_id == freight_id).first()
     if not rp :
-        RateProperties.create(
+        FclFreightRateProperties.create(
             rate_id = freight_id,
             created_at = datetime.now(),
             updated_at = datetime.now(),
@@ -23,11 +24,13 @@ def add_rate_properties(request,freight_id):
             shipment_count = request["shipment_count"],
             volume_count=request["volume_count"]
         )
-    # rp = RateProperties.select().where(RateProperties.rate_id == freight_id).first()
+    # rp = FclFreightRateProperties.select().where(FclFreightRateProperties.rate_id == freight_id).first()
     # rp.validate_value_props()
 
 
 def create_audit(request, freight_id):
+
+    rate_type = request.get('rate_type')
 
     audit_data = {}
     audit_data["validity_start"] = request["validity_start"].isoformat()
@@ -37,7 +40,7 @@ def create_audit(request, freight_id):
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
     audit_data["is_extended"] = request.get("is_extended")
-    audit_data['validities'] = request.get("validities")
+    audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
 
     id = FclFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
@@ -50,6 +53,7 @@ def create_audit(request, freight_id):
         source=request.get("source"),
     )
     return id
+
 def create_fcl_freight_rate_data(request):
     # origin_port_id = str(request.get("origin_port_id"))
     # query = "create table if not exists fcl_freight_rates_{} partition of fcl_freight_rates for values in ('{}')".format(origin_port_id.replace("-", "_"), origin_port_id)

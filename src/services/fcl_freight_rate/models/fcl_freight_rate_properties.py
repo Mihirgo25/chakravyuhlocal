@@ -9,7 +9,7 @@ class BaseModel(Model):
     class Meta:
         database = db
 
-class RateProperties(BaseModel):
+class FclFreightRateProperties(BaseModel):
     id = BigAutoField(index=True,primary_key=True)
     rate_id = UUIDField(index=True,unique=True)
     created_at = DateTimeField(null=True)
@@ -22,7 +22,7 @@ class RateProperties(BaseModel):
     volume_count = IntegerField(default=0)
 
     class Meta:
-        db_table = "rate_properties"
+        db_table = "fcl_freight_rate_properties"
 
     def validate_value_properties(self):
       value_props = self.value_props

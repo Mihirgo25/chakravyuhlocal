@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.fcl_freight_rate_properties import RateProperties
+from services.fcl_freight_rate.models.fcl_freight_rate_properties import FclFreightRateProperties
 # from services.fcl_freight_rate.models.fcl_freight_rate_properties import validate_value_props
 
 from database.db_session import db
@@ -12,7 +12,7 @@ def update_fcl_freight_rate_properties(request):
     
 def execute_transaction_code(request):
     try:
-        updated_properties = RateProperties.select().where(RateProperties.rate_id==request['rate_id']).first()
+        updated_properties = FclFreightRateProperties.select().where(FclFreightRateProperties.rate_id==request['rate_id']).first()
     except:
         raise HTTPException(status_code=400,detail='Rate Properties id Not Found')
 
