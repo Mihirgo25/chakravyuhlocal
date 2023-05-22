@@ -29,3 +29,13 @@ CONTAINER_SIZE_FACTORS = {
     '40HC': 1.8,
     '45HC': 2
 }
+
+CONTAINR_TYPE_FACTORS = {
+    'standard': 1,
+    'refer': 1.5,
+    'open_top': 1.3,
+    'flat_rack': 1.2,
+    'open_side': 1.3, 
+    'iso_tank': 1.4
+    
+}

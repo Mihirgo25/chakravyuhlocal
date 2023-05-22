@@ -88,7 +88,6 @@ class INTrailerRateEstimator():
         if containers_count > 1:
             total_cost = total_cost * (containers_count-0.2)
 
-        if container_type in ['refer', 'open_top', 'iso_tank', 'flat_rack', 'open_side']:
-            total_cost = total_cost + (total_cost * 0.5)
+        total_cost = total_cost * CONTAINR_TYPE_FACTORS[container_type]
 
         return total_cost
