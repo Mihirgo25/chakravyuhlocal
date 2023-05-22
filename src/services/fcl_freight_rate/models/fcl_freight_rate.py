@@ -16,7 +16,7 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
-from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
+from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -406,7 +406,7 @@ class FclFreightRate(BaseModel):
 
       return result
 
-    def set_platform_prices(self, rate_type):
+    def set_platform_prices(self, rate_type=DEFAULT_RATE_TYPE):
       with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
         futures = [executor.submit(self.get_platform_price,validity_object['validity_start'], validity_object['validity_end'], validity_object['price'], validity_object['currency'], rate_type ) for validity_object in self.validities]
         for i in range(0,len(futures)):
