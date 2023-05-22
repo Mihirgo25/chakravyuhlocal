@@ -190,6 +190,8 @@ SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f
 
 EXTENSION_ENABLED_MODES = ['manual']
 
+DEFAULT_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
+
 VALUE_PROPOSITIONS =  ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']
 
 RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_time']

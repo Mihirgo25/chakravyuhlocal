@@ -182,7 +182,8 @@ class PostFclFreightRateLocal(BaseModel):
     procured_by_id: str = None
     sourced_by_id: str = None
     trade_type: str
-    port_id: str
+    port_id: str = None
+    country_id: str = None
     main_port_id: str = None
     container_size: str
     container_type: str
