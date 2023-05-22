@@ -67,15 +67,17 @@ def get_data(query, expired_rates_required):
       for validity_object in result['validities']:
         if (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') <= datetime.now()) and (not expired_rates_required):
             continue 
+        
+        platform_price = validity_object.get('platform_price') or -1
 
         validity = {
           'validity_start': validity_object['validity_start'],
           'validity_end': validity_object['validity_end'],
           'price': validity_object['price'],
-          'platform_price': validity_object['platform_price'],
+          'platform_price': platform_price,
           'currency': validity_object['currency'],
           'is_rate_about_to_expire': (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') >= datetime.now()) & (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') < (datetime.now() + timedelta(days = SEARCH_START_DATE_OFFSET))),
-          'is_best_price': (validity_object['price'] == validity_object['platform_price']),
+          'is_best_price': (validity_object['price'] == platform_price),
           'schedule_type' : validity_object['schedule_type'],
           'payment_type' : validity_object['payment_term'],
           'is_rate_expired' : datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') < datetime.now()}

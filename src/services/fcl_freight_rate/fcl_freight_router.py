@@ -91,7 +91,6 @@ from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from configs.fcl_freight_rate_constants import DEFAULT_SHIPPING_LINE_ID, DEFAULT_PROCURED_BY_ID, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SOURCED_BY_ID
 
 fcl_freight_router = APIRouter()
@@ -1846,5 +1845,6 @@ def get_suggested_cogo_assured_fcl_freight_rates_data(
     except HTTPException as e:
         raise
     except Exception as e:
+        # raise
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

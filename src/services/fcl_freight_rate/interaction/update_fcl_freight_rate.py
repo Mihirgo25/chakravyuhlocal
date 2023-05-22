@@ -77,12 +77,14 @@ def execute_transaction_code(request):
 
   if request.get('validity_start'):
     freight_object.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
-    if request['rate_type'] == "market_place":
+    
+    if request['rate_type'] != "cogo_assured":
       freight_object.validate_line_items(request.get('line_items'))
       freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), request.get('line_items'), request.get('schedule_type'), False, request.get('payment_term'))
-    elif request['rate_type'] == "cogo_assured":
+    else:
       freight_object.set_validities_for_cogo_assured_rates(request['validities'])
-    freight_object.set_platform_prices()
+
+    freight_object.set_platform_prices(request['rate_type'])
     freight_object.set_is_best_price()
     freight_object.set_last_rate_available_date()
 

@@ -369,7 +369,7 @@ class FclFreightRate(BaseModel):
       if len([code for code in mandatory_codes if code not in codes]) > 0:
           raise HTTPException(status_code=400, detail="line_items does not contain all mandatory_codes {}".format(", ".join([code for code in mandatory_codes if code not in codes])))
 
-    def get_platform_price(self, validity_start, validity_end, price, currency):
+    def get_platform_price(self, validity_start, validity_end, price, currency, rate_type):
       freight_rates = FclFreightRate.select(FclFreightRate.validities, FclFreightRate.id).where(
             (FclFreightRate.origin_port_id == self.origin_port_id) &
             (FclFreightRate.origin_main_port_id == self.origin_main_port_id) &
@@ -380,7 +380,7 @@ class FclFreightRate(BaseModel):
             (FclFreightRate.commodity == self.commodity) &
             (FclFreightRate.shipping_line_id == self.shipping_line_id) &
             (FclFreightRate.service_provider_id != self.service_provider_id) &
-            (FclFreightRate.rate_type == DEFAULT_RATE_TYPE)
+            (FclFreightRate.rate_type == rate_type)
             ).where(FclFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
 
       result = price
@@ -403,9 +403,9 @@ class FclFreightRate(BaseModel):
 
       return result
 
-    def set_platform_prices(self):
+    def set_platform_prices(self, rate_type):
       with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-        futures = [executor.submit(self.get_platform_price,validity_object['validity_start'], validity_object['validity_end'], validity_object['price'], validity_object['currency'] ) for validity_object in self.validities]
+        futures = [executor.submit(self.get_platform_price,validity_object['validity_start'], validity_object['validity_end'], validity_object['price'], validity_object['currency'], rate_type ) for validity_object in self.validities]
         for i in range(0,len(futures)):
           self.validities[i]['platform_price'] = futures[i].result()
 
