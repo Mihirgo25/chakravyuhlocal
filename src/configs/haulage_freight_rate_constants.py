@@ -5,11 +5,11 @@ DESTINATION_TERMINAL_CHARGES_INDIA = 15
 CONTAINER_TYPE_CLASS_MAPPINGS = {
     # 120 refer
     "standard": ["Class LR-3"],
-    "refer": ["Class LR1", "Class 130A", "Class 200"],
-    "open_top": ["Class 165", "Class 140A"],
-    "open_side": ["Class 145", "Class 170"],
-    "flat_rack": ["Class 180A"],
-    "iso_tank": ["Class 150"],
+    "refer": ["Class 165","Class 200"],
+    "open_top": ["Class LR1"],
+    "open_side": ["Class 120", "Class 170"],
+    "flat_rack": ["Class 130A"],
+    "iso_tank": ["Class 140A"],
 }
 
 WAGON_COMMODITY_MAPPING = {
@@ -17,7 +17,10 @@ WAGON_COMMODITY_MAPPING = {
     "Class LR-3": "BRNA",
     "Class 165": "BTPGLN",
     "Class 145": "BOXNHL",
-    "Class LR1": "BCXT"
+    "Class LR1": "BCXT",
+    "Class 130A": "BCNA",
+    "Class 140A": "BCXT",
+    "Class 120": "BTAP"
 }
 
 
