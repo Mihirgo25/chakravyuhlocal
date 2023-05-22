@@ -2,6 +2,7 @@ from database.db_session import db
 from micro_services.client import maps
 from configs.trailer_freight_rate_constants import *
 from services.trailer_freight_rates.rate_estimators.IN_trailer_estimator import INTrailerRateEstimator
+from services.trailer_freight_rates.rate_estimators.US_trailer_estimator import USTrailerRateEstimator
 
 class TrailerFreightEstimator():
     def __init__(self, origin_location_id, destination_location_id, country_code):
@@ -17,6 +18,10 @@ class TrailerFreightEstimator():
 
         if self.country_code == "IN":
             estimator = INTrailerRateEstimator
+            return estimator.estimate(self)
+        
+        if self.country_code == "US":
+            estimator = USTrailerRateEstimator
             return estimator.estimate(self)
         
         return {'list':[]}

@@ -8,7 +8,7 @@ from playhouse.shortcuts import model_to_dict
 from configs.trailer_freight_rate_constants import *
 
 
-class INTrailerRateEstimator():
+class USTrailerRateEstimator():
 
     def __init__(self, *_, **__): pass
 
@@ -38,7 +38,7 @@ class INTrailerRateEstimator():
         
         fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[country_code] #use fuel charge with currency
 
-        my_class = INTrailerRateEstimator(self)
+        my_class = USTrailerRateEstimator(self)
         constants_cost = my_class.constants_cost(distance)
         total_cost = fuel_cost + constants_cost
 
@@ -46,7 +46,7 @@ class INTrailerRateEstimator():
 
         return {'list':[{
             'base_price' : total_cost,
-            'currency' : "INR",
+            'currency' : "USD",
             'distance' : distance,
             'transit_time' : transit_time,
             'upper_limit' : cargo_weight_per_container}]
@@ -54,7 +54,7 @@ class INTrailerRateEstimator():
 
     def constants_cost(self,distance):
         constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == "IN"),
+                    (TrailerFreightRateCharges.country_code == "US"),
                     (TrailerFreightRateCharges.status == 'active')
                     ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
         constants_data = model_to_dict(constants)
