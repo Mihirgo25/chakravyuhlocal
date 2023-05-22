@@ -7,11 +7,6 @@ from playhouse.postgres_ext import SQL
 from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
     get_transit_time,
 )
-from configs.haulage_freight_rate_constants import (
-    CONTAINER_SIZE_FACTORS,
-    DESTINATION_TERMINAL_CHARGES_INDIA,
-)
-
 
 class ChinaHaulageFreightRateEstimator:
     def __init__(self, *_, **__):
@@ -61,6 +56,8 @@ class ChinaHaulageFreightRateEstimator:
         price_per_container = float(price["base_price"])
         running_base_price_per_carton_km = float(price["running_base_price"])
         base_price = price_per_container * containers_count
+        if not cargo_weight_per_container:
+            cargo_weight_per_container = 1
         running_base_price = (
             running_base_price_per_carton_km
             * cargo_weight_per_container

@@ -34,7 +34,6 @@ class EuropeHaulageFreightRateEstimator:
         final_data = {}
         final_data["distance"] = distance
         final_data["currency"] = "EUR"
-        final_data["country_code"] = "EU"
 
         wagon_upper_limit = (
             HaulageFreightRateRuleSet.select()
@@ -55,7 +54,7 @@ class EuropeHaulageFreightRateEstimator:
         price = wagon_price_upper_limit[0]["base_price"]
         price = price * containers_count
         final_data["base_price"] = self.apply_surcharges_for_europe(float(price))
-
+        final_data["transit_time"] = get_transit_time(distance)
         return final_data
 
     def apply_surcharges_for_europe(self, price):

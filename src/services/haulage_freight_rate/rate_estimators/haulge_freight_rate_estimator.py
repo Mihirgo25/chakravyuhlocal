@@ -53,6 +53,7 @@ class HaulageFreightRateEstimator:
         self.container_size = container_size
 
     def estimate(self):
+        print(self.__dict__)
         locations_data, location_category = self.get_location_data_and_category()
         self.convert_general_params_to_estimation_params()
         if location_category == "india":
@@ -61,11 +62,11 @@ class HaulageFreightRateEstimator:
         elif location_category == "china":
             estimator = ChinaHaulageFreightRateEstimator
 
-        elif location_category == "europe":
-            estimator = EuropeHaulageFreightRateEstimator
+        # elif location_category == "europe":
+        #     estimator = EuropeHaulageFreightRateEstimator
 
-        elif location_category == "north_america":
-            estimator = NorthAmericaHaulageFreightRateEstimator
+        # elif location_category == "north_america":
+        #     estimator = NorthAmericaHaulageFreightRateEstimator
 
         else:
             estimator = GeneralizedHaulageFreightRateEstimator

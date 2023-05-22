@@ -106,7 +106,6 @@ class IndiaHaulageFreightRateEstimator:
             price = model_to_dict(query.first())
             price_per_tonne = price["base_price"]
             currency = price["currency"]
-
             indicative_price = (
                 float(price_per_tonne)
                 * containers_count
