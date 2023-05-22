@@ -254,8 +254,12 @@ def validate_value_props(v_props):
 def create_line_items_cogo_assured(validities,freight,request):
     line_items = []
     for validity in validities:
-        validity_start = validity['validity_start'].date()
-        validity_end = validity['validity_end'].date()
+        try:
+            validity_start = datetime.strptime(validity['validity_start'], '%Y-%m-%d').date()
+            validity_end = datetime.strptime(validity['validity_end'], '%Y-%m-%d').date()
+        except:
+            validity_start = validity['validity_start'].date()
+            validity_end = validity['validity_end'].date()
         updated_validity = {k: v for k, v in validity.items() if k not in ["validity_start", "validity_end"]}
         updated_validity["code"] = "BAS"
         updated_validity["unit"] = "per_container"

@@ -349,11 +349,8 @@ def migrate_cogo_assured_fcl_to_rms_table():
                         result['sourced_by_id'] = '7f6f97fd-c17b-4760-a09f-d70b6ad963e8'
                         result['shipment_count'] = 0
                         result['volume_count'] = 0
-                        try:
-                            id = create_fcl_freight_rate(result)
-                            print(id)
-                        except Exception as e:
-                            print(e)
+                        id = create_fcl_freight_rate(result)
+                        print(id)
                 cur.close()
         conn.close()
         return {"message": "Created rates in fcl with tag cogo_assured"}
