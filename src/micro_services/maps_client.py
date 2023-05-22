@@ -44,4 +44,5 @@ class MapsApiClient:
         return self.client.request('GET','get_sea_route',{}, data)
 
     def get_distance_matrix_valhalla(self, data= {}):
+        data['is_authorization_required'] = False
         return self.client.request('GET','get_distance_matrix_valhalla',{}, data)

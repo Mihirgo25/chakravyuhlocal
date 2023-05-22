@@ -5,11 +5,12 @@ from libs.get_distance import get_distance
 
 def get_railway_route(origin_location_id, destination_location_id):
     input = {
-        "origin_location_id": origin_location_id,
-        "destination_location_id": destination_location_id,
+        "origin_location_id": [origin_location_id],
+        "destination_location_id": [destination_location_id],
     }
     try:
         data = maps.get_distance_matrix_valhalla(input)
+
     except HTTPException as e:
         data = None
     return data
@@ -92,7 +93,7 @@ def get_distances(origin_location, destination_location, data):
             destination_location = (d["latitude"], d["longitude"])
     coords_1 = origin_location
     coords_2 = destination_location
-    # route_distance = get_railway_route(origin_location, destination_location)
-    # if route_distance:
-    #     return route_distance
+    route_distance = get_railway_route(origin_location, destination_location)
+    if route_distance:
+        return route_distance
     return get_distance(coords_1, coords_2)

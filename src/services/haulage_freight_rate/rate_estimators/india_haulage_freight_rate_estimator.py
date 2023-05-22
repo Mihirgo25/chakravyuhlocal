@@ -57,6 +57,7 @@ class IndiaHaulageFreightRateEstimator:
     ):
         final_data = {}
         final_data["distance"] = location_pair_distance
+        location_pair_distance = float(location_pair_distance)
         if containers_count > 50:
             full_rake_count = containers_count / 50
             remaining_wagons_count = containers_count % 50
