@@ -10,19 +10,22 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
 from configs.haulage_freight_rate_constants import (
     CONTAINER_SIZE_FACTORS,
     DESTINATION_TERMINAL_CHARGES_INDIA,
+    DEFAULT_MAX_WEIGHT_LIMIT
 )
 
 
 class EuropeHaulageFreightRateEstimator:
-    def __init__(self, *_, **__):
-        pass
+    def __init__(self, commodity, load_type, containers_count, distance):
+        self.commodity = commodity
+        self.load_type = load_type
+        self.containers_count = containers_count
+        self.distance = distance
 
     def estimate(self):
         """
         Primary Function to estimate europe prices
         """
-        instance = EuropeHaulageFreightRateEstimator()
-        final_price = instance.get_europe_rates(
+        final_price = self.get_europe_rates(
             commodity=self.commodity,
             load_type=self.load_type,
             containers_count=self.containers_count,

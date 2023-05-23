@@ -11,7 +11,7 @@ from services.haulage_freight_rate.rate_estimators.north_america_haulage_freight
     NorthAmericaHaulageFreightRateEstimator,
 )
 from services.haulage_freight_rate.rate_estimators.generalized_haulage_freight_rate_estimator import (
-    GeneralizedHaulageFreightRateEstimator
+    GeneralizedHaulageFreightRateEstimator,
 )
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import (
     HaulageFreightRateRuleSet,
@@ -56,22 +56,53 @@ class HaulageFreightRateEstimator:
         locations_data, location_category = self.get_location_data_and_category()
         self.convert_general_params_to_estimation_params()
         if location_category == "india":
-            estimator = IndiaHaulageFreightRateEstimator
+            estimator = IndiaHaulageFreightRateEstimator(
+                self.query,
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance,
+                self.container_type,
+                self.cargo_weight_per_container,
+                self.permissable_carrying_capacity,
+                self.container_size,
+                self.transit_time,
+            )
 
         elif location_category == "china":
-            estimator = ChinaHaulageFreightRateEstimator
+            estimator = ChinaHaulageFreightRateEstimator(
+                self.query,
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance,
+                self.container_type,
+                self.cargo_weight_per_container,
+                self.permissable_carrying_capacity,
+                self.container_size,
+                self.transit_time,
+            )
 
         elif location_category == "europe":
-            estimator = EuropeHaulageFreightRateEstimator
+            estimator = EuropeHaulageFreightRateEstimator(
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance
+            )
 
         elif location_category == "north_america":
-            estimator = NorthAmericaHaulageFreightRateEstimator
+            estimator = NorthAmericaHaulageFreightRateEstimator(
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance
+            )
 
         else:
-            estimator = GeneralizedHaulageFreightRateEstimator
+            estimator = GeneralizedHaulageFreightRateEstimator(self)
 
-
-        price = estimator.estimate(self)
+        price = estimator.estimate()
         line_items_data = build_line_item(
             self.origin_location_id,
             self.destination_location_id,

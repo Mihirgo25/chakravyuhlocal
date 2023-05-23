@@ -9,15 +9,23 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
 )
 
 class ChinaHaulageFreightRateEstimator:
-    def __init__(self, *_, **__):
-        pass
+    def __init__(self, query, commodity, load_type, containers_count, distance, container_type, cargo_weight_per_container, permissable_carrying_capacity, container_size, transit_time):
+        self.query = query
+        self.commodity = commodity
+        self.load_type = load_type
+        self.containers_count = containers_count
+        self.distance = distance
+        self.container_type = container_type
+        self.cargo_weight_per_container = cargo_weight_per_container
+        self.permissable_carrying_capacity = permissable_carrying_capacity
+        self.container_size = container_size
+        self.transit_time = transit_time
 
     def estimate(self):
         """
         Primary Function to estimate china prices
         """
-        instance = ChinaHaulageFreightRateEstimator()
-        final_price = instance.get_china_rates(
+        final_price = self.get_china_rates(
             query=self.query,
             commodity=self.commodity,
             load_type=self.load_type,
@@ -57,7 +65,7 @@ class ChinaHaulageFreightRateEstimator:
         currency = price["currency"]
         price_per_container = float(price["base_price"])
         running_base_price_per_carton_km = float(price["running_base_price"])
-        base_price = price_per_container 
+        base_price = price_per_container
         if not cargo_weight_per_container:
             cargo_weight_per_container = 1
         running_base_price = (
