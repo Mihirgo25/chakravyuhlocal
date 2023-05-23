@@ -9,7 +9,7 @@ CONTAINER_TYPE_CLASS_MAPPINGS = {
     "open_top": ["Class LR1"],
     "open_side": ["Class 120", "Class 170"],
     "flat_rack": ["Class 130A"],
-    "iso_tank": ["Class 140A"],
+    "iso_tank": ["Class 150"],
 }
 
 WAGON_COMMODITY_MAPPING = {
@@ -19,7 +19,7 @@ WAGON_COMMODITY_MAPPING = {
     "Class 145": "BOXNHL",
     "Class LR1": "BCXT",
     "Class 130A": "BCNA",
-    "Class 140A": "BCXT",
+    "Class 150": "BCXT",
     "Class 120": "BTAP"
 }
 
