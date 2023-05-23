@@ -30,6 +30,7 @@ class HaulageFreightRateRuleSet(BaseModel):
     country_code = CharField(index=True)
     currency = CharField(index=True)
     transit_time = IntegerField(null=True)
+    haulage_type = CharField(index=True, null=True, default='merchant')
     generalized_data = BinaryJSONField(null=True)
     container_size = CharField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)

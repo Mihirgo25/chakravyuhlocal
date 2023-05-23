@@ -15,7 +15,7 @@ def get_railway_route(origin_location_id, destination_location_id):
 
 
 def get_transit_time(distance):
-    transit_time = (distance // 250) * 24
+    transit_time = (distance // 750) * 24
     if transit_time == 0:
         transit_time = 12
     return transit_time
@@ -86,7 +86,7 @@ def build_line_item(
 def get_distances(origin_location_id, destination_location_id, data):
     route_distance = get_railway_route(origin_location_id, destination_location_id)
     if route_distance:
-        return route_distance['distance'], route_distance['time']
+        return route_distance["distance"], route_distance["time"]
     for d in data:
         if d["id"] == origin_location_id:
             origin_location = (d["latitude"], d["longitude"])
