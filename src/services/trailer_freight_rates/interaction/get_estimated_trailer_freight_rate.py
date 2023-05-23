@@ -3,7 +3,7 @@ from configs.trailer_freight_rate_constants import *
 from micro_services.client import maps
 from fastapi import HTTPException
 
-def get_estimated_rate(request):
+def get_estimated_trailer_freight_rate(request):
     origin_location_id = request['origin_location_id']
     destination_location_id = request['destination_location_id']
     container_size = request['container_size']

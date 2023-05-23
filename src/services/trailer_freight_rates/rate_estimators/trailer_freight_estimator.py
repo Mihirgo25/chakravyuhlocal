@@ -19,11 +19,12 @@ class TrailerFreightEstimator():
         self.cargo_weight_per_container = cargo_weight_per_container
 
         if self.country_code == "IN":
-            estimator = INTrailerRateEstimator
-            return estimator.estimate(self)
+            estimator = INTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
+            return estimator.IN_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
         
         if self.country_code == "US":
-            estimator = USTrailerRateEstimator
-            return estimator.estimate(self)
+            estimator = USTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
+            return estimator.US_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
+        
         
         return {'list':[]}
