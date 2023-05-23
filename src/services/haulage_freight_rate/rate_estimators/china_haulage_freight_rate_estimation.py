@@ -57,7 +57,7 @@ class ChinaHaulageFreightRateEstimator:
         currency = price["currency"]
         price_per_container = float(price["base_price"])
         running_base_price_per_carton_km = float(price["running_base_price"])
-        base_price = price_per_container * containers_count
+        base_price = price_per_container 
         if not cargo_weight_per_container:
             cargo_weight_per_container = 1
         running_base_price = (

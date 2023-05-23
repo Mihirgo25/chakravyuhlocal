@@ -112,7 +112,6 @@ class IndiaHaulageFreightRateEstimator:
             currency = price["currency"]
             indicative_price = (
                 float(price_per_tonne)
-                * containers_count
                 * permissable_carrying_capacity
             ) * CONTAINER_SIZE_FACTORS[container_size]
         final_data["base_price"] = self.apply_surcharges_for_india(indicative_price)

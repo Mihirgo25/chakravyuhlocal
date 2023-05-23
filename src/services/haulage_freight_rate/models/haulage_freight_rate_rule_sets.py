@@ -9,11 +9,7 @@ class BaseModel(Model):
     class Meta:
         database = db
 class HaulageFreightRateRuleSet(BaseModel):
-    id = UUIDField(
-        primary_key=True,
-        constraints=[SQL("DEFAULT uuid_generate_v4()")],
-        default=uuid.uuid4,
-    )
+    id = BigAutoField(primary_key=True)
     distance = FloatField(index=True)
     wagon_count = IntegerField(index=True, null=True)
     status = CharField(index=True, default='active')

@@ -16,7 +16,7 @@ from services.haulage_freight_rate.rate_estimators.generalized_haulage_freight_r
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import (
     HaulageFreightRateRuleSet,
 )
-import services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation as get_haulage_freight_rate_estimation
+import services.haulage_freight_rate.interactions.get_estimated_haulage_freight_rate as get_estimated_haulage_freight_rate
 from configs.haulage_freight_rate_constants import (
     CONTAINER_TYPE_CLASS_MAPPINGS,
     WAGON_COMMODITY_MAPPING,
@@ -53,7 +53,6 @@ class HaulageFreightRateEstimator:
         self.container_size = container_size
 
     def estimate(self):
-        print(self.__dict__)
         locations_data, location_category = self.get_location_data_and_category()
         self.convert_general_params_to_estimation_params()
         if location_category == "india":
@@ -62,11 +61,11 @@ class HaulageFreightRateEstimator:
         elif location_category == "china":
             estimator = ChinaHaulageFreightRateEstimator
 
-        # elif location_category == "europe":
-        #     estimator = EuropeHaulageFreightRateEstimator
+        elif location_category == "europe":
+            estimator = EuropeHaulageFreightRateEstimator
 
-        # elif location_category == "north_america":
-        #     estimator = NorthAmericaHaulageFreightRateEstimator
+        elif location_category == "north_america":
+            estimator = NorthAmericaHaulageFreightRateEstimator
 
         else:
             estimator = GeneralizedHaulageFreightRateEstimator

@@ -52,7 +52,6 @@ class EuropeHaulageFreightRateEstimator:
             raise HTTPException(status_code=400, detail="rates not present")
 
         price = wagon_price_upper_limit[0]["base_price"]
-        price = price * containers_count
         final_data["base_price"] = self.apply_surcharges_for_europe(float(price))
         final_data["transit_time"] = get_transit_time(distance)
         return final_data

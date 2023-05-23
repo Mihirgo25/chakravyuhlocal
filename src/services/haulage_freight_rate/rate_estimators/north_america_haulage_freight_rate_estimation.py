@@ -50,7 +50,6 @@ class NorthAmericaHaulageFreightRateEstimator:
             raise HTTPException(status_code=400, detail="rates not present")
 
         price = wagon_price_upper_limit[0]["base_price"]
-        price = price * containers_count
         final_data["base_price"] = self.apply_surcharges_for_north_america(float(price))
 
         return final_data

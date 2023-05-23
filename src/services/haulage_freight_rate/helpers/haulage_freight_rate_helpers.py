@@ -15,9 +15,7 @@ def get_railway_route(origin_location_id, destination_location_id):
 
 
 def get_transit_time(distance):
-    transit_time = (distance // 750) * 24
-    if transit_time == 0:
-        transit_time = 12
+    transit_time = (distance / 750) * 24
     return transit_time
 
 

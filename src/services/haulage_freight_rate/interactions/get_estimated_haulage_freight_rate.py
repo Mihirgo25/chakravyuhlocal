@@ -1,4 +1,4 @@
-from configs.global_constants import COGO_ENVISION_ID
+from configs.env import DEFAULT_USER_ID
 from services.haulage_freight_rate.rate_estimators.haulge_freight_rate_estimator import (
     HaulageFreightRateEstimator,
 )
