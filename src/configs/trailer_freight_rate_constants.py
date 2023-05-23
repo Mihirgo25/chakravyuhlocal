@@ -32,10 +32,9 @@ CONTAINER_SIZE_FACTORS = {
 
 CONTAINR_TYPE_FACTORS = {
     'standard': 1,
-    'refer': 1.5,
-    'open_top': 1.3,
-    'flat_rack': 1.2,
-    'open_side': 1.3, 
-    'iso_tank': 1.4
-    
+    'refer': 1.6,
+    'open_top': 1.4,
+    'flat_rack': 1.3,
+    'open_side': 1.4, 
+    'iso_tank': 1.5
 }
