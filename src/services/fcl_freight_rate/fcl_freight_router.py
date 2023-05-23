@@ -83,12 +83,16 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_commodity_sur
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_seasonal_surcharge import create_fcl_freight_rate_seasonal_surcharge
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
-
+from services.fcl_freight_rate.interaction.get_fcl_freight_rate_properties import get_fcl_freight_rate_properties
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_properties import update_fcl_freight_rate_properties
+from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
+from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
+
 fcl_freight_router = APIRouter()
 
 @fcl_freight_router.post("/create_fcl_freight_commodity_cluster")
@@ -147,6 +151,26 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
+    if request.rate_type == 'cogo_assured' :
+        request.shipping_line_id = COGO_ASSURED_SHIPPING_LINE_ID
+        request.service_provider_id = COGO_ASSURED_SERVICE_PROVIDER_ID
+        request.sourced_by_id = DEFAULT_SOURCED_BY_ID
+        request.procured_by_id = DEFAULT_PROCURED_BY_ID
+
+    not_available_params = []
+    if not request.shipping_line_id:
+        not_available_params.append('Shipping line')
+
+    if not request.sourced_by_id:
+        not_available_params.append('Sourced by')
+
+    if not request.service_provider_id:
+        not_available_params.append('Service provider')
+
+    if not request.shipping_line_id or not request.sourced_by_id or not request.service_provider_id:
+        details = ' '.join(not_available_params) + ' not present'
+        raise  HTTPException(status_code=400, detail=details)
+
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
@@ -274,6 +298,7 @@ def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConf
 
 @fcl_freight_router.get("/get_fcl_freight_rate")
 def get_fcl_freight_rate_data(
+    id: str = None,
     origin_port_id: str = None,
     origin_main_port_id: str = None,
     destination_port_id: str = None,
@@ -285,11 +310,13 @@ def get_fcl_freight_rate_data(
     service_provider_id: str = None,
     importer_exporter_id: str = None,
     cogo_entity_id: str = None,
+    rate_type: str = "market_place",
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     request = {
+        'id':id,
         'origin_port_id':origin_port_id,
         'origin_main_port_id':origin_main_port_id,
         'destination_port_id':destination_port_id,
@@ -300,7 +327,8 @@ def get_fcl_freight_rate_data(
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id,
         'importer_exporter_id': importer_exporter_id,
-        'cogo_entity_id': cogo_entity_id
+        'cogo_entity_id': cogo_entity_id,
+        'rate_type':rate_type
     }
 
     try:
@@ -1009,6 +1037,9 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
+    if request.rate_type == 'cogo_assured' :
+        request.sourced_by_id= DEFAULT_SOURCED_BY_ID
+        request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         data = update_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1034,6 +1065,17 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.post("/update_fcl_freight_rate_properties")
+def update_fcl_freight_rate_properties_data(request: UpdateRateProperties,resp: dict=Depends(authorize_token)):
+    try:
+        data = update_fcl_freight_rate_properties(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500,content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.post("/update_fcl_freight_rate_local_agent")
 def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalAgent, resp: dict = Depends(authorize_token)):
@@ -1093,6 +1135,9 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
+    if request.rate_type == 'cogo_assured' :
+        request.sourced_by_id= DEFAULT_SOURCED_BY_ID
+        request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
@@ -1451,6 +1496,17 @@ def get_fcl_freight_rate_stats_data(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
+@fcl_freight_router.get("/get_fcl_freight_rate_properties")
+def get_fcl_freight_rate_properties_data(rate_id:str=None):
+    try:
+        data = get_fcl_freight_rate_properties(rate_id)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
 @fcl_freight_router.get("/get_fcl_freight_rate_seasonal_surcharge")
 def get_fcl_freight_rate_seasonal_surcharge_data(
     origin_location_id: str = None,
@@ -1766,5 +1822,29 @@ def get_fcl_freight_weight_slabs(
     except HTTPException as e:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.get("/get_suggested_cogo_assured_fcl_freight_rates")
+def get_suggested_cogo_assured_fcl_freight_rates_data(
+    container_size: str,
+    price: int,
+    currency: str,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        rate_params = {
+            'container_size': container_size,
+            'price': price,
+            'currency': currency
+        }
+        data = get_suggested_cogo_assured_fcl_freight_rates(rate_params)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        # raise
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
