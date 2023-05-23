@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 
 def create_audit(request, freight_id):
 
@@ -14,6 +15,7 @@ def create_audit(request, freight_id):
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
     audit_data["is_extended"] = request.get("is_extended")
+    audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
 
     id = FclFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
@@ -149,6 +151,9 @@ def create_fcl_freight_rate(request):
      
     current_validities = freight.validities
     adjust_dynamic_pricing(request, row, freight, current_validities)
+
+    if request.get('fcl_freight_rate_request_id'):
+        update_fcl_freight_rate_request({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
     return {"id": freight.id}
 

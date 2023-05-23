@@ -178,6 +178,8 @@ VALID_UNITS = ['per_bl', 'per_container', 'per_shipment']
 
 EXPECTED_TAT = 6 # HOURS
 
+EXPECTED_TAT_RATE_FEEDBACK_REVERT = 48 # HOURS
+
 DEFAULT_LOCAL_AGENT_IDS = {
   "541d1232-58ce-4d64-83d6-556a42209eb7":{'platform_config_constant_id':'3617e7ea-fc4f-4478-aea2-651fcb0ec1e6', 'value_type':'default', 'value':'5dc403b3-c1bd-4871-b8bd-35543aaadb36', 'display_name':'COGO FREIGHT PRIVATE LIMITED', 'status':'active'},
   "default": {'platform_config_constant_id':'3617e7ea-fc4f-4478-aea2-651fcb0ec1e6', 'value_type':'default', 'value':'5dc403b3-c1bd-4871-b8bd-35543aaadb36', 'display_name':'COGO FREIGHT PRIVATE LIMITED', 'status':'active'}
