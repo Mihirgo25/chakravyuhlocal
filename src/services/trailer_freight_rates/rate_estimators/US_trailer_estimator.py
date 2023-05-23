@@ -15,9 +15,9 @@ class USTrailerRateEstimator():
 
     def estimate(self):
         ''' 
-        Primary Function to estimate india prices
+        Primary Function to estimate US prices
         '''
-        print('Estimating India rates')
+        print('Estimating USA rates')
 
         origin_location_id = self.origin_location_id
         destination_location_id = self.destination_location_id
