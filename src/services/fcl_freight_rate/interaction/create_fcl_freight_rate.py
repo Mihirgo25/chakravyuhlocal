@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
-from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
+from celery_worker import update_fcl_freight_rate_request_in_delay
 
 def create_audit(request, freight_id):
 
@@ -153,7 +153,7 @@ def create_fcl_freight_rate(request):
     adjust_dynamic_pricing(request, row, freight, current_validities)
 
     if request.get('fcl_freight_rate_request_id'):
-        update_fcl_freight_rate_request({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+        update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
     return {"id": freight.id}
 
