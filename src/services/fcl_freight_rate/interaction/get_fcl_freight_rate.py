@@ -14,7 +14,6 @@ def get_fcl_freight_rate(request):
     return object
   else:
     del request['id']
-    del request['rate_type']
 
   if all_fields_present(request):
     object = find_object(request)
