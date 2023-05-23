@@ -13,7 +13,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class FtlFreightRateRuleSet(BaseModel):
-    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    id = BigAutoField(primary_key=True)
     location_id = UUIDField(null=False,index=True)
     location_type = CharField(null=False,index = True)
     truck_type = CharField(null=False,index = True)
@@ -31,4 +31,4 @@ class FtlFreightRateRuleSet(BaseModel):
       return super(FtlFreightRateRuleSet, self).save(*args, **kwargs)
 
     class Meta:
-        table_name = 'ftl_freight_rates'
+        table_name = 'ftl_freight_rate_rule_set'

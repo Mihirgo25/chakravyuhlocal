@@ -13,7 +13,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class FtlFreightRate(BaseModel):
-    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    id = BigAutoField(primary_key=True)
     service_provider_id = UUIDField(index=True)
     importer_exporter_id = UUIDField(null=True)
     origin_location_id = UUIDField(null=False,index=True)
@@ -27,6 +27,10 @@ class FtlFreightRate(BaseModel):
     commodity_type = TextField(null=False)
     distance = FloatField()
     line_items = BinaryJSONField(default = [],null = False)
+    is_line_items_error_messages_present = BooleanField(null=True)
+    is_line_items_info_messages_present = BooleanField(null=True)
+    line_items_error_messages = ArrayField(null = False)
+    line_items_info_messages = BinaryJSONField(null= True)
     truck_type = CharField(null=False,index = True)
     truck_body_type = CharField(null = False)
     origin_location_type = CharField(null = False)
@@ -41,6 +45,10 @@ class FtlFreightRate(BaseModel):
     detention_free_time = CharField(null = True)
     minimum_chargeable_weight = FloatField(null=True)
     source = CharField(null=True)
+    sourced_by_id = UUIDField(null=True, index=True)
+    procured_by_id = UUIDField(null=True, index=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     
