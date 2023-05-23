@@ -14,51 +14,43 @@ def get_system_rates(request):
         FclFreightRate.destination_port_id == request.get('destination_port_id'),
         FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),
         FclFreightRate.destination_main_port_id == request.get('destination_main_port_id'),
+        FclFreightRate.service_provider_id != COGO_ASSURED_SERVICE_PROVIDER_ID,
         FclFreightRate.container_size == request.get('container_size'),
         FclFreightRate.container_type == request.get('container_type'),
         FclFreightRate.commodity == request.get('commodity'),
         FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
         ~FclFreightRate.rate_not_available_entry,
-        FclFreightRate.last_rate_available_date >= datetime.now().date()
+        FclFreightRate.last_rate_available_date >= datetime.now().date(),
+        FclFreightRate.mode == 'manual'
     )
     return jsonable_encoder(list(fcl_rate.dicts()))
 
-def update_fcl_rates_to_cogo_assured(request,):
-    print('jii')
-
-    system_rates =  get_system_rates(request=request)
-
-    fcl_rate = FclFreightRate.select(
-        FclFreightRate.validities,
-        FclFreightRate.id
-    ).where(
-        FclFreightRate.origin_port_id == request.get('origin_port_id'),
-        FclFreightRate.destination_port_id == request.get('destination_port_id'),
-        FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),
-        FclFreightRate.destination_main_port_id == request.get('destination_main_port_id'),
-        FclFreightRate.container_size == request.get('container_size'),
-        FclFreightRate.container_type == request.get('container_type'),
-        FclFreightRate.commodity == request.get('commodity'),
-        FclFreightRate.shipping_line_id == COGO_ASSURED_SHIPPING_LINE_ID,
-        FclFreightRate.service_provider_id == COGO_ASSURED_SERVICE_PROVIDER_ID,
-        FclFreightRate.rate_type == 'cogo_assured'
-    )
-
-    rates = jsonable_encoder(list(fcl_rate.dicts()))
-    cogo_assured_rate = None
-    if len(rates):
-        cogo_assured_rate = rates[0]
-    
-    if not cogo_assured_rate:
-        return
-    
-
-    
-    first_week_validity = cogo_assured_rate['validities'][0]
-
-    first_week_price = first_week_validity['price']
-
-
+def update_cogo_assured_fcl_freight_rate_validities(rate):
+    cogo_assured_rate = rate
+    before_modification_prices = {}
+    for validity in cogo_assured_rate['validities']:
+        validity_start = validity["validity_start"]
+        validity_end = validity["validity_end"]
+        current_date = datetime.now().date()
+        
+        if validity_end >= current_date:
+            currency = validity["currency"]
+            
+            existing_system_rates =  get_system_rates(request=cogo_assured_rate)
+            key = cogo_assured_rate["container_size"] + cogo_assured_rate["container_type"] + cogo_assured_rate["commodity"]
+            before_modification_prices[key] = validity["price"]
+            
+            initial_first_week_price = get_initial_first_week_price(existing_system_rates, validity["price"], cogo_assured_rate, cogo_assured_rate["container_size"], cogo_assured_rate["container_type"], cogo_assured_rate["commodity"], before_modification_prices)
+            week_1_rate = set_week_rate(initial_first_week_price, initial_first_week_price, 1)
+            second_week_price = get_second_week_price(existing_system_rates, validity["price"], week_1_rate)
+            week_2_rate = set_week_rate(second_week_price, week_1_rate, 2)
+            week_3_rate = set_week_rate(week_2_rate, week_1_rate, 3)
+            week_4_rate = set_week_rate(week_3_rate, week_1_rate, 4)
+            week_5_rate = set_week_rate(week_4_rate, week_1_rate, 5)
+            new_validities = get_new_validities(week_1_rate, week_2_rate, week_3_rate, week_4_rate, week_5_rate, validity_start, validity_end, currency)
+            validity_end = new_validities[-1]["validity_end"]
+            FclFreightRate.update(validities = new_validities, last_rate_available_date = validity_end, update_at = datetime.now()).where(FclFreightRate.id == cogo_assured_rate['id']).execute()
+            break
 
 def get_initial_first_week_price(existing_system_rates, current_price, cogo_assured_rate, container_size, container_type, commodity, before_modification_prices):
     if existing_system_rates:

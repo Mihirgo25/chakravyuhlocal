@@ -18,6 +18,7 @@ from celery.schedules import crontab
 from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
+from services.fcl_freight_rate.interaction.update_fcl_rates_to_cogo_assured import update_cogo_assured_fcl_freight_rate_validities
 
 # Rate Producers
 
@@ -64,7 +65,12 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
         'schedule': crontab(minute=00,hour=00),
         'options': {'queue' : 'fcl_freight_rate'}
-        }
+        },
+    'update_cogo_assured_fcl_freight_rates': {
+        'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
+        'schedule': crontab(minute=30, hour=18),
+        'options': { 'queue': 'fcl_freight_rate' }
+    }
 }
 
 
@@ -267,7 +273,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, retry_backoff=True,max_retries=5)
+@celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_freight_rates_to_cogo_assured(self):
     try:
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
@@ -367,3 +373,18 @@ def create_country_wise_locals_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind=True, retry_backoff=True, max_retries=1)
+def update_cogo_assured_fcl_freight_rates(self):
+    batch_size = 5000
+    cogo_assured_rates = FclFreightRate.select().where(FclFreightRate.rate_type == 'cogo_assured')
+    total_size = cogo_assured_rates.count()
+    
+    for batch in range(0, total_size, batch_size):
+        batched_rates = cogo_assured_rates.limit(batch_size).offset(batch)
+        if not batched_rates.exists():
+            break
+        
+        batch_rates = list(batched_rates.dict())
+        for rate in batched_rates:
+            update_cogo_assured_fcl_freight_rate_validities(rate)
