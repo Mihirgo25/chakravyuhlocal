@@ -29,11 +29,11 @@ def get_trailer_freight_rate_estimate(
         "cargo_weight_per_container": cargo_weight_per_container
     }
 
-    # try:
-    data = get_estimated_trailer_freight_rate(request)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = get_estimated_trailer_freight_rate(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
