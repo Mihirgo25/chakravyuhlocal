@@ -41,7 +41,8 @@ def initialize_freight_query(requirements, prediction_required = False):
     FclFreightRate.is_origin_local_line_items_error_messages_present,
     FclFreightRate.is_destination_local_line_items_error_messages_present,
     FclFreightRate.cogo_entity_id,
-    FclFreightRate.mode
+    FclFreightRate.mode,
+    FclFreightRate.rate_type
     ).where(
     FclFreightRate.origin_port_id == requirements['origin_port_id'],
     FclFreightRate.destination_port_id == requirements['destination_port_id'],
