@@ -3,7 +3,6 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
 from configs.global_constants import HAZ_CLASSES
-from celery_worker import update_fcl_freight_rate_request_in_delay
 
 def create_audit(request, freight_id):
 
@@ -36,7 +35,8 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions
+    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
+
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
