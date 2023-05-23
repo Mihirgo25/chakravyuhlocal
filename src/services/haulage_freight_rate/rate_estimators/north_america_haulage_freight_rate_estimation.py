@@ -10,15 +10,17 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
 
 
 class NorthAmericaHaulageFreightRateEstimator:
-    def __init__(self, *_, **__):
-        pass
+    def __init__(self, commodity, load_type, containers_count, distance):
+        self.commodity = commodity
+        self.load_type = load_type
+        self.containers_count = containers_count
+        self.distance = distance
 
     def estimate(self):
         """
         Primary Function to estimate north america prices
         """
-        instance = NorthAmericaHaulageFreightRateEstimator()
-        final_price = instance.get_north_america_rates(
+        final_price = self.get_north_america_rates(
             commodity=self.commodity,
             load_type=self.load_type,
             containers_count=self.containers_count,

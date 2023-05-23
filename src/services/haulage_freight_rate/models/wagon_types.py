@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 import datetime
 from playhouse.postgres_ext import ArrayField
-from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
+from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
 
 
 class BaseModel(Model):
@@ -10,7 +10,7 @@ class BaseModel(Model):
         database = db
 class WagonTypes(BaseModel):
     id = BigAutoField(primary_key=True)
-    wagon_type = ForeignKeyField(HaulageFreightRate)
+    wagon_type = ForeignKeyField(HaulageFreightRateRuleSet)
     wagon_code = CharField(index=True, null=True)
     name = CharField(index=True, null=True)
     permissible_speed = IntegerField(null=True)

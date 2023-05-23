@@ -8,6 +8,9 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
     get_transit_time,
 )
 
+from configs.haulage_freight_rate_constants import (
+    DEFAULT_MAX_WEIGHT_LIMIT
+)
 class ChinaHaulageFreightRateEstimator:
     def __init__(self, query, commodity, load_type, containers_count, distance, container_type, cargo_weight_per_container, permissable_carrying_capacity, container_size, transit_time):
         self.query = query
@@ -67,7 +70,7 @@ class ChinaHaulageFreightRateEstimator:
         running_base_price_per_carton_km = float(price["running_base_price"])
         base_price = price_per_container
         if not cargo_weight_per_container:
-            cargo_weight_per_container = 1
+            cargo_weight_per_container = DEFAULT_MAX_WEIGHT_LIMIT[container_size]
         running_base_price = (
             running_base_price_per_carton_km
             * cargo_weight_per_container
