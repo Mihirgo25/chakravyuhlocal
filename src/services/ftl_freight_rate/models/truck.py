@@ -36,6 +36,22 @@ class Truck(BaseModel):
     horse_power = FloatField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     data = BinaryJSONField(null=True)
+    search_vector = TSVectorField(
+        constraints=[SQL(
+            """GENERATED ALWAYS AS (
+                to_tsvector('english', coalesce(truck_company, '')) ||
+                to_tsvector('english', coalesce(truck_name, '')) ||
+                to_tsvector('english', coalesce(display_name, '')) ||
+                to_tsvector('english', coalesce(cast(mileage as text), '')) ||
+                to_tsvector('english', coalesce(cast(capacity as text), '')) ||
+                to_tsvector('english', coalesce(fuel_type, '')) ||
+                to_tsvector('english', coalesce(cast(no_of_wheels as text), '')) ||
+                to_tsvector('english', coalesce(truck_type, '')) ||
+                to_tsvector('english', coalesce(body_type, ''))
+                )
+            STORED"""
+            )]
+        )
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

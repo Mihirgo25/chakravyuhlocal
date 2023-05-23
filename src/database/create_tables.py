@@ -31,7 +31,7 @@ from services.chakravyuh.models.fcl_freight_rate_local_estimation import FclFrei
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FtlServiceAudit,Truck])
+        db.create_tables([Truck])
         db.close()
         print("created table")
     except:
