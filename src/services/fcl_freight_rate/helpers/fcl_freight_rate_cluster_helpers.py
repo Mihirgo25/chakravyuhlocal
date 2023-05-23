@@ -8,6 +8,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster imp
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import copy
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import *
 from rms_utils.get_in_batches import get_in_batches
 
@@ -147,7 +148,7 @@ def add_mandatory_line_items(param,request):
     return param
 
 def check_rate_existence(updated_param):
-    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
+    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).execute()
     if system_rate:
         return True
     else:

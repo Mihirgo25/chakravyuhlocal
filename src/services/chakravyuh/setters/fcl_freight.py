@@ -2,6 +2,7 @@ from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from micro_services.client import common
 import sentry_sdk
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
@@ -176,7 +177,8 @@ class FclFreightVyuh():
             FclFreightRate.container_type == affected_transformation['container_type'],
             ~FclFreightRate.rate_not_available_entry,
             FclFreightRate.last_rate_available_date >= current_date,
-            FclFreightRate.mode != 'predicted'
+            FclFreightRate.mode != 'predicted',
+            FclFreightRate.rate_type == DEFAULT_RATE_TYPE
         )
 
         if affected_transformation['origin_location_type'] == 'seaport':

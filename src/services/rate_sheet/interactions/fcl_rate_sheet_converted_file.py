@@ -877,7 +877,7 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_ro
     return object_validity
 
 def process_fcl_freight_freight(params, converted_file, update):
-    valid_headers = ["origin_port", "origin_main_port", "destination_port", "destination_main_port", "container_size", "container_type", "commodity", "shipping_line", "validity_start", "validity_end", "code", "unit", "price", "currency", "extend_rates", "weight_free_limit", "weight_lower_limit", "weight_upper_limit", "weight_limit_price", "weight_limit_currency", "destination_detention_free_limit", "destination_detention_lower_limit", "destination_detention_upper_limit", "destination_detention_price", "destination_detention_currency", "schedule_type", "remark1", "remark2", "remark3", "payment_term"]
+    valid_headers = ["origin_port", "origin_main_port", "destination_port", "destination_main_port", "container_size", "container_type", "commodity", "shipping_line", "validity_start", "validity_end", "code", "unit", "price", "currency", "extend_rates", "weight_free_limit", "weight_lower_limit", "weight_upper_limit", "weight_limit_price", "weight_limit_currency", "destination_detention_free_limit", "destination_detention_lower_limit", "destination_detention_upper_limit", "destination_detention_price", "destination_detention_currency", "schedule_type", "remark1", "remark2", "remark3", "payment_term", "rate_type"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -1218,7 +1218,7 @@ def create_fcl_freight_freight_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
 ):
     from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
-    keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term']
+    keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term', 'rate_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
 
     object['validity_start'] = convert_date_format(object.get('validity_start'))

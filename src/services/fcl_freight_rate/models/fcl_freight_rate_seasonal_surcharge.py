@@ -4,7 +4,7 @@ from playhouse.postgres_ext import *
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import datetime
 from fastapi import HTTPException
-from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES
+from configs.fcl_freight_rate_constants import CONTAINER_SIZES, CONTAINER_TYPES, DEFAULT_RATE_TYPE
 from configs.definitions import FCL_FREIGHT_SEASONAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_mapping import FclFreightRateMappings
 from micro_services.client import *
@@ -150,6 +150,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
             (FclFreightRate.container_type == self.container_type) &
             (FclFreightRate.shipping_line_id == self.shipping_line_id) &
             (FclFreightRate.service_provider_id == self.service_provider_id) &
+            (FclFreightRate.rate_type == DEFAULT_RATE_TYPE) &
             (getattr(FclFreightRate, f"origin_{self.origin_location_type}_id") == self.origin_location_id) &
             (getattr(FclFreightRate, f"destination_{self.destination_location_type}_id") == self.destination_location_id)
         )
