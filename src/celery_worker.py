@@ -19,6 +19,7 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_cogo_assured_fcl_freight_rate_validities import update_cogo_assured_fcl_freight_rate_validities
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 
 # Rate Producers
 
@@ -372,8 +373,8 @@ def create_country_wise_locals_in_delay(self, request):
         if type(exc).__name__ == 'HTTPException':
             pass
         else:
-            raise self.retry(exc= exc)
-        
+            raise self.retry(exc= exc)        
+
 @celery.task(bind=True, retry_backoff=True, max_retries=1)
 def update_cogo_assured_fcl_freight_rates(self):
     batch_size = 5000
@@ -388,3 +389,13 @@ def update_cogo_assured_fcl_freight_rates(self):
         batch_rates = list(batched_rates.dict())
         for rate in batched_rates:
             update_cogo_assured_fcl_freight_rate_validities(rate)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_fcl_freight_rate_request_in_delay(self, request):
+    try:
+        update_fcl_freight_rate_request(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
