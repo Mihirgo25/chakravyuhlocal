@@ -6,7 +6,6 @@ from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freigh
 from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
-from celery_worker import update_fcl_freight_rate_request_in_delay
 from datetime import datetime
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 
@@ -64,7 +63,8 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions
+    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
+
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
