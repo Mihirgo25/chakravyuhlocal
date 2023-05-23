@@ -72,7 +72,7 @@ class USTrailerRateEstimator():
 
         return {'list':[{
             'base_price' : total_cost,
-            'currency' : "INR",
+            'currency' : "USD",
             'distance' : distance,
             'transit_time' : transit_time,
             'upper_limit' : cargo_weight_per_container}]
