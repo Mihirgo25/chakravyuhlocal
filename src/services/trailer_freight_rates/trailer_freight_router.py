@@ -11,7 +11,6 @@ trailer_router = APIRouter()
 def get_trailer_freight_rate_estimate(
     origin_location_id: str = None,
     destination_location_id: str = None,
-    country_code: str = None,
     container_size: str = None,
     container_type: str = None,
     containers_count: int =None,
@@ -24,7 +23,6 @@ def get_trailer_freight_rate_estimate(
     request = {
         "origin_location_id": origin_location_id,
         "destination_location_id": destination_location_id,
-        "country_code": country_code,
         "container_size": container_size,
         "container_type": container_type,
         "containers_count": containers_count,
