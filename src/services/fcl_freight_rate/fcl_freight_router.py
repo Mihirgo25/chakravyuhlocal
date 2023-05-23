@@ -160,17 +160,17 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
     not_available_params = []
     if not request.shipping_line_id:
         not_available_params.append('Shipping line')
-    
+
     if not request.sourced_by_id:
         not_available_params.append('Sourced by')
-    
+
     if not request.service_provider_id:
         not_available_params.append('Service provider')
 
     if not request.shipping_line_id or not request.sourced_by_id or not request.service_provider_id:
         details = ' '.join(not_available_params) + ' not present'
-        raise  HTTPException(status_code=400, detail=details) 
-        
+        raise  HTTPException(status_code=400, detail=details)
+
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
@@ -340,8 +340,8 @@ def get_fcl_freight_rate_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
-    
+
+
 @fcl_freight_router.get("/get_fcl_freight_rate_for_lcl")
 def get_fcl_freight_rate_for_lcl_func(
     origin_port_id: str = None,
@@ -1065,7 +1065,7 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @fcl_freight_router.post("/update_fcl_freight_rate_properties")
 def update_fcl_freight_rate_properties_data(request: UpdateRateProperties,resp: dict=Depends(authorize_token)):
     try:
@@ -1688,8 +1688,8 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
-    
+
+
 
 @fcl_freight_router.post("/update_fcl_freight_rate_sheet")
 def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
@@ -1791,7 +1791,7 @@ def get_fcl_freight_weight_slabs(
     resp: dict = Depends(authorize_token),
     rates: List[str] | None= Query(None)
 
-):  
+):
     request = {
         'origin_port_id' : origin_port_id,
         'origin_country_id' : origin_country_id,
@@ -1824,7 +1824,7 @@ def get_fcl_freight_weight_slabs(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @fcl_freight_router.get("/get_suggested_cogo_assured_fcl_freight_rates")
 def get_suggested_cogo_assured_fcl_freight_rates_data(
     container_size: str,
