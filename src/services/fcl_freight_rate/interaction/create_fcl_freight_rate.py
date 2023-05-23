@@ -66,6 +66,7 @@ def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
 
     row = {
+        'origin_port_id': request.get('origin_port_id'),
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
         "destination_main_port_id": request.get("destination_main_port_id"),
@@ -90,12 +91,13 @@ def create_fcl_freight_rate(request):
         FclFreightRate.select()
         .where(
             FclFreightRate.init_key == init_key,
+            FclFreightRate.rate_type == row['rate_type']
         )
         .first()
     )
     
     if not freight:
-        freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
+        freight = FclFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
 
