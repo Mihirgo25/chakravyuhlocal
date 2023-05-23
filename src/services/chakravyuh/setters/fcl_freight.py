@@ -542,7 +542,7 @@ class FclFreightVyuh():
           Main Function to set dynamic pricing bounds  
         '''  
         from celery_worker import transform_dynamic_pricing
-        if self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
+        if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
             return False
         
         affected_transformations = self.get_transformations_to_be_affected()

@@ -210,7 +210,7 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'destination_trade_id': freight.destination_trade_id,
         'service_provider_id': freight.service_provider_id
     }
-    if row["mode"] == 'manual' and not request.get("is_extended"):
+    if row["mode"] == 'manual' and not request.get("is_extended") and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
