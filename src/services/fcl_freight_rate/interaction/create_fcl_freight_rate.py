@@ -40,6 +40,7 @@ def create_audit(request, freight_id):
     audit_data["origin_local"] = request.get("origin_local")
     audit_data["destination_local"] = request.get("destination_local")
     audit_data["is_extended"] = request.get("is_extended")
+    audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
     audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
 
     id = FclFreightRateAudit.create(
@@ -62,7 +63,8 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions
+    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
+
     row = {
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
@@ -188,6 +190,9 @@ def create_fcl_freight_rate(request):
      
     current_validities = freight.validities
     adjust_dynamic_pricing(request, row, freight, current_validities)
+
+    if request.get('fcl_freight_rate_request_id'):
+        update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
     return {"id": freight.id}
 
