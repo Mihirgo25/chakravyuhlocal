@@ -5,15 +5,13 @@ from libs.get_distance import get_distance
 
 def get_railway_route(origin_location_id, destination_location_id):
     input = {
-        "origin_location_id": [origin_location_id],
-        "destination_location_id": [destination_location_id],
+        "origin_location_id": origin_location_id,
+        "destination_location_id": destination_location_id,
     }
-    try:
-        data = maps.get_distance_matrix_valhalla(input)
-
-    except HTTPException as e:
-        data = None
-    return data
+    data = maps.get_distance_matrix_valhalla(input)
+    if isinstance(data, dict):
+        return data
+    return None
 
 
 def get_transit_time(distance):
@@ -85,15 +83,17 @@ def build_line_item(
     return line_items_data
 
 
-def get_distances(origin_location, destination_location, data):
+def get_distances(origin_location_id, destination_location_id, data):
+    route_distance = get_railway_route(origin_location_id, destination_location_id)
+    if route_distance:
+        return route_distance['distance'], route_distance['time']
     for d in data:
-        if d["id"] == origin_location:
+        if d["id"] == origin_location_id:
             origin_location = (d["latitude"], d["longitude"])
-        if d["id"] == destination_location:
+        if d["id"] == destination_location_id:
             destination_location = (d["latitude"], d["longitude"])
     coords_1 = origin_location
     coords_2 = destination_location
-    # route_distance = get_railway_route(origin_location, destination_location)
-    # if route_distance:
-    #     return route_distance
-    return get_distance(coords_1, coords_2)
+    distance = get_distance(coords_1, coords_2)
+    transit_time = get_transit_time(distance)
+    return distance, transit_time

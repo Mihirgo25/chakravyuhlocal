@@ -27,6 +27,7 @@ class ChinaHaulageFreightRateEstimator:
             cargo_weight_per_container=self.cargo_weight_per_container,
             permissable_carrying_capacity=self.permissable_carrying_capacity,
             container_size=self.container_size,
+            transit_time=self.transit_time
         )
         return final_price
 
@@ -41,6 +42,7 @@ class ChinaHaulageFreightRateEstimator:
         cargo_weight_per_container,
         permissable_carrying_capacity,
         container_size,
+        transit_time
     ):
         final_data = {}
         final_data["distance"] = location_pair_distance
@@ -67,7 +69,7 @@ class ChinaHaulageFreightRateEstimator:
 
         final_data["base_price"] = self.apply_surcharges_for_china(indicative_price)
         final_data["currency"] = currency
-        final_data["transit_time"] = get_transit_time(location_pair_distance)
+        final_data["transit_time"] = transit_time
         return final_data
 
     def apply_surcharges_for_china(self, indicative_price):

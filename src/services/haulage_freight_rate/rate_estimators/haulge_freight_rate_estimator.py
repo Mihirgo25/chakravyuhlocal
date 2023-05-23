@@ -90,10 +90,11 @@ class HaulageFreightRateEstimator:
         if location_category not in POSSIBLE_LOCATION_CATEGORY:
             return {"is_price_estimated": False, "price": None}
 
-        location_pair_distance = get_distances(
+        location_pair_distance, transit_time = get_distances(
             self.origin_location_id, self.destination_location_id, locations_data
         )
         self.distance = location_pair_distance
+        self.transit_time = transit_time
         return locations_data, location_category
 
     def convert_general_params_to_estimation_params(self):
