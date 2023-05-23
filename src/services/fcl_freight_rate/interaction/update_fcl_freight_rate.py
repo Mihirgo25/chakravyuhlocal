@@ -2,17 +2,21 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from database.db_session import db
-
+from datetime import datetime
 def create_audit(request, freight_id):
+    validity_start = request.get('validity_start')
+    validity_end = request.get('validity_end')
     audit_data = {}
-    audit_data['validity_start'] = request.get('validity_start').isoformat()
-    audit_data['validity_end'] = request.get('validity_end').isoformat()
+    audit_data['validity_start'] = validity_start.isoformat() if validity_start else datetime.now().isoformat()
+    audit_data['validity_end'] = validity_end.isoformat() if validity_end else datetime.now().isoformat()
     audit_data['line_items'] = request.get('line_items')
     audit_data['weight_limit'] = request.get('weight_limit')
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
     audit_data['is_extended'] = request.get("is_extended")
-
+    ## remove this during prodution for testing I am taking some constant value for performed_by_id
+    request['performed_ by_id'] = '515a7d68-3527-422d-9fce-f63bec350d78'
+    #########
     FclFreightRateAudit.create(
         bulk_operation_id = request.get('bulk_operation_id'),
         action_name = 'update',
@@ -73,9 +77,14 @@ def execute_transaction_code(request):
 
   if request.get('validity_start'):
     freight_object.validate_validity_object(request.get('validity_start'), request.get('validity_end'))
-    freight_object.validate_line_items(request.get('line_items'))
-    freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), request.get('line_items'), request.get('schedule_type'), False, request.get('payment_term'))
-    freight_object.set_platform_prices()
+    
+    if request['rate_type'] != "cogo_assured":
+      freight_object.validate_line_items(request.get('line_items'))
+      freight_object.set_validities(request.get('validity_start').date(), request.get('validity_end').date(), request.get('line_items'), request.get('schedule_type'), False, request.get('payment_term'))
+    else:
+      freight_object.set_validities_for_cogo_assured_rates(request['validities'])
+
+    freight_object.set_platform_prices(request['rate_type'])
     freight_object.set_is_best_price()
     freight_object.set_last_rate_available_date()
 
@@ -95,7 +104,7 @@ def execute_transaction_code(request):
 
   freight_object.update_platform_prices_for_other_service_providers()
 
-  freight_object.create_trade_requirement_rate_mapping(request['procured_by_id'], request['performed_by_id'])
+  freight_object.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
 
   update_multiple_service_objects.apply_async(kwargs={'object':freight_object},queue='critical')
 

@@ -15,8 +15,11 @@ class UpdateLineItem(BaseModel):
   code: str
   unit: str
   price: float
+  market_price: float = None 
   currency: str
   remarks: list[str] = None
+  slabs: list[Slab] = []
+
 
 class FreeDay(BaseModel):
   free_limit: float
@@ -29,6 +32,7 @@ class LineItem(BaseModel):
   unit: str
   price: float
   currency: str
+  market_price: float = None 
   remarks: list[str] = None
   slabs: list[Slab] = None
 
@@ -38,14 +42,8 @@ class LocalData(BaseModel):
   demurrage: FreeDay = None
   plugin: FreeDay = None
 
-class StandardLineItem(BaseModel):
-  code: str
-  unit: str
-  price: float
-  currency: str
-  remarks: list[str] = None
-  slabs: list[Slab] = []
 
+  
 class PostFclFreightRate(BaseModel):
   origin_main_port_id: str = None
   origin_port_id: str
@@ -54,15 +52,15 @@ class PostFclFreightRate(BaseModel):
   container_size: str
   container_type: str
   commodity: str
-  shipping_line_id: str
-  service_provider_id: str
+  shipping_line_id: str = None
+  service_provider_id: str = None
   importer_exporter_id: str = None
   validity_start: datetime
   validity_end: datetime
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
-  line_items: List[StandardLineItem]=None
+  line_items: List[UpdateLineItem]=None
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
@@ -71,12 +69,21 @@ class PostFclFreightRate(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   procured_by_id: str = None
-  sourced_by_id: str
+  sourced_by_id: str = None
   cogo_entity_id: str = None
   mode: str = None
   source: str = 'rms_upload'
   is_extended: bool = None
   rate_not_available_entry: bool = False
+  rate_type: str = 'market_place'
+  available_inventory: int = 100
+  used_inventory: int = 0
+  shipment_count: int = 0
+  volume_count: int = 0
+  value_props: List[dict] = []
+  t_n_c: list = []
+  validities:List[dict] = None
+
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None
@@ -152,6 +159,8 @@ class UpdateFclFreightRate(BaseModel):
   destination_local: LocalData = None
   source: str = 'rms_upload'
   is_extended: bool = None
+  rate_type: str = "market_place"
+  validities : List[dict] = None
 
 class Data(BaseModel):
     line_items: list[LineItem] = []
@@ -166,7 +175,8 @@ class PostFclFreightRateLocal(BaseModel):
     procured_by_id: str = None
     sourced_by_id: str = None
     trade_type: str
-    port_id: str
+    port_id: str = None
+    country_id: str = None
     main_port_id: str = None
     container_size: str
     container_type: str
@@ -204,7 +214,7 @@ class PostFclFreightRateExtensionRuleSet(BaseModel):
   performed_by_type: str = None
 
 class MandatoryCharges(BaseModel):
-  line_items: list[StandardLineItem] = []
+  line_items: list[UpdateLineItem] = []
   required_mandatory_codes: list[dict] = []
 
 class ExtendCreateFclFreightRate(BaseModel):
@@ -230,7 +240,7 @@ class ExtendCreateFclFreightRate(BaseModel):
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
-  line_items: List[StandardLineItem]
+  line_items: List[UpdateLineItem]
   weight_limit: FreeDay = None
   origin_local: Data = None
   destination_local: Data = None
@@ -307,16 +317,17 @@ class GetFclFreightLocalRateCards(BaseModel):
     rates: List[str] = []
     service_provider_id: str = None
 
-class DeleteFclFreightRate(BaseModel):
+class   DeleteFclFreightRate(BaseModel):
     id: str
     performed_by_id: str = None
     performed_by_type: str = None
     validity_start: datetime
     validity_end: datetime
     bulk_operation_id: str = None
-    sourced_by_id: str
-    procured_by_id: str
+    sourced_by_id: str = None
+    procured_by_id: str = None
     payment_term: str = 'prepaid'
+    rate_type:str = 'market_place'
 
 class DeleteFclFreightRateFeedback(BaseModel):
     fcl_freight_rate_feedback_ids: List[str]
@@ -842,3 +853,12 @@ class UpdateFclFreightRateTask(BaseModel):
   status: str = None
   closing_remarks: str = None
   validate_closing_remarks: str = None
+
+class UpdateRateProperties(BaseModel):
+  rate_id:str
+  available_inventory: int = 100
+  used_inventory: int = 0
+  shipment_count: int = 0
+  volume_count: int = 0
+  value_props: List[dict] = []
+  t_n_c: List[str] = []
