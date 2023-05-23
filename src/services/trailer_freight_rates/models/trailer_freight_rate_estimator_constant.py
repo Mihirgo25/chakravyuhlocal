@@ -9,7 +9,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class TrailerFreightRateCharges(BaseModel):
-    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    id = BigAutoField(primary_key=True)
     country_code = CharField(index=True)
     currency_code = CharField()
     nh_toll = FloatField(null=True)

@@ -9,11 +9,7 @@ class BaseModel(Model):
         database = db
 
 class TrailerFreightRate(BaseModel):
-    id = UUIDField(
-        primary_key=True,
-        constraints=[SQL("DEFAULT uuid_generate_v4()")],
-        default=uuid.uuid4,
-    )
+    id = BigAutoField(primary_key=True)
     origin_location_id = UUIDField(null=True, index=True)
     origin_cluster_id = UUIDField(null=True)
     origin_city_id = UUIDField(null=True)
