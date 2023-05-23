@@ -1,5 +1,5 @@
 from services.trailer_freight_rates.rate_estimators.trailer_freight_estimator import TrailerFreightEstimator
-from configs.trailer_freight_rate_constants import DEFAULT_MAX_WEIGHT_LIMIT
+from configs.trailer_freight_rate_constants import *
 from micro_services.client import maps
 from fastapi import HTTPException
 
@@ -17,13 +17,9 @@ def get_estimated_rate(request):
         data = data["list"]
     for d in data:
         if d["id"] == origin_location_id:
-            origin_country_code = d['country_code']
-        if d["id"] == destination_location_id:
-            destination_country_code = d['country_code']
-    
-    if origin_country_code!=destination_country_code:
-        raise HTTPException(status_code=404, detail="Origin and destination country should be same")
-    country_code = origin_country_code
+            country_code = d['country_code']
+
+    country_code = country_code if country_code in CALCULATION_COUNTRY_CODES else DEFAULT_CALCULATION_COUNTRY_CODE
     
     estimator = TrailerFreightEstimator(origin_location_id, destination_location_id, country_code)
     return estimator.estimate(container_size, container_type, containers_count, cargo_weight_per_container)
