@@ -48,7 +48,7 @@ class INTrailerRateEstimator():
         distance = distance if distance > 100 else 100
         fuel_used = fuel_consumption(distance,cargo_weight_per_container)
         
-        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[country_code] #use fuel charge with currency
+        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES["INR"] #use fuel charge with currency
 
         my_class = INTrailerRateEstimator(self)
         constants_cost = my_class.constants_cost(distance)
