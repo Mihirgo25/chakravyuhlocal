@@ -18,7 +18,7 @@ from celery.schedules import crontab
 from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
-from services.fcl_freight_rate.interaction.update_fcl_rates_to_cogo_assured import update_cogo_assured_fcl_freight_rate_validities
+from services.fcl_freight_rate.interaction.update_cogo_assured_fcl_freight_rate_validities import update_cogo_assured_fcl_freight_rate_validities
 
 # Rate Producers
 
