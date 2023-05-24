@@ -11,6 +11,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
@@ -350,6 +351,16 @@ def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
     try:
         fcl_freight_vyuh = FclFreightVyuhSetter(new_rate=new_rate, current_validities=current_validities)
         fcl_freight_vyuh.set_dynamic_pricing()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+    
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def process_fuel_data_delay(self):
+    try:
+        fuel_scheduler()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

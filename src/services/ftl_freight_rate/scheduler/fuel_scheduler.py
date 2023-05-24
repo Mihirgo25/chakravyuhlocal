@@ -1,5 +1,4 @@
-from scheduler import scheduler
-from schedule import every
+
 from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS
 import requests
 import time
@@ -12,7 +11,7 @@ from configs.global_constants import COUNTRY_CODES_MAPPING
 import services.ftl_freight_rate.scheduler.fuel_scheduler as fuel_schedulers
 
 
-@scheduler.add(every().day.at("01:00"))
+# @scheduler.add(every().day.at("01:00"))
 def fuel_scheduler():
     list_of_countries = ["india", "usa"]
 
@@ -36,10 +35,11 @@ def process_fuel_data(list_fuel_data, country):
             else num_batches
         )
         country_code = COUNTRY_CODES_MAPPING[country]
-        for fuel_data in list_fuel_data[start_index:end_index]:
-            input = {
-                "filters": (
-                    {
+        if start_index<end_index:
+            for fuel_data in list_fuel_data[start_index:end_index]:
+                input = {
+                    "filters": (
+                        {
                         "q": fuel_data["location_name"],
                         "type": ["city", "district", "pincode"]
                         if fuel_data["location_type"] == "city "
@@ -47,13 +47,15 @@ def process_fuel_data(list_fuel_data, country):
                         "status": "active",
                         "country_code": country_code,
                     }
-                )
-            }
-            list_location_data = maps.list_locations(input)["list"]
-            list_fuel_data = get_fuel_data_list(fuel_data, list_location_data)
-
-            for fuel_data in list_fuel_data:
-                create_fuel_data(fuel_data)
+                    )
+                }
+                list_location_data = maps.list_locations(input)["list"]
+                fuel_data_list = get_fuel_data_list(fuel_data, list_location_data)
+                for fuel_data in fuel_data_list:
+                    create_fuel_data(fuel_data)
+        else:
+            pass
+            
 
 
 def get_fuel_data_list(scrapped_fuel_data, list_location_data):
@@ -74,7 +76,7 @@ def get_scrapped_data_for_india():
     fuel_data_for_india = []
     for url, data_set in urls.items():
         request = requests.get(url)
-        scrapper = BeautifulSoup(request.text, "lxml")
+        scrapper = BeautifulSoup(request.text, "html")
         data = scrapper.find("div", {"class": data_set[0]})
         table_data = data.find_all("td")
         link_data = data.find_all("a")
