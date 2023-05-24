@@ -30,9 +30,16 @@ def create_fcl_freight_rate_local(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    from celery_worker import fcl_freight_local_data_updation
+    from celery_worker import fcl_freight_local_data_updation, create_country_wise_locals_in_delay
     if not request.get('source'):
         request['source'] = 'rms_upload'
+
+    if request.get('country_id') and not request.get('port_id'):
+        create_country_wise_locals_in_delay.apply_async(kwargs={"request":request},queue='low')
+        return {"message":"Creating rates in delay"}
+
+    elif not request.get('country_id') and not request.get('port_id'):
+        raise HTTPException(status_code=400, detail='Please select port or country')
 
     row = {
         'port_id' : request.get('port_id'),
@@ -42,7 +49,8 @@ def execute_transaction_code(request):
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
         'shipping_line_id' : request.get('shipping_line_id'),
-        'service_provider_id' : request.get('service_provider_id')
+        'service_provider_id' : request.get('service_provider_id'),
+        "rate_not_available_entry": request.get("rate_not_available_entry")
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
@@ -57,7 +65,6 @@ def execute_transaction_code(request):
 
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
-        fcl_freight_local.rate_not_available_entry = False
         fcl_freight_local.set_port()
         fcl_freight_local.data={}
         
@@ -84,7 +91,8 @@ def execute_transaction_code(request):
     else:
         fcl_freight_local.update_special_attributes(new_free_days, True)
 
-    fcl_freight_local.rate_not_available_entry = False
+    if not request.get("rate_not_available_entry"):
+        fcl_freight_local.rate_not_available_entry = False
     fcl_freight_local.update_freight_objects()
     create_free_days(fcl_freight_local, request)
 

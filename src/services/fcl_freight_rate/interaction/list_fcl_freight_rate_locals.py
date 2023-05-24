@@ -18,7 +18,7 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
             filters = json.loads(filters)
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, FclFreightRateLocal)
         query = apply_indirect_filters(query, indirect_filters)
 
