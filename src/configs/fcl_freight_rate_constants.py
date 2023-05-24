@@ -178,6 +178,8 @@ VALID_UNITS = ['per_bl', 'per_container', 'per_shipment']
 
 EXPECTED_TAT = 6 # HOURS
 
+EXPECTED_TAT_RATE_FEEDBACK_REVERT = 48 # HOURS
+
 DEFAULT_LOCAL_AGENT_IDS = {
   "541d1232-58ce-4d64-83d6-556a42209eb7":{'platform_config_constant_id':'3617e7ea-fc4f-4478-aea2-651fcb0ec1e6', 'value_type':'default', 'value':'5dc403b3-c1bd-4871-b8bd-35543aaadb36', 'display_name':'COGO FREIGHT PRIVATE LIMITED', 'status':'active'},
   "default": {'platform_config_constant_id':'3617e7ea-fc4f-4478-aea2-651fcb0ec1e6', 'value_type':'default', 'value':'5dc403b3-c1bd-4871-b8bd-35543aaadb36', 'display_name':'COGO FREIGHT PRIVATE LIMITED', 'status':'active'}
@@ -190,4 +192,18 @@ SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f
 
 EXTENSION_ENABLED_MODES = ['manual']
 
+COGO_ASSURED_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
+
 DEFAULT_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
+
+DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+
+COGO_ASSURED_SERVICE_PROVIDER_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
+
+DEFAULT_SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
+
+VALUE_PROPOSITIONS =  ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']
+
+RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
+
+DEFAULT_RATE_TYPE = 'market_place'

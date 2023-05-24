@@ -2,6 +2,7 @@ from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from micro_services.client import common
 import sentry_sdk
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
@@ -176,7 +177,8 @@ class FclFreightVyuh():
             FclFreightRate.container_type == affected_transformation['container_type'],
             ~FclFreightRate.rate_not_available_entry,
             FclFreightRate.last_rate_available_date >= current_date,
-            FclFreightRate.mode != 'predicted'
+            FclFreightRate.mode != 'predicted',
+            FclFreightRate.rate_type == DEFAULT_RATE_TYPE
         )
 
         if affected_transformation['origin_location_type'] == 'seaport':
@@ -540,7 +542,7 @@ class FclFreightVyuh():
           Main Function to set dynamic pricing bounds  
         '''  
         from celery_worker import transform_dynamic_pricing
-        if self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
+        if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
             return False
         
         affected_transformations = self.get_transformations_to_be_affected()

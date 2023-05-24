@@ -41,7 +41,8 @@ def initialize_freight_query(requirements, prediction_required = False):
     FclFreightRate.is_origin_local_line_items_error_messages_present,
     FclFreightRate.is_destination_local_line_items_error_messages_present,
     FclFreightRate.cogo_entity_id,
-    FclFreightRate.mode
+    FclFreightRate.mode,
+    FclFreightRate.rate_type
     ).where(
     FclFreightRate.origin_port_id == requirements['origin_port_id'],
     FclFreightRate.destination_port_id == requirements['destination_port_id'],
@@ -596,6 +597,11 @@ def add_freight_objects(freight_query_result, response_object, request):
 
 
 def build_response_object(freight_query_result, request):
+    source = 'spot_rates'
+    if freight_query_result['mode'] == 'predicted':
+        source = 'predicted'
+    elif freight_query_result['rate_type'] != 'market_place':
+        source = freight_query_result['rate_type']
     response_object = {
       'shipping_line_id': freight_query_result['shipping_line_id'],
       'origin_port_id': freight_query_result['origin_port_id'],
@@ -610,7 +616,7 @@ def build_response_object(freight_query_result, request):
       'commodity': freight_query_result['commodity'],
       'service_provider_id': freight_query_result['service_provider_id'],
       'importer_exporter_id': freight_query_result['importer_exporter_id'],
-      'source': 'predicted' if freight_query_result['mode'] == 'predicted' else 'spot_rates',
+      'source': source,
       'tags': [],
       'rate_id': freight_query_result['id']
     }
