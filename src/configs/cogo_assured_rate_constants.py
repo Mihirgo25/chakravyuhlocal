@@ -1,0 +1,23 @@
+MAX_DEVIATION_PRICE = 150
+
+MAX_DEVIATION_CURRENCY = 'USD'
+
+FCL_FREIGHT_RATE_DISCOUNT_GREATER_THAN_1000 = {
+    1 : 30,
+    2 : 50,
+    3 : 70,
+    4 : 90,
+    5 : 110
+  }
+
+FCL_FREIGHT_RATE_DISCOUNT_LESS_THAN_EQUAL_TO_1000 = {
+    1 : 0.97,
+    2 : 0.985,
+    3 : 0.985,
+    4 : 0.98,
+    5 : 0.975
+}
+
+SERVICE_PROVIDER_IDS_TO_REJECT = ['5dc403b3-c1bd-4871-b8bd-35543aaadb36', '536abfe7-eab8-4a43-a4c3-6ff318ce01b5']
+
+

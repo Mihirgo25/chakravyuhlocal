@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
 from fastapi.encoders import jsonable_encoder
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from datetime import datetime
 
 
@@ -27,6 +28,7 @@ def create_fcl_transformation():
         FclFreightRate.service_provider_id,
     ).where(
         FclFreightRate.last_rate_available_date > current_date,
+        FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
         ~FclFreightRate.rate_not_available_entry
     ).order_by(FclFreightRate.id.desc())
 

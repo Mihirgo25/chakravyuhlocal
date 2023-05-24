@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 import datetime
 from playhouse.postgres_ext import *
-from micro_services.client import common
+from micro_services.client import common, maps
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
 class BaseModel(Model):
     class Meta:
@@ -23,6 +23,9 @@ class FclFreightRateEstimation(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     status = CharField(default="active", null=False)
+    origin_location = BinaryJSONField(null=True)
+    destination_location = BinaryJSONField(null=True)
+    shipping_line = BinaryJSONField(null=True)
 
     class Meta:
         table_name = "fcl_freight_rate_estimations"
@@ -30,6 +33,30 @@ class FclFreightRateEstimation(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(FclFreightRateEstimation, self).save(*args, **kwargs)
+    
+    def set_attribute_objects(self):
+        from database.rails_db import get_shipping_line
+        location_ids = [str(self.origin_location_id), str(self.destination_location_id)]
+
+        locations_response = maps.list_locations({ 'filters': { 'id': location_ids }})
+
+        if 'list' in locations_response:
+            locations_list = locations_response['list']
+            for location in locations_list:
+                if location['id'] == str(self.origin_location_id):
+                    self.origin_location = location
+                if location['id'] == str(self.destination_location_id):
+                    self.destination_location = location
+        if self.shipping_line_id:
+            shipping_line_list = get_shipping_line(str(self.shipping_line_id))
+
+            if shipping_line_list:
+                self.shipping_line = shipping_line_list[0]
+        
+        self.save()
+
+
+
     
     def set_line_items(self, line_items):
         new_line_items = []

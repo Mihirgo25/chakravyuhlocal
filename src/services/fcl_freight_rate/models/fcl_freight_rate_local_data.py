@@ -54,7 +54,7 @@ class FclFreightRateLocalData(BaseModel):
 
 
         for code, line_items in grouped_charge_codes.items():
-            code_config = fcl_freight_local_charges_dict[code]
+            code_config = fcl_freight_local_charges_dict.get(code)
 
             if not code_config:
                 line_items_error_messages[code] = ['is invalid']

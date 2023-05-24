@@ -1,5 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from playhouse.shortcuts import model_to_dict
 from configs.global_constants import HAZ_CLASSES
 from operator import attrgetter
 from configs.definitions import FCL_FREIGHT_CHARGES
@@ -7,6 +8,12 @@ from configs.definitions import FCL_FREIGHT_CHARGES
 
 def get_fcl_freight_rate(request):
   details = {}
+
+  if request['rate_type'] == 'cogo_assured':
+    object = find_cogo_assured_rate(request)
+    return object
+  else:
+    del request['id']
 
   if all_fields_present(request):
     object = find_object(request)
@@ -59,12 +66,22 @@ def find_object(object_params):
   query = FclFreightRate.select()
   for key in object_params:
     query = query.where(attrgetter(key)(FclFreightRate) == object_params[key])
-  
   object = query.first()
   
   return object
 
 def all_fields_present(object_params):
-  if (object_params['origin_port_id'] is not None) and (object_params['destination_port_id'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None):
+  if ((object_params['origin_port_id'] is not None) and (object_params['destination_port_id'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None)) :
     return True
   return False
+def remove_empty_values(request):
+    return  dict(filter(lambda item: item[1], request.items()))
+
+def find_cogo_assured_rate(object_params):
+  rate_list = list(FclFreightRate.select().where(FclFreightRate.id==object_params['id']).dicts())
+  if not len(rate_list):
+    clean_request = remove_empty_values(object_params)
+    object = find_object(clean_request)
+    return model_to_dict(object) if object else {}
+  return rate_list[0]
+  

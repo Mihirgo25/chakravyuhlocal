@@ -4,6 +4,8 @@ from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from celery_worker import create_communication_background, update_multiple_service_objects
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
+from datetime import datetime, timedelta
+from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT
 
 
 def create_fcl_freight_rate_request(request):
@@ -56,7 +58,8 @@ def execute_transaction_code(request):
         }
 
 def get_create_params(request):
-    return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id']} | ({'status': 'active' })
+    expiration_time = datetime.now() + timedelta(seconds = EXPECTED_TAT_RATE_FEEDBACK_REVERT * 60 * 60)
+    return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id']} | ({'status': 'active' , 'expiration_time': expiration_time})
 
 def supply_agents_to_notify(request):
 

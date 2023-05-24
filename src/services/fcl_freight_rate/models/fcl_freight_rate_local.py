@@ -127,7 +127,9 @@ class FclFreightRateLocal(BaseModel):
         if not self.local_data_instance.validate_duplicate_charge_codes():
             raise HTTPException(status_code=400, detail='duplicate line items present')
 
-        invalid_charge_codes = self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
+        invalid_charge_codes = []
+        if not self.rate_not_available_entry:
+            invalid_charge_codes = self.local_data_instance.validate_invalid_charge_codes(self.possible_charge_codes())
 
         if invalid_charge_codes:
             raise HTTPException(status_code=400, detail=f"{invalid_charge_codes} are invalid line items")
@@ -317,7 +319,9 @@ class FclFreightRateLocal(BaseModel):
             'is_plugin_slabs_missing': self.is_plugin_slabs_missing,
             'updated_at': self.updated_at,
             'procured_by_id': self.procured_by_id,
-            'procured_by': self.procured_by
+            'procured_by': self.procured_by,
+            'sourced_by': self.sourced_by,
+            'sourced_by_id': self.sourced_by_id
         }
 
         for item in detail.get('line_items',[]):

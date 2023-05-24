@@ -4,6 +4,9 @@ from micro_services.client import common
 
 def create_fcl_freight_rate_prediction_feedback(result):
     for feedback in result:
+        if not isinstance(feedback,dict):
+            feedback = feedback.dict(exclude_none=True)
+
         with db.atomic() as transaction:
             try:
                 if "origin_country_id" not in feedback:
