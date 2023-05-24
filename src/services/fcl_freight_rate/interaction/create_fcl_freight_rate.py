@@ -66,6 +66,7 @@ def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
 
     row = {
+        'origin_port_id': request.get('origin_port_id'),
         "origin_main_port_id": request.get("origin_main_port_id"),
         "destination_port_id": request.get("destination_port_id"),
         "destination_main_port_id": request.get("destination_main_port_id"),
@@ -90,12 +91,13 @@ def create_fcl_freight_rate(request):
         FclFreightRate.select()
         .where(
             FclFreightRate.init_key == init_key,
+            FclFreightRate.rate_type == row['rate_type']
         )
         .first()
     )
     
     if not freight:
-        freight = FclFreightRate(origin_port_id = request.get('origin_port_id'), init_key = init_key)
+        freight = FclFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
 
@@ -208,7 +210,7 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'destination_trade_id': freight.destination_trade_id,
         'service_provider_id': freight.service_provider_id
     }
-    if row["mode"] == 'manual' and not request.get("is_extended"):
+    if row["mode"] == 'manual' and not request.get("is_extended") and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
