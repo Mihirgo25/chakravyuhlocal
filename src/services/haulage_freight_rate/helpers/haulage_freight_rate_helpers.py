@@ -20,6 +20,8 @@ def get_transit_time(distance):
 
 
 def get_country_filter(origin_location, destination_location):
+    if origin_location == destination_location:
+        raise HTTPException(status_code=400, detail="origin_location_id cannot be same as destination_location_id")
     input = {"filters": {"id": [origin_location, destination_location]}}
     location_category = "generalized"
     locations_data = maps.list_locations(input)["list"]
