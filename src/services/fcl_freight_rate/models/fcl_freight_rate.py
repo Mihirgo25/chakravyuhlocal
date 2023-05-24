@@ -98,9 +98,9 @@ class FclFreightRate(BaseModel):
     init_key = TextField(index=True, null=True)
     rate_type = CharField(default='market_place', choices = RATE_TYPES)
     tags = BinaryJSONField(null=True)
-    def save(self, *args, **kwargs):
-      self.updated_at = datetime.datetime.now()
-      return super(FclFreightRate, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #   self.updated_at = datetime.datetime.now()
+    #   return super(FclFreightRate, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_freight_rates_temp'

@@ -216,32 +216,34 @@ def create_func(idx, row):
         for item in validity['line_items']:
             if item['code'] == 'BAS':
                 item['price'] = price
+                validity['price'] = price
+                validity['platform_price'] = price
     
     if not create_rate:
         return
                 
     rate.validities = validities
     rate.save()
-    rate.set_platform_prices()
+    # rate.set_platform_prices()
     
-    data = {
-        'validity_end': validity_end,
-        'validity_start': '2023-05-24',
-        'line_items': validities[-1]['line_items'],
-        'weight_limit': rate.weight_limit,
-        'origin_local': rate.origin_local,
-        'destination_local': rate.destination_local,
-        'source': 'rate_extension'
-    }
+    # data = {
+    #     'validity_end': validity_end,
+    #     'validity_start': '2023-05-24',
+    #     'line_items': validities[-1]['line_items'],
+    #     'weight_limit': rate.weight_limit,
+    #     'origin_local': rate.origin_local,
+    #     'destination_local': rate.destination_local,
+    #     'source': 'rate_extension'
+    # }
 
-    id = FclFreightRateAudit.create(
-        action_name="create",
-        performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
-        data=data,
-        object_id=id,
-        object_type="FclFreightRate",
-        source='rate_extension',
-    )
+    # id = FclFreightRateAudit.create(
+    #     action_name="create",
+    #     performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
+    #     data=data,
+    #     object_id=id,
+    #     object_type="FclFreightRate",
+    #     source='rate_extension',
+    # )
     print(idx)
     
         
