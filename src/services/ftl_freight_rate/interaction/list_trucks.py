@@ -7,7 +7,7 @@ from libs.get_applicable_filters import get_applicable_filters
 
 # define filters
 possible_direct_filters = ['id','truck_company','truck_name','created_at','mileage','mileage_unit','capacity','capacity_unit','vehicle_weight','vehicle_weight_unit','fuel_type','avg_speed','no_of_wheels','engine_type','country_id','axels','truck_type','body_type','status','horse_power','updated_at','display_name']
-possible_indirect_filters = []
+possible_indirect_filters = ['q','capacity_greater_equal_than']
 
 def list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_data_required):
     # make sql query
@@ -58,3 +58,11 @@ def apply_indirect_filters(query, filters):
             apply_filter_function = f'apply_{key}_filter'
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
+
+# ILIKE filter to search in truck display name
+def apply_q_filter(query, filters):
+    return query.where(Truck.display_name.contains(filters['q']))
+
+# filter greater than or equal to capacity
+def apply_capacity_greater_equal_than_filter(query, filters):
+    return query.where(Truck.capacity >= filters['capacity_greater_equal_than'])
