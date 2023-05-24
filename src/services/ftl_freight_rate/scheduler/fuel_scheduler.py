@@ -11,7 +11,6 @@ from configs.global_constants import COUNTRY_CODES_MAPPING
 import services.ftl_freight_rate.scheduler.fuel_scheduler as fuel_schedulers
 
 
-# @scheduler.add(every().day.at("01:00"))
 def fuel_scheduler():
     list_of_countries = ["india", "usa"]
 

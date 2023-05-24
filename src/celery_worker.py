@@ -63,6 +63,11 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
         'schedule': crontab(minute=00,hour=00),
         'options': {'queue' : 'fcl_freight_rate'}
+        },
+    'process_fuel_data_delays': {
+        'task': 'celery_worker.process_fuel_data_delay',
+        'schedule': crontab(minute=00,hour=00),
+        'options': {'queue' : 'fcl_freight_rate'}
         }
 }
 
@@ -269,6 +274,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
 def fcl_freight_rates_to_cogo_assured(self):
     try:
+        print('here')
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
             ).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])
         total_count = query.count()
