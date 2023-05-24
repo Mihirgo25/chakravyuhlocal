@@ -39,15 +39,15 @@ class Truck(BaseModel):
     search_vector = TSVectorField(
         constraints=[SQL(
             """GENERATED ALWAYS AS (
-                to_tsvector('english', coalesce(truck_company, '')) ||
-                to_tsvector('english', coalesce(truck_name, '')) ||
-                to_tsvector('english', coalesce(display_name, '')) ||
-                to_tsvector('english', coalesce(cast(mileage as text), '')) ||
-                to_tsvector('english', coalesce(cast(capacity as text), '')) ||
-                to_tsvector('english', coalesce(fuel_type, '')) ||
-                to_tsvector('english', coalesce(cast(no_of_wheels as text), '')) ||
-                to_tsvector('english', coalesce(truck_type, '')) ||
-                to_tsvector('english', coalesce(body_type, ''))
+                setweight(to_tsvector('english', coalesce(truck_company, '')),'C') ||
+                setweight(to_tsvector('english', coalesce(truck_name, '')),'C') ||
+                setweight(to_tsvector('english', coalesce(display_name, '')),'A') ||
+                setweight(to_tsvector('english', coalesce(cast(mileage as text), '')),'D') ||
+                setweight(to_tsvector('english', coalesce(cast(capacity as text), '')),'B') ||
+                setweight(to_tsvector('english', coalesce(fuel_type, '')),'B') ||
+                setweight(to_tsvector('english', coalesce(cast(no_of_wheels as text), '')),'D') ||
+                setweight(to_tsvector('english', coalesce(truck_type, '')),'B') ||
+                setweight(to_tsvector('english', coalesce(body_type, '')),'C')
                 )
             STORED"""
             )]

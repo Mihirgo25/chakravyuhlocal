@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
+# from services.ftl_freight_rate.insert import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.ftl_freight_rate.ftl_freight_router import ftl_freight_router
 from services.envision.envision_service_router import envision_router

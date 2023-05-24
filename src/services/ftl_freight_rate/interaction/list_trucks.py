@@ -9,9 +9,9 @@ from libs.get_applicable_filters import get_applicable_filters
 possible_direct_filters = ['id','truck_company','truck_name','created_at','mileage','mileage_unit','capacity','capacity_unit','vehicle_weight','vehicle_weight_unit','fuel_type','avg_speed','no_of_wheels','engine_type','country_id','axels','truck_type','body_type','status','horse_power','updated_at','display_name']
 possible_indirect_filters = ['q','capacity_greater_equal_than']
 
-def list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_data_required):
+def list_trucks_data(filters, page_limit, page, sort_by, sort_type):
     # make sql query
-    query = get_query(sort_by, sort_type)
+    query = get_query(sort_by, sort_type, page, page_limit)
 
     # use filters and filter out required data
     if filters:
@@ -25,31 +25,31 @@ def list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_d
         # indirect filters
         query = apply_indirect_filters(query, indirect_filters)
 
-    # apply pagination
-    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+    # # apply pagination
+    # pagination_data = get_pagination_data(query, page, page_limit)
 
     data = jsonable_encoder(list(query.dicts()))
 
-    return {'list': data } | (pagination_data)
+    return {'list': data }
 
 # sql query
-def get_query(sort_by, sort_type):
-    query = Truck.select().order_by(eval("Truck.{}.{}()".format(sort_by, sort_type)))
+def get_query(sort_by, sort_type, page, page_limit):
+    query = Truck.select().order_by(eval("Truck.{}.{}()".format(sort_by, sort_type))).paginate(page, page_limit)
     return query
 
-# split data into pages
-def get_pagination_data(query, page, page_limit, pagination_data_required):
-    if not pagination_data_required:
-        return {}
+# # split data into pages
+# def get_pagination_data(query, page, page_limit, pagination_data_required):
+#     if not pagination_data_required:
+#         return {}
 
-    total_count = query.count()
-    params = {
-      'page': page,
-      'total': ceil(total_count/page_limit),
-      'total_count': total_count,
-      'page_limit': page_limit
-    }
-    return params
+#     total_count = query.count()
+#     params = {
+#       'page': page,
+#       'total': ceil(total_count/page_limit),
+#       'total_count': total_count,
+#       'page_limit': page_limit
+#     }
+#     return params
 
 # indirect filters
 def apply_indirect_filters(query, filters):
