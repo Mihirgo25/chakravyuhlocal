@@ -55,7 +55,8 @@ class EuropeHaulageFreightRateEstimator:
             raise HTTPException(status_code=400, detail="rates not present")
 
         price = wagon_price_upper_limit[0]["base_price"]
-        final_data["base_price"] = self.apply_surcharges_for_europe(float(price))
+        inflated_price = self.get_inflated_rate_europe(float(price))
+        final_data["base_price"] = self.apply_surcharges_for_europe(float(inflated_price))
         final_data["transit_time"] = get_transit_time(distance)
         return final_data
 
@@ -65,3 +66,11 @@ class EuropeHaulageFreightRateEstimator:
         final_price = price + surcharge + development_charges
 
         return final_price
+    
+
+    def get_inflated_rate_europe(self,price):
+        inflation_rates = [0.0018,0.0103,0.0185,0.0111,0.0048,0.0164,0.0522]
+        for element in inflation_rates:
+            price = price*(1 + element)
+
+        return price
