@@ -20,12 +20,13 @@ def list_trucks(
     page: int = 1,
     sort_by: str = 'created_at',
     sort_type: str = 'asc',
+    pagination_data_required: bool = True,
     resp: dict = Depends(authorize_token)
 ):
         if resp["status_code"] != 200:
             return JSONResponse(status_code=resp["status_code"], content=resp)
         try:
-            data = list_trucks_data(filters, page_limit, page, sort_by, sort_type)
+            data = list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
             return JSONResponse(status_code=200, content=data)
         except HTTPException as e:
             raise
