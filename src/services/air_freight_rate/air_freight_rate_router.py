@@ -6,9 +6,9 @@ from fastapi.encoders import jsonable_encoder
 from air_freight_rate_params import *
 import sentry_sdk
 
-
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
-from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
+from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rat
+from services.air_freight_rate.interaction.get_air_freight_rate import get_air_freight_rate
 air_freight_router = APIRouter()
 
 @air_freight_router.post("/create_air_freight_rate")
@@ -50,4 +50,6 @@ def update_air_freight_rate(request: UpdateAirFreightRate, resp:dict =Depends(au
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
-
+@air_freight_router.get('/get_air_freught_router')
+def get_air_freight_rate(request:GetAirFreightRate , resp:dict =Depends(authorize_token)):
+    return

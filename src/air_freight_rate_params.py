@@ -39,6 +39,24 @@ class UpdateAirFreightRate(BaseModel):
     available_volume:float=None
     available_gross_weight:float=None
 
+class GetAirFreightRate(BaseModel):
+    origin_airport_id:str
+    destination_airport_id:str
+    commodity:str
+    commodity_type:str=None
+    commodity_sub_type:str =None
+    airline_id:str
+    operation_type:str
+    service_provider_id:str=None
+    shipment_type:str ='box'
+    stacking_type:str = 'stackable'
+    validity_start:datetime =datetime.now()
+    validity_end:datetime =datetime.now()
+    weight:float =None
+    cargo_readiness_date:date
+    price_type:str=None
+    cogo_entity_id:str=None
+
 
 
 
