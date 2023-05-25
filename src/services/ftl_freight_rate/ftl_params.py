@@ -3,7 +3,6 @@ from peewee import *
 from typing import Optional
 
 class CreateTruck(BaseModel):
-  performed_by_id: str
   truck_company: str
   truck_name: str
   performed_by_id: Optional[str]=None
@@ -28,7 +27,7 @@ class CreateTruck(BaseModel):
 
 class UpdateTruck(BaseModel):
     id: int
-   
+
     performed_by_id: Optional[str]=None
     performed_by_type: str=None
     mileage: float=None
