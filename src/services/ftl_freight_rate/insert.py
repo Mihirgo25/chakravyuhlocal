@@ -1,5 +1,6 @@
 import pandas as pd
 from services.ftl_freight_rate.models.truck import Truck
+from services.ftl_freight_rate.interaction.create_truck import create_truck_data
 
 path_to_csv = '/Users/rasswanth/Desktop/data/india-mileage-added.csv'
 
