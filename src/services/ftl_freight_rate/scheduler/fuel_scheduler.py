@@ -129,5 +129,5 @@ def get_scrapped_data_for_usa():
                 )
 
             fuel_data_for_usa.append(copy.deepcopy(fuel_data))
-        start += 5
+            start += 5
     return fuel_data_for_usa
