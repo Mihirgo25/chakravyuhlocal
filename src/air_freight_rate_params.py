@@ -33,7 +33,7 @@ class UpdateAirFreightRate(BaseModel):
     length:float=None
     breadth:float=None
     height:float=None
-    maximum_weight=float=None
+    maximum_weight:float=None
     procured_by_id:str=None
     sourced_by_id:str=None
     available_volume:float=None
