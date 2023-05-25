@@ -15,7 +15,7 @@ from rms_utils.get_in_batches import get_in_batches
 def get_cluster_objects(rate_object):
     clusters = {}
 
-    port_codes = maps.list_locations({'filters':{'id': [rate_object['origin_port_id'], rate_object['destination_port_id']]}})['list']
+    port_codes = maps.list_locations({'filters':{'id': [str(rate_object['origin_port_id']),str(rate_object['destination_port_id'])]}})['list']
 
     param = {}
     for data in port_codes:
