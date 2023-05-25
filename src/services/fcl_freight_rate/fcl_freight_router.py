@@ -92,6 +92,9 @@ from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
+from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
+from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate import get_fcl_cfs_rate
+from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
 
 fcl_freight_router = APIRouter()
 
@@ -1848,3 +1851,59 @@ def get_suggested_cogo_assured_fcl_freight_rates_data(
         # raise
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.get("/get_fcl_cfs_rates")
+def get_fcl_cfs_rates(location_id: str = None,
+                    trade_type: str = None,
+                    container_size: str = None,
+                    container_type: str = None,
+                    commodity: str = None,
+                    service_provider_id: str = None,
+                    importer_exporter_id: str = None,
+                    cargo_handling_type: str = None,
+                    resp: dict = Depends(authorize_token)
+                    ):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'location_id': location_id,
+        'trade_type': trade_type,
+        'container_size': container_size,
+        'container_type': container_type,
+        'commodity': commodity,
+        'service_provider_id': service_provider_id,
+        'importer_exporter_id': importer_exporter_id,
+        'cargo_handling_type': cargo_handling_type
+    }
+    try:
+        data = get_fcl_cfs_rate(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) }) 
+
+
+@fcl_freight_router.get("/list_fcl_cfs_rates")
+def list_fcl_cfs_rates(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    return_query: bool = False,
+    pagination_data_required:bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_fcl_cfs_rate(filters, page_limit, page, sort_by, sort_type, return_query,pagination_data_required)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })  
