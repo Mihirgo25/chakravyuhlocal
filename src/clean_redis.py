@@ -188,10 +188,10 @@ def delete_fcl_locals():
         print(idx, id)
         
 def extend_china_rates():
-    file_path = os.path.join(ROOT_DIR, 'Correct import rates.xlsx')
+    file_path = os.path.join(ROOT_DIR, 'CHINA Cogoenvision.xlsx')
     df = pd.read_excel(file_path)
     print(df.shape[0])
-    result = Parallel(n_jobs=4)(delayed(create_func)(idx, row) for idx, row in df.iterrows())
+    result = Parallel(n_jobs=2)(delayed(create_func)(idx, row) for idx, row in df.iterrows())
     print(len(result))
         
         
@@ -208,7 +208,7 @@ def create_func(idx, row):
     validities = rate.validities
     validity_end = validities[-1]['validity_end']
     for validity in validities:
-        validity['validity_start'] = '2023-05-24'
+        validity['validity_start'] = '2023-05-25'
         if validity['validity_start'] >= validity['validity_end']:
             print('__|__')
             create_rate = False
@@ -228,7 +228,7 @@ def create_func(idx, row):
     
     data = {
         'validity_end': validity_end,
-        'validity_start': '2023-05-24',
+        'validity_start': '2023-05-25',
         'line_items': validities[-1]['line_items'],
         'weight_limit': rate.weight_limit,
         'origin_local': rate.origin_local,
