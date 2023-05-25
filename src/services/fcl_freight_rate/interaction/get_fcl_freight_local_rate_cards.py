@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
-from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS
+from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, DEFAULT_SHIPPING_LINE_ID
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from fastapi.encoders import jsonable_encoder
 
@@ -15,7 +15,7 @@ def get_fcl_freight_local_rate_cards(request):
         local_query = initialize_local_query(request)
 
         local_query_results = jsonable_encoder(list(local_query.dicts()))
-
+    
         rate_list = build_response_list(local_query_results, request)
 
         return {'list' : rate_list }
@@ -31,6 +31,10 @@ def initialize_local_query(request):
         default_lsp = DEFAULT_LOCAL_AGENT_IDS[country_id]["value"]
     
     service_provider_ids = [default_lsp]
+    shipping_line_ids = None
+    if request['shipping_line_id']:
+        shipping_line_ids = [request['shipping_line_id'], DEFAULT_SHIPPING_LINE_ID]
+
     local_agents = get_local_agent_ids(request)
     if local_agents:
         service_provider_ids.append(local_agents)
@@ -55,8 +59,8 @@ def initialize_local_query(request):
     else:
         query = query.where(FclFreightRateLocal.commodity == None)
     
-    if request['shipping_line_id']:
-        query = query.where(FclFreightRateLocal.shipping_line_id == request['shipping_line_id'])
+    if shipping_line_ids:
+        query = query.where(FclFreightRateLocal.shipping_line_id << shipping_line_ids)
 
     return query
 
@@ -126,7 +130,7 @@ def build_local_line_item_object(line_item, request):
 
     slab_value = None
 
-    if line_item['slabs']:
+    if line_item.get('slabs', []):
         if 'slab_containers_count' in code_config.get('tags'):
             slab_value = request['containers_count']
 

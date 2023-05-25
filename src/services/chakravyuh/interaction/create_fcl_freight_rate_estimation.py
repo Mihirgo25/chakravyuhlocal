@@ -22,7 +22,23 @@ def create_fcl_estimated_rate(request):
     }
 
     rate = (
-        FclFreightRateEstimation.select()
+        FclFreightRateEstimation.select(
+            FclFreightRateEstimation.origin_location_id,
+            FclFreightRateEstimation.origin_location_type,
+            FclFreightRateEstimation.destination_location_id,
+            FclFreightRateEstimation.destination_location_type,
+            FclFreightRateEstimation.shipping_line_id,
+            FclFreightRateEstimation.commodity,
+            FclFreightRateEstimation.container_size,
+            FclFreightRateEstimation.container_type,
+            FclFreightRateEstimation.created_at,
+            FclFreightRateEstimation.updated_at,
+            FclFreightRateEstimation.schedule_type,
+            FclFreightRateEstimation.payment_term,
+            FclFreightRateEstimation.line_items,
+            FclFreightRateEstimation.id,
+            FclFreightRateEstimation.status
+        )
         .where(
             FclFreightRateEstimation.origin_location_id
             == request.get("origin_location_id"),

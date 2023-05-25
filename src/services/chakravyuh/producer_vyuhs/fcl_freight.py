@@ -5,6 +5,7 @@ from configs.global_constants import DEAFULT_RATE_PRODUCER_METHOD
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
 from configs.env import DEFAULT_USER_ID
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 class FclFreightVyuh():
     '''
@@ -66,6 +67,7 @@ class FclFreightVyuh():
             FclFreightRate.container_size == requirement['container_size'],
             FclFreightRate.commodity == requirement['commodity'],
             FclFreightRate.mode != 'predicted',
+            FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
             FclFreightRate.importer_exporter_id.is_null(True),
             FclFreightRate.last_rate_available_date > next_two_days,
            ~FclFreightRate.rate_not_available_entry

@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from database.rails_db import get_organization
 from micro_services.client import organization
-from datetime import datetime
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def get_fcl_freight_rate_visibility(request):
     response_object = {'reason': '', 'is_rate_available': False, 'is_visible': False }
@@ -64,6 +64,7 @@ def get_fcl_freight_rate_data(request):
             FclFreightRate.commodity  ==  request['commodity'],
             FclFreightRate.service_provider_id  ==  request['service_provider_id'],
             FclFreightRate.shipping_line_id  ==  request['shipping_line_id'],
+            FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
             ~FclFreightRate.rate_not_available_entry).first()
     return fcl_freight_rate_data
 

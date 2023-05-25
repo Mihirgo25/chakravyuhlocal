@@ -2,6 +2,7 @@ from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from micro_services.client import common
 import sentry_sdk
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
@@ -28,7 +29,23 @@ class FclFreightVyuh():
         FclFreightRateEstimationAudit.create(**data)
     
     def get_transformations_to_be_affected(self):
-        price_estimations_query = FclFreightRateEstimation.select().where(
+        price_estimations_query = FclFreightRateEstimation.select(
+            FclFreightRateEstimation.origin_location_id,
+            FclFreightRateEstimation.origin_location_type,
+            FclFreightRateEstimation.destination_location_id,
+            FclFreightRateEstimation.destination_location_type,
+            FclFreightRateEstimation.shipping_line_id,
+            FclFreightRateEstimation.commodity,
+            FclFreightRateEstimation.container_size,
+            FclFreightRateEstimation.container_type,
+            FclFreightRateEstimation.created_at,
+            FclFreightRateEstimation.updated_at,
+            FclFreightRateEstimation.schedule_type,
+            FclFreightRateEstimation.payment_term,
+            FclFreightRateEstimation.line_items,
+            FclFreightRateEstimation.id,
+            FclFreightRateEstimation.status
+        ).where(
             FclFreightRateEstimation.origin_location_id << self.new_rate['origin_location_ids'],
             FclFreightRateEstimation.destination_location_id << self.new_rate['destination_location_ids'],
             FclFreightRateEstimation.container_size == self.new_rate['container_size'],
@@ -36,11 +53,30 @@ class FclFreightVyuh():
             ((FclFreightRateEstimation.schedule_type.is_null(True)) | (FclFreightRateEstimation.schedule_type == self.new_rate['schedule_type'])),
             ((FclFreightRateEstimation.payment_term.is_null(True)) | (FclFreightRateEstimation.payment_term == self.new_rate['payment_term'])),
             ((FclFreightRateEstimation.commodity.is_null(True)) | (FclFreightRateEstimation.commodity == self.new_rate['commodity'])),
-            ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id == self.new_rate['shipping_line_id']))
+            ((FclFreightRateEstimation.shipping_line_id.is_null(True)) | (FclFreightRateEstimation.shipping_line_id == self.new_rate['shipping_line_id'])),
+            FclFreightRateEstimation.status == 'active'
         )
 
         price_estimations = jsonable_encoder(list(price_estimations_query.dicts()))
         return price_estimations
+    
+    def get_transformation(self, payload):
+        created_tf = FclFreightRateEstimation.select(FclFreightRateEstimation.id).where(
+                FclFreightRateEstimation.origin_location_id == payload['origin_location_id'],
+                FclFreightRateEstimation.destination_location_id == payload['destination_location_id'],
+                FclFreightRateEstimation.container_size == payload['container_size'],
+                FclFreightRateEstimation.container_type == payload['container_type'],
+                FclFreightRateEstimation.schedule_type.is_null(True),
+                FclFreightRateEstimation.payment_term.is_null(True),
+                FclFreightRateEstimation.commodity.is_null(True),
+                FclFreightRateEstimation.shipping_line_id.is_null(True),
+                FclFreightRateEstimation.status == 'active'
+            ).limit(1)
+
+        price_estimations = jsonable_encoder(list(created_tf.dicts()))
+        if len(price_estimations):
+            return price_estimations[0]
+        return None
     
     def get_transformations_to_be_added(self, already_added_tranformations: list = []):
         must_have_transformations = [
@@ -141,7 +177,8 @@ class FclFreightVyuh():
             FclFreightRate.container_type == affected_transformation['container_type'],
             ~FclFreightRate.rate_not_available_entry,
             FclFreightRate.last_rate_available_date >= current_date,
-            FclFreightRate.mode != 'predicted'
+            FclFreightRate.mode != 'predicted',
+            FclFreightRate.rate_type == DEFAULT_RATE_TYPE
         )
 
         if affected_transformation['origin_location_type'] == 'seaport':
@@ -297,7 +334,23 @@ class FclFreightVyuh():
                     'schedule_type': None
                 })
 
-        tfs_query = FclFreightRateEstimation.select().where(
+        tfs_query = FclFreightRateEstimation.select(
+            FclFreightRateEstimation.origin_location_id,
+            FclFreightRateEstimation.origin_location_type,
+            FclFreightRateEstimation.destination_location_id,
+            FclFreightRateEstimation.destination_location_type,
+            FclFreightRateEstimation.shipping_line_id,
+            FclFreightRateEstimation.commodity,
+            FclFreightRateEstimation.container_size,
+            FclFreightRateEstimation.container_type,
+            FclFreightRateEstimation.created_at,
+            FclFreightRateEstimation.updated_at,
+            FclFreightRateEstimation.schedule_type,
+            FclFreightRateEstimation.payment_term,
+            FclFreightRateEstimation.line_items,
+            FclFreightRateEstimation.id,
+            FclFreightRateEstimation.status
+        ).where(
             FclFreightRateEstimation.origin_location_id == actual_transformation['origin_location_id'],
             FclFreightRateEstimation.destination_location_id == actual_transformation['destination_location_id'],
             FclFreightRateEstimation.container_type << container_types,
@@ -408,6 +461,7 @@ class FclFreightVyuh():
     
     
     def adjust_price_for_tranformation(self, affected_transformation, new: bool=False, is_relative: bool = False):
+        from celery_worker import update_multiple_service_objects
         transformation_id = affected_transformation.get('id')
         if is_relative:
             adjusted_line_items = affected_transformation['line_items']
@@ -419,6 +473,11 @@ class FclFreightVyuh():
             # Return If no line_items to create
             return
         
+        if not transformation_id and new:
+            tf = self.get_transformation(affected_transformation)
+            if tf:
+                transformation_id = tf['id']
+ 
         if transformation_id:
             transformation = FclFreightRateEstimation.update(
                 line_items = adjusted_line_items,
@@ -453,7 +512,7 @@ class FclFreightVyuh():
                 shipping_line_id=payload['shipping_line_id'],
                 commodity=payload['commodity'],
                 payment_term=payload['payment_term'],
-                schedule_type=payload['schedule_type']
+                schedule_type=payload['schedule_type'],
             )
             data = {
                 'data': payload,
@@ -463,6 +522,7 @@ class FclFreightVyuh():
             }
             affected_transformation['id'] = str(transformation.id)
             self.create_audits(data=data)
+            transformation.set_attribute_objects()
         
         if not is_relative:
             actual_transformation = affected_transformation
@@ -482,7 +542,7 @@ class FclFreightVyuh():
           Main Function to set dynamic pricing bounds  
         '''  
         from celery_worker import transform_dynamic_pricing
-        if self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
+        if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
             return False
         
         affected_transformations = self.get_transformations_to_be_affected()
