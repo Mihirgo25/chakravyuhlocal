@@ -600,8 +600,8 @@ def build_response_object(freight_query_result, request):
     source = 'spot_rates'
     if freight_query_result['mode'] == 'predicted':
         source = 'predicted'
-    elif freight_query_result['rate_type'] != 'market_place':
-        source = freight_query_result['rate_type']
+    # elif freight_query_result['rate_type'] != 'market_place':
+    #     source = freight_query_result['rate_type']
     response_object = {
       'shipping_line_id': freight_query_result['shipping_line_id'],
       'origin_port_id': freight_query_result['origin_port_id'],
