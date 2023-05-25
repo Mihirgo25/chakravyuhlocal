@@ -51,7 +51,7 @@ class Truck(BaseModel):
                 )
             STORED"""
             )]
-        )
+        , index=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

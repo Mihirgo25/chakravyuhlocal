@@ -11,7 +11,7 @@ from libs.get_applicable_filters import get_applicable_filters
 
 # define filters
 POSSIBLE_DIRECT_FILTERS = ['id','truck_company','truck_name','created_at','mileage','mileage_unit','capacity','capacity_unit','vehicle_weight','vehicle_weight_unit','fuel_type','avg_speed','no_of_wheels','engine_type','country_id','axels','truck_type','body_type','status','horse_power','updated_at','display_name']
-POSSIBLE_INDIRECT_FILTERS = ['q','capacity_greater_equal_than']
+POSSIBLE_INDIRECT_FILTERS = ['q','capacity_greater_equal_than', 'vehicle_weight_greater_equal_than']
 TS_MATCH = "@@"
 TS_FULL_MATCH = "<->"
 
@@ -123,3 +123,6 @@ def apply_q_filter(query, val):
 # filter greater than or equal to capacity
 def apply_capacity_greater_equal_than_filter(query, val):
     return query.where(Truck.capacity >= val)
+
+def apply_vehicle_weight_greater_equal_than_filter(query, val):
+    return query.where(Truck.vehicle_weight >= val)
