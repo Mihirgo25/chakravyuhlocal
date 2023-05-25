@@ -66,7 +66,7 @@ celery.conf.beat_schedule = {
         },
     'process_fuel_data_delays': {
         'task': 'celery_worker.process_fuel_data_delay',
-        'schedule': crontab(minute=00,hour=00),
+        'schedule': crontab(minute=00,hour=21),
         'options': {'queue' : 'fcl_freight_rate'}
         }
 }

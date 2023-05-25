@@ -91,9 +91,8 @@ def get_scrapped_data_for_india():
                 "currency": "INR",
                 "fuel_unit": "Lt",
             }
-            copy_of_fuel_data = {key: value for key, value in fuel_data.items()}
             fuel_data_for_india.append(copy.deepcopy(fuel_data))
-        start += 3
+            start += 3
     return fuel_data_for_india
 
 
@@ -104,7 +103,7 @@ def get_scrapped_data_for_usa():
     }
     response = requests.get(url, headers=headers)
     html = response.content
-    scrapper = BeautifulSoup(html, "html.parser")
+    scrapper = BeautifulSoup(html, "html.parser",features="lxml")
     table_body = scrapper.find("tbody")
     table_list = table_body.findAll("td")
     fuel_data_for_usa = []
@@ -128,7 +127,7 @@ def get_scrapped_data_for_usa():
                 fuel_data["fuel_price"] = (
                     table_list[start + 4].text.strip().replace("$", "")
                 )
-            copy_of_fuel_data = {key: value for key, value in fuel_data.items()}
+
             fuel_data_for_usa.append(copy.deepcopy(fuel_data))
         start += 5
     return fuel_data_for_usa
