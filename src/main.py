@@ -19,6 +19,7 @@ from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
+from services.air_freight_rate.air_freight_rate_router import air_freight_router
 from micro_services.client import *
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -39,6 +40,8 @@ app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router)
 app.include_router(prefix="/fcl_freight_rate", router=trailer_router)
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
+
+app.include_router(prefix="/air_freight_rate",router = air_freight_router)
 
 
 app.add_middleware(
