@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from datetime import datetime,timedelta
 from configs.definitions import FCL_FREIGHT_CHARGES
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local
@@ -358,7 +359,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
                 'payment_term': data.get('payment_term'),
-                'rate_type': data.get('rate_type', 'market_place')
+                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
             })
 
             self.progress = int((count * 100.0) / total_count)
