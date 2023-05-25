@@ -16,7 +16,7 @@ def create_air_freight_rate(request):
         request['density_ratio']='1:1'
     if request['commodity'] == 'special_consideration' and not request.get('commodity_subtype'):
         raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
-    if request['density_ratio']  and request['density_ratio'].w= '1':
+    if request['density_ratio']  and request['density_ratio']!= '1':
         raise HTTPException(status_code='400',detail='should be in the form of 1:x')
     if len(set(slab['currency'] for slab in request['weight_slabs']))!=1 or  request['weight_slabs'][0]['currency'] != request['currency']:
         raise HTTPException(status_code='400', detail='currency invalid')
