@@ -14,7 +14,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail="Rate id not found")
     if request['procured_by_id'] is None or request['sourced_by_id']is None:
         raise HTTPException(status_code=400, detail="procured or souurced by id is null")
-    if request['rate_type'] == "cogo_assured" and (request['validity_start']==request['validity_end']):
+    if request.get('rate_type') == "cogo_assured" and (request['validity_start']==request['validity_end']):
         validity_start = object.validities[0]['validity_start']
         validity_end = object.validities[-1]['validity_end']
         request['validity_start'] = datetime.strptime(validity_start , '%Y-%m-%d')

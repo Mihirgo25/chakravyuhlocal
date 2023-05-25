@@ -357,7 +357,8 @@ class FclFreightRateBulkOperation(BaseModel):
                 'bulk_operation_id': self.id,
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
-                'payment_term': data.get('payment_term')
+                'payment_term': data.get('payment_term'),
+                'rate_type': data.get('rate_type', 'market_place')
             })
 
             self.progress = int((count * 100.0) / total_count)
