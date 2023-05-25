@@ -2,6 +2,9 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from playhouse.postgres_ext import *
 from configs.air_freight_rate_constants import RATE_ENTITY_MAPPING
+from fastapi.encoders import jsonable_encoder
+from database.rails_db import get_shipping_line
+
 def get_air_freight_rate_cards(request):
     if request['commodity'] =='general':
         request['commodity_subtype'] = 'all'
@@ -10,6 +13,10 @@ def get_air_freight_rate_cards(request):
         raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
 
     freight_query = initialize_freight_query(request)
+    freight_rates = jsonable_encoder(list(freight_query.dicts()))
+    freight_rates = check_eligible_airlines(freight_rates)
+
+
 
 
 def initialize_freight_query(requirements,prediction_required=True):
@@ -59,6 +66,18 @@ def initialize_freight_query(requirements,prediction_required=True):
 
     if allow_entity_ids:
         freight_query = freight_query.where(((AirFreightRate.cogo_entity_id << allow_entity_ids) | (AirFreightRate.cogo_entity_id.is_null(True))))
+
+def check_eligible_airlines(freight_rates):
+    airline_ids = [freight_rate['airline_id'] for freight_rate in freight_rates]
+    airlines = get_shipping_line(id=airline_ids)
+    active_airlines_ids = [sl["id"] for sl in airlines if sl["status"] == "active"]
+    freight_rates = [rate for rate in freight_rates if rate["shipping_line_id"] in active_airlines_ids]
+    return freight_rates
+
+
+def build_response_list(freight_rates):
+    return
+
 
 
 
