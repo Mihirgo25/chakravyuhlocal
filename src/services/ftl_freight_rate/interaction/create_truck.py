@@ -24,7 +24,6 @@ def execute_transaction_code(request):
     row={
         'truck_company': request.get('truck_company'),
         'truck_name': request.get('truck_name'),
-        'display_name':request.get('display_name'),
         'mileage': request.get('mileage'),
         'mileage_unit': request.get('mileage_unit'),
         'capacity': request.get('capacity'),
@@ -39,10 +38,12 @@ def execute_transaction_code(request):
         'axels': request.get('axels'),
         'truck_type': request.get('truck_type'),
         'body_type': request.get('body_type'),
-        'status': request.get('status'),
+        'status': request.get('status') or 'active',
         'horse_power': request.get('horse_power'),
         'data':request.get('data')
     }
+    row['display_name'] = "{} {} ton".format(row['truck_company'], row['vehicle_weight'])
+    
     truck = Truck.select().where((Truck.truck_name == request.get('truck_name')),
                                  (Truck.horse_power == request.get('horse_power')),
                                  (Truck.country_id == request.get('country_id')),

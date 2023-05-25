@@ -24,7 +24,7 @@ def execute_transaction_code(request):
     if type(request) != dict:
         request = request.dict(exclude_none = False)
 
-    update_params = {key: value for key, value in request.items() if key in ['truck_company', 'truck_name', 'mileage', 'mileage_unit', 'capacity', 'capacity_unit', 'vehicle_weight', 'vehicle_weight_unit', 'fuel_type', 'avg_speed', 'no_of_wheels', 'engine_type', 'axels', 'truck_type', 'body_type', 'status', 'horse_power','display_name','data']}
+    update_params = {key: value for key, value in request.items() if key in ['mileage', 'mileage_unit', 'capacity', 'capacity_unit', 'vehicle_weight', 'vehicle_weight_unit', 'fuel_type', 'avg_speed', 'no_of_wheels', 'engine_type', 'axels', 'truck_type', 'body_type', 'status', 'horse_power','data']}
     update_params['updated_at'] = datetime.now()
     truck = Truck.update(update_params).where(Truck.id == request['id'])
 
