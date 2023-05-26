@@ -328,7 +328,7 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
 
     def validate_line_items(self, line_items):
-      if(line_items==None or len(line_items)==0):
+      if(not line_items or len(line_items)==0):
         raise HTTPException(status_code=400, detail="line_items required")
 
       codes = [item['code'] for item in line_items]
