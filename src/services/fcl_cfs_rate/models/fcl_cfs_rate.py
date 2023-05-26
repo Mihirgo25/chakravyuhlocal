@@ -5,7 +5,8 @@ import datetime
 from micro_services.client import maps
 from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES
 from configs.global_constants import  IMPORT_CARGO_HANDLING_TYPES
-
+import yaml
+from configs.definitions import FCL_CFS_CHARGES
 
 class BaseModel(Model):
     class Meta:
@@ -38,7 +39,7 @@ class FclCfsRate(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     location_type= CharField(null=False, index=True)
-    cargo_handling_type = CharField(index=True)
+    cargo_handling_type = CharField(index=True,null=True)
 
 
     def validate_cargo_handling_type(self):
@@ -47,6 +48,18 @@ class FclCfsRate(BaseModel):
                 self.errors.append('Invalid cargo_handling_type for export.')
             if self.trade_type == 'import' and self.cargo_handling_type not in IMPORT_CARGO_HANDLING_TYPES:
                 self.errors.append('Invalid cargo_handling_type for import.')
+    def possible_charge_codes(self):
+        fcl_cfs_charges = FCL_CFS_CHARGES
+        filtered_charge_codes = {}
+        for code, config in fcl_cfs_charges.items():
+            if (
+                self.trade_type in config['trade_types']
+                and self.cargo_handling_type in config['tags']
+                and config['condition']
+            ):
+                filtered_charge_codes[code] = config
+
+        return filtered_charge_codes
 
 
     def delete_rate_not_available_entry(self):
