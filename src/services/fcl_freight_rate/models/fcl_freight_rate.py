@@ -229,7 +229,7 @@ class FclFreightRate(BaseModel):
       response = {}
       if self.destination_local:
         self.destination_local_data_instance = FclFreightRateLocalData(self.destination_local)
-        response = self.destination_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response = self.destination_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'import',self.possible_destination_local_charge_codes())
 
       self.destination_local_line_items_error_messages = response.get('line_items_error_messages')
       self.is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present')
