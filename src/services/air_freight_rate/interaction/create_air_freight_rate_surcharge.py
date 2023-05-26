@@ -11,11 +11,10 @@ def create_audit(request,surcharge_id):
         rate_sheet_id = request.get('rate_sheet_id'),
         performed_by_id = request['performed_by_id'],
         procured_by_id = request['procured_by_id'],
-        bulk_operation_id=request.get('bulk_operation_id')
+        bulk_operation_id=request('bulk_operation_id'),
         data = audit_data,
         object_id = surcharge_id,
-        object_type = 'AirFreightRateSurcharge'
-    )
+        object_type = 'AirFreightRateSurcharge')
     return id
 
 def create_air_freight_rate_surcharge(request):
@@ -37,8 +36,7 @@ def execute_transaction_code(request):
         'operation_type':request.get('operation_type'),
         'service_provider_id':request.get('service_provider_id')
         }
-    surcharge =
-    AirFreightRateSurcharge.select().where(
+    surcharge = AirFreightRateSurcharge.select().where(
         AirFreightRateSurcharge.origin_airport_id == request.get("origin_airport_id"),
         AirFreightRateSurcharge.destination_airport_id == request.get("destination_airport_id"),
         AirFreightRateSurcharge.commodity_type == request.get("commodity_type"),
