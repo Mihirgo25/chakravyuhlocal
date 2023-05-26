@@ -4,7 +4,7 @@ from typing import Union, List
 import json
 import traceback
 from fastapi.encoders import jsonable_encoder
-from params import *
+from fcl_cfs_params import *
 from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
@@ -36,7 +36,7 @@ def create_fcl_cfs_rate(request: CreateFclCfsRate, resp: dict = Depends(authoriz
     
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate_request')
-def create_fcl_cfs_rate(request: CreateFclCfsRate, resp: dict = Depends(authorize_token)): #
+def create_fcl_cfs_rate(request: FclCfsRateRequest, resp: dict = Depends(authorize_token)): #
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
