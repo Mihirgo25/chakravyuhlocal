@@ -13,7 +13,7 @@ from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs
 from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate import get_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.get_cfs_rate_card import get_fcl_cfs_rate_card
-
+from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate_request import list_fcl_cfs_rate_request
 fcl_cfs_router = APIRouter()
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate')
@@ -119,4 +119,26 @@ def list_fcl_cfs_rates(
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })  
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) }) 
+
+@fcl_cfs_router.get("/list_fcl_cfs_rate_requests") 
+def list_fcl_cfs_rate_requests(
+    filters: str = {},
+    page_limit: int = 10,
+    page: int = 1,
+    is_stats_required: bool = True,
+    performed_by_id: str = None,
+    resp: dict  = Depends(authorize_token)
+    ):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        interaction = list_fcl_cfs_rate_request(filters, page_limit, page, is_stats_required, performed_by_id)
+        data = interaction.execute()
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+

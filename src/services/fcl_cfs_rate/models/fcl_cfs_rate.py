@@ -7,6 +7,7 @@ from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES
 from configs.global_constants import  IMPORT_CARGO_HANDLING_TYPES
 import yaml
 from configs.definitions import FCL_CFS_CHARGES
+from fastapi import HTTPException
 
 class BaseModel(Model):
     class Meta:
@@ -40,6 +41,9 @@ class FclCfsRate(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     location_type= CharField(null=False, index=True)
     cargo_handling_type = CharField(index=True,null=True)
+
+        class Meta:
+        table_name = 'fcl_cfs_rate'
 
 
     def validate_cargo_handling_type(self):
@@ -176,10 +180,11 @@ class FclCfsRateLineItem(Model):
     def validate(self):
         super().validate()
         if not self.code:
-            self.errors.append('Code is required.')
+           raise HTTPException( status_code =401 ,detail = 'Code is required.')
         if not self.unit:
-            self.errors.append('Unit is required.')
+            raise HTTPException( status_code =401 ,detail ='Unit is required.')
         if not self.price:
-            self.errors.append('Price is required.')
+            raise HTTPException( status_code =401 ,detail ='Price is required.')
         if self.price and self.price < 0:
-            self.errors.append('Price must be greater than or equal to 0.')
+            raise HTTPException( status_code =401 ,detail = 'Price cannot  be negative')
+        
