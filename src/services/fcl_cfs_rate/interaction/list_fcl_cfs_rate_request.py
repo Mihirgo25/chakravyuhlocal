@@ -1,7 +1,8 @@
-from fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
+from fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from peewee import *
+from fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 POSSIBLE_INDIRECT_FILTERS = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 POSSIBLE_DIRECT_FILTERS = ['port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id']
@@ -43,16 +44,16 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id))
-    query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
+    query = query.where((FclCfsRateRequest.origin_port_id << origin_port_id) | (FclCfsRateRequest.origin_country_id << origin_port_id) | (FclCfsRateRequest.origin_continent_id << origin_port_id) | (FclCfsRateRequest.origin_trade_id << origin_port_id))
+    query = query.where((FclCfsRateRequest.destination_port_id << destination_port_id) | (FclCfsRateRequest.destination_country_id << destination_port_id) | (FclCfsRateRequest.destination_continent_id << destination_port_id) | (FclCfsRateRequest.destination_trade_id << destination_port_id))
     return query
 
 def apply_supply_agent_id_filter(query, filters):
     expertises = get_organization_service_experties('fcl_freight', filters['supply_agent_id'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateRequest.origin_port_id << origin_port_id) | (FclFreightRateRequest.origin_country_id << origin_port_id) | (FclFreightRateRequest.origin_continent_id << origin_port_id) | (FclFreightRateRequest.origin_trade_id << origin_port_id))
-    query = query.where((FclFreightRateRequest.destination_port_id << destination_port_id) | (FclFreightRateRequest.destination_country_id << destination_port_id) | (FclFreightRateRequest.destination_continent_id << destination_port_id) | (FclFreightRateRequest.destination_trade_id << destination_port_id))
+    query = query.where((FclCfsRateRequest.origin_port_id << origin_port_id) | (FclCfsRateRequest.origin_country_id << origin_port_id) | (FclCfsRateRequest.origin_continent_id << origin_port_id) | (FclCfsRateRequest.origin_trade_id << origin_port_id))
+    query = query.where((FclCfsRateRequest.destination_port_id << destination_port_id) | (FclCfsRateRequest.destination_country_id << destination_port_id) | (FclCfsRateRequest.destination_continent_id << destination_port_id) | (FclCfsRateRequest.destination_trade_id << destination_port_id))
     return query
     
 
@@ -92,7 +93,7 @@ def add_service_objects(data):
         }
     ]
 
-    service_objects = GetMultipleServiceObjectsData.run!(objects=objects)
+    service_objects = get_multiple_service_objects(objects)
 
     for obj in data:
         obj['port'] = service_objects['location'].get(obj['port_id'], None)

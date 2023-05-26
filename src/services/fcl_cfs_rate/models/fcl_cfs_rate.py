@@ -42,7 +42,7 @@ class FclCfsRate(BaseModel):
     location_type= CharField(null=False, index=True)
     cargo_handling_type = CharField(index=True,null=True)
 
-        class Meta:
+    class Meta:
         table_name = 'fcl_cfs_rate'
 
 
