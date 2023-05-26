@@ -1,0 +1,91 @@
+FSC:
+  name: "Fuel Surcharge"
+  units: ['per_kg']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+CTS:
+  name: "Carting Surcharge"
+  units: ['per_kg']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+MSC:
+  name: "Miscellaneous Surcharge"
+  units: ['per_kg']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+PSS:
+  name: "Peak Season Surcharge"
+  units: ['per_kg']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+AWC:
+  name: "Code not in use"
+  units: ['per_shipment','per_awb']
+  condition: true
+  tags: ['additional_service', 'deleted']
+  sac_code: '996531'
+AMS:
+  name: "Automated Manifest System"
+  units: ['per_shipment','per_awb']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996531'
+SSC:
+  name: "Security Surcharge"
+  units: ['per_kg' , 'per_shipment']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+XRAY:
+  name: "X Ray Machine Charges"
+  units: ['per_kg' , 'per_shipment']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+PCA:
+  name: "Code not in use"
+  units: ['per_kg' , 'per_shipment']
+  condition: true
+  tags: ['additional_service', 'deleted']
+  sac_code: '996799'
+HAZ:
+  name: "Hazardous Cargo Surcharge"
+  units: ['per_kg' , 'per_shipment']
+  condition: GlobalConstants::HAZ_CLASSES.include?(commodity) || commodity_type == 'dangerous'
+  tags: ['additional_service']
+  sac_code: '996799'
+SULD:
+  name: "Special equipment (ULD) Surcharge"
+  units: ['per_kg' , 'per_shipment']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996531'
+ADEM:
+  name: "Code not in use"
+  units: ['per_kg_per_day']
+  condition: true
+  tags: ['additional_service', 'deleted']
+  sac_code: ''
+AEDEM:
+  name: "Airline Demurrage Charge"
+  units: ['per_kg_per_day']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996531'
+AEDC:
+  name: "Airline Due Carrier"
+  units: ['per_kg']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996531'
+AMSNO:
+  name: "Automated Manifest System with no tax"
+  units: ['per_shipment','per_awb']
+  condition: commodity == "special_consideration"
+  tags: ['additional_service']
+  sac_code: '996531'
+
