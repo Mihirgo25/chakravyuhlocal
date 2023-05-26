@@ -13,32 +13,32 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 class  FclCfsRateRequest(BaseModel):
-	id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True, index=True)
-	port_id	= UUIDField(null=True)
-	serial_id = IntegerField(max_length=8)	#int8	NO	NULL	"nextval('fcl_cfs_rate_requests_serial_id_seq'::regclass)"
-	country_id = UUIDField(null=True)
-	trade_type = CharField(null=True)
-	container_size	= CharField(null=True)
-	commodity	= CharField(null=True)
-	status	= CharField(null=True)
-	preferred_rate = FloatField(null=True, max_length=8)#	float8	YES	NULL	NULL
-	preferred_rate_currency	= CharField(null=True)
-	source	= CharField(null=True)
-	source_id = UUIDField(null=True)
-	performed_by_id = UUIDField(null=True)
-	performed_by_type	= CharField(null=True)
-	performed_by_org_id = UUIDField(null=True)
-	closed_by_id = UUIDField(null=True)
-	remarks	= CharField(null=True)#
-	booking_params = BinaryJSONField(null=True)#	jsonb	YES	NULL	NULL
-	preferred_detention_free_days = IntegerField(max_length=4, null = True)	#int4	YES	NULL	NULL
-	cargo_readiness_date = DateField(null=True)	#date	YES	NULL	NULL
-	closing_remarks	= CharField(null=True)
-	created_at = DateTimeField(default=datetime.datetime.now)
-	updated_at = DateTimeField(default=datetime.datetime.now)
-    class Meta:
-        db_table = 'fcl_cfs_rate_requests'
+    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True, index=True)
+    port_id	= UUIDField(null=True)
+    serial_id = IntegerField(max_length=8)	#int8	NO	NULL	"nextval('fcl_cfs_rate_requests_serial_id_seq'::regclass)"
+    country_id = UUIDField(null=True)
+    trade_type = CharField(null=True)
+    container_size	= CharField(null=True)
+    commodity	= CharField(null=True)
+    status	= CharField(null=True)
+    preferred_rate = FloatField(null=True, max_length=8)#	float8	YES	NULL	NULL
+    preferred_rate_currency	= CharField(null=True)
+    source	= CharField(null=True)
+    source_id = UUIDField(null=True)
+    performed_by_id = UUIDField(null=True)
+    performed_by_type	= CharField(null=True)
+    performed_by_org_id = UUIDField(null=True)
+    closed_by_id = UUIDField(null=True)
+    remarks	= CharField(null=True)
+    booking_params = BinaryJSONField(null=True)
+    preferred_detention_free_days = IntegerField(max_length=4, null = True)	
+    cargo_readiness_date = DateField(null=True)	
+    closing_remarks	= CharField(null=True)
+    created_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now)
 
+    class Meta:
+        table_name = 'fcl_cfs_rate'  
     def send_closed_notifications_to_sales_agent(self):
         # Implementation here
         port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
