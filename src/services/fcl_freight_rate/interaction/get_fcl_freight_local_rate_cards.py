@@ -130,7 +130,7 @@ def build_local_line_item_object(line_item, request):
 
     slab_value = None
 
-    if line_item['slabs']:
+    if line_item.get('slabs', []):
         if 'slab_containers_count' in code_config.get('tags'):
             slab_value = request['containers_count']
 
