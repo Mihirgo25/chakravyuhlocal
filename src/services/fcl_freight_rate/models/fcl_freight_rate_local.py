@@ -329,3 +329,6 @@ class FclFreightRateLocal(BaseModel):
             item.update({'name': line_item_name})
 
         return detail
+
+
+

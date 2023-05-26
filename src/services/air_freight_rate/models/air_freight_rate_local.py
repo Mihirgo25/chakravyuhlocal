@@ -2,7 +2,8 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-
+from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -50,3 +51,39 @@ class AirFreightRateLocal(BaseModel):
             (('updated_at', 'service_provider_id'), False),
         )
     
+    def validate_duplicate_line_items(self):
+        line_item_codes = [t.code.upper() for t in self.line_items]
+        unique_line_item_codes = set(line_item_codes)
+
+        if len(unique_line_item_codes) != len(line_item_codes):
+            self.errors.add('line_items', 'contains duplicates')
+    
+    def update_freight_objects(self):
+        location_key = 'origin' if self.trade_type == 'export' else 'destination'
+
+        if location_key == 'origin':
+            kwargs = {
+                'origin_local_id':self.id
+            }
+        else:
+            kwargs = {
+                'destination_local_id':self.id
+            }
+        t=AirFreightRate.update(**kwargs).where(
+            AirFreightRate.airline_id==self.airline_id,
+            AirFreightRate.commodity==self.commodity,
+            AirFreightRate.commodity_type==self.commodity_type,
+            AirFreightRate.service_provider_id==self.service_provider_id,
+            AirFreightRate.rate_type==self.rate_type,
+            (eval("FclFreightRate.{}_airport_id".format(location_key)) == self.airport_id),
+            (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
+        )
+        t.execute()
+    
+    # def possible_charge_codes(self):
+    #     air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
+    #     charge_codes={}
+    #     for code,config in air_freight_local_charges_dict.items():
+    #         if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'deleted' not in config['tags']:
+    #             charge_codes[code] = config
+        
