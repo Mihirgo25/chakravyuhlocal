@@ -14,6 +14,8 @@ from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate import get_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.get_cfs_rate_card import get_fcl_cfs_rate_card
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate_request import list_fcl_cfs_rate_request
+from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_request import create_fcl_cfs_rate_request
+
 fcl_cfs_router = APIRouter()
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate')
@@ -31,18 +33,41 @@ def create_fcl_cfs_rate(request: CreateFclCfsRate, resp: dict = Depends(authoriz
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_cfs_router.post('/create_fcl_cfs_rate_request')
+def create_fcl_cfs_rate(request: CreateFclCfsRate, resp: dict = Depends(authorize_token)): #
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = create_fcl_cfs_rate_request(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+
+
+
+
 
 @fcl_cfs_router.get("/get_fcl_cfs_rate_cards")
 def get_cfs_rate_cards(trade_type: str,
                        cargo_handling_type: str,
                        port_id: str,
-                       country_id: str = None,
                        container_size: str,
                        container_type: str,
-                       commodity: str = None,
                         importer_exporter_id: str,
                        containers_count: int, 
                        bls_count: int,
+                       country_id: str = None,
+                       commodity: str = None,
                        cargo_weight_per_container: int = None,
                        additional_services: List[str] = [],
                        cargo_value: int = None, 
