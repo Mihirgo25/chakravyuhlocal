@@ -28,6 +28,7 @@ class UpdateAirFreightRate(BaseModel):
     currency:str=None
     min_price:float=None
     performed_by_id:str=None
+    performed_by_type:str =None
     bulk_operation_id:str=None
     weight_slabs: list[WeightSlab]=None
     length:float=None
