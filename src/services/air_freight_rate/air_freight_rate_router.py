@@ -49,6 +49,7 @@ def update_air_freight_rates(request: UpdateAirFreightRate, resp:dict =Depends(a
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
+        
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_air_freight_rate(request.dict(exclude_none=True))
