@@ -3,6 +3,8 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from fastapi import HTTPException
+from configs.definitions import AIR_FREIGHT_SURCHARGES
+
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -48,6 +50,54 @@ class AirFreightRateSurcharge(BaseModel):
 
     class Meta:
         table_name = 'air_freight_rate_surcharges'
+
+    def possible_charge_codes():
+        charges = AIR_FREIGHT_SURCHARGES
+        filtered_charges = [charge for charge in charges if eval(charge[-1]['condition'].to_s)]
+        filtered_charges = [charge for charge in filtered_charges if charge]
+        charges_dict = dict(filtered_charges)
+        return charges_dict
+
+    def detail(self):
+        return {
+        'freight': {
+            'id': self.id,
+            'validities': self.validities,
+            'is_rate_expired': self.is_rate_expired(),
+            'is_rate_about_to_expire': self.is_rate_about_to_expire(),
+            'is_rate_not_available': self.is_rate_not_available()
+        },
+        'origin_local': {
+            'id': self.origin_local.id,
+            'line_items': self.origin_local.line_items,
+            'line_items_info_messages': self.origin_local.line_items_info_messages,
+            'is_line_items_info_messages_present': self.origin_local.is_line_items_info_messages_present,
+            'line_items_error_messages': self.origin_local.line_items_error_messages,
+            'is_line_items_error_messages_present': self.origin_local.is_line_items_error_messages_present
+        },
+        'destination_local': {
+            'id': self.destination_local.id,
+            'line_items': self.destination_local.line_items,
+            'line_items_info_messages': self.destination_local.line_items_info_messages,
+            'is_line_items_info_messages_present': self.destination_local.is_line_items_info_messages_present,
+            'line_items_error_messages': self.destination_local.line_items_error_messages,
+            'is_line_items_error_messages_present': self.destination_local.is_line_items_error_messages_present
+        },
+        'surcharge': {
+            'id': self.surcharge.id,
+            'line_items': self.surcharge.line_items,
+            'line_items_info_messages': self.surcharge.line_items_info_messages,
+            'is_line_items_info_messages_present': self.surcharge.is_line_items_info_messages_present,
+            'line_items_error_messages': self.surcharge.line_items_error_messages,
+            'is_line_items_error_messages_present': self.surcharge.is_line_items_error_messages_present
+        }
+    }
+
+
+        
+    
+
+
     
 
 

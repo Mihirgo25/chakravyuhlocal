@@ -51,7 +51,11 @@ def execute_transaction_code(request):
         surcharge = AirFreightRateSurcharge(**row)
         surcharge['line_items']=request.get('line_items')
     else:
-        old_line_items= surcharge['line_items'].
+        old_line_items= surcharge.get('line_items')
+        for line_item in request.get('line_items'):
+            add_line_item(old_line_items, line_item)
+        surcharge['line_items'] = old_line_items
+
 
 
 
@@ -64,6 +68,19 @@ def execute_transaction_code(request):
       'id': str(surcharge.id)
     }
     
+def add_line_item(old_line_items, line_item):
+    is_new_line_item = True
+    for index, old_line_item in enumerate(old_line_items):
+        if old_line_item['code'] == line_item['code']:
+            is_new_line_item = False
+            old_line_items[index] = line_item
+            break
+
+    if is_new_line_item:
+        old_line_items.append(line_item)
+
+
+        
 
 
 
