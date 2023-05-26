@@ -2,6 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
+from micro_services.client import maps
 from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES
 from configs.global_constants import  IMPORT_CARGO_HANDLING_TYPES
 
@@ -48,6 +49,98 @@ class FclCfsRate(BaseModel):
                 self.errors.append('Invalid cargo_handling_type for import.')
 
 
+    def delete_rate_not_available_entry(self):
+        FclCfsRate.delete().where(
+            FclCfsRate.trade_type == self.trade_type,
+            FclCfsRate.location_id == self.location_id,
+            FclCfsRate.service_provider_id == self.service_provider_id,
+            FclCfsRate.container_size == self.container_size,
+            FclCfsRate.container_type == self.container_type,
+            FclCfsRate.commodity == self.commodity,
+            FclCfsRate.cargo_handling_type == self.cargo_handling_type,
+            FclCfsRate.rate_not_available_entry == True
+            ).execute()
+    
+    def set_location(self):
+        if self.location is not None or self.location_id is None:
+            return True
+        
+        location = maps.list_locations({ 'filters': { 'id': self.location_id } })
+        self.location = location if location['list'] else None
+        
+        return self.location
+    
+    def update_line_item_messages(self):
+        self.set_location()
+
+        self.line_items_error_messages = {}
+        self.line_items_info_messages = {}
+        self.is_line_items_error_messages_present = False
+        self.is_line_items_info_messages_present = False
+
+        grouped_charge_codes = {}
+        # self.line_items.each do |line_item|
+        # grouped_charge_codes[line_item.code] = grouped_charge_codes[line_item.code].to_a + [line_item]
+        # end
+        for line_item in self.line_items:
+            if line_item.code not in grouped_charge_codes:
+                grouped_charge_codes[line_item.code] = []
+
+            grouped_charge_codes[line_item.code].append(line_item)
+
+        # grouped_charge_codes.each do |code, line_items|
+        # code_config = $CHARGES['fcl_cfs_charges'][code.to_sym]
+        for code, line_items in grouped_charge_codes.items():
+            code_config = CHARGES['fcl_cfs_charges'][code]
+
+        if code_config.blank?
+            self.line_items_error_messages[code] = ['is invalid']
+            self.is_line_items_error_messages_present = true
+            next
+        end
+
+        unless code_config[:trade_types].include?(self.trade_type)
+            self.line_items_error_messages[code] = ["can only be added for #{code_config[:trade_types].join(', ')}"]
+            self.is_line_items_error_messages_present = true
+            next
+        end
+
+        if (line_items.map(&:unit) - code_config[:units]).count > 0
+            self.line_items_error_messages[code] = ["can only be having units #{code_config[:units].join(', ')}"]
+            self.is_line_items_error_messages_present = true
+            next
+        end
+
+        unless eval(code_config[:condition].to_s)
+            self.line_items_error_messages[code] = ['is invalid']
+            self.is_line_items_error_messages_present = true
+            next
+        end
+        end
+
+        possible_charge_codes.select { |_code, config| config[:tags].include?('mandatory') }.each do |code, _config|
+        code = code.to_s
+        if grouped_charge_codes[code].blank?
+            self.line_items_error_messages[code] = ['is not present']
+            self.is_line_items_error_messages_present = true
+        end
+        end
+
+        possible_charge_codes.select { |_code, config| config[:tags].include?('additional_service') || config[:tags].include?('shipment_execution_service') }.each do |code, _config|
+        code = code.to_s
+        if grouped_charge_codes[code].blank?
+            self.line_items_info_messages[code] = ['can be added for more conversion']
+            self.is_line_items_info_messages_present = true
+        end
+        end
+
+        self.update_columns(
+        line_items_error_messages: line_items_error_messages,
+        line_items_info_messages: line_items_info_messages,
+        is_line_items_info_messages_present: is_line_items_info_messages_present,
+        is_line_items_error_messages_present: is_line_items_error_messages_present
+        )
+    end
 
 class FclCfsRateLineItem(Model):
     code = CharField()
