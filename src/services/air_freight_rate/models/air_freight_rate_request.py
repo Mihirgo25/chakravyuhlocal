@@ -1,5 +1,10 @@
 from peewee import *
 from database.db_session import db
+from configs.air_freight_rate_constants import REQUEST_SOURCES
+from fastapi import HTTPException
+from micro_services.client import *
+from database.rails_db import *
+from playhouse.postgres_ext import *
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -10,7 +15,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 
-class AirFreightRateRequests(BaseModel):
+class AirFreightRateRequest(BaseModel):
     booking_params = BinaryJSONField(null=True)
     cargo_readiness_date = DateTimeField(null=True)
     cargo_stacking_type = CharField(null=True)
@@ -53,3 +58,48 @@ class AirFreightRateRequests(BaseModel):
 
     class Meta:
         table_name = 'air_freight_rate_requests'
+
+
+    def validate(self):
+        # self.validate_source()
+        # self.validate_source_id()
+        # self.validate_performed_by_id()
+        # self.validate_performed_by_org_id()
+        self.validate_preferred_shipping_line_ids()
+        return True
+
+    def validate_source(self):
+        if self.source and self.source not in REQUEST_SOURCES:
+            raise HTTPException(status_code=400, detail="Invalid source")
+
+
+    def validate_source_id(self):
+        if self.source == 'spot_search':
+            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+            if len(spot_search_data) == 0:
+                raise HTTPException(status_code=400, detail="Invalid Source ID")
+
+    def validate_performed_by_id(self):
+        data = get_user(str(self.performed_by_id))
+
+        if data:
+            pass
+        else:
+            raise HTTPException(status_code=400, detail='Invalid Performed by ID')
+
+    def validate_performed_by_org_id(self):
+        performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
+        if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
+            raise HTTPException(status_code=400, detail='Invalid Account Type')
+
+    def validate_preferred_airline_ids(self):
+        if not self.preferred_airline_ids:
+            pass
+        if self.preferred_airline_ids:
+            # need to change the name to get operators name
+            airline_data = get_shipping_line(id=self.preferred_airline_ids)
+            if len(airline_data) != len(self.preferred_airline_ids):
+                raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
+            self.preferred_shipping_lines = airline_data
+            self.preferred_shipping_line_ids = [uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids]
+
