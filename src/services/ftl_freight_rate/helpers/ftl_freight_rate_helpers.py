@@ -2,12 +2,32 @@
 
 from micro_services.client import maps
 from libs.get_distance import get_distance
+import httpx, json
+
+
+def get_land_route_from_valhalla(location_ids):
+    url = 'https://api.cogoport.com/location/get_land_route_location_details'
+    params = {
+        'location_ids': json.dumps(location_ids),
+        'number_of_locations': '5',
+        'is_authorization_required': 'false'
+    }
+    headers = {
+        'accept': 'application/json'
+    }
+    response = httpx.get(url, params=params, headers=headers)
+    
+    # Access the response data
+    data = response.json()
+    
+    # Do something with the response data
+    return data
 
 def get_road_route(origin_location_id, destination_location_id):
-    input = {
-        "location_ids": [origin_location_id,destination_location_id]
-    }
-    data = maps.get_land_route_from_valhalla(input)
+    
+    location_ids = [origin_location_id,destination_location_id]
+    
+    data = get_land_route_from_valhalla(location_ids)
     if isinstance(data, dict):
         return data
     return None
@@ -21,7 +41,6 @@ def get_transit_time(distance):
 
 def get_path_data(origin_location_id, destination_location_id, location_data):
     route_distance = get_road_route(origin_location_id, destination_location_id)
-    print(route_distance)
     if route_distance:
         route_distance['time'] = route_distance['time']/3600
         route_distance['is_valhala'] = True
