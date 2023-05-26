@@ -1,0 +1,22 @@
+from peewee import *
+from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
+
+def find_rate_objects(request):
+    query = (FclCfsRate
+        .select()
+        .where(
+        (FclCfsRate.location_id == request.location_id) ,
+        (FclCfsRate.trade_type == request.trade_type) ,
+        (FclCfsRate.container_size == request.container_size) ,
+        (FclCfsRate.container_type == request.container_type) ,
+        (FclCfsRate.commodity == request.commodity) ,
+        (FclCfsRate.importer_exporter_id.in_([None, request.importer_exporter_id])) ,
+        (FclCfsRate.is_line_items_error_messages_present == request.is_line_items_error_messages_present)
+        ))
+    return query
+
+def update_platform_prices_for_other_service_providers(request):
+    for rate_object in find_rate_objects(request):
+        rate_object.set_platform_price()
+        rate_object.set_is_best_price()
+        rate_object.save()
