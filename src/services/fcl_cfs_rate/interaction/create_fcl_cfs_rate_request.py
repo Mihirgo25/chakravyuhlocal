@@ -51,25 +51,3 @@ def create_fcl_cfs_rate_request(request):
 
     return {'id': freight.id}
 
-# ######## ---------------------------------------   Usage
-
-
-# create_request = CreateFclCfsRateRequest(
-#     source='source123',
-#     source_id='source_id123',
-#     performed_by_id='performed_by_id123',
-#     performed_by_org_id='performed_by_org_id123',
-#     performed_by_type='performed_by_type123',
-#     preferred_rate=None,
-#     preferred_rate_currency=None,
-#     preferred_detention_free_days=None,
-#     cargo_readiness_date=None,
-#     remarks=[],
-#     booking_params={},
-#     container_size=None,
-#     commodity=None,
-#     country_id=None,
-#     port_id=None,
-#     trade_type=None
-# )
-# result = create_request.execute()
