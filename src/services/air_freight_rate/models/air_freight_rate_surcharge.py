@@ -2,6 +2,8 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+
 from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 
@@ -92,6 +94,72 @@ class AirFreightRateSurcharge(BaseModel):
             'is_line_items_error_messages_present': self.surcharge.is_line_items_error_messages_present
         }
     }
+
+    def update_line_item_messages(self):
+        line_items_error_messages = {}
+        line_items_info_messages = {}
+        is_line_items_error_messages_present = False
+        is_line_items_info_messages_present = False
+
+        grouped_charge_codes = {}
+        for line_item in self.line_items:
+            if line_item['code'] not in grouped_charge_codes:
+                grouped_charge_codes[line_item['code']] = []
+            grouped_charge_codes[line_item['code']].append(line_item)
+
+        for code, line_items in grouped_charge_codes.items():
+            code_config = AIR_FREIGHT_SURCHARGES.get(code)
+
+            if not code_config:
+                line_items_error_messages[code] = ['is invalid']
+                is_line_items_error_messages_present = True
+                continue
+
+            if len(set([item.unit for item in line_items]) - set(code_config['units'])) > 0:
+                line_items_error_messages[code] = ["can only be having units " + ", ".join(code_config['units'])]
+                is_line_items_error_messages_present = True
+                continue
+
+            if not eval(str(code_config['condition'])):
+                line_items_error_messages[code] = ['is invalid']
+                is_line_items_error_messages_present = True
+                continue
+        possible_charge_codes=possible_charge_codes()
+        for code, config in possible_charge_codes.items():
+            if 'mandatory' in config['tags']:
+                if str(code) not in grouped_charge_codes:
+                    line_items_error_messages[code] = ['is not present']
+                    is_line_items_error_messages_present = True
+
+        for code, config in possible_charge_codes.items():
+            if 'additional_service' in config['tags'] or 'shipment_execution_service' in config['tags']:
+                if str(code) not in grouped_charge_codes:
+                    line_items_info_messages[code] = ['can be added for more conversion']
+                    is_line_items_info_messages_present = True
+
+        self.line_items_error_messages = line_items_error_messages
+        self.line_items_info_messages = line_items_info_messages
+        self.is_line_items_info_messages_present = is_line_items_info_messages_present
+        self.is_line_items_error_messages_present = is_line_items_error_messages_present
+        self.save()
+    
+    def update_freight_objects(self):
+        freight_query = AirFreightRate.select(AirFreightRate.id).where(
+            (AirFreightRate.origin_airport_id == self.origin_airport_id),
+            (AirFreightRate.destination_airport_id == self.destination_airport_id),
+            (AirFreightRate.commodity == self.commodity) ,
+            (AirFreightRate.commodity_type == self.commodity_type) ,
+            (AirFreightRate.operation_type == self.operation_type) ,
+            (AirFreightRate.airline_id == self.airline_id) ,
+            (AirFreightRate.service_provider == self.service_provider_id),
+            (getattr(AirFreightRate, "surcharge_id" == None)),
+            (getattr(AirFreightRate, "price_type" == "net_net"))).update(surcharge_id=self.id)
+      
+
+
+
+
+
 
 
         

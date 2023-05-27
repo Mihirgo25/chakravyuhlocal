@@ -15,10 +15,7 @@ def create_audit(request):
         object_id = request['id'],
         object_type='AirFreightRateSurcharge'
     )
-def get_update_params(request):
-    interaction_inputs = {key: value for key, value in request.items() if key not in ['performed_by_id', 'id', 'procured_by_id', 'sourced_by_id']}
-    return interaction_inputs
-
+    
 def update_air_freight_rate_surcharge(request):
     object_type = 'Air_Freight_Rate_Surcharge' 
     query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
@@ -30,6 +27,27 @@ def execute_transaction_code(request):
     air_freight_rate_surcharge = AirFreightRateSurcharge.get_by_id(request['id'])
     if not air_freight_rate_surcharge:
         raise HTTPException(status_code=400, detail=" Surcharge not found")
+    
+    air_freight_rate_surcharge['line_items']=request.get('line_items')
+
+    if not air_freight_rate_surcharge.save():
+        raise HTTPException(status_code=500, detail="Surcharge not updated")
+    
+    air_freight_rate_surcharge.update_line_item_messages()
+
+    create_audit(request)
+
+    return {'id':str(air_freight_rate_surcharge.id)}
+
+
+
+
+
+    
+
+
+
+    
 
 
 

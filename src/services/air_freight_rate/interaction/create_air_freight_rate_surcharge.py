@@ -48,20 +48,22 @@ def execute_transaction_code(request):
     if not surcharge:
         surcharge = AirFreightRateSurcharge(**row)
         surcharge['line_items']=request.get('line_items')
+        surcharge.update_freight_objects()
     else:
         old_line_items= surcharge.get('line_items')
         for line_item in request.get('line_items'):
             add_line_item(old_line_items, line_item)
         surcharge['line_items'] = old_line_items
 
-
+    
+    surcharge.update_line_item_messages()
 
 
 
     if not surcharge.save():
         raise HTTPException(status_code=500, detail="Surcharge not saved")
     
-    
+    create_audit(request,surcharge.get('id'))
     return {
       'id': str(surcharge.id)
     }
