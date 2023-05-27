@@ -15,7 +15,10 @@ def create_audit(request):
         object_id = request['id'],
         object_type='AirFreightRateSurcharge'
     )
-    
+def get_update_params(request):
+    interaction_inputs = {key: value for key, value in request.items() if key not in ['performed_by_id', 'id', 'procured_by_id', 'sourced_by_id']}
+    return interaction_inputs
+
 def update_air_freight_rate_surcharge(request):
     object_type = 'Air_Freight_Rate_Surcharge' 
     query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
