@@ -1,0 +1,58 @@
+from pydantic import BaseModel
+from datetime import datetime, timedelta,date
+from peewee import *
+from typing import List
+from dateutil.relativedelta import relativedelta
+
+class Slab(BaseModel):
+  lower_limit: float
+  upper_limit: float
+  price: float
+  currency: str
+
+class StandardLineItem(BaseModel):
+  code: str
+  unit: str
+  price: float
+  currency: str
+  remarks: list[str] = []
+  slabs: list[Slab] = []
+
+class FreeDaysType(BaseModel):
+  free_days_type:str
+  free_limit:int
+  slabs: list[Slab]
+
+class CreateFclCfsRate(BaseModel):
+  rate_sheet_id:str = None
+  location_id: str
+  trade_type: str
+  container_size: str
+  container_type: str
+  commodity: str = None
+  service_provider_id: str
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  cargo_handling_type: str
+  importer_exporter_id: str = None
+  line_items: list[StandardLineItem]
+  free_days: list[FreeDaysType]
+
+class FclCfsRateRequest(BaseModel):
+    source: str 
+    source_id:str 
+    performed_by_id : str
+    performed_by_org_id: str
+    performed_by_type: str
+    preferred_rate: str= None
+    preferred_rate_currency: str= None
+    preferred_detention_free_days: str= None
+    cargo_readiness_date: str= None
+    remarks:list[str] =[]
+    booking_params : dict = {}
+    container_size: str = None
+    commodity: str = None
+    country_id: str = None
+    port_id: str = None
+    trade_type: str = None

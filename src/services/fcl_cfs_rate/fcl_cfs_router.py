@@ -4,7 +4,7 @@ from typing import Union, List
 import json
 import traceback
 from fastapi.encoders import jsonable_encoder
-from params import *
+from fcl_cfs_params import *
 from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
@@ -13,6 +13,8 @@ from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs
 from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate import get_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.get_cfs_rate_card import get_fcl_cfs_rate_card
+from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate_request import list_fcl_cfs_rate_request
+from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_request import create_fcl_cfs_rate_request
 
 fcl_cfs_router = APIRouter()
 
@@ -31,38 +33,61 @@ def create_fcl_cfs_rate(request: CreateFclCfsRate, resp: dict = Depends(authoriz
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
 
-# @fcl_cfs_router.get("/get_fcl_cfs_rate_cards")
-# def get_cfs_rate_cards(trade_type: str,
-#                        cargo_handling_type: str,
-#                        port_id: str,
-#                        country_id: str = None,
-#                        container_size: str,
-#                        container_type: str,
-#                        commodity: str = None,
-#                        importer_exporter_id: str,
-#                        containers_count: int, 
-#                        bls_count: int,
-#                        cargo_weight_per_container: int = None,
-#                        additional_services: List[str] = [],
-#                        cargo_value: int = None, 
-#                        cargo_value_currency: str = None,
-#                        include_confirmed_inventory_rates: bool = False,
-#                        resp: dict = Depends(authorize_token)):
-#     if resp["status_code"] != 200:
-#         return JSONResponse(status_code=resp["status_code"], content=resp)    
-#     try:
-#         data = get_fcl_cfs_rate_card(trade_type, cargo_handling_type, port_id, country_id,
-#                              container_size, container_type, commodity, importer_exporter_id,
-#                              containers_count, bls_count, cargo_weight_per_container,
-#                              additional_services, cargo_value, cargo_value_currency,
-#                              include_confirmed_inventory_rates)
-#         return JSONResponse(status_code=200, content=jsonable_encoder(data))
-#     except HTTPException as e:
-#         raise
-#     except Exception as e:
-#         sentry_sdk.capture_exception(e)
-#         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+@fcl_cfs_router.post('/create_fcl_cfs_rate_request')
+def create_fcl_cfs_rate(request: FclCfsRateRequest, resp: dict = Depends(authorize_token)): #
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = create_fcl_cfs_rate_request(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+
+
+
+
+
+@fcl_cfs_router.get("/get_fcl_cfs_rate_cards")
+def get_cfs_rate_cards(trade_type: str,
+                       cargo_handling_type: str,
+                       port_id: str,
+                       container_size: str,
+                       container_type: str,
+                        importer_exporter_id: str,
+                       containers_count: int, 
+                       bls_count: int,
+                       country_id: str = None,
+                       commodity: str = None,
+                       cargo_weight_per_container: int = None,
+                       additional_services: List[str] = [],
+                       cargo_value: int = None, 
+                       cargo_value_currency: str = None,
+                       include_confirmed_inventory_rates: bool = False,
+                       resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)    
+    try:
+        data = get_fcl_cfs_rate_card(trade_type, cargo_handling_type, port_id, country_id,
+                             container_size, container_type, commodity, importer_exporter_id,
+                             containers_count, bls_count, cargo_weight_per_container,
+                             additional_services, cargo_value, cargo_value_currency,
+                             include_confirmed_inventory_rates)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @fcl_cfs_router.get("/get_fcl_cfs_rates")
@@ -118,5 +143,26 @@ def list_fcl_cfs_rates(
     except HTTPException as e:
         raise
     except Exception as e:
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) }) 
+
+@fcl_cfs_router.get("/list_fcl_cfs_rate_requests") 
+def list_fcl_cfs_rate_requests(
+    filters: str = {},
+    page_limit: int = 10,
+    page: int = 1,
+    is_stats_required: bool = True,
+    performed_by_id: str = None,
+    resp: dict  = Depends(authorize_token)
+    ):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        interaction = list_fcl_cfs_rate_request(filters, page_limit, page, is_stats_required, performed_by_id)
+        data = interaction.execute()
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })  

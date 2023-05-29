@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from peewee import *
 from typing import List
-
+from datetime import date
 class FclCustomsLineItems(BaseModel):
     location_id: str = None
     code: str
@@ -50,3 +50,25 @@ class CreateFclCustomsRateNotAvailable(BaseModel):
   container_size: str
   container_type: str
   commodity: str = None
+
+class CreateFclCustomsRateRequest(BaseModel):
+  source: str
+  source_id: str
+  performed_by_id: str
+  performed_by_org_id: str
+  performed_by_type: str
+  preferred_customs_rate: float = None
+  preferred_customs_rate_currency: str = None
+  preferred_detention_free_days: int = None
+  preferred_storage_free_days: int = None
+  cargo_readiness_date: date = None
+  remarks: list[str] = []
+  booking_params: dict = {}
+  containers_count: int
+  container_size: str 
+  commodity: str = None
+  cargo_handling_type: str 
+  country_id: str = None
+  port_id: str 
+  container_type: str 
+  trade_type: str = None

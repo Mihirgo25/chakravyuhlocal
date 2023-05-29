@@ -94,3 +94,6 @@ class FclCustomsRateRequest(BaseModel):
         }
         common.create_communication(data)
         
+
+class FclCustomsRateRequest(BaseModel):
+    id = UUIDField()
