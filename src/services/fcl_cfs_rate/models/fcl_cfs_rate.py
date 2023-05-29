@@ -41,6 +41,14 @@ class FclCfsRate(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     location_type= CharField(null=False, index=True)
     cargo_handling_type = CharField(index=True,null=True)
+    port = BinaryJSONField(null=True)
+    performed_by = BinaryJSONField(null=True)
+    closed_by = BinaryJSONField(null=True)
+    spot_search = BinaryJSONField(null=True)
+    importer_exporter_id = UUIDField(null=True)
+    service_provider_id = UUIDField(null=True)
+    procured_by = BinaryJSONField(null=True)
+    sourced_by = BinaryJSONField(null=True)
 
     class Meta:
         table_name = 'fcl_cfs_rate'

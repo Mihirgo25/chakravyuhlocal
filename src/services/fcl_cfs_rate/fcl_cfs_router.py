@@ -16,6 +16,7 @@ from services.fcl_cfs_rate.interaction.get_cfs_rate_card import get_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate_request import list_fcl_cfs_rate_request
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_request import create_fcl_cfs_rate_request
 
+import uvicorn
 fcl_cfs_router = APIRouter()
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate')
@@ -164,5 +165,8 @@ def list_fcl_cfs_rate_requests(
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })  
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+# for testing
+if __name__ == "__main__":
+    uvicorn.run(fcl_cfs_router, host="0.0.0.0", port=8000)

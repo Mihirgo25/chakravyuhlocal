@@ -17,12 +17,8 @@ class FclCfsRateAudits(BaseModel):
     object_type = CharField(null=True,index=True)
     action_name = CharField(null=True,index=True)
     data = 	BinaryJSONField(null=True)
-    procured_by_id = UUIDField(null=True)
-    sourced_by_id = UUIDField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-
-
 
 
     def get_audit_params(self):
