@@ -4,6 +4,22 @@ from services.fcl_cfs_rate.models.fcl_cfs_audits import FclCfsRateAudits
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_platform_prices_for_other_service_providers
 from celery_worker import delay_fcl_functions
 
+def get_audit_params(request):
+    audit_data = {
+        "line_items": request.line_items,
+        "free_days": request.free_days
+        }
+
+    return {
+        "action_name": 'create',
+        "performed_by_id": request["performed_by_id"],
+        "sourced_by_id": request["sourced_by_id"],
+        "procured_by_id": request["procured_by_id"],
+        "rate_sheet_id": request["rate_sheet_id"],
+        "data": audit_data
+    }
+    
+
 def create_fcl_cfs_rates(request):
     params = {
         "rate_sheet_id": request["rate_sheet_id"],
@@ -41,7 +57,7 @@ def create_fcl_cfs_rates(request):
         
     FclCfsRate.update_line_item_messages()
 
-    audit_params = FclCfsRateAudits.get_audit_params()
+    audit_params = get_audit_params(request)
     FclCfsRateAudits.create(**audit_params)
 
     update_platform_prices_for_other_service_providers(request)
