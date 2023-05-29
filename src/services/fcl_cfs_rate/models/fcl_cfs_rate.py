@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from micro_services.client import maps
+from micro_services.client import maps, common
 from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES
 from configs.global_constants import  IMPORT_CARGO_HANDLING_TYPES
 import yaml
@@ -94,6 +94,71 @@ class FclCfsRate(BaseModel):
         self.location = location if location['list'] else None
         
         return self.location
+    
+    def mandatory_charge_codes(self):
+        return [
+            code.upper() for code, config in possible_charge_codes.items() #shreyas
+            if 'mandatory' in config['tags']
+        ]
+
+
+    def get_mandatory_line_items(self):
+        return [
+            line_item for line_item in self.line_items
+            if line_item.code.upper() in self.mandatory_charge_codes()
+        ]
+
+
+    def get_line_items_total_price(self):
+        line_items = self.cfs_line_items
+        currency = self.cfs_line_items[0].get('currency')
+        total_price = 0
+        for line_item in line_items:
+            total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": currency })['price']
+        return total_price
+    
+    def set_platform_price(self):
+        line_items = self.get_mandatory_line_items()
+
+        if not line_items:
+            return
+
+        result = self.get_line_items_total_price()
+
+        rates_query = FclCfsRate.select().where(
+            (FclCfsRate.location_id == self.location_id),
+            (FclCfsRate.trade_type == self.trade_type),
+            (FclCfsRate.container_size == self.container_size),
+            (FclCfsRate.container_type == self.container_type),
+            (FclCfsRate.commodity == self.commodity),
+            (FclCfsRate.service_provider_id != self.service_provider_id),
+            ((FclCfsRate.importer_exporter_id == self.importer_exporter_id) | (FclCfsRate.importer_exporter_id.is_null(True))),
+            (FclCfsRate.cargo_handling_type == self.cargo_handling_type)
+        )
+        
+        rates = list(rates_query.dicts())
+
+        for rate in rates:
+            rate_min_price=0
+            currency = self.cfs_line_items[0].get('currency')
+            for line_item in rate.line_items:
+                rate_min_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": currency })['price']
+            
+
+            if rate_min_price is not None and result > rate_min_price:
+                result = rate_min_price
+
+        self.platform_price = result
+
+    
+    def set_is_best_price(self):
+        if self.platform_price is None:
+            return
+
+        total_price = self.get_line_items_total_price()
+
+        self.is_best_price = (total_price <= self.platform_price)
+        
     
     def update_line_item_messages(self):
         self.set_location()
