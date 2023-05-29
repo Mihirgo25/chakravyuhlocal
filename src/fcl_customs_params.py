@@ -72,3 +72,33 @@ class CreateFclCustomsRateRequest(BaseModel):
   port_id: str 
   container_type: str 
   trade_type: str = None
+
+class UpdateFclCustomsRatePlatformPrices(BaseModel):
+  location_id: str
+  container_size: str 
+  container_type: str 
+  commodity: str = None
+  importer_exporter_id: str = None
+  is_customs_line_items_error_messages_presen: bool = False
+  is_cfs_line_items_error_messages_presen: bool = False
+
+class DeleteFclCustomsRateFeedback(BaseModel):
+ fcl_customs_rate_feedback_ids: list[str] 
+ closing_remarks: list[str] = []
+ performed_by_id: str
+
+class UpdateFclCustomsRate(BaseModel):
+  id: str
+  performed_by_id: str
+  sourced_by_id: str
+  procured_by_id: str
+  bulk_operation_id: str = None
+  customs_line_items: list[FclCustomsLineItems] = []
+  cfs_line_items: list[FclCustomsLineItems] = []
+
+class DeleteFclCustomsRate(BaseModel):
+  id: str
+  performed_by_id: str
+  bulk_operation_id: str = None
+  sourced_by_id: str
+  procured_by_id: str

@@ -19,8 +19,6 @@ class FclCustomsRateAudit(BaseModel):
     data = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    procured_by_id = UUIDField(index=True)
-    sourced_by_id = UUIDField(index=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

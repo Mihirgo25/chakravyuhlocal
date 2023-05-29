@@ -16,6 +16,8 @@ class LoadYmls():
         self.FCL_FREIGHT_CURRENCIES = self.load_ymls(os.path.join(ROOT_DIR, "libs", "currencies.yml"))
         self.FCL_FREIGHT_SEASONAL_CHARGES = self.load_ymls(os.path.join(ROOT_DIR, "charges", "fcl_freight_seasonal_charges.yml"))
         self.FCL_CFS_CHARGES = self.load_ymls(os.path.join(ROOT_DIR, "charges", "fcl_freight_seasonal_charges.yml"))
+        self.FCL_CUSTOMS_CHARGES = self.load_ymls(os.path.join(ROOT_DIR, "charges", "fcl_customs_charges.yml"))
+
         
     def load_ymls(self, file):
         with open(file, 'r') as f:
@@ -29,4 +31,5 @@ FCL_FREIGHT_LOCAL_CHARGES = yml_obj.FCL_FREIGHT_LOCAL_CHARGES
 FCL_FREIGHT_CURRENCIES = yml_obj.FCL_FREIGHT_CURRENCIES
 FCL_FREIGHT_SEASONAL_CHARGES = yml_obj.FCL_FREIGHT_SEASONAL_CHARGES 
 FCL_CFS_CHARGES  = yml_obj.FCL_CFS_CHARGES 
+FCL_CUSTOMS_CHARGES = yml_obj.FCL_CUSTOMS_CHARGES
     
