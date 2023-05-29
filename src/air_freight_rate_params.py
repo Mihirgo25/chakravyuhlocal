@@ -92,7 +92,6 @@ class CreateAirFreightRateSurcharge(BaseModel):
     sourced_by_id:str
     bulk_operation_id:str=None
     rate_sheet_id:str=None
-    weight_slabs: list[WeightSlab]=None
     line_items: list[LineItem]
 
 class UpdateAirFreightRateSurcharge(BaseModel):
@@ -101,7 +100,7 @@ class UpdateAirFreightRateSurcharge(BaseModel):
     procured_by_id: str=None
     sourced_by_id: str=None
     line_items: list[LineItem]
-    
+
 
 
 
