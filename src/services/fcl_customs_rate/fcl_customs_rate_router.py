@@ -171,11 +171,11 @@ def list_fcl_customs_rates_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_fcl_customs_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = list_fcl_customs_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
