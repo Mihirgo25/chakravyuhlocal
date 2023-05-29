@@ -17,7 +17,7 @@ class UpdateLineItem(BaseModel):
   price: float
   market_price: float = None 
   currency: str
-  remarks: list[str] = []
+  remarks: list[str] = None
   slabs: list[Slab] = []
 
 
@@ -33,11 +33,11 @@ class LineItem(BaseModel):
   price: float
   currency: str
   market_price: float = None 
-  remarks: list[str] = []
-  slabs: list[Slab] = []
+  remarks: list[str] = None
+  slabs: list[Slab] = None
 
 class LocalData(BaseModel):
-  line_items: list[LineItem]=[]
+  line_items: list[LineItem]=None
   detention: FreeDay = None
   demurrage: FreeDay = None
   plugin: FreeDay = None
@@ -60,7 +60,7 @@ class PostFclFreightRate(BaseModel):
   schedule_type: str = 'transhipment'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
-  line_items: List[UpdateLineItem]=[]
+  line_items: List[UpdateLineItem]=None
   weight_limit: FreeDay = None
   origin_local: LocalData = None
   destination_local: LocalData = None
@@ -392,7 +392,7 @@ class UpdateFclFreightRateLocalAgent(BaseModel):
 
 
 class rate(BaseModel):
-  line_items: list[LineItem] = []
+  line_items: list[LineItem] = None
   detention: FreeDay = None
   demurrage: FreeDay = None
   plugin: FreeDay = None
