@@ -45,7 +45,6 @@ class FclCustomsRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
-    shipping_line = BinaryJSONField(null=True)
     location = BinaryJSONField(null=True)
     importer_exporter = BinaryJSONField(null=True)
 

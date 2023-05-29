@@ -41,6 +41,9 @@ class FclCustomsRateRequest(BaseModel):
     port_id = UUIDField(index=True, null=True)
     container_type = CharField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
+    performed_by = BinaryJSONField(null=True)
+    closed_by = BinaryJSONField(null=True)
+    spot_search = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

@@ -36,6 +36,11 @@ class FclCustomsRateFeedback(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     performed_by = BinaryJSONField(null=True)
+    location = BinaryJSONField(null=True)
+    closed_by = BinaryJSONField(null=True)
+    organization = BinaryJSONField(null=True)
+    spot_search = BinaryJSONField(null=True)
+    service_provider = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
