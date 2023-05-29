@@ -363,7 +363,7 @@ def insert_france_germany_rates():
                 "base_price" : row[element],
                 "wagon_type" : Wagon_types[element-1],
                 "train_load_type" : "Wagon Load",
-                "commodity_class_type" : "empty",
+                "commodity_class_type" : "default",
                 "currency" : "EUR",
                 "country_code" : "FR",
                 "haulage_type": "merchant"
@@ -374,7 +374,7 @@ def insert_france_germany_rates():
                 "base_price" : row[element+2],
                 "wagon_type" : Wagon_types[element-1],
                 "train_load_type" : "Wagon Load",
-                "commodity_class_type" : "empty",
+                "commodity_class_type" : "default",
                 "currency" : "EUR",
                 "country_code" : "DE",
                 "haulage_type": "merchant"

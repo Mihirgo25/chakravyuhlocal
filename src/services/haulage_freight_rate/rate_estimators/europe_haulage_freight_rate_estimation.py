@@ -37,15 +37,14 @@ class EuropeHaulageFreightRateEstimator:
         final_data = {}
         final_data["distance"] = distance
         final_data["currency"] = "EUR"
-
+        # apply charges commdoity class wise and container type here are all standard
         wagon_upper_limit = (
             HaulageFreightRateRuleSet.select()
             .where(
-                HaulageFreightRateRuleSet.commodity_class_type == commodity,
                 HaulageFreightRateRuleSet.distance >= distance,
                 HaulageFreightRateRuleSet.train_load_type == load_type,
                 HaulageFreightRateRuleSet.currency == "EUR",
-                HaulageFreightRateRuleSet.country_code == "EU",
+                HaulageFreightRateRuleSet.country_code << ["EU", "DE", "FR"],
             )
             .order_by(HaulageFreightRateRuleSet.distance)
         )

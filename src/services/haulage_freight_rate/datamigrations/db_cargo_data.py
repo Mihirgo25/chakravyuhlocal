@@ -59,3 +59,4 @@ def insert_dbcargo_rates():
                 }
             
             HaulageFreightRateRuleSet.create(**query)
+            print('done')
