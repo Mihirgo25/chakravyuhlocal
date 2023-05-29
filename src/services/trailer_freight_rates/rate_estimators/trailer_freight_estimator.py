@@ -24,7 +24,8 @@ class TrailerFreightEstimator():
             estimator = INTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
             return estimator.IN_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
         
-        if self.country_code == "US":
+        '''For North America'''
+        if self.country_code == "US" or self.country_code == "CA" or self.country_code == "MX":
             estimator = USTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
             return estimator.US_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
         

@@ -9,7 +9,7 @@ CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
 
 CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
 
-CALCULATION_COUNTRY_CODES = ['IN', 'CN', 'US', 'VN']
+CALCULATION_COUNTRY_CODES = ['IN', 'CN', 'US', 'VN', 'CA', 'MX']
 
 DEFAULT_CALCULATION_COUNTRY_CODE = "US"
 
@@ -20,6 +20,8 @@ DEFAULT_FUEL_PRICES = {
     "USD": 1.1,
     "CNY": 9.07,
     "VND": 25000,
+    "CAD": 1.58,
+    "MXN": 24.16,
 }
 
 DEFAULT_SERVICE_PROVIDER_ID = '5dc403b3-c1bd-4871-b8bd-35543aaadb36'
@@ -40,4 +42,13 @@ CONTAINR_TYPE_FACTORS = {
     'flat_rack': 1.3,
     'open_side': 1.4, 
     'iso_tank': 1.5
+}
+
+COUNTRY_CURRENCY_CODE_MAPPING = {
+    'IN': 'INR',
+    'CN': 'CNY',
+    'US': 'USD',
+    'CA': 'CAD',
+    'MX': 'MXN',
+    'VN': 'VND'
 }

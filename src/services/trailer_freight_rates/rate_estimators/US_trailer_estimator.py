@@ -7,6 +7,7 @@ from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from configs.trailer_freight_rate_constants import *
 from services.trailer_freight_rates.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
+from currency_converter import CurrencyConverter
 
 class USTrailerRateEstimator():
 
@@ -17,10 +18,17 @@ class USTrailerRateEstimator():
 
     def constants_cost(self,distance):
         constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == "US"),
+                    (TrailerFreightRateCharges.country_code == self.country_code),
                     (TrailerFreightRateCharges.status == 'active')
                     ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
-        constants_data = model_to_dict(constants)
+        if constants:
+            constants_data = model_to_dict(constants)
+        else:
+            constants = TrailerFreightRateCharges.select().where(
+                            (TrailerFreightRateCharges.country_code == "US"),
+                            (TrailerFreightRateCharges.status == 'active')
+                            ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
+            constants_data = model_to_dict(constants)
 
         handling_rate = constants_data.get('handling')
         nh_toll_rate = constants_data.get('nh_toll')
@@ -63,7 +71,7 @@ class USTrailerRateEstimator():
 
         fuel_used = fuel_consumption(distance,cargo_weight_per_container)
         
-        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES["USD"] #use fuel charge with currency
+        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[COUNTRY_CURRENCY_CODE_MAPPING[self.country_code]] #use fuel charge with currency
 
         constants_cost = self.constants_cost(distance)
         total_cost = fuel_cost + constants_cost
@@ -72,7 +80,7 @@ class USTrailerRateEstimator():
 
         return {'list':[{
             'base_price' : total_cost,
-            'currency' : "USD",
+            'currency' : COUNTRY_CURRENCY_CODE_MAPPING[self.country_code],
             'distance' : distance,
             'transit_time' : transit_time,
             'upper_limit' : cargo_weight_per_container}]
