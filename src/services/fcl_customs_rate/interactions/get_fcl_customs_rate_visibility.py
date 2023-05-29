@@ -4,10 +4,16 @@ from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 
 def get_fcl_customs_rate_visibility(request):
     response_object = { 'reason': '', 'is_rate_available': False, 'is_visible': False }
-
-    org_details = get_organization(id=request['service_provider_id'])[0]
-    org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})['list']
-    org_services = [service['service'] for service in org_services_data]
+    org_services = []
+    org_details = get_organization(id=request['service_provider_id'])
+    if org_details:
+        org_details = org_details[0]
+        org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})
+        if org_services_data:
+            org_services_data = org_services_data['list']
+        else:
+            org_services_data = []
+        org_services = [service['service'] for service in org_services_data]
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
     if kyc_and_service_status:

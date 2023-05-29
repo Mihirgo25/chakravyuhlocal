@@ -45,12 +45,12 @@ class FclCustomsRateRequest(BaseModel):
     closed_by = BinaryJSONField(null=True)
     spot_search = BinaryJSONField(null=True)
 
+    class Meta:
+        table_name = 'fcl_customs_rate_requests'
+
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(FclCustomsRateRequest, self).save(*args, **kwargs)
-
-    class Meta:
-        table_name = 'fcl_customs_rate_requests'
 
     def validate_source(self):
         if self.source and self.source not in REQUEST_SOURCES:
@@ -97,6 +97,3 @@ class FclCustomsRateRequest(BaseModel):
         }
         common.create_communication(data)
         
-
-class FclCustomsRateRequest(BaseModel):
-    id = UUIDField()

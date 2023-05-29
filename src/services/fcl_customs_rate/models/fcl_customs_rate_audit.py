@@ -28,6 +28,3 @@ class FclCustomsRateAudit(BaseModel):
 
     class Meta:
         table_name = 'fcl_customs_rate_audits'
-
-class FclCustomsRateAudit(BaseModel):
-    id = UUIDField()

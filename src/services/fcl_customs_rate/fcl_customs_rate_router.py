@@ -6,10 +6,13 @@ from fastapi.responses import JSONResponse
 import sentry_sdk
 from fastapi import HTTPException
 
-# from services.fcl_customs_rate.interactions.create_fcl_customs_rate import create_fcl_customs_rate_data
+from services.fcl_customs_rate.interactions.create_fcl_customs_rate import create_fcl_customs_rate_data
 from services.fcl_customs_rate.interactions.get_fcl_customs_rate_addition_frequency import get_fcl_customs_rate_addition_frequency
 from services.fcl_customs_rate.interactions.get_fcl_customs_rate_visibility import get_fcl_customs_rate_visibility
 from services.fcl_customs_rate.interactions.get_fcl_customs_rate import get_fcl_customs_rate
+from services.fcl_customs_rate.interactions.list_fcl_customs_rates import list_fcl_customs_rates
+from services.fcl_customs_rate.interactions.list_fcl_customs_rate_requests import list_fcl_customs_rate_requests
+from services.fcl_customs_rate.interactions.list_fcl_customs_rate_feedbacks import list_fcl_customs_rate_feedbacks
 
 fcl_customs_router = APIRouter()
 
@@ -40,7 +43,7 @@ def get_fcl_customs_rate_addition_frequency_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = get_fcl_customs_rate_addition_frequency( group_by, filters, sort_type)
+        data = get_fcl_customs_rate_addition_frequency(group_by, filters, sort_type)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -112,3 +115,67 @@ def get_fcl_customs_rate_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_customs_router.get("/list_fcl_customs_rate_feedbacks")
+def list_fcl_customs_rate_feedbacks_data(
+    filters: str = None,
+    spot_search_details_required: bool = False,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_fcl_customs_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.get("/list_fcl_customs_rate_requests")
+def list_fcl_customs_rate_requests_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_fcl_customs_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.get("/list_fcl_customs_rates")
+def list_fcl_customs_rates_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    pagination_data_required: bool = False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    # try:
+    data = list_fcl_customs_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

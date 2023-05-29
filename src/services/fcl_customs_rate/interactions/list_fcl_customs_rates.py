@@ -28,31 +28,9 @@ def list_fcl_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
 def get_query(sort_by, sort_type, page, page_limit):
   query = FclCustomsRate.select().order_by(eval('FclCustomsRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
   return query
-
+  
 def get_data(query):
-    data = query.select(
-      FclCustomsRate.id,
-      FclCustomsRate.location_id,
-      FclCustomsRate.trade_type,
-      FclCustomsRate.importer_exporter_id,
-      FclCustomsRate.service_provider_id,
-      FclCustomsRate.commodity,
-      FclCustomsRate.container_type,
-      FclCustomsRate.container_size,
-      FclCustomsRate.customs_line_items,
-      FclCustomsRate.customs_line_items_info_messages,
-      FclCustomsRate.is_customs_line_items_info_messages_present,
-      FclCustomsRate.customs_line_items_error_messages,
-      FclCustomsRate.is_customs_line_items_error_messages_present,
-      FclCustomsRate.cfs_line_items,
-      FclCustomsRate.cfs_line_items_info_messages,
-      FclCustomsRate.is_cfs_line_items_info_messages_present,
-      FclCustomsRate.cfs_line_items_error_messages,
-      FclCustomsRate.is_cfs_line_items_error_messages_present,
-      FclCustomsRate.updated_at,
-      FclCustomsRate.procured_by_id,
-      FclCustomsRate.sourced_by_id
-    ).execute()
+    data = list(query.dicts())
 
     return data
 
