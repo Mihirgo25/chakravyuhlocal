@@ -17,31 +17,26 @@ def execute(request):
         raise HTTPException(status_code=400,detail="id is invalid")
     
     validities=object.validities
-    print(validities)
-
-
-    print(request.get('validity_id'))
 
     for validity in validities:
         if validity['id']==request.get('validity_id'):
-            print(1)
+
             if request.get('validity_start') and request.get('validity_end'):
-                print(2)
+
                 if validate_validity_object(request['validity_start'],request['validity_end']):
+
                     validity['validity_start']=datetime.strftime(request.get('validity_start'),'%Y-%m-%d')
                     validity['validity_end']=datetime.strftime(request.get('validity_end'),'%Y-%m-%d')
             
             validity['status']=True
 
-            print("hello")
-
             if request.get('min_price') !=0.0: 
-                print('in min price')
+
                 object.min_price=request['min_price']
                 validity['min_price'] = request['min_price']
 
             if request.get('currency'):
-                print('in curr')
+
                 object.currency = request['currency']
 
             if request.get('weight_slabs'):
@@ -65,16 +60,16 @@ def execute(request):
 
             if request.get('maximum_weight'):
                 object.maximum_weight = request.get('maximum_weight')
-    object.validities=validities
-    # updating validities
-    # AirFreightRate.update(validities = validities).where(AirFreightRate.id == request.get('id')).execute()
+
+            object.validities=validities
+
+            break
 
     try:
-        print('o db')
         object.save()
     except Exception as e:
         print("Exception in saving freight rate", e)
-    print('final')
+
     create_audit(request, object.id)
     return {
         'id':object.id
@@ -94,8 +89,6 @@ def create_audit(request,object_id):
     update_data['available_volume']=request.get('available_volume')
     update_data['available_gross_weight']=request.get('available_gross_weight')
     update_data['weight_slabs']=request.get('weight_slabs')
-    print('d',update_data)
-    print('hehehe',request.get('validity_start'))
 
     AirFreightRateAudits.create(
         bulk_operation_id=request.get('bulk_operation_id'),
@@ -107,38 +100,25 @@ def create_audit(request,object_id):
         validity_id=request.get('validity_id')
     )
 
-def validate(validity_start,validity_end):
-    print('entered')
-    if not validity_start:
-        return False
-    if not validity_end:
-        return False
-    if validity_end.date() > datetime.now().date()+timedelta(days=120):
-        return False
-    if validity_start.date() <datetime.now().date()-timedelta(days=15):
-        return False
-    if validity_end <= validity_start:
-        return False
-    
-
 def validate_validity_object(validity_start, validity_end):
-      if not validity_start:
+    if not validity_start:
         raise HTTPException(status_code=400, detail="validity_start is invalid")
 
-      if not validity_end:
+    if not validity_end:
         raise HTTPException(status_code=400, detail="validity_end is invalid")
-
-      if validity_end.date() > (datetime.now().date() + timedelta(days=60)):
+    if validity_end.date() > (datetime.now().date() + timedelta(days=60)):
         raise HTTPException(status_code=400, detail="validity_end can not be greater than 60 days from current date")
 
-      if validity_end.date() < (datetime.now().date() +timedelta(days=2)):
+    if validity_end.date() < (datetime.now().date() +timedelta(days=2)):
         raise HTTPException(status_code=400, detail="validity_end can not be less than 2 days from current date")
 
-      if validity_start.date() < (datetime.now().date() - timedelta(days=15)):
+    if validity_start.date() < (datetime.now().date() - timedelta(days=15)):
         raise HTTPException(status_code=400, detail="validity_start can not be less than 15 days from current date")
 
-      if validity_end < validity_start:
+    if validity_end < validity_start:
         raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
+    
+    return True
 
 def find_object(request):
     try:
