@@ -4,6 +4,8 @@ from configs.trailer_freight_rate_constants import *
 from fastapi import HTTPException
 from services.trailer_freight_rates.rate_estimators.IN_trailer_estimator import INTrailerRateEstimator
 from services.trailer_freight_rates.rate_estimators.US_trailer_estimator import USTrailerRateEstimator
+from services.trailer_freight_rates.rate_estimators.CN_trailer_estimator import CNTrailerRateEstimator
+from services.trailer_freight_rates.rate_estimators.VN_trailer_estimator import VNTrailerRateEstimator
 
 
 class TrailerFreightEstimator():
@@ -25,6 +27,14 @@ class TrailerFreightEstimator():
         if self.country_code == "US":
             estimator = USTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
             return estimator.US_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
+        
+        if self.country_code == "CN":
+            estimator = CNTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
+            return estimator.CN_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
+        
+        if self.country_code == "VN":
+            estimator = VNTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
+            return estimator.VN_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
         
         
         return {'list':[]}
