@@ -2,7 +2,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from playhouse.shortcuts import model_to_dict
 from peewee import *
 from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES
-
+import main
 def get_fcl_cfs_rate(request):
     if all(value for value in request.values()):
         try:

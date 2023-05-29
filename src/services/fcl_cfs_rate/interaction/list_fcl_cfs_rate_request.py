@@ -3,20 +3,23 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from peewee import *
 from fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-
+import json
 POSSIBLE_INDIRECT_FILTERS = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 POSSIBLE_DIRECT_FILTERS = ['port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id']
 
 def list_fcl_cfs_rate_request(filters, page_limit=10, page=1, is_stats_required=True, performed_by_id=None):
-    query = get_query()
-    query = apply_direct_filters(query, filters)
-    query = apply_indirect_filters(query, filters)
+    if filters:
+        if type(filters) != dict:
+            filters = json.loads(filters)
+        query = get_query()
+        query = apply_direct_filters(query, filters)
+        query = apply_indirect_filters(query, filters)
     stats = get_stats(query, is_stats_required, performed_by_id)
     query = get_page(query, page, page_limit)
     data = get_data(query)
-    pagination_data = get_pagination_data(query, page, page_limit)
+    # pagination_data = get_pagination_data(query, page, page_limit)
     response_data = {'list': data}
-    response_data.update(pagination_data)
+    # response_data.update(pagination_data)
     response_data.update(stats)
 def get_query():
     return FclCfsRateRequest
@@ -92,7 +95,10 @@ def add_service_objects(data):
             'fields': ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']
         }
     ]
+    """
+     Has to make changes here but first testing the other apis so i will do this later.
 
+    """
     service_objects = get_multiple_service_objects(objects)
 
     for obj in data:

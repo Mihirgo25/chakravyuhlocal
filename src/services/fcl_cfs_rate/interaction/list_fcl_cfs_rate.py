@@ -1,28 +1,24 @@
 from typing import List, Dict
 from peewee import *
+import json
 from fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 POSSIBLE_DIRECT_FILTERS = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type']
 POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'importer_exporter_present', 'is_rate_available']
 
 
 def list_fcl_cfs_rate(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False,pagination_data_required=True ):
-    query = get_query(filters, sort_by, sort_type, page, page_limit)
-    query = apply_direct_filters(query, filters)
-    query = apply_indirect_filters(query, filters)
+    if filters:
+        if type(filters) != dict:
+            filters = json.loads(filters)
+        query = get_query(filters, sort_by, sort_type, page, page_limit)
+        query = apply_direct_filters(query, filters)
+        query = apply_indirect_filters(query, filters)
 
     if return_query:
         return {'list': query}
-
-    executors = ['get_data', 'get_pagination_data']
-    method_responses = {}
-
-    for method_name in executors:
-        method_responses.update({method_name: globals()[method_name](query)})
-
-    data = method_responses['get_data']
-    pagination_data = method_responses['get_pagination_data']
-
-    return {'list': data, **pagination_data}
+    
+    data = get_data(query)
+    return {'list': data}
 
 def get_query(filters, sort_by, sort_type, page, page_limit):
     query = FclCfsRate.select().order_by(f"{sort_by} {sort_type}").paginate(page, page_limit)
@@ -69,11 +65,3 @@ def get_data(query):
     data = query.select(*fields).dicts()
 
     return list(data)
-
-def get_pagination_data(query):
-    return {
-        'page': query.paginator.page,
-        'total': query.paginator.total_pages,
-        'total_count': query.count(),
-        'page_limit': query.paginator.per_page
-    }

@@ -56,3 +56,11 @@ class FclCfsRateRequest(BaseModel):
     country_id: str = None
     port_id: str = None
     trade_type: str = None
+
+class CreateFclCfsRateNotAvailable(BaseModel):
+  location_id: str
+  country_id: str = None
+  trade_type: str
+  container_size: str
+  container_type: str
+  commodity: str = None
