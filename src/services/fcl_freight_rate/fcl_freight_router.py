@@ -560,7 +560,7 @@ def get_fcl_freight_rate_cards_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_addition_frequency")
-def get_fcl_freight_rate_addition_frequency_data(
+def  (
     group_by: str,
     filters: str = None,
     sort_type: str = 'desc',

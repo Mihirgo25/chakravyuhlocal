@@ -138,8 +138,36 @@ class AirFreightRateSurcharge(BaseModel):
             (AirFreightRate.surcharge_id == None),
             (AirFreightRate.price_type == "net_net"))
     
+    def set_origin_location_ids(self):
+        self.origin_country_id = self.origin_port.get('country_id')
+        self.origin_continent_id = self.origin_port.get('continent_id')
+        self.origin_trade_id = self.origin_port.get('trade_id')
+        self.origin_location_ids = [uuid.UUID(str(self.origin_port_id)),uuid.UUID(str(self.origin_country_id)),uuid.UUID(str(self.origin_trade_id)),uuid.UUID(str(self.origin_continent_id))]
+
+    def set_destination_location_ids(self):
+        self.destination_country_id = self.destination_port.get('country_id')
+        self.destination_continent_id = self.destination_port.get('continent_id')
+        self.destination_trade_id = self.destination_port.get('trade_id')
+        self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))] 
+    
+    def validate_origin_destination_country(self):
+        if self.origin_airport[:country_code] == self.destination_airport[:country_code]:
+            raise HTTPException(status_code=400, detail="Destination airport can not be in the same country as origin_airport")
+    
+    def validate_duplicate_line_items(self):
+        item_codes = [item.code.upper() for item in self.line_items]
+        if len(set(item_codes)) != len(item_codes):
+            raise HTTPException(status_code=400, detail="Line items contain duplicates")
+
+
+
+
+
+
 
     
+
+
       
 
 
