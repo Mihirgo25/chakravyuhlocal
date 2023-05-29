@@ -39,11 +39,20 @@ class FclCustomsRate(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
     location_type = CharField(index=True, null=True)
+    sourced_by_id = UUIDField(null=True, index=True)
+    procured_by_id = UUIDField(null=True, index=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
+    service_provider = BinaryJSONField(null=True)
+    shipping_line = BinaryJSONField(null=True)
+    location = BinaryJSONField(null=True)
+    importer_exporter = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
-      self.updated_at = datetime.datetime.now()
-      return super(FclCustomsRate, self).save(*args, **kwargs)
-
+        self.updated_at = datetime.datetime.now()
+        return super(FclCustomsRate, self).save(*args, **kwargs)
 
     class Meta:
         table_name = 'fcl_customs_rates'
+
+

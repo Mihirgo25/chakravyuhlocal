@@ -26,7 +26,7 @@ def get_fcl_cfs_rate_card(trade_type, cargo_handling_type, port_id, country_id,
     }
 
 def ignore_non_eligible_service_providers(result_list):
-return result_list
+    return result_list
 
 
 

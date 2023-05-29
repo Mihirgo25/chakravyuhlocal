@@ -6,13 +6,15 @@ from fastapi.responses import JSONResponse
 import sentry_sdk
 from fastapi import HTTPException
 
-from services.fcl_customs_rate.interactions.create_fcl_customs_rate import create_fcl_customs_rate_data
-
+# from services.fcl_customs_rate.interactions.create_fcl_customs_rate import create_fcl_customs_rate_data
+from services.fcl_customs_rate.interactions.get_fcl_customs_rate_addition_frequency import get_fcl_customs_rate_addition_frequency
+from services.fcl_customs_rate.interactions.get_fcl_customs_rate_visibility import get_fcl_customs_rate_visibility
+from services.fcl_customs_rate.interactions.get_fcl_customs_rate import get_fcl_customs_rate
 
 fcl_customs_router = APIRouter()
 
 @fcl_customs_router.post("/create_fcl_customs_rate")
-def create_fcl_freight_rate_func(request: CreateFclCustomsRate, resp: dict = Depends(authorize_token)):
+def create_fcl_customs_rate_func(request: CreateFclCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -27,3 +29,86 @@ def create_fcl_freight_rate_func(request: CreateFclCustomsRate, resp: dict = Dep
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+
+@fcl_customs_router.get("/get_fcl_customs_rate_addition_frequency")
+def get_fcl_customs_rate_addition_frequency_data(
+    group_by: str,
+    filters: str = None,
+    sort_type: str = 'desc',
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = get_fcl_customs_rate_addition_frequency( group_by, filters, sort_type)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_customs_router.get("/get_fcl_customs_rate_visibility")
+def get_fcl_customs_rate_visibility_data(
+    service_provider_id: str,
+    location_id: str = None,
+    rate_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'service_provider_id' : service_provider_id,
+        'location_id': location_id,
+        'rate_id': rate_id,
+        'container_size': container_size,
+        'container_type': container_type,
+        'commodity': commodity
+    }
+    try:
+        data = get_fcl_customs_rate_visibility(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.get("/get_fcl_customs_rate")
+def get_fcl_customs_rate_data(
+    id: str = None,
+    location_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    service_provider_id: str = None,
+    importer_exporter_id: str = None,
+    trade_type: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'id':id,
+        'location_id':location_id,
+        'container_size' : container_size,
+        'container_type' : container_type,
+        'commodity' : commodity,
+        'service_provider_id': service_provider_id,
+        'importer_exporter_id': importer_exporter_id,
+        'trade_type': trade_type,
+    }
+
+    try:
+        data = get_fcl_customs_rate(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
