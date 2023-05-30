@@ -17,10 +17,16 @@ class VNTrailerRateEstimator():
 
     def constants_cost(self,distance):
         constants = TrailerFreightRateCharges.select().where(
+                    (TrailerFreightRateCharges.country_code == self.country_code),
+                    (TrailerFreightRateCharges.status == 'active')
+                    ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
+        if constants:
+            constants_data = model_to_dict(constants)
+        else:
+            constants = TrailerFreightRateCharges.select().where(
                     (TrailerFreightRateCharges.country_code == "VN"),
                     (TrailerFreightRateCharges.status == 'active')
                     ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
-        constants_data = model_to_dict(constants)
 
         handling_rate = constants_data.get('handling')
         nh_toll_rate = constants_data.get('nh_toll')
@@ -63,7 +69,7 @@ class VNTrailerRateEstimator():
 
         fuel_used = fuel_consumption(distance,cargo_weight_per_container)
         
-        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES["VND"] #use fuel charge with currency
+        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[COUNTRY_CURRENCY_CODE_MAPPING[self.country_code]] #use fuel charge with currency
 
         constants_cost = self.constants_cost(distance)
         total_cost = fuel_cost + constants_cost
@@ -72,9 +78,8 @@ class VNTrailerRateEstimator():
 
         return {'list':[{
             'base_price' : total_cost,
-            'currency' : "VND",
+            'currency' : COUNTRY_CURRENCY_CODE_MAPPING[self.country_code],
             'distance' : distance,
             'transit_time' : transit_time,
             'upper_limit' : cargo_weight_per_container}]
             }
-	# VN	VND	2400	3170	117425	2000	12000	20000	5000	active	
