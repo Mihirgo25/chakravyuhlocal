@@ -6,13 +6,12 @@ def get_air_freight_rate_surcharge(request):
     if not all_fields_present(request):
         return {}
 
-    objects = find_object(request)
+    objects = find_object(request).detail()
     
     if not objects:
         return {}
     
-    objects = objects.detail()
-    return objects.update({'surcharge_charge_codes': AirFreightRateSurcharge(get_object_params()).possible_charge_codes()})
+    return objects.update({'surcharge_charge_codes': AirFreightRateSurcharge(get_object_params(request)).possible_charge_codes()})
 
 def all_fields_present(request):
     if request.get('origin_airport_id') and request.get('destination_airport_id') and request.get('container_size') and request.get('commodity') and request.get('airline_id') and request.get('operation_type') and request.get('service_provider_id'):
@@ -35,6 +34,7 @@ def find_object(request):
     except:
         raise HTTPException(status_code=400, detail="no surcharge entry with the given id exists")
     return objects
+
 def get_object_params(request):
     return request
 

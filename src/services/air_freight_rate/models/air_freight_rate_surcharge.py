@@ -54,44 +54,24 @@ class AirFreightRateSurcharge(BaseModel):
         table_name = 'air_freight_rate_surcharges'
 
     def possible_charge_codes():
-        charges = AIR_FREIGHT_SURCHARGES
-        filtered_charges = [charge for charge in charges if eval(charge[-1]['condition'].to_s)]
-        filtered_charges = [charge for charge in filtered_charges if charge]
-        charges_dict = dict(filtered_charges)
-        return charges_dict
+        air_freight_surcharges = AIR_FREIGHT_SURCHARGES
+
+        charge_codes = {}
+
+        for k,v in air_freight_surcharges.items():
+            if eval(str(v['condition'])):
+                charge_codes[k] = v
+        return charge_codes
 
     def detail(self):
         return {
-        'freight': {
-            'id': self.id,
-            'validities': self.validities,
-            'is_rate_expired': self.is_rate_expired(),
-            'is_rate_about_to_expire': self.is_rate_about_to_expire(),
-            'is_rate_not_available': self.is_rate_not_available()
-        },
-        'origin_local': {
-            'id': self.origin_local.id,
-            'line_items': self.origin_local.line_items,
-            'line_items_info_messages': self.origin_local.line_items_info_messages,
-            'is_line_items_info_messages_present': self.origin_local.is_line_items_info_messages_present,
-            'line_items_error_messages': self.origin_local.line_items_error_messages,
-            'is_line_items_error_messages_present': self.origin_local.is_line_items_error_messages_present
-        },
-        'destination_local': {
-            'id': self.destination_local.id,
-            'line_items': self.destination_local.line_items,
-            'line_items_info_messages': self.destination_local.line_items_info_messages,
-            'is_line_items_info_messages_present': self.destination_local.is_line_items_info_messages_present,
-            'line_items_error_messages': self.destination_local.line_items_error_messages,
-            'is_line_items_error_messages_present': self.destination_local.is_line_items_error_messages_present
-        },
         'surcharge': {
-            'id': self.surcharge.id,
-            'line_items': self.surcharge.line_items,
-            'line_items_info_messages': self.surcharge.line_items_info_messages,
-            'is_line_items_info_messages_present': self.surcharge.is_line_items_info_messages_present,
-            'line_items_error_messages': self.surcharge.line_items_error_messages,
-            'is_line_items_error_messages_present': self.surcharge.is_line_items_error_messages_present
+            'id': self.id,
+            'line_items': self.line_items,
+            'line_items_info_messages': self.line_items_info_messages,
+            'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
+            'line_items_error_messages': self.line_items_error_messages,
+            'is_line_items_error_messages_present': self.is_line_items_error_messages_present
         }
     }
 
@@ -100,23 +80,25 @@ class AirFreightRateSurcharge(BaseModel):
         line_items_info_messages = {}
         is_line_items_error_messages_present = False
         is_line_items_info_messages_present = False
+       
 
+        air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
         grouped_charge_codes = {}
         for line_item in self.line_items:
-            if line_item['code'] not in grouped_charge_codes:
-                grouped_charge_codes[line_item['code']] = []
-            grouped_charge_codes[line_item['code']].append(line_item)
+            grouped_charge_codes[line_item.code] = line_item.__dict__
+
+            
 
         for code, line_items in grouped_charge_codes.items():
-            code_config = AIR_FREIGHT_SURCHARGES.get(code)
+            code_config = air_freight_surcharges_dict.get(code)
 
             if not code_config:
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present = True
                 continue
 
-            if len(set([item.unit for item in line_items]) - set(code_config['units'])) > 0:
-                line_items_error_messages[code] = ["can only be having units " + ", ".join(code_config['units'])]
+            if line_items['unit'] not in code_config['units']:
+                line_items_error_messages[code] = [f"can only be having units {', '.join(code_config['units'])}"]
                 is_line_items_error_messages_present = True
                 continue
 
@@ -124,16 +106,17 @@ class AirFreightRateSurcharge(BaseModel):
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present = True
                 continue
+
         possible_charge_codes=possible_charge_codes()
         for code, config in possible_charge_codes.items():
-            if 'mandatory' in config['tags']:
-                if str(code) not in grouped_charge_codes:
+            if 'mandatory' in config.get('tags', []) and not config.get('locations'):
+                if code not in grouped_charge_codes:
                     line_items_error_messages[code] = ['is not present']
                     is_line_items_error_messages_present = True
 
         for code, config in possible_charge_codes.items():
             if 'additional_service' in config['tags'] or 'shipment_execution_service' in config['tags']:
-                if str(code) not in grouped_charge_codes:
+                if grouped_charge_codes.get(code) is None and not line_items_error_messages.get(code):
                     line_items_info_messages[code] = ['can be added for more conversion']
                     is_line_items_info_messages_present = True
 
@@ -144,7 +127,7 @@ class AirFreightRateSurcharge(BaseModel):
         self.save()
     
     def update_freight_objects(self):
-        freight_query = AirFreightRate.select(AirFreightRate.id).where(
+        AirFreightRate.update(surcharge_id=self.id).where(
             (AirFreightRate.origin_airport_id == self.origin_airport_id),
             (AirFreightRate.destination_airport_id == self.destination_airport_id),
             (AirFreightRate.commodity == self.commodity) ,
@@ -152,8 +135,39 @@ class AirFreightRateSurcharge(BaseModel):
             (AirFreightRate.operation_type == self.operation_type) ,
             (AirFreightRate.airline_id == self.airline_id) ,
             (AirFreightRate.service_provider == self.service_provider_id),
-            (getattr(AirFreightRate, "surcharge_id" == None)),
-            (getattr(AirFreightRate, "price_type" == "net_net"))).update(surcharge_id=self.id)
+            (AirFreightRate.surcharge_id == None),
+            (AirFreightRate.price_type == "net_net"))
+    
+    def set_origin_location_ids(self):
+        self.origin_country_id = self.origin_port.get('country_id')
+        self.origin_continent_id = self.origin_port.get('continent_id')
+        self.origin_trade_id = self.origin_port.get('trade_id')
+        self.origin_location_ids = [uuid.UUID(str(self.origin_port_id)),uuid.UUID(str(self.origin_country_id)),uuid.UUID(str(self.origin_trade_id)),uuid.UUID(str(self.origin_continent_id))]
+
+    def set_destination_location_ids(self):
+        self.destination_country_id = self.destination_port.get('country_id')
+        self.destination_continent_id = self.destination_port.get('continent_id')
+        self.destination_trade_id = self.destination_port.get('trade_id')
+        self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))] 
+    
+    def validate_origin_destination_country(self):
+        if self.origin_airport[:country_code] == self.destination_airport[:country_code]:
+            raise HTTPException(status_code=400, detail="Destination airport can not be in the same country as origin_airport")
+    
+    def validate_duplicate_line_items(self):
+        item_codes = [item.code.upper() for item in self.line_items]
+        if len(set(item_codes)) != len(item_codes):
+            raise HTTPException(status_code=400, detail="Line items contain duplicates")
+
+
+
+
+
+
+
+    
+
+
       
 
 
