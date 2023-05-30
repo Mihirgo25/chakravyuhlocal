@@ -13,6 +13,7 @@ from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
+from micro_services.client import maps
 import traceback
 
 def initialize_freight_query(requirements, prediction_required = False):
@@ -391,7 +392,39 @@ def build_local_line_item_object(line_item, request):
 
     return line_item
 
+def is_charge_present(line_item,charge_code):
+    for item in line_item:
+        if item['code']==charge_code:
+            return True
+    return False
+
+def add_condition_location_charge(freight_query_result):
+
+    location_id=[freight_query_result['destination_port_id']]
+    locations=[]
+    locations = maps.list_locations({'filters': { 'id': location_id }})['list']
+
+    charge={
+        "code": "IFE",
+        "unit": "per_bl",
+        "price": 4000,
+        "slabs": [],
+        "remarks": [],
+        "currency": "USD",
+        "locations": ["US"],
+        "location_id":"1c5ad46b-1c83-4fe5-bb3f-d71510d7e56c"
+      }
+    for list_item in locations:
+        if list_item['country_code']=='AU':
+            if list_item['id']==freight_query_result['destination_port_id']:
+                line_items=freight_query_result.get('origin_local').get('data').get('line_items')
+                if not is_charge_present(line_items,'IFE'):
+                    line_items.append(charge)
+
+    return freight_query_result
+
 def add_local_objects(freight_query_result, response_object, request):
+    add_condition_location_charge(freight_query_result)
     response_object['origin_local'] = {
         'id': freight_query_result['origin_local'].get('id'),
         'service_provider_id': freight_query_result['origin_local']['service_provider_id'] if freight_query_result['origin_local'].get('service_provider_id') else response_object['service_provider_id'],
