@@ -3,15 +3,16 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-
+from air_freight_rate_params import LineItem
 from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
-
+from micro_services.client import maps
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
 class BaseModel(Model):
+    line_items: list[LineItem] = []
     class Meta:
         database = db
         only_save_dirty = True
@@ -53,16 +54,6 @@ class AirFreightRateSurcharge(BaseModel):
     class Meta:
         table_name = 'air_freight_rate_surcharges'
 
-    def possible_charge_codes():
-        air_freight_surcharges = AIR_FREIGHT_SURCHARGES
-
-        charge_codes = {}
-
-        for k,v in air_freight_surcharges.items():
-            if eval(str(v['condition'])):
-                charge_codes[k] = v
-        return charge_codes
-
     def detail(self):
         return {
         'surcharge': {
@@ -80,18 +71,17 @@ class AirFreightRateSurcharge(BaseModel):
         line_items_info_messages = {}
         is_line_items_error_messages_present = False
         is_line_items_info_messages_present = False
-       
+
 
         air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
         grouped_charge_codes = {}
         for line_item in self.line_items:
-            grouped_charge_codes[line_item.code] = line_item.__dict__
-
+            grouped_charge_codes[line_item.get('code')] = line_item
+      
             
 
         for code, line_items in grouped_charge_codes.items():
             code_config = air_freight_surcharges_dict.get(code)
-
             if not code_config:
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present = True
@@ -106,14 +96,16 @@ class AirFreightRateSurcharge(BaseModel):
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present = True
                 continue
-
-        possible_charge_codes=possible_charge_codes()
+        
+        
+        possible_charge_codes=self.possible_charge_codes()
         for code, config in possible_charge_codes.items():
+    
             if 'mandatory' in config.get('tags', []) and not config.get('locations'):
                 if code not in grouped_charge_codes:
                     line_items_error_messages[code] = ['is not present']
                     is_line_items_error_messages_present = True
-
+       
         for code, config in possible_charge_codes.items():
             if 'additional_service' in config['tags'] or 'shipment_execution_service' in config['tags']:
                 if grouped_charge_codes.get(code) is None and not line_items_error_messages.get(code):
@@ -125,6 +117,7 @@ class AirFreightRateSurcharge(BaseModel):
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
         self.save()
+        
     
     def update_freight_objects(self):
         AirFreightRate.update(surcharge_id=self.id).where(
@@ -139,25 +132,75 @@ class AirFreightRateSurcharge(BaseModel):
             (AirFreightRate.price_type == "net_net"))
     
     def set_origin_location_ids(self):
-        self.origin_country_id = self.origin_port.get('country_id')
-        self.origin_continent_id = self.origin_port.get('continent_id')
-        self.origin_trade_id = self.origin_port.get('trade_id')
-        self.origin_location_ids = [uuid.UUID(str(self.origin_port_id)),uuid.UUID(str(self.origin_country_id)),uuid.UUID(str(self.origin_trade_id)),uuid.UUID(str(self.origin_continent_id))]
+        self.origin_country_id = self.origin_airport.get('country_id')
+        self.origin_continent_id = self.origin_airport.get('continent_id')
+        self.origin_trade_id = self.origin_airport.get('trade_id')
+        self.origin_location_ids = [uuid.UUID(str(self.origin_airport_id)),uuid.UUID(str(self.origin_country_id)),uuid.UUID(str(self.origin_trade_id)),uuid.UUID(str(self.origin_continent_id))]
 
     def set_destination_location_ids(self):
-        self.destination_country_id = self.destination_port.get('country_id')
-        self.destination_continent_id = self.destination_port.get('continent_id')
-        self.destination_trade_id = self.destination_port.get('trade_id')
-        self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))] 
+        self.destination_country_id = self.destination_airport.get('country_id')
+        self.destination_continent_id = self.destination_airport.get('continent_id')
+        self.destination_trade_id = self.destination_airport.get('trade_id')
+        self.destination_location_ids = [uuid.UUID(str(self.destination_airport_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))] 
     
     def validate_origin_destination_country(self):
-        if self.origin_airport[:country_code] == self.destination_airport[:country_code]:
+        if self.origin_airport['country_code'] == self.destination_airport['country_code']:
             raise HTTPException(status_code=400, detail="Destination airport can not be in the same country as origin_airport")
     
     def validate_duplicate_line_items(self):
-        item_codes = [item.code.upper() for item in self.line_items]
+        item_codes = [item['code'].upper() for item in self.line_items]
         if len(set(item_codes)) != len(item_codes):
             raise HTTPException(status_code=400, detail="Line items contain duplicates")
+        
+    def possible_charge_codes(self):
+        commodity = self.commodity
+        commodity_type = self.commodity_type
+        air_freight_surcharges = AIR_FREIGHT_SURCHARGES
+
+
+        charge_codes = {}
+    
+        for k,v in air_freight_surcharges.items():
+            if eval(str(v['condition'])):
+                charge_codes[k] = v
+        return charge_codes
+    
+    def validate(self):
+        self.validate_duplicate_line_items()
+        self.validate_origin_destination_country()
+        return True
+    
+    def set_locations(self):
+        ids = [str(self.origin_airport_id), str(self.destination_airport_id)]
+        if self.origin_airport_id:
+           ids.append(str(self.origin_airport_id))
+        if self.destination_airport_id:
+           ids.append(str(self.destination_airport_id))
+
+        obj = {'filters':{"id": ids, "type":'airport'}}
+        locations_response = maps.list_locations(obj)
+        locations = []
+        if 'list' in locations_response:
+           locations = locations_response["list"]
+
+
+        for location in locations:
+            if str(self.origin_airport_id) == str(location['id']):
+               self.origin_airport = self.get_required_location_data(location)
+            if str(self.destination_airport_id) == str(location['id']):
+               self.destination_airport = self.get_required_location_data(location)
+
+    def get_required_location_data(self, location):
+        loc_data = {
+          "id": location["id"],
+          "name": location["name"],
+          "airport_code": location["port_code"],
+          "country_id": location["country_id"],
+          "continent_id": location["continent_id"],
+          "trade_id": location["trade_id"],
+          "country_code": location["country_code"]
+        }
+        return loc_data
 
 
 
