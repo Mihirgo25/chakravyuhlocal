@@ -348,16 +348,16 @@ class FclCustomsRate(BaseModel):
                 charge_codes[code] = config
         return charge_codes
 
-def delete_rate_not_available_entry(self):
-    FclCustomsRate.delete().where(
-      'location_id' == self.location_id,
-      'trade_type' == self.trade_type,
-      'service_provider_id' == self.service_provider_id,
-      'container_size' == self.container_size,
-      'container_type' == self.container_type,
-      'commodity' == self.commodity,
-      'rate_not_available_entry' == True
-    ).execute() 
+    def delete_rate_not_available_entry(self):
+        FclCustomsRate.delete().where(
+          'location_id' == self.location_id,
+          'trade_type' == self.trade_type,
+          'service_provider_id' == self.service_provider_id,
+          'container_size' == self.container_size,
+          'container_type' == self.container_type,
+          'commodity' == self.commodity,
+          'rate_not_available_entry' == True
+        ).execute() 
 
-def update_customs_line_messages(self):
-    self.set_location()
+    def update_customs_line_item_messages(self):
+        self.set_location()

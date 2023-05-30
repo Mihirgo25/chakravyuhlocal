@@ -30,7 +30,7 @@ class FclCustomsRateBulkOperation(BaseModel):
     service_provider_id = UUIDField(index=True, null=True)
 
     def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.now()
+        self.updated_at = datetime.now()
         return super(FclCustomsRateBulkOperation, self).save(*args, **kwargs)
 
     class Meta:
@@ -113,7 +113,7 @@ class FclCustomsRateBulkOperation(BaseModel):
 
     def perform_add_markup_action(self, sourced_by_id, procured_by_id):
         data = self.data
-
+        
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
@@ -122,10 +122,10 @@ class FclCustomsRateBulkOperation(BaseModel):
 
         total_count = len(fcl_customs_rates)
         count = 0
-
+        
         for customs in fcl_customs_rates:
             count += 1
-
+            
             if FclCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = customs['id']):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
@@ -137,7 +137,7 @@ class FclCustomsRateBulkOperation(BaseModel):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
                 continue
-
+            print('9999999')
             customs['customs_line_items'] = [t for t in customs['customs_line_items'] if t not in line_items]
 
             for line_item in line_items:

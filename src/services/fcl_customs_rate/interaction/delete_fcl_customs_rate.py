@@ -44,7 +44,7 @@ def create_audit_for_delete_rates(request, rate_object, delete_params):
     FclCustomsRateAudit.create(
         action_name = 'delete',
         performed_by_id = request.get('performed_by_id'),
-        bulk_operation_id =request.get('bulk_operation_id'),
+        bulk_operation_id = request.get('bulk_operation_id'),
         object_id = rate_object.id,
         object_type = 'FclCustomsRate',
         data = delete_params
