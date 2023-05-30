@@ -1,6 +1,7 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
+from fastapi import HTTPException
 
 def create_fcl_customs_rate_data(request):
     with db.atomic():
@@ -36,7 +37,7 @@ def create_fcl_customs_rate(request):
   try:
      customs_rate.save()
   except Exception as e:
-      print("Exception in creating rate", e)
+      raise HTTPException(status_code=500, detail='Customs Rate did not save')
 
   if not customs_rate.importer_exporter_id:
     customs_rate.delete_rate_not_available_entry()
