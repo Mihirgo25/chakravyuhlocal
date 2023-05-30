@@ -57,6 +57,24 @@ class FclCfsRateRequest(BaseModel):
     port_id: str = None
     trade_type: str = None
 
+class DeleteFclCfsRate(BaseModel):
+    id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    validity_start: datetime
+    validity_end: datetime
+    bulk_operation_id: str = None
+    sourced_by_id: str = None
+    procured_by_id: str = None
+    payment_term: str = 'prepaid'
+
+class DeleteFclCfsRateRequest(BaseModel):
+  fcl_freight_rate_request_ids: List[str]
+  closing_remarks: List[str] = []
+  performed_by_id: str = None
+  performed_by_type: str = None
+
+
 class CreateFclCfsRateNotAvailable(BaseModel):
   location_id: str
   country_id: str = None

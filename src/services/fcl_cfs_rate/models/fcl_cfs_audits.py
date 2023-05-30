@@ -19,3 +19,20 @@ class FclCfsRateAudits(BaseModel):
     data = 	BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
+    class Meta:
+        table_name = 'fcl_cfs_rate_audits'  
+        
+    def get_audit_params(self):
+        audit_data = {
+            "line_items": self.line_items,
+            "free_days": self.free_days
+            }
+
+        return {
+            "action_name": 'create',
+            "performed_by_id": self.performed_by_id,
+            "sourced_by_id": self.sourced_by_id,
+            "procured_by_id": self.procured_by_id,
+            "rate_sheet_id": self.rate_sheet_id,
+            "data": audit_data
+        }
