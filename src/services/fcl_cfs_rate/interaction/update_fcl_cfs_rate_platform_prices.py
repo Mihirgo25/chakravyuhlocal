@@ -5,13 +5,13 @@ def find_rate_objects(request):
     query = (FclCfsRate
         .select()
         .where(
-        (FclCfsRate.location_id == request.location_id) ,
-        (FclCfsRate.trade_type == request.trade_type) ,
-        (FclCfsRate.container_size == request.container_size) ,
-        (FclCfsRate.container_type == request.container_type) ,
-        (FclCfsRate.commodity == request.commodity) ,
-        (FclCfsRate.importer_exporter_id.in_([None, request.importer_exporter_id])) ,
-        (FclCfsRate.is_line_items_error_messages_present == request.is_line_items_error_messages_present)
+        (FclCfsRate.location_id == request.get('location_id')) ,
+        (FclCfsRate.trade_type == request.get('trade_type') ),
+        (FclCfsRate.container_size == request.get('container_size') ),
+        (FclCfsRate.container_type == request.get('container_type') ),
+        (FclCfsRate.commodity == request.get('commodity') ),
+        (FclCfsRate.importer_exporter_id.in_([None, request.get('importer_exporter_id')])) ,
+        (FclCfsRate.is_cfs_line_items_error_messages_present == request.get('is_cfs_line_items_error_messages_present'))
         ))
     return query
 

@@ -26,6 +26,7 @@ class FreeDaysType(BaseModel):
 class CreateFclCfsRate(BaseModel):
   rate_sheet_id:str = None
   location_id: str
+  location_type: str
   trade_type: str
   container_size: str
   container_type: str
@@ -36,7 +37,7 @@ class CreateFclCfsRate(BaseModel):
   procured_by_id: str
   cargo_handling_type: str
   importer_exporter_id: str = None
-  line_items: list[StandardLineItem]
+  cfs_line_items: list[StandardLineItem]
   free_days: list[FreeDaysType]
 
 class FclCfsRateRequest(BaseModel):
