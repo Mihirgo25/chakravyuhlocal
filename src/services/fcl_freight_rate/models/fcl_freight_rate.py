@@ -335,7 +335,7 @@ class FclFreightRate(BaseModel):
 
       fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
-      invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict.keys()]
+      invalid_line_items = [code for code in codes if code.strip() not in fcl_freight_charges_dict.keys()]
 
       if invalid_line_items:
           raise HTTPException(status_code=400, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
