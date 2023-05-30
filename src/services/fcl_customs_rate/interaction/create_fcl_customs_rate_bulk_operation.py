@@ -1,7 +1,8 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_bulk_operation import FclCustomsRateBulkOperation
-from celery_worker import update_multiple_service_objects, bulk_operation_perform_action_functions
 
-def create_fcl_customs_bulk_operation(request):
+def create_fcl_customs_rate_bulk_operation(request):
+    from celery_worker import update_multiple_service_objects, bulk_operation_perform_action_functions
+
     action_name = [key for key in request if key not in ['performed_by_id', 'service_provider_id', 'procured_by_id', 'sourced_by_id']]
     if action_name:
         action_name = action_name[0]

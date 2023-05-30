@@ -73,6 +73,23 @@ class CreateFclCustomsRateRequest(BaseModel):
   container_type: str 
   trade_type: str = None
 
+class CreateFclCustomsRateFeedback(BaseModel):
+  source: str
+  source_id: str
+  performed_by_id: str
+  performed_by_org_id: str
+  performed_by_type: str
+  rate_id: str
+  likes_count: int
+  dislikes_count: int
+  feedbacks: list[str] = []
+  remarks: list[str] = []
+  preferred_customs_rate: float = None
+  preferred_customs_rate_currency: str = None
+  preferred_storage_free_days: int = None
+  feedback_type: str
+  booking_params: dict ={}
+
 class UpdateFclCustomsRatePlatformPrices(BaseModel):
   location_id: str
   container_size: str 

@@ -21,7 +21,7 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
-
+from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -400,9 +400,18 @@ def delay_fcl_cfs_functions(self,fcl_cfs_object,request):
     try:
         if not FclCfsRate.select().where(FclCfsRate.service_provider_id==request["service_provider_id"], FclCfsRate.rate_not_available_entry==False).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-
             get_multiple_service_objects(fcl_cfs_object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def update_customs_rate_platform_prices(self, request):
+    try:
+        update_fcl_customs_rate_platform_prices(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

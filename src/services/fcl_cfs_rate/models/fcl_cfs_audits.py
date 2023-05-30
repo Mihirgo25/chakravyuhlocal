@@ -31,8 +31,6 @@ class FclCfsRateAudits(BaseModel):
         return {
             "action_name": 'create',
             "performed_by_id": self.performed_by_id,
-            "sourced_by_id": self.sourced_by_id,
-            "procured_by_id": self.procured_by_id,
             "rate_sheet_id": self.rate_sheet_id,
             "data": audit_data
         }
