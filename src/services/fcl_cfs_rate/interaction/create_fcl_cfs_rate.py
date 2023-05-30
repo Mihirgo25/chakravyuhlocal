@@ -22,7 +22,6 @@ def create_fcl_cfs_rates(request):
     params = {
         "rate_sheet_id": request["rate_sheet_id"],
         "location_id": request["location_id"],
-        "location_type": request["location_type"],
         "trade_type": request["trade_type"],
         "container_size": request["container_size"],
         "container_type": request["container_type"],

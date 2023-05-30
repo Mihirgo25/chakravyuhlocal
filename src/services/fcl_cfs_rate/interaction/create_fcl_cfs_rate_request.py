@@ -1,14 +1,6 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
-
-def get_unique_object_params(request):
-    return {
-        'source': request.get('source'),
-        'source_id': request.get('source_id'),
-        'performed_by_id': request.get('performed_by_id'),
-        'performed_by_type': request.get('performed_by_type'),
-        'performed_by_org_id': request.get('performed_by_org_id')
-    }
+from services.fcl_cfs_rate.models.fcl_cfs_audits import FclCfsRateAudits
 
 def get_create_params(request):
     return {
@@ -32,22 +24,45 @@ def create_audit(request):
         'performed_by_id': request.get('performed_by_id'),
         'data': get_audit_params(request)
     }
-    request.audits.create(**audit_params)
+    
+    return audit_params
 
 def get_audit_params(request):
     return {k: v for k, v in request.items() if k != 'performed_by_id'}
 
 
 def create_fcl_cfs_rate_request(request):
-    freight = FclCfsRateRequest.get_or_create(**get_unique_object_params(request))
-    freight.set_attributes(get_create_params(request))
+    search_params = {
+        'source': request.get('source'),
+        'source_id': request.get('source_id'),
+        'performed_by_id': request.get('performed_by_id'),
+        'performed_by_type': request.get('performed_by_type'),
+        'performed_by_org_id': request.get('performed_by_org_id')
+    }
 
-    if not freight.save():
-        request.errors = freight.errors
-        return
+    cfs_request = FclCfsRateRequest.select().where(
+        FclCfsRateRequest.source == request['source'],
+        FclCfsRateRequest.source_id == request['source_id'],
+        FclCfsRateRequest.performed_by_id == request['performed_by_id'],
+        FclCfsRateRequest.performed_by_type == request['performed_by_type'],
+        FclCfsRateRequest.performed_by_org_id == request['performed_by_org_id']).first()
 
-    create_audit(request)
-    FclCfsRateRequest.send_notifications_to_supply_agents()
+    if not cfs_request:
+        cfs_request = FclCfsRateRequest(**search_params)
 
-    return {'id': freight.id}
+    create_params = get_create_params(request)
+    for attr, value in create_params.items():
+        setattr(cfs_request, attr, value)
+
+    try:
+        cfs_request.save()
+    except:
+        raise
+
+
+    audit_params= create_audit(request)
+    FclCfsRateAudits.create(**audit_params)
+    cfs_request.send_notifications_to_supply_agents()
+
+    return {'id': cfs_request.id}
 

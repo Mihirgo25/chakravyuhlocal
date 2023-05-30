@@ -15,7 +15,7 @@ class BaseModel(Model):
 class  FclCfsRateRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True, index=True)
     port_id	= UUIDField(null=True)
-    serial_id = IntegerField()
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_cfs_rate_request_serial_id_seq'::regclass)")])
     country_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     container_size	= CharField(null=True)
@@ -45,7 +45,7 @@ class  FclCfsRateRequest(BaseModel):
         table_name = 'fcl_cfs_rate_requests'  
     
     def send_closed_notifications_to_sales_agent(self):
-        # Implementation here
+        
         port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
         try:
             importer_exporter_id = spot_search.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
@@ -72,15 +72,15 @@ class  FclCfsRateRequest(BaseModel):
         common.create_communication(data)
 
     def send_notifications_to_supply_agents(self):
-        # Implementation here
+        
         port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
         filters = {
             'service_type': 'fcl_cfs',
             'status': 'active',
             'location_id': [self.port_id, self.country_id] if self.country_id else [self.port_id]
         }
-        supply_agents_list = partner.list_partner_user_expertises(filters=filters, pagination_data_required=False, page_limit=MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT)['list']
-        supply_agents_user_ids = partner.list_partner_usersListPartnerUsers(filters={'id': supply_agents_list}, pagination_data_required=False, page_limit=MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT)['list']
+        supply_agents_list = partner.list_partner_user_expertises({'filters': filters, 'pagination_data_required':False, 'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+        supply_agents_user_ids = partner.list_partner_users(filters={'id': supply_agents_list}, pagination_data_required=False, page_limit=MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT)['list']
         data = {
             'type': 'platform_notification',
             'service': 'spot_search',
