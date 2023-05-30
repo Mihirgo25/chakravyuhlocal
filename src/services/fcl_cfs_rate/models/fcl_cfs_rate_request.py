@@ -15,13 +15,13 @@ class BaseModel(Model):
 class  FclCfsRateRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True, index=True)
     port_id	= UUIDField(null=True)
-    serial_id = IntegerField(max_length=8)	#int8	NO	NULL	"nextval('fcl_cfs_rate_requests_serial_id_seq'::regclass)"
+    serial_id = IntegerField()
     country_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     container_size	= CharField(null=True)
     commodity	= CharField(null=True)
     status	= CharField(null=True)
-    preferred_rate = FloatField(null=True, max_length=8)
+    preferred_rate = FloatField(null=True)
     preferred_rate_currency	= CharField(null=True)
     source	= CharField(null=True)
     source_id = UUIDField(null=True)
@@ -31,11 +31,15 @@ class  FclCfsRateRequest(BaseModel):
     closed_by_id = UUIDField(null=True)
     remarks	= CharField(null=True)
     booking_params = BinaryJSONField(null=True)
-    preferred_detention_free_days = IntegerField(max_length=4, null = True)
+    preferred_detention_free_days = IntegerField(null = True)
     cargo_readiness_date = DateField(null=True)	
     closing_remarks	= CharField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
+    port = BinaryJSONField(null=True)
+    performed_by = BinaryJSONField(null=True)
+    closed_by = BinaryJSONField(null=True)
+    spot_search = BinaryJSONField(null=True)
 
     class Meta:
         table_name = 'fcl_cfs_rate_requests'  

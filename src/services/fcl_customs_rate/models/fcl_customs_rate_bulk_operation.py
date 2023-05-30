@@ -1,7 +1,7 @@
 from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
-import datetime
+from datetime import datetime
 from database.rails_db import *
 from fastapi import HTTPException
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT

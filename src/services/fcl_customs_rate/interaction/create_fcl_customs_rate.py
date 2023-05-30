@@ -1,4 +1,5 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
+from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
 
 def create_fcl_customs_rate_data(request):
@@ -28,11 +29,18 @@ def create_fcl_customs_rate(request):
   customs_rate.customs_line_items = request.get('customs_line_items')
 
   customs_rate.set_platform_price()
-  
+  customs_rate.set_is_best_price()
+
   customs_rate.update_customs_line_item_messages()
+  
+  try:
+     customs_rate.save()
+  except Exception as e:
+      print("Exception in creating rate", e)
 
   if not customs_rate.importer_exporter_id:
     customs_rate.delete_rate_not_available_entry()
+
   create_audit(request)
 
   customs_rate.update_platform_prices_for_other_service_providers()
@@ -41,7 +49,7 @@ def create_fcl_customs_rate(request):
   return {'id': customs_rate.id}
 
 def get_create_object_params(request):
-    creation_params = {
+    return {
       'location_id':request.get('location_id'),
       'trade_type' : request.get('trade_type'),
       'container_size' : request.get('container_size'),
@@ -51,7 +59,16 @@ def get_create_object_params(request):
       'importer_exporter_id' : request.get('importer_exporter_id')
     }
 
-    return creation_params
+def create_audit(request, custom_rate):
+  audit_data = {
+      'customs_line_items': request.get('customs_line_items')
+  }
 
-def create_audit(request):
-  return None
+  FclCustomsRateAudit.create(
+    object_id = custom_rate,
+    object_type = 'FclCustomsRate',
+    action_name = 'create',
+    performed_by_id = request.get('performed_by_id'),
+    rate_sheet_id = request.get('rate_sheet_id'),
+    data = audit_data
+  )

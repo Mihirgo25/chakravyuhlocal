@@ -1,8 +1,8 @@
-from fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
+from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from peewee import *
-from fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 import json
 POSSIBLE_INDIRECT_FILTERS = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 POSSIBLE_DIRECT_FILTERS = ['port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id']

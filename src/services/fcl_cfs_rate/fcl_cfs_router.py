@@ -16,7 +16,8 @@ from services.fcl_cfs_rate.interaction.get_cfs_rate_card import get_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate_request import list_fcl_cfs_rate_request
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_request import create_fcl_cfs_rate_request
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_not_available import create_fcl_cfs_rate_not_available
-
+from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate import delete_fcl_cfs_rate
+from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate_request import delete_fcl_cfs_rate_request
 import uvicorn
 fcl_cfs_router = APIRouter()
 
@@ -179,6 +180,34 @@ def list_fcl_cfs_rate_requests(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-# for testing
-if __name__ == "__main__":
-    uvicorn.run(fcl_cfs_router, host="0.0.0.0", port=8000)
+@fcl_cfs_router.post("/delete_fcl_cfs_rates")
+def delete_fcl_cfs_rates(request: DeleteFclCfsRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_fcl_cfs_rate(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_cfs_router.post("/delete_fcl_cfs_rate_requests")
+def delete_fcl_cfs_rates_requests(request: DeleteFclCfsRateRequest, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_fcl_cfs_rate_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

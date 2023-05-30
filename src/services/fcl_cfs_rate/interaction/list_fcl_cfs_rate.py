@@ -1,7 +1,7 @@
 from typing import List, Dict
 from peewee import *
 import json
-from fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
+from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 POSSIBLE_DIRECT_FILTERS = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type']
 POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'importer_exporter_present', 'is_rate_available']
 

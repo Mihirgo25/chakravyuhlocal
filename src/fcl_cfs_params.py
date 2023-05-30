@@ -26,6 +26,7 @@ class FreeDaysType(BaseModel):
 class CreateFclCfsRate(BaseModel):
   rate_sheet_id:str = None
   location_id: str
+  location_type: str
   trade_type: str
   container_size: str
   container_type: str
@@ -36,7 +37,7 @@ class CreateFclCfsRate(BaseModel):
   procured_by_id: str
   cargo_handling_type: str
   importer_exporter_id: str = None
-  line_items: list[StandardLineItem]
+  cfs_line_items: list[StandardLineItem]
   free_days: list[FreeDaysType]
 
 class FclCfsRateRequest(BaseModel):
@@ -56,6 +57,24 @@ class FclCfsRateRequest(BaseModel):
     country_id: str = None
     port_id: str = None
     trade_type: str = None
+
+class DeleteFclCfsRate(BaseModel):
+    id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
+    validity_start: datetime
+    validity_end: datetime
+    bulk_operation_id: str = None
+    sourced_by_id: str = None
+    procured_by_id: str = None
+    payment_term: str = 'prepaid'
+
+class DeleteFclCfsRateRequest(BaseModel):
+  fcl_freight_rate_request_ids: List[str]
+  closing_remarks: List[str] = []
+  performed_by_id: str = None
+  performed_by_type: str = None
+
 
 class CreateFclCfsRateNotAvailable(BaseModel):
   location_id: str
