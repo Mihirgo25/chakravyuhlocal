@@ -7,7 +7,6 @@ from configs.fcl_freight_rate_constants import *
 from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
 from database.rails_db import *
 from fastapi import HTTPException
-from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from configs.definitions import FCL_CUSTOMS_CHARGES
 
 class BaseModel(Model):

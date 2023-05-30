@@ -1,7 +1,6 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate import *
 from services.fcl_cfs_rate.models.fcl_cfs_audits import  FclCfsRateAudits
 from fastapi import HTTPException
-from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices
 from datetime import datetime
 def delete_fcl_cfs_rate(request):
         with db.atomic():
