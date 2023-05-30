@@ -41,8 +41,8 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_location_ids_filter(query, filters):
-    locations_ids = filters['locations_ids']
-    query = query.where(FclCustomsRate.locations_ids.contains(locations_ids))
+    location_ids = filters['location_ids']
+    query = query.where(FclCustomsRate.location_ids.contains(location_ids))
     return query 
 
 def apply_importer_exporter_present_filter(query, filters):

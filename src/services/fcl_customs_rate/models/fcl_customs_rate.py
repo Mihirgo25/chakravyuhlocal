@@ -7,8 +7,7 @@ from configs.fcl_freight_rate_constants import *
 from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
 from database.rails_db import *
 from fastapi import HTTPException
-from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
-from configs.definitions import FCL_CUSTOMS_CHARGES
+# from configs.definitions import FCL_CUSTOMS_CHARGES
 
 class BaseModel(Model):
     class Meta:
@@ -286,7 +285,20 @@ class FclCustomsRate(BaseModel):
         self.location = maps.list_locations({'filters':{'id': [str(self.location_id)]}})['list'][0]
         self.save()
 
-    
+    def possible_customs_charge_codes(self):
+        self.set_location()
+        # ..
+
+    def delete_rate_not_available_entry(self):
+        FclCustomsRate.select().where(
+            FclCustomsRate.location_id == self.location_id,
+            FclCustomsRate.trade_type == self.trade_type,
+            FclCustomsRate.service_provider_id == self.service_provider_id,
+            FclCustomsRate.container_size == self.container_size,
+            FclCustomsRate.container_type == self.container_type,
+            FclCustomsRate.commodity == self.commodity,
+            FclCustomsRate.rate_not_available_entry == True
+        )
 
         
 

@@ -7,10 +7,10 @@ from fastapi import HTTPException
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import common
 from configs.definitions import FCL_CUSTOMS_CHARGES
-from services.fcl_customs_rate.interactions.list_fcl_customs_rates import list_fcl_customs_rates
+from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fcl_customs_rates
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
-from services.fcl_customs_rate.interactions.delete_fcl_customs_rate import delete_fcl_customs_rate
-from services.fcl_customs_rate.interactions.update_fcl_customs_rate import update_fcl_customs_rate
+from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
+from services.fcl_customs_rate.interaction.update_fcl_customs_rate import update_fcl_customs_rate
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
 
