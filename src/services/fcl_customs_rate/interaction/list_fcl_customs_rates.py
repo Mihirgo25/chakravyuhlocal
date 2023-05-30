@@ -3,9 +3,9 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 
-possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present']
+possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id']
 
-possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available', 'procured_by_id']
+possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available']
 
 def list_fcl_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, pagination_data_required = False):
     query = get_query(sort_by, sort_type, page, page_limit)
@@ -55,7 +55,3 @@ def apply_importer_exporter_present_filter(query, filters):
 def apply_is_rate_available_filter(query, filters):
     query = query.where(FclCustomsRate.rate_not_available_entry != True)
     return query 
-
-def apply_procured_by_id_filter(query, filters):
-    query = query.where(FclCustomsRate.procured_by_id == filters['procured_by_id'])
-    return query
