@@ -10,6 +10,7 @@ from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
+from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
@@ -387,6 +388,20 @@ def delay_fcl_customs_functions(self,fcl_customs_object,request):
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
             get_multiple_service_objects(fcl_customs_object)
+
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def delay_fcl_cfs_functions(self,fcl_cfs_object,request):
+    try:
+        if not FclCfsRate.select().where(FclCfsRate.service_provider_id==request["service_provider_id"], FclCfsRate.rate_not_available_entry==False).exists():
+            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+
+            get_multiple_service_objects(fcl_cfs_object)
 
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
