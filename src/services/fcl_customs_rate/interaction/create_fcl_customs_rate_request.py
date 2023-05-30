@@ -88,7 +88,6 @@ def create_audit(request, customs_request):
         action_name = 'create',
         performed_by_id = request.get('performed_by_id'),
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
-        object_id = customs_request.id,
         object_type = 'FclFreightRateRequest'
     )
 

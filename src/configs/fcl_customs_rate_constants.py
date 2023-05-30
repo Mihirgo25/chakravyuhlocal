@@ -1,6 +1,4 @@
-from global_constants import HAZ_CLASSES, STANDARD_COMMODITIES
-
-from configs.global_constants import *
+from configs.global_constants import HAZ_CLASSES, STANDARD_COMMODITIES
 
 REQUEST_SOURCES = ['spot_search']
 

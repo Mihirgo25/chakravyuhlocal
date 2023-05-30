@@ -3,16 +3,20 @@ from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-import sentry_sdk
+import sentry_sdk, traceback
 from fastapi import HTTPException
 
-from services.fcl_customs_rate.interactions.create_fcl_customs_rate import create_fcl_customs_rate_data
-from services.fcl_customs_rate.interactions.get_fcl_customs_rate_addition_frequency import get_fcl_customs_rate_addition_frequency
-from services.fcl_customs_rate.interactions.get_fcl_customs_rate_visibility import get_fcl_customs_rate_visibility
-from services.fcl_customs_rate.interactions.get_fcl_customs_rate import get_fcl_customs_rate
-from services.fcl_customs_rate.interactions.list_fcl_customs_rates import list_fcl_customs_rates
-from services.fcl_customs_rate.interactions.list_fcl_customs_rate_requests import list_fcl_customs_rate_requests
-from services.fcl_customs_rate.interactions.list_fcl_customs_rate_feedbacks import list_fcl_customs_rate_feedbacks
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_bulk_operation import create_fcl_customs_rate_bulk_operation
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_feedback import create_fcl_customs_rate_feedback
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_request import create_fcl_customs_rate_request
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate_not_available import create_fcl_customs_rate_not_available
+from services.fcl_customs_rate.interaction.get_fcl_customs_rate_addition_frequency import get_fcl_customs_rate_addition_frequency
+from services.fcl_customs_rate.interaction.get_fcl_customs_rate_visibility import get_fcl_customs_rate_visibility
+from services.fcl_customs_rate.interaction.get_fcl_customs_rate import get_fcl_customs_rate
+from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fcl_customs_rates
+from services.fcl_customs_rate.interaction.list_fcl_customs_rate_requests import list_fcl_customs_rate_requests
+from services.fcl_customs_rate.interaction.list_fcl_customs_rate_feedbacks import list_fcl_customs_rate_feedbacks
 
 fcl_customs_router = APIRouter()
 
@@ -33,6 +37,70 @@ def create_fcl_customs_rate_func(request: CreateFclCustomsRate, resp: dict = Dep
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
+@fcl_customs_router.post("/create_fcl_customs_rate_bulk_operation")
+def create_fcl_customs_rate_bulk_operation_data(request: CreateFclCustomsRateBulkOperation, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate = create_fcl_customs_rate_bulk_operation(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.post("/create_fcl_customs_rate_feedback")
+def create_fcl_customs_rate_feedback_data(request: CreateFclCustomsRateFeedback, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate = create_fcl_customs_rate_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_customs_router.post("/create_fcl_customs_rate_request")
+def create_fcl_customs_rate_request_data(request: CreateFclCustomsRateRequest, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate = create_fcl_customs_rate_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_customs_router.post("/create_fcl_customs_rate_not_available")
+def create_fcl_customs_rate_not_available_data(request: CreateFclCustomsRateNotAvailable, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate = create_fcl_customs_rate_not_available(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
 @fcl_customs_router.get("/get_fcl_customs_rate_addition_frequency")
 def get_fcl_customs_rate_addition_frequency_data(
     group_by: str,
