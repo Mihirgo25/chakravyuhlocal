@@ -2,7 +2,11 @@ from peewee import *
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
-
+from configs.air_freight_rate_constants import LOCAL_COMMODITIES
+from fastapi import HTTPException
+from configs.global_constants import TRADE_TYPES
+from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -11,29 +15,90 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 class AirFreightStorageRates(BaseModel):
-    airline_id = UUIDField(null=True)
-    airport_id = UUIDField(null=True)
-    commodity = CharField(null=True)
+    airline_id = UUIDField(null=True,index=True)
+    airport_id = UUIDField(null=True,index=True)
+    commodity = CharField(null=True,index=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
     created_at = DateTimeField()
     free_limit = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    importer_exporter_id = UUIDField(null=True)
+    importer_exporter_id = UUIDField(null=True,index= True)
     is_slabs_missing = BooleanField(null=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
     priority_score = IntegerField(null=True)
     priority_score_updated_at = DateTimeField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
-    service_provider_id = UUIDField(null=True)
+    service_provider_id = UUIDField(null=True,index=True)
     slabs = BinaryJSONField(null=True)
     trade_id = UUIDField(null=True)
-    trade_type = CharField(null=True)
+    trade_type = CharField(null=True,index = True)
     updated_at = DateTimeField()
 
     class Meta:
         table_name = 'air_freight_storage_rates'
-        indexes = (
-            (('airport_id', 'airline_id', 'commodity', 'trade_type'), False),
-            (('airport_id', 'airline_id', 'trade_type', 'commodity', 'service_provider_id', 'importer_exporter_id'), True),
-        )
+
+    
+    def validate_commodity(self):
+        if self.commodity not in LOCAL_COMMODITIES:
+            raise HTTPException(status_code = 404,details = 'Invalid Commodity')
+    
+    def validate_trade_type(self):
+        if self.trade_type not in TRADE_TYPES:
+            raise HTTPException(status_code = 404,details = 'Invalid Trade Type')
+    
+    def validate_free_limit(self):
+        if not self.free_limit:
+            raise HTTPException(status_code = 404,details = 'Free Limit Cannot Be Empty')
+    
+    def validate_slabs(self):
+        slabs = self.slabs
+    
+
+    def update_foreign_objects(self):
+        self.update_local_objects()
+        self.update_freight_objects()
+    
+    def update_freight_objects(self):
+        location_key = 'origin' if self.trade_type == 'export' else 'destination'
+        if location_key == 'origin':
+            kwargs = {
+                'origin_storage_id':self.id
+            }
+        else:
+            kwargs = {
+                'destination_storage_id':self.id
+            }
+        t=AirFreightRate.update(**kwargs).where(
+            AirFreightRate.airline_id == self.airline_id,
+            AirFreightRate.service_provider_id == self.service_provider_id,
+            AirFreightRate.commodity <<['general','express'] if self.commodity == 'general' else AirFreightRate.commodity == self.commodity,
+            (eval("AirFreightRate.{}_airport_id".format(location_key)) == self.port_id),
+            (eval("AirFreightRate.{}_storage_id".format(location_key)) == None)
+            )
+        t.execute() 
+    
+    def update_local_objects(self):
+        AirFreightRateLocal.update(storage_rate_id=self.id).where(
+            AirFreightRateLocal.airport_id == self.airport_id,
+            AirFreightRateLocal.airline_id == self.airline_id,
+            AirFreightRateLocal.commodity == self.commodity,
+            AirFreightRateLocal.trade_type == self.trade_type,
+            AirFreightRateLocal.service_provider_id == self.service_provider_id
+        ).execute()
+    
+    def update_special_attributes(self):
+        self.is_slabs_missing == True if not self.slabs else False
+    
+    def detail(self):
+        return{
+            'storage_rate':{
+                'free_limit':self.free_limit,
+                'slabs': self.slabs,
+                'is_slabs_missing' : self.is_slabs_missing,
+                'remarks': self.remarks
+            }
+        }
+
+    
+
