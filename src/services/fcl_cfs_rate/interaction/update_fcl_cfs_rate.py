@@ -34,7 +34,8 @@ def update_fcl_cfs_rate(request):
     audit_params = get_audit_params(request)
     FclCfsRateAudits.create(**audit_params)
     
-    update_platform_prices_for_other_service_providers(request)
+    freight.update_platform_prices_for_other_service_providers()
+    
 
     freight.save()
 
