@@ -232,56 +232,53 @@ class FclCustomsRate(BaseModel):
             'importer_exporter_id': self.importer_exporter_id
         }
         update_customs_rate_platform_prices.apply_async(kwargs = {'request':request}, queue = 'low')
-    
-    def update_customs_line_item_messages(self):
-        self.set_location()
 
-    def update_cfs_line_item_messages(self):
-        self.set_location()
-        self.cfs_line_items_error_messages = {}
-        self.cfs_line_items_info_messages = {}
-        self.is_cfs_line_items_error_messages_present = False
-        self.is_cfs_line_items_info_messages_present = False
+    # def update_cfs_line_item_messages(self):
+    #     self.set_location()
+    #     self.cfs_line_items_error_messages = {}
+    #     self.cfs_line_items_info_messages = {}
+    #     self.is_cfs_line_items_error_messages_present = False
+    #     self.is_cfs_line_items_info_messages_present = False
 
-        grouped_charge_codes = {}
-        for line_item in self.cfs_line_items:
-            grouped_charge_codes[line_item.get('code')] = grouped_charge_codes.get(line_item.get('code'),[]) + [line_item]
+    #     grouped_charge_codes = {}
+    #     for line_item in self.cfs_line_items:
+    #         grouped_charge_codes[line_item.get('code')] = grouped_charge_codes.get(line_item.get('code'),[]) + [line_item]
 
-        for code, line_items in grouped_charge_codes:
-            for _code, config in FCL_CUSTOMS_CHARGES:
-                if 'cfs' in config['tags']:
-                    code_config = FCL_CUSTOMS_CHARGES.get(code)
+    #     for code, line_items in grouped_charge_codes:
+    #         for _code, config in FCL_CUSTOMS_CHARGES:
+    #             if 'cfs' in config['tags']:
+    #                 code_config = FCL_CUSTOMS_CHARGES.get(code)
 
-            if not code_config:
-                self.cfs_line_items_error_messages[code] = ['is invalid']
-                self.is_cfs_line_items_error_messages_present = True
-                next
+    #         if not code_config:
+    #             self.cfs_line_items_error_messages[code] = ['is invalid']
+    #             self.is_cfs_line_items_error_messages_present = True
+    #             next
 
-            if self.trade_type not in code_config['trade_types']:
-                self.cfs_line_items_error_messages[code] = ["can only be added for {}".format(','.join(code_config['trade_types']))]
-                self.is_cfs_line_items_error_messages_present = True
-                next
+    #         if self.trade_type not in code_config['trade_types']:
+    #             self.cfs_line_items_error_messages[code] = ["can only be added for {}".format(','.join(code_config['trade_types']))]
+    #             self.is_cfs_line_items_error_messages_present = True
+    #             next
 
-            # if len(set(line_items.map(&:unit).difference(set(code_config['units'])))) > 0
-            #     self.cfs_line_items_error_messages[code] = ["can only be having units {}".format(','.join(code_config['units']))]
-            #     self.is_cfs_line_items_error_messages_present = True
-            #     next
+    #         # if len(set(line_items.map(&:unit).difference(set(code_config['units'])))) > 0
+    #         #     self.cfs_line_items_error_messages[code] = ["can only be having units {}".format(','.join(code_config['units']))]
+    #         #     self.is_cfs_line_items_error_messages_present = True
+    #         #     next
 
-            if not eval(code_config['condition']):
-                self.cfs_line_items_error_messages[code] = ['is invalid']
-                self.is_cfs_line_items_error_messages_present = True
-                next
+    #         if not eval(code_config['condition']):
+    #             self.cfs_line_items_error_messages[code] = ['is invalid']
+    #             self.is_cfs_line_items_error_messages_present = True
+    #             next
 
-        for code, config in self.possible_cfs_charge_codes():
-            if 'mandatory' in config['tags']:
-                if not grouped_charge_codes[code]:
-                    self.cfs_line_items_error_messages[code] = ['is not present']
-                    self.is_cfs_line_items_error_messages_present = True
+    #     for code, config in self.possible_cfs_charge_codes():
+    #         if 'mandatory' in config['tags']:
+    #             if not grouped_charge_codes[code]:
+    #                 self.cfs_line_items_error_messages[code] = ['is not present']
+    #                 self.is_cfs_line_items_error_messages_present = True
             
-            if 'additional_service' in config['tags']:
-                if not grouped_charge_codes[code]:
-                    self.cfs_line_items_info_messages[code] = ['can be added for more conversion']
-                    self.is_cfs_line_items_info_messages_present = True
+    #         if 'additional_service' in config['tags']:
+    #             if not grouped_charge_codes[code]:
+    #                 self.cfs_line_items_info_messages[code] = ['can be added for more conversion']
+    #                 self.is_cfs_line_items_info_messages_present = True
 
     #     self.cfs_line_items_error_messages: cfs_line_items_error_messages,
     #     self.cfs_line_items_info_messages: cfs_line_items_info_messages,
