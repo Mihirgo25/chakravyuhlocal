@@ -11,6 +11,16 @@ class WeightSlab(BaseModel):
     currency: str
     unit:str ='per_kg'
 
+class LineItem(BaseModel):
+  code: str
+  unit: str
+  price: float
+  currency: str
+  min_price: float  
+  remarks: list[str] = None
+
+
+
 class DeleteAirFreightRate(BaseModel):
     id:str
     validity_id:str
@@ -60,6 +70,47 @@ class GetAirFreightRate(BaseModel):
     trade_type:str=None
     volume:float =None
     predicted_rates_required:bool=False
+
+class GetAirFreightRateSurcharge(BaseModel):
+
+    origin_airport_id:str=None
+    destination_airport_id:str=None
+    commodity:str=None
+    airline_id:str=None
+    operation_type:str=None
+    service_provider_id:str=None
+
+
+
+class CreateAirFreightRateSurcharge(BaseModel):
+    origin_airport_id:str
+    destination_airport_id:str
+    commodity:str
+    commodity_type:str
+    airline_id:str
+    operation_type:str
+    service_provider_id:str
+    performed_by_id:str
+    procured_by_id:str
+    sourced_by_id:str
+    bulk_operation_id:str=None
+    rate_sheet_id:str=None
+    line_items: list[LineItem]
+
+class UpdateAirFreightRateSurcharge(BaseModel):
+    id: str
+    performed_by_id: str
+    procured_by_id: str=None
+    sourced_by_id: str=None
+    line_items: list[LineItem]
+
+
+
+
+
+
+
+
 
 
 
