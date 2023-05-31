@@ -7,7 +7,7 @@ from configs.env import APP_ENV, SENTRY_DSN
 from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
-# from database.create_tables import create_table
+from database.create_tables import create_table
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
@@ -22,6 +22,7 @@ from services.haulage_freight_rate.haulage_freight_rate_router import haulage_fr
 from services.haulage_freight_rate.datamigrations.db_cargo_data import insert_dbcargo_rates
 from services.haulage_freight_rate.datamigrations.france_germany_data import insert_france_germany_rates
 from services.haulage_freight_rate.datamigrations.usa_rail_data import create_rail_haulage_rates
+from services.haulage_freight_rate.datamigrations.wagon_type_data import insert_wagon_type
 from micro_services.client import *
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -81,6 +82,7 @@ if APP_ENV != 'production':
 def startup():
     if db.is_closed():
         db.connect()
+    # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()
     # create_rail_haulage_rates()
