@@ -16,7 +16,7 @@ def list_ftl_rule_set_data(filters, page_limit, page, sort_by, sort_type, pagina
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-        
+
         # get applicable filters
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
         # direct filters
@@ -25,7 +25,10 @@ def list_ftl_rule_set_data(filters, page_limit, page, sort_by, sort_type, pagina
         query = apply_indirect_filters(query, indirect_filters)
 
     # apply pagination
-    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
+
+    query, total_count = apply_pagination(query, page, page_limit)
+
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required, total_count)
 
     data = jsonable_encoder(list(query.dicts()))
 
@@ -36,12 +39,17 @@ def get_query(sort_by, sort_type):
     query = FtlFreightRateRuleSet.select().order_by(eval("FtlFreightRateRuleSet.{}.{}()".format(sort_by, sort_type)))
     return query
 
-# split data into pages
-def get_pagination_data(query, page, page_limit, pagination_data_required):
-    if not pagination_data_required:
-        return {} 
-
+def apply_pagination(query, page, page_limit):
+    offset = (page - 1) * page_limit
     total_count = query.count()
+    query = query.offset(offset).limit(page_limit)
+    return query, total_count
+
+# split data into pages
+def get_pagination_data(query, page, page_limit, pagination_data_required, total_count):
+    if not pagination_data_required:
+        return {}
+
     params = {
       'page': page,
       'total': ceil(total_count/page_limit),

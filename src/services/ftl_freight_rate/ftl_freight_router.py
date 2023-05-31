@@ -24,7 +24,7 @@ from services.ftl_freight_rate.ftl_params import *
 ftl_freight_router = APIRouter()
 
 
-@ftl_freight_router.post("/get_estimated_ftl_freight_rate")
+@ftl_freight_router.get("/get_estimated_ftl_freight_rate")
 def get_ftl_freight_rates(
     origin_location_id: str = None,
     destination_location_id: str = None,
