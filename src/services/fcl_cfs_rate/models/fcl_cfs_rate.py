@@ -38,7 +38,7 @@ class FclCfsRate(BaseModel):
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    location_type= CharField(null=False, index=True)
+    location_type= CharField(null=True, index=True)
     cargo_handling_type = CharField(index=True,null=True)
     importer_exporter_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
@@ -87,9 +87,13 @@ class FclCfsRate(BaseModel):
             return True
         
         location = maps.list_locations({ 'filters': { 'id': self.location_id } })
-        self.location = location if location['list'] else None
+        if location['list']:
+            self.location = location
+            self.location_type = 'port' if location.get('type') == 'seaport' else location.get('type')
         
-        return self.location
+        else:
+            None
+
     
     def mandatory_charge_codes(self):
         return [
