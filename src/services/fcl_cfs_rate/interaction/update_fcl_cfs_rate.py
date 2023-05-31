@@ -1,7 +1,7 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_cfs_rate.models.fcl_cfs_audits import FclCfsRateAudits
-from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_platform_prices_for_other_service_providers
+
 
 def get_audit_params(request):
     audit_data = {
