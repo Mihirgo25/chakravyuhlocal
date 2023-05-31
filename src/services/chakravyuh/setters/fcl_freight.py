@@ -151,6 +151,7 @@ class FclFreightVyuh():
         current_date =  datetime.now().date()
         rate_validities = rate['validities'] or []
         for validity in rate_validities:
+            print("validity['validity_end']",validity['validity_end'])
             if current_date <= datetime.fromisoformat(validity['validity_end']).date():
                 matching_validity = validity
                 break
@@ -158,6 +159,8 @@ class FclFreightVyuh():
     
     def get_available_rates_of_transormation(self, affected_transformation):
         current_date =  datetime.now().date()
+        print('affected_transformation',affected_transformation)
+        
         rates_query = FclFreightRate.select(
             FclFreightRate.id, 
             FclFreightRate.validities,
@@ -463,16 +466,19 @@ class FclFreightVyuh():
     def adjust_price_for_tranformation(self, affected_transformation, new: bool=False, is_relative: bool = False):
         from celery_worker import update_multiple_service_objects
         transformation_id = affected_transformation.get('id')
+        
         if is_relative:
             adjusted_line_items = affected_transformation['line_items']
         else:
             adjusted_line_items = self.get_adjusted_line_items_to_add(affected_transformation, new)
+
+        print('adjusted_line_items',adjusted_line_items)
         
 
         if len(adjusted_line_items) == 0:
             # Return If no line_items to create
             return
-        
+        print(transformation_id)
         if not transformation_id and new:
             tf = self.get_transformation(affected_transformation)
             if tf:
@@ -542,21 +548,27 @@ class FclFreightVyuh():
           Main Function to set dynamic pricing bounds  
         '''  
         from celery_worker import transform_dynamic_pricing
-        if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
+        # if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
+        #     return False
+        if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted':
             return False
         
         affected_transformations = self.get_transformations_to_be_affected()
+        print('affected_transformations',affected_transformations)
 
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
+        print('new_transformations_to_add',new_transformations_to_add)
 
         for affected_transformation in affected_transformations:
             if self.what_to_create[affected_transformation['origin_location_type']]:
                 # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
-                transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
+                # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
+                transform_dynamic_pricing(self.new_rate, self.current_validities, affected_transformation,False)
         
         for new_transformation in new_transformations_to_add:
             # self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
-            transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
-
+            # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
+            print('new_transformations_to_add')
+            transform_dynamic_pricing(self.new_rate, self.current_validities, new_transformation,True)
 
         return True
