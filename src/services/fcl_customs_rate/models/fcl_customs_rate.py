@@ -7,7 +7,7 @@ from configs.fcl_freight_rate_constants import *
 from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
 from database.rails_db import *
 from fastapi import HTTPException
-from configs.definitions import FCL_CUSTOMS_CHARGES, FCL_CFS_CHARGES
+from configs.definitions import FCL_CUSTOMS_CHARGES
 
 class BaseModel(Model):
     class Meta:
@@ -311,36 +311,37 @@ class FclCustomsRate(BaseModel):
     #     self.is_cfs_line_items_info_messages_present: is_cfs_line_items_info_messages_present,
     #     self.is_cfs_line_items_error_messages_present: is_cfs_line_items_error_messages_present
 
-    # def detail(self):
-    #     fcl_customs = {
-    #         'customs_line_items': self.customs_line_items,
-    #         'customs_line_items_info_messages': self.customs_line_items_info_messages,
-    #         'is_customs_line_items_info_messages_present': self.is_customs_line_items_info_messages_present,
-    #         'customs_line_items_error_messages': self.customs_line_items_error_messages,
-    #         'is_customs_line_items_error_messages_present': self.is_customs_line_items_error_messages_present,
-    #         'cfs_line_items': self.cfs_line_items,
-    #         'cfs_line_items_info_messages': self.cfs_line_items_info_messages,
-    #         'is_cfs_line_items_info_messages_present': self.is_cfs_line_items_info_messages_present,
-    #         'cfs_line_items_error_messages': self.cfs_line_items_error_messages,
-    #         'is_cfs_line_items_error_messages_present': self.is_cfs_line_items_error_messages_present
-    #     }
+    def detail(self):
+        fcl_customs = {
+            'customs_line_items': self.customs_line_items,
+            'customs_line_items_info_messages': self.customs_line_items_info_messages,
+            'is_customs_line_items_info_messages_present': self.is_customs_line_items_info_messages_present,
+            'customs_line_items_error_messages': self.customs_line_items_error_messages,
+            'is_customs_line_items_error_messages_present': self.is_customs_line_items_error_messages_present,
+            'cfs_line_items': self.cfs_line_items,
+            'cfs_line_items_info_messages': self.cfs_line_items_info_messages,
+            'is_cfs_line_items_info_messages_present': self.is_cfs_line_items_info_messages_present,
+            'cfs_line_items_error_messages': self.cfs_line_items_error_messages,
+            'is_cfs_line_items_error_messages_present': self.is_cfs_line_items_error_messages_present
+        }
 
-    #     return {'fcl_customs': fcl_customs}
+        return {'fcl_customs': fcl_customs}
 
     def possible_customs_charge_codes(self):
         self.set_location()
         fcl_custom_charges = FCL_CUSTOMS_CHARGES
-
+        location = self.location
+        
         charge_codes = {}
         for code, config in fcl_custom_charges.items():
-        
             if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'customs_clearance' in config.get('tags'):
                 charge_codes[code] = config
         return charge_codes
 
     def possible_cfs_charge_codes(self):
         self.set_location()
-        fcl_cfs_charges = FCL_CFS_CHARGES
+        fcl_cfs_charges = FCL_CUSTOMS_CHARGES
+        location = self.location
 
         charge_codes = {}
         for code, config in fcl_cfs_charges.items():
@@ -350,14 +351,153 @@ class FclCustomsRate(BaseModel):
 
     def delete_rate_not_available_entry(self):
         FclCustomsRate.delete().where(
-          'location_id' == self.location_id,
-          'trade_type' == self.trade_type,
-          'service_provider_id' == self.service_provider_id,
-          'container_size' == self.container_size,
-          'container_type' == self.container_type,
-          'commodity' == self.commodity,
-          'rate_not_available_entry' == True
+          FclCustomsRate.location_id == self.location_id,
+          FclCustomsRate.trade_type == self.trade_type,
+          FclCustomsRate.service_provider_id == self.service_provider_id,
+          FclCustomsRate.container_size == self.container_size,
+          FclCustomsRate.container_type == self.container_type,
+          FclCustomsRate.commodity == self.commodity,
+          FclCustomsRate.rate_not_available_entry == True
         ).execute() 
 
     def update_customs_line_item_messages(self):
         self.set_location()
+        location_ids = list(set([item.location_id for item in self.customs_line_items if item.location_id is not None]))
+        locations = []
+
+        if location_ids:
+            locations = maps.list_locations({'filters': { 'id': location_ids }})['list']
+
+        self.customs_line_items_error_messages = {}
+        self.customs_line_items_info_messages = {}
+        self.is_customs_line_items_error_messages_present = False
+        self.is_customs_line_items_info_messages_present = False
+
+        grouped_charge_codes = {}
+
+        for line_item in self.customs_line_items:
+            grouped_charge_codes[line_item.code] = line_item.__dict__
+
+        for code, line_items in grouped_charge_codes.items():
+            code_config = FCL_CUSTOMS_CHARGES.get(code)
+
+            code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in line_items.get('tags', [])}
+
+            if not code_config:
+                self.customs_line_items_error_messages[code] = ['is invalid']
+                self.is_customs_line_items_error_messages_present = True
+                continue
+
+            if self.trade_type not in code_config['trade_types']:
+                self.customs_line_items_error_messages[code] = [f"can only be added for {', '.join(code_config['trade_types'])}"]
+                self.is_customs_line_items_error_messages_present = True
+                continue
+
+            if line_items['unit'] not in code_config['units']:
+                self.customs_line_items_error_messages[code] = [f"can only be having units {', '.join(code_config['units'])}"]
+                self.is_customs_line_items_error_messages_present = True
+                continue
+
+            if not eval(str(code_config['condition'])):
+                self.customs_line_items_error_messages[code] = ['is invalid']
+                self.is_customs_line_items_error_messages_present = True
+                continue
+
+            if len(code_config.get('locations', [])) == 0 and line_items.get('location_id') and len(line_items.get('location_id',[])) > 0:
+                self.customs_line_items_error_messages[code] = ['can not be added with location']
+                self.is_customs_line_items_error_messages_present = True
+                continue
+
+            if len(code_config.get('locations', [])) > 0 and line_items.get('location_id') and len(line_items.get('location_id',[])) == 0:
+                self.customs_line_items_error_messages[code] = ['can only be added with location']
+                self.is_customs_line_items_error_messages_present = True
+                continue
+
+            if len(code_config.get('locations', [])) > 0 and ((locations['location_id']['type'] != 'country') or (locations['location_id']['country_code'].upper() == code_config.get('locations', []))):
+                self.customs_line_items_error_messages[code] = [f"can only contain locations {', '.join(code_config['locations'])}"]
+                self.is_customs_line_items_error_messages_present = True
+                continue
+        
+        possible_customs_charge_codes = self.possible_customs_charge_codes()
+        for code, config in possible_customs_charge_codes.items():
+            if 'mandatory' in config.get('tags', []):
+                if code not in grouped_charge_codes:
+                    self.customs_line_items_error_messages[code] = ['is not present']
+                    self.is_customs_line_items_error_messages_present = True
+
+            if config.get('locations'):
+                location_codes = config.get('locations')
+                required_code_specific_locations = maps.list_locations({'filters': { 'id': location_codes }})['list']
+
+                location_names = [value['name'] for key,value in required_code_specific_locations]
+                if not location_names:
+                    continue
+
+                if not grouped_charge_codes.get(code):
+                    self.customs_line_items_info_messages[code] = [f"is required for serving in {', '.join(location_names)}"]
+                    self.is_customs_line_items_info_messages_present = True
+                else:
+                    given_code_specific_location_ids = list(set([t['location_id'] for t in grouped_charge_codes.get(code)]))
+                    remaining_code_specific_location_ids = [t for t in required_code_specific_locations.keys() if t not in given_code_specific_location_ids]
+                    if not remaining_code_specific_location_ids:
+                        self.customs_line_items_info_messages[code] = [f"is required for serving in {', '.join([data['name'] for id, data in required_code_specific_locations.items()])}"]
+                        self.is_customs_line_items_info_messages_present = True
+
+            if 'additional_service' in config.get('tags', []) or 'shipment_execution_service' in config.get('tags', []):
+                if grouped_charge_codes.get(code) is None:
+                    self.customs_line_items_info_messages[code] = ['can be added for more conversion']
+                    self.is_customs_line_items_info_messages_present = True
+
+        self.save()
+
+    def update_cfs_line_item_messages(self):
+        self.set_location()
+
+        self.cfs_line_items_error_messages = {}
+        self.cfs_line_items_info_messages = {}
+        self.is_cfs_line_items_error_messages_present = False
+        self.is_cfs_line_items_info_messages_present = False
+
+        grouped_charge_codes = {}
+
+        for line_item in self.cfs_line_items:
+            grouped_charge_codes[line_item.code] = line_item.__dict__
+
+        for code, line_items in grouped_charge_codes.items():
+            code_config = FCL_CUSTOMS_CHARGES.get(code)
+
+            code_config = {key:value for key,value in code_config.items() if 'cfs' in line_items.get('tags', [])}
+
+            if not code_config:
+                self.cfs_line_items_error_messages[code] = ['is invalid']
+                self.is_cfs_line_items_error_messages_present = True
+                continue
+
+            if self.trade_type not in code_config['trade_types']:
+                self.cfs_line_items_error_messages[code] = [f"can only be added for {', '.join(code_config['trade_types'])}"]
+                self.is_cfs_line_items_error_messages_present = True
+                continue
+
+            if line_items['unit'] not in code_config['units']:
+                self.cfs_line_items_error_messages[code] = [f"can only be having units {', '.join(code_config['units'])}"]
+                self.is_cfs_line_items_error_messages_present = True
+                continue
+
+            if not eval(str(code_config['condition'])):
+                self.cfs_line_items_error_messages[code] = ['is invalid']
+                self.is_cfs_line_items_error_messages_present = True
+                continue
+
+        possible_cfs_charge_codes = self.possible_cfs_charge_codes()
+        for code, config in possible_cfs_charge_codes.items():
+            if 'mandatory' in config.get('tags', []):
+                if code not in grouped_charge_codes:
+                    self.cfs_line_items_error_messages[code] = ['is not present']
+                    self.is_cfs_line_items_error_messages_present = True
+
+            if 'additional_service' in config.get('tags', []) or 'shipment_execution_service' in config.get('tags', []):
+                if grouped_charge_codes.get(code) is None:
+                    self.cfs_line_items_info_messages[code] = ['can be added for more conversion']
+                    self.is_cfs_line_items_info_messages_present = True
+
+        self.save()

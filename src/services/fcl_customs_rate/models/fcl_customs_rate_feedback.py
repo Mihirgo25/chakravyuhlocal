@@ -6,7 +6,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from configs.fcl_customs_rate_constants import FEEDBACK_SOURCES, FEEDBACK_TYPES
 from micro_services.client import spot_search, checkout
 from database.rails_db import *
-from configs.definitions import FCL_CUSTOMS_CHARGES
+from configs.definitions import FCL_CUSTOMS_CURRENCIES
 
 class BaseModel(Model):
     class Meta:
