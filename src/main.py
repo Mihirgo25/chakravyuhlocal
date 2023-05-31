@@ -22,6 +22,7 @@ from services.haulage_freight_rate.haulage_freight_rate_router import haulage_fr
 from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
 from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from micro_services.client import *
+import uvicorn
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
     environment="production",
@@ -106,3 +107,9 @@ def read_root():
 @app.get('/fcl_freight_rate/health')
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
+
+
+###Remove this later
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -42,6 +42,8 @@ class FclCfsRate(BaseModel):
     cargo_handling_type = CharField(index=True,null=True)
     importer_exporter_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
+    procured_by_id = UUIDField(null=True)
+    sourced_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
     sourced_by = BinaryJSONField(null=True)
     location = BinaryJSONField(null=True)

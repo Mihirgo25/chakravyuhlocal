@@ -1,5 +1,4 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
-from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from peewee import *
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
@@ -29,7 +28,10 @@ def get_page(query, page, page_limit):
 
 def apply_direct_filters(query, filters):
     direct_filters = {k: v for k, v in filters.items() if k in POSSIBLE_DIRECT_FILTERS}
-    return query.where(**direct_filters)
+    for k, v in direct_filters.items():
+        query = query.where(getattr(FclCfsRateRequest, k) == v)
+    return query
+
 
 def apply_indirect_filters(query, filters):
     indirect_filters = {k: v for k, v in filters.items() if k in POSSIBLE_INDIRECT_FILTERS}
@@ -113,15 +115,15 @@ def add_service_objects(data):
         obj['preferred_freight_rate_currency'] = obj.get('preferred_rate_currency', None)
 
 
-def get_pagination_data(query, page, page_limit):
-    total_count = query.count()
-    total_pages = (total_count + page_limit - 1) // page_limit
-    return {
-        'page': page,
-        'total': total_pages,
-        'total_count': total_count,
-        'page_limit': page_limit
-    }
+# def get_pagination_data(query, page, page_limit):
+#     total_count = query.count()
+#     total_pages = (total_count + page_limit - 1) // page_limit
+#     return {
+#         'page': page,
+#         'total': total_pages,
+#         'total_count': total_count,
+#         'page_limit': page_limit
+#     }
 
 def get_stats(query, is_stats_required, performed_by_id):
     if not is_stats_required:

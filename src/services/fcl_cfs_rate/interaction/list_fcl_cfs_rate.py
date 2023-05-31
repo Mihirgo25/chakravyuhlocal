@@ -1,12 +1,13 @@
 from typing import List, Dict
 from peewee import *
 import json
+from playhouse.shortcuts import model_to_dict
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 POSSIBLE_DIRECT_FILTERS = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type']
 POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'importer_exporter_present', 'is_rate_available']
 
 
-def list_fcl_cfs_rate(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False,pagination_data_required=True ):
+def list_fcl_cfs_rate(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False):
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -21,7 +22,7 @@ def list_fcl_cfs_rate(filters = {}, page_limit = 10, page = 1, sort_by = 'update
     return {'list': data}
 
 def get_query(filters, sort_by, sort_type, page, page_limit):
-    query = FclCfsRate.select().order_by(f"{sort_by} {sort_type}").paginate(page, page_limit)
+    query = FclCfsRate.select().order_by(eval(f"FclCfsRate.{sort_by}.{sort_type}()")).paginate(page, page_limit)
     return query
 
 def apply_direct_filters(query, filters):
@@ -45,7 +46,7 @@ def apply_is_rate_available_filter(query, _):
     return query
 
 def get_data(query):
-    fields = [
+    query_result = query.select(
         FclCfsRate.id,
         FclCfsRate.location_id,
         FclCfsRate.service_provider_id,
@@ -54,14 +55,11 @@ def get_data(query):
         FclCfsRate.commodity,
         FclCfsRate.container_type,
         FclCfsRate.container_size,
-        FclCfsRate.line_items,
-        FclCfsRate.free_days,
-        FclCfsRate.is_line_items_error_messages_present,
-        FclCfsRate.is_line_items_info_messages_present,
-        FclCfsRate.line_items_error_messages,
-        FclCfsRate.line_items_info_messages,
-        FclCfsRate.cargo_handling_type
-    ]
-    data = query.select(*fields).dicts()
+        FclCfsRate.cfs_line_items,
+        FclCfsRate.is_cfs_line_items_error_messages_present,
+        FclCfsRate.is_cfs_line_items_info_messages_present,
+        FclCfsRate.cfs_line_items_error_messages,
+        FclCfsRate.cfs_line_items_info_messages,
+        FclCfsRate.cargo_handling_type).dicts()
 
-    return list(data)
+    return list(query_result)
