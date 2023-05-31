@@ -1,5 +1,4 @@
 
-
 from micro_services.client import maps
 from libs.get_distance import get_distance
 import httpx, json
@@ -16,17 +15,17 @@ def get_land_route_from_valhalla(location_ids):
         'accept': 'application/json'
     }
     response = httpx.get(url, params=params, headers=headers)
-    
+
     # Access the response data
     data = response.json()
-    
+
     # Do something with the response data
     return data
 
 def get_road_route(origin_location_id, destination_location_id):
-    
+
     location_ids = [origin_location_id,destination_location_id]
-    
+
     data = get_land_route_from_valhalla(location_ids)
     if isinstance(data, dict):
         return data
@@ -45,7 +44,7 @@ def get_path_data(origin_location_id, destination_location_id, location_data):
         route_distance['time'] = route_distance['time']/3600
         route_distance['is_valhala'] = True
         return route_distance
-    
+
     origin_location = (location_data[origin_location_id]["latitude"], location_data[origin_location_id]["longitude"])
     destination_location = (location_data[destination_location_id]["latitude"], location_data[destination_location_id]["longitude"])
     coords_1 = origin_location
@@ -59,7 +58,7 @@ def get_path_data(origin_location_id, destination_location_id, location_data):
                 location_details.append(location_data[location_ids][location_key])
     return {
         'location_details':location_details,
-         'distance':distance, 
+         'distance':distance,
          'time': transit_time,
          'is_valhala':False
     }

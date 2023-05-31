@@ -1,8 +1,6 @@
 from services.ftl_freight_rate.rate_estimators.IN_ftl_freight_rate_estimator import INFtlFreightRateEstimator
-from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING,TRUCK_TYPES_MILEAGE_MAPPING
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_path_data
-import pdb
 class FtlFreightEstimator:
     def __init__(self, origin_location_id, destination_location_id,location_data_mapping,truck_and_commodity_data):
         self.origin_location_id = origin_location_id
@@ -16,18 +14,17 @@ class FtlFreightEstimator:
         is_location_data_from_valhala = path_data['is_valhala']
         country_category  = self.get_country_code()
         if country_category == 'IN':
-            pdb.set_trace()
             average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','INR')
             estimator = INFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
             return { 'is_price_estimated': bool(price), 'price': price['base_rate'],'distance':price['distance'],'currency':price['currency'] }
-    
+
     def get_path_from_valhala(self):
         origin_location_id  = self.origin_location_id
         destination_location_id = self.destination_location_id
         path_data = get_path_data(origin_location_id,destination_location_id,self.location_data_mapping)
         return path_data
-    
+
 
     def get_average_fuel_price(self,from_valhala,path_data,fuel_type,currency):
         location_ids = []
@@ -40,7 +37,7 @@ class FtlFreightEstimator:
                         location_ids.append(data[f"{location_type}_id"])
         else:
             location_ids = path_data
-            
+
         location_ids = list(set(location_ids))
         all_fuel_price = FuelData.select(FuelData.fuel_price, FuelData.fuel_unit).where(
             FuelData.location_id << location_ids,
@@ -54,7 +51,7 @@ class FtlFreightEstimator:
             avg_fuel_price += float(fuel_price_data['fuel_price'])
 
         return avg_fuel_price / len(all_fuel_price)
-        
+
 
     def get_country_code(self):
         origin_country_code = self.location_data_mapping[self.origin_location_id]['country_code']

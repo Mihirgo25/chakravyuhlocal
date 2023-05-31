@@ -83,47 +83,11 @@ PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1" #kshitij sharma
 INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
 
 
-TRUCK_TYPES_MAPPING = {
-    'open_body_pickup_1ton': {'tyre': 4,'weight': 1,'mileage':17,'mileage_unit':'kmpl', 'truck_type':'small'},
-    'open_body_tata_ace_750_800kgs': {'tyre': 4,'weight': 1,'volume': 161.28, 'mileage': 21,'mileage_unit':'kmpl','truck_type':'small'},
-    'open_body_tata_407_2.5ton': {'tyre': 4,'weight': 2.5, 'volume': 247.5, 'mileage': 8,'mileage_unit':'kmpl','truck_type':'medium'},
-    'open_body_LCV_14ft_4ton': {'tyre': 4,'weight': 4, 'volume': 546, 'mileage': 7,'mileage_unit':'kmpl','truck_type':'medium'},
-    'open_body_LCV_17ft_5ton': {'tyre': 4,'weight': 5, 'volume': 714, 'mileage': 6.5,'mileage_unit':'kmpl','truck_type':'medium'},
-    'open_body_LCV_19ft_7ton': {'tyre': 4,'weight': 7, 'volume': 931, 'mileage': 6,'mileage_unit':'kmpl','truck_type':'medium'},
-    'open_body_6tyre_19_24ft_9ton': {'tyre': 6,'weight': 9, 'volume': 857.5, 'mileage': 5.2,'mileage_unit':'kmpl','truck_type':'medium'},
-    'open_body_10tyre_taurus_22ft_16ton': {'tyre': 10,'weight': 16, 'volume': 1058.4, 'mileage': 4,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_body_12tyre_taurus_22ft_22ton': {'tyre': 12,'weight': 22, 'volume': 1226.4, 'mileage': 3.9,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_body_14tyre_taurus_22ft_26ton': {'tyre': 14,'weight': 26, 'volume': 1528.8, 'mileage': 3.5,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_body_18tyre_28ton': {'tyre': 18,'weight': 28, 'volume': 1680, 'mileage': 3.4,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_body_22tyre_35ton': {'tyre': 22,'weight': 35, 'volume': 2063.12, 'mileage': 3,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_body_14tyre_30ton': {'tyre': 14,'weight': 30, 'volume': 1836.8, 'mileage': 3.4,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_body_12tyre_taurus_24ft_25ton': {'tyre': 12,'weight': 25, 'volume': 1310.4, 'mileage': 3.6,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_body_14tyre_taurus_25ft_26ton': {'tyre': 14,'weight': 26, 'volume': 1528.8, 'mileage': 3.5,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'closed_body_LCV_14ft_3.5ton': {'tyre': 6,'weight': 3.5, 'volume': 546, 'mileage': 7.5,'mileage_unit':'kmpl','truck_type':'medium'},
-    'closed_body_LCV_17ft_5ton': {'tyre': 6,'weight': 5, 'volume': 714, 'mileage': 6.5,'mileage_unit':'kmpl','truck_type':'medium'},
-    'closed_body_LCV_19ft_7ton': {'tyre': 6,'weight': 7, 'volume': 931, 'mileage': 6,'mileage_unit':'kmpl','truck_type':'medium'},
-    'closed_body_32ft_single_axle_7ton': {'tyre': 10,'weight': 7, 'volume': 2048, 'mileage': 5.6,'mileage_unit':'kmpl','truck_type':'medium'},
-    'closed_body_32ft_single_axle_HQ_7ton': {'tyre': 10,'weight': 7, 'volume': 2073.6, 'mileage': 5,'mileage_unit':'kmpl','truck_type':'medium'},
-    'closed_body_19_22ft_single_axle_7ton': {'tyre': 8,'weight': 7, 'volume': 1280, 'mileage': 6,'mileage_unit':'kmpl','truck_type':'medium'},
-    'closed_body_24ft_single_axle_7ton': {'tyre': 8,'weight': 7, 'volume': 1310, 'mileage': 5.4,'mileage_unit':'kmpl','truck_type':'medium'},
-    'closed_body_24ft_multi_axle_14_15_ton': {'tyre': 10,'weight': 15, 'volume': 1536, 'mileage': 5.2,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'closed_body_32ft_multi_axle_HQ_14_15_ton': {'tyre': 12,'weight': 15, 'volume': 1680, 'mileage': 4.4,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'closed_body_32ft_multi_axle_14_15_ton': {'tyre': 14,'weight': 15, 'volume': 1600, 'mileage': 5.2,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'closed_body_32ft_triple_axle_20_21_ton': {'tyre': 16,'weight': 21, 'volume': 2560, 'mileage': 4,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'closed_body_32ft_triple_axle_HQ_20_21_ton': {'tyre': 18,'weight': 21, 'volume': 2610, 'mileage': 3.9,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_40ft_flat_bed_trailor_20_25ton': {'tyre': 20,'weight': 25, 'volume': 2048, 'mileage': 3.6,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_40ft_semi_low_bed_trailor_20_25ton': {'tyre': 20,'weight': 25, 'volume': 2073.6, 'mileage': 3.5,'mileage_unit':'kmpl','truck_type':'heavy'},
-    'open_40ft_low_bed_trailor_20_25_30ton': {'tyre': 22,'weight': 30, 'volume': 2560, 'mileage': 3.2,'mileage_unit':'kmpl','truck_type':'medium'}
-}
-TRUCK_TYPES_MILEAGE_MAPPING = {
-    'small':{'weight_lower_limit':0,'weight_upper_limit':3,'mileage':17},
-    'medium':{'weight_lower_limit':4,'weight_upper_limit':14,'mileage':5.2},
-    'heavy':{'weight_lower_limit':15,'weight_upper_limit':30,'mileage':3.5},
-}
+
 BASIC_CHARGE_LIST = ['toll','tyre', 'maintenance', 'driver', 'insurance', 'loading_unloading']
 
 HAZ_CLASSES = [
-    "hazardous"
+    "hazardous",
     "gases-2.1",
     "gases-2.2",
     "gases-2.3",
@@ -143,4 +107,11 @@ CONSUMER_DURABLE_COMMODITIES = ["fmcg", "fmcg_consumer_durables", "consumer_dura
 DISTANCE_FACTOR = {
     'km':1,
     'mi':0.621371
+}
+
+TRUCK_TYPES_MAPPING = {
+    'small' : {'lower_limit':0,'upper_limit':2},
+    'medium' : {'lower_limit':2,'upper_limit':14},
+    'heavy': {'lower_limit':14,'upper_limit':40},
+
 }

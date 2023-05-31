@@ -11,15 +11,15 @@ from fastapi.responses import JSONResponse
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
-from services.ftl_freight_rate.insert import insert
+# from services.ftl_freight_rate.insert import insert
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
+from services.ftl_freight_rate.ftl_freight_router import ftl_freight_router
 from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
-from services.ftl_freight_rate.ftl_freight_rate_router import ftl_freight_router
 
 from micro_services.client import *
 sentry_sdk.init(
@@ -36,6 +36,8 @@ app = FastAPI(docs_url=docs_url,debug=True)
 
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
+app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router)
+
 app.include_router(prefix="/fcl_freight_rate", router=envision_router)
 app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router)
 app.include_router(prefix="/fcl_freight_rate", router=trailer_router)
@@ -94,6 +96,7 @@ def startup():
 
 
 
+
 @app.on_event("shutdown")
 def shutdown():
     if not db.is_closed():
@@ -106,3 +109,14 @@ def read_root():
 @app.get('/fcl_freight_rate/health')
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
+
+
+
+
+
+
+
+
+
+
+

@@ -1,7 +1,7 @@
 from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
 from fastapi import HTTPException
 from database.db_session import db
-from services.ftl_freight_rate.models.ftl_service_audits import FtlServiceAudit
+from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
 
 
 def get_extension_rule_set_object(request):
@@ -15,7 +15,7 @@ def get_extension_rule_set_object(request):
         'process_currency' : request.get('process_currency'),
         'status' : request.get('status')
     }
-    
+
     extension_rule_set = FtlFreightRateRuleSet.select().where(
         FtlFreightRateRuleSet.location_id == request.get('location_id'),
         FtlFreightRateRuleSet.location_type == request.get('location_type'),
@@ -38,14 +38,14 @@ def create_ftl_rule_set_data(request):
 
 def execute_transaction_code(request):
   rule_set = get_extension_rule_set_object(request)
- 
+
   try:
       rule_set.save()
   except:
       raise HTTPException(status_code=500, detail='ftl rule set did not save')
-  
+
   create_audit(request,rule_set.id)
-  
+
   return {"id": rule_set.id}
 
 def create_audit(request, rule_set_id):
@@ -57,4 +57,3 @@ def create_audit(request, rule_set_id):
         object_id = rule_set_id,
         object_type = 'FtlFreightRateRuleSet'
     )
-    
