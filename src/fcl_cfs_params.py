@@ -1,8 +1,7 @@
 from pydantic import BaseModel
-from datetime import datetime, timedelta,date
+from datetime import datetime
 from peewee import *
 from typing import List
-from dateutil.relativedelta import relativedelta
 
 class Slab(BaseModel):
   lower_limit: float
@@ -91,3 +90,22 @@ class UpdateFclCfsRate(BaseModel):
     bulk_operation_id: str = None
     line_items: list[StandardLineItem] = []
     free_limit: int = None
+    
+class Filters(BaseModel):
+  filters: list = []
+
+class AddMarkUp(BaseModel):
+  filters : dict = {}
+  markup : float
+  line_item_code : str
+  markup_type : str
+  markup_currency : str = None
+
+  
+class CreateFclCfsRateBulkOperation(BaseModel):
+  performed_by_id: str 
+  service_provider_id: str 
+  sourced_by_id: str 
+  procured_by_id: str 
+  delete_rate: list[Filters] = None
+  add_markup: list[AddMarkUp] = None
