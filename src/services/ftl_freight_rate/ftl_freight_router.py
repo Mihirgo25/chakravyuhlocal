@@ -28,11 +28,11 @@ ftl_freight_router = APIRouter()
 def get_ftl_freight_rates(
     origin_location_id: str = None,
     destination_location_id: str = None,
-    commodity_type: str = None,
-    truck_type: str = None,
-    truck_body_type: str = None,
-    commodity_weight: float = None,
     trip_type: str = "one_way",
+    truck_type: str = None,
+    commodity_type: str = None,
+    commodity_weight: float = None,
+    truck_body_type: str = None,
 ):
     # if resp['status_code'] != 200:
     #     return JSONResponse(status_code=resp["status_code"], content=resp)
