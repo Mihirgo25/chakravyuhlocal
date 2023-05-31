@@ -21,8 +21,8 @@ def get_update_params(request):
 
 def update_air_freight_rate_surcharge(request):
     object_type = 'Air_Freight_Rate_Surcharge' 
-    query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
-    db.execute_sql(query)
+    # query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_","")) 
+    # db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
     
@@ -31,12 +31,16 @@ def execute_transaction_code(request):
     if not air_freight_rate_surcharge:
         raise HTTPException(status_code=400, detail=" Surcharge not found")
     
-    air_freight_rate_surcharge['line_items']=request.get('line_items')
+    air_freight_rate_surcharge.line_items=request.get('line_items')
 
-    if not air_freight_rate_surcharge.save():
-        raise HTTPException(status_code=500, detail="Surcharge not updated")
+   
     
     air_freight_rate_surcharge.update_line_item_messages()
+
+    try:
+        air_freight_rate_surcharge.save()
+    except Exception:
+        raise HTTPException(status_code=500, detail="Surcharge not updated")
 
     create_audit(request)
 

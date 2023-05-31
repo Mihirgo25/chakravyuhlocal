@@ -95,3 +95,9 @@ TRADE_TYPES = ['import', 'export', 'domestic']
 ALLOWED_RATE_PRODUCER_METHODS = ['minimum', 'maximum', 'latest']
 
 DEAFULT_RATE_PRODUCER_METHOD = 'latest'
+
+AIR_STANDARD_COMMODITIES = ['general', 'perishable', 'live_animals', 'pharma']
+
+AIR_HAZARDOUS_COMMODITIES = ['hazardous']
+
+

@@ -1,4 +1,5 @@
 from database.db_session import db
+<<<<<<< HEAD
 from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
 from services.haulage_freight_rate.models.wagon_types import WagonTypes
@@ -8,6 +9,17 @@ def create_table():
     try:
         # db.create_tables([TrailerFreightRateCharges, HaulageFreightRateRuleSet, WagonTypes])
         db.create_tables([AirFreightRateLocal])
+=======
+from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
+
+
+
+def create_table():
+    # db.connect()
+    try:
+        db.create_tables([AirFreightRateSurcharge,AirServiceAudit])
+>>>>>>> 12c3251ab5225eda61f612ae910abbdf7f40028b
         db.close()
 
         print("created table")
