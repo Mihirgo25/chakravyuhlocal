@@ -84,7 +84,7 @@ INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
 
 
 
-BASIC_CHARGE_LIST = ['toll','tyre', 'maintenance', 'driver', 'insurance', 'loading_unloading']
+BASIC_CHARGE_LIST = ['toll','tyre', 'maintenance', 'driver', 'insurance']
 
 HAZ_CLASSES = [
     "hazardous",
