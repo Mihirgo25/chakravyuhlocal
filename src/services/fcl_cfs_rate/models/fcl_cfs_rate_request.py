@@ -80,7 +80,7 @@ class  FclCfsRateRequest(BaseModel):
             'location_id': [self.port_id, self.country_id] if self.country_id else [self.port_id]
         }
         supply_agents_list = partner.list_partner_user_expertises({'filters': filters, 'pagination_data_required':False, 'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
-        supply_agents_user_ids = partner.list_partner_users(filters={'id': supply_agents_list}, pagination_data_required=False, page_limit=MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT)['list']
+        supply_agents_user_ids = partner.list_partner_users({'filters': {'id': supply_agents_list}, 'pagination_data_required':False, 'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
         data = {
             'type': 'platform_notification',
             'service': 'spot_search',
