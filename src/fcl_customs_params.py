@@ -40,7 +40,6 @@ class CreateFclCustomsRateBulkOperation(BaseModel):
   service_provider_id: str
   sourced_by_id: str
   procured_by_id: str
-  cogo_entity_id: str = None
   delete_rate: DeleteRate = None
   add_markup: AddMarkup = None
   performed_by_type: str
