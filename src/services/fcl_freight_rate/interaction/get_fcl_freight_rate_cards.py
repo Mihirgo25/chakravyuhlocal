@@ -600,8 +600,8 @@ def build_response_object(freight_query_result, request):
     source = 'spot_rates'
     if freight_query_result['mode'] == 'predicted':
         source = 'predicted'
-    # elif freight_query_result['rate_type'] != 'market_place':
-    #     source = freight_query_result['rate_type']
+    elif freight_query_result['rate_type'] != 'market_place':
+        source = freight_query_result['rate_type']
     response_object = {
       'shipping_line_id': freight_query_result['shipping_line_id'],
       'origin_port_id': freight_query_result['origin_port_id'],
@@ -638,7 +638,7 @@ def build_response_list(freight_rates, request):
     grouping = {}
     for freight_rate in freight_rates:
         # if freight_query_result['freight']['origin_main_port_id'] and freight_query_result['freight']['destination_main_port_id']:
-        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or ""])
+        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or "", freight_rate['rate_type'] or ""])
         if grouping.get(key) and grouping[key].get('importer_exporter_id'):
             continue
         response_object = build_response_object(freight_rate, request)
