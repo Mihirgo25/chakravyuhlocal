@@ -8,7 +8,7 @@ from fastapi import HTTPException
 
 from services.chakravyuh.interaction.create_fcl_freight_rate_estimation import create_fcl_freight_rate_estimation
 from services.chakravyuh.interaction.create_demand_transformation import create_demand_transformation
-from services.chakravyuh.interaction.create_cost_booking_transformation import create_cost_booking_transformation
+from services.chakravyuh.interaction.get_cost_booking_transformation import get_cost_booking_transformation
 from services.chakravyuh.interaction.create_revenue_target import create_revenue_target
 
 # get apis
@@ -48,14 +48,14 @@ def create_revenue_target_func(request: PostRevenueTarget, resp:dict = Depends(a
     target = create_revenue_target(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content=jsonable_encoder(target))
 
-@chakravyuh_router.post("/create_cost_booking_transformation")
-def create_cost_booking_transformation_func():
+@chakravyuh_router.post("/get_cost_booking_transformation")
+def get_cost_booking_transformation_func():
     # if resp["status_code"] != 200:
     #     return JSONResponse(status_code=resp["status_code"], content=resp)
     # if resp["isAuthorized"]:
     #     request.performed_by_id = resp["setters"]["performed_by_id"]
     #     request.performed_by_type = resp["setters"]["performed_by_type"]
-    target = create_cost_booking_transformation()
+    target = get_cost_booking_transformation()
     # return JSONResponse(status_code=200, content=jsonable_encoder(target))
 
 @chakravyuh_router.get('/list_fcl_freight_rate_estimations')

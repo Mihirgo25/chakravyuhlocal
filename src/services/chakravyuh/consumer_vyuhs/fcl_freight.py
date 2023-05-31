@@ -2,6 +2,7 @@ from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRat
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 from datetime import datetime
+from services.chakravyuh.interaction.get_cost_booking_transformation import get_cost_booking_transformation
 
 class FclFreightVyuh():
     def __init__(self, freight_rates: list = [], requirements: dict = {}):
@@ -59,6 +60,9 @@ class FclFreightVyuh():
     
     def get_probable_customer_transformations(self):
         return []
+    
+    def get_probable_booking_data_tranformation(self):
+        return get_cost_booking_transformation()
     
     def get_most_eligible_customer_transformation(self, probable_customer_transformations):
         return probable_customer_transformations[0]
@@ -183,8 +187,32 @@ class FclFreightVyuh():
             new_validities.append(validity)
         rate['validities'] = new_validities
         return rate
+    
 
-    def apply_transformation(self, rate, probable_transformations, probable_customer_transformations):
+    def apply_booking_data_transformation(self, rate, probable_booking_data_transformations):
+        print(probable_booking_data_transformations)
+        all_prices=[]
+
+        for data in probable_booking_data_transformations:
+            price=data['price']
+            converted_price=price
+            if data['currency'] != 'USD':
+                converted_price = common.get_money_exchange_for_fcl({"price": price, "from_currency": data['currency'], "to_currency": 'USD' })['price']
+            all_prices.append(converted_price)
+
+        size = len(all_prices)
+        mean = sum(all_prices) / size
+        variance = sum([((x - mean) ** 2) for x in all_prices]) / size
+        std_dev = variance ** 0.5
+        lower_limit = mean - 1 * std_dev # -1 sigma
+        upper_limit = mean + 1 * std_dev # 1 sigma
+        print(lower_limit)
+        print(upper_limit)
+
+
+
+
+    def apply_transformation(self, rate, probable_transformations, probable_customer_transformations,probable_booking_data_transformations):
         rate_specific_transformations = []
         for pt in probable_transformations:
             if (not pt['shipping_line_id'] or pt['shipping_line_id'] == rate['shipping_line_id']):
@@ -197,7 +225,11 @@ class FclFreightVyuh():
             
         if len(probable_customer_transformations) > 0:
             new_rate = self.apply_customer_transformation(rate=new_rate, probable_customer_transformations=probable_customer_transformations)
+            print(new_rate)
 
+        if len(probable_booking_data_transformations)>0:
+            new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
+            print(new_rate)
         return new_rate
 
     def apply_dynamic_pricing(self):
@@ -212,6 +244,8 @@ class FclFreightVyuh():
 
         probable_customer_transformations = self.get_probable_customer_transformations()
 
+        probable_booking_data_transformations=self.get_probable_booking_data_tranformation()
+
         new_freight_rates = []
 
         for freight_rate in self.freight_rates:
@@ -219,6 +253,7 @@ class FclFreightVyuh():
                 rate=freight_rate, 
                 probable_transformations=probable_transformations,
                 probable_customer_transformations=probable_customer_transformations,
+                probable_booking_data_transformations=probable_booking_data_transformations
             )
             new_freight_rates.append(new_freight_rate)
         
