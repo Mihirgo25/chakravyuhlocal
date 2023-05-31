@@ -16,7 +16,7 @@ class FclCfsRateBulkOperation(Model):
     service_provider_id = CharField(null = True)
     performed_by_id = CharField(null = True)
     data = BinaryJSONField(null=True)
-    progress = IntegerField(null=True, max_length = 4)
+    progress = IntegerField(null=True)
     action_name = CharField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)

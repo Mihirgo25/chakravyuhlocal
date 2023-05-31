@@ -1,7 +1,6 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_cfs_rate.models.fcl_cfs_audits import FclCfsRateAudits
-from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_platform_prices_for_other_service_providers
 from celery_worker import delay_fcl_cfs_functions
 
 def get_audit_params(request):
@@ -58,8 +57,7 @@ def create_fcl_cfs_rates(request):
     audit_params = get_audit_params(request)
     FclCfsRateAudits.create(**audit_params)
 
-    update_platform_prices_for_other_service_providers(request)
-
+    freight.update_platform_prices_for_other_service_providers()
     delay_fcl_cfs_functions.apply_async(kwargs={'fcl_cfs_object':freight,'request':request},queue='low')
     
     return {
