@@ -6,9 +6,9 @@ import json
 from peewee import fn, SQL
 from fastapi.encoders import jsonable_encoder
 
-possible_direct_filters = ['location_ids']
+possible_direct_filters = ['procured_by_id']
 
-possible_indirect_filters = ['procured_by_id']
+possible_indirect_filters = ['location_ids']
 
 def get_fcl_customs_rate_addition_frequency(group_by, filters = {}, sort_type = 'desc'):
     query = get_query()
@@ -41,5 +41,7 @@ def get_data(query, sort_type, group_by):
         ).order_by(eval(f"fn.date_trunc('{group_by}', FclCustomsRate.updated_at).{sort_type}()")))
     return jsonable_encoder(list(data.dicts()))
 
-def apply_procured_by_id_filter(query, filters):
-    return query.where(FclCustomsRate.procured_by_id == filters['procured_by_id'])
+def apply_location_ids_filter(query, filters):
+    location_ids = filters['location_ids']
+    query = query.where(FclCustomsRate.location_ids.contains(location_ids))
+    return query 

@@ -43,12 +43,10 @@ def execute_transaction_code(request):
     try:
         customs_feedback.save()
     except:
-        raise
+        raise HTTPException(status_code=500, detail='Feedback did not Save')
 
     create_audit(request, customs_feedback)
     update_multiple_service_objects.apply_async(kwargs={'object':customs_feedback},queue='low')
-
-    create_audit(request)
 
     return {
       'id': request.get('rate_id')
@@ -69,8 +67,6 @@ def get_create_params(request):
 
 def create_audit(request, customs_feedback):
     FclCustomsRateAudit.create(
-        created_at = datetime.now(),
-        updated_at = datetime.now(),
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
         object_id = customs_feedback.id,
         object_type = 'FclFreightRateFeedback',
