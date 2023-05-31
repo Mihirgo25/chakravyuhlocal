@@ -316,7 +316,8 @@ def get_cost_booking_data(origin_country_id, destination_country_id, codes=None)
                 shipment_fcl_freight_services.container_size,
                 shipment_fcl_freight_services.container_type,
                 line_item ->> 'price' as price, 
-                line_item ->> 'currency' as currency
+                line_item ->> 'currency' as currency,
+                shipment_fcl_freight_services.containers_count
             FROM
                 shipment_collection_parties
             INNER JOIN
@@ -346,6 +347,7 @@ def get_cost_booking_data(origin_country_id, destination_country_id, codes=None)
                     "container_type":res[7],
                     "price":res[8],
                     "currency":str(res[9]),
+                    "containers_count":str(res[10])
                 }
                 all_result.append(new_obj)
             cur.close()

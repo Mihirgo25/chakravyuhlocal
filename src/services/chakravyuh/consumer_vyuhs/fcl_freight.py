@@ -198,7 +198,8 @@ class FclFreightVyuh():
             converted_price=price
             if data['currency'] != 'USD':
                 converted_price = common.get_money_exchange_for_fcl({"price": price, "from_currency": data['currency'], "to_currency": 'USD' })['price']
-            all_prices.append(converted_price)
+                converted_price=converted_price/data['containers_count']
+            all_prices.append(float(converted_price))
 
         size = len(all_prices)
         mean = sum(all_prices) / size
@@ -208,6 +209,7 @@ class FclFreightVyuh():
         upper_limit = mean + 1 * std_dev # 1 sigma
         print(lower_limit)
         print(upper_limit)
+ 
 
 
 
