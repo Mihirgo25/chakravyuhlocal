@@ -4,8 +4,9 @@ from playhouse.postgres_ext import *
 import datetime
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from configs.fcl_customs_rate_constants import FEEDBACK_SOURCES, FEEDBACK_TYPES
-from micro_services.client import partner, common, maps, spot_search, checkout
+from micro_services.client import spot_search, checkout
 from database.rails_db import *
+from configs.definitions import FCL_CUSTOMS_CURRENCIES
 
 class BaseModel(Model):
     class Meta:
@@ -15,16 +16,16 @@ class BaseModel(Model):
 class FclCustomsRateFeedback(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     source = CharField(index=True, null=True)
-    source_id = UUIDField(index=True, null=True)
+    source_id = UUIDField(null=True)
     performed_by_id = UUIDField(index=True, null=True)
-    performed_by_org_id = UUIDField(index=True, null=True)
+    performed_by_org_id = UUIDField(null=True)
     performed_by_type = CharField(index=True, null=True)
     preferred_customs_rate = DoubleField(null=True)
     preferred_customs_rate_currency = CharField(null=True)
     feedbacks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     fcl_customs_rate_id = UUIDField(null=True,index=True)
-    validity_id = UUIDField(index=True, null=True)
+    validity_id = UUIDField(null=True)
     outcome = CharField(null=True)
     outcome_object_id = UUIDField(null=True)
     booking_params = BinaryJSONField(null=True)
@@ -41,6 +42,13 @@ class FclCustomsRateFeedback(BaseModel):
     organization = BinaryJSONField(null=True)
     spot_search = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
+    location_id = UUIDField(null=True)
+    country_id = UUIDField(null=True)
+    trade_type = CharField(null=True)
+    port_id = UUIDField(null=True)
+    trade_id = UUIDField(null=True)
+    commodity = CharField(null=True, index=True)
+    service_provider_id = UUIDField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

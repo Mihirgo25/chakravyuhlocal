@@ -11,9 +11,9 @@ from peewee import fn, SQL,Window
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id']
+possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'port_id', 'trade_id', 'service_provider_id']
 
-possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'country_id', 'trade_type', 'port_id', 'trade_id', 'service_provider_id', 'supply_agent_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 
 def list_fcl_customs_rate_feedbacks(filters = {}, spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
     query = FclCustomsRateFeedback.select()
@@ -65,21 +65,21 @@ def apply_supply_agent_id_filter(query, filters):
                     (FclCustomsRateFeedback.country_id << location_id))
     return query
 
-def apply_country_id_filter(query, filters):
-    query = query.where(FclCustomsRateFeedback.country_id == filters['country_id'])
-    return query
+# def apply_country_id_filter(query, filters):
+#     query = query.where(FclCustomsRateFeedback.country_id == filters['country_id'])
+#     return query
 
-def apply_trade_type_filter(query, filters):
-    query = query.where(FclCustomsRateFeedback.trade_type == filters['trade_type'])
-    return query
+# def apply_trade_type_filter(query, filters):
+#     query = query.where(FclCustomsRateFeedback.trade_type == filters['trade_type'])
+#     return query
 
-def apply_port_id_filter(query, filters):
-    query = query.where(FclCustomsRateFeedback.port_id == filters['port_id'])
-    return query
+# def apply_port_id_filter(query, filters):
+#     query = query.where(FclCustomsRateFeedback.port_id == filters['port_id'])
+#     return query
 
-def apply_trade_id_filter(query, filters):
-    query = query.where(FclCustomsRateFeedback.trade_id == filters['trade_id'])
-    return query
+# def apply_trade_id_filter(query, filters):
+#     query = query.where(FclCustomsRateFeedback.trade_id == filters['trade_id'])
+#     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
     query = query.where(FclCustomsRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())

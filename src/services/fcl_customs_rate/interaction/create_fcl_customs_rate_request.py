@@ -2,8 +2,9 @@ from services.fcl_customs_rate.models.fcl_customs_rate_request import FclCustoms
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
-from micro_services.client import common, maps
+from micro_services.client import maps
 from celery_worker import create_communication_background
+from fastapi import HTTPException
 
 def create_fcl_customs_rate_request(request):
     with db.atomic():
@@ -35,7 +36,7 @@ def execute_transaction_code(request):
     try:
         customs_request.save()
     except:
-        raise
+        raise HTTPException(status_code=500, detail='Request did not save')
 
     create_audit(request, customs_request)
     send_notifications_to_supply_agents(request)
