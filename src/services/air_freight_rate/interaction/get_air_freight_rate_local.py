@@ -1,18 +1,20 @@
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 
 def get_air_freight_rate_local(request):
-    details = {}
     if all_fields_present(request):
         object = find_object(request)
-        if object:
-          details = object.detail()
+        details
+        print(object)
+          
     else:
       object=None
+
+    
     if not object:
         object=AirFreightRateLocal()
         for key in list(request.keys()):
             setattr(object,key,request[key])
-    return details | ({'local_charge_codes':object.possible_charge_codes()})
+    return detail ({'local_charge_codes':object.possible_charge_codes()})
 
 
 def all_fields_present(object_params):
@@ -29,6 +31,5 @@ def find_object(request):
     AirFreightRateLocal.service_provider_id == request.get('service_provider_id'),
     ).first()
     return object
-
 
     

@@ -58,6 +58,35 @@ class GetAirFreightRate(BaseModel):
     price_type:str=None
     cogo_entity_id:str=None
 
+class ListSlab(BaseModel):
+    lower_limit:int
+    upper_limit:int
+    price:float
+    currency:str
+
+class ListLineItems(BaseModel):
+    code:str
+    unit:str
+    price:float
+    min_price:float
+    currency:str
+    remarks:list=None
+
+class UpdateFrieghtRateLocal(BaseModel):
+    id:str=None
+    performed_by_id:str=None
+    sourced_by_id:str=None
+    procured_by_id:str=None
+    bulk_operation_id:str=None
+    line_items:list[ListLineItems]=None
+    slabs: list[ListSlab]=None
+
+
+
+
+
+
+
 
 
 
