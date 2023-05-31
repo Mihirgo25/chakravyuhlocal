@@ -5,6 +5,7 @@ import datetime
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 
+
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -41,6 +42,7 @@ class AirFreightRateLocal(BaseModel):
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField()
+    rate_type=CharField(null=True)
 
     class Meta:
         table_name = 'air_freight_rate_locals'
@@ -57,7 +59,70 @@ class AirFreightRateLocal(BaseModel):
 
         if len(unique_line_item_codes) != len(line_item_codes):
             self.errors.add('line_items', 'contains duplicates')
-    
+
+    def possible_charge_codes(self):
+        air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
+        charge_codes={}
+        for code,config in air_freight_local_charges_dict.items():
+            if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'deleted' not in config['tags']:
+                charge_codes[code] = config
+
+    def update_line_item_messages(self):
+        
+        self.line_items_error_messages = {}
+        self.line_items_info_messages = {}
+        self.is_line_items_error_messages_present = False
+        self.is_line_items_info_messages_present = False
+        grouped_charge_codes = {}
+        
+        
+        for line_item in self.line_items:
+            if line_item['code'] not in grouped_charge_codes:
+                grouped_charge_codes['line_items'] = []
+            grouped_charge_codes['line_items'].append(line_item)
+
+        for line_items in grouped_charge_codes['line_items']:
+            code_config=AIR_FREIGHT_LOCAL_CHARGES   
+            if not code_config:
+                self.line_items_error_messages[line_items['code']] = ['is invalid']
+                self.is_line_items_error_messages_present =True
+            
+            # if self.trade_type not in code_config['code']['trade_types']:     
+                   
+            #     self.line_items_error_messages[code] = ["can only be added for {}".format(", ".join(code_config['trade_types']))]
+            #     self.is_line_items_error_messages_present = True
+
+            if len(set(line_items['unit'])  - set(code_config[line_items['code']]["units"])) > 0:
+                self.line_items_error_messages[code] = ["can only be having units {}".format(", ".join(code_config["units"]))]
+                
+                self.is_line_items_error_messages_present = True
+                continue
+            
+            
+            # if not eval(str(code_config['condition'])):
+            #     print(12345678)
+            #     self.line_items_error_messages[line_items['code']] = ['is invalid']
+            #     self.is_line_items_error_messages_present = True
+
+            if 'tags' in code_config and 'weight_slabs_required' in code_config['tags'] and any(not t.get('slabs') for t in line_items):
+                
+                self.line_items_error_messages[line_items['code']] = ['weight slabs are required']
+                self.is_line_items_error_messages_present = True
+
+            for code, config in possible_charge_codes.items():
+                if 'mandatory' in config.get('tags', []):
+                    if not grouped_charge_codes[code]:
+                        self.line_items_error_messages[code] = ['is not present']
+                        self.is_line_items_error_messages_present = True
+
+            for code, config in possible_charge_codes.items(): 
+                if 'additional_service' in config.get('tags', []):
+                    if not grouped_charge_codes[code]:
+                        self.line_items_info_messages[code] = ['can be added for more conversion']
+                        self.is_line_items_info_messages_present = True
+            
+
+
     def update_freight_objects(self):
         location_key = 'origin' if self.trade_type == 'export' else 'destination'
 
@@ -79,11 +144,6 @@ class AirFreightRateLocal(BaseModel):
             (eval("FclFreightRate.{}_local_id".format(location_key)) == None)
         )
         t.execute()
-    
-    # def possible_charge_codes(self):
-    #     air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
-    #     charge_codes={}
-    #     for code,config in air_freight_local_charges_dict.items():
-    #         if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'deleted' not in config['tags']:
-    #             charge_codes[code] = config
+
+
         
