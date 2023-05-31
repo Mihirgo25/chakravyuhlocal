@@ -69,7 +69,7 @@ class DeleteFclCfsRate(BaseModel):
     payment_term: str = 'prepaid'
 
 class DeleteFclCfsRateRequest(BaseModel):
-  fcl_freight_rate_request_ids: List[str]
+  fcl_cfs_rate_request_ids: List[str]
   closing_remarks: List[str] = []
   performed_by_id: str = None
   performed_by_type: str = None

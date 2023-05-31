@@ -3,7 +3,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRa
 from database.db_session import db
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
-from celery_worker import create_communication_background
+from celery_worker import create_communication_background, update_multiple_service_objects
 from fastapi import HTTPException
 
 def create_fcl_customs_rate_request(request):
@@ -20,11 +20,11 @@ def execute_transaction_code(request):
     }
 
     customs_request = FclCustomsRateRequest.select().where(
-        FclCustomsRateRequest.source == request['source'],
-        FclCustomsRateRequest.source_id == request['source_id'],
-        FclCustomsRateRequest.performed_by_id == request['performed_by_id'],
-        FclCustomsRateRequest.performed_by_type == request['performed_by_type'],
-        FclCustomsRateRequest.performed_by_org_id == request['performed_by_org_id']).first()
+        FclCustomsRateRequest.source == request.get('source'),
+        FclCustomsRateRequest.source_id == request.get('source_id'),
+        FclCustomsRateRequest.performed_by_id == request.get('performed_by_id'),
+        FclCustomsRateRequest.performed_by_type == request.get('performed_by_type'),
+        FclCustomsRateRequest.performed_by_org_id == request.get('performed_by_org_id')).first()
 
     if not customs_request:
         customs_request = FclCustomsRateRequest(**search_params)
@@ -33,12 +33,16 @@ def execute_transaction_code(request):
     for attr, value in create_params.items():
         setattr(customs_request, attr, value)
 
+    customs_request.set_port()
+    customs_request.validate_source_id()
+    
     try:
         customs_request.save()
     except:
         raise HTTPException(status_code=500, detail='Request did not save')
 
-    create_audit(request, customs_request)
+    create_audit(request, customs_request.id)
+    update_multiple_service_objects.apply_async(kwargs={'object':customs_request},queue='low')
     send_notifications_to_supply_agents(request)
     
     return {
@@ -47,7 +51,7 @@ def execute_transaction_code(request):
 
 
 def supply_agents_to_notify(request):
-    locations_data = FclCustomsRateRequest.select(FclCustomsRateRequest.port_id, FclCustomsRateRequest.country_id).where(FclCustomsRateRequest.source_id == request.get('source_id')).get().dicts()
+    locations_data = FclCustomsRateRequest.select(FclCustomsRateRequest.port_id, FclCustomsRateRequest.country_id).where(FclCustomsRateRequest.source_id == request.get('source_id')).dicts().get()
     locations = list(filter(None,[str(value or "") for key,value in locations_data.items()]))
 
     supply_agents_data = get_partner_users_by_expertise('fcl_customs', locations )
@@ -56,7 +60,7 @@ def supply_agents_to_notify(request):
     supply_agents_user_data = get_partner_users(supply_agents_list)
     supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data])) if supply_agents_user_data else None
 
-    port_ids = [data.get('port_id') for data in locations_data]
+    port_ids = locations_data.get('port_id')
     try:
         route_data = maps.list_locations({'filters':{'id':port_ids}})['list']
     except Exception as e:
@@ -66,7 +70,8 @@ def supply_agents_to_notify(request):
     return { 'user_ids': supply_agents_user_ids, 'location': route.get(str(locations_data.get('port_id') or '')) }
 
 def send_notifications_to_supply_agents(request):
-    request_info = supply_agents_to_notify
+    request_info = supply_agents_to_notify(request)
+
     data = {
         'type': 'platform_notification',
         'service': 'spot_search',
@@ -78,18 +83,23 @@ def send_notifications_to_supply_agents(request):
         }
     }
 
-    for user_id in request_info.get('user_ids',[]):
+    for user_id in (request_info.get('user_ids') or []):
         data['user_id'] = user_id
         create_communication_background.apply_async(kwargs = {'data':data}, queue = 'communication')
 
 
-def create_audit(request, customs_request):
+def create_audit(request, customs_request_id):
+    performed_by_id = request.get('performed_by_id')
+    del request['performed_by_id']
+    if request.get('cargo_readiness_date'):
+        request['cargo_readiness_date'] = request.get('cargo_readiness_date').isoformat()
+    
     FclCustomsRateAudit.create(
-        object_id = customs_request.rate_id,
+        object_id = customs_request_id,
         action_name = 'create',
-        performed_by_id = request.get('performed_by_id'),
-        data = {key:value for key,value in request.items() if key != 'performed_by_id'},
-        object_type = 'FclFreightRateRequest'
+        performed_by_id = performed_by_id,
+        data = request,
+        object_type = 'FclCustomsRateRequest'
     )
 
 def get_create_params(request):
