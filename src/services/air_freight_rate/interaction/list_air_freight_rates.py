@@ -4,6 +4,7 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 from math import ceil
+from configs.global_constants import SEARCH_START_DATE_OFFSET
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'airline_id', 'commodity', 'operation_type', 'service_provider_id', 'rate_not_available_entry', 'price_type', 'shipment_type', 'stacking_type', 'commodity_type', 'cogo_entity_id', 'rate_type']
 
@@ -56,9 +57,61 @@ def apply_updated_at_filer(query,filters):
    query.where(AirFreightRate.updated_at > filters['updated_at'])   
    return query
 
-def apply_location_ids_filter(query,filters):
-    location_ids = filters['location_ids']
-    query.where('location_ids && ?', "{#{location_ids.join(',')}}")
+# def apply_location_ids_filter(query,filters):
+#     location_ids = filters['location_ids']
+#     query.where(AirFreightRate.location_ids.contains(location_ids))
+#     return query
+
+def apply_origin_location_ids_filter(query, filters):
+  locations_ids = filters['origin_location_ids']
+  query = query.where(AirFreightRate.origin_location_ids.contains(locations_ids))
+  return query
+
+def apply_destination_location_ids_filter(query,filters):
+  locations_ids = filters['destination_location_ids']
+  query = query.where(AirFreightRate.destination_location_ids.contains(locations_ids))
+  return query
+
+def apply_is_rate_about_to_expire_filter(query, filters):
+  query = query.where(AirFreightRate.last_rate_available_date != None).where(AirFreightRate.last_rate_available_date >= datetime.now().date()).where(AirFreightRate.last_rate_available_date < (datetime.now().date() + timedelta(days = SEARCH_START_DATE_OFFSET)))
+  return query
+
+def apply_is_rate_not_available_filter(query,filters):
+  query = query.where((AirFreightRate.last_rate_available_date == None) | (AirFreightRate.last_rate_available_date < datetime.now().date()))
+  return query
+
+def apply_is_rate_available_filter(query, filters):
+  query = query.where(AirFreightRate.last_rate_available_date >= datetime.now().date())
+  return query 
+
+def apply_density_category_filter(query,filters):
+    density_category = filters['density_category']
+    if density_category == 'general':
+        query=query.where("air_freight_rates.validity->>'density_category' = ? or (air_freight_rates.validity->>'density_category' is null)", 'general')
+    else:
+       query= query.where("air_freight_rates.validity->>'density_category' = ? and (air_freight_rates.validity->>'density_category' is not null)", density_category.to_s)
+
+def apply_is_rate_not_available_entry_filter(query,filters):
+   query=query.where(AirFreightRate.rate_not_available_entry==False)
+   return query
+
+def apply_last_rate_available_date_greater_than_filter(query,filters):
+    query=query.where(AirFreightRate.last_rate_available_date> filters['last_rate_available_date_greater_than'])
+    return query
+
+def apply_procured_by_id_filter(query,filters):
+   query = query.where(AirFreightRate.procured_by_id == filters['procured_by_id'])
+   return query
+
+def apply_partner_id_filter(query, filters):
+  cogo_entity_id = filters['partner_id']
+  if cogo_entity_id:
+    query = query.where(AirFreightRate.cogo_entity_id.in_([cogo_entity_id,None]))
+  else:
+    query = query.where(AirFreightRate.cogo_entity_id == None)
+  return query
+
+
 
 
 

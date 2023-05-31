@@ -15,7 +15,7 @@ def get_connection():
     return conn
 
 
-def get_shipping_line(id=None, short_name=None):
+def get_shipping_line(id=None, short_name=None,operator_type='shipping_line'):
     all_result = []
     try:
         newconnection = get_connection()  
@@ -23,7 +23,7 @@ def get_shipping_line(id=None, short_name=None):
             with newconnection.cursor() as cur:
                 if short_name:
                     sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.short_name = %s and operators.status = %s and operators.operator_type = %s'
-                    cur.execute(sql, (short_name,'active','shipping_line',))
+                    cur.execute(sql, (short_name,'active',operator_type,))
                 else:
                     if not isinstance(id, list):
                         id = (id,)

@@ -11,6 +11,12 @@ class WeightSlab(BaseModel):
     currency: str
     unit:str ='per_kg'
 
+class Slab(BaseModel):
+    lower_limit: float
+    upper_limit: float
+    price: float
+    currency: str
+
 class LineItem(BaseModel):
   code: str
   unit: str
@@ -19,7 +25,18 @@ class LineItem(BaseModel):
   min_price: float  
   remarks: list[str] = None
 
+class TaskLineItem(BaseModel):
+    location_id: str = None
+    code: str
+    unit: str
+    price: float
+    currency: str
+    market_price: float = None 
+    remarks: list[str] = None
+    slabs: list[Slab] = None
 
+class LocalData(BaseModel):
+    line_items: list[TaskLineItem]=None
 
 class DeleteAirFreightRate(BaseModel):
     id:str
@@ -104,19 +121,25 @@ class UpdateAirFreightRateSurcharge(BaseModel):
     sourced_by_id: str=None
     line_items: list[LineItem]
 
+class CreateAirFreightRateTask(BaseModel):
+    service: str=None
+    airport_id: str=None
+    commodity: str=None
+    commodity_type:str=None
+    trade_type: str=None
+    airline_id: str=None
+    logistics_service_type:str=None
+    source: str=None
+    task_type: str=None
+    shipment_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    rate: LocalData = None
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+class UpdateAirFreightRateTask(BaseModel):
+  id: str
+  performed_by_id: str=None
+  performed_by_type: str=None
+  rate: LocalData = None
+  status: str = None
+  closing_remarks: str = None
