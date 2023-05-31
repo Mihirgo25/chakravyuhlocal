@@ -57,6 +57,9 @@ class GetAirFreightRate(BaseModel):
     cargo_readiness_date:date
     price_type:str=None
     cogo_entity_id:str=None
+    trade_type:str=None
+    volume:float =None
+    predicted_rates_required:bool=False
 
 
 
