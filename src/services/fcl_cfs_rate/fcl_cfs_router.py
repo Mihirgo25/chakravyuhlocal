@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs_rates
 from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate import get_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
-from services.fcl_cfs_rate.interaction.get_cfs_rate_card import get_fcl_cfs_rate_card
+from services.fcl_cfs_rate.interaction.get_cfs_rate_cards import get_fcl_cfs_rate_cards
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate_request import list_fcl_cfs_rate_request
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_request import create_fcl_cfs_rate_request
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_not_available import create_fcl_cfs_rate_not_available
@@ -77,25 +77,39 @@ def get_cfs_rate_cards(trade_type: str,
                        port_id: str,
                        container_size: str,
                        container_type: str,
-                        importer_exporter_id: str,
                        containers_count: int, 
                        bls_count: int,
+                       importer_exporter_id: str = None,
                        country_id: str = None,
                        commodity: str = None,
                        cargo_weight_per_container: int = None,
-                       additional_services: List[str] = [],
+                       additional_services: List[str] | None= Query(None),
                        cargo_value: int = None, 
                        cargo_value_currency: str = None,
                        include_confirmed_inventory_rates: bool = False,
                        resp: dict = Depends(authorize_token)):
+    
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)    
     try:
-        data = get_fcl_cfs_rate_card(trade_type, cargo_handling_type, port_id, country_id,
-                             container_size, container_type, commodity, importer_exporter_id,
-                             containers_count, bls_count, cargo_weight_per_container,
-                             additional_services, cargo_value, cargo_value_currency,
-                             include_confirmed_inventory_rates)
+        request = {
+            'trade_type':trade_type,
+            'cargo_handling_type': cargo_handling_type,
+            'port_id':port_id,
+            'country_id':country_id,
+            'container_size':container_size,
+            'container_type':container_type,
+            'commodity':commodity,
+            'importer_exporter_id':importer_exporter_id,
+            'containers_count':containers_count,
+            'bls_count':bls_count,
+            'cargo_weight_per_container':cargo_weight_per_container,
+            'additional_services':additional_services,
+            'cargo_value':cargo_value,
+            'cargo_value_currency':cargo_value_currency,
+            'include_confirmed_inventory_rates':include_confirmed_inventory_rates
+        }
+        data = get_fcl_cfs_rate_cards(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
