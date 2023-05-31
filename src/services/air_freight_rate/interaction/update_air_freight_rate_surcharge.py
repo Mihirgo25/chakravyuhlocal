@@ -31,12 +31,15 @@ def execute_transaction_code(request):
     if not air_freight_rate_surcharge:
         raise HTTPException(status_code=400, detail=" Surcharge not found")
     
-    air_freight_rate_surcharge['line_items']=request.get('line_items')
+    air_freight_rate_surcharge.line_items=request.get('line_items')
 
    
     
     air_freight_rate_surcharge.update_line_item_messages()
-    if not air_freight_rate_surcharge.save():
+
+    try:
+        air_freight_rate_surcharge.save()
+    except Exception:
         raise HTTPException(status_code=500, detail="Surcharge not updated")
 
     create_audit(request)

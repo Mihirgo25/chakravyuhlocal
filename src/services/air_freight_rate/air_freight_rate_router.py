@@ -104,31 +104,32 @@ def create_air_freight_rate_surcharge_data(request: CreateAirFreightRateSurcharg
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         # request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_air_freight_rate_surcharge(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = create_air_freight_rate_surcharge(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/update_air_freight_rate_surcharge")
-def update_air_freight_rate_surcharge(request: UpdateAirFreightRateSurcharge, resp:dict = Depends(authorize_token)):
+def update_air_freight_rate_surcharge_data(request: UpdateAirFreightRateSurcharge, resp:dict = Depends(authorize_token)):
+   
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         
         # request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = update_air_freight_rate_surcharge(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = update_air_freight_rate_surcharge(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.get("/get_air_freight_rate_surcharge")
 def get_air_freight_rate_surcharge_data(
@@ -151,14 +152,14 @@ def get_air_freight_rate_surcharge_data(
         'service_provider_id':service_provider_id,
     }
 
-    # try:
-    data = get_air_freight_rate_surcharge(request)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code=200, content = data)
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = get_air_freight_rate_surcharge(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content = data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
     
