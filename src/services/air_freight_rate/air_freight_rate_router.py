@@ -19,6 +19,7 @@ from fastapi import HTTPException
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
 from services.air_freight_rate.interaction.get_air_freight_rate import get_air_freight_rate
+from services.air_freight_rate.interaction.list_air_freight_rate_surcharges import list_air_freight_rate_surcharges
 from services.air_freight_rate.interaction.get_air_freight_rate_surcharge import get_air_freight_rate_surcharge
 from services.air_freight_rate.interaction.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 from services.air_freight_rate.interaction.update_air_freight_rate_surcharge import update_air_freight_rate_surcharge
@@ -26,8 +27,11 @@ from services.air_freight_rate.interaction.create_air_freight_rate_task import c
 from services.air_freight_rate.interaction.get_air_freight_rate_local import get_air_freight_rate_local
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interaction.list_air_freight_rate_local import list_air_freight_rate_locals
+<<<<<<< Updated upstream
 from services.air_freight_rate.interaction.update_air_freight_rate_task import update_air_freight_rate_task_data
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
+=======
+>>>>>>> Stashed changes
 
 air_freight_router = APIRouter()
 
@@ -165,13 +169,31 @@ def update_air_freight_rates_locals(request: UpdateFrieghtRateLocal, resp:dict =
     #     request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_air_freight_rate_local(request.dict(exclude_none=True))
+<<<<<<< Updated upstream
+=======
+    except:
+        pass
+    
+@air_freight_router.post("/create_air_freight_rate_surcharge")
+def create_air_freight_rate_surcharge_data(request: CreateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        # request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = create_air_freight_rate_surcharge(request.dict(exclude_none=True))
+>>>>>>> Stashed changes
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
     
 @air_freight_router.get("/list_air_freight_rate_locals")
 def list_air_freight_rate_locals_data(
@@ -244,6 +266,7 @@ def get_air_freight_rate_surcharge_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
     
+<<<<<<< Updated upstream
 
 @air_freight_router.post("/create_air_freight_rate_tasks")
 def create_air_freight_rate_task_data(request: CreateAirFreightRateTask, resp: dict = Depends(authorize_token)):
@@ -251,10 +274,27 @@ def create_air_freight_rate_task_data(request: CreateAirFreightRateTask, resp: d
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = create_air_freight_rate_task(request.dict(exclude_none = False))
+=======
+@air_freight_router.get("/list_air_freight_rate_surcharges")
+def list_air_freight_rate_surcharges_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    pagination_data_required: bool = True,
+    return_query: bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_air_freight_rate_surcharges(filters, page_limit, page, pagination_data_required,return_query)
+>>>>>>> Stashed changes
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
+<<<<<<< Updated upstream
         # sentry_sdk.capture_exception(e)
         print(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
@@ -272,3 +312,7 @@ def update_air_freight_rate_task(request:UpdateAirFreightRateTask  , resp:dict =
         print(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
+=======
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+>>>>>>> Stashed changes
