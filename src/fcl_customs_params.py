@@ -24,6 +24,7 @@ class CreateFclCustomsRate(BaseModel):
   procured_by_id: str
   importer_exporter_id: str = None
   customs_line_items: List[FclCustomsLineItems] = []
+  performed_by_type: str
 
 class DeleteRate(BaseModel):
   filters:dict={}
@@ -40,7 +41,6 @@ class CreateFclCustomsRateBulkOperation(BaseModel):
   service_provider_id: str
   sourced_by_id: str
   procured_by_id: str
-  cogo_entity_id: str = None
   delete_rate: DeleteRate = None
   add_markup: AddMarkup = None
   performed_by_type: str
@@ -52,6 +52,8 @@ class CreateFclCustomsRateNotAvailable(BaseModel):
   container_size: str
   container_type: str
   commodity: str = None
+  performed_by_type: str
+  performed_by_id: str
 
 class CreateFclCustomsRateRequest(BaseModel):
   source: str

@@ -45,10 +45,10 @@ def get_fcl_customs_rate_data(request):
         fcl_customs_rate_data = FclCustomsRate.select().where(FclCustomsRate.id == request['rate_id']).first()
     else:
         fcl_customs_rate_data = FclCustomsRate.select().where(
-            FclCustomsRate.location_id  == request['location_id'],
-            FclCustomsRate.container_size  ==  request['container_size'],
-            FclCustomsRate.container_type  ==  request['container_type'],
-            FclCustomsRate.commodity  ==  request['commodity'],
-            FclCustomsRate.service_provider_id  ==  request['service_provider_id'],
+            FclCustomsRate.location_id == request.get('location_id'),
+            FclCustomsRate.container_size == request.get('container_size'),
+            FclCustomsRate.container_type == request.get('container_type'),
+            FclCustomsRate.commodity == request.get('commodity'),
+            FclCustomsRate.service_provider_id == request.get('service_provider_id'),
             ~FclCustomsRate.rate_not_available_entry).first()
     return fcl_customs_rate_data

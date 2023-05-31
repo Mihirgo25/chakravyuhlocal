@@ -38,7 +38,7 @@ class FclCfsRate(BaseModel):
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    location_type= CharField(null=False, index=True)
+    location_type= CharField(null=True, index=True)
     cargo_handling_type = CharField(index=True,null=True)
     importer_exporter_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
@@ -87,9 +87,13 @@ class FclCfsRate(BaseModel):
             return True
         
         location = maps.list_locations({ 'filters': { 'id': self.location_id } })
-        self.location = location if location['list'] else None
+        if location['list']:
+            self.location = location
+            self.location_type = 'port' if location.get('type') == 'seaport' else location.get('type')
         
-        return self.location
+        else:
+            None
+
     
     def mandatory_charge_codes(self):
         return [
@@ -154,6 +158,19 @@ class FclCfsRate(BaseModel):
         total_price = self.get_cfs_line_items_total_price()
 
         self.is_best_price = (total_price <= self.platform_price)
+    
+    def update_platform_prices_for_other_service_providers(self):
+        from celery_worker import update_cfs_rate_platform_prices
+        request = {
+            'location_id': self.location_id,
+            'trade_type': self.trade_type,
+            'container_size': self.container_size,
+            'container_type': self.container_type,
+            'commodity': self.commodity,
+            'importer_exporter_id': self.importer_exporter_id,
+            'cargo_handling_type': self.cargo_handling_type
+        }
+        update_cfs_rate_platform_prices.apply_async(kwargs = {'request':request}, queue = 'low')
         
     
     def update_line_item_messages(self):

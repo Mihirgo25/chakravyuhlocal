@@ -18,11 +18,11 @@ class FclCustomsRateRequest(BaseModel):
     source_id = UUIDField(index=True, null=True)
     performed_by_id = UUIDField(index=True, null=True)
     performed_by_org_id = UUIDField(index=True, null=True)
-    performed_by_type = CharField(index=True, null=True)
+    performed_by_type = CharField(null=True)
     preferred_customs_rate = DoubleField(null=True)
     preferred_customs_rate_currency = CharField(null=True)
-    preferred_detention_free_days = IntegerField(null=True)
-    preferred_storage_free_days = IntegerField(null=True)
+    # preferred_detention_free_days = IntegerField(null=True)
+    # preferred_storage_free_days = IntegerField(null=True)
     cargo_readiness_date = DateTimeField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     booking_params = BinaryJSONField(null=True)
@@ -35,15 +35,16 @@ class FclCustomsRateRequest(BaseModel):
     updated_at = DateTimeField(default = datetime.datetime.now)
     containers_count = IntegerField(null=True)
     container_size = CharField(index=True, null=True)
-    commodity = CharField(index=True, null=True)
+    commodity = CharField(null=True)
     cargo_handling_type = CharField(index=True, null=True)
-    country_id = UUIDField( null=True)
+    country_id = UUIDField(null=True)
     port_id = UUIDField(index=True, null=True)
     container_type = CharField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     performed_by = BinaryJSONField(null=True)
     closed_by = BinaryJSONField(null=True)
     spot_search = BinaryJSONField(null=True)
+    port = BinaryJSONField(null=True)
 
     class Meta:
         table_name = 'fcl_customs_rate_requests'
@@ -52,28 +53,18 @@ class FclCustomsRateRequest(BaseModel):
         self.updated_at = datetime.datetime.now()
         return super(FclCustomsRateRequest, self).save(*args, **kwargs)
 
-    def validate_source(self):
-        if self.source and self.source not in REQUEST_SOURCES:
-            raise HTTPException(status_code=400, detail="Invalid source")
-
     def validate_source_id(self):
         if self.source == 'spot_search':
             spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
             if len(spot_search_data) == 0:
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
-            
-    def validate_performed_by_id(self):
-        data = get_user(self.performed_by_id)
-        if data!={}:
-            pass
-        else:
-            raise HTTPException(status_code=400, detail='Invalid Performed by ID')
+            self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
+    
+    def set_port(self):
+        port_data = maps.list_locations({'filters':{'id':self.port_id}})['list']
+        if port_data:
+            self.port = {key:value for key,value in port_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
-    def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
-        if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
-            raise HTTPException(status_code=400, detail='Invalid Account Type')
-        
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FclCustomsRateRequest.select(FclCustomsRateRequest.port_id).where(FclCustomsRateRequest.source_id == self.source_id).limit(1).dicts().get()
         location_pair_data = maps.list_locations({ 'filters': {'id': [str(location_pair['port_id'])] }})['list']

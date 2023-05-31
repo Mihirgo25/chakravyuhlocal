@@ -44,7 +44,7 @@ MLR:
   name: "Meis Licence Registration"
   units: ['per_shipment']
   trade_types: ['export']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
 LRPC:
   name: "Lab Report Charges"
@@ -56,7 +56,7 @@ IGT:
   name: "ICEGATE Charges"
   units: ['per_shipping_bill']
   trade_types: ['export']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
 PYC:
   name: "Phyto Sanitary Certificate"
@@ -68,7 +68,7 @@ OWC:
   name: "On Wheel Charges"
   units: ['per_container']
   trade_types: ['export']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
 DCG:
   name: "Destination Certificate Charge"
@@ -92,13 +92,13 @@ DS:
   name: "Dock Stuffing"
   units: ['per_container']
   trade_types: ['export']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['mandatory', 'dock_stuffing', 'cfs']
 DDS:
   name: "Dock Destuffing"
   units: ['per_container']
   trade_types: ['import']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['mandatory', 'dock_destuffing', 'cfs']
 FC:
   name: "Fumigation"
@@ -128,13 +128,13 @@ ICDS:
   name: "ICD Stuffing"
   units: ['per_container']
   trade_types: ['export']
-  condition: location[:is_icd]
+  condition: location['is_icd']
   tags: ['mandatory', 'icd_stuffing', 'cfs']
 ICDDS:
   name: "ICD Destuffing"
   units: ['per_container']
   trade_types: ['import']
-  condition: location[:is_icd]
+  condition: location['is_icd']
   tags: ['mandatory', 'icd_destuffing', 'cfs']
 WRC:
   name: "Warai Charge"
@@ -242,13 +242,13 @@ SSPC:
   name: "Self Sealing Permission Charges"
   units: ['per_shipment']
   trade_types: ['export']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
 CMCC:
   name: "CMC Charges (Customs Printing)"
   units: ['per_shipping_bill']
   trade_types: ['export', 'import']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['customs_clearance']
 VGMC:
   name: "VGM Charges"
@@ -260,13 +260,13 @@ BMC:
   name: "Buffer Movement Charges"
   units: ['per_container']
   trade_types: ['export']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
 T1:
   name: "T1 Document"
   units: ['per_bl']
   trade_types: ['import', 'export']
-  condition: (['CZ', 'MK', 'FR', 'IE', 'IS', 'BY', 'NI', 'AT', 'CH', 'HU', 'SE', 'RU', 'DK', 'FO', 'FI', 'BE', 'MD', 'LT', 'AM', 'LV', 'PT', 'NO', 'SK', 'RS', 'DE', 'EE', 'NL', 'AD', 'LI', 'PL', 'MC', 'GB', 'LU'].include?(location[:country_code]))
+  condition: (location['country_code'] in ['CZ', 'MK', 'FR', 'IE', 'IS', 'BY', 'NI', 'AT', 'CH', 'HU', 'SE', 'RU', 'DK', 'FO', 'FI', 'BE', 'MD', 'LT', 'AM', 'LV', 'PT', 'NO', 'SK', 'RS', 'DE', 'EE', 'NL', 'AD', 'LI', 'PL', 'MC', 'GB', 'LU'])
   tags: ['mandatory', 'customs_clearance']
 SBILL:
   name: "Shipping Bill Cancellation Fee"
@@ -308,13 +308,13 @@ UKS:
   name: "UK Security"
   units: ['per_container']
   trade_types: ['import']
-  condition: location[:country_code] == 'GB'
+  condition: location['country_code'] == 'GB'
   tags: ['mandatory', 'customs_clearance']
 ADCRF:
   name: "Port Registration Fee"
   units: ['per_shipment']
   trade_types: ['import', 'export']
-  condition: location[:country_code] == 'IN'
+  condition: location['country_code'] == 'IN'
   tags: ['additional_service', 'customs_clearance']
 ADSI:
   name: "Stamp Duty Charges"

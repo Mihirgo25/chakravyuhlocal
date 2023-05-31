@@ -6,7 +6,7 @@ from database.rails_db import *
 from fastapi import HTTPException
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import common
-from configs.definitions import FCL_CUSTOMS_CHARGES
+from configs.definitions import FCL_CUSTOMS_CHARGES, FCL_CUSTOMS_CURRENCIES
 from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fcl_customs_rates
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
@@ -21,7 +21,7 @@ class BaseModel(Model):
 
 class FclCustomsRateBulkOperation(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
+    progress = IntegerField(constraints=[SQL("DEFAULT 0")], null=True)
     action_name = CharField(index = True, null=True)
     performed_by_id = UUIDField(null=True, index=True)
     created_at = DateTimeField(default=datetime.now())
@@ -35,25 +35,6 @@ class FclCustomsRateBulkOperation(BaseModel):
 
     class Meta:
         table_name = 'fcl_customs_rate_bulk_operations'
-
-    def validate_performed_by_id(self):
-        data =  get_user(self.performed_by_id)
-        if data:
-            return True
-        else:
-            return False
-        
-    def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            return
-
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
-        
-    def validate_action_name(self):
-        if self.action_name not in ACTION_NAMES:
-            raise HTTPException(status_code=400,detail='Invalid action Name')
         
     def validate_delete_rate_data(self):
         return
@@ -75,10 +56,10 @@ class FclCustomsRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        # currencies = FCL_CUSTOMS_CURRENCIES['list']
+        currencies = FCL_CUSTOMS_CURRENCIES['list']
 
-        # if data['markup_currency'] not in currencies:
-        #     raise HTTPException(status_code=400, detail='markup currency is invalid')
+        if data['markup_currency'] not in currencies:
+            raise HTTPException(status_code=400, detail='markup currency is invalid')
 
     def perform_delete_rate_action(self, sourced_by_id, procured_by_id):
         data = self.data
@@ -95,13 +76,13 @@ class FclCustomsRateBulkOperation(BaseModel):
         for customs in fcl_customs_rates:
             count += 1
 
-            if FclCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = customs['id']):
+            if FclCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = customs.get('id')):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
                 continue
 
             delete_fcl_customs_rate({
-                'id': customs['id'],
+                'id': customs.get('id'),
                 'performed_by_id': self.performed_by_id,
                 'bulk_operation_id': self.id,
                 'procured_by_id': procured_by_id,
@@ -137,7 +118,7 @@ class FclCustomsRateBulkOperation(BaseModel):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
                 continue
-            print('9999999')
+            
             customs['customs_line_items'] = [t for t in customs['customs_line_items'] if t not in line_items]
 
             for line_item in line_items:
@@ -147,7 +128,7 @@ class FclCustomsRateBulkOperation(BaseModel):
                     markup = data['markup']
 
                 if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+                    markup = common.get_money_exchange_for_fcl({'from_currency': data.get('markup_currency'), 'to_currency': line_item.get('currency'), 'price': markup})['price']
 
                 line_item['price'] = line_item['price'] + markup
 
@@ -157,7 +138,7 @@ class FclCustomsRateBulkOperation(BaseModel):
                 customs['customs_line_items'].append(line_item)
 
             update_fcl_customs_rate({
-                'id': customs['id'],
+                'id': customs.get('id'),
                 'performed_by_id': self.performed_by_id,
                 'bulk_operation_id': self.id,
                 'customs_line_items': customs['customs_line_items'],
@@ -168,9 +149,3 @@ class FclCustomsRateBulkOperation(BaseModel):
 
             self.progress = int((count * 100.0) / total_count)
             self.save()
-
-    def delete_rate_detail():
-        return
-    
-    def add_markup_detail():
-        return

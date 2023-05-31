@@ -1,8 +1,7 @@
 from pydantic import BaseModel
-from datetime import datetime, timedelta,date
+from datetime import datetime
 from peewee import *
 from typing import List
-from dateutil.relativedelta import relativedelta
 
 class Slab(BaseModel):
   lower_limit: float
@@ -26,7 +25,6 @@ class FreeDaysType(BaseModel):
 class CreateFclCfsRate(BaseModel):
   rate_sheet_id:str = None
   location_id: str
-  location_type: str
   trade_type: str
   container_size: str
   container_type: str
@@ -48,7 +46,7 @@ class FclCfsRateRequest(BaseModel):
     performed_by_type: str
     preferred_rate: str= None
     preferred_rate_currency: str= None
-    preferred_detention_free_days: str= None
+    preferred_detention_free_days: int= None
     cargo_readiness_date: str= None
     remarks:list[str] =[]
     booking_params : dict = {}
@@ -70,7 +68,7 @@ class DeleteFclCfsRate(BaseModel):
     payment_term: str = 'prepaid'
 
 class DeleteFclCfsRateRequest(BaseModel):
-  fcl_freight_rate_request_ids: List[str]
+  fcl_cfs_rate_request_ids: List[str]
   closing_remarks: List[str] = []
   performed_by_id: str = None
   performed_by_type: str = None
@@ -83,3 +81,31 @@ class CreateFclCfsRateNotAvailable(BaseModel):
   container_size: str
   container_type: str
   commodity: str = None
+
+class UpdateFclCfsRate(BaseModel):
+    id: str 
+    performed_by_id: str 
+    sourced_by_id: str 
+    procured_by_id: str 
+    bulk_operation_id: str = None
+    line_items: list[StandardLineItem] = []
+    free_limit: int = None
+    
+class Filters(BaseModel):
+  filters: list = []
+
+class AddMarkUp(BaseModel):
+  filters : dict = {}
+  markup : float
+  line_item_code : str
+  markup_type : str
+  markup_currency : str = None
+
+  
+class CreateFclCfsRateBulkOperation(BaseModel):
+  performed_by_id: str 
+  service_provider_id: str 
+  sourced_by_id: str 
+  procured_by_id: str 
+  delete_rate: list[Filters] = None
+  add_markup: list[AddMarkUp] = None
