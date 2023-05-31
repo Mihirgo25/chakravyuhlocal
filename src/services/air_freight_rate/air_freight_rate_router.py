@@ -25,7 +25,12 @@ from services.air_freight_rate.interaction.update_air_freight_rate_surcharge imp
 
 air_freight_router = APIRouter()
 from services.air_freight_rate.interaction.get_air_freight_rate_local import get_air_freight_rate_local
+
+air_freight_router = APIRouter()
+
+
 @air_freight_router.post("/create_air_freight_rate")
+
 def create_air_freight_rate():
     return
 
@@ -65,9 +70,63 @@ def update_air_freight_rates(request: UpdateAirFreightRate, resp:dict =Depends(a
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
-@air_freight_router.get('/get_air_freught_router')
-def get_air_freight_rate(request:GetAirFreightRate , resp:dict =Depends(authorize_token)):
-    return
+@air_freight_router.get("/get_air_freight_rate")
+def get_air_freight_rate_data(
+    origin_airport_id:str=None,
+    destination_airport_id:str=None,
+    commodity:str=None,
+    commodity_type:str=None,
+    commodity_sub_type:str =None,
+    airline_id:str=None,
+    operation_type:str=None,
+    service_provider_id:str=None,
+    shipment_type:str ='box',
+    stacking_type:str = 'stackable',
+    validity_start:datetime =datetime.now(),
+    validity_end:datetime =datetime.now(),
+    weight:float =None,
+    cargo_readiness_date:datetime=datetime.now(),
+    price_type:str=None,
+    cogo_entity_id:str=None,
+    trade_type:str=None,
+    volume:float =None,
+    predicted_rates_required:bool=False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'id':id,
+        'origin_airport_id':origin_airport_id,
+        'destination_airport_id':destination_airport_id,
+        'commodity' : commodity,
+        'commodity_type':commodity_type,
+        'commodity_sub_type' : commodity_sub_type,
+        'airline_id':airline_id,
+        'operation_type':operation_type,
+        'shipment_type' : shipment_type,
+        'service_provider_id': service_provider_id,
+        'stacking_type': stacking_type,
+        'cogo_entity_id': cogo_entity_id,
+        'validity_start':validity_start,
+        'validity_end':validity_end,
+        'weight':weight,
+        'cargo_readiness_date':cargo_readiness_date,
+        'price_type':price_type,
+        'trade_type':trade_type,
+        'volume':volume,
+        'predicted_rates_required':predicted_rates_required
+    }
+
+    try:
+        data = get_air_freight_rate(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        # sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 @air_freight_router.get("/get_air_freight_rate_local")
 def get_air_freight_rate_local_data(
     airport_id:str=None,

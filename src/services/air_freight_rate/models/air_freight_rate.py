@@ -87,72 +87,75 @@ class AirFreightRate(BaseModel):
         if new_validities:
             self.last_rate_available_date = new_validities[-1]['validity_end'] 
 
-        
 
+    def update_local_references(request):
 
-      
+        return
     
-    # def merging_weight_slabs(old_weight_slabs,new_weight_slab):
-    #     final_old_weight_slabs=[]
-    #     for old_weight_slab in old_weight_slabs:
-    #         if old_weight_slab['lower_limit'] >= int(new_weight_slab['upper_limit']):
-    #             old_weight_slab['lower_limit'] = int(old_weight_slab['lower_limit']) + 0.1
-    #             new_weight_slab['upper_limit'] = int(new_weight_slab['upper_limit'])
-    #             final_old_weight_slabs << old_weight_slab
-    #             continue
-    #         if int(old_weight_slab['upper_limit']) <= new_weight_slab['lower_limit']:
-    #             old_weight_slab['upper_limit'] =int( old_weight_slab['upper_limit'])
-    #             new_weight_slab['lower_limit'] = int(new_weight_slab['lower_limit']) + 0.1
-    #             final_old_weight_slabs << old_weight_slab
-    #             continue
-    #         if int(old_weight_slab['lower_limit']) >= int(new_weight_slab['lower_limit'] )and int(old_weight_slab['upper_limit']) <= new_weight_slab['upper_limit']:
-    #             continue
-    #         if int(old_weight_slab['lower_limit']) < new_weight_slab['lower_limit'] and int(old_weight_slab['upper_limit']) <= new_weight_slab['upper_limit']:
-    #             old_weight_slab['upper_limit'] = int(new_weight_slab['lower_limit'])
-    #             new_weight_slab['lower_limit'] = int(new_weight_slab['lower_limit']) + 0.1
-    #             final_old_weight_slabs << old_weight_slab
-    #         if int(old_weight_slab['lower_limit']) >= int(new_weight_slab['lower_limit']) and old_weight_slab['upper_limit'] > int(new_weight_slab['upper_limit']):
-    #             old_weight_slab['lower_limit'] = int(new_weight_slab['upper_limit']) + 0.1
-    #             new_weight_slab['upper_limit'] = int(new_weight_slab['upper_limit'])
-    #             final_old_weight_slabs << old_weight_slab
-    #         if int(old_weight_slab['lower_limit']) < new_weight_slab['lower_limit'] and int(old_weight_slab['upper_limit'])> new_weight_slab['upper_limit']:
-    #             old_weight_slab1 = AirFreightRateWeightSlab.new(old_weight_slab.as_json.deep_symbolize_keys.merge(upper_limit: new_weight_slab['lower_limit'].to_i))
-    #             old_weight_slab2 = AirFreightRateWeightSlab.new(old_weight_slab.as_json.deep_symbolize_keys.merge(lower_limit: new_weight_slab['upper_limit'].to_i + 0.1))
+    # def update_foreign_references(request):
+    #     update_local_references(request)
+    #     if request.get('price_type') != 'all_in':
+    #         update_surcharge_refernece()
 
-    #             new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'].to_i + 0.1
-    #             new_weight_slab['upper_limit'] = new_weight_slab['upper_limit'].to_i
+ 
+    def merging_weight_slabs(old_weight_slabs,new_weight_slab):
+        final_old_weight_slabs=[]
+        for old_weight_slab in old_weight_slabs:
+            if old_weight_slab['lower_limit'] >= int(new_weight_slab['upper_limit']):
+                old_weight_slab['lower_limit'] = int(old_weight_slab['lower_limit']) + 0.1
+                new_weight_slab['upper_limit'] = int(new_weight_slab['upper_limit'])
+                final_old_weight_slabs << old_weight_slab
+                continue
+            if int(old_weight_slab['upper_limit']) <= new_weight_slab['lower_limit']:
+                old_weight_slab['upper_limit'] =int( old_weight_slab['upper_limit'])
+                new_weight_slab['lower_limit'] = int(new_weight_slab['lower_limit']) + 0.1
+                final_old_weight_slabs << old_weight_slab
+                continue
+            if int(old_weight_slab['lower_limit']) >= int(new_weight_slab['lower_limit'] )and int(old_weight_slab['upper_limit']) <= new_weight_slab['upper_limit']:
+                continue
+            if int(old_weight_slab['lower_limit']) < new_weight_slab['lower_limit'] and int(old_weight_slab['upper_limit']) <= new_weight_slab['upper_limit']:
+                old_weight_slab['upper_limit'] = int(new_weight_slab['lower_limit'])
+                new_weight_slab['lower_limit'] = int(new_weight_slab['lower_limit']) + 0.1
+                final_old_weight_slabs << old_weight_slab
+            if int(old_weight_slab['lower_limit']) >= int(new_weight_slab['lower_limit']) and old_weight_slab['upper_limit'] > int(new_weight_slab['upper_limit']):
+                old_weight_slab['lower_limit'] = int(new_weight_slab['upper_limit']) + 0.1
+                new_weight_slab['upper_limit'] = int(new_weight_slab['upper_limit'])
+                final_old_weight_slabs << old_weight_slab
+            if int(old_weight_slab['lower_limit']) < new_weight_slab['lower_limit'] and int(old_weight_slab['upper_limit'])> new_weight_slab['upper_limit']:
+                # old_weight_slab1 = AirFreightRateWeightSlab.new(old_weight_slab.as_json.deep_symbolize_keys.merge(upper_limit: new_weight_slab['lower_limit'].to_i))
+                # old_weight_slab2 = AirFreightRateWeightSlab.new(old_weight_slab.as_json.deep_symbolize_keys.merge(lower_limit: new_weight_slab['upper_limit'].to_i + 0.1))
 
-    #             final_old_weight_slabs << old_weight_slab1
-    #             final_old_weight_slabs << old_weight_slab2
-    #             continue
-    #     final_old_weight_slabs << new_weight_slab
+                new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
+                new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
+
+                # final_old_weight_slabs << old_weight_slab1
+                # final_old_weight_slabs << old_weight_slab2
+                continue
+        final_old_weight_slabs.append(new_weight_slab)
+
         
-    #     return final_old_weight_slabs
+        return final_old_weight_slabs
 
+    def validate_validity_object(validity_start,validity_end):
 
-
-            
-
-
-    # def validate_validity_object(validity_start,validity_end):
-
-    #     if not validity_start:
-    #         raise HTTPException(status_code=400,details='Validity Start is not Valid')
+        if not validity_start:
+            raise HTTPException(status_code=400,details='Validity Start is not Valid')
     
-    #     if not validity_end:
-    #      raise HTTPException(status_code=400, detail="validity_end is invalid")
+        if not validity_end:
+         raise HTTPException(status_code=400, detail="validity_end is invalid")
 
-    #     if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
-    #         raise HTTPException(status_code=400, detail="validity_end can not be greater than 60 days from current date")
+        if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=60)):
+            raise HTTPException(status_code=400, detail="validity_end can not be greater than 60 days from current date")
 
-    #     if validity_end.date() < (datetime.datetime.now().date() + datetime.timedelta(days=2)):
-    #         raise HTTPException(status_code=400, detail="validity_end can not be less than 2 days from current date")
+        if validity_end.date() < (datetime.datetime.now().date() + datetime.timedelta(days=2)):
+            raise HTTPException(status_code=400, detail="validity_end can not be less than 2 days from current date")
 
-    #     if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
-    #         raise HTTPException(status_code=400, detail="validity_start can not be less than 15 days from current date")
+        if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
+            raise HTTPException(status_code=400, detail="validity_start can not be less than 15 days from current date")
 
-    #     if validity_end < validity_start:
-    #         raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
+        if validity_end < validity_start:
+            raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
+        return True
         
     # def set_validities(self,validity_start, validity_end, min_price, currency, weight_slabs, deleted, validity_id, density_category, density_ratio, initial_volume, initial_gross_weight, available_volume, available_gross_weight, rate_type):
     #     new_validities = []
@@ -170,7 +173,7 @@ class AirFreightRate(BaseModel):
     #             max_density_weight=MAX_CARGO_LIMIT
                 
     #     for validity_object in self.validities:
-    #         if  validity_object.density_category:
+    #         if  not validity_object.density_category:
     #             validity_object.density_category = 'general'
 
     #         if validity_object.status ==False:
@@ -188,11 +191,12 @@ class AirFreightRate(BaseModel):
     #             if validity_object.validity_end < validity_start:
     #                 new_validities.append(validity_object)
     #                 continue
-    #             if float(min_price) == 0.0:
+    #             if min_price == 0.0:
     #                 min_price = validity_object.min_price
     #             if validity_object.validity_start >= validity_start and validity_object.validity_end <= validity_end and validity_id != validity_object.id:
     #                 new_weight_slabs = merging_weight_slabs(validity_object.weight_slabs, new_weight_slabs)
     #                 validity_object.status = False
+    #                 new_validities.append(validity_object)
     #                 continue
     #             if validity_object.validity_start < validity_start and validity_object.validity_end <= validity_end:
     #                 new_weight_slabs = merging_weight_slabs(validity_object.weight_slabs, new_weight_slabs)
