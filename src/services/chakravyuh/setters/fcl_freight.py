@@ -463,12 +463,12 @@ class FclFreightVyuh():
     def adjust_price_for_tranformation(self, affected_transformation, new: bool=False, is_relative: bool = False):
         from celery_worker import update_multiple_service_objects
         transformation_id = affected_transformation.get('id')
-        
         if is_relative:
             adjusted_line_items = affected_transformation['line_items']
         else:
             adjusted_line_items = self.get_adjusted_line_items_to_add(affected_transformation, new)
         
+
         if len(adjusted_line_items) == 0:
             # Return If no line_items to create
             return
@@ -558,4 +558,5 @@ class FclFreightVyuh():
             # self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
             transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
+        
         return True
