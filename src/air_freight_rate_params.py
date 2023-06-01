@@ -193,7 +193,27 @@ class CreateAirFreightRateLocal(BaseModel):
     rate_type:str='general'
     line_items: list[LineItemLocal]=None
     slabs:list[SlabLocal]=None
+class LocalSlabs(BaseModel):
+    lower_limit:int
+    upper_limit:int
+    price:float
+    currency:str
 
+class LineItemsLocal(BaseModel):
+    code:str
+    unit:str
+    price:float
+    min_price:float
+    currency:str
+    remarks:list[str]=None
+    slabs:list[LocalSlabs]=None
+class UpdateFrieghtRateLocal(BaseModel):
+    id:str
+    performed_by_id:str=None
+    sourced_by_id:str=None
+    procured_by_id:str=None
+    bulk_operation_id:str=None
+    line_items:list[LineItemsLocal]=None
 
 class UpdateAirFreightRateSurcharge(BaseModel):
     id: str
