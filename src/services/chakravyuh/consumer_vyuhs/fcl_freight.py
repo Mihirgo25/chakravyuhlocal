@@ -224,8 +224,8 @@ class FclFreightVyuh():
             new_lineitems = []
             for line_item in line_items:
                 if line_item['code'] == 'BAS':
-                    line_items['price']=price
-                    new_lineitems.append(line_items)
+                    line_item['price']=price
+                    new_lineitems.append(line_item)
                 else:
                     new_lineitems.append(line_item)
                     
