@@ -196,10 +196,10 @@ class FclFreightVyuh():
 
         for data in probable_booking_data_transformations:
             price=data['price']
-            converted_price=price
+            converted_price=float(price)
             if data['currency'] != 'USD':
                 converted_price = common.get_money_exchange_for_fcl({"price": price, "from_currency": data['currency'], "to_currency": 'USD' })['price']
-            if converted_price>5000:
+            if converted_price>10000:
                 converted_price=converted_price/float(data['containers_count'])
             if converted_price>100:
                 all_prices.append(converted_price)
