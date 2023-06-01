@@ -61,7 +61,9 @@ class FclFreightVyuh():
     def get_probable_customer_transformations(self):
         return []
     
-    def get_probable_booking_data_tranformation(self):
+    def get_probable_booking_data_tranformation(self, first_rate: dict={}):
+        origin_port_id=first_rate['origin_port_id']
+        destination_port_id=first_rate['destination_port_id']
         return get_cost_booking_transformation()
     
     def get_most_eligible_customer_transformation(self, probable_customer_transformations):
@@ -211,9 +213,15 @@ class FclFreightVyuh():
         upper_limit = mean + 1 * std_dev # 1 sigma
         print(lower_limit)
         print(upper_limit)
- 
+        price = self.apply_periodic_pricing(lower_limit, upper_limit)
 
+        print('price',price)
 
+        if price >= 200:
+            price = round(price/5) * 5
+        else:
+            price = round(price)
+        
 
 
     def apply_transformation(self, rate, probable_transformations, probable_customer_transformations,probable_booking_data_transformations):
@@ -248,7 +256,7 @@ class FclFreightVyuh():
 
         probable_customer_transformations = self.get_probable_customer_transformations()
 
-        probable_booking_data_transformations=self.get_probable_booking_data_tranformation()
+        probable_booking_data_transformations=self.get_probable_booking_data_tranformation(first_rate)
 
         new_freight_rates = []
 

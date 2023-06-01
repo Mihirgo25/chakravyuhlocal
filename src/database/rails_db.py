@@ -301,63 +301,62 @@ def get_cost_booking_data(origin_country_id, destination_country_id, codes=None)
         return []
 
     all_result = []
-    # try:
-    conn = get_connection()
-    with conn:
-        with conn.cursor() as cur:
-            sql = '''
-            SELECT
-                shipment_fcl_freight_services.origin_port_id,
-                shipment_fcl_freight_services.origin_country_id,
-                shipment_fcl_freight_services.origin_trade_id,
-                shipment_fcl_freight_services.destination_port_id,
-                shipment_fcl_freight_services.destination_country_id,
-                shipment_fcl_freight_services.destination_trade_id,
-                shipment_fcl_freight_services.container_size,
-                shipment_fcl_freight_services.container_type,
-                line_item ->> 'price' as price, 
-                line_item ->> 'currency' as currency,
-                shipment_fcl_freight_services.containers_count
-            FROM
-                shipment_collection_parties
-            INNER JOIN
-                shipment_fcl_freight_services ON shipment_collection_parties.shipment_id = shipment_fcl_freight_services.shipment_id
-            CROSS JOIN
-                jsonb_array_elements(line_items) AS line_item
-            WHERE
-                line_item ->> 'code' = 'BAS'
-                AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
-                AND shipment_fcl_freight_services.origin_port_id = %s
-                AND shipment_fcl_freight_services.destination_port_id = %s
-                AND shipment_collection_parties.status IN %s
-                AND line_item ->> 'unit' = 'per_container'
-                limit 20
-            '''
-            cur.execute(sql, (origin_country_id, destination_country_id, tuple(codes) if codes else ()))
-            result = cur.fetchall()
-            for res in result:
-                new_obj = {
-                    "origin_port_id": str(res[0]),
-                    "origin_country_id": str(res[1]),
-                    "origin_trade_id": str(res[2]),
-                    "destination_port_id": str(res[3]),
-                    "destination_country_id": str(res[4]),
-                    "destination_trade_id": str(res[5]),
-                    "container_size":res[6],
-                    "container_type":res[7],
-                    "price":res[8],
-                    "currency":str(res[9]),
-                    "containers_count":str(res[10])
-                }
-                all_result.append(new_obj)
-            cur.close()
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                sql = '''
+                SELECT
+                    shipment_fcl_freight_services.origin_port_id,
+                    shipment_fcl_freight_services.origin_country_id,
+                    shipment_fcl_freight_services.origin_trade_id,
+                    shipment_fcl_freight_services.destination_port_id,
+                    shipment_fcl_freight_services.destination_country_id,
+                    shipment_fcl_freight_services.destination_trade_id,
+                    shipment_fcl_freight_services.container_size,
+                    shipment_fcl_freight_services.container_type,
+                    line_item ->> 'price' as price, 
+                    line_item ->> 'currency' as currency,
+                    shipment_fcl_freight_services.containers_count
+                FROM
+                    shipment_collection_parties
+                INNER JOIN
+                    shipment_fcl_freight_services ON shipment_collection_parties.shipment_id = shipment_fcl_freight_services.shipment_id
+                CROSS JOIN
+                    jsonb_array_elements(line_items) AS line_item
+                WHERE
+                    line_item ->> 'code' = 'BAS'
+                    AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
+                    AND shipment_fcl_freight_services.origin_port_id = %s
+                    AND shipment_fcl_freight_services.destination_port_id = %s
+                    AND shipment_collection_parties.status IN %s
+                    AND line_item ->> 'unit' = 'per_container'
+                '''
+                cur.execute(sql, (origin_country_id, destination_country_id, tuple(codes) if codes else ()))
+                result = cur.fetchall()
+                for res in result:
+                    new_obj = {
+                        "origin_port_id": str(res[0]),
+                        "origin_country_id": str(res[1]),
+                        "origin_trade_id": str(res[2]),
+                        "destination_port_id": str(res[3]),
+                        "destination_country_id": str(res[4]),
+                        "destination_trade_id": str(res[5]),
+                        "container_size":res[6],
+                        "container_type":res[7],
+                        "price":res[8],
+                        "currency":str(res[9]),
+                        "containers_count":str(res[10])
+                    }
+                    all_result.append(new_obj)
+                cur.close()
 
-    conn.close()
-    return all_result 
+        conn.close()
+        return all_result 
 
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
     
 
 
