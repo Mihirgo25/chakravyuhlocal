@@ -19,7 +19,13 @@ class LineItem(BaseModel):
   min_price: float  
   remarks: list[str] = None
 
-
+class LineItemLocal(BaseModel):
+    code: str
+    unit: str
+    min_price: float 
+    price: float
+    currency: str
+    remarks: list[str] = None
 
 class DeleteAirFreightRate(BaseModel):
     id:str
@@ -96,6 +102,29 @@ class CreateAirFreightRateSurcharge(BaseModel):
     bulk_operation_id:str=None
     rate_sheet_id:str=None
     line_items: list[LineItem]
+
+class SlabLocal(BaseModel):
+    lower_limit:float
+    upper_limit:float
+    price:float
+    currency:str
+
+class CreateAirFreightRateLocal(BaseModel):
+    airport_id:str
+    airline_id:str=None
+    trade_type:str=None
+    commodity:str=None
+    commodity_type:str=None
+    service_provider_id:str=None
+    performed_by_id:str=None
+    procured_by_id:str=None
+    sourced_by_id:str=None
+    bulk_operation_id:str=None
+    rate_sheet_id:str=None
+    rate_type:str='general'
+    line_items: list[LineItemLocal]=None
+    slabs:list[SlabLocal]=None
+
 
 class UpdateAirFreightRateSurcharge(BaseModel):
     id:str

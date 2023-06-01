@@ -7,7 +7,7 @@ from configs.env import APP_ENV, SENTRY_DSN
 from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
-# from database.create_tables import create_table
+from database.create_tables import create_table
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
@@ -84,7 +84,7 @@ def startup():
     # insert()
     # insert_china()
     # run_migration()
-    # create_table()
+    create_table()
     # fcl_freight_migration()
     # create_partition_table()
     # fcl_local_
