@@ -70,7 +70,7 @@ def execute_transaction_code(request):
             truck.save()
         except:
             raise HTTPException(status_code=500, detail="truck did not save")
-    
+
     else:
         raise HTTPException(status_code=500, detail="truck already exist")
 

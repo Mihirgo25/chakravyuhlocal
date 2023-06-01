@@ -4,7 +4,7 @@ from typing import Optional
 
 class CreateTruck(BaseModel):
   truck_company: str
-  truck_name: str
+  display_name: str
   performed_by_id: Optional[str]=None
   performed_by_type: str=None
   mileage: float
