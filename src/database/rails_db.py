@@ -296,8 +296,8 @@ def get_ff_mlo():
         return result
 
 
-def get_cost_booking_data(origin_country_id, destination_country_id, codes=None):
-    if not origin_country_id:
+def get_cost_booking_data(origin_port_id, destination_port_id, codes=None):
+    if not origin_port_id or not destination_port_id:
         return []
 
     all_result = []
@@ -332,7 +332,7 @@ def get_cost_booking_data(origin_country_id, destination_country_id, codes=None)
                     AND shipment_collection_parties.status IN %s
                     AND line_item ->> 'unit' = 'per_container'
                 '''
-                cur.execute(sql, (origin_country_id, destination_country_id, tuple(codes) if codes else ()))
+                cur.execute(sql, (origin_port_id, destination_port_id, tuple(codes) if codes else ()))
                 result = cur.fetchall()
                 for res in result:
                     new_obj = {
