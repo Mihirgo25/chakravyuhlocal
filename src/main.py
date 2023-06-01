@@ -9,6 +9,7 @@ from params import *
 from fastapi.responses import JSONResponse
 
 # from database.create_tables import create_table
+# from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
@@ -18,6 +19,9 @@ from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
 from services.ftl_freight_rate.ftl_freight_router import ftl_freight_router
 from services.envision.envision_service_router import envision_router
+from services.chakravyuh.chakravyuh_router import chakravyuh_router
+from services.trailer_freight_rates.trailer_freight_router import trailer_router
+from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from micro_services.client import *
 
 sentry_sdk.init(
@@ -36,8 +40,10 @@ app = FastAPI(docs_url=docs_url, debug=True)
 app.include_router(prefix="/fcl_freight_rate", router=fcl_freight_router)
 app.include_router(prefix="/fcl_freight_rate", router=envision_router)
 app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router)
+app.include_router(prefix="/fcl_freight_rate", router=trailer_router)
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
 app.include_router(prefix="/fcl_freight_rate", router=ftl_freight_router)
+app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
 
 
 app.add_middleware(
@@ -82,12 +88,14 @@ if APP_ENV != "production":
 def startup():
     if db.is_closed():
         db.connect()
-    # run_migration()
     # insert()
+    # insert_china()
+    # run_migration()
     # create_table()
     # fcl_freight_migration()
     # create_partition_table()
-    # fcl_local_migration()
+    # fcl_local_
+    # migration()
     # free_day()
     scheduler.start()
 

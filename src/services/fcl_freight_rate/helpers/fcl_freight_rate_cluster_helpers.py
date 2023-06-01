@@ -8,13 +8,14 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_commodity_cluster imp
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 import copy
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import *
 from rms_utils.get_in_batches import get_in_batches
 
 def get_cluster_objects(rate_object):
     clusters = {}
 
-    port_codes = maps.list_locations({'filters':{'id': [rate_object['origin_port_id'], rate_object['destination_port_id']]}})['list']
+    port_codes = maps.list_locations({'filters':{'id': [str(rate_object['origin_port_id']),str(rate_object['destination_port_id'])]}})['list']
 
     param = {}
     for data in port_codes:
@@ -147,7 +148,7 @@ def add_mandatory_line_items(param,request):
     return param
 
 def check_rate_existence(updated_param):
-    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end']).execute()
+    system_rate = FclFreightRate.select().where(FclFreightRate.origin_port_id == updated_param['origin_port_id'], FclFreightRate.destination_port_id == updated_param['destination_port_id'], FclFreightRate.container_size == updated_param['container_size'], FclFreightRate.commodity == updated_param['commodity'], FclFreightRate.container_type == updated_param['container_type'], FclFreightRate.service_provider_id == updated_param['service_provider_id'], FclFreightRate.shipping_line_id == updated_param['shipping_line_id'], FclFreightRate.last_rate_available_date > updated_param['validity_end'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).execute()
     if system_rate:
         return True
     else:
@@ -190,14 +191,14 @@ def get_fcl_freight_cluster_objects(request):
         #     return
 
     try:
-        origin_locations = [t['id'] for t in data['origin_location_cluster']['cluster_items']]
+        origin_locations = [str(t['id']) for t in data['origin_location_cluster']['cluster_items']]
     except:
-        origin_locations = [request['origin_port_id']]
+        origin_locations = [str(request['origin_port_id'])]
 
     try:
-        destination_locations = [t['id'] for t in data['destination_location_cluster']['cluster_items']]
+        destination_locations = [str(t['id']) for t in data['destination_location_cluster']['cluster_items']]
     except:
-        destination_locations = [request['destination_port_id']]
+        destination_locations = [str(request['destination_port_id'])]
 
     if data.get('commodity_cluster'):
         commodities = data['commodity_cluster']['cluster_items']

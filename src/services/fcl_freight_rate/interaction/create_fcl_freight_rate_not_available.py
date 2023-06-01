@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.shortcuts import model_to_dict
 from micro_services.client import organization
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def create_fcl_freight_rate_not_available(request):
     request = request.__dict__
@@ -10,7 +11,8 @@ def create_fcl_freight_rate_not_available(request):
         FclFreightRate.container_size == request['container_size'],
         FclFreightRate.container_type == request['container_type'],
         FclFreightRate.commodity == request['commodity'],
-        FclFreightRate.importer_exporter_id == None
+        FclFreightRate.importer_exporter_id == None,
+        FclFreightRate.rate_type == DEFAULT_RATE_TYPE
     )
     present_service_provider_ids = [model_to_dict(item)['service_provider_id'] for item in present_service_provider_data.execute()]
 

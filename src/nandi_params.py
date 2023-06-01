@@ -8,7 +8,7 @@ class CreateDraftFclFreightRate(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   rate_id : str
-  data : List[StandardLineItem]=None
+  data : List[UpdateLineItem]=None
   source : str
   status : str = 'pending'
   invoice_url : str = None
@@ -19,7 +19,7 @@ class CreateFclFreightDraft(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
   status : str = 'pending'
-  data : List[StandardLineItem]=None
+  data : List[UpdateLineItem]=None
   invoice_url : str = None
   invoice_date : datetime = None
   shipment_serial_id : str = None
@@ -34,7 +34,7 @@ class CreateFclFreightDraft(BaseModel):
   service_provider_id: str
   validity_start: datetime
   validity_end: datetime
-  line_items: List[StandardLineItem]=None
+  line_items: List[UpdateLineItem]=None
   weight_limit: FreeDay = None
   procured_by_id: str = None
   sourced_by_id: str
@@ -46,7 +46,7 @@ class UpdateDraftFclFreightRate(BaseModel):
   performed_by_type: str = None
   id : str
   rate_id : str = None
-  data : List[StandardLineItem]=None
+  data : List[UpdateLineItem]=None
   source : str = None
   status : str = 'pending'
   invoice_url : str = None

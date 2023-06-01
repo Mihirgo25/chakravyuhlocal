@@ -1,6 +1,7 @@
 from celery import Celery
 from kombu.serialization import registry
 from configs.env import *
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from micro_services.client import organization, common
 from services.fcl_freight_rate.interaction.send_fcl_freight_rate_task_notification import send_fcl_freight_rate_task_notification
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
@@ -12,11 +13,13 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request impor
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
+from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
 from kombu import Exchange, Queue
 from celery.schedules import crontab
 from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 
 # Rate Producers
 
@@ -85,7 +88,7 @@ def create_fcl_freight_rate_delay(self, request):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def delay_fcl_functions(self,fcl_object,request):
     try:
-        if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False).exists():
+        if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False, FclFreightRate.rate_type == DEFAULT_RATE_TYPE).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
         if request.get("fcl_freight_rate_request_id"):
@@ -275,7 +278,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 def fcl_freight_rates_to_cogo_assured(self):
     try:
         query =FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
-            ).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])
+            ).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE)
         total_count = query.count()
         batches = int(total_count/5000)
         last_batch = total_count%5000
@@ -361,7 +364,7 @@ def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
             pass
         else:
             raise self.retry(exc= exc)
-    
+
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_fuel_data_delay(self):
     try:

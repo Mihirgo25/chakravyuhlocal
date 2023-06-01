@@ -30,7 +30,7 @@ class FclFreightRateLocalData(BaseModel):
         return False
 
     def validate_invalid_charge_codes(self, possible_charge_codes):
-        invalid_line_items = [str(t.code) for t in self.line_items if str(t.code) not in possible_charge_codes]
+        invalid_line_items = [str(t.code) for t in self.line_items if str(t.code).strip() not in possible_charge_codes]
         return invalid_line_items
 
 
@@ -54,7 +54,7 @@ class FclFreightRateLocalData(BaseModel):
 
 
         for code, line_items in grouped_charge_codes.items():
-            code_config = fcl_freight_local_charges_dict[code]
+            code_config = fcl_freight_local_charges_dict.get(code)
 
             if not code_config:
                 line_items_error_messages[code] = ['is invalid']

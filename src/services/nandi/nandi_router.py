@@ -146,8 +146,8 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
             fcl_freight_local = create_fcl_freight_rate_local(request)
 
         request['rate_id'] = fcl_freight_local.get('id')
-        draft_freight_local = create_draft_fcl_freight_rate_local_data(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+        draft_fcl_freight_local = create_draft_fcl_freight_rate_local_data(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_fcl_freight_local))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -179,8 +179,8 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
         if 'freight' not in fcl_freight:
             fcl_freight = create_fcl_freight_rate_data(request)
         request['rate_id'] = fcl_freight['freight'].get('id')
-        draft_freight = create_draft_fcl_freight_rate_data(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+        draft_fcl_freight = create_draft_fcl_freight_rate_data(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(draft_fcl_freight))
     except HTTPException as e:
         raise
     except Exception as e:

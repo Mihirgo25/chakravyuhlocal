@@ -7,11 +7,7 @@ class BaseModel(Model):
     class Meta:
         database = db
 class FuelData(BaseModel):
-    id = UUIDField(
-        primary_key=True,
-        constraints=[SQL("DEFAULT uuid_generate_v4()")],
-        default=uuid.uuid4,
-    )
+    id = BigAutoField(primary_key=True)
     location_id = UUIDField(null=True, index=True)
     location_type = CharField(null=False, index=True)
     currency = CharField(null=False)
