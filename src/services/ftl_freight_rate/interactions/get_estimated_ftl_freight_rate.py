@@ -32,7 +32,7 @@ def get_truck_and_commodity_data(truck_type, weight,country_id,trip_type,commodi
     else:
         default_truck_type = ''
         for truck_type, weight_limit_data in TRUCK_TYPES_MAPPING.items():
-            if weight >= weight_limit_data['lower_limit'] and weight <= weight_limit_data['upper_limit']:
+            if weight > weight_limit_data['lower_limit'] and weight <= weight_limit_data['upper_limit']:
                 default_truck_type = truck_type
                 break
         filters['capacity_greater_equal_than'] = weight
