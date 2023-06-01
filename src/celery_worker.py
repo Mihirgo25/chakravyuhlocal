@@ -365,6 +365,25 @@ def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind = True, retry_backoff = True, max_retries = 3)
+def create_country_wise_locals_in_delay(self, request):
+    try:
+        add_local_rates_on_country(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_fcl_freight_rate_request_in_delay(self, request):
+    try:
+        update_fcl_freight_rate_request(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_fuel_data_delay(self):
     try:
