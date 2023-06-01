@@ -109,7 +109,7 @@ def read_root():
     return "WELCOME TO OCEAN RMS"
 
 
-@app.get("/fcl_freight_rate/health_check")
+@app.get("/fcl_freight_rate/health")
 def get_health_check():
-    return JSONResponse(status_code=200, content={"status": "healthy"})
+    return JSONResponse(status_code=200, content={"status": "ok"})
   
