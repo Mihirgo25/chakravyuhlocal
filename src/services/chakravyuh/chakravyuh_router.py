@@ -48,16 +48,6 @@ def create_revenue_target_func(request: PostRevenueTarget, resp:dict = Depends(a
     target = create_revenue_target(request.dict(exclude_none=True))
     return JSONResponse(status_code=200, content=jsonable_encoder(target))
 
-@chakravyuh_router.post("/get_cost_booking_transformation")
-def get_cost_booking_transformation_func():
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-    #     request.performed_by_id = resp["setters"]["performed_by_id"]
-    #     request.performed_by_type = resp["setters"]["performed_by_type"]
-    target = get_cost_booking_transformation()
-    # return JSONResponse(status_code=200, content=jsonable_encoder(target))
-
 @chakravyuh_router.get('/list_fcl_freight_rate_estimations')
 def list_fcl_freight_rate_estimations_api(
     filters: str = None,

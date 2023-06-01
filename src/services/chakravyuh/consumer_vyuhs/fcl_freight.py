@@ -64,7 +64,7 @@ class FclFreightVyuh():
     def get_probable_booking_data_tranformation(self, first_rate: dict={}):
         origin_port_id=first_rate['origin_port_id']
         destination_port_id=first_rate['destination_port_id']
-        return get_cost_booking_transformation()
+        return get_cost_booking_transformation(origin_port_id,destination_port_id)
     
     def get_most_eligible_customer_transformation(self, probable_customer_transformations):
         return probable_customer_transformations[0]
@@ -192,7 +192,6 @@ class FclFreightVyuh():
     
 
     def apply_booking_data_transformation(self, rate, probable_booking_data_transformations):
-        print(probable_booking_data_transformations)
         all_prices=[]
 
         for data in probable_booking_data_transformations:
@@ -209,19 +208,31 @@ class FclFreightVyuh():
         mean = sum(all_prices) / size
         variance = sum([((x - mean) ** 2) for x in all_prices]) / size
         std_dev = variance ** 0.5
-        lower_limit = mean - 1 * std_dev # -1 sigma
-        upper_limit = mean + 1 * std_dev # 1 sigma
-        print(lower_limit)
-        print(upper_limit)
+        lower_limit = mean - 1 * std_dev 
+        upper_limit = mean + 1 * std_dev
         price = self.apply_periodic_pricing(lower_limit, upper_limit)
-
-        print('price',price)
 
         if price >= 200:
             price = round(price/5) * 5
         else:
             price = round(price)
-        
+
+        validities = rate['validities'] or []
+        new_validities = []
+        for validity in validities:
+            line_items = validity['line_items']
+            new_lineitems = []
+            for line_item in line_items:
+                if line_item['code'] == 'BAS':
+                    line_items['price']=price
+                    new_lineitems.append(line_items)
+                else:
+                    new_lineitems.append(line_item)
+                    
+            validity['line_items'] = new_lineitems
+            new_validities.append(validity)
+        rate['validities'] = new_validities
+        return rate    
 
 
     def apply_transformation(self, rate, probable_transformations, probable_customer_transformations,probable_booking_data_transformations):
@@ -237,11 +248,9 @@ class FclFreightVyuh():
             
         if len(probable_customer_transformations) > 0:
             new_rate = self.apply_customer_transformation(rate=new_rate, probable_customer_transformations=probable_customer_transformations)
-            print(new_rate)
 
         if len(probable_booking_data_transformations)>0:
             new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
-            print(new_rate)
         return new_rate
 
     def apply_dynamic_pricing(self):
