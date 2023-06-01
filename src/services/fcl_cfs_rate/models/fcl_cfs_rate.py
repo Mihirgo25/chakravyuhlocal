@@ -3,11 +3,11 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from micro_services.client import maps, common
-from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES
-from configs.global_constants import  IMPORT_CARGO_HANDLING_TYPES
+from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES,IMPORT_CARGO_HANDLING_TYPES,TRADE_TYPES,CONTAINER_SIZES,CONTAINER_TYPES,CONTAINER
 from configs.definitions import FCL_CFS_CHARGES
-from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES
+from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES,CONTAINER_TYPE_COMMODITY_MAPPINGS
 from fastapi import HTTPException
+from database.rails_db import *
 
 
 class BaseModel(Model):
@@ -49,23 +49,47 @@ class FclCfsRate(BaseModel):
     procured_by = BinaryJSONField(null=True)
     sourced_by = BinaryJSONField(null=True)
     location = BinaryJSONField(null=True)
-    free_days = BinaryJSONField(default = [], null=True)
+    # free_days = BinaryJSONField(default = [], null=True)
     
     class Meta:
         table_name = 'fcl_cfs_rate'
-    def validate_mandatory_free_days(self):
-        free_days = [fd.free_days_type for fd in self.free_days]
+    # def validate_mandatory_free_days(self):
+    #     free_days = [fd.free_days_type for fd in self.free_days]
 
-        required_free_days = set(free_days) - set(
-            t['type'] for t in FREE_DAYS_TYPES if 'mandatory' in t['tags']
-         )
+    #     required_free_days = set(free_days) - set(
+    #         t['type'] for t in FREE_DAYS_TYPES if 'mandatory' in t['tags']
+    #      )
 
-        if required_free_days:
-            error_message = f"{', '.join(required_free_days)} is required"
-            raise HTTPException(status_code=400, detail=error_message)
+    #     if required_free_days:
+    #         error_message = f"{', '.join(required_free_days)} is required"
+    #         raise HTTPException(status_code=400, detail=error_message)
 
+    def possible_cfs_charge_codes(self):
+        self.set_location()
+        fcl_cfs_charges = FCL_CFS_CHARGES
+        location = self.location
 
+        charge_codes = {}
+        for code, config in fcl_cfs_charges.items():
+            if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'mandatory' in config.get('tags'):
+                charge_codes[code] = config
+        return charge_codes
     
+    def validate_duplicate_line_items(self):
+        unique_items = set()
+        for cfs_line_item in self.cfs_line_items:
+            unique_items.add(str(cfs_line_item['code']).upper() + str(cfs_line_item['location_id']))
+
+        if len(self.cfs_line_items) != len(unique_items):
+            raise HTTPException(status_code=400, detail="Contains Duplicates")
+        
+    def validate_invalid_line_items(self):
+        cfs_line_item_codes = [str(t.code) for t in self.cfs_line_items]
+        possible_cfs_charge_codes = [str(t[0]) for t in self.possible_cfs_charge_codes]
+
+        invalid_customs_line_items = [t for t in cfs_line_item_codes if t not in possible_cfs_charge_codes]
+        if invalid_customs_line_items:
+            raise HTTPException(status_code=400, detail="Invalid line items")
 
     def validate_cargo_handling_type(self):
             super().validate()
@@ -105,14 +129,13 @@ class FclCfsRate(BaseModel):
         
         location = maps.list_locations({ 'filters': { 'id': self.location_id } })
         if location['list']:
-            self.location = location
             location_data = location['list'][0]
-            
+            self.location = location_data
             self.location_type = 'seaport' if location_data['type'] == 'seaport' else location_data['type']
-            self.country_id = location_data.get('country_id') if self.country_id is None else self.country_id
-            self.trade_id = location_data.get('trade_id') if self.trade_id is None else self.trade_id
-            self.continent_id = location_data.get('continent_id') if self.continet_id is None else self.continent_id
-            self.location_ids = [uuid.UUID(str(self.location_id)),uuid.UUID(str(self.country_id)),uuid.UUID(str(self.trade_id)),uuid.UUID(str(self.continent_id))]
+            self.country_id = uuid.UUID(location_data.get('country_id')) if self.country_id is None else self.country_id
+            self.trade_id = uuid.UUID(location_data.get('trade_id')) if self.trade_id is None else self.trade_id
+            self.continent_id = uuid.UUID(location_data.get('continent_id')) if self.continet_id is None else self.continent_id
+            self.location_ids = [self.location_id,self.country_id,self.trade_id,self.continent_id]
         
         else:
             None
@@ -245,7 +268,50 @@ class FclCfsRate(BaseModel):
                 self.is_cfs_line_items_info_messages_present = True
 
         self.save()
+      
+    def validate_trade_type(self):
+            if self.trade_type and self.trade_type in TRADE_TYPES:
+                return True
+            return False
 
+    def valid_uniqueness(self): 
+        uniqueness = FclCfsRate.select().where(
+            FclCfsRate.location_id == self.location_id,
+            FclCfsRate.trade_type == self.trade_type,
+            FclCfsRate.container_size == self.container_size,
+            FclCfsRate.container_type == self.container_type,
+            FclCfsRate.commodity == self.commodity,
+            FclCfsRate.service_provider_id == self.service_provider_id,
+            FclCfsRate.importer_exporter_id == self.importer_exporter_id
+        ).count()
+        if self.id and uniqueness == 1:
+            return True
+        if not self.id and uniqueness == 0:
+            return True
+        return False
+        
+    def validate_container_size(self):
+        if self.container_size and self.container_size in CONTAINER_SIZES:
+            return True
+        return False
+        
+    def validate_container_type(self):
+        if self.container_type and self.container_type in CONTAINER_TYPES:
+            return True
+        return False
+        
+    def validate_commodity(self):
+        if self.container_type and self.commodity in CONTAINER_TYPE_COMMODITY_MAPPINGS[f"{self.container_type}"]:
+            return True
+        return False
+        
+    def validate_service_provider_id(self):
+        if not self.service_provider_id:
+            return
+        service_provider_data = get_organization(id=self.service_provider_id)
+        if len(service_provider_data) == 0:
+            raise HTTPException(status_code=400, detail="Invalid service provider ID")
+        
         return True
 
 class FclCfsRateLineItem(Model):
@@ -269,4 +335,4 @@ class FclCfsRateLineItem(Model):
             raise HTTPException( status_code =401 ,detail ='Price is required.')
         if self.price and self.price < 0:
             raise HTTPException( status_code =401 ,detail = 'Price cannot  be negative')
-        
+  
