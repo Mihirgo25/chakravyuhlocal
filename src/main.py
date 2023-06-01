@@ -13,7 +13,6 @@ from fastapi.responses import JSONResponse
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from db_migration import run_migration
 # from migrate import insert
-from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
@@ -97,7 +96,6 @@ def startup():
     # fcl_local_
     # migration()
     # free_day()
-    scheduler.start()
 
 
 @app.on_event("shutdown")
