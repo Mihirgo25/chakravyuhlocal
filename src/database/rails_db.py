@@ -327,8 +327,8 @@ def get_cost_booking_data(origin_country_id, destination_country_id, codes=None)
             WHERE
                 line_item ->> 'code' = 'BAS'
                 AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
-                AND shipment_fcl_freight_services.origin_country_id = %s
-                AND shipment_fcl_freight_services.destination_country_id = %s
+                AND shipment_fcl_freight_services.origin_port_id = %s
+                AND shipment_fcl_freight_services.destination_port_id = %s
                 AND shipment_collection_parties.status IN %s
                 AND line_item ->> 'unit' = 'per_container'
                 limit 20

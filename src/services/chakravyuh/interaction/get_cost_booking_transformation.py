@@ -11,7 +11,7 @@ def get_cost_booking_transformation():
 def transaction():
     # from celery_worker import adjust_fcl_freight_dynamic_pricing
     codes=['locked', 'coe_approved']
-    cost_booking_data = get_cost_booking_data('1b94734e-7d51-4e94-9dd2-ef96aee64a8f','541d1232-58ce-4d64-83d6-556a42209eb7',codes)
+    cost_booking_data = get_cost_booking_data('79b677ac-e075-47a4-8f99-bfa2cda5e55b','eb187b38-51b2-4a5e-9f3c-978033ca1ddf',codes)
     print(cost_booking_data)
     return cost_booking_data
    
