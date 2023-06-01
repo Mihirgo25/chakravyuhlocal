@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
@@ -600,8 +600,8 @@ def build_response_object(freight_query_result, request):
     source = 'spot_rates'
     if freight_query_result['mode'] == 'predicted':
         source = 'predicted'
-    # elif freight_query_result['rate_type'] != 'market_place':
-    #     source = freight_query_result['rate_type']
+    elif freight_query_result['rate_type'] != 'market_place':
+        source = freight_query_result['rate_type']
     response_object = {
       'shipping_line_id': freight_query_result['shipping_line_id'],
       'origin_port_id': freight_query_result['origin_port_id'],
@@ -638,7 +638,7 @@ def build_response_list(freight_rates, request):
     grouping = {}
     for freight_rate in freight_rates:
         # if freight_query_result['freight']['origin_main_port_id'] and freight_query_result['freight']['destination_main_port_id']:
-        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or ""])
+        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or "", freight_rate['rate_type'] or ""])
         if grouping.get(key) and grouping[key].get('importer_exporter_id'):
             continue
         response_object = build_response_object(freight_rate, request)
@@ -826,12 +826,20 @@ def get_fcl_freight_rate_cards(requirements):
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
         is_predicted = False
-
-        if len(freight_rates) == 0:
+        freight_rates_length = len(freight_rates)
+        if freight_rates_length == 0:
             get_fcl_freight_predicted_rate(requirements)
             initial_query = initialize_freight_query(requirements, True)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
             is_predicted = True
+        else:
+            cogofreight_freight_rates_length = 0
+            for val in freight_rates:
+                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                    cogofreight_freight_rates_length += 1
+
+            if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != freight_rates_length:
+                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
