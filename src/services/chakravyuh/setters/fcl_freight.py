@@ -158,7 +158,6 @@ class FclFreightVyuh():
     
     def get_available_rates_of_transormation(self, affected_transformation):
         current_date =  datetime.now().date()
-        
         rates_query = FclFreightRate.select(
             FclFreightRate.id, 
             FclFreightRate.validities,
@@ -470,10 +469,10 @@ class FclFreightVyuh():
         else:
             adjusted_line_items = self.get_adjusted_line_items_to_add(affected_transformation, new)
         
-
         if len(adjusted_line_items) == 0:
             # Return If no line_items to create
             return
+        
         if not transformation_id and new:
             tf = self.get_transformation(affected_transformation)
             if tf:
@@ -543,9 +542,7 @@ class FclFreightVyuh():
           Main Function to set dynamic pricing bounds  
         '''  
         from celery_worker import transform_dynamic_pricing
-        # if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
-        #     return False
-        if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted':
+        if self.new_rate['rate_type'] != 'market_place' or self.new_rate['mode'] == 'predicted' or (self.ff_mlo and self.new_rate["service_provider_id"] not in self.ff_mlo):
             return False
         
         affected_transformations = self.get_transformations_to_be_affected()
