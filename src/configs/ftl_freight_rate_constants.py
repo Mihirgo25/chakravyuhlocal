@@ -109,18 +109,18 @@ DISTANCE_FACTOR = {
     'mi':0.621371
 }
 
-# lower and upper limit are GVW(Gross Vehicle Weight in Tonnes)
+# lower and upper limit are Capacity of Vehicle
 TRUCK_TYPES_MAPPING = {
-    'small' : {'lower_limit':0,'upper_limit':2},
-    'medium' : {'lower_limit':2,'upper_limit':14},
-    'heavy': {'lower_limit':14,'upper_limit':40},
+    'small' : {'lower_limit':0,'upper_limit':2.3},
+    'medium' : {'lower_limit':2.3,'upper_limit':10.1},
+    'heavy': {'lower_limit':10.1,'upper_limit':154.3}
 }
 
 # 40% addtional basic freight for round trip
 ROUND_TRIP_CHARGE = 0.4
 
 # Loading charges 150/tonn same for unloading so 300
-LOADING_UNLOADING_CHARGES = 300 
+LOADING_UNLOADING_CHARGES = 300
 
 # HAZ commodity or reefer truck body type 20% extra basic freight charge.
 ADDITIONAL_CHARGE = 0.2
