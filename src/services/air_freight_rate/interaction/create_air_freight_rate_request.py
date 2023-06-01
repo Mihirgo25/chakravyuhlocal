@@ -2,6 +2,7 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from datetime import datetime, timedelta
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from celery_worker import update_multiple_service_objects
 def create_air_freight_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -45,7 +46,7 @@ def execute_transaction_code(request):
     create_audit(request, request_object.id)
 
     # for air 
-    # update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
+    update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
     
     # send_notifications_to_supply_agents(request)
 

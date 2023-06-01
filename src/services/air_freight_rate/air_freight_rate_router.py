@@ -338,6 +338,3 @@ def update_air_freight_rate_task(request:UpdateAirFreightRateTask  , resp:dict =
         # sentry_sdk.capture_exception(e)
         print(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
