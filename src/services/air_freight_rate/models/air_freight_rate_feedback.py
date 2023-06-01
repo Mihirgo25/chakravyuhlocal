@@ -56,8 +56,8 @@ class AirFreightRateFeedbacks(BaseModel):
     service_provider_id= UUIDField(null=True)
     origin_airport=BinaryJSONField(null=True)
     destination_airport=BinaryJSONField(null=True)
-    weight:float(null=True)
-    volume:float(null=True)
+    weight:DoubleField(null=True)
+    volume:DoubleField(null=True)
     packages_count:IntegerField(null=True)
 
     class Meta:

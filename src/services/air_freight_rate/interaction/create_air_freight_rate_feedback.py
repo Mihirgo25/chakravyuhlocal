@@ -3,7 +3,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_feeback import AirFreightRateFeedbacks
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
 from celery_worker import update_multiple_service_objects
 from celery_worker import send_create_notifications_to_supply_agents_function

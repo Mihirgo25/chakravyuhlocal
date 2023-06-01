@@ -1,6 +1,7 @@
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
-from datetime import datetime, timedelta
+from datetime import *
+from playhouse.postgres_ext import *
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
 from celery_worker import update_multiple_service_objects
 def create_air_freight_rate_request(request):
@@ -34,24 +35,31 @@ def execute_transaction_code(request):
 
     if not request_object:
         request_object = AirFreightRateRequest(**unique_object_params)
-    
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():
-        setattr(request_object, attr, value)
+        if attr =='preffered_airline_ids' and value:
+            ids=[]
+            for val in value:
+                ids.append(uuid.UUID(str(val)))
+            setattr(request_object,attr,ids)
+        else:
+            setattr(request_object, attr, value)
     
     if request_object.validate():
         request_object.save()
+    print(1234)
 
     create_audit(request, request_object.id)
 
     # for air 
     update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
+
     
     # send_notifications_to_supply_agents(request)
 
     return {
-    'id': request_object.id
+    'id': str(request_object.id)
     }
 
 

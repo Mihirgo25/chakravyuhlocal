@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from micro_services.client import *
 from database.rails_db import *
 from playhouse.postgres_ext import *
+from datetime import datetime
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -24,20 +25,23 @@ class AirFreightRateRequest(BaseModel):
     commodity = CharField(null=True)
     commodity_sub_type = CharField(null=True)
     commodity_type = CharField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.now())
     destination_airport_id = UUIDField(null=True)
+    destination_airport=BinaryJSONField(null=True)
     destination_continent_id = UUIDField(null=True)
     destination_country_id = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     inco_term = CharField(null=True)
     origin_airport_id = UUIDField(null=True)
+    origin_airport=BinaryJSONField(null=True)
     origin_continent_id = UUIDField(null=True)
     origin_country_id = UUIDField(null=True)
     origin_trade_id = UUIDField(null=True)
     packages = BinaryJSONField(null=True)
     packages_count = IntegerField(null=True)
     performed_by_id = UUIDField(null=True)
+    performed_by=BinaryJSONField(null=True)
     performed_by_org_id = CharField(null=True)
     performed_by_type = CharField(null=True)
     preferred_airline_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
@@ -52,7 +56,7 @@ class AirFreightRateRequest(BaseModel):
     source_id = UUIDField(null=True)
     status = CharField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.now())
     volume = DoubleField(null=True)
     weight = DoubleField(null=True)
 
@@ -65,7 +69,7 @@ class AirFreightRateRequest(BaseModel):
         # self.validate_source_id()
         # self.validate_performed_by_id()
         # self.validate_performed_by_org_id()
-        self.validate_preferred_shipping_line_ids()
+        self.validate_preferred_airline_ids()
         return True
 
     def validate_source(self):
@@ -100,6 +104,6 @@ class AirFreightRateRequest(BaseModel):
             airline_data = get_shipping_line(id=self.preferred_airline_ids)
             if len(airline_data) != len(self.preferred_airline_ids):
                 raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
-            self.preferred_shipping_lines = airline_data
-            self.preferred_shipping_line_ids = [uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids]
+            self.preferred_airlines = airline_data
+            self.preferred_airline_ids = [uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids]
 
