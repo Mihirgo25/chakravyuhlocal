@@ -102,7 +102,6 @@ def startup():
 def shutdown():
     if not db.is_closed():
         db.close()
-    scheduler.stop()
 
 
 @app.get("/")
