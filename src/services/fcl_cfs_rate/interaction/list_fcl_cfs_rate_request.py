@@ -10,18 +10,16 @@ def list_fcl_cfs_rate_request(filters, page_limit=10, page=1, is_stats_required=
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-        query = get_query()
+        query = FclCfsRateRequest.select()
         query = apply_direct_filters(query, filters)
         query = apply_indirect_filters(query, filters)
-    stats = get_stats(query, is_stats_required, performed_by_id)
-    query = get_page(query, page, page_limit)
+    stats = get_stats(filters, is_stats_required, performed_by_id)
+    # query = get_page(query, page, page_limit)
     data = get_data(query)
     # pagination_data = get_pagination_data(query, page, page_limit)
     response_data = {'list': data}
     # response_data.update(pagination_data)
     response_data.update(stats)
-def get_query():
-    return FclCfsRateRequest
 
 def get_page(query, page, page_limit):
     return query.order_by(FclCfsRateRequest.created_at.desc()).paginate(page, page_limit)
@@ -100,19 +98,19 @@ def add_service_objects(data):
     """
      Has to make changes here but first testing the other apis so i will do this later.
 
-    """
-    service_objects = get_multiple_service_objects(objects)
+    # """
+    # service_objects = get_multiple_service_objects(objects)
 
-    for obj in data:
-        obj['port'] = service_objects['location'].get(obj['port_id'], None)
-        obj['performed_by'] = service_objects['user'].get(obj['performed_by_id'], None)
-        obj['closed_by'] = service_objects['user'].get(obj['closed_by_id'], None)
-        obj['commodity'] = obj.get('commodity', None)
-        obj['cargo_readiness_date'] = obj.get('cargo_readiness_date', None)
-        obj['closing_remarks'] = obj.get('closing_remarks', None)
-        obj['spot_search'] = service_objects['spot_search'].get(obj['source_id'], None)
-        obj['preferred_freight_rate'] = obj.get('preferred_rate', None)
-        obj['preferred_freight_rate_currency'] = obj.get('preferred_rate_currency', None)
+    # for obj in data:
+    #     obj['location'] = service_objects['location'].get(obj['port_id'], None)
+    #     obj['performed_by'] = service_objects['user'].get(obj['performed_by_id'], None)
+    #     obj['closed_by'] = service_objects['user'].get(obj['closed_by_id'], None)
+    #     obj['commodity'] = obj.get('commodity', None)
+    #     obj['cargo_readiness_date'] = obj.get('cargo_readiness_date', None)
+    #     obj['closing_remarks'] = obj.get('closing_remarks', None)
+    #     obj['spot_search'] = service_objects['spot_search'].get(obj['source_id'], None)
+    #     obj['preferred_freight_rate'] = obj.get('preferred_rate', None)
+    #     obj['preferred_freight_rate_currency'] = obj.get('preferred_rate_currency', None)
 
 
 # def get_pagination_data(query, page, page_limit):
@@ -125,11 +123,15 @@ def add_service_objects(data):
 #         'page_limit': page_limit
 #     }
 
-def get_stats(query, is_stats_required, performed_by_id):
+def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
-
-    query = query.unscope(where=[FclCfsRateRequest.status])
+    query = FclCfsRateRequest.select()
+    if filters:
+        if 'status' in filters:
+            del filters['status']
+        query = apply_direct_filters(query, filters)
+        query = apply_indirect_filters(query, filters)
     total_closed_by_user = get_total_closed_by_user(query, performed_by_id)
     total_opened_by_user = get_total_opened_by_user(query, performed_by_id)
     status_count = get_status_count(query)
@@ -162,4 +164,10 @@ def get_total_opened_by_user(query, performed_by_id):
     ).count()
 
 def get_status_count(query):
-    return query.group_by(FclCfsRateRequest.status).count()
+    result = query.group_by(FclCfsRateRequest.id, FclCfsRateRequest.status).select(
+        FclCfsRateRequest.status,fn.COUNT(FclCfsRateRequest.id).alias('count'))
+    status_count = {}
+    for row in result:
+        status_count[row.status] = row.count
+
+    return status_count

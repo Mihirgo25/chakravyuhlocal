@@ -6,7 +6,9 @@ from micro_services.client import maps, common
 from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES
 from configs.global_constants import  IMPORT_CARGO_HANDLING_TYPES
 from configs.definitions import FCL_CFS_CHARGES
+from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES
 from fastapi import HTTPException
+
 
 class BaseModel(Model):
     class Meta:
@@ -47,10 +49,23 @@ class FclCfsRate(BaseModel):
     procured_by = BinaryJSONField(null=True)
     sourced_by = BinaryJSONField(null=True)
     location = BinaryJSONField(null=True)
+    free_days = BinaryJSONField(default = [], null=True)
     
     class Meta:
         table_name = 'fcl_cfs_rate'
+    def validate_mandatory_free_days(self):
+        free_days = [fd.free_days_type for fd in self.free_days]
 
+        required_free_days = set(free_days) - set(
+            t['type'] for t in FREE_DAYS_TYPES if 'mandatory' in t['tags']
+         )
+
+        if required_free_days:
+            error_message = f"{', '.join(required_free_days)} is required"
+            raise HTTPException(status_code=400, detail=error_message)
+
+
+    
 
     def validate_cargo_handling_type(self):
             super().validate()
@@ -91,7 +106,13 @@ class FclCfsRate(BaseModel):
         location = maps.list_locations({ 'filters': { 'id': self.location_id } })
         if location['list']:
             self.location = location
-            self.location_type = 'port' if location.get('type') == 'seaport' else location.get('type')
+            location_data = location['list'][0]
+            
+            self.location_type = 'seaport' if location_data['type'] == 'seaport' else location_data['type']
+            self.country_id = location_data.get('country_id') if self.country_id is None else self.country_id
+            self.trade_id = location_data.get('trade_id') if self.trade_id is None else self.trade_id
+            self.continent_id = location_data.get('continent_id') if self.continet_id is None else self.continent_id
+            self.location_ids = [uuid.UUID(str(self.location_id)),uuid.UUID(str(self.country_id)),uuid.UUID(str(self.trade_id)),uuid.UUID(str(self.continent_id))]
         
         else:
             None
