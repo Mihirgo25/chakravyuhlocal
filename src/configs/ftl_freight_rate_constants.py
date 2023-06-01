@@ -109,9 +109,22 @@ DISTANCE_FACTOR = {
     'mi':0.621371
 }
 
+# lower and upper limit are GVW(Gross Vehicle Weight in Tonnes)
 TRUCK_TYPES_MAPPING = {
     'small' : {'lower_limit':0,'upper_limit':2},
     'medium' : {'lower_limit':2,'upper_limit':14},
     'heavy': {'lower_limit':14,'upper_limit':40},
-
 }
+
+# 40% addtional basic freight for round trip
+ROUND_TRIP_CHARGE = 0.4
+
+# Loading charges 150/tonn same for unloading so 300
+LOADING_UNLOADING_CHARGES = 300 
+
+# HAZ commodity or reefer truck body type 20% extra basic freight charge.
+ADDITIONAL_CHARGE = 0.2
+
+
+# Minimum charges for driver if distance is less than 300
+MINIMUM_APPLICABLE_CHARGE = 400

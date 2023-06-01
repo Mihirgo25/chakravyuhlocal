@@ -5,22 +5,12 @@ import httpx, json
 
 
 def get_land_route_from_valhalla(location_ids):
-    url = 'https://api.cogoport.com/location/get_land_route_location_details'
     params = {
         'location_ids': json.dumps(location_ids),
         'number_of_locations': '5',
         'is_authorization_required': 'false'
     }
-    headers = {
-        'accept': 'application/json'
-    }
-    response = httpx.get(url, params=params, headers=headers)
-
-    # Access the response data
-    data = response.json()
-
-    # Do something with the response data
-    return data
+    return maps.get_land_route_location_details(params)
 
 def get_road_route(origin_location_id, destination_location_id):
 

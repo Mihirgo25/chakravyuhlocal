@@ -1,4 +1,4 @@
-from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,HAZ_CLASSES
+from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,HAZ_CLASSES,ADDITIONAL_CHARGE,ROUND_TRIP_CHARGE,LOADING_UNLOADING_CHARGES,MINIMUM_APPLICABLE_CHARGE
 from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
 class INFtlFreightRateEstimator:
     def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data):
@@ -26,12 +26,12 @@ class INFtlFreightRateEstimator:
 
 
         if self.truck_and_commodity_data['commodity'] in HAZ_CLASSES or self.truck_and_commodity_data['truck_body_type'] == 'reefer':
-            basic_freight_charges += 0.20*basic_freight_charges
+            basic_freight_charges += ADDITIONAL_CHARGE*basic_freight_charges
 
         weight = self.truck_and_commodity_data['weight']
-        basic_freight_charges += weight*150*2  #loading and unloading charges
+        basic_freight_charges += weight*LOADING_UNLOADING_CHARGES
         if self.truck_and_commodity_data['trip_type'] == 'round_trip':
-            basic_freight_charges += 0.4*basic_freight_charges
+            basic_freight_charges += ROUND_TRIP_CHARGE*basic_freight_charges
         result = {}
         result['currency']  = currency
         result["base_rate"] = round(basic_freight_charges,4)
@@ -40,7 +40,7 @@ class INFtlFreightRateEstimator:
 
     def get_driver_charges_factor(self,total_distance):
         if total_distance <= 300:
-            return 400
+            return MINIMUM_APPLICABLE_CHARGE
         return total_distance
 
     def get_applicable_rule_set(self):

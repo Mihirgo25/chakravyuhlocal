@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from services.ftl_freight_rate.interactions.get_estimated_ftl_freight_rate import (
     get_ftl_freight_rate,
 )
-from services.ftl_freight_rate.interactions.list_ftl_freight_rule_set import (
+from services.ftl_freight_rate.interactions.list_ftl_freight_rule_sets import (
     list_ftl_rule_set_data,
 )
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate_rule_set import (
@@ -48,7 +48,7 @@ def get_ftl_freight_rates(
     data = jsonable_encoder(data)
     return JSONResponse(status_code=200, content=data)
 
-@ftl_freight_router.get("/list_ftl_freight_rate_rule_set")
+@ftl_freight_router.get("/list_ftl_freight_rate_rule_sets")
 def list_ftl_rule_set(
     filters: str = None,
     page_limit: int = 10,

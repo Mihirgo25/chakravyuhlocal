@@ -54,3 +54,8 @@ class MapsApiClient:
         data['is_authorization_required'] = False
         data = json.dumps(data)
         return self.client.request('GET','get_land_route_location_details',data)
+
+    def get_land_route_location_details(self,data = {}):
+        data['is_authorization_required'] = False
+        data = json.dumps(data)
+        return self.client.request('GET','get_land_route_location_details',data)
