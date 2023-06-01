@@ -23,7 +23,7 @@ class CreateFclCustomsRate(BaseModel):
   sourced_by_id: str
   procured_by_id: str
   importer_exporter_id: str = None
-  customs_line_items: List[FclCustomsLineItems] = []
+  customs_line_items: List[FclCustomsLineItems] = None
   performed_by_type: str
 
 class DeleteRate(BaseModel):
@@ -90,9 +90,14 @@ class CreateFclCustomsRateFeedback(BaseModel):
   remarks: list[str] = []
   preferred_customs_rate: float = None
   preferred_customs_rate_currency: str = None
-  preferred_storage_free_days: int = None
   feedback_type: str
   booking_params: dict ={}
+  location_id: str = None
+  country_id: str = None
+  trade_type: str = None
+  trade_id: str = None
+  commodity: str = None
+  service_provider_id: str = None
 
 class UpdateFclCustomsRatePlatformPrices(BaseModel):
   location_id: str

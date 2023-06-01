@@ -2,11 +2,9 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
-from configs.fcl_customs_rate_constants import FEEDBACK_SOURCES, FEEDBACK_TYPES
-from micro_services.client import spot_search, checkout
+from fastapi import HTTPException
+from micro_services.client import spot_search, maps
 from database.rails_db import *
-from configs.definitions import FCL_CUSTOMS_CURRENCIES
 
 class BaseModel(Model):
     class Meta:
@@ -57,54 +55,14 @@ class FclCustomsRateFeedback(BaseModel):
     class Meta:
         table_name = 'fcl_customs_rate_feedbacks'
 
-    def validate_fcl_customs_rate_id(self):
-        fcl_customs_rate_data = FclCustomsRate.get(**{'id' : self.fcl_customs_rate_id})
-        if fcl_customs_rate_data:
-            return True
-        return False
-    
-    def validate_source(self):
-        if self.source and self.source in FEEDBACK_SOURCES:
-            return True
-        return False
-    
+    def set_location(self):
+        location_data = maps.list_locations({'filters':{'id':self.location_id}})['list']
+        if location_data:
+            self.port = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+
     def validate_source_id(self):
         if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
-            if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
-                return True
-            
-        if self.source == 'checkout':
-            checkout_data = checkout.list_checkouts({'filters':{'id': [str(self.source_id)]}})
-            if 'list' in checkout_data and len(checkout_data['list']) != 0:
-                return True
-        return False
-    
-    def validate_performed_by_id(self):
-        data =  get_user(self.performed_by_id)
-        if data:
-            return True
-        else:
-            return False
-
-    def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=self.performed_by_org_id)
-        if len(performed_by_org_data) > 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
-            return True
-        else:
-            return False
-        
-    def validate_preferred_customs_rate_currency(self):
-        if not self.preferred_customs_rate_currency:
-            return True
-
-        fcl_customs_currencies = FCL_CUSTOMS_CURRENCIES
-
-        if self.preferred_customs_rate_currency in fcl_customs_currencies:
-            return True
-        return False
-
-    def validate_feedback_type(self):
-        if self.feedback_type in FEEDBACK_TYPES:
-            return True
-        return False
+            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+            if len(spot_search_data) == 0:
+                raise HTTPException(status_code=400, detail="Invalid Source")
+            self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}

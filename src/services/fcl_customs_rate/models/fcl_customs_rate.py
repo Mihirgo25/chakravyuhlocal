@@ -8,6 +8,7 @@ from configs.fcl_customs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS
 from database.rails_db import *
 from fastapi import HTTPException
 from configs.definitions import FCL_CUSTOMS_CHARGES
+import uuid
 
 class BaseModel(Model):
     class Meta:
@@ -64,8 +65,8 @@ class FclCustomsRate(BaseModel):
         self.country_id = self.location.get('country_id') 
         self.trade_id = self.location.get('trade_id') 
         self.continent_id = self.location.get('continent_id') 
-        self.location_ids = list(filter(None, [self.location_id, self.country_id, self.trade_id, self.continent_id]))
-
+        self.location_ids = list(filter(None, [uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
+        
     def set_location_type(self):
         self.location_type = self.location.get('type')
  
@@ -165,7 +166,7 @@ class FclCustomsRate(BaseModel):
             raise HTTPException(status_code=400, detail="Invalid line items")
         
     def mandatory_charge_codes(self):
-        mandatory_charge_codes = [code.upper() for code, config in self.possible_customs_charge_codes if 'mandatory' in config.get('tags', [])]
+        mandatory_charge_codes = [code.upper() for code, config in (self.possible_customs_charge_codes() or {}).items() if 'mandatory' in (config.get('tags') or [])]
         return mandatory_charge_codes
     
     def get_line_items_total_price(self, line_items):
@@ -178,7 +179,8 @@ class FclCustomsRate(BaseModel):
         return result
     
     def get_mandatory_line_items(self):
-        selected_line_items = [line_item for line_item in self.customs_line_items if line_item.code.upper() in self.mandatory_charge_codes]
+        print(self.mandatory_charge_codes(),'line')
+        selected_line_items = [line_item for line_item in self.customs_line_items if line_item.get('code').upper() in self.mandatory_charge_codes()]
         return selected_line_items
     
     def set_platform_price(self):
@@ -349,7 +351,7 @@ class FclCustomsRate(BaseModel):
 
     def update_customs_line_item_messages(self):
         self.set_location()
-        location_ids = list(set([item.location_id for item in self.customs_line_items if item.location_id is not None]))
+        location_ids = list(set([item.get('location_id') for item in self.customs_line_items if item.get('location_id')]))
         locations = []
 
         if location_ids:
@@ -363,7 +365,7 @@ class FclCustomsRate(BaseModel):
         grouped_charge_codes = {}
 
         for line_item in self.customs_line_items:
-            grouped_charge_codes[line_item.code] = line_item.__dict__
+            grouped_charge_codes[line_item.get('code')] = line_item
 
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CUSTOMS_CHARGES.get(code)

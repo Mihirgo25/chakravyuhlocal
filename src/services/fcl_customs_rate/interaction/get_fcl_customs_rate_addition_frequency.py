@@ -15,10 +15,10 @@ def get_fcl_customs_rate_addition_frequency(group_by, filters = {}, sort_type = 
     if filters:
       if type(filters) != dict:
         filters = json.loads(filters)
-        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+      direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   
-        query = get_filters(direct_filters, query, FclCustomsRate)
-        query = apply_indirect_filters(query, indirect_filters)
+      query = get_filters(direct_filters, query, FclCustomsRate)
+      query = apply_indirect_filters(query, indirect_filters)
 
     data = get_data(query, sort_type, group_by)
     return data
@@ -36,7 +36,7 @@ def apply_indirect_filters(query, filters):
     return query
 
 def get_data(query, sort_type, group_by):
-    data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', FclCustomsRate.updated_at).alias(f'date_trunc_{group_by}_fcl_customs_rates_temp_updated_at')
+    data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', FclCustomsRate.updated_at).alias(f'date_trunc_{group_by}_fcl_customs_rates_updated_at')
         ).group_by(fn.date_trunc(f'{group_by}', FclCustomsRate.updated_at)
         ).order_by(eval(f"fn.date_trunc('{group_by}', FclCustomsRate.updated_at).{sort_type}()")))
     return jsonable_encoder(list(data.dicts()))
