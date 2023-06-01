@@ -1,4 +1,4 @@
-from configs.env import RUBY_AUTHTOKEN,RUBY_AUTHSCOPE,RUBY_AUTHSCOPEID,RUBY_ADDRESS_URL
+from configs.env import RUBY_AUTHTOKEN,RUBY_AUTHSCOPE,RUBY_AUTHSCOPEID
 from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from configs.env import APP_ENV
@@ -14,15 +14,12 @@ class MapsApiClient:
         })
 
     def list_locations(self, data={}):
-        if True:
+        if APP_ENV == "production":
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
-            self.client.url.set('https://api.cogoport.com/location')
-            resp =  self.client.request('GET', 'list_locations', {}, data)
-            # self.clconient.url = RUBY_ADDRESS_URL
-            return resp
+            return self.client.request('GET', 'list_locations', {}, data)
         return self.client.request('GET', 'list_locations', data, {})
 
     def list_location_cluster(self,data={}):
@@ -49,7 +46,7 @@ class MapsApiClient:
     def get_distance_matrix_valhalla(self, data= {}):
         data['is_authorization_required'] = False
         return self.client.request('GET','get_distance_matrix_valhalla',{}, data)
-    
+     
     def get_land_route_from_valhalla(self,data = {}):
         data['is_authorization_required'] = False
         data = json.dumps(data)
