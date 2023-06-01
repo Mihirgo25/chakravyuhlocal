@@ -1,7 +1,7 @@
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from datetime import datetime, timedelta
-from services.air_freight_rate.models.air_freight_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
 def create_air_freight_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)

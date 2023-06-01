@@ -100,4 +100,7 @@ AIR_STANDARD_COMMODITIES = ['general', 'perishable', 'live_animals', 'pharma']
 
 AIR_HAZARDOUS_COMMODITIES = ['hazardous']
 
+AIR_GENERAL_COMMODITY_TYPE =['all']
+
+AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES = ['dangerous' 'temp_controlled' 'other_special']
 

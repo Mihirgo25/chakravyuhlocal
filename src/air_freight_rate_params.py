@@ -11,6 +11,12 @@ class WeightSlab(BaseModel):
     currency: str
     unit:str ='per_kg'
 
+class Slab(BaseModel):
+    lower_limit: float
+    upper_limit: float
+    price: float
+    currency: str
+
 class LineItem(BaseModel):
   code: str
   unit: str
@@ -19,6 +25,15 @@ class LineItem(BaseModel):
   min_price: float  
   remarks: list[str] = None
 
+class TaskLineItem(BaseModel):
+    location_id: str = None
+    code: str
+    unit: str
+    price: float
+    currency: str
+    market_price: float = None 
+    remarks: list[str] = None
+    slabs: list[Slab] = None
 class LineItemLocal(BaseModel):
     code: str
     unit: str
@@ -26,6 +41,8 @@ class LineItemLocal(BaseModel):
     price: float
     currency: str
     remarks: list[str] = None
+class LocalData(BaseModel):
+    line_items: list[TaskLineItem]=None
 
 class DeleteAirFreightRate(BaseModel):
     id:str
@@ -127,12 +144,26 @@ class CreateAirFreightRateLocal(BaseModel):
 
 
 class UpdateAirFreightRateSurcharge(BaseModel):
-    id:str
-    performed_by_id:str
-    procured_by_id:str=None
-    sourced_by_id:str=None
-    line_items:list[LineItem]
+    id: str
+    performed_by_id: str
+    procured_by_id: str=None
+    sourced_by_id: str=None
+    line_items: list[LineItem]
 
+class CreateAirFreightRateTask(BaseModel):
+    service: str=None
+    airport_id: str=None
+    commodity: str=None
+    commodity_type:str=None
+    trade_type: str=None
+    airline_id: str=None
+    logistics_service_type:str=None
+    source: str=None
+    task_type: str=None
+    shipment_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    rate: LocalData = None
 
 
 
@@ -147,34 +178,51 @@ class ListSlab(BaseModel):
     price:float
     currency:str
 
-class ListLineItems(BaseModel):
-    code:str
-    unit:str
-    price:float
-    min_price:float
-    currency:str
-    remarks:list=None
-
-class UpdateFrieghtRateLocal(BaseModel):
-    id:str=None
+class CreateAirFreightRateLocal(BaseModel):
+    airport_id:str
+    airline_id:str=None
+    trade_type:str=None
+    commodity:str=None
+    commodity_type:str=None
+    service_provider_id:str=None
     performed_by_id:str=None
-    sourced_by_id:str=None
     procured_by_id:str=None
+    sourced_by_id:str=None
     bulk_operation_id:str=None
-    line_items:list[ListLineItems]=None
-    slabs: list[ListSlab]=None
+    rate_sheet_id:str=None
+    rate_type:str='general'
+    line_items: list[LineItemLocal]=None
+    slabs:list[SlabLocal]=None
 
 
+class UpdateAirFreightRateSurcharge(BaseModel):
+    id: str
+    performed_by_id: str
+    procured_by_id: str=None
+    sourced_by_id: str=None
+    line_items: list[LineItem]
 
+class CreateAirFreightRateTask(BaseModel):
+    service: str=None
+    airport_id: str=None
+    commodity: str=None
+    commodity_type:str=None
+    trade_type: str=None
+    airline_id: str=None
+    logistics_service_type:str=None
+    source: str=None
+    task_type: str=None
+    shipment_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    rate: LocalData = None
 
-
-
-
-
-
-
-
-
-
+class UpdateAirFreightRateTask(BaseModel):
+  id: str
+  performed_by_id: str=None
+  performed_by_type: str=None
+  rate: LocalData = None
+  status: str = None
+  closing_remarks: str = None
 
 
