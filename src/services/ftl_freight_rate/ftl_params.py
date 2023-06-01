@@ -47,11 +47,6 @@ class UpdateTruck(BaseModel):
     horse_power: float=None
     data: dict = {}
 
-from pydantic import BaseModel
-from peewee import *
-from typing import Optional
-
-
 
 class CreateFtlRuleSet(BaseModel):
     performed_by_id: str=None
