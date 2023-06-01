@@ -18,6 +18,6 @@ def execute_transaction_code(request):
     ).execute()
 
     for result in query_result:
-        result.set_platform_price
-        result.set_is_best_price
+        result.set_platform_price()
+        result.set_is_best_price()
         result.save()

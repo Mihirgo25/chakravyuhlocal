@@ -200,10 +200,10 @@ class FclCustomsRate(BaseModel):
             ((FclCustomsRate.importer_exporter_id == self.importer_exporter_id) | (FclCustomsRate.importer_exporter_id.is_null(True))),
             FclCustomsRate.is_customs_line_items_error_messages_present == False,
             ~FclCustomsRate.service_provider_id == self.service_provider_id
-        )
+        ).execute()
 
         for rate in rates:
-            selected_line_items = [line_item for line_item in rate.customs_line_items if line_item.code.upper() in self.mandatory_charge_codes]
+            selected_line_items = [line_item for line_item in rate.customs_line_items if line_item['code'].upper() in self.mandatory_charge_codes()]
             rate_min_price = 0.0
             currency = selected_line_items[0]['currency']
             for line_item in selected_line_items:

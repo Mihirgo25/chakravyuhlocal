@@ -18,6 +18,11 @@ from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fc
 from services.fcl_customs_rate.interaction.list_fcl_customs_rate_requests import list_fcl_customs_rate_requests
 from services.fcl_customs_rate.interaction.list_fcl_customs_rate_feedbacks import list_fcl_customs_rate_feedbacks
 from services.fcl_customs_rate.interaction.get_fcl_customs_rate_cards import get_fcl_customs_rate_cards
+from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_feedback import delete_fcl_customs_rate_feedback
+from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_request import delete_fcl_customs_rate_request
+from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
+from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
+from services.fcl_customs_rate.interaction.update_fcl_customs_rate import update_fcl_customs_rate
 
 fcl_customs_router = APIRouter()
 
@@ -292,6 +297,86 @@ def get_fcl_cutsoms_rate_cards_data(
 
     try:
         data = get_fcl_customs_rate_cards(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.post("/delete_fcl_customs_rate_feedback")
+def delete_fcl_customs_rates_feedback(request: DeleteFclCustomsRateFeedback, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_fcl_customs_rate_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.post("/delete_fcl_customs_rate_request")
+def delete_fcl_customs_rates_request(request: DeleteFclCustomsRateRequest, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_fcl_customs_rate_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.post("/delete_fcl_customs_rate")
+def delete_fcl_customs_rates(request: DeleteFclCustomsRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_fcl_customs_rate(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.post("/update_fcl_customs_rate_platform_prices")
+def update_fcl_customs_rate_platform_prices_data(request: UpdateFclCustomsRatePlatformPrices, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = update_fcl_customs_rate_platform_prices(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_customs_router.post("/update_fcl_customs_rate")
+def update_fcl_customs_rate_data(request: UpdateFclCustomsRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = update_fcl_customs_rate(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise

@@ -18,21 +18,21 @@ def execute_transaction_code(request):
     rate_object.procured_by_id = request.get('procured_by_id')
     rate_object.sourced_by_id = request.get('sourced_by_id')
     
-    rate_object.set_platform_price
-    rate_object.set_is_best_price
+    rate_object.set_platform_price()
+    rate_object.set_is_best_price()
 
     try:
         rate_object.save()
     except Exception as e:
         print("Exception in updating rate", e)
 
-    rate_object.update_customs_line_item_messages
+    rate_object.update_customs_line_item_messages()
 
-    rate_object.update_cfs_line_item_messages
+    rate_object.update_cfs_line_item_messages()
 
     create_audit_for_updating_rate(request, rate_object)
 
-    rate_object.update_platform_prices_for_other_service_providers
+    rate_object.update_platform_prices_for_other_service_providers()
 
     return {'id': rate_object.id}
 

@@ -25,7 +25,7 @@ def execute_transaction_code(request):
     except Exception as e:
          print("Exception in deleting rate", e)
 
-    rate_object.update_platform_prices_for_other_service_providers
+    rate_object.update_platform_prices_for_other_service_providers()
 
     create_audit_for_delete_rates(request, rate_object, delete_params)
 
