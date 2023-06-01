@@ -74,3 +74,12 @@ class UpdateFtlRuleSet(BaseModel):
     process_currency: str = None
     status: str = None
 
+    
+class CreateFuelData(BaseModel):
+    location_id: str 
+    location_type: str
+    fuel_type: str
+    fuel_price: float
+    fuel_unit: str
+    currency:str
+    

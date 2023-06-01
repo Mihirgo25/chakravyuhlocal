@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Depends
 from rms_utils.auth import authorize_token
 from fastapi.responses import JSONResponse
 import sentry_sdk
@@ -20,6 +20,7 @@ from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
 from services.ftl_freight_rate.interaction.create_truck import create_truck_data
 from services.ftl_freight_rate.interaction.update_truck import update_truck_data
 from services.ftl_freight_rate.ftl_params import *
+from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
 
 ftl_freight_router = APIRouter()
 
@@ -48,6 +49,19 @@ def get_ftl_freight_rates(
     )
     data = jsonable_encoder(data)
     return JSONResponse(status_code=200, content=data)
+
+@ftl_freight_router.post("/create_fuel_data")
+def create_fuel_datas(request: CreateFuelData,resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = create_fuel_data(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @ftl_freight_router.get("/list_ftl_freight_rate_rule_sets")
 def list_ftl_rule_set(
