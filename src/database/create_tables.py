@@ -6,7 +6,7 @@ from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
 def create_table():
     # db.connect()
     try:
-        db.create_tables([Truck,FtlServiceAudit,FtlFreightRateRuleSet])
+        db.create_tables([FtlFreightRateRuleSet])
         db.close()
         print("created table")
     except:

@@ -31,4 +31,4 @@ class FtlFreightRateRuleSet(BaseModel):
       return super(FtlFreightRateRuleSet, self).save(*args, **kwargs)
 
     class Meta:
-        table_name = 'ftl_freight_rate_rule_set'
+        table_name = 'ftl_freight_rate_rule_sets'
