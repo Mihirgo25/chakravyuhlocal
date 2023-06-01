@@ -23,21 +23,11 @@ def get_air_freight_rate_local(request):
 
 
 def all_fields_present(request):
-    # if((object_params['airport_id'] is not None) and (object_params['airline_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['commodity'] is not None) and (object_params['service_provider_id'] is not None)):
-    #     return True
-    # return False
     if request.get('airport_id') and request.get('airline_id') and request.get('trade_type') and request.get('commodity') and request.get('service_provider_id'):
         return True
     return False
     
 def find_object(request):
-    # object = AirFreightRateLocal.select().where(
-    # AirFreightRateLocal.airport_id == request.get("airport_id"),
-    # AirFreightRateLocal.airline_id == request.get("airline_id"),
-    # AirFreightRateLocal.trade_type == request.get("trade_type"),
-    # AirFreightRateLocal.commodity == request.get("commodity"),
-    # AirFreightRateLocal.service_provider_id == request.get('service_provider_id'),
-    # ).first()
 
     row = {
         'airport_id' : request.get("airport_id"),
@@ -48,11 +38,10 @@ def find_object(request):
         }
     
     try:
+        
         objects = AirFreightRateLocal.get(**row)
-    
     except:
         raise HTTPException(status_code=400, detail="no local rates entry with the given id exists")
-
     return objects
 
     
