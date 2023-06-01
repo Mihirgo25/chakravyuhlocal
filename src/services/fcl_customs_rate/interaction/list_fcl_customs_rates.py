@@ -53,5 +53,6 @@ def apply_importer_exporter_present_filter(query, filters):
     return query
 
 def apply_is_rate_available_filter(query, filters):
-    query = query.where(FclCustomsRate.rate_not_available_entry != True)
+    rate_not_available_entry = not filters.get('is_rate_available')
+    query = query.where(FclCustomsRate.rate_not_available_entry == rate_not_available_entry)
     return query 

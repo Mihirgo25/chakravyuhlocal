@@ -11,7 +11,7 @@ from peewee import fn, SQL,Window
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'port_id', 'trade_id', 'service_provider_id']
+possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'location_id', 'trade_id', 'service_provider_id']
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 
@@ -27,7 +27,6 @@ def list_fcl_customs_rate_feedbacks(filters = {}, spot_search_details_required=F
         query = get_filters(direct_filters, query, FclCustomsRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
 
-    # query = get_join_query(query)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
     pagination_data = get_pagination_data(query, page, page_limit)
 
@@ -39,10 +38,6 @@ def list_fcl_customs_rate_feedbacks(filters = {}, spot_search_details_required=F
 def get_page(query, page, page_limit):
     query = query.order_by(FclCustomsRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
     return query
-
-# def get_join_query(query):
-#     query = query.join(FclCustomsRate, on=( FclCustomsRateFeedback.fcl_customs_rate_id == FclCustomsRate.id))
-#     return query
 
 def apply_indirect_filters(query, filters):
     for key in filters:
@@ -64,22 +59,6 @@ def apply_supply_agent_id_filter(query, filters):
     query = query.where((FclCustomsRateFeedback.location_id << location_id) |
                     (FclCustomsRateFeedback.country_id << location_id))
     return query
-
-# def apply_country_id_filter(query, filters):
-#     query = query.where(FclCustomsRateFeedback.country_id == filters['country_id'])
-#     return query
-
-# def apply_trade_type_filter(query, filters):
-#     query = query.where(FclCustomsRateFeedback.trade_type == filters['trade_type'])
-#     return query
-
-# def apply_port_id_filter(query, filters):
-#     query = query.where(FclCustomsRateFeedback.port_id == filters['port_id'])
-#     return query
-
-# def apply_trade_id_filter(query, filters):
-#     query = query.where(FclCustomsRateFeedback.trade_id == filters['trade_id'])
-#     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
     query = query.where(FclCustomsRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
@@ -164,7 +143,6 @@ def get_stats(filters, is_stats_required, performed_by_id):
         query = get_filters(direct_filters, query, FclCustomsRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
 
-    # query = get_join_query(query)
     query = (
         query
         .select(
@@ -189,38 +167,3 @@ def get_stats(filters, is_stats_required, performed_by_id):
     else:
         stats = {}
     return {'stats': stats }
-
-def get_total(query, performed_by_id):
-    try:
-        query = query.select(FclCustomsRateFeedback.id)
-
-        return {'get_total':query.count()}
-    except:
-        return {'get_total' : 0}
-
-def get_total_closed_by_user(query, performed_by_id):
-    try:
-        query = query.select(FclCustomsRateFeedback.id)
-
-        return {'get_total_closed_by_user':query.where(FclCustomsRateFeedback.status == 'inactive', FclCustomsRateFeedback.closed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_closed_by_user':0}
-
-
-def get_total_opened_by_user(query, performed_by_id):
-    try:
-        query = query.select(FclCustomsRateFeedback.id)
-
-        return {'get_total_opened_by_user' : query.where(FclCustomsRateFeedback.status == 'active', FclCustomsRateFeedback.performed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_opened_by_user' : 0}
-
-def get_status_count(query, performed_by_id):
-    try:
-        query = query.select(FclCustomsRateFeedback.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclCustomsRateFeedback.status)
-        result = {}
-        for row in query.execute():
-            result[row.status] = row.count_all
-        return {'get_status_count' : result}
-    except:
-        return {'get_status_count' : 0}

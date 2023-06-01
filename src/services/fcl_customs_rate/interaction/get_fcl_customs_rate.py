@@ -29,7 +29,8 @@ def find_object(request):
         FclCustomsRate.is_customs_line_items_info_messages_present, 
         FclCustomsRate.customs_line_items_error_messages, 
         FclCustomsRate.is_customs_line_items_error_messages_present, 
-        FclCustomsRate.cfs_line_items, FclCustomsRate.cfs_line_items_info_messages, 
+        FclCustomsRate.cfs_line_items, 
+        FclCustomsRate.cfs_line_items_info_messages, 
         FclCustomsRate.is_cfs_line_items_info_messages_present, 
         FclCustomsRate.cfs_line_items_error_messages, 
         FclCustomsRate.is_cfs_line_items_error_messages_present
@@ -45,11 +46,11 @@ def find_object(request):
 
 def get_object_params(request):
     params = {
-        'location_id': request['location_id'],
-        'trade_type': request['trade_type'],
-        'container_size': request['container_size'],
-        'container_type': request['container_type'],
-        'commodity': request['commodity'],
-        'service_provider_id': request['service_provider_id']
+        'location_id': request.get('location_id'),
+        'trade_type': request.get('trade_type'),
+        'container_size': request.get('container_size'),
+        'container_type': request.get('container_type'),
+        'commodity': request.get('commodity'),
+        'service_provider_id': request.get('service_provider_id')
     }
     return params

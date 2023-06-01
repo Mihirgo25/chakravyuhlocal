@@ -52,11 +52,11 @@ def initialize_customs_query(request):
     return query
 
 
-def discard_noneligible_lsps(freight_rates):
+def discard_noneligible_lsps(custom_rates):
     ids = get_eligible_orgs('fcl_customs')
 
-    freight_rates = [rate for rate in freight_rates if rate["service_provider_id"] in ids]
-    return freight_rates
+    custom_rates = [rate for rate in custom_rates if rate.get("service_provider_id") in ids]
+    return custom_rates
 
 def build_response_list(request, customs_rates):
     list = []
@@ -72,7 +72,7 @@ def build_response_list(request, customs_rates):
       else:
         result = rates[0]
 
-      response_object = build_response_object(result)
+      response_object = build_response_object(result, request)
       if response_object:
         list.append(response_object) 
     return list
@@ -84,8 +84,6 @@ def build_response_object(result, request):
       'importer_exporter_id': result.get('importer_exporter_id'),
       'location_id': result.get('location_id'),
       'line_items': [],
-      'price': 0,
-      'total_price': 0,
       'source': 'predicted' if result.get('service_provider_id') in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates',
       'tags': []
     }

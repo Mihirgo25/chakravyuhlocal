@@ -43,7 +43,6 @@ class FclCustomsRateFeedback(BaseModel):
     location_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
     trade_type = CharField(null=True)
-    port_id = UUIDField(null=True)
     trade_id = UUIDField(null=True)
     commodity = CharField(null=True, index=True)
     service_provider_id = UUIDField(null=True)

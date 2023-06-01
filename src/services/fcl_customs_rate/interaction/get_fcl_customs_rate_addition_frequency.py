@@ -42,6 +42,6 @@ def get_data(query, sort_type, group_by):
     return jsonable_encoder(list(data.dicts()))
 
 def apply_location_ids_filter(query, filters):
-    location_ids = filters['location_ids']
+    location_ids = filters.get('location_ids')
     query = query.where(FclCustomsRate.location_ids.contains(location_ids))
     return query 

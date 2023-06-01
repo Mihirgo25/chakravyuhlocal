@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 import sentry_sdk, traceback
 from fastapi import HTTPException
-
+import json
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_bulk_operation import create_fcl_customs_rate_bulk_operation
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_feedback import create_fcl_customs_rate_feedback
@@ -17,6 +17,7 @@ from services.fcl_customs_rate.interaction.get_fcl_customs_rate import get_fcl_c
 from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fcl_customs_rates
 from services.fcl_customs_rate.interaction.list_fcl_customs_rate_requests import list_fcl_customs_rate_requests
 from services.fcl_customs_rate.interaction.list_fcl_customs_rate_feedbacks import list_fcl_customs_rate_feedbacks
+from services.fcl_customs_rate.interaction.get_fcl_customs_rate_cards import get_fcl_customs_rate_cards
 
 fcl_customs_router = APIRouter()
 
@@ -241,6 +242,56 @@ def list_fcl_customs_rates_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_customs_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@fcl_customs_router.get("/get_fcl_customs_rate_cards")
+def get_fcl_cutsoms_rate_cards_data(
+    port_id: str,
+    country_id: str,
+    container_size: str,
+    container_type: str,
+    containers_count: int,
+    cargo_handling_type: str,
+    trade_type: str = None,
+    include_confirmed_inventory_rates: bool = True,
+    importer_exporter_id: str = None,
+    bls_count: int = 1,
+    commodity: str = None,
+    additional_services: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    if additional_services:
+        additional_services = json.loads(additional_services)
+    else:
+        additional_services = []
+    if not importer_exporter_id:
+        importer_exporter_id = None
+    request = {
+        'port_id' : port_id,
+        'country_id' : country_id,
+        'container_size' : container_size,
+        'container_type' : container_type,
+        'containers_count' : containers_count,
+        'bls_count' : bls_count,
+        'commodity' : commodity,
+        'importer_exporter_id' : importer_exporter_id,
+        'trade_type' : trade_type,
+        'cargo_handling_type' : cargo_handling_type,
+        'additional_services':additional_services,
+        'include_confirmed_inventory_rates':include_confirmed_inventory_rates,
+    }
+
+    try:
+        data = get_fcl_customs_rate_cards(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise

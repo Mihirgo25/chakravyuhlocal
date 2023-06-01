@@ -130,33 +130,4 @@ def get_stats(filters, is_stats_required, performed_by_id):
         }
     else:
         stats ={}
-    return { 'stats': stats }
-
-def get_total(query, performed_by_id):
-    try:
-        return {'get_total' : query.count()}
-    except:
-        return {'get_total' : None}
-    
-def get_total_closed_by_user(query, performed_by_id):
-    try:
-        return {'get_total_closed_by_user' : query.where(FclCustomsRateRequest.status == 'inactive', FclCustomsRateRequest.closed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_closed_by_user' : None}
-
-
-def get_total_opened_by_user(query, performed_by_id):
-    try:
-        return {'get_total_opened_by_user' : query.where(FclCustomsRateRequest.status == 'active', FclCustomsRateRequest.closed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_opened_by_user' : None}
-
-def get_status_count(query, performed_by_id):
-    try:
-        query = query.select(FclCustomsRateRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclCustomsRateRequest.status)
-        result = {}
-        for row in query.execute():
-            result[row.status] = row.count_all
-        return {'get_status_count' : result}
-    except:
-        return {'get_status_count' : None}
+    return { 'stats': stats }      
