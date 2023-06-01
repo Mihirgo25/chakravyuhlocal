@@ -191,14 +191,14 @@ def get_fcl_freight_cluster_objects(request):
         #     return
 
     try:
-        origin_locations = [t['id'] for t in data['origin_location_cluster']['cluster_items']]
+        origin_locations = [str(t['id']) for t in data['origin_location_cluster']['cluster_items']]
     except:
-        origin_locations = [request['origin_port_id']]
+        origin_locations = [str(request['origin_port_id'])]
 
     try:
-        destination_locations = [t['id'] for t in data['destination_location_cluster']['cluster_items']]
+        destination_locations = [str(t['id']) for t in data['destination_location_cluster']['cluster_items']]
     except:
-        destination_locations = [request['destination_port_id']]
+        destination_locations = [str(request['destination_port_id'])]
 
     if data.get('commodity_cluster'):
         commodities = data['commodity_cluster']['cluster_items']
