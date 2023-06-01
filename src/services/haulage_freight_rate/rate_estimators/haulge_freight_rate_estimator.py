@@ -7,6 +7,9 @@ from services.haulage_freight_rate.rate_estimators.china_haulage_freight_rate_es
 from services.haulage_freight_rate.rate_estimators.europe_haulage_freight_rate_estimation import (
     EuropeHaulageFreightRateEstimator,
 )
+from services.haulage_freight_rate.rate_estimators.vietnam_haulage_freight_rate_estimation import (
+    VietnamHaulageFreightRateEstimator,
+)
 from services.haulage_freight_rate.rate_estimators.north_america_haulage_freight_rate_estimation import (
     NorthAmericaHaulageFreightRateEstimator,
 )
@@ -83,7 +86,26 @@ class HaulageFreightRateEstimator:
                 self.transit_time,
             )
 
+        elif location_category == "vietnam":
+            """
+            Estimation of haulage rate for vietnam
+            """
+            estimator = VietnamHaulageFreightRateEstimator(
+                self.query,
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance,
+                self.container_type,
+                self.cargo_weight_per_container,
+                self.permissable_carrying_capacity,
+                self.container_size,
+                self.transit_time,
+            )
         elif location_category == "europe":
+            """
+            Estimation of haulage rate for european countries (Majorly for France, Norway, Netherlands, Germany, Switzerland)
+            """
             estimator = EuropeHaulageFreightRateEstimator(
                 self.commodity,
                 self.load_type,
