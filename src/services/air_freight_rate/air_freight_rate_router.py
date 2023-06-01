@@ -30,6 +30,7 @@ from services.air_freight_rate.interaction.list_air_freight_rate_local import li
 from services.air_freight_rate.interaction.update_air_freight_rate_task import update_air_freight_rate_task_data
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 
+
 air_freight_router = APIRouter()
 
 
@@ -168,6 +169,17 @@ def update_air_freight_rates_locals(request: UpdateFrieghtRateLocal, resp:dict =
         data = update_air_freight_rate_local(request.dict(exclude_none=True))
     except:
         pass
+# @air_freight_router.post("/update_air_freight_rate_local")
+# def update_air_freight_rates_locals(request: UpdateFrieghtRateLocal, resp:dict =Depends(authorize_token)):
+#     if resp["status_code"] != 200:
+#         return JSONResponse(status_code=resp["status_code"], content=resp)
+#     # if resp["isAuthorized"]:
+#     #     request.performed_by_id = resp["setters"]["performed_by_id"]
+#     #     request.performed_by_type = resp["setters"]["performed_by_type"]
+#     try:
+#         data = update_air_freight_rate_local(request.dict(exclude_none=True))
+#     except:
+#         pass
     
 @air_freight_router.post("/create_air_freight_rate_surcharge")
 def create_air_freight_rate_surcharge_data(request: CreateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)):
