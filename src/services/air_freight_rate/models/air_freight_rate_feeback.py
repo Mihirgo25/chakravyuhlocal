@@ -1,5 +1,6 @@
 from peewee import *
 from database.db_session import db
+from playhouse.postgres_ext import *
 
 
 class UnknownField(object):
@@ -29,7 +30,7 @@ class AirFreightRateFeedbacks(BaseModel):
     preferred_freight_rate_currency = CharField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_feedbacks_serial_id_seq'::regclass)")])
+    # serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_feedbacks_serial_id_seq'::regclass)")])
     source = CharField(null=True)
     source_id = UUIDField(null=True)
     status = CharField(null=True)
