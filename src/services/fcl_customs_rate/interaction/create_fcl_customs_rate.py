@@ -34,7 +34,7 @@ def create_fcl_customs_rate(request):
   customs_rate.set_is_best_price()
 
   customs_rate.update_customs_line_item_messages()
-  
+  customs_rate.validate_before_save()
   try:
      customs_rate.save()
   except Exception as e:

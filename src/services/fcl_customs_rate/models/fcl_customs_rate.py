@@ -91,8 +91,8 @@ class FclCustomsRate(BaseModel):
 
     def validate_trade_type(self):
         if self.trade_type and self.trade_type in TRADE_TYPES:
-            return True
-        return False
+            return 
+        raise HTTPException(status_code=400, detail="Invalid trade type")
 
     def valid_uniqueness(self):
         uniqueness = FclCustomsRate.select().where(
@@ -113,18 +113,18 @@ class FclCustomsRate(BaseModel):
     
     def validate_container_size(self):
         if self.container_size and self.container_size in CONTAINER_SIZES:
-            return True
-        return False
+            return
+        raise HTTPException(status_code=400, detail="Invalid container size")
     
     def validate_container_type(self):
         if self.container_type and self.container_type in CONTAINER_TYPES:
-            return True
-        return False
+            return
+        raise HTTPException(status_code=400, detail="Invalid container type")
     
     def validate_commodity(self):
       if self.container_type and self.commodity in CONTAINER_TYPE_COMMODITY_MAPPINGS[f"{self.container_type}"]:
-        return True
-      return False
+        return
+      raise HTTPException(status_code=400, detail="Invalid commodity")
     
     def validate_service_provider_id(self):
         if not self.service_provider_id:
@@ -158,8 +158,8 @@ class FclCustomsRate(BaseModel):
             raise HTTPException(status_code=400, detail="Contains Duplicates")
         
     def validate_invalid_line_items(self):
-        customs_line_item_codes = [str(t.code) for t in self.customs_line_items]
-        possible_customs_charge_codes = [str(t[0]) for t in self.possible_customs_charge_codes]
+        customs_line_item_codes = [str(t['code']) for t in self.customs_line_items]
+        possible_customs_charge_codes = [str(key) for key in self.possible_customs_charge_codes().keys()]
 
         invalid_customs_line_items = [t for t in customs_line_item_codes if t not in possible_customs_charge_codes]
         if invalid_customs_line_items:
@@ -287,19 +287,6 @@ class FclCustomsRate(BaseModel):
     #     self.is_cfs_line_items_info_messages_present: is_cfs_line_items_info_messages_present,
     #     self.is_cfs_line_items_error_messages_present: is_cfs_line_items_error_messages_present
 
-    def detail(self):
-        fcl_customs = {
-            'customs_line_items': self.customs_line_items,
-            'customs_line_items_info_messages': self.customs_line_items_info_messages,
-            'is_customs_line_items_info_messages_present': self.is_customs_line_items_info_messages_present,
-            'customs_line_items_error_messages': self.customs_line_items_error_messages,
-            'is_customs_line_items_error_messages_present': self.is_customs_line_items_error_messages_present,
-            'cfs_line_items': self.cfs_line_items,
-            'cfs_line_items_info_messages': self.cfs_line_items_info_messages,
-            'is_cfs_line_items_info_messages_present': self.is_cfs_line_items_info_messages_present,
-            'cfs_line_items_error_messages': self.cfs_line_items_error_messages,
-            'is_cfs_line_items_error_messages_present': self.is_cfs_line_items_error_messages_present
-        }
     def detail(self):
         fcl_customs = {
             'customs_line_items': self.customs_line_items,
@@ -490,3 +477,12 @@ class FclCustomsRate(BaseModel):
                     self.is_cfs_line_items_info_messages_present = True
 
         self.save()
+
+    def validate_before_save(self):
+        self.set_location_type()
+        self.validate_duplicate_line_items()
+        self.validate_invalid_line_items()
+        self.validate_trade_type()
+        self.validate_container_size()
+        self.validate_container_type()
+        self.validate_commodity()

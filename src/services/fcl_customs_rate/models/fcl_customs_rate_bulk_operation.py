@@ -4,7 +4,7 @@ from playhouse.postgres_ext import *
 from datetime import datetime
 from database.rails_db import *
 from fastapi import HTTPException
-from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import common
 from configs.definitions import FCL_CUSTOMS_CHARGES, FCL_CUSTOMS_CURRENCIES
 from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fcl_customs_rates
@@ -56,7 +56,7 @@ class FclCustomsRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = FCL_CUSTOMS_CURRENCIES['list']
+        currencies = FCL_CUSTOMS_CURRENCIES
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=400, detail='markup currency is invalid')

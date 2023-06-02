@@ -57,7 +57,7 @@ class FclCustomsRateFeedback(BaseModel):
     def set_location(self):
         location_data = maps.list_locations({'filters':{'id':self.location_id}})['list']
         if location_data:
-            self.port = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+            self.location = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def validate_source_id(self):
         if self.source == 'spot_search':
