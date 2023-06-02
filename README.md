@@ -1,5 +1,5 @@
 
-# Welcome to Dynamic Pricing Engine
+# Welcome to Dynamic Pricing Engine 
 
 To manually create a virtualenv on MacOS and Linux:
 
