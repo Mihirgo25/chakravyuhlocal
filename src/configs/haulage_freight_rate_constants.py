@@ -293,3 +293,5 @@ COUNTRY_CURRENCY_CODE_MAPPING = {
     'MX': 'MXN',
     'VN': 'VND'
 }
+
+GLOBAL_FUEL_DATA_LINKS = ['https://www.globalpetrolprices.com/india/electricity_prices/']
