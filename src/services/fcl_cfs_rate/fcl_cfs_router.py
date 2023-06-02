@@ -183,7 +183,7 @@ def get_fcl_cfs_rates(location_id: str = None,
 
 
 @fcl_cfs_router.get("/list_fcl_cfs_rates")
-def list_fcl_cfs_rates(
+def list_fcl_cfs_rates_data(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,

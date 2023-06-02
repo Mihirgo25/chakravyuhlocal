@@ -2,6 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustom
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
 from fastapi import HTTPException
+from celery_worker import update_multiple_service_objects
 
 def delete_fcl_customs_rate_feedback(request):
   with db.atomic():
@@ -24,6 +25,7 @@ def execute_transaction_code(request):
         print("Exception in deleting feedback", e)
     
     create_audit_for_customs_feedback(request, object, data)
+    update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
 
   return {'fcl_customs_rate_feedback_ids' : request.get('fcl_customs_rate_feedback_ids')}
 

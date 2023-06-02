@@ -12,7 +12,7 @@ class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
-class  FclCfsRateRequest(BaseModel):
+class FclCfsRateRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True, index=True)
     port_id	= UUIDField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_cfs_rate_request_serial_id_seq'::regclass)")])

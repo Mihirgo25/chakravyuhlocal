@@ -131,14 +131,26 @@ class UpdateFclCustomsRate(BaseModel):
   sourced_by_id: str
   procured_by_id: str
   bulk_operation_id: str = None
+  performed_by_type: str = None
   customs_line_items: list[FclCustomsLineItems] = None
   cfs_line_items: list[FclCustomsLineItems] = None
-  performed_by_type: str
+
+class DeleteFclCustomsRateFeedback(BaseModel):
+ fcl_customs_rate_feedback_ids: list[str] 
+ closing_remarks: list[str] = []
+ performed_by_id: str
+ performed_by_type: str = None
 
 class DeleteFclCustomsRate(BaseModel):
   id: str
   performed_by_id: str
+  performed_by_type: str = None
   bulk_operation_id: str = None
   sourced_by_id: str
   procured_by_id: str
-  performed_by_type: str 
+
+class DeleteFclCustomsRateRequest(BaseModel):
+  fcl_customs_rate_request_ids: list[str] 
+  closing_remarks: list[str] = []
+  performed_by_id: str
+  performed_by_type: str = None

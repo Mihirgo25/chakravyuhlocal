@@ -92,7 +92,7 @@ class UpdateFclCfsRate(BaseModel):
     free_limit: int = None
     
 class Filters(BaseModel):
-  filters: list = []
+  filters: dict = {}
 
 class AddMarkUp(BaseModel):
   filters : dict = {}
@@ -107,5 +107,6 @@ class CreateFclCfsRateBulkOperation(BaseModel):
   service_provider_id: str 
   sourced_by_id: str 
   procured_by_id: str 
-  delete_rate: list[Filters] = None
-  add_markup: list[AddMarkUp] = None
+  performed_by_type: str = None
+  delete_rate: Filters = None
+  add_markup: AddMarkUp = None

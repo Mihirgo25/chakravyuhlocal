@@ -203,7 +203,7 @@ class FclCustomsRate(BaseModel):
         ).execute()
 
         for rate in rates:
-            selected_line_items = [line_item for line_item in rate.customs_line_items if line_item['code'].upper() in self.mandatory_charge_codes()]
+            selected_line_items = [line_item for line_item in rate.customs_line_items if line_item.get('code').upper() in self.mandatory_charge_codes()]
             rate_min_price = 0.0
             currency = selected_line_items[0]['currency']
             for line_item in selected_line_items:
@@ -450,7 +450,7 @@ class FclCustomsRate(BaseModel):
         grouped_charge_codes = {}
 
         for line_item in self.cfs_line_items:
-            grouped_charge_codes[line_item.code] = line_item.__dict__
+            grouped_charge_codes[line_item.get('code')] = line_item
 
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CUSTOMS_CHARGES.get(code)

@@ -1,6 +1,6 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate_bulk_operation import FclCfsRateBulkOperation
-from celery_worker import update_multiple_service_objects, bulk_operation_perform_action_functions
+from celery_worker import update_multiple_service_objects, bulk_operation_perform_action_functions_customs_cfs
 
 def get_bulk_operation_params(request, action_name, data):
     params = {
@@ -30,10 +30,10 @@ def create_fcl_cfs_rate_bulk_operation(request):
 
         bulk_operation.save()
 
-        bulk_operation_perform_action_functions.apply_async(kwargs={'action_name':action_name,
+        bulk_operation_perform_action_functions_customs_cfs.apply_async(kwargs={'action_name':action_name,
         'object':bulk_operation,'sourced_by_id':request.get("sourced_by_id"),
         'procured_by_id':request.get('procured_by_id')},queue='low')
         
         return {
             'id': bulk_operation.id
-            }
+        }

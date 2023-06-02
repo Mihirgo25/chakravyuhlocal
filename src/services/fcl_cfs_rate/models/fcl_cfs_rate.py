@@ -3,7 +3,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from micro_services.client import maps, common
-from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES,IMPORT_CARGO_HANDLING_TYPES,TRADE_TYPES,CONTAINER_SIZES,CONTAINER_TYPES,CONTAINER
+from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES,IMPORT_CARGO_HANDLING_TYPES,TRADE_TYPES,CONTAINER_SIZES,CONTAINER_TYPES
 from configs.definitions import FCL_CFS_CHARGES
 from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES,CONTAINER_TYPE_COMMODITY_MAPPINGS
 from fastapi import HTTPException
@@ -44,12 +44,14 @@ class FclCfsRate(BaseModel):
     cargo_handling_type = CharField(index=True,null=True)
     importer_exporter_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
+    service_provider = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     sourced_by_id = UUIDField(null=True)
     procured_by = BinaryJSONField(null=True)
     sourced_by = BinaryJSONField(null=True)
     location = BinaryJSONField(null=True)
-    # free_days = BinaryJSONField(default = [], null=True)
+    free_days = BinaryJSONField(null=True)
+    importer_exporter = BinaryJSONField(null=True)
     
     class Meta:
         table_name = 'fcl_cfs_rate'
@@ -134,16 +136,13 @@ class FclCfsRate(BaseModel):
             self.location_type = 'seaport' if location_data['type'] == 'seaport' else location_data['type']
             self.country_id = uuid.UUID(location_data.get('country_id')) if self.country_id is None else self.country_id
             self.trade_id = uuid.UUID(location_data.get('trade_id')) if self.trade_id is None else self.trade_id
-            self.continent_id = uuid.UUID(location_data.get('continent_id')) if self.continet_id is None else self.continent_id
+            self.continent_id = uuid.UUID(location_data.get('continent_id')) if self.continent_id is None else self.continent_id
             self.location_ids = [self.location_id,self.country_id,self.trade_id,self.continent_id]
-        
-        else:
-            None
 
     
     def mandatory_charge_codes(self):
         return [
-            code.upper() for code, config in self.possible_charge_codes.items()
+            code.upper() for code, config in self.possible_charge_codes().items()
             if 'mandatory' in config['tags']
         ]
 
@@ -151,7 +150,7 @@ class FclCfsRate(BaseModel):
     def get_mandatory_cfs_line_items(self):
         return [
             line_item for line_item in self.cfs_line_items
-            if line_item.code.upper() in self.mandatory_charge_codes()
+            if line_item.get('code').upper() in self.mandatory_charge_codes()
         ]
 
 
@@ -314,6 +313,18 @@ class FclCfsRate(BaseModel):
         
         return True
 
+    def detail(self):
+        return {
+            'fcl_cfs':{
+            'line_items':self.cfs_line_items,
+            'line_items_info_messages':self.cfs_line_items_info_messages,
+            'is_line_items_info_messages_present':self.is_cfs_line_items_info_messages_present,
+            'line_items_error_messages':self.cfs_line_items_error_messages,
+            'is_line_items_error_messages_present':self.is_cfs_line_items_error_messages_present,
+            'cargo_handling_type':self.cargo_handling_type
+            }
+        }
+
 class FclCfsRateLineItem(Model):
     code = CharField()
     unit = CharField()
@@ -334,5 +345,7 @@ class FclCfsRateLineItem(Model):
         if not self.price:
             raise HTTPException( status_code =401 ,detail ='Price is required.')
         if self.price and self.price < 0:
-            raise HTTPException( status_code =401 ,detail = 'Price cannot  be negative')
+            raise HTTPException( status_code =401 ,detail = 'Price cannot be negative')
+        
+
   
