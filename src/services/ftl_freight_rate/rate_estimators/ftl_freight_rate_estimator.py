@@ -1,4 +1,5 @@
 from services.ftl_freight_rate.rate_estimators.IN_ftl_freight_rate_estimator import INFtlFreightRateEstimator
+from services.ftl_freight_rate.rate_estimators.EU_ftl_freight_rate_estimator import EUFtlFreightRateEstimator
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_path_data
 class FtlFreightEstimator:
@@ -16,6 +17,11 @@ class FtlFreightEstimator:
         if country_category == 'IN':
             average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','INR')
             estimator = INFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
+            price = estimator.estimate()
+            return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'] }]}
+        elif country_category == 'EU':
+            average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','INR')
+            estimator = EUFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
             return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'] }]}
 
