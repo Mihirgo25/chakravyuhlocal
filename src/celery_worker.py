@@ -75,7 +75,7 @@ celery.conf.beat_schedule = {
         },
     'process_electricity_data_delays': {
         'task': 'celery_worker.process_electricity_data_delays',
-        'schedule': crontab(0, 0, day_of_month='1', month_of_year='*/3'),
+        'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
         'options': {'queue' : 'fcl_freight_rate'}
         }
 }
