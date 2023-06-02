@@ -207,6 +207,7 @@ class LineItemsLocal(BaseModel):
     currency:str
     remarks:list[str]=None
     slabs:list[LocalSlabs]=None
+    
 class UpdateFrieghtRateLocal(BaseModel):
     id:str
     performed_by_id:str=None
