@@ -57,7 +57,7 @@ class HaulageFreightRateEstimator:
         self.container_size = container_size
 
     def estimate(self):
-        locations_data, location_category = self.get_location_data_and_category()
+        locations_data, location_category, country_code = self.get_location_data_and_category()
         self.convert_general_params_to_estimation_params(location_category)
         if location_category == "india":
             estimator = IndiaHaulageFreightRateEstimator(
@@ -117,7 +117,19 @@ class HaulageFreightRateEstimator:
             )
 
         else:
-            estimator = GeneralizedHaulageFreightRateEstimator(self)
+            estimator = GeneralizedHaulageFreightRateEstimator(
+                self.query,
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance,
+                self.container_type,
+                self.cargo_weight_per_container,
+                self.permissable_carrying_capacity,
+                self.container_size,
+                self.transit_time,
+                country_code
+            )
 
         price = estimator.estimate()
         line_items_data = build_line_item(
@@ -131,7 +143,7 @@ class HaulageFreightRateEstimator:
         return price
 
     def get_location_data_and_category(self):
-        locations_data, location_category = get_country_filter(
+        locations_data, location_category, country_code = get_country_filter(
             self.origin_location_id, self.destination_location_id
         )
         if location_category not in POSSIBLE_LOCATION_CATEGORY:
@@ -142,7 +154,7 @@ class HaulageFreightRateEstimator:
         )
         self.distance = location_pair_distance
         self.transit_time = transit_time
-        return locations_data, location_category
+        return locations_data, location_category, country_code
 
     def convert_general_params_to_estimation_params(self, location_category):
         query = HaulageFreightRateRuleSet.select(

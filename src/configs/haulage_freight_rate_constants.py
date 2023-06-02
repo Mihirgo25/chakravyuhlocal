@@ -5,11 +5,11 @@ DESTINATION_TERMINAL_CHARGES_INDIA = 15
 CONTAINER_TYPE_CLASS_MAPPINGS = {
     # 120 refer
     "standard": {"india": "Class LR-3", "vietnam": "3"},
-    "refer": {"india":"Class 165", "vietnam": "3"},
+    "refer": {"india": "Class 165", "vietnam": "3"},
     "open_top": {"india": "Class LR1", "vietnam": "2"},
-    "open_side": {"india":"Class 120", "vietnam": "2"},
-    "flat_rack": {"india":"Class 130A", "vietnam": "2"},
-    "iso_tank": {"india":"Class 150", "vietnam": "2"},
+    "open_side": {"india": "Class 120", "vietnam": "2"},
+    "flat_rack": {"india": "Class 130A", "vietnam": "2"},
+    "iso_tank": {"india": "Class 150", "vietnam": "2"},
 }
 
 WAGON_COMMODITY_MAPPING = {
@@ -117,3 +117,21 @@ VIETNAMESE_INFLATION_FACTOR = 1.76
 CHARGE_LEVEL_MAPPING_VEITNAM = {}
 
 USD_TO_VND = 23482.50
+
+DEFAULT_ENVIRONMENT_PROTECTION_INDEX = 0.00543
+
+DEFAULT_CLIMATE_CHANGE_FEE_INDEX = 0.00116
+
+DEFAULT_NOISE_POLLUTION_FEE_INDEX = 0.00053
+
+DEFAULT_INDIRECT_POLLUTION_FEE_INDEX = 0.00742
+
+DEFAULT_POLLUTION_INDEX = 0.01454
+
+DEFAULT_SAFTEY_INDEX = 0.97
+
+DEFAULT_WEIGHT_INDEX = 0.25
+
+AVERAGE_ENERGY_CONSUMPTION = 0.41
+
+AVERAGE_GLOBAL_CO2_EMISSION = 104

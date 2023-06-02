@@ -56,8 +56,8 @@ def get_country_filter(origin_location, destination_location):
         "country_code"
     ] in ["US", "CA", "MX"]:
         location_category = "north_america"
-
-    return locations_data, location_category
+    country_code = locations_data[0]["country_code"]
+    return locations_data, location_category, country_code
 
 
 def build_line_item(
