@@ -37,15 +37,15 @@ def find_object(id):
 
 def get_delete_params_for_cfs(request):
     return {
-        'cfs_line_items': [],
+        'line_items': [],
         'free_days': [],
         'rate_not_available_entry': True,
         'platform_price': None,
         'is_best_price': None,
-        'is_cfs_line_items_error_messages_present': None,
-        'is_cfs_line_items_info_messages_present': None,
-        'cfs_line_items_error_messages': None,
-        'cfs_line_items_info_messages': None,
+        'is_line_items_error_messages_present': None,
+        'is_line_items_info_messages_present': None,
+        'line_items_error_messages': None,
+        'line_items_info_messages': None,
         'procured_by_id': request.get('procured_by_id'),
         'sourced_by_id':request.get('sourced_by_id'),
         'updated_at': datetime.now().isoformat()

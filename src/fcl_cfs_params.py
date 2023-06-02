@@ -35,7 +35,7 @@ class CreateFclCfsRate(BaseModel):
   procured_by_id: str
   cargo_handling_type: str
   importer_exporter_id: str = None
-  cfs_line_items: list[StandardLineItem]
+  line_items: list[StandardLineItem]
   free_days: list[FreeDaysType]
 
 class FclCfsRateRequest(BaseModel):

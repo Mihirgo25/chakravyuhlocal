@@ -1,13 +1,18 @@
-from peewee import * 
-from database.db_session import db
-from playhouse.postgres_ext import *
 import datetime
-from micro_services.client import maps, common
-from configs.global_constants import EXPORT_CARGO_HANDLING_TYPES,IMPORT_CARGO_HANDLING_TYPES,TRADE_TYPES,CONTAINER_SIZES,CONTAINER_TYPES
-from configs.definitions import FCL_CFS_CHARGES
-from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES,CONTAINER_TYPE_COMMODITY_MAPPINGS
+
 from fastapi import HTTPException
+from peewee import *
+from playhouse.postgres_ext import *
+
+from configs.definitions import FCL_CFS_CHARGES
+from configs.fcl_cfs_rate_constants import (CONTAINER_TYPE_COMMODITY_MAPPINGS,
+                                            FREE_DAYS_TYPES)
+from configs.global_constants import (CONTAINER_SIZES, CONTAINER_TYPES,
+                                      EXPORT_CARGO_HANDLING_TYPES,
+                                      IMPORT_CARGO_HANDLING_TYPES, TRADE_TYPES)
+from database.db_session import db
 from database.rails_db import *
+from micro_services.client import common, maps
 
 
 class BaseModel(Model):
@@ -28,15 +33,15 @@ class FclCfsRate(BaseModel):
     importer_exporter_id = UUIDField(null=True)
     containers_count = IntegerField(null=True)
     trade_type = CharField(index=True, null= True)
-    cfs_line_items = BinaryJSONField(default = [], null=True)
+    line_items = BinaryJSONField(default = [], null=True)
     free_limit = IntegerField(null=True)
     platform_price = IntegerField(null=True)
     is_best_price = BooleanField(null=True)
-    is_cfs_line_items_error_messages_present = BooleanField(null=True)
-    is_cfs_line_items_info_messages_present = BooleanField(null=True)
+    is_line_items_error_messages_present = BooleanField(null=True)
+    is_line_items_info_messages_present = BooleanField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
-    cfs_line_items_error_messages = BinaryJSONField( null=True)
-    cfs_line_items_info_messages = BinaryJSONField( null=True)
+    line_items_error_messages = BinaryJSONField( null=True)
+    line_items_info_messages = BinaryJSONField( null=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
@@ -55,38 +60,38 @@ class FclCfsRate(BaseModel):
     
     class Meta:
         table_name = 'fcl_cfs_rate'
-    # def validate_mandatory_free_days(self):
-    #     free_days = [fd.free_days_type for fd in self.free_days]
+    def validate_mandatory_free_days(self):
+        free_days = [free_day.get('free_days_type') for free_day in self.free_days]
 
-    #     required_free_days = set(free_days) - set(
-    #         t['type'] for t in FREE_DAYS_TYPES if 'mandatory' in t['tags']
-    #      )
+        required_free_days = set(
+            t['type'] for t in FREE_DAYS_TYPES if 'mandatory' in t['tags']
+         ) - set(free_days)
 
-    #     if required_free_days:
-    #         error_message = f"{', '.join(required_free_days)} is required"
-    #         raise HTTPException(status_code=400, detail=error_message)
+        if required_free_days:
+            error_message = f"{', '.join(required_free_days)} is required"
+            raise HTTPException(status_code=400, detail=error_message)
 
-    def possible_cfs_charge_codes(self):
-        self.set_location()
-        fcl_cfs_charges = FCL_CFS_CHARGES
-        location = self.location
+    # def possible_cfs_charge_codes(self):
+    #     self.set_location()
+    #     fcl_cfs_charges = FCL_CFS_CHARGES
+    #     location = self.location
 
-        charge_codes = {}
-        for code, config in fcl_cfs_charges.items():
-            if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'mandatory' in config.get('tags'):
-                charge_codes[code] = config
-        return charge_codes
+    #     charge_codes = {}
+    #     for code, config in fcl_cfs_charges.items():
+    #         if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and self.cargo_handling_type in config.get('tags'):
+    #             charge_codes[code] = config
+    #     return charge_codes
     
     def validate_duplicate_line_items(self):
         unique_items = set()
-        for cfs_line_item in self.cfs_line_items:
+        for cfs_line_item in self.line_items:
             unique_items.add(str(cfs_line_item['code']).upper() + str(cfs_line_item['location_id']))
 
-        if len(self.cfs_line_items) != len(unique_items):
+        if len(self.line_items) != len(unique_items):
             raise HTTPException(status_code=400, detail="Contains Duplicates")
         
     def validate_invalid_line_items(self):
-        cfs_line_item_codes = [str(t.code) for t in self.cfs_line_items]
+        cfs_line_item_codes = [str(t.code) for t in self.line_items]
         possible_cfs_charge_codes = [str(t[0]) for t in self.possible_cfs_charge_codes]
 
         invalid_customs_line_items = [t for t in cfs_line_item_codes if t not in possible_cfs_charge_codes]
@@ -99,7 +104,9 @@ class FclCfsRate(BaseModel):
                 self.errors.append('Invalid cargo_handling_type for export.')
             if self.trade_type == 'import' and self.cargo_handling_type not in IMPORT_CARGO_HANDLING_TYPES:
                 self.errors.append('Invalid cargo_handling_type for import.')
-    def possible_charge_codes(self):
+    def possible_cfs_charge_codes(self):
+        self.set_location()
+        location = self.location
         fcl_cfs_charges = FCL_CFS_CHARGES
         filtered_charge_codes = {}
         for code, config in fcl_cfs_charges.items():
@@ -133,39 +140,40 @@ class FclCfsRate(BaseModel):
         if location['list']:
             location_data = location['list'][0]
             self.location = location_data
-            self.location_type = 'seaport' if location_data['type'] == 'seaport' else location_data['type']
+            self.location_type = location_data.get('type') if self.location_type is None else self.location_type
             self.country_id = uuid.UUID(location_data.get('country_id')) if self.country_id is None else self.country_id
             self.trade_id = uuid.UUID(location_data.get('trade_id')) if self.trade_id is None else self.trade_id
             self.continent_id = uuid.UUID(location_data.get('continent_id')) if self.continent_id is None else self.continent_id
             self.location_ids = [self.location_id,self.country_id,self.trade_id,self.continent_id]
 
     
-    def mandatory_charge_codes(self):
+    def mandatory_cfs_charge_codes(self):
         return [
-            code.upper() for code, config in self.possible_charge_codes().items()
-            if 'mandatory' in config['tags']
+            code.upper() for code, config in (self.possible_cfs_charge_codes() or {}).items()
+            if 'mandatory' in (config['tags'] or [])
         ]
 
 
     def get_mandatory_cfs_line_items(self):
-        return [
-            line_item for line_item in self.cfs_line_items
-            if line_item.get('code').upper() in self.mandatory_charge_codes()
+
+        selected_line_items =     [line_item for line_item in self.line_items
+            if line_item.get('code').upper() in self.mandatory_cfs_charge_codes()
         ]
+        return selected_line_items
 
 
     def get_cfs_line_items_total_price(self):
-        cfs_line_items = self.cfs_line_items
-        currency = self.cfs_line_items[0].get('currency')
+        line_items = self.line_items
+        currency = self.line_items[0].get('currency')
         total_price = 0
-        for line_item in cfs_line_items:
+        for line_item in line_items:
             total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": currency })['price']
         return total_price
     
     def set_platform_price(self):
-        cfs_line_items = self.get_mandatory_cfs_line_items()
+        line_items = self.get_mandatory_cfs_line_items()
 
-        if not cfs_line_items:
+        if not line_items:
             return
 
         result = self.get_cfs_line_items_total_price()
@@ -185,8 +193,8 @@ class FclCfsRate(BaseModel):
 
         for rate in rates:
             rate_min_price=0
-            currency = self.cfs_line_items[0].get('currency')
-            for line_item in rate.cfs_line_items:
+            currency = self.line_items[0].get('currency')
+            for line_item in rate.line_items:
                 rate_min_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": currency })['price']
             
 
@@ -221,14 +229,14 @@ class FclCfsRate(BaseModel):
     def update_line_item_messages(self):
         self.set_location()
 
-        self.cfs_line_items_error_messages = {}
-        self.cfs_line_items_info_messages = {}
-        self.is_cfs_line_items_error_messages_present = False
-        self.is_cfs_line_items_info_messages_present = False
+        self.line_items_error_messages = {}
+        self.line_items_info_messages = {}
+        self.is_line_items_error_messages_present = False
+        self.is_line_items_info_messages_present = False
 
         grouped_charge_codes = {}
 
-        for line_item in self.cfs_line_items:
+        for line_item in self.line_items:
             if line_item["code"] not in grouped_charge_codes:
                 grouped_charge_codes[line_item["code"]] = []
 
@@ -238,33 +246,33 @@ class FclCfsRate(BaseModel):
             code_config = FCL_CFS_CHARGES[code]
 
             if code_config is None:
-                self.cfs_line_items_error_messages[code] = ['is invalid']
-                self.is_cfs_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
 
             if not self.trade_type in code_config['trade_types']:
-                self.cfs_line_items_error_messages[code] = ["can only be added for #{code_config[:trade_types].join(', ')}"]
-                self.is_cfs_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ["can only be added for #{code_config[:trade_types].join(', ')}"]
+                self.is_line_items_error_messages_present = True
 
             if len(set(map(lambda x: x["unit"], line_items)) - set(code_config["units"])) > 0:
-                self.cfs_line_items_error_messages[code] = ["can only be having units #{code_config[:units].join(', ')}"]
-                self.is_cfs_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ["can only be having units #{code_config[:units].join(', ')}"]
+                self.is_line_items_error_messages_present = True
 
             if not eval(str(code_config["condition"])):
-                self.cfs_line_items_error_messages[code] = ['is invalid']
-                self.is_cfs_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
 
-        possible_charge_codes_values= self.possible_charge_codes()
+        possible_charge_codes_values= self.possible_cfs_charge_codes()
         for code, config in filter(lambda x: 'mandatory' in x[1]['tags'], possible_charge_codes_values.items()):
             code = str(code)
             if not grouped_charge_codes.get(code):
-                self.cfs_line_items_error_messages[code] = ['is not present']
-                self.is_cfs_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ['is not present']
+                self.is_line_items_error_messages_present = True
 
         for code, config in filter(lambda x: 'additional_service' in x[1]['tags'] or 'shipment_execution_service' in x[1]['tags'], possible_charge_codes_values.items()):
             code = str(code)
             if not grouped_charge_codes.get(code):
-                self.cfs_line_items_info_messages[code] = ['can be added for more conversion']
-                self.is_cfs_line_items_info_messages_present = True
+                self.line_items_info_messages[code] = ['can be added for more conversion']
+                self.is_line_items_info_messages_present = True
 
         self.save()
       
@@ -316,11 +324,11 @@ class FclCfsRate(BaseModel):
     def detail(self):
         return {
             'fcl_cfs':{
-            'line_items':self.cfs_line_items,
-            'line_items_info_messages':self.cfs_line_items_info_messages,
-            'is_line_items_info_messages_present':self.is_cfs_line_items_info_messages_present,
-            'line_items_error_messages':self.cfs_line_items_error_messages,
-            'is_line_items_error_messages_present':self.is_cfs_line_items_error_messages_present,
+            'line_items':self.line_items,
+            'line_items_info_messages':self.ine_items_info_messages,
+            'is_line_items_info_messages_present':self.is_line_items_info_messages_present,
+            'line_items_error_messages':self.line_items_error_messages,
+            'is_line_items_error_messages_present':self.is_line_items_error_messages_present,
             'cargo_handling_type':self.cargo_handling_type
             }
         }

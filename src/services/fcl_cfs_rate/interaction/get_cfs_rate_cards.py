@@ -43,7 +43,7 @@ def initialize_query(request):
         FclCfsRate.commodity == request.get('commodity'),
         ((FclCfsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCfsRate.importer_exporter_id.is_null(True))),
         FclCfsRate.trade_type == request.get('trade_type'),
-        FclCfsRate.is_cfs_line_items_error_messages_present == False,
+        FclCfsRate.is_line_items_error_messages_present == False,
         FclCfsRate.cargo_handling_type == request.get('cargo_handling_type'),
         FclCfsRate.rate_not_available_entry == False
     )
@@ -113,10 +113,10 @@ def build_response_object(result, request):
     return response_object
     
 def add_cfs_charges(result, response_object, request):
-    if not result.get("cfs_line_items"):
+    if not result.get("line_items"):
         return False
 
-    for line_item in result.get("cfs_line_items",[]):
+    for line_item in result.get("line_items",[]):
         line_item = build_line_item_object(line_item,request)
 
         if line_item:

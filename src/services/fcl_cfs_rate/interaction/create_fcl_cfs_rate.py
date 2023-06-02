@@ -7,7 +7,7 @@ from fastapi import HTTPException
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {
-        "line_items": request["cfs_line_items"],
+        "line_items": request["line_items"],
         "free_days": request["free_days"]
     }
     
@@ -49,11 +49,12 @@ def execute_transaction_code(request):
     if not cfs_object:
         cfs_object = FclCfsRate(**params)
     
-    cfs_object.cfs_line_items = request.get('cfs_line_items')
+    cfs_object.line_items = request.get('line_items')
     cfs_object.free_days = request.get('free_days')
     cfs_object.rate_not_available_entry = False
     cfs_object.set_platform_price()
     cfs_object.set_is_best_price()
+    # cfs_object.validate_mandatory_free_days()
 
     cfs_object.sourced_by_id = request.get("sourced_by_id")
     cfs_object.procured_by_id = request.get("procured_by_id")

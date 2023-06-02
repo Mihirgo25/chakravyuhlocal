@@ -56,13 +56,13 @@ ICDS:
   name: "ICD Stuffing"
   units: ['per_container']
   trade_types: ['export']
-  condition: location[:is_icd]
+  condition: location['is_icd']
   tags: ['mandatory']
 ICDDS:
   name: "ICD Destuffing"
   units: ['per_container']
   trade_types: ['import']
-  condition: location[:is_icd]
+  condition: location['is_icd']
   tags: ['destuffing_at_dock']
 WRC:
   name: "Warai Charge"

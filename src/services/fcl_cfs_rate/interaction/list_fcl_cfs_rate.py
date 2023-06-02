@@ -36,7 +36,14 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_location_ids_filter(query, location_ids):
-    query = query.where(FclCfsRate.location_ids << location_ids)
+    query = query.where(FclCfsRate.location_ids.contains(location_ids))
+    return query
+
+def apply_importer_exporter_present_filter(query,value):
+    if value:
+        return query.where(FclCfsRate.importer_exporter_id != None)
+  
+    query = query.where(FclCfsRate.importer_exporter_id == None)
     return query
 
 def apply_is_rate_available_filter(query, filters):
@@ -54,11 +61,11 @@ def get_data(query):
         FclCfsRate.commodity,
         FclCfsRate.container_type,
         FclCfsRate.container_size,
-        FclCfsRate.cfs_line_items,
-        FclCfsRate.is_cfs_line_items_error_messages_present,
-        FclCfsRate.is_cfs_line_items_info_messages_present,
-        FclCfsRate.cfs_line_items_error_messages,
-        FclCfsRate.cfs_line_items_info_messages,
+        FclCfsRate.line_items,
+        FclCfsRate.is_line_items_error_messages_present,
+        FclCfsRate.is_line_items_info_messages_present,
+        FclCfsRate.line_items_error_messages,
+        FclCfsRate.line_items_info_messages,
         FclCfsRate.cargo_handling_type).dicts()
 
     data = list(query_result)
