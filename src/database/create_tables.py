@@ -11,7 +11,7 @@ from services.air_freight_rate.models.air_freight_rate_request import AirFreight
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FtlFreightRateRuleSet])
+        # db.create_tables([FtlFreightRateRuleSet])
         db.close()
         print("created table")
     except:

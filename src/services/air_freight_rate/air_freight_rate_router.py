@@ -31,6 +31,7 @@ from services.air_freight_rate.interaction.list_air_freight_rate_local import li
 from services.air_freight_rate.interaction.update_air_freight_rate_task import update_air_freight_rate_task_data
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interaction.create_air_freight_rate_request import create_air_freight_rate_request
+from services.air_freight_rate.interaction.get_air_freight_rate_stats import get_air_freight_rate_stats
 
 
 air_freight_router = APIRouter()
@@ -331,11 +332,35 @@ def update_air_freight_rate_task(request:UpdateAirFreightRateTask  , resp:dict =
 @air_freight_router.post('/create_air_freight_rate_request')
 def create_air_freight_rate_request_data(request:CreateAirFreightRateRequest,resp:dict=Depends(authorize_token)):
     if resp['status_code']!=200:
-        return JSONResponse(status_code=resp['status_code'],content=resp)
+            return JSONResponse(status_code=resp['status_code'],content=resp)
+    try:
+        return JSONResponse(status_code=200,content=create_air_freight_rate_request(request.dict(exclude_none=False)))
+    except HTTPException as h :
+        raise
+    except Exception as e:
+        print(e)
+        return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
+
+@air_freight_router.get("/get_air_freight_rate_stats")
+def get_air_freight_rate_stats_data(
+    validity_start: datetime,
+    validity_end: datetime,
+    stats_types: str=None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    request = {
+        'validity_start':validity_start,
+        'validity_end':validity_end,
+        'stats_types':stats_types
+    }
     # try:
-    return JSONResponse(status_code=200,content=create_air_freight_rate_request(request.dict(exclude_none=False)))
-    # except HTTPException as h :
+    data = get_air_freight_rate_stats(request)
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    # except HTTPException as e:
     #     raise
     # except Exception as e:
-    #     print(e)
-    #     return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
