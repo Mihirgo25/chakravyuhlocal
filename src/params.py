@@ -26,6 +26,10 @@ class FreeDay(BaseModel):
   slabs: list[Slab] = []
   remarks: list[str] = []
 
+class LocalConditions(BaseModel):
+  or_condition: list[list[str]] = []
+  and_condition: list[list[str]] = []
+
 class LineItem(BaseModel):
   location_id: str = None
   code: str
@@ -35,7 +39,7 @@ class LineItem(BaseModel):
   market_price: float = None 
   remarks: list[str] = None
   slabs: list[Slab] = None
-  conditions: List[list[str]] = []
+  conditions: LocalConditions = {}
 
 class LocalData(BaseModel):
   line_items: list[LineItem]=None

@@ -153,29 +153,61 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
             "line_items": local_charge["data"]["line_items"]
         }
         all_formatted_locals.append(new_local_obj)
+    print(all_formatted_locals)
     return all_formatted_locals
+
+def is_charge_present(line_item,charge_code):
+    for item in line_item:
+        if item['code']==charge_code:
+            return True
+    return False
+
 def conditional_line_items(charges, rate, local_rate):
-    # import time
-    # a = time.time()
     if charges:
         new_line_items = []
         for item in charges:
-            condition=item.get('conditions')
-            if condition:
-                for i in condition:
-                    if eval("rate.get('{}') {} '{}'".format(i[0],i[1],i[2])):
+            if item.get('conditions'):
+                or_condition, and_condition = get_condition(rate,item.get('conditions'))
+                print(or_condition)
+                print(and_condition)
+                print(eval(or_condition))
+                if eval(and_condition) and eval(or_condition):
+                    code = item.get('code')
+                    if not is_charge_present(new_line_items,code):
+                        del item['conditions']
                         new_line_items.append(item)
             else:
                 new_line_items.append(item)
 
         local_rate['data']['line_items'] = new_line_items
         local_rate['line_items'] = new_line_items
-        # print(time.time() - a)
-        # print('0=-----')
         return local_rate
     else: 
         return []
+
+def converted_condition(rate,expression,exp_conditions):
+    exp_condition=''
+    count = 0
+    for condition in exp_conditions:
+        count +=1
+        if count == len(exp_conditions):
+            exp_condition += "'{}' {} '{}'".format(rate.get(condition[0]),condition[1],condition[2])
+        else:
+            exp_condition += "'{}' {} '{}' {} ".format(rate.get(condition[0]),condition[1],condition[2],expression)
+    return exp_condition
+
     
+def get_condition(rate,conditions):
+    or_condition = ''
+    and_condition = ''
+    or_conditions = conditions.get('or_condition')
+    and_conditions = conditions.get('and_condition')
+
+    or_condition=converted_condition(rate,'or',or_conditions)
+    and_condition=converted_condition(rate,'and',and_conditions)
+     
+    return or_condition, and_condition
+
 def get_matching_local(local_type, rate, local_rates, default_lsp):
     matching_locals = {}
     default_shipping_line_locals = {}
@@ -414,39 +446,7 @@ def build_local_line_item_object(line_item, request):
 
     return line_item
 
-def is_charge_present(line_item,charge_code):
-    for item in line_item:
-        if item['code']==charge_code:
-            return True
-    return False
-
-def add_condition_location_charge(freight_query_result):
-
-    location_id=[freight_query_result['destination_port_id']]
-    locations=[]
-    locations = maps.list_locations({'filters': { 'id': location_id }})['list']
-
-    charge={
-        "code": "IFE",
-        "unit": "per_bl",
-        "price": 4000,
-        "slabs": [],
-        "remarks": [],
-        "currency": "USD",
-        "locations": ["US"],
-        "location_id":"1c5ad46b-1c83-4fe5-bb3f-d71510d7e56c"
-      }
-    for list_item in locations:
-        if list_item['country_code']=='AU':
-            if list_item['id']==freight_query_result['destination_port_id']:
-                line_items=freight_query_result.get('origin_local').get('data').get('line_items')
-                if not is_charge_present(line_items,'IFE'):
-                    line_items.append(charge)
-
-    return freight_query_result
-
 def add_local_objects(freight_query_result, response_object, request):
-    # add_condition_location_charge(freight_query_result)
     response_object['origin_local'] = {
         'id': freight_query_result['origin_local'].get('id'),
         'service_provider_id': freight_query_result['origin_local']['service_provider_id'] if freight_query_result['origin_local'].get('service_provider_id') else response_object['service_provider_id'],
@@ -875,44 +875,44 @@ def get_fcl_freight_rate_cards(requirements):
             }]
         }]
     """
-    try:
-        initial_query = initialize_freight_query(requirements)
+    # try:
+    initial_query = initialize_freight_query(requirements)
+    freight_rates = jsonable_encoder(list(initial_query.dicts()))
+
+    freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+    is_predicted = False
+
+    if len(freight_rates) == 0:
+        get_fcl_freight_predicted_rate(requirements)
+        initial_query = initialize_freight_query(requirements, True)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        is_predicted = True
 
-        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
-        is_predicted = False
+    missing_local_rates = get_rates_which_need_locals(freight_rates)
+    rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
+    rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
+    local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
+    freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
+    missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
 
-        if len(freight_rates) == 0:
-            get_fcl_freight_predicted_rate(requirements)
-            initial_query = initialize_freight_query(requirements, True)
-            freight_rates = jsonable_encoder(list(initial_query.dicts()))
-            is_predicted = True
-
-        missing_local_rates = get_rates_which_need_locals(freight_rates)
-        rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
-        rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
-        local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
-        freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
-        missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
-
-        if len(missing_free_weight_limit) > 0:
-            free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
-            freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
-        freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
-        freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
-        
-        if is_predicted:
-            fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
-            freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
-        
-        freight_rates = build_response_list(freight_rates, requirements)
-        return {
-            "list" : freight_rates
-        }
-    except Exception as e:
-        traceback.print_exc()
-        sentry_sdk.capture_exception(e)
-        print(e, 'Error In Fcl Freight Rate Cards')
-        return {
-            "list": []
-        }
+    if len(missing_free_weight_limit) > 0:
+        free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
+        freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
+    freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
+    freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
+    
+    if is_predicted:
+        fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
+        freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+    
+    freight_rates = build_response_list(freight_rates, requirements)
+    return {
+        "list" : freight_rates
+    }
+    # except Exception as e:
+    #     traceback.print_exc()
+    #     sentry_sdk.capture_exception(e)
+    #     print(e, 'Error In Fcl Freight Rate Cards')
+    #     return {
+    #         "list": []
+    #     }
