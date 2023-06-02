@@ -4,7 +4,7 @@ from micro_services.client import maps
 from configs.haulage_freight_rate_constants import GLOBAL_FUEL_DATA_LINKS
 
 
-def find_electricity_price():
+def electricity_price_scheduler():
     payload = {
         "customers": "2",
         "currency": "USD",

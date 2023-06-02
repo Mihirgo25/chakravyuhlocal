@@ -399,6 +399,7 @@ def process_fuel_data_delay(self):
             pass
         else:
             raise self.retry(exc= exc)
+
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_electricity_data_delays(self):
     try:

@@ -295,3 +295,27 @@ COUNTRY_CURRENCY_CODE_MAPPING = {
 }
 
 GLOBAL_FUEL_DATA_LINKS = ['https://www.globalpetrolprices.com/india/electricity_prices/']
+
+CONTAINER_TO_WAGON_TYPE_MAPPING = {
+    'standard': '2 axles',
+    'refer': '2 axles',
+    'open_top': 'More than 2 axles',
+    'open_side': 'More than 2 axles',
+    'flat_rack': '5 and 6 axles',
+    'iso_tank': '3 and 4 axles'
+}
+
+CONTAINER_HANDLING_CHARGES = {
+    "20" : {"stuffed": {"warehouse_to_automobile": 23.00, "automobile_to_warehouse": 57.00}, "empty": {"warehouse_to_automobile": 15.00, "automobile_to_warehouse": 37.00}},
+    "40" : {"stuffed": {"warehouse_to_automobile": 35.00, "automobile_to_warehouse": 85.00}, "empty": {"warehouse_to_automobile": 23.00, "automobile_to_warehouse": 55.00}},
+    "40HC" : {"stuffed": {"warehouse_to_automobile": 53.00, "automobile_to_warehouse": 127.00}, "empty": {"warehouse_to_automobile": 34.00, "automobile_to_warehouse": 83.00}},
+    # "45HC" : {"stuffed": {"warehouse_to_automobile": 23.00, "automobile_to_warehouse": 57.00}, "empty": {"warehouse_to_automobile": 15.00, "automobile_to_warehouse": 37.00}}
+}
+
+GENERAL_INFLATION_FACTOR = 1.76
+
+VIETNAMESE_INFLATION_FACTOR = 1.76
+
+CHARGE_LEVEL_MAPPING_VEITNAM = {
+    
+}
