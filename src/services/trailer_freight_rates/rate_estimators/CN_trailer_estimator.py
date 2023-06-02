@@ -20,13 +20,7 @@ class CNTrailerRateEstimator():
                     (TrailerFreightRateCharges.country_code == self.country_code),
                     (TrailerFreightRateCharges.status == 'active')
                     ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
-        if constants:
-            constants_data = model_to_dict(constants)
-        else:
-             constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == "CN"),
-                    (TrailerFreightRateCharges.status == 'active')
-                    ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
+        constants_data = model_to_dict(constants)
 
         handling_rate = constants_data.get('handling')
         nh_toll_rate = constants_data.get('nh_toll')
