@@ -20,18 +20,20 @@ def get_transit_time(distance):
 
 
 def get_country_filter(origin_location, destination_location):
+    if origin_location == destination_location:
+        raise HTTPException(status_code=400, detail="origin_location_id cannot be same as destination_location_id")
     input = {"filters": {"id": [origin_location, destination_location]}}
     location_category = "generalized"
     locations_data = maps.list_locations(input)["list"]
     if (
         locations_data[0]["country_code"] == "IN"
-        and locations_data[1]["country_code"] == "IN"
+        and locations_data[-1]["country_code"] == "IN"
     ):
         location_category = "india"
 
     if (
         locations_data[0]["country_code"] == "CN"
-        and locations_data[1]["country_code"] == "CN"
+        and locations_data[-1]["country_code"] == "CN"
     ):
         location_category = "china"
 
@@ -41,10 +43,10 @@ def get_country_filter(origin_location, destination_location):
         "NL",
         "DE",
         "CH",
-    ] and locations_data[1]["country_code"] in ["FR", "NO", "NL", "DE", "CH"]:
+    ] and locations_data[-1]["country_code"] in ["FR", "NO", "NL", "DE", "CH"]:
         location_category = "europe"
 
-    if locations_data[0]["country_code"] in ["US", "CA", "MX"] and locations_data[1][
+    if locations_data[0]["country_code"] in ["US", "CA", "MX"] and locations_data[-1][
         "country_code"
     ] in ["US", "CA", "MX"]:
         location_category = "north_america"
