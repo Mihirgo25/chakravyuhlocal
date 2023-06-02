@@ -25,6 +25,7 @@ from configs.haulage_freight_rate_constants import (
     WAGON_COMMODITY_MAPPING,
     WAGON_MAPPINGS,
 )
+from services.haulage_freight_rate.models.wagon_types import WagonTypes
 
 POSSIBLE_LOCATION_CATEGORY = [
     "india",
@@ -107,18 +108,12 @@ class HaulageFreightRateEstimator:
             Estimation of haulage rate for european countries (Majorly for France, Norway, Netherlands, Germany, Switzerland)
             """
             estimator = EuropeHaulageFreightRateEstimator(
-                self.commodity,
-                self.load_type,
-                self.containers_count,
-                self.distance
+                self.commodity, self.load_type, self.containers_count, self.distance
             )
 
         elif location_category == "north_america":
             estimator = NorthAmericaHaulageFreightRateEstimator(
-                self.commodity,
-                self.load_type,
-                self.containers_count,
-                self.distance
+                self.commodity, self.load_type, self.containers_count, self.distance
             )
 
         else:
@@ -168,7 +163,9 @@ class HaulageFreightRateEstimator:
 
     def get_container_and_commodity_type(self, commodity, container_type):
         commodity = CONTAINER_TYPE_CLASS_MAPPINGS[container_type][0]
-        permissable_carrying_capacity = WAGON_MAPPINGS[
-            WAGON_COMMODITY_MAPPING[commodity]
-        ][0]["permissable_carrying_capacity"]
+        permissable_carrying_capacity = list(
+            WagonTypes.select(WagonTypes.permissible_carrying_capacity)
+            .where(WagonTypes.wagon_type == WAGON_COMMODITY_MAPPING[commodity])
+            .dicts()
+        )[0]["permissible_carrying_capacity"]
         return commodity, permissable_carrying_capacity
