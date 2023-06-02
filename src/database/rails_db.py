@@ -294,3 +294,84 @@ def get_ff_mlo():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return result
+
+def get_past_invoices(origin_airport_id,destination_airport_id,lower_limit,upper_limit):
+        result =0
+        try:
+            conn = get_connection()
+            with conn:
+                with conn.cursor() as cur:
+                     
+                    sql_query = """
+                        select avg(cast(line_item->>'price' as double precision))
+                        from shipment_collection_parties
+                        inner join shipment_air_freight_services on shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
+                        cross join jsonb_array_elements(line_items) as line_item
+                        where line_item ->> 'code' = 'BAS' and shipment_collection_parties.invoice_date > date_trunc('MONTH',CURRENT_DATE - INTERVAL '3 months')::DATE
+                        and shipment_air_freight_services.origin_airport_id = %s
+                        and shipment_air_freight_services.destination_airport_id = %s
+                        and shipment_collection_parties.status in ('locked', 'coe_approved')
+                        and shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') and  line_item ->> 'code' = 'BAS' and
+                        invoice_type in ('purchase_invoice', 'proforma_invoice') and weight >= %i and weight <= %i
+                        """
+                    cur.execute(sql_query,(origin_airport_id,destination_airport_id,lower_limit,upper_limit))
+                    result = cur.fetchall()
+                    print(result)
+                    cur.close()
+            cur.close()
+            return result
+        except Exception as e:
+            # sentry_sdk.capture_exception(e)
+            return result
+        
+def get_invoices():
+        all_result =[]
+        try:
+            conn = get_connection()
+            with conn:
+                with conn.cursor() as cur:
+                     
+                    sql_query = """
+                        select shipment_air_freight_services.origin_airport_id as origin_airport_id, 
+                        shipment_air_freight_services.origin_country_id as origin_country_id, 
+                        shipment_air_freight_services.destination_airport_id as destination_airport_id,
+                        shipment_air_freight_services.destination_country_id as destination_country_id,
+                        shipment_air_freight_services.operation_type, shipment_air_freight_services.weight,shipment_air_freight_services.commodity,
+                        line_item ->> 'price' as price, line_item ->> 'currency' as currency
+                        from shipment_collection_parties
+                        inner join shipment_air_freight_services on shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
+                        cross join jsonb_array_elements(line_items) as line_item
+                        where line_item ->> 'code' = 'BAS' and shipment_collection_parties.invoice_date > now()::date -1
+                        and shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') and  line_item ->> 'code' = 'BAS' and
+                        invoice_type in ('purchase_invoice', 'proforma_invoice') 
+                        """
+                    cur.execute(sql_query)
+                    result = cur.fetchall()
+                    result = cur.fetchall()
+
+                for res in result:
+
+                    new_obj = {
+                        "origin_airport_id": str(res[0]),
+                        "origin_country_id": str(res[1]),
+                        "destination_airport_id": str(res[3]),
+                        "destination_country_id": str(res[4]),
+                        "operation_type":res[6],
+                        "weight":res[7],
+                        "commodity":res[8],
+                        "price":str(res[9]),
+                        "currency":str(res[10])
+                    }
+
+                    all_result.append(new_obj)
+                    cur.close()
+            cur.close()
+            return all_result
+        except Exception as e:
+            # sentry_sdk.capture_exception(e)
+            return all_result
+
+
+
+                    
+            

@@ -95,3 +95,34 @@ TRADE_TYPES = ['import', 'export', 'domestic']
 ALLOWED_RATE_PRODUCER_METHODS = ['minimum', 'maximum', 'latest']
 
 DEAFULT_RATE_PRODUCER_METHOD = 'latest'
+
+DEFAULT_WEIGHT_SLABS=[
+    {
+        'lower_limit':'0',
+        'upper_limit':'50',
+        'lower_tariff_price':0,
+        'upper_tariff_price':0,
+        'currency':'INR'
+    },
+    {
+        'lower_limit':'51',
+        'upper_limit':'100',
+        'lower_tariff_price':0 ,
+        'upper_tariff_price':0,
+        'currency':'INR'
+        },
+    {
+        'lower_limit':'101',
+        'upper_limit':'300',
+        'lower_tariff_price':0,
+        'upper_tariff_price':0,
+        'currency':'INR'
+    },
+    {
+        'lower_limit':'301',
+        'upper_limit':'500',
+        'lower_tariff_price':0,
+        'upper_tariff_price':0,
+        'currency':'INR'
+    }
+]
