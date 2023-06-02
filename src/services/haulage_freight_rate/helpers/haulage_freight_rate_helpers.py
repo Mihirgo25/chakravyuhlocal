@@ -86,7 +86,10 @@ def build_line_item(
 def get_distances(origin_location_id, destination_location_id, data):
     route_distance = get_railway_route(origin_location_id, destination_location_id)
     if route_distance:
-        return route_distance["distance"], route_distance["time"]/3600
+        distance = route_distance.get("distance")
+        time = route_distance.get("time")
+        if distance and time:
+            return distance, time / 3600
     for d in data:
         if d["id"] == origin_location_id:
             origin_location = (d["latitude"], d["longitude"])
