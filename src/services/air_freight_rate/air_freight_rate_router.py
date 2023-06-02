@@ -16,6 +16,7 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 
+
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
 from services.air_freight_rate.interaction.get_air_freight_rate import get_air_freight_rate
@@ -26,12 +27,15 @@ from services.air_freight_rate.interaction.create_air_freight_rate_local import 
 from services.air_freight_rate.interaction.update_air_freight_rate_surcharge import update_air_freight_rate_surcharge
 from services.air_freight_rate.interaction.create_air_freight_rate_task import create_air_freight_rate_task
 from services.air_freight_rate.interaction.get_air_freight_rate_local import get_air_freight_rate_local
+from services.air_freight_rate.interaction.get_air_freight_rate_cards import get_air_freight_rate_cards
+
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interaction.list_air_freight_rate_local import list_air_freight_rate_locals
 from services.air_freight_rate.interaction.update_air_freight_rate_task import update_air_freight_rate_task_data
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interaction.create_air_freight_rate_request import create_air_freight_rate_request
 from services.air_freight_rate.interaction.get_air_freight_rate_stats import get_air_freight_rate_stats
+from services.air_freight_rate.interaction.create_air_freight_rate_not_available import create_air_freight_rate_not_available
 
 
 air_freight_router = APIRouter()
@@ -174,6 +178,22 @@ def update_air_freight_rates_locals(request: UpdateFrieghtRateLocal, resp:dict =
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@air_freight_router.post("/create_air_freight_rate_not_available")
+def create_air_freight_rate_not_available_data(request: CreateAirFrieghtRateNotAvailable, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    data = create_air_freight_rate_not_available(request)
+    if data:
+        try:
+            return JSONResponse(status_code = 200, content = {'success': True})
+        except Exception as e:
+            # sentry_sdk.capture_exception(e)
+            print(e)
+            # return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })x
+    return JSONResponse(status_code=400, content={ "success": False, 'error': 'No data available' })
+
 
 @air_freight_router.post("/create_air_freight_rate_local")
 def create_air_freight_rate_local_data(request: CreateAirFreightRateLocal, resp: dict = Depends(authorize_token)):
@@ -328,6 +348,72 @@ def update_air_freight_rate_task(request:UpdateAirFreightRateTask  , resp:dict =
         # sentry_sdk.capture_exception(e)
         print(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@air_freight_router.get("/get_air_freight_rate_cards")
+def get_air_freight_rate_cards_data(
+    
+    origin_airport_id:str,
+    destination_airport_id:str,
+    validity_start:datetime,
+    cargo_clearance_date: date,
+    validity_end:datetime,
+    packages_count:int,
+    trade_type:str,
+    commodity:str='general',
+    commodity_type:str='all',
+    commodity_sub_type:str =None,
+    commodity_sub_type_code:str =None,
+    airline_id:str=None,
+    packing_type:str ='box',
+    handling_type:str = 'stackable',
+    weight:float =None,
+    price_type:str=None,
+    cogo_entity_id:str=None,
+    
+    volume:float =None,
+    additional_services:List[str]=[],
+    predicted_rate_creation_required:bool=True,
+    resp: dict = Depends(authorize_token)):
+
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request={
+        'origin_airport_id':origin_airport_id,
+        'destination_airport_id':destination_airport_id,
+        'commodity':commodity,
+        'airline_id':airline_id,
+        'cargo_clearance_date': cargo_clearance_date,
+        'validity_end':validity_end,
+        'validity_start':validity_start,
+        'weight':weight,
+        'volume':volume,
+        'cogo_entity_id':cogo_entity_id,
+        'additional_services':additional_services,
+        'predicted_rate_creation_required':predicted_rate_creation_required,
+        'commodity_sub_type':commodity_sub_type,
+        'commodity_sub_type_code':commodity_sub_type_code,
+        'price_type':price_type,
+        'packages_count':packages_count,
+        'trade_type':trade_type,
+        'packing_type':packing_type,
+        'handling_type':handling_type
+
+    }
+
+    # try:
+    data = get_air_freight_rate_cards(request)
+    data = jsonable_encoder(data)
+    return JSONResponse(status_code=200, content = data)
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+   
 
 @air_freight_router.post('/create_air_freight_rate_request')
 def create_air_freight_rate_request_data(request:CreateAirFreightRateRequest,resp:dict=Depends(authorize_token)):

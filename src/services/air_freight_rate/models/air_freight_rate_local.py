@@ -6,6 +6,7 @@ from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from fastapi import HTTPException
 from micro_services.client import *
+from celery_worker import get_multiple_service_objects
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -205,6 +206,9 @@ class AirFreightRateLocal(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
+    
+    def add_service_objects(response):
+        service_objects=get_multiple_service_objects()
     
     def set_location_ids(self):
         self.country_id = self.airport.get('country_id')

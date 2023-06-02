@@ -203,6 +203,7 @@ class LineItemsLocal(BaseModel):
     currency:str
     remarks:list[str]=None
     slabs:list[LocalSlabs]=None
+    
 class UpdateFrieghtRateLocal(BaseModel):
     id:str
     performed_by_id:str=None
@@ -210,6 +211,15 @@ class UpdateFrieghtRateLocal(BaseModel):
     procured_by_id:str=None
     bulk_operation_id:str=None
     line_items:list[LineItemsLocal]=None
+    
+class CreateAirFrieghtRateNotAvailable(BaseModel):
+    origin_airport_id:str
+    origin_country_id:str
+    origin_trade_id:str
+    destination_airport_id:str
+    destination_country_id:str
+    destination_trade_id:str
+    commodity:str
 
 class UpdateAirFreightRateSurcharge(BaseModel):
     id: str

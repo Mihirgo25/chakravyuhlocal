@@ -14,7 +14,7 @@ def list_air_freight_rate_locals(filters={},page_limit=10,page=1,
 sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=False):
     
     query=get_query(sort_by,sort_type,page,page_limit)
-    print('hi')
+
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -22,14 +22,11 @@ sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
         
         query = get_filters(direct_filters, query, AirFreightRateLocal)
+        
         query = apply_indirect_filters(query, indirect_filters)
-    
+        
     if return_query: 
         return { 'list': str(query) }
-    
-
-
-
 
     pagination_data=get_pagination_data(query,page,page_limit,pagination_data_required)
     query = query.paginate(page, page_limit)
@@ -50,11 +47,23 @@ def get_query(sort_by,sort_type,page,page_limit):
             AirFreightRateLocal.service_provider_id,
             AirFreightRateLocal.is_line_items_info_messages_present,
             AirFreightRateLocal.rate_type,
-            
-
+            AirFreightRateLocal.bookings_count,
+            AirFreightRateLocal.bookings_importer_exporters_count,
+            AirFreightRateLocal.commodity_type,
+            AirFreightRateLocal.created_at,
+            AirFreightRateLocal.currency,
+            AirFreightRateLocal.is_line_items_error_messages_present,
+            AirFreightRateLocal.is_line_items_info_messages_present,
+            AirFreightRateLocal.line_items,
+            AirFreightRateLocal.line_items_error_messages,
+            AirFreightRateLocal.line_items_info_messages,
+            AirFreightRateLocal.location_ids,
+            AirFreightRateLocal.service_provider_id,
+            AirFreightRateLocal.trade_id,
+            AirFreightRateLocal.trade_type,
         ).order_by(AirFreightRateLocal.updated_at.desc())
     return query
-
+    
 
 def apply_indirect_filters(query,filters):
     
