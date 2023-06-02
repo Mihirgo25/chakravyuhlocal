@@ -4,7 +4,7 @@ DESTINATION_TERMINAL_CHARGES_INDIA = 15
 
 CONTAINER_TYPE_CLASS_MAPPINGS = {
     # 120 refer
-    "standard": {"india": "Class LR-3", "vietnam": "1"},
+    "standard": {"india": "Class LR-3", "vietnam": "3"},
     "refer": {"india":"Class 165", "vietnam": "3"},
     "open_top": {"india": "Class LR1", "vietnam": "2"},
     "open_side": {"india":"Class 120", "vietnam": "2"},
@@ -21,6 +21,9 @@ WAGON_COMMODITY_MAPPING = {
     "Class 130A": "BCNA",
     "Class 150": "BCXT",
     "Class 120": "BTAP",
+    "1": "BRNA",
+    "2": "BTAP",
+    "3": "BTPGLN",
 }
 
 
@@ -112,3 +115,5 @@ GENERAL_INFLATION_FACTOR = 1.76
 VIETNAMESE_INFLATION_FACTOR = 1.76
 
 CHARGE_LEVEL_MAPPING_VEITNAM = {}
+
+USD_TO_VND = 23482.50

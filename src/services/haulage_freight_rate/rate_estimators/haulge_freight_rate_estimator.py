@@ -31,6 +31,7 @@ POSSIBLE_LOCATION_CATEGORY = [
     "china",
     "europe",
     "north_america",
+    "vietnam",
     "generalized",
 ]
 from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import *
@@ -161,10 +162,13 @@ class HaulageFreightRateEstimator:
         ) = self.get_container_and_commodity_type(self.commodity, self.container_type, location_category)
 
     def get_container_and_commodity_type(self, commodity, container_type, location_category):
-        commodity = CONTAINER_TYPE_CLASS_MAPPINGS[container_type][location_category]
-        permissable_carrying_capacity = list(
-            WagonTypes.select(WagonTypes.permissible_carrying_capacity)
-            .where(WagonTypes.wagon_type == WAGON_COMMODITY_MAPPING[commodity])
-            .dicts()
-        )[0]["permissible_carrying_capacity"]
+        if location_category in ['india', 'vietnam']:
+            commodity = CONTAINER_TYPE_CLASS_MAPPINGS[container_type][location_category]
+            permissable_carrying_capacity = list(
+                WagonTypes.select(WagonTypes.permissible_carrying_capacity)
+                .where(WagonTypes.wagon_type == WAGON_COMMODITY_MAPPING[commodity])
+                .dicts()
+            )[0]["permissible_carrying_capacity"]
+        else:
+            permissable_carrying_capacity = 18
         return commodity, permissable_carrying_capacity

@@ -37,6 +37,12 @@ def get_country_filter(origin_location, destination_location):
     ):
         location_category = "china"
 
+    if (
+        locations_data[0]["country_code"] == "VN"
+        and locations_data[-1]["country_code"] == "VN"
+    ):
+        location_category = "vietnam"
+
     if locations_data[0]["country_code"] in [
         "FR",
         "NO",
