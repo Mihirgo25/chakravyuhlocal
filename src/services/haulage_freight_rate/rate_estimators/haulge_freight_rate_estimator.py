@@ -108,12 +108,30 @@ class HaulageFreightRateEstimator:
             Estimation of haulage rate for european countries (Majorly for France, Norway, Netherlands, Germany, Switzerland)
             """
             estimator = EuropeHaulageFreightRateEstimator(
-                self.commodity, self.load_type, self.containers_count, self.distance
+                self.query,
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance,
+                self.container_type,
+                self.cargo_weight_per_container,
+                self.permissable_carrying_capacity,
+                self.container_size,
+                self.transit_time,
             )
 
         elif location_category == "north_america":
             estimator = NorthAmericaHaulageFreightRateEstimator(
-                self.commodity, self.load_type, self.containers_count, self.distance
+                self.query,
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance,
+                self.container_type,
+                self.cargo_weight_per_container,
+                self.permissable_carrying_capacity,
+                self.container_size,
+                self.transit_time,
             )
 
         else:
