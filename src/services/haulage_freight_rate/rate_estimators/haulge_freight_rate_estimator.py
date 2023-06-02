@@ -23,7 +23,6 @@ import services.haulage_freight_rate.interactions.get_estimated_haulage_freight_
 from configs.haulage_freight_rate_constants import (
     CONTAINER_TYPE_CLASS_MAPPINGS,
     WAGON_COMMODITY_MAPPING,
-    WAGON_MAPPINGS,
 )
 from services.haulage_freight_rate.models.wagon_types import WagonTypes
 
@@ -58,7 +57,7 @@ class HaulageFreightRateEstimator:
 
     def estimate(self):
         locations_data, location_category = self.get_location_data_and_category()
-        self.convert_general_params_to_estimation_params()
+        self.convert_general_params_to_estimation_params(location_category)
         if location_category == "india":
             estimator = IndiaHaulageFreightRateEstimator(
                 self.query,
@@ -144,7 +143,7 @@ class HaulageFreightRateEstimator:
         self.transit_time = transit_time
         return locations_data, location_category
 
-    def convert_general_params_to_estimation_params(self):
+    def convert_general_params_to_estimation_params(self, location_category):
         query = HaulageFreightRateRuleSet.select(
             HaulageFreightRateRuleSet.base_price,
             HaulageFreightRateRuleSet.running_base_price,
@@ -159,10 +158,10 @@ class HaulageFreightRateEstimator:
         (
             self.commodity,
             self.permissable_carrying_capacity,
-        ) = self.get_container_and_commodity_type(self.commodity, self.container_type)
+        ) = self.get_container_and_commodity_type(self.commodity, self.container_type, location_category)
 
-    def get_container_and_commodity_type(self, commodity, container_type):
-        commodity = CONTAINER_TYPE_CLASS_MAPPINGS[container_type][0]
+    def get_container_and_commodity_type(self, commodity, container_type, location_category):
+        commodity = CONTAINER_TYPE_CLASS_MAPPINGS[container_type][location_category]
         permissable_carrying_capacity = list(
             WagonTypes.select(WagonTypes.permissible_carrying_capacity)
             .where(WagonTypes.wagon_type == WAGON_COMMODITY_MAPPING[commodity])
