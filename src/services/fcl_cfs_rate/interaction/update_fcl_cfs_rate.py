@@ -1,42 +1,57 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
-from services.fcl_cfs_rate.models.fcl_cfs_audits import FclCfsRateAudits
+from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from fastapi import HTTPException
 
-
-def get_audit_params(request):
+def create_audit_for_updating_cfs(request, cfs_object_id):
     audit_data = {
-        "line_items": request.line_items,
-        "free_days": request.free_days
+        "cfs_line_items": request.get('cfs_line_items')
     }
 
-    return {
-        'action_name': 'update',
-        'performed_by_id': request["performed_by_id"],
-        'bulk_operation_id': request["bulk_operation_id"],
-        'sourced_by_id': request["sourced_by_id"],
-        'procured_by_id': request["procured_by_id"],
-        'data': audit_data
-    }
+    FclCfsRateAudit.create(
+        action_name = 'update',
+        object_id = cfs_object_id,
+        object_type = 'FclCfsRate',
+        performed_by_id = request.get("performed_by_id"),
+        bulk_operation_id = request.get("bulk_operation_id"),
+        data = audit_data
+    )
 
 def update_fcl_cfs_rate(request):
-    freight_id = request["id"]
+    cfs_object = find_cfs_object(request)
 
-    freight = FclCfsRate.get_or_none(id=freight_id)
-
-    if not freight:
-        return 'id is invalid'
-
-    FclCfsRate.set_platform_price()
-    FclCfsRate.set_is_best_price()
-    FclCfsRate.update_line_item_messages()
+    if not cfs_object:
+        raise HTTPException(status_code=500, detail='Rate Not Found')
     
-    
-    audit_params = get_audit_params(request)
-    FclCfsRateAudits.create(**audit_params)
-    
-    freight.update_platform_prices_for_other_service_providers()
-    
+    update_params =  {
+        'procured_by_id':request.get('procured_by_id'),
+        'sourced_by_id':request.get('sourced_by_id'),
+        'cfs_line_items':request.get('cfs_line_items'),
+        'free_limit':request.get('free_limit')
+    }
 
-    freight.save()
+    for key in list(cfs_object.keys()):
+        setattr(cfs_object, key, update_params[key])
 
-    return {'id': freight.id}
+    cfs_object.set_platform_price()
+    cfs_object.set_is_best_price()
+    cfs_object.update_line_item_messages()
+    
+    create_audit_for_updating_cfs(request, cfs_object.id)
+    
+    cfs_object.update_platform_prices_for_other_service_providers()
+    
+    try:
+        cfs_object.save()
+    except Exception as e:
+        print("Exception in updating rate", e)
+
+    return {'id': cfs_object.id}
+
+def find_cfs_object(request):
+    try:
+        cfs_object = FclCfsRate.get_by_id(id=request.get('id'))
+    except:
+        cfs_object = None
+    
+    return cfs_object
