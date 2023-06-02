@@ -38,3 +38,9 @@ TECHOPS_TASK_ABORT_REASONS = [
 DEFAULT_SERVICE_PROVIDER_ID = '536abfe7-eab8-4a43-a4c3-6ff318ce01b5'
 
 DEFAULT_SOURCED_BY_ID = '7f6f97fd-c17b-4760-a09f-d70b6ad963e8'
+
+FEEDBACK_TYPES = ['liked', 'disliked']
+
+POSSIBLE_FEEDBACKS = ['unsatisfactory_rate', 'unsatisfactory_destination_storage', 'unpreferred_airlines']
+
+FEEDBACK_SOURCES = ['spot_search', 'checkout']
