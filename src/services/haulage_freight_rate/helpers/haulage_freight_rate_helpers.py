@@ -21,7 +21,10 @@ def get_transit_time(distance):
 
 def get_country_filter(origin_location, destination_location):
     if origin_location == destination_location:
-        raise HTTPException(status_code=400, detail="origin_location_id cannot be same as destination_location_id")
+        raise HTTPException(
+            status_code=400,
+            detail="origin_location_id cannot be same as destination_location_id",
+        )
     input = {"filters": {"id": [origin_location, destination_location]}}
     location_category = "generalized"
     locations_data = maps.list_locations(input)["list"]
@@ -49,7 +52,13 @@ def get_country_filter(origin_location, destination_location):
         "NL",
         "DE",
         "CH",
-    ] and locations_data[-1]["country_code"] in ["FR", "NO", "NL", "DE", "CH"]:
+    ] and locations_data[-1]["country_code"] in [
+        "FR",
+        "NO",
+        "NL",
+        "DE",
+        "CH",
+    ]:
         location_category = "europe"
 
     if locations_data[0]["country_code"] in ["US", "CA", "MX"] and locations_data[-1][
@@ -61,7 +70,12 @@ def get_country_filter(origin_location, destination_location):
 
 
 def build_line_item(
-    origin_location_id, destination_location_id, base_price, currency, locations_data, upper_limit
+    origin_location_id,
+    destination_location_id,
+    base_price,
+    currency,
+    locations_data,
+    upper_limit,
 ):
     origin_is_icd = ""
     destination_is_icd = ""
@@ -87,7 +101,7 @@ def build_line_item(
                     "price": base_price,
                     "lower_limit": 0,
                     "upper_limit": upper_limit,
-                    "currency": currency
+                    "currency": currency,
                 }
             ],
             "currency": currency,
