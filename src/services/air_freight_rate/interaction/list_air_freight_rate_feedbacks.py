@@ -1,6 +1,6 @@
-from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
-from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+from configs.air_freight_rate_constants import RATE_ENTITY_MAPPING
 from playhouse.shortcuts import model_to_dict
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
@@ -13,10 +13,10 @@ from math import ceil
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
-possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id', 'relevant_service_provider_id']
+possible_indirect_filters = ['relevant_supply_agent','origin_airport_id', 'destination_airport_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
 
-def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
-    query = FclFreightRateFeedback.select()
+def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
+    query = AirFreightRateFeedbacks.select()
 
     if filters:
         if type(filters) != dict:
@@ -24,7 +24,7 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
-        query = get_filters(direct_filters, query, FclFreightRateFeedback)
+        query = get_filters(direct_filters, query, AirFreightRateFeedbacks)
         query = apply_indirect_filters(query, indirect_filters)
 
     # query = get_join_query(query)
@@ -37,7 +37,7 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
-    query = query.order_by(FclFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
+    query = query.order_by(AirFreightRateFeedbacks.created_at.desc(nulls='LAST')).paginate(page, page_limit)
     return query
 
 # def get_join_query(query):
@@ -52,142 +52,108 @@ def apply_indirect_filters(query, filters):
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):
-    expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
-    origin_port_id = [t['origin_location_id'] for t in expertises]
-    destination_port_id = [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateFeedback.origin_port_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_country_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_continent_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_trade_id << origin_port_id))
-    query = query.where((FclFreightRateFeedback.destination_port_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_country_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_continent_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_trade_id << destination_port_id))
+    expertises = get_partner_user_experties('air_freight', filters['relevant_supply_agent'])
+    origin_airport_id = [t['origin_location_id'] for t in expertises]
+    destination_airport_id = [t['destination_location_id'] for t in expertises]
+    query = query.where((AirFreightRateFeedbacks.origin_airport_id << origin_airport_id) |
+                    (AirFreightRateFeedbacks.origin_country_id << origin_airport_id) |
+                    (AirFreightRateFeedbacks.origin_continent_id << origin_airport_id) |
+                    (AirFreightRateFeedbacks.origin_trade_id << origin_airport_id))
+    query = query.where((AirFreightRateFeedbacks.destination_airport_id << destination_airport_id) |
+                    (AirFreightRateFeedbacks.destination_country_id << destination_airport_id) |
+                    (AirFreightRateFeedbacks.destination_continent_id << destination_airport_id) |
+                    (AirFreightRateFeedbacks.destination_trade_id << destination_airport_id))
     return query
 
-def apply_relevant_service_provider_id_filter(query, filters):
-    expertises = get_organization_service_experties('fcl_freight', filters['relevant_service_provider_id'], account_type='organization')
-    origin_port_id = [t['origin_location_id'] for t in expertises]
-    destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateFeedback.origin_port_id << origin_port_id) | (FclFreightRateFeedback.origin_country_id << origin_port_id) | (FclFreightRateFeedback.origin_continent_id << origin_port_id) | (FclFreightRateFeedback.origin_trade_id << origin_port_id))
-    query = query.where((FclFreightRateFeedback.destination_port_id << destination_port_id) | (FclFreightRateFeedback.destination_country_id << destination_port_id) | (FclFreightRateFeedback.destination_continent_id << destination_port_id) | (FclFreightRateFeedback.destination_trade_id << destination_port_id))
-    return query
-
-def apply_supply_agent_id_filter(query, filters):
-    expertises = get_organization_service_experties('fcl_freight', filters['supply_agent_id'])
-    origin_port_id = [t['origin_location_id'] for t in expertises]
-    destination_port_id = [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateFeedback.origin_port_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_country_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_continent_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_trade_id << origin_port_id))
-    query = query.where((FclFreightRateFeedback.destination_port_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_country_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_continent_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_trade_id << destination_port_id))
-    return query
 
 def apply_cogo_entity_id_filter(query, filters):
     filter_entity_id = filters['cogo_entity_id']
-
-    query = query.where((FclFreightRateFeedback.cogo_entity_id == filter_entity_id) | (FclFreightRateFeedback.cogo_entity_id.is_null(True)))
+    query = query.where((AirFreightRateFeedbacks.cogo_entity_id == filter_entity_id) | (AirFreightRateFeedbacks.cogo_entity_id.is_null(True)))
     return query
 
 def apply_service_provider_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.service_provider_id == filters['service_provider_id'])
+    query = query.where(AirFreightRateFeedbacks.service_provider_id == filters['service_provider_id'])
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+    query = query.where(AirFreightRateFeedbacks.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
 
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
+    query = query.where(AirFreightRateFeedbacks.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
 
     return query
 
-def apply_origin_port_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.origin_port_id == filters['origin_port_id'])
+def apply_origin_airport_id_filter(query, filters):
+    query = query.where(AirFreightRateFeedbacks.origin_airport_id == filters['origin_airport_id'])
     return query
 
-def apply_destination_port_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.destination_port_id == filters['destination_port_id'])
+def apply_destination_airport_id_filter(query, filters):
+    query = query.where(AirFreightRateFeedbacks.destination_airport_id == filters['destination_airport_id'])
     return query
 
 def apply_origin_country_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.origin_country_id == filters['origin_country_id'])
+    query = query.where(AirFreightRateFeedbacks.origin_country_id == filters['origin_country_id'])
     return query
 
 def apply_destination_country_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.destination_country_id == filters['destination_country_id'])
-    return query
-
-def apply_origin_trade_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.origin_trade_id == filters['origin_trade_id'])
-    return query
-
-def apply_destination_trade_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.destination_trade_id == filters['destination_trade_id'])
-    return query
-
-def apply_shipping_line_id_filter(query, filters):
-    query = query.where(FclFreightRateFeedback.shipping_line_id == filters['shipping_line_id'])
+    query = query.where(AirFreightRateFeedbacks.destination_country_id == filters['destination_country_id'])
     return query
 
 def apply_similar_id_filter(query, filters):
-    feedback_data = (FclFreightRateFeedback.select(FclFreightRateFeedback.origin_port_id, FclFreightRateFeedback.destination_port_id, FclFreightRateFeedback.container_size, FclFreightRateFeedback.container_type, FclFreightRateFeedback.commodity).where(FclFreightRateFeedback.id==filters['similar_id'])).first()
+    feedback_data = (AirFreightRateFeedbacks.select(AirFreightRateFeedbacks.origin_airport_id, AirFreightRateFeedbacks.destination_airport_id, AirFreightRateFeedbacks.operation_type , AirFreightRateFeedbacks.commodity).where(AirFreightRateFeedbacks.id==filters['similar_id'])).get()
     if feedback_data:
-        query = query.where(FclFreightRateFeedback.id != filters.get('similar_id'))
-        query = query.where(FclFreightRateFeedback.origin_port_id == feedback_data.origin_port_id, FclFreightRateFeedback.destination_port_id == feedback_data.destination_port_id, FclFreightRateFeedback.container_size == feedback_data.container_size, FclFreightRateFeedback.container_type == feedback_data.container_type, FclFreightRateFeedback.commodity == feedback_data.commodity)
-
+        query = query.where(AirFreightRateFeedbacks.id != filters.get('similar_id'))
+        query = query.where(AirFreightRateFeedbacks.origin_airport_id == feedback_data.origin_airport_id, AirFreightRateFeedbacks.destination_airport_id == feedback_data.destination_airport_id, AirFreightRateFeedbacks.operation_type == feedback_data.operation_type, AirFreightRateFeedbacks.commodity == feedback_data.commodity)
     return query
 
 def get_data(query, spot_search_details_required, booking_details_required):
     if not booking_details_required:
         query = query.select(
-            FclFreightRateFeedback.id,
-            FclFreightRateFeedback.cogo_entity_id,
-            FclFreightRateFeedback.closed_by_id,
-            FclFreightRateFeedback.closed_by,
-            FclFreightRateFeedback.closing_remarks,
-            FclFreightRateFeedback.created_at,
-            FclFreightRateFeedback.fcl_freight_rate_id,
-            FclFreightRateFeedback.feedback_type,
-            FclFreightRateFeedback.feedbacks,
-            FclFreightRateFeedback.outcome,
-            FclFreightRateFeedback.outcome_object_id,
-            FclFreightRateFeedback.performed_by_id,
-            FclFreightRateFeedback.performed_by,
-            FclFreightRateFeedback.performed_by_org_id,
-            FclFreightRateFeedback.performed_by_org,
-            FclFreightRateFeedback.performed_by_type,
-            FclFreightRateFeedback.preferred_detention_free_days,
-            FclFreightRateFeedback.preferred_freight_rate,
-            FclFreightRateFeedback.preferred_freight_rate_currency,
-            FclFreightRateFeedback.preferred_shipping_line_ids,
-            FclFreightRateFeedback.preferred_shipping_lines,
-            FclFreightRateFeedback.remarks,
-            FclFreightRateFeedback.serial_id,
-            FclFreightRateFeedback.source,
-            FclFreightRateFeedback.source_id,
-            FclFreightRateFeedback.status,
-            FclFreightRateFeedback.updated_at,
-            FclFreightRateFeedback.validity_id,
-            FclFreightRateFeedback.origin_port_id,
-            FclFreightRateFeedback.origin_continent_id,
-            FclFreightRateFeedback.origin_trade_id,
-            FclFreightRateFeedback.origin_country_id,
-            FclFreightRateFeedback.destination_port_id,
-            FclFreightRateFeedback.destination_continent_id,
-            FclFreightRateFeedback.destination_trade_id,
-            FclFreightRateFeedback.destination_country_id,
-            FclFreightRateFeedback.commodity,
-            FclFreightRateFeedback.container_size,
-            FclFreightRateFeedback.container_type,
-            FclFreightRateFeedback.service_provider_id,
-            FclFreightRateFeedback.origin_port,
-            FclFreightRateFeedback.destination_port
+            AirFreightRateFeedbacks.id,
+            AirFreightRateFeedbacks.cogo_entity_id,
+            AirFreightRateFeedbacks.closed_by_id,
+            AirFreightRateFeedbacks.closed_by,
+            AirFreightRateFeedbacks.closing_remarks,
+            AirFreightRateFeedbacks.created_at,
+            AirFreightRateFeedbacks.air_freight_rate_id,
+            AirFreightRateFeedbacks.feedback_type,
+            AirFreightRateFeedbacks.feedbacks,
+            AirFreightRateFeedbacks.outcome,
+            AirFreightRateFeedbacks.outcome_object_id,
+            AirFreightRateFeedbacks.performed_by_id,
+            AirFreightRateFeedbacks.performed_by,
+            AirFreightRateFeedbacks.performed_by_org_id,
+            AirFreightRateFeedbacks.performed_by_org,
+            AirFreightRateFeedbacks.performed_by_type,
+            AirFreightRateFeedbacks.preferred_freight_rate,
+            AirFreightRateFeedbacks.preferred_freight_rate_currency,
+            AirFreightRateFeedbacks.preferred_airline_ids,
+            AirFreightRateFeedbacks.preferred_airlines,
+            AirFreightRateFeedbacks.remarks,
+            AirFreightRateFeedbacks.serial_id,
+            AirFreightRateFeedbacks.source,
+            AirFreightRateFeedbacks.source_id,
+            AirFreightRateFeedbacks.status,
+            AirFreightRateFeedbacks.updated_at,
+            AirFreightRateFeedbacks.validity_id,
+            AirFreightRateFeedbacks.origin_airport_id,
+            AirFreightRateFeedbacks.origin_continent_id,
+            AirFreightRateFeedbacks.origin_trade_id,
+            AirFreightRateFeedbacks.origin_country_id,
+            AirFreightRateFeedbacks.destination_airport_id,
+            AirFreightRateFeedbacks.destination_continent_id,
+            AirFreightRateFeedbacks.destination_trade_id,
+            AirFreightRateFeedbacks.destination_country_id,
+            AirFreightRateFeedbacks.commodity,
+            AirFreightRateFeedbacks.operation_type,
+            AirFreightRateFeedbacks.service_provider_id,
+            AirFreightRateFeedbacks.origin_airport,
+            AirFreightRateFeedbacks.destination_airport,
+            AirFreightRateFeedbacks.weight,
+            AirFreightRateFeedbacks.volume,
+            AirFreightRateFeedbacks.airline_id
         )
     data = list(query.dicts())
     # fcl_freight_rate_ids = [row['fcl_freight_rate_id'] for row in data]
@@ -222,8 +188,6 @@ def get_data(query, spot_search_details_required, booking_details_required):
         # object['container_type'] = rate.get('container_type')
         # object['commodity'] = rate.get('commodity')
         if 'booking_params' in object:
-            object['containers_count'] = object['booking_params'].get('containers_count', None)
-            object['bls_count'] = object['booking_params'].get('bls_count', None)
             object['inco_term'] = object['booking_params'].get('inco_term', None)
         # try:
         #     price_currency = [t for t in object['validities'] if t['id'] == object.get('validity_id')][0]
@@ -257,7 +221,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
 
-    query = FclFreightRateFeedback.select()
+    query = AirFreightRateFeedbacks.select()
 
     if filters:
         if 'status' in filters:
@@ -267,18 +231,18 @@ def get_stats(filters, is_stats_required, performed_by_id):
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
-        query = get_filters(direct_filters, query, FclFreightRateFeedback)
+        query = get_filters(direct_filters, query, AirFreightRateFeedbacks)
         query = apply_indirect_filters(query, indirect_filters)
 
     # query = get_join_query(query)
     query = (
         query
         .select(
-            fn.count(FclFreightRateFeedback.id).over().alias('get_total'),
-          fn.count(FclFreightRateFeedback.id).filter(FclFreightRateFeedback.status == 'active').over().alias('get_status_count_active'),
-        fn.count(FclFreightRateFeedback.id).filter(FclFreightRateFeedback.status == 'inactive').over().alias('get_status_count_inactive'),
-        fn.count(FclFreightRateFeedback.id).filter((FclFreightRateFeedback.status=='inactive') & (FclFreightRateFeedback.closed_by_id==performed_by_id)).over().alias('get_total_closed_by_user'),
-        fn.count(FclFreightRateFeedback.id).filter((FclFreightRateFeedback.status=='active')  & (FclFreightRateFeedback.performed_by_id==performed_by_id)).over().alias('get_total_opened_by_user'),
+            fn.count(AirFreightRateFeedbacks.id).over().alias('get_total'),
+          fn.count(AirFreightRateFeedbacks.id).filter(AirFreightRateFeedbacks.status == 'active').over().alias('get_status_count_active'),
+        fn.count(AirFreightRateFeedbacks.id).filter(AirFreightRateFeedbacks.status == 'inactive').over().alias('get_status_count_inactive'),
+        fn.count(AirFreightRateFeedbacks.id).filter((AirFreightRateFeedbacks.status=='inactive') & (AirFreightRateFeedbacks.closed_by_id==performed_by_id)).over().alias('get_total_closed_by_user'),
+        fn.count(AirFreightRateFeedbacks.id).filter((AirFreightRateFeedbacks.status=='active')  & (AirFreightRateFeedbacks.performed_by_id==performed_by_id)).over().alias('get_total_opened_by_user'),
 
          )
     ).limit(1)
@@ -300,7 +264,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
 
 # def get_total(query, performed_by_id):
 #     try:
-#         query = query.select(FclFreightRateFeedback.id)
+#         query = query.select(AirFreightRateFeedbacks.id)
 
 #         return {'get_total':query.count()}
 #     except:
@@ -308,24 +272,24 @@ def get_stats(filters, is_stats_required, performed_by_id):
 
 # def get_total_closed_by_user(query, performed_by_id):
 #     try:
-#         query = query.select(FclFreightRateFeedback.id)
+#         query = query.select(AirFreightRateFeedbacks.id)
 
-#         return {'get_total_closed_by_user':query.where(FclFreightRateFeedback.status == 'inactive', FclFreightRateFeedback.closed_by_id == performed_by_id).count() }
+#         return {'get_total_closed_by_user':query.where(AirFreightRateFeedbacks.status == 'inactive', AirFreightRateFeedbacks.closed_by_id == performed_by_id).count() }
 #     except:
 #         return {'get_total_closed_by_user':0}
 
 
 # def get_total_opened_by_user(query, performed_by_id):
 #     try:
-#         query = query.select(FclFreightRateFeedback.id)
+#         query = query.select(AirFreightRateFeedbacks.id)
 
-#         return {'get_total_opened_by_user' : query.where(FclFreightRateFeedback.status == 'active', FclFreightRateFeedback.performed_by_id == performed_by_id).count() }
+#         return {'get_total_opened_by_user' : query.where(AirFreightRateFeedbacks.status == 'active', AirFreightRateFeedbacks.performed_by_id == performed_by_id).count() }
 #     except:
 #         return {'get_total_opened_by_user' : 0}
 
 # def get_status_count(query, performed_by_id):
 #     try:
-#         query = query.select(FclFreightRateFeedback.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FclFreightRateFeedback.status)
+#         query = query.select(AirFreightRateFeedbacks.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(AirFreightRateFeedbacks.status)
 #         result = {}
 #         for row in query.execute():
 #             result[row.status] = row.count_all
