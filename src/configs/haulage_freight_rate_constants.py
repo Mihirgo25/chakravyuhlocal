@@ -59,7 +59,7 @@ DEFAULT_TRIP_TYPE = "one_way"
 
 CONTAINER_SIZE_FACTORS = {"20": 1, "40": 1.1, "40HC": 1.15, "45HC": 1.2}
 
-weight_limit_constants = {
+WEIGHT_LIMIT_CONSTANTS = {
     "upto_500km": {"upto_17_ton": 0.3636, "upto_23_ton": 0.4, "upto_28_ton": 0.4651},
     "upto_1000km": {"upto_17_ton": 0.3571, "upto_23_ton": 0.4, "upto_28_ton": 0.4651},
     "more_than_1000km": {

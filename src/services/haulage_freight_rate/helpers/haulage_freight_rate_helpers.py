@@ -61,7 +61,7 @@ def get_country_filter(origin_location, destination_location):
 
 
 def build_line_item(
-    origin_location_id, destination_location_id, base_price, currency, locations_data
+    origin_location_id, destination_location_id, base_price, currency, locations_data, upper_limit
 ):
     origin_is_icd = ""
     destination_is_icd = ""
@@ -82,7 +82,14 @@ def build_line_item(
             "unit": "per_container",
             "price": base_price,
             "remarks": [],
-            "slabs": [],
+            "slabs": [
+                {
+                    "price": base_price,
+                    "lower_limit": 0,
+                    "upper_limit": upper_limit,
+                    "currency": currency
+                }
+            ],
             "currency": currency,
         }
     ]

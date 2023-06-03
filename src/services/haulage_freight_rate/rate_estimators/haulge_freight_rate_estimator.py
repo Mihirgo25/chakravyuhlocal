@@ -23,6 +23,7 @@ import services.haulage_freight_rate.interactions.get_estimated_haulage_freight_
 from configs.haulage_freight_rate_constants import (
     CONTAINER_TYPE_CLASS_MAPPINGS,
     WAGON_COMMODITY_MAPPING,
+    DEFAULT_MAX_WEIGHT_LIMIT
 )
 from services.haulage_freight_rate.models.wagon_types import WagonTypes
 
@@ -150,12 +151,17 @@ class HaulageFreightRateEstimator:
             )
 
         price = estimator.estimate()
+        if self.cargo_weight_per_container:
+            upper_limit = self.cargo_weight_per_container
+        else:
+            upper_limit = DEFAULT_MAX_WEIGHT_LIMIT[self.container_size]
         line_items_data = build_line_item(
             self.origin_location_id,
             self.destination_location_id,
             price["base_price"],
             price["currency"],
             locations_data,
+            upper_limit
         )
         price["line_items"] = line_items_data
         return price
