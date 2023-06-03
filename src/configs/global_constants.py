@@ -113,3 +113,5 @@ AIR_GENERAL_COMMODITY_TYPE =['all']
 
 AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES = ['dangerous' 'temp_controlled' 'other_special']
 
+COUNTRY_CODE_MAPPING = ["IN","VN"]
+

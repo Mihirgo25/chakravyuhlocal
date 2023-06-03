@@ -95,7 +95,7 @@ def startup():
     # insert()
     # insert_china()
     # run_migration()
-    create_table()
+    # create_table()
     # fcl_freight_migration()
     # create_partition_table()
     # fcl_local_
