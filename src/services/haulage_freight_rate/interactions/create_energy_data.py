@@ -57,8 +57,8 @@ def create_new_energy_data(request):
     fuel_data = EnergyData.create(
         fuel_type=request["fuel_type"],
         currency=request["currency"],
-        fuel_price=request["fuel_price"],
-        country_code=float(request["country_code"]),
+        fuel_price=float(request["fuel_price"]),
+        country_code=request["country_code"],
         fuel_unit=request["fuel_unit"],
     )
     return fuel_data.id
