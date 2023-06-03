@@ -90,7 +90,8 @@ class GeneralizedHaulageFreightRateEstimator:
         energy_cost = EnergyData.select(EnergyData.fuel_price, EnergyData.currency).where(EnergyData.country_code == country_code)
         if energy_cost.count()==0:
             raise HTTPException(status_code=400, detail="rates not present")
-        energy_price = list(energy_cost.dicta())[0]
+        energy_data = list(energy_cost.dicts())[0]
+        energy_price = float(energy_data['fuel_price'])
         cost_of_goods_transport = energy_consumption * energy_price
         loading_charges = float(CONTAINER_HANDLING_CHARGES[container_size]['stuffed']['warehouse_to_automobile'])
         miscellaneous_charges = 10
@@ -98,8 +99,8 @@ class GeneralizedHaulageFreightRateEstimator:
             cost_of_goods_transport + loading_charges + miscellaneous_charges
         )
         generalized_cost = GENERALIZED_WEIGHT_OF_ECONOMY* (total_cost_of_goods_trasport)
-        final_data["base_price"] = generalized_cost
-        final_data["currency"] = energy_price['currency']
+        final_data["base_price"] = self.apply_generalized_surcharge(generalized_cost)
+        final_data["currency"] = energy_data['currency']
         final_data["transit_time"] = transit_time
         return final_data
         """time_value_of_goods = (
@@ -135,3 +136,11 @@ class GeneralizedHaulageFreightRateEstimator:
         # ) // safety_index
 
         raise HTTPException(status_code=400, detail="rates not present")
+
+
+    def apply_generalized_surcharge(self, indicative_price):
+        surcharge = 0.25 * indicative_price
+        development_charges = 0.05 * indicative_price
+        international_tax_charges = indicative_price * 0.05
+        final_price = indicative_price + surcharge + development_charges + international_tax_charges
+        return final_price
