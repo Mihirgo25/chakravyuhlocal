@@ -1,4 +1,4 @@
-import requests
+import httpx
 from bs4 import BeautifulSoup
 from micro_services.client import maps
 from configs.haulage_freight_rate_constants import GLOBAL_FUEL_DATA_LINKS
@@ -10,7 +10,11 @@ def electricity_price_scheduler():
         "customers": "2",
         "currency": "USD",
     }
-    response = requests.post(GLOBAL_FUEL_DATA_LINKS[0], data=payload)
+    with httpx.Client() as client:
+        response = client.post(GLOBAL_FUEL_DATA_LINKS[0], data=payload)
+
+        if response.status_code == 302:
+            response = client.get(GLOBAL_FUEL_DATA_LINKS[0])
     soup = BeautifulSoup(response.content, "html.parser")
     div_element_price = soup.find("div", {"id": "graphic"})
     div_element_country = soup.find("div", {"id": "outsideLinks"})
