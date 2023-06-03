@@ -47,8 +47,6 @@ WAGON_CONTAINER_TYPE_MAPPINGS = {
     "iso_tank": ["BTNP", "BTAP", "BTALN", "BTPGLN", "BTCS"],
 }
 
-CONTAINER_SIZE_WAGON_MAPPING = {}
-
 DEFAULT_SERVICE_PROVIDER_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
 
 DEFAULT_MAX_WEIGHT_LIMIT = {"20": 18, "40": 30, "40HC": 32.5, "45HC": 32.68}
@@ -93,21 +91,45 @@ CONTAINER_TO_WAGON_TYPE_MAPPING = {
 
 CONTAINER_HANDLING_CHARGES = {
     "20": {
-        "stuffed": {"warehouse_to_automobile": 23.00, "automobile_to_warehouse": 57.00},
-        "empty": {"warehouse_to_automobile": 15.00, "automobile_to_warehouse": 37.00},
+        "stuffed": {
+            "warehouse_to_automobile": 23.00,
+            "automobile_to_warehouse": 57.00,
+        },
+        "empty": {
+            "warehouse_to_automobile": 15.00,
+            "automobile_to_warehouse": 37.00,
+        },
     },
     "40": {
-        "stuffed": {"warehouse_to_automobile": 35.00, "automobile_to_warehouse": 85.00},
-        "empty": {"warehouse_to_automobile": 23.00, "automobile_to_warehouse": 55.00},
+        "stuffed": {
+            "warehouse_to_automobile": 35.00,
+            "automobile_to_warehouse": 85.00,
+        },
+        "empty": {
+            "warehouse_to_automobile": 23.00,
+            "automobile_to_warehouse": 55.00,
+        },
     },
     "40HC": {
         "stuffed": {
             "warehouse_to_automobile": 53.00,
             "automobile_to_warehouse": 127.00,
         },
-        "empty": {"warehouse_to_automobile": 34.00, "automobile_to_warehouse": 83.00},
+        "empty": {
+            "warehouse_to_automobile": 34.00,
+            "automobile_to_warehouse": 83.00,
+        },
     },
-    # "45HC" : {"stuffed": {"warehouse_to_automobile": 23.00, "automobile_to_warehouse": 57.00}, "empty": {"warehouse_to_automobile": 15.00, "automobile_to_warehouse": 37.00}}
+    "45HC": {
+        "stuffed": {
+            "warehouse_to_automobile": 57.00,
+            "automobile_to_warehouse": 145.00,
+        },
+        "empty": {
+            "warehouse_to_automobile": 39.00,
+            "automobile_to_warehouse": 97.00,
+        },
+    },
 }
 
 GENERAL_INFLATION_FACTOR = 1.76
