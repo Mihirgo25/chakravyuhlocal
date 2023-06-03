@@ -14,28 +14,29 @@ class TrailerFreightEstimator():
         self.destination_location_id = destination_location_id
         self.country_code = country_code
 
-    def estimate(self, container_size, container_type, containers_count, cargo_weight_per_container):
+    def estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
         self.container_size = container_size
         self.container_type = container_type
         self.containers_count = containers_count
         self.cargo_weight_per_container = cargo_weight_per_container
+        self.trip_type = trip_type
 
         if self.country_code == "IN":
             estimator = INTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
-            return estimator.IN_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
+            return estimator.IN_estimate(container_size, container_type, containers_count, cargo_weight_per_container, trip_type)
         
         '''For North America'''
         if self.country_code == "US" or self.country_code == "CA" or self.country_code == "MX":
             estimator = USTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
-            return estimator.US_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
+            return estimator.US_estimate(container_size, container_type, containers_count, cargo_weight_per_container, trip_type)
         
         if self.country_code == "CN":
             estimator = CNTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
-            return estimator.CN_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
+            return estimator.CN_estimate(container_size, container_type, containers_count, cargo_weight_per_container, trip_type)
         
         if self.country_code == "VN":
             estimator = VNTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
-            return estimator.VN_estimate(container_size, container_type, containers_count, cargo_weight_per_container)
+            return estimator.VN_estimate(container_size, container_type, containers_count, cargo_weight_per_container, trip_type)
         
         
         return {'list':[]}

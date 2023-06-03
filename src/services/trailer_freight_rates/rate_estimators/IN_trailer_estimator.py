@@ -44,7 +44,7 @@ class INTrailerRateEstimator():
 
         return total_cost
 
-    def IN_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container):
+    def IN_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
         ''' 
         Primary Function to estimate india prices
         '''
@@ -53,6 +53,7 @@ class INTrailerRateEstimator():
         origin_location_id = self.origin_location_id
         destination_location_id = self.destination_location_id
         country_code = self.country_code
+        trip_type = trip_type if trip_type is not None else DEFAULT_TRIP_TYPE
 
         distance = get_estimated_distance(origin_location_id, destination_location_id)
         distance = distance if distance > 100 else 100
@@ -69,12 +70,16 @@ class INTrailerRateEstimator():
         constants_cost = self.constants_cost(distance)
         total_cost = fuel_cost + constants_cost
 
-        total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count) 
+        total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count)
+
+        if trip_type == 'round_trip':
+            total_cost = total_cost * ROUND_TRIP_FACTOR
 
         return {'list':[{
             'base_price' : total_cost,
             'currency' : "INR",
             'distance' : distance,
             'transit_time' : transit_time,
-            'upper_limit' : cargo_weight_per_container}]
+            'upper_limit' : cargo_weight_per_container,
+            'trip_type' : trip_type}]
             }

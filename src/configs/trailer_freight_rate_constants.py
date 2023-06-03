@@ -11,6 +11,10 @@ CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'i
 
 CALCULATION_COUNTRY_CODES = ['IN', 'CN', 'US', 'VN', 'CA', 'MX']
 
+ROUND_TRIP_FACTOR = 1.5
+
+DEFAULT_TRIP_TYPE = "one_way"
+
 DEFAULT_CALCULATION_COUNTRY_CODE = "US"
 
 CALCULATION_CURRENCY_CODES = ['INR', 'CNY','USD', 'VND']
