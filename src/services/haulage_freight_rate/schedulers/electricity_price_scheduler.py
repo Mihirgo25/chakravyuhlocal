@@ -40,6 +40,5 @@ def electricity_price_scheduler():
         params['fuel_unit'] = 'kWh'
         params['fuel_type'] = 'electricity'
         params['fuel_price'] = val
-        print()
         create_energy_data(params)
     return price_country_mapping
