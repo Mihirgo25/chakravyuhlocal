@@ -31,7 +31,7 @@ class MapsApiClient:
 
     def get_location_cluster(self,data={}):
         return self.client.request('GET','get_location_cluster',{}, data)
-    
+
     def list_locations_mapping(self, data = {}):
         if APP_ENV == "production":
             return self.client.request('GET','list_locations_mapping',{}, data)
@@ -39,6 +39,18 @@ class MapsApiClient:
 
     def get_sea_route(self, data = {}):
         return self.client.request('GET','get_sea_route',{}, data)
-    
+
     def get_service_lane(self, data= {}):
         return self.client.request('GET','get_sea_route',{}, data)
+
+    def get_distance_matrix_valhalla(self, data= {}):
+        data['is_authorization_required'] = False
+        return self.client.request('GET','get_distance_matrix_valhalla',{}, data)
+ 
+    def get_land_route_from_valhalla(self,data = {}):
+        data['is_authorization_required'] = False
+        data = json.dumps(data)
+        return self.client.request('GET','get_land_route_location_details',data)
+
+    def get_land_route_location_details(self,data = {}):
+        return self.client.request('GET','get_land_route_location_details',data)

@@ -31,7 +31,10 @@ def initialize_local_query(request):
         default_lsp = DEFAULT_LOCAL_AGENT_IDS[country_id]["value"]
     
     service_provider_ids = [default_lsp]
-    shipping_line_ids = [request['shipping_line_id'], DEFAULT_SHIPPING_LINE_ID]
+    shipping_line_ids = None
+    if request['shipping_line_id']:
+        shipping_line_ids = [request['shipping_line_id'], DEFAULT_SHIPPING_LINE_ID]
+
     local_agents = get_local_agent_ids(request)
     if local_agents:
         service_provider_ids.append(local_agents)
@@ -49,7 +52,6 @@ def initialize_local_query(request):
         FclFreightRateLocal.container_type == request['container_type'], 
         FclFreightRateLocal.trade_type == request['trade_type'],
         ~ FclFreightRateLocal.is_line_items_error_messages_present,
-        FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id.in_(service_provider_ids))
 
     if request['commodity'] in HAZ_CLASSES:
@@ -57,8 +59,8 @@ def initialize_local_query(request):
     else:
         query = query.where(FclFreightRateLocal.commodity == None)
     
-    # if request['shipping_line_id']:
-    #     query = query.where(FclFreightRateLocal.shipping_line_id == request['shipping_line_id'])
+    if shipping_line_ids:
+        query = query.where(FclFreightRateLocal.shipping_line_id << shipping_line_ids)
 
     return query
 
@@ -128,7 +130,7 @@ def build_local_line_item_object(line_item, request):
 
     slab_value = None
 
-    if line_item['slabs']:
+    if line_item.get('slabs', []):
         if 'slab_containers_count' in code_config.get('tags'):
             slab_value = request['containers_count']
 
