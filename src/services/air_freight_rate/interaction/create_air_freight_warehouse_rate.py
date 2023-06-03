@@ -42,5 +42,6 @@ def create_audit(request):
         action_name='create',
         performed_by_id=request['performed_by_id'],
         rate_sheet_id=request['rate_sheet_id'],
-        bulk_operation_id=request['bulk_operation_id']
+        bulk_operation_id=request['bulk_operation_id'],
+        object_type='AirFreightWarehouseRate'
     )

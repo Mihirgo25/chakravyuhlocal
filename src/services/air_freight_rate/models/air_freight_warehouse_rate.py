@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from configs.air_freight_rate_constants import MAX_CARGO_LIMIT
 from playhouse.postgres_ext import *
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
+from configs.definitions import AIR_FREIGHT_WAREHOUSE_CHARGES
 from configs.air_freight_rate_constants import LOCAL_COMMODITIES
 from micro_services.client import *
 from database.rails_db import get_organization,get_shipping_line
@@ -49,8 +49,21 @@ class AirFreightWarehouseRates(BaseModel):
 
     class Meta:
         table_name = 'air_freight_warehouse_rates'
-    
 
+    def detail(self):
+
+        return  { 
+            'warehouse':{
+                'id':self.id,
+                # 'is_best_price':self.is_best_price #is_best_price not present in table
+                'line_items':self.line_items,
+                'line_items_info_messages':self.line_items_info_messages,
+                'is_line_items_info_messages_present':self.is_line_items_info_messages_present,
+                'line_items_error_messages':self.line_items_error_messages,
+                'is_line_items_error_messages_present':self.is_line_items_error_messages_present
+            }
+        }
+        
     def validate_trade_type(self):
         if self.trade_type not in ['import', 'export', 'domestic']:
             raise HTTPException(status_code=500,detail='invalid trade_type')
@@ -96,8 +109,7 @@ class AirFreightWarehouseRates(BaseModel):
     
     def possible_charge_codes(self):
         commodity = self.commodity
-        commodity_type = self.commodity_type
-        air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
+        air_freight_local_charges_dict =AIR_FREIGHT_WAREHOUSE_CHARGES
         charge_codes={}
         for code,config in air_freight_local_charges_dict.items():
             if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and 'deleted' not in config['tags']:
@@ -110,7 +122,7 @@ class AirFreightWarehouseRates(BaseModel):
         is_line_items_error_messages_present = False
         is_line_items_info_messages_present = False
          
-        air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
+        air_freight_local_charges_dict = AIR_FREIGHT_WAREHOUSE_CHARGES
         grouped_charge_codes = {}
         for line_item in self.line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
