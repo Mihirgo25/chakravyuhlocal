@@ -12,7 +12,8 @@ from configs.haulage_freight_rate_constants import (
     DEFAULT_INDIRECT_POLLUTION_FEE_INDEX,
     DEFAULT_POLLUTION_INDEX,
     DEFAULT_WEIGHT_INDEX,
-    AVERAGE_ENERGY_CONSUMPTION
+    AVERAGE_ENERGY_CONSUMPTION,
+    GENERALIZED_WEIGHT_OF_ECONOMY
 )
 from services.haulage_freight_rate.models.energy_data import EnergyData
 
@@ -82,8 +83,11 @@ class GeneralizedHaulageFreightRateEstimator:
         """
         total_cost_of_goods_trasport = basic_cost(c1) + railway_construction_fund(c2) + electrification_surcharges + pick_up + delivery_charge + loading_charges + miscellaneous_charges
         """ 
+        final_data = {}
+        final_data["distance"] = location_pair_distance
+        location_pair_distance = float(location_pair_distance)
         energy_consumption = location_pair_distance * AVERAGE_ENERGY_CONSUMPTION * cargo_weight_per_container
-        energy_cost = EnergyData.select(EnergyData.fuel_price).where(EnergyData.country_code == country_code)
+        energy_cost = EnergyData.select(EnergyData.fuel_price, EnergyData.currency).where(EnergyData.country_code == country_code)
         if energy_cost.count()==0:
             raise HTTPException(status_code=400, detail="rates not present")
         energy_price = list(energy_cost.dicta())[0]
@@ -93,7 +97,11 @@ class GeneralizedHaulageFreightRateEstimator:
         total_cost_of_goods_trasport = (
             cost_of_goods_transport + loading_charges + miscellaneous_charges
         )
-        
+        generalized_cost = GENERALIZED_WEIGHT_OF_ECONOMY* (total_cost_of_goods_trasport)
+        final_data["base_price"] = generalized_cost
+        final_data["currency"] = energy_price['currency']
+        final_data["transit_time"] = transit_time
+        return final_data
         """time_value_of_goods = (
             time_of_goods_transport
             + order_acceptence_waiting_time
