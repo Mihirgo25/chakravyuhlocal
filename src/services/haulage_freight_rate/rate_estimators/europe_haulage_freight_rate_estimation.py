@@ -11,7 +11,8 @@ from configs.haulage_freight_rate_constants import (
     CONTAINER_SIZE_FACTORS,
     DESTINATION_TERMINAL_CHARGES_INDIA,
     DEFAULT_MAX_WEIGHT_LIMIT,
-    CONTAINER_TO_WAGON_TYPE_MAPPING
+    CONTAINER_TO_WAGON_TYPE_MAPPING,
+    EUROPE_INFLATION_RATES
 )
 
 
@@ -96,8 +97,7 @@ class EuropeHaulageFreightRateEstimator:
     
 
     def get_inflated_rate_europe(self,price):
-        inflation_rates = [0.0018,0.0103,0.0185,0.0111,0.0048,0.0164,0.0522]
-        for element in inflation_rates:
+        for element in EUROPE_INFLATION_RATES:
             price = price*(1 + element)
 
         return price
