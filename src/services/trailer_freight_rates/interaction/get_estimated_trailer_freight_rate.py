@@ -12,6 +12,9 @@ def get_estimated_trailer_freight_rate(request):
     cargo_weight_per_container = request['cargo_weight_per_container'] if request.get('cargo_weight_per_container') is not None else DEFAULT_MAX_WEIGHT_LIMIT.get(container_size)
     trip_type = request['trip_type']
 
+    if origin_location_id == destination_location_id:
+        raise HTTPException(status_code=400, detail="origin_location cannot be same as destination_location")
+
     input = {"filters":{"id":[origin_location_id, destination_location_id]}}
     data = maps.list_locations(input)
     if data:
