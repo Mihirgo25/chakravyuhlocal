@@ -67,15 +67,6 @@ WEIGHT_LIMIT_CONSTANTS = {
     },
 }
 
-COUNTRY_CURRENCY_CODE_MAPPING = {
-    "india": "INR",
-    "CN": "CNY",
-    "US": "USD",
-    "CA": "CAD",
-    "MX": "MXN",
-    "vietnam": "VND",
-}
-
 GLOBAL_FUEL_DATA_LINKS = [
     "https://www.globalpetrolprices.com/india/electricity_prices/"
 ]
