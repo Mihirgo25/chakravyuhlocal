@@ -7,7 +7,11 @@ from bs4 import BeautifulSoup
 from micro_services.client import *
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
+<<<<<<< HEAD
 from configs.global_constants import COUNTRY_CODE_MAPPING
+=======
+# from configs.global_constants import COUNTRY_CODES_MAPPING
+>>>>>>> f06f86768c3f4a21ecda7a349deff933d453811c
 import services.ftl_freight_rate.scheduler.fuel_scheduler as fuel_schedulers
 
 
