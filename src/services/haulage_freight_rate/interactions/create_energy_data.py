@@ -37,7 +37,7 @@ def find_energy_data(fuel_data_search_params):
         .where(
             EnergyData.country_code == str(fuel_data_search_params["country_code"]),
             EnergyData.currency == str(fuel_data_search_params["currency"]),
-            EnergyData.fuel_type == str(fuel_data_search_params["fuel_type"]),
+            EnergyData.fuel_price == str(fuel_data_search_params["fuel_price"]),
         )
         .first()
     )

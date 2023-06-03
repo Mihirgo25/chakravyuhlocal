@@ -60,6 +60,7 @@ class HaulageFreightRateEstimator:
     def estimate(self):
         locations_data, location_category, country_code = self.get_location_data_and_category()
         self.convert_general_params_to_estimation_params(location_category)
+
         if location_category == "india":
             estimator = IndiaHaulageFreightRateEstimator(
                 self.query,
@@ -151,10 +152,7 @@ class HaulageFreightRateEstimator:
             )
 
         price = estimator.estimate()
-        if self.cargo_weight_per_container:
-            upper_limit = self.cargo_weight_per_container
-        else:
-            upper_limit = DEFAULT_MAX_WEIGHT_LIMIT[self.container_size]
+        upper_limit = self.cargo_weight_per_container
         line_items_data = build_line_item(
             self.origin_location_id,
             self.destination_location_id,
@@ -206,5 +204,7 @@ class HaulageFreightRateEstimator:
                 .dicts()
             )[0]["permissible_carrying_capacity"]
         else:
-            permissable_carrying_capacity = 18
+            permissable_carrying_capacity = DEFAULT_MAX_WEIGHT_LIMIT[self.container_size]
+        if not self.cargo_weight_per_container:
+            self.cargo_weight_per_container = DEFAULT_MAX_WEIGHT_LIMIT[self.container_size]
         return commodity, permissable_carrying_capacity
