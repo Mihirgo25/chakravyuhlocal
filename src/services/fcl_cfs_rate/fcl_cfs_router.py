@@ -214,9 +214,8 @@ def list_fcl_cfs_rate_requests(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        interaction = list_fcl_cfs_rate_request(filters, page_limit, page, is_stats_required, performed_by_id)
-        data = interaction.execute()
-        return JSONResponse(status_code=200, content=data)
+        data = list_fcl_cfs_rate_request(filters, page_limit, page, is_stats_required, performed_by_id)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:

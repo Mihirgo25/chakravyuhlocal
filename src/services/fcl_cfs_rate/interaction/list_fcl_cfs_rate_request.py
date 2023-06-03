@@ -27,7 +27,6 @@ def list_fcl_cfs_rate_request(filters, page_limit=10, page=1, is_stats_required=
 
     pagination_data = get_pagination_data(query, page, page_limit)
     query = get_page(query, page, page_limit)
-
     data = list(query.dicts())
 
     return {'list': json_encoder(data)} | pagination_data | stats
@@ -46,7 +45,7 @@ def apply_validity_start_greater_than_filter(query, filters):
     return query.where(FclCfsRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclCfsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+    return query.where(FclCfsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_start_less_than']).date())
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_cfs', filters['relevant_supply_agent'])
@@ -63,7 +62,7 @@ def apply_supply_agent_id_filter(query, filters):
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclCfsRateRequest.select().where(FclCfsRateRequest.id == filters['similar_id']).dicts().get()
     query = query.where(FclCfsRateRequest.id != filters['similar_id'])
-    return query.where(FclCfsRateRequest.port_id == rate_request_obj.get('port_id'), FclCfsRateRequest.container_size == rate_request_obj.get('container_size'), FclCfsRateRequest.container_type == rate_request_obj.get('container_type'), FclCfsRateRequest.commodity == rate_request_obj.get('commodity'), FclCfsRateRequest.inco_term == rate_request_obj.get('inco_term'))
+    return query.where(FclCfsRateRequest.port_id == rate_request_obj.get('port_id'), FclCfsRateRequest.container_size == rate_request_obj.get('container_size'), FclCfsRateRequest.container_type == rate_request_obj.get('container_type'), FclCfsRateRequest.commodity == rate_request_obj.get('commodity'))
 
 def get_pagination_data(query, page, page_limit):
     total_count = query.count()

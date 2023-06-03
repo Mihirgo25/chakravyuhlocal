@@ -344,7 +344,7 @@ class FclCfsRate(BaseModel):
         return {
             'fcl_cfs':{
             'line_items':self.line_items,
-            'line_items_info_messages':self.ine_items_info_messages,
+            'line_items_info_messages':self.line_items_info_messages,
             'is_line_items_info_messages_present':self.is_line_items_info_messages_present,
             'line_items_error_messages':self.line_items_error_messages,
             'is_line_items_error_messages_present':self.is_line_items_error_messages_present,
