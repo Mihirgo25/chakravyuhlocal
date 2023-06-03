@@ -15,6 +15,7 @@ def get_trailer_freight_rate_estimate(
     container_type: str = None,
     containers_count: int = 1,
     cargo_weight_per_container: float = None,
+    trip_type: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -26,7 +27,8 @@ def get_trailer_freight_rate_estimate(
         "container_size": container_size,
         "container_type": container_type,
         "containers_count": containers_count,
-        "cargo_weight_per_container": cargo_weight_per_container
+        "cargo_weight_per_container": cargo_weight_per_container,
+        "trip_type": trip_type
     }
 
     try:
