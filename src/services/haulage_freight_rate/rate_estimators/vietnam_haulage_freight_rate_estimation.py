@@ -9,14 +9,12 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
 )
 from configs.haulage_freight_rate_constants import (
     CONTAINER_SIZE_FACTORS,
-    DESTINATION_TERMINAL_CHARGES_INDIA,
     DEFAULT_MAX_WEIGHT_LIMIT,
-    CONTAINER_TO_WAGON_TYPE_MAPPING,
-    EUROPE_INFLATION_RATES
+    VIETNAMESE_INFLATION_FACTOR,
+    USD_TO_VND,
+    CONTAINER_HANDLING_CHARGES
 )
-
-
-class EuropeHaulageFreightRateEstimator:
+class VietnamHaulageFreightRateEstimator:
     def __init__(self, query, commodity, load_type, containers_count, distance, container_type, cargo_weight_per_container, permissable_carrying_capacity, container_size, transit_time):
         self.query = query
         self.commodity = commodity
@@ -31,9 +29,9 @@ class EuropeHaulageFreightRateEstimator:
 
     def estimate(self):
         """
-        Primary Function to estimate europe prices
+        Primary Function to estimate vietnam prices
         """
-        final_price = self.get_europe_rates(
+        final_price = self.get_vietnam_rates(
             query=self.query,
             commodity=self.commodity,
             load_type=self.load_type,
@@ -47,7 +45,7 @@ class EuropeHaulageFreightRateEstimator:
         )
         return final_price
 
-    def get_europe_rates(
+    def get_vietnam_rates(
         self,
         query,
         commodity,
@@ -63,41 +61,28 @@ class EuropeHaulageFreightRateEstimator:
         final_data = {}
         final_data["distance"] = location_pair_distance
         location_pair_distance = float(location_pair_distance)
-        final_data["currency"] = "EUR"
-        pseudo_commodity = CONTAINER_TO_WAGON_TYPE_MAPPING[container_type]
-        # apply charges commdoity class wise and container type here are all standard
-        wagon_upper_limit = (
-            HaulageFreightRateRuleSet.select()
-            .where(
-                HaulageFreightRateRuleSet.distance >= location_pair_distance,
-                HaulageFreightRateRuleSet.wagon_type == pseudo_commodity,
-                HaulageFreightRateRuleSet.train_load_type == load_type,
-                HaulageFreightRateRuleSet.currency == "EUR",
-                HaulageFreightRateRuleSet.country_code << ["EU", "DE", "FR", "NO", "NL", "CH"],
-            )
-            .order_by(HaulageFreightRateRuleSet.distance)
-        )
-        wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
-
-        if not wagon_price_upper_limit:
+        query = query.where(
+            HaulageFreightRateRuleSet.distance >= location_pair_distance,
+            HaulageFreightRateRuleSet.commodity_class_type == commodity,
+            HaulageFreightRateRuleSet.train_load_type == load_type,
+        ).order_by(SQL("base_price ASC"))
+        if query.count() == 0:
             raise HTTPException(status_code=400, detail="rates not present")
-
-        price = wagon_price_upper_limit[0]["base_price"]
-        inflated_price = self.get_inflated_rate_europe(float(price))
-        final_data["base_price"] = self.apply_surcharges_for_europe(float(inflated_price))
-        final_data["transit_time"] = get_transit_time(location_pair_distance)
+        price = model_to_dict(query.first())
+        price_per_tonne_per_km = price["base_price"]
+        currency = price["currency"]
+        indicative_price = (float(price_per_tonne_per_km) * permissable_carrying_capacity) * CONTAINER_SIZE_FACTORS[container_size] * location_pair_distance
+        final_data["base_price"] = self.apply_surcharges_for_vietnam(indicative_price, container_size)
+        final_data["currency"] = currency
+        final_data["transit_time"] = transit_time
         return final_data
 
-    def apply_surcharges_for_europe(self, price):
-        surcharge = 0.15 * price
-        development_charges = 0.05 * price
-        final_price = price + surcharge + development_charges
-
+    def apply_surcharges_for_vietnam(self, indicative_price, container_size):
+        indicative_price = indicative_price
+        surcharge = 0.15 * indicative_price
+        development_charges = 0.05 * indicative_price
+        tonnage_fees = 0.1*indicative_price 
+        gst_charges = indicative_price * 0.05
+        cargo_handling_charge = float(CONTAINER_HANDLING_CHARGES[container_size]['stuffed']['warehouse_to_automobile']) * float(USD_TO_VND)
+        final_price =  indicative_price + surcharge + tonnage_fees + gst_charges + cargo_handling_charge
         return final_price
-    
-
-    def get_inflated_rate_europe(self,price):
-        for element in EUROPE_INFLATION_RATES:
-            price = price*(1 + element)
-
-        return price

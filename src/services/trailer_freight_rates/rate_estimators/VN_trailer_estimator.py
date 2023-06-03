@@ -8,8 +8,7 @@ from playhouse.shortcuts import model_to_dict
 from configs.trailer_freight_rate_constants import *
 from services.trailer_freight_rates.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
 
-
-class INTrailerRateEstimator():
+class VNTrailerRateEstimator():
 
     def __init__(self, origin_location_id, destination_location_id, country_code):
         self.origin_location_id = origin_location_id
@@ -18,7 +17,7 @@ class INTrailerRateEstimator():
 
     def constants_cost(self,distance):
         constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == "IN"),
+                    (TrailerFreightRateCharges.country_code == self.country_code),
                     (TrailerFreightRateCharges.status == 'active')
                     ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
         constants_data = model_to_dict(constants)
@@ -33,7 +32,7 @@ class INTrailerRateEstimator():
 
         constants_cost = (handling_rate + nh_toll_rate + tyre_rate + driver_rate + document_rate + maintanance_rate + misc_rate) * distance
         return constants_cost
-
+    
     def variable_cost(self, total_cost, container_size, container_type, containers_count):
         total_cost = total_cost * CONTAINER_SIZE_FACTORS[container_size]
 
@@ -44,11 +43,11 @@ class INTrailerRateEstimator():
 
         return total_cost
 
-    def IN_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
+    def VN_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
         ''' 
-        Primary Function to estimate india prices
+        Primary Function to estimate Vietnamese prices
         '''
-        print('Estimating India rates')
+        print('Estimating Vietnam rates')
 
         origin_location_id = self.origin_location_id
         destination_location_id = self.destination_location_id
@@ -65,19 +64,19 @@ class INTrailerRateEstimator():
 
         fuel_used = fuel_consumption(distance,cargo_weight_per_container)
         
-        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES["INR"] #use fuel charge with currency
+        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[COUNTRY_CURRENCY_CODE_MAPPING[self.country_code]] #use fuel charge with currency
 
         constants_cost = self.constants_cost(distance)
         total_cost = fuel_cost + constants_cost
 
-        total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count)
+        total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count) 
 
         if trip_type == 'round_trip':
             total_cost = total_cost * ROUND_TRIP_FACTOR
 
         return {'list':[{
             'base_price' : total_cost,
-            'currency' : "INR",
+            'currency' : COUNTRY_CURRENCY_CODE_MAPPING[self.country_code],
             'distance' : distance,
             'transit_time' : transit_time,
             'upper_limit' : cargo_weight_per_container,
