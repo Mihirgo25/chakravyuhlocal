@@ -275,3 +275,7 @@ INDIA_FUEL_DATA_LINKS = {
         "region",
     ],
 }
+
+# EUROPE
+
+EU_BASIC_CHARGE_LIST = {'distance_factor','time_factor','capacity_factor','constant'}
