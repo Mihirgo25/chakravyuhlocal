@@ -1,5 +1,5 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_request import FclCustomsRateRequest
-import concurrent.futures, json
+import json
 from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
@@ -7,7 +7,7 @@ from micro_services.client import spot_search
 from datetime import datetime
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from math import ceil
-from peewee import fn, SQL
+from peewee import fn
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 

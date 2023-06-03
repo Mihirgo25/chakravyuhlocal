@@ -46,8 +46,8 @@ class FclCfsRateRequest(BaseModel):
     performed_by_type: str
     preferred_rate: str= None
     preferred_rate_currency: str= None
-    preferred_detention_free_days: int= None
-    cargo_readiness_date: str= None
+    # preferred_detention_free_days: int= None
+    cargo_readiness_date: str = None
     remarks:list[str] =[]
     booking_params : dict = {}
     container_size: str = None

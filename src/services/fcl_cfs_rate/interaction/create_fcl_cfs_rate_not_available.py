@@ -48,4 +48,3 @@ def create_fcl_cfs_rate_not_available(request):
         )
 
     return True
-

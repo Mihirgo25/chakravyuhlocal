@@ -34,12 +34,17 @@ class FclCfsRate(BaseModel):
     containers_count = IntegerField(null=True)
     trade_type = CharField(index=True, null= True)
     line_items = BinaryJSONField(default = [], null=True)
+    line_items = BinaryJSONField(default = [], null=True)
     free_limit = IntegerField(null=True)
     platform_price = IntegerField(null=True)
     is_best_price = BooleanField(null=True)
     is_line_items_error_messages_present = BooleanField(null=True)
     is_line_items_info_messages_present = BooleanField(null=True)
+    is_line_items_error_messages_present = BooleanField(null=True)
+    is_line_items_info_messages_present = BooleanField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
+    line_items_error_messages = BinaryJSONField( null=True)
+    line_items_info_messages = BinaryJSONField( null=True)
     line_items_error_messages = BinaryJSONField( null=True)
     line_items_info_messages = BinaryJSONField( null=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
@@ -47,8 +52,6 @@ class FclCfsRate(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     location_type= CharField(null=True, index=True)
     cargo_handling_type = CharField(index=True,null=True)
-    importer_exporter_id = UUIDField(null=True)
-    service_provider_id = UUIDField(null=True)
     service_provider = BinaryJSONField(null=True)
     procured_by_id = UUIDField(null=True)
     sourced_by_id = UUIDField(null=True)
@@ -233,6 +236,10 @@ class FclCfsRate(BaseModel):
         self.line_items_info_messages = {}
         self.is_line_items_error_messages_present = False
         self.is_line_items_info_messages_present = False
+        self.line_items_error_messages = {}
+        self.line_items_info_messages = {}
+        self.is_line_items_error_messages_present = False
+        self.is_line_items_info_messages_present = False
 
         grouped_charge_codes = {}
 
@@ -240,24 +247,32 @@ class FclCfsRate(BaseModel):
             if line_item["code"] not in grouped_charge_codes:
                 grouped_charge_codes[line_item["code"]] = []
 
-            grouped_charge_codes[line_item["code"]].append(line_item)
-
+            grouped_charge_codes[line_item.get("code")].append(line_item)
+ 
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CFS_CHARGES[code]
 
             if code_config is None:
                 self.line_items_error_messages[code] = ['is invalid']
                 self.is_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
 
             if not self.trade_type in code_config['trade_types']:
+                self.line_items_error_messages[code] = ["can only be added for #{code_config[:trade_types].join(', ')}"]
+                self.is_line_items_error_messages_present = True
                 self.line_items_error_messages[code] = ["can only be added for #{code_config[:trade_types].join(', ')}"]
                 self.is_line_items_error_messages_present = True
 
             if len(set(map(lambda x: x["unit"], line_items)) - set(code_config["units"])) > 0:
                 self.line_items_error_messages[code] = ["can only be having units #{code_config[:units].join(', ')}"]
                 self.is_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ["can only be having units #{code_config[:units].join(', ')}"]
+                self.is_line_items_error_messages_present = True
 
             if not eval(str(code_config["condition"])):
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
                 self.line_items_error_messages[code] = ['is invalid']
                 self.is_line_items_error_messages_present = True
 
@@ -267,10 +282,14 @@ class FclCfsRate(BaseModel):
             if not grouped_charge_codes.get(code):
                 self.line_items_error_messages[code] = ['is not present']
                 self.is_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ['is not present']
+                self.is_line_items_error_messages_present = True
 
         for code, config in filter(lambda x: 'additional_service' in x[1]['tags'] or 'shipment_execution_service' in x[1]['tags'], possible_charge_codes_values.items()):
             code = str(code)
             if not grouped_charge_codes.get(code):
+                self.line_items_info_messages[code] = ['can be added for more conversion']
+                self.is_line_items_info_messages_present = True
                 self.line_items_info_messages[code] = ['can be added for more conversion']
                 self.is_line_items_info_messages_present = True
 

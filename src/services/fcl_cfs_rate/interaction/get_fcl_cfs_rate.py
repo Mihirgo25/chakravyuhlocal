@@ -30,8 +30,3 @@ def get_cfs_object(request):
   object = query.first()
   
   return object
-
-
-        
-    
-          
