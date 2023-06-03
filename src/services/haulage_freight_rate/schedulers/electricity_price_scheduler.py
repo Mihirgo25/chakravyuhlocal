@@ -1,4 +1,4 @@
-import httpx
+import requests
 from bs4 import BeautifulSoup
 from micro_services.client import maps
 from configs.haulage_freight_rate_constants import GLOBAL_FUEL_DATA_LINKS
@@ -10,7 +10,7 @@ def electricity_price_scheduler():
         "customers": "2",
         "currency": "USD",
     }
-    response = httpx.post(GLOBAL_FUEL_DATA_LINKS[0], data=payload)
+    response = requests.post(GLOBAL_FUEL_DATA_LINKS[0], data=payload)
     soup = BeautifulSoup(response.content, "html.parser")
     div_element_price = soup.find("div", {"id": "graphic"})
     div_element_country = soup.find("div", {"id": "outsideLinks"})
@@ -40,5 +40,6 @@ def electricity_price_scheduler():
         params['fuel_unit'] = 'kWh'
         params['fuel_type'] = 'electricity'
         params['fuel_price'] = val
+        print()
         create_energy_data(params)
     return price_country_mapping
