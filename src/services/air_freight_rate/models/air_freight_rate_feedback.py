@@ -44,11 +44,11 @@ class AirFreightRateFeedbacks(BaseModel):
     trade_type = CharField(null=True)
     updated_at = DateTimeField()
     validity_id = UUIDField(null=True)
-    origin_airport_id:UUIDField(null=True)
-    origin_country_id:UUIDField(null=True)
+    origin_airport_id=UUIDField(null=True)
+    origin_country_id=UUIDField(null=True)
     origin_continent_id  = UUIDField(null=True)
     origin_trade_id = UUIDField(null=True)
-    destination_airport_i=UUIDField(null=True)
+    destination_airport_id=UUIDField(null=True)
     destination_continent_id  = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     destination_country_id = UUIDField(null=True)
@@ -56,9 +56,14 @@ class AirFreightRateFeedbacks(BaseModel):
     service_provider_id= UUIDField(null=True)
     origin_airport=BinaryJSONField(null=True)
     destination_airport=BinaryJSONField(null=True)
-    weight:DoubleField(null=True)
-    volume:DoubleField(null=True)
-    packages_count:IntegerField(null=True)
+    weight=DoubleField(null=True)
+    volume=DoubleField(null=True)
+    packages_count = IntegerField(null=True)
+    cogo_entity_id = UUIDField(null=True)
+    operation_type = CharField(null=True)
+    closed_by=BinaryJSONField(null=True)
+    airline_id=UUIDField(null=True)
+
 
     class Meta:
         table_name = 'air_freight_rate_feedbacks'

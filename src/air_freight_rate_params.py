@@ -321,3 +321,22 @@ class CreateAirFreightRateRequest(BaseModel):
   origin_airport_id: str
   origin_trade_id: str = None
   packages:list[Item]=None
+
+class WarehouseLineItems(BaseModel):
+    code:str
+    unit:str
+    min_price:float
+    currency:str
+    remarks:list=[]
+    slabs:list[Slab]=None
+class CreateAirFreightWarehouseRates(BaseModel):
+    airport_id:str
+    trade_type:str
+    commodity:str
+    service_provider_id:str
+    performed_by_id:str
+    procured_by_id:str
+    sourced_by_id:str
+    bulk_operation_id:str=None
+    rate_sheet_id:str=None
+    lineitems:list[WarehouseLineItems]=None
