@@ -508,7 +508,7 @@ def list_air_freight_rate_requests_data(
     #     print(e)
     #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@air_freight_router.get("/list_air_freight_rate_feedbacks")
+@air_freight_router.get("/list_air_freight_rate_dislikes")
 def list_air_freight_rate_dislikes_data(
     filters: str = None,
     page_limit: int = 10,
