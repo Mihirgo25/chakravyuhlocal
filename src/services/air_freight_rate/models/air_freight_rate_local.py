@@ -3,7 +3,6 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
-from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from fastapi import HTTPException
 from micro_services.client import *
 from celery_worker import get_multiple_service_objects
@@ -146,6 +145,8 @@ class AirFreightRateLocal(BaseModel):
 
 
     def update_freight_objects(self):
+        from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+
         location_key = 'origin' if self.trade_type == 'export' else 'destination'
 
         if location_key == 'origin':

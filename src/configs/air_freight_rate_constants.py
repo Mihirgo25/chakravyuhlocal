@@ -44,3 +44,23 @@ FEEDBACK_TYPES = ['liked', 'disliked']
 POSSIBLE_FEEDBACKS = ['unsatisfactory_rate', 'unsatisfactory_destination_storage', 'unpreferred_airlines']
 
 FEEDBACK_SOURCES = ['spot_search', 'checkout']
+
+REQUEST_SOURCES = ['spot_search', 'shipment']
+
+FEEDBACK_SOURCES = ['spot_search', 'checkout']
+
+FEEDBACK_TYPES = ['liked', 'disliked']
+
+PRICE_TYPES = ['net_net', 'all_in']
+
+COMMODITY = ["general","special_consideration"]
+
+PACKING_TYPE = ["pallet", "box", "crate", "loose"]
+HANDLING_TYPE = ["stackable", "non_stackable"]
+
+COMMODITY_SUB_TYPE = []
+
+RATE_TYPES = ['general','promotional','consolidated']
+
+AIR_OPERATION_TYPES = ['passenger', 'freighter', 'charter', 'prime', 'lean']
+
