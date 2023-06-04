@@ -14,7 +14,7 @@ possible_direct_filters = ['feedback_type', 'continent', 'status']
 
 possible_indirect_filters = ['relevant_supply_agent', 'trade_lane', 'airline', 'validity_start_greater_than', 'validity_end_less_than', 'service_provider_id']
 
-def list_fcl_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
+def list_air_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
     query = get_query()
 
     if filters:

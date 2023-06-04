@@ -14,7 +14,7 @@ possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'perfo
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id']
 
-def list_fcl_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
+def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
     query = AirFreightRateRequest.select()
     if filters:
         if type(filters) != dict:
