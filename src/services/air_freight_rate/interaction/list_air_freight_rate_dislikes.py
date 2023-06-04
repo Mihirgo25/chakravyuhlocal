@@ -73,7 +73,7 @@ def get_data(query):
     return data 
 
 def get_query():
-    query = AirFreightRateFeedbacks.select(AirFreightRateFeedbacks, AirFreightRate.origin_trade_id, AirFreightRate.destination_trade_id, AirFreightRate.airline).join(FclFreightRate, on = (AirFreightRateFeedbacks.air_freight_rate_id == AirFreightRate.id)
+    query = AirFreightRateFeedbacks.select(AirFreightRateFeedbacks, AirFreightRate.origin_trade_id, AirFreightRate.destination_trade_id, AirFreightRate.airline).join(AirFreightRate, on = (AirFreightRateFeedbacks.air_freight_rate_id == AirFreightRate.id)
     ).where(AirFreightRateFeedbacks.feedback_type == 'disliked')
     return query
 

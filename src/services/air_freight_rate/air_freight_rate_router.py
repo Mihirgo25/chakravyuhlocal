@@ -469,43 +469,24 @@ def create_air_freight_warehouse_data(request:CreateAirFreightWarehouseRates,res
 @air_freight_router.get("/list_air_freight_rate_feedbacks")
 def list_air_freight_rate_feedbacks_data(
     filters: str = None,
+    spot_search_details_required: bool = False,
     page_limit: int = 10,
     page: int = 1,
-    pagination_data_required: bool = True,
+    performed_by_id: str = None,
+    is_stats_required: bool = True,
+    booking_details_required: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     # try:
-    data = list_air_freight_rate_feedbacks(filters, page_limit, page, pagination_data_required,return_query)
+    data = list_air_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required,booking_details_required)
     return JSONResponse(status_code=200, content=jsonable_encoder(data))
     # except HTTPException as e:
     #     raise
     # except Exception as e:
-    #     # sentry_sdk.capture_exception(e)
-    #     print(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@air_freight_router.get("/list_air_freight_rate_requests")
-def list_air_freight_rate_requests_data(
-    filters: str = None,
-    page_limit: int = 10,
-    page: int = 1,
-    pagination_data_required: bool = True,
-    resp: dict = Depends(authorize_token)
-):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-
-    # try:
-    data = list_air_freight_rate_requests(filters, page_limit, page, pagination_data_required,return_query)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     # sentry_sdk.capture_exception(e)
-    #     print(e)
+    #     sentry_sdk.capture_exception(e)
     #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.get("/list_air_freight_rate_dislikes")
@@ -513,18 +494,36 @@ def list_air_freight_rate_dislikes_data(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    pagination_data_required: bool = True,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_air_freight_rate_dislikes(filters, page_limit, page)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-    # try:
-    data = list_air_freight_rate_dislikes(filters, page_limit, page, pagination_data_required,return_query)
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     # sentry_sdk.capture_exception(e)
-    #     print(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@air_freight_router.get("/list_air_freight_rate_requests")
+def list_air_freight_rate_requests_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_air_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

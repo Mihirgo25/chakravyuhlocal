@@ -12,8 +12,10 @@ from peewee import fn, SQL,Window
 from math import ceil
 from micro_services.client import spot_search
 from database.rails_db import get_organization
+import pdb
 possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent','origin_airport_id', 'destination_airport_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
+
 
 def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = AirFreightRateFeedbacks.select()
@@ -178,6 +180,7 @@ def get_data(query, spot_search_details_required, booking_details_required):
     new_data = []
     if spot_search_details_required:
         spot_search_ids = list(set([str(row['source_id']) for row in data]))
+        pdb.set_trace()
         spot_search_data = spot_search.list_spot_searches({'filters':{'id': spot_search_ids}})['list']
         for search in spot_search_data:
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
