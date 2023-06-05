@@ -52,7 +52,6 @@ class VNTrailerRateEstimator():
         origin_location_id = self.origin_location_id
         destination_location_id = self.destination_location_id
         country_code = self.country_code
-        trip_type = trip_type if trip_type is not None else DEFAULT_TRIP_TYPE
 
         distance = get_estimated_distance(origin_location_id, destination_location_id)
         distance = distance if distance > 100 else 100
@@ -71,8 +70,7 @@ class VNTrailerRateEstimator():
 
         total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count) 
 
-        if 'round' in trip_type:
-            trip_type = 'round_trip'
+        if trip_type == 'round_trip':
             total_cost = total_cost * ROUND_TRIP_FACTOR
 
         return {'list':[{
