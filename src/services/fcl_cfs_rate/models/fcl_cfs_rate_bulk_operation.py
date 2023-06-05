@@ -25,6 +25,10 @@ class FclCfsRateBulkOperation(Model):
     updated_at = DateTimeField(default=datetime.datetime.now)
     service_provider = BinaryJSONField(null=True)
 
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(FclCfsRateBulkOperation, self).save(*args, **kwargs)
+
     class Meta:
         database = db
         table_name = 'fcl_cfs_rate_bulk_operations'

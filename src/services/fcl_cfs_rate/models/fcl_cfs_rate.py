@@ -60,9 +60,14 @@ class FclCfsRate(BaseModel):
     location = BinaryJSONField(null=True)
     free_days = BinaryJSONField(null=True)
     importer_exporter = BinaryJSONField(null=True)
+
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(FclCfsRate, self).save(*args, **kwargs)
     
     class Meta:
         table_name = 'fcl_cfs_rate'
+
     def validate_mandatory_free_days(self):
         free_days = [free_day.get('free_days_type') for free_day in self.free_days]
 

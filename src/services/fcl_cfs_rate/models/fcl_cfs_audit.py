@@ -20,5 +20,9 @@ class FclCfsRateAudit(BaseModel):
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
 
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(FclCfsRateAudit, self).save(*args, **kwargs)
+
     class Meta:
         table_name = 'fcl_cfs_rate_audits'

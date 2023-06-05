@@ -7,8 +7,8 @@ from fastapi import HTTPException
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {
-        "line_items": request["line_items"],
-        "free_days": request["free_days"]
+        "line_items": request.get("cfs_line_items"),
+        "free_days": request.get("free_days")
     }
     
     FclCfsRateAudit.create(

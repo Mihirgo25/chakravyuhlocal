@@ -43,6 +43,11 @@ class FclCfsRateRequest(BaseModel):
     closed_by = BinaryJSONField(null=True)
     spot_search = BinaryJSONField(null=True)
 
+
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(FclCfsRateRequest, self).save(*args, **kwargs)
+
     class Meta:
         table_name = 'fcl_cfs_rate_requests'  
     
