@@ -6,6 +6,7 @@ from database.rails_db import *
 # from micro_services.partner_client import PartnerApiClient
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 import datetime
+from fastapi import HTTPException
 
 
 class BaseModel(Model):
@@ -71,6 +72,17 @@ class FclCfsRateRequest(BaseModel):
             }
         }
         common.create_communication(data)
+    def set_port(self):
+        port_data = maps.list_locations({'filters':{'id':self.port_id}})['list']
+        print(port_data)
+        if port_data:
+            self.port = {key:value for key,value in port_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+    def validate_source_id(self):
+        if self.source == 'spot_search':
+            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+            if len(spot_search_data) == 0:
+                raise HTTPException(status_code=400, detail="Invalid Source ID")
+            self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
 
     def send_notifications_to_supply_agents(self):
         

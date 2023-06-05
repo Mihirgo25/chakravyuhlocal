@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from peewee import *
 from typing import List
+from datetime import date
 
 class Slab(BaseModel):
   lower_limit: float
@@ -47,7 +48,7 @@ class FclCfsRateRequest(BaseModel):
     preferred_rate: str= None
     preferred_rate_currency: str= None
     # preferred_detention_free_days: int= None
-    cargo_readiness_date: str = None
+    cargo_readiness_date: date = None
     remarks:list[str] =[]
     booking_params : dict = {}
     container_size: str = None
@@ -60,12 +61,9 @@ class DeleteFclCfsRate(BaseModel):
     id: str
     performed_by_id: str = None
     performed_by_type: str = None
-    validity_start: datetime
-    validity_end: datetime
     bulk_operation_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
-    payment_term: str = 'prepaid'
 
 class DeleteFclCfsRateRequest(BaseModel):
   fcl_cfs_rate_request_ids: List[str]
@@ -81,6 +79,8 @@ class CreateFclCfsRateNotAvailable(BaseModel):
   container_size: str
   container_type: str
   commodity: str = None
+  performed_by_type: str
+  performed_by_id: str
 
 class UpdateFclCfsRate(BaseModel):
     id: str 
@@ -110,3 +110,14 @@ class CreateFclCfsRateBulkOperation(BaseModel):
   performed_by_type: str = None
   delete_rate: Filters = None
   add_markup: AddMarkUp = None
+
+class UpdateFclCfsRatePlatformPrice(BaseModel):
+  location_id: str
+  container_size: str 
+  container_type: str 
+  commodity: str = None
+  trade_type:str
+  performed_by_id: str
+  performed_by_type: str
+  importer_exporter_id: str = None
+  is_line_items_error_messages_present: bool = False

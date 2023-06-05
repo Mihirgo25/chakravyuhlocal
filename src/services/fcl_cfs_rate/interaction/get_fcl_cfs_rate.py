@@ -9,13 +9,13 @@ def get_fcl_cfs_rate(request):
             fcl_cfs_rate = get_cfs_object(request)
             detail = fcl_cfs_rate.detail()
 
-        except DoesNotExist:
+        except :
             fcl_cfs_rate = FclCfsRate(**request)
             detail = {}
 
         response = {
             'detail': detail,
-            'fcl_cfs_charge_codes': fcl_cfs_rate.possible_charge_codes(),
+            'fcl_cfs_charge_codes': fcl_cfs_rate.possible_cfs_charge_codes(),
             'fcl_cfs_free_days': FREE_DAYS_TYPES
         }
     else:

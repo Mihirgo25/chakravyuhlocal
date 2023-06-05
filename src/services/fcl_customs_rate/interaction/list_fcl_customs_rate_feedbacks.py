@@ -3,11 +3,10 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.json_encoder import json_encoder
 import json
 from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustomsRateFeedback
-from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 from math import ceil
-from peewee import fn, SQL,Window
+from peewee import fn
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 

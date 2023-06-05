@@ -48,13 +48,14 @@ def execute_transaction_code(request):
 
     if not cfs_object:
         cfs_object = FclCfsRate(**params)
-    
+        cfs_object.set_location()
+
     cfs_object.line_items = request.get('line_items')
     cfs_object.free_days = request.get('free_days')
     cfs_object.rate_not_available_entry = False
     cfs_object.set_platform_price()
     cfs_object.set_is_best_price()
-    # cfs_object.validate_mandatory_free_days()
+    cfs_object.validate_mandatory_free_days()
 
     cfs_object.sourced_by_id = request.get("sourced_by_id")
     cfs_object.procured_by_id = request.get("procured_by_id")

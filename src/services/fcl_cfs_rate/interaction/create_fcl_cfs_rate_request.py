@@ -32,10 +32,12 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
     for attr, value in create_params.items():
         setattr(cfs_request, attr, value)
+    cfs_request.set_port()
+    cfs_request.validate_source_id()
 
     try:
         cfs_request.save()
-    except Exception as e:
+    except :
       raise HTTPException(status_code=500, detail='CFS Request did not save')
 
 
