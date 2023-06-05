@@ -3,7 +3,7 @@ from configs.definitions import ROOT_DIR
 import os
 import joblib
 from micro_services.client import maps
-from configs.haulage_freight_rate_constants import weight_limit_constants
+from configs.haulage_freight_rate_constants import WEIGHT_LIMIT_CONSTANTS
 
 
 def predict_haulage_freight_rate(request):
@@ -52,33 +52,33 @@ def predict_haulage_freight_rate(request):
 def fuel_consumption(distance,upper_limit):
     if distance < 500:
         if upper_limit < 17:
-            litre_per_km = weight_limit_constants['upto_500km']['upto_17_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['upto_500km']['upto_17_ton']
             fuel_used = distance * litre_per_km
         elif upper_limit < 23:
-            litre_per_km = weight_limit_constants['upto_500km']['upto_23_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['upto_500km']['upto_23_ton']
             fuel_used = distance * litre_per_km
         else:
-            litre_per_km = weight_limit_constants['upto_500km']['upto_28_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['upto_500km']['upto_28_ton']
             fuel_used = distance * litre_per_km
     elif distance < 1000:
         if upper_limit < 17:
-            litre_per_km = weight_limit_constants['upto_1000km']['upto_17_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['upto_1000km']['upto_17_ton']
             fuel_used = distance * litre_per_km
         elif upper_limit < 23:
-            litre_per_km = weight_limit_constants['upto_1000km']['upto_23_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['upto_1000km']['upto_23_ton']
             fuel_used = distance * litre_per_km
         else:
-            litre_per_km = weight_limit_constants['upto_1000km']['upto_28_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['upto_1000km']['upto_28_ton']
             fuel_used = distance * litre_per_km
     else:
         if upper_limit < 17:
-            litre_per_km = weight_limit_constants['more_than_1000km']['upto_17_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['more_than_1000km']['upto_17_ton']
             fuel_used = distance * litre_per_km
         elif upper_limit < 23:
-            litre_per_km = weight_limit_constants['more_than_1000km']['upto_23_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['more_than_1000km']['upto_23_ton']
             fuel_used = distance * litre_per_km
         else:
-            litre_per_km = weight_limit_constants['more_than_1000km']['upto_28_ton']
+            litre_per_km = WEIGHT_LIMIT_CONSTANTS['more_than_1000km']['upto_28_ton']
             fuel_used = distance * litre_per_km
 
     return fuel_used

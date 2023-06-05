@@ -15,6 +15,7 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request impor
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
+from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
 from kombu import Exchange, Queue
 from celery.schedules import crontab
@@ -73,6 +74,11 @@ celery.conf.beat_schedule = {
     'process_fuel_data_delays': {
         'task': 'celery_worker.process_fuel_data_delay',
         'schedule': crontab(minute=00,hour=21),
+        'options': {'queue' : 'fcl_freight_rate'}
+        },
+    'process_electricity_data_delays': {
+        'task': 'celery_worker.process_electricity_data_delays',
+        'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
         'options': {'queue' : 'fcl_freight_rate'}
         }
 }
@@ -397,6 +403,15 @@ def process_fuel_data_delay(self):
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def process_electricity_data_delays(self):
+    try:
+        electricity_price_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def delay_fcl_customs_functions(self,fcl_customs_object,request):
     try:

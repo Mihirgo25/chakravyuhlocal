@@ -4,12 +4,12 @@ DESTINATION_TERMINAL_CHARGES_INDIA = 15
 
 CONTAINER_TYPE_CLASS_MAPPINGS = {
     # 120 refer
-    "standard": ["Class LR-3"],
-    "refer": ["Class 165","Class 200"],
-    "open_top": ["Class LR1"],
-    "open_side": ["Class 120", "Class 170"],
-    "flat_rack": ["Class 130A"],
-    "iso_tank": ["Class 150"],
+    "standard": {"india": "Class LR-3", "vietnam": "3"},
+    "refer": {"india": "Class 165", "vietnam": "3"},
+    "open_top": {"india": "Class LR1", "vietnam": "2"},
+    "open_side": {"india": "Class 120", "vietnam": "2"},
+    "flat_rack": {"india": "Class 130A", "vietnam": "2"},
+    "iso_tank": {"india": "Class 150", "vietnam": "2"},
 }
 
 WAGON_COMMODITY_MAPPING = {
@@ -20,7 +20,10 @@ WAGON_COMMODITY_MAPPING = {
     "Class LR1": "BCXT",
     "Class 130A": "BCNA",
     "Class 150": "BCXT",
-    "Class 120": "BTAP"
+    "Class 120": "BTAP",
+    "1": "BRNA",
+    "2": "BTAP",
+    "3": "BTPGLN",
 }
 
 
@@ -44,243 +47,108 @@ WAGON_CONTAINER_TYPE_MAPPINGS = {
     "iso_tank": ["BTNP", "BTAP", "BTALN", "BTPGLN", "BTCS"],
 }
 
+DEFAULT_SERVICE_PROVIDER_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
 
-WAGON_MAPPINGS = {
-    "BTPGLN": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 60},
-        {"container_size": "40"},
-    ],
-    "BRNA": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 26},
-        {"container_size": "20"},
-    ],
-    "BCACBM": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BCX": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BCXC": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BCXR": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BCXT": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BCXN": [
-        {"permissable_carrying_capacity": 55.5},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BCN": [
-        {"permissable_carrying_capacity": 58.0},
-        {"number_of_wagons": 43},
-        {"container_size": "20"},
-    ],
-    "BCNA": [
-        {"permissable_carrying_capacity": 58.8},
-        {"number_of_wagons": 43},
-        {"container_size": "20"},
-    ],
-    "BCNAHS": [
-        {"permissable_carrying_capacity": 58.8},
-        {"number_of_wagons": 43},
-        {"container_size": "20"},
-    ],
-    "BOXNHA": [
-        {"permissable_carrying_capacity": 60.1},
-        {"number_of_wagons": 43},
-        {"container_size": "20"},
-    ],
-    "BOXN": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOXNHS": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOI": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BRS": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BRH": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BRN": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOBS": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOBSN": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOBX": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOBY": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOBYN": [
-        {"permissable_carrying_capacity": 58},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOX": [
-        {"permissable_carrying_capacity": 60},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOST": [
-        {"permissable_carrying_capacity": 60},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOBR": [
-        {"permissable_carrying_capacity": 60},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BTNP": [
-        {"permissable_carrying_capacity": 60},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BTALN": [
-        {"permissable_carrying_capacity": 60},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BTPGLN": [
-        {"permissable_carrying_capacity": 60},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BTCS": [
-        {"permissable_carrying_capacity": 60},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BTPN": [
-        {"permissable_carrying_capacity": 54.28},
-        {"number_of_wagons": 47},
-        {"container_size": "20"},
-    ],
-    "BTAP": [
-        {"permissable_carrying_capacity": 54.28},
-        {"number_of_wagons": 47},
-        {"container_size": "20"},
-    ],
-    "BCNAHS": [
-        {"permissable_carrying_capacity": 56.73},
-        {"number_of_wagons": 43},
-        {"container_size": "20"},
-    ],
-    "BRNA-EUR": [
-        {"permissable_carrying_capacity": 56.73},
-        {"number_of_wagons": 18},
-        {"container_size": "20"},
-    ],
-    "BFNSM": [
-        {"permissable_carrying_capacity": 56.73},
-        {"number_of_wagons": 68},
-        {"container_size": "40HC"},
-    ],
-    "BOXNHL": [
-        {"permissable_carrying_capacity": 71.05},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOXNHS": [
-        {"permissable_carrying_capacity": 58.08},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BCNHL": [
-        {"permissable_carrying_capacity": 70.8},
-        {"number_of_wagons": 58},
-        {"container_size": "40"},
-    ],
-    "BOXNS": [
-        {"permissable_carrying_capacity": 80.15},
-        {"number_of_wagons": 59},
-        {"container_size": "40"},
-    ],
-    "BOY": [
-        {"permissable_carrying_capacity": 70.89},
-        {"number_of_wagons": 52},
-        {"container_size": "40"},
-    ],
-    "BRNA": [
-        {"permissable_carrying_capacity": 57.7},
-        {"number_of_wagons": 43},
-        {"container_size": "20"},
-    ],
-    "BFNS": [
-        {"permissable_carrying_capacity": 70.8},
-        {"number_of_wagons": 54},
-        {"container_size": "40"},
-    ],
+DEFAULT_MAX_WEIGHT_LIMIT = {"20": 18, "40": 30, "40HC": 32.5, "45HC": 32.68}
+
+DEFAULT_HAULAGE_TYPE = "merchant"
+
+DEFAULT_TRIP_TYPE = "one_way"
+
+CONTAINER_SIZE_FACTORS = {"20": 1, "40": 1.1, "40HC": 1.15, "45HC": 1.2}
+
+WEIGHT_LIMIT_CONSTANTS = {
+    "upto_500km": {"upto_17_ton": 0.3636, "upto_23_ton": 0.4, "upto_28_ton": 0.4651},
+    "upto_1000km": {"upto_17_ton": 0.3571, "upto_23_ton": 0.4, "upto_28_ton": 0.4651},
+    "more_than_1000km": {
+        "upto_17_ton": 0.3333,
+        "upto_23_ton": 0.4,
+        "upto_28_ton": 0.4651,
+    },
 }
 
-CONTAINER_SIZE_WAGON_MAPPING = {}
+GLOBAL_FUEL_DATA_LINKS = [
+    "https://www.globalpetrolprices.com/india/electricity_prices/"
+]
 
-DEFAULT_SERVICE_PROVIDER_ID = '5dc403b3-c1bd-4871-b8bd-35543aaadb36'
-
-DEFAULT_MAX_WEIGHT_LIMIT = {
-    '20': 18,
-    '40': 30,
-    '40HC':32.5,
-    '45HC': 32.68
+CONTAINER_TO_WAGON_TYPE_MAPPING = {
+    "standard": "2 axles",
+    "refer": "2 axles",
+    "open_top": "More than 2 axles",
+    "open_side": "More than 2 axles",
+    "flat_rack": "5 and 6 axles",
+    "iso_tank": "3 and 4 axles",
 }
 
-DEFAULT_HAULAGE_TYPE = 'merchant'
-
-DEFAULT_TRIP_TYPE = 'one_way'
-
-CONTAINER_SIZE_FACTORS = {
-    '20': 1,
-    '40': 1.1,
-    '40HC': 1.15,
-    '45HC': 1.2
+CONTAINER_HANDLING_CHARGES = {
+    "20": {
+        "stuffed": {
+            "warehouse_to_automobile": 23.00,
+            "automobile_to_warehouse": 57.00,
+        },
+        "empty": {
+            "warehouse_to_automobile": 15.00,
+            "automobile_to_warehouse": 37.00,
+        },
+    },
+    "40": {
+        "stuffed": {
+            "warehouse_to_automobile": 35.00,
+            "automobile_to_warehouse": 85.00,
+        },
+        "empty": {
+            "warehouse_to_automobile": 23.00,
+            "automobile_to_warehouse": 55.00,
+        },
+    },
+    "40HC": {
+        "stuffed": {
+            "warehouse_to_automobile": 53.00,
+            "automobile_to_warehouse": 127.00,
+        },
+        "empty": {
+            "warehouse_to_automobile": 34.00,
+            "automobile_to_warehouse": 83.00,
+        },
+    },
+    "45HC": {
+        "stuffed": {
+            "warehouse_to_automobile": 57.00,
+            "automobile_to_warehouse": 145.00,
+        },
+        "empty": {
+            "warehouse_to_automobile": 39.00,
+            "automobile_to_warehouse": 97.00,
+        },
+    },
 }
 
-weight_limit_constants = {'upto_500km':{'upto_17_ton':0.3636, 'upto_23_ton':0.4, 'upto_28_ton':0.4651}
-                            ,'upto_1000km':{'upto_17_ton':0.3571, 'upto_23_ton':0.4, 'upto_28_ton':0.4651}
-                            ,'more_than_1000km':{'upto_17_ton':0.3333, 'upto_23_ton':0.4, 'upto_28_ton':0.4651}
-}
+GENERAL_INFLATION_FACTOR = 1.76
+
+VIETNAMESE_INFLATION_FACTOR = 1.76
+
+CHARGE_LEVEL_MAPPING_VEITNAM = {}
+
+USD_TO_VND = 23482.50
+
+DEFAULT_ENVIRONMENT_PROTECTION_INDEX = 0.00543
+
+DEFAULT_CLIMATE_CHANGE_FEE_INDEX = 0.00116
+
+DEFAULT_NOISE_POLLUTION_FEE_INDEX = 0.00053
+
+DEFAULT_INDIRECT_POLLUTION_FEE_INDEX = 0.00742
+
+DEFAULT_POLLUTION_INDEX = 0.01454
+
+DEFAULT_SAFTEY_INDEX = 0.97
+
+DEFAULT_WEIGHT_INDEX = 0.25
+
+AVERAGE_ENERGY_CONSUMPTION = 0.41
+
+AVERAGE_GLOBAL_CO2_EMISSION = 104
+
+GENERALIZED_WEIGHT_OF_ECONOMY = 0.25
+
+EUROPE_INFLATION_RATES = [0.0018,0.0103,0.0185,0.0111,0.0048,0.0164,0.0522]
