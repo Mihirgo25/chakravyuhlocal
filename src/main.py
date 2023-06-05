@@ -94,6 +94,10 @@ if APP_ENV != "production":
 def startup():
     if db.is_closed():
         db.connect()
+    # insert_wagon_type()
+    # insert_dbcargo_rates()
+    # insert_france_germany_rates()
+    # create_rail_haulage_rates()
     # insert()
     # insert_china()
     # run_migration()
