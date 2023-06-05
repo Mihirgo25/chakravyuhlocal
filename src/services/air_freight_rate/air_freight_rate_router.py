@@ -557,3 +557,24 @@ def update_air_freight_storage_rates_data(request:UpdateAirFreightStorageRates,r
     except Exception as e:
         print(e)
         return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
+    
+from services.air_freight_rate.interaction.get_air_freight_rate_suggestions import get_air_freight_rate_suggestions
+@air_freight_router.get("/get_air_freight_rate_suggestions")
+def get_air_freight_rate_suggestions_data(
+    validity_start: str,
+    validity_end: str,
+    searched_origin_airport_id: str = None,
+    searched_destination_airport_id: str = None,
+    filters: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = get_air_freight_rate_suggestions(validity_start, validity_end, searched_origin_airport_id, searched_destination_airport_id, filters)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
