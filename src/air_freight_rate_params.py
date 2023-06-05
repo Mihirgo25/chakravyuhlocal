@@ -346,4 +346,4 @@ class UpdateAirFreightStorageRates(BaseModel):
     performed_by_id:str=None
     bulk_operation_id:str=None
     free_limit:int=None
-    slabs=list[Slab]=[]
+    slabs:list[Slab]=[]
