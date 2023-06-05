@@ -1,8 +1,8 @@
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
+from services.chakravyuh.models.cost_booking_estimation import CostBookingEstimation
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 from datetime import datetime
-from services.chakravyuh.interaction.get_cost_booking_transformation import get_cost_booking_transformation
 
 class FclFreightVyuh():
     def __init__(self, freight_rates: list = [], requirements: dict = {}):
@@ -62,9 +62,42 @@ class FclFreightVyuh():
         return []
     
     def get_probable_booking_data_tranformation(self, first_rate: dict={}):
-        origin_port_id=first_rate['origin_port_id']
-        destination_port_id=first_rate['destination_port_id']
-        return get_cost_booking_transformation(origin_port_id,destination_port_id)
+        origin_location_ids = [first_rate['origin_port_id'], first_rate['origin_country_id'], first_rate['origin_trade_id']]
+        destination_location_ids = [first_rate['destination_port_id'], first_rate['destination_country_id'], first_rate['destination_trade_id']]
+
+        shipping_line_ids = []
+
+        for freight_rate in self.freight_rates:
+            shipping_line_ids.append(freight_rate['shipping_line_id'])
+
+
+        transformation_query = CostBookingEstimation.select(
+            CostBookingEstimation.origin_location_id,
+            CostBookingEstimation.origin_location_type,
+            CostBookingEstimation.destination_location_id,
+            CostBookingEstimation.destination_location_type,
+            CostBookingEstimation.shipping_line_id,
+            CostBookingEstimation.commodity,
+            CostBookingEstimation.container_size,
+            CostBookingEstimation.container_type,
+            CostBookingEstimation.created_at,
+            CostBookingEstimation.updated_at,
+            CostBookingEstimation.schedule_type,
+            CostBookingEstimation.payment_term,
+            CostBookingEstimation.line_items,
+            CostBookingEstimation.id,
+            CostBookingEstimation.status
+        ).where(
+            CostBookingEstimation.origin_location_id << origin_location_ids,
+            CostBookingEstimation.destination_location_id << destination_location_ids,
+            CostBookingEstimation.container_size == self.requirements['container_size'],
+            CostBookingEstimation.container_type == self.requirements['container_type'],
+            ((CostBookingEstimation.commodity.is_null(True)) | (CostBookingEstimation.commodity == self.requirements['commodity'])),
+            ((CostBookingEstimation.shipping_line_id.is_null(True)) | (CostBookingEstimation.shipping_line_id << shipping_line_ids)),
+            CostBookingEstimation.status == 'active'
+        )
+        transformations = jsonable_encoder(list(transformation_query.dicts()))
+        return transformations
     
     def get_most_eligible_customer_transformation(self, probable_customer_transformations):
         return probable_customer_transformations[0]
@@ -192,48 +225,34 @@ class FclFreightVyuh():
     
 
     def apply_booking_data_transformation(self, rate, probable_booking_data_transformations):
-        all_prices=[]
-
-        for data in probable_booking_data_transformations:
-            price=data['price']
-            converted_price=float(price)
-            if data['currency'] != 'USD':
-                converted_price = common.get_money_exchange_for_fcl({"price": price, "from_currency": data['currency'], "to_currency": 'USD' })['price']
-            if converted_price>10000:
-                converted_price=converted_price/float(data['containers_count'])
-            if converted_price>100:
-                all_prices.append(converted_price)
-
-        size = len(all_prices)
-        mean = sum(all_prices) / size
-        variance = sum([((x - mean) ** 2) for x in all_prices]) / size
-        std_dev = variance ** 0.5
-        lower_limit = mean - 1 * std_dev 
-        upper_limit = mean + 1 * std_dev
-        price = self.apply_periodic_pricing(lower_limit, upper_limit)
-
-        if price >= 200:
-            price = round(price/5) * 5
-        else:
-            price = round(price)
-
+        
+        probable_transformation_to_apply = self.get_most_eligible_rate_transformation(probable_booking_data_transformations)
         validities = rate['validities'] or []
+
         new_validities = []
+
         for validity in validities:
+
             line_items = validity['line_items']
+
+            transformation_items = probable_transformation_to_apply['line_items']
+
             new_lineitems = []
             for line_item in line_items:
-                if line_item['code'] == 'BAS':
-                    line_item['price']=price
-                    new_lineitems.append(line_item)
+                transformed_line_item = self.get_lineitem(code=line_item['code'], items=transformation_items)
+                if transformed_line_item:
+                    adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
+                    new_lineitems.append(adjusted_lineitem)
                 else:
                     new_lineitems.append(line_item)
-                    
+        
             validity['line_items'] = new_lineitems
             new_validities.append(validity)
+        
         rate['validities'] = new_validities
-        return rate    
 
+        return rate
+        
 
     def apply_transformation(self, rate, probable_transformations, probable_customer_transformations,probable_booking_data_transformations):
         rate_specific_transformations = []
