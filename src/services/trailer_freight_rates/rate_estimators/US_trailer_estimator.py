@@ -79,7 +79,8 @@ class USTrailerRateEstimator():
 
         total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count) 
 
-        if trip_type == 'round_trip':
+        if 'round' in trip_type:
+            trip_type = 'round_trip'
             total_cost = total_cost * ROUND_TRIP_FACTOR
 
         return {'list':[{
