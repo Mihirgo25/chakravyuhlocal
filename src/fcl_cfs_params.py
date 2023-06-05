@@ -110,3 +110,14 @@ class CreateFclCfsRateBulkOperation(BaseModel):
   performed_by_type: str = None
   delete_rate: Filters = None
   add_markup: AddMarkUp = None
+
+class UpdateFclCfsRatePlatformPrice(BaseModel):
+  location_id: str
+  container_size: str 
+  container_type: str 
+  commodity: str = None
+  trade_type:str
+  performed_by_id: str
+  performed_by_type: str
+  importer_exporter_id: str = None
+  is_line_items_error_messages_present: bool = False

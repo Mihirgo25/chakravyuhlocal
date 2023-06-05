@@ -2,6 +2,7 @@ from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
 from fastapi import HTTPException
+from database.db_session import db
 
 def create_audit_for_updating_cfs(request, cfs_object_id):
     audit_data = {
@@ -18,6 +19,10 @@ def create_audit_for_updating_cfs(request, cfs_object_id):
     )
 
 def update_fcl_cfs_rate(request):
+    with db.atomic():
+        return execute_transaction_code(request)
+    
+def execute_transaction_code(request):
     cfs_object = find_cfs_object(request)
 
     if not cfs_object:
@@ -26,11 +31,11 @@ def update_fcl_cfs_rate(request):
     update_params =  {
         'procured_by_id':request.get('procured_by_id'),
         'sourced_by_id':request.get('sourced_by_id'),
-        'cfs_line_items':request.get('cfs_line_items'),
+        'line_items':request.get('line_items'),
         'free_limit':request.get('free_limit')
     }
 
-    for key in list(cfs_object.keys()):
+    for key in list(update_params.keys()):
         setattr(cfs_object, key, update_params[key])
 
     cfs_object.set_platform_price()
@@ -50,7 +55,7 @@ def update_fcl_cfs_rate(request):
 
 def find_cfs_object(request):
     try:
-        cfs_object = FclCfsRate.get_by_id(id=request.get('id'))
+        cfs_object = FclCfsRate.get_by_id(request.get("id"))
     except:
         cfs_object = None
     
