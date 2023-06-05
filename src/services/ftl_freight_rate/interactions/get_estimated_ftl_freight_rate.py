@@ -28,6 +28,7 @@ def get_truck_and_commodity_data(truck_type, weight,country_id,trip_type,commodi
         'country_id':country_id
     }
     if truck_type:
+        closest_truck_type = truck_type
         filters['truck_name'] = truck_type
     else:
         default_truck_type = ''
