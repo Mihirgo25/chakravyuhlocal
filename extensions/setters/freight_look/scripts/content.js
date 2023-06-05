@@ -2030,19 +2030,8 @@ const getRatesData = () => {
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    console.log(sender.tab ? "from a content script:" + sender.tab.url : "from the extension");
     const rates = getRatesData()
-    if (request.greeting === "hello")
-      sendResponse({farewell: "goodbye", rates: rates });
+    if (request.rates)
+      sendResponse({ rates: rates });
   }
 );
-
-const sendResponse = async ()=> {
-  const response = await chrome.runtime.sendMessage({greeting: "hello"});
-  // do something with response here, not outside the function
-  console.log(response);
-}
-
-console.log('Hii')
-
-// sendResponse()

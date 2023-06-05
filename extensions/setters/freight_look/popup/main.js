@@ -1,25 +1,27 @@
-console.log('HII')
-
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-    console.log(sender.tab ?
-                "from a content script:" + sender.tab.url :
-                "from the extension");
-    if (request.greeting === "hello")
-      sendResponse({farewell: "goodbye"});
-  }
-);
+const sendRatesToRMS = async (data={})=> {
+  console.log(data)
+  const url = 'http://localhost:8000/fcl_freight_rate/create_freight_look_rates'
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data)
+  });
+  const jsonData = await response.json();
+  console.log(jsonData);
+}
 
 const getFromWebPage = async () => {
   const [tab] = await chrome.tabs.query({ active: true });
-  console.log(tab)
-  const response = await chrome.tabs.sendMessage(tab.id, {greeting: "hello"});
-  console.log(response);
+  const response = await chrome.tabs.sendMessage(tab.id, { rates: true });
+  return response
 }
 
 const getRates = async ()=> {
-  console.log('Hii Rates')
-  await getFromWebPage()
+  const response = await getFromWebPage()
+  console.log(response)
+  await sendRatesToRMS({ rates: (response || {}).rates || [] })
 }
 
 document.getElementById("getrates").addEventListener("click", getRates);
