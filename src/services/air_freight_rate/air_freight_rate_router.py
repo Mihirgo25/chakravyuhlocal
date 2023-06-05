@@ -40,6 +40,7 @@ from services.air_freight_rate.interaction.create_air_freight_warehouse_rate imp
 from services.air_freight_rate.interaction.list_air_freight_rate_feedbacks import list_air_freight_rate_feedbacks
 from services.air_freight_rate.interaction.list_air_freight_rate_requests import list_air_freight_rate_requests
 from services.air_freight_rate.interaction.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
+from services.air_freight_rate.interaction.list_air_freight_charge_codes import list_air_freight_charge_codes
 
 air_freight_router = APIRouter()
 
@@ -527,6 +528,38 @@ def list_air_freight_rate_requests_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@air_freight_router.get("/list_air_freight_charge_codes")
+def list_air_freight_charge_codes_data(
+    service_type: str,
+    commodity: str=None,
+    commodity_type: str=None,
+    commodity_sub_type: str=None,
+    trade_type:str =None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request={
+        'service_type':service_type,
+        'commodity':commodity,
+        'commodity_type':commodity_type,
+        'commodity_sub_type':commodity_sub_type,
+        'trade_type': trade_type
+    }
+
+    try:
+        data = list_air_freight_charge_codes(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content = data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+
 @air_freight_router.get("/list_air_freight_warehiuse_rates")
 def list_air_freight_warehouse_rates_data(
     filters: str = None,
