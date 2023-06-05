@@ -1,5 +1,7 @@
 from database.db_session import db
 from fastapi import HTTPException
+from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
 def create_air_freight_storage_rate(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -13,16 +15,16 @@ def execute_transaction_code(request):
         'commodity'   :request.get('commodity'),
         'service_provider_id' : request.get('service_provider_id')
         }
-    object = AirFreightStorageRate.select().where(
-        AirFreightStorageRate.airport_id == request.get('airport_id'),
-        AirFreightStorageRate.airline_id == request.get('airline_id'),
-        AirFreightStorageRate.trade_type == request.get('trade_type'),
-        AirFreightStorageRate.commodity == request.get('commodity'),
-        AirFreightStorageRate.service_provider_id == request.get('service_provider_id')
+    object = AirFreightStorageRates.select().where(
+        AirFreightStorageRates.airport_id == request.get('airport_id'),
+        AirFreightStorageRates.airline_id == request.get('airline_id'),
+        AirFreightStorageRates.trade_type == request.get('trade_type'),
+        AirFreightStorageRates.commodity == request.get('commodity'),
+        AirFreightStorageRates.service_provider_id == request.get('service_provider_id')
     ).first()
 
     if not object:
-        object = AirFreightStorageRate(**row)
+        object = AirFreightStorageRates(**row)
 
     object.slabs = request.get('slabs')
     object.remarks = request.get('remarks')
@@ -33,3 +35,17 @@ def execute_transaction_code(request):
     except:
         raise HTTPException(status_code = 404,details = 'Error in Saving Object')
     
+    create_audit(request,object)
+    
+    return {'id':object.id}
+
+def create_audit(request,object):
+    AirFreightRateAudits.create(
+        action_name='create',
+        object_type='AirFreightStorageRates',
+        object_id=object.id,
+        performed_by_id=request['performed_by_id'],
+        bulk_operation_id=request['bulk_operation_id'],
+        data={k:v for k , v in request.items() if k  in ['slabs','free_limit','remarks']}
+    )
+        
