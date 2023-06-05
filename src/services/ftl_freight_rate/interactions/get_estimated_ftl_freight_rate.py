@@ -40,6 +40,9 @@ def get_truck_and_commodity_data(truck_type, weight,country_id,trip_type,commodi
         filters['truck_type'] = default_truck_type
         sorted_truck_types = sorted(PREDICTION_TRUCK_TYPES.items(), key=lambda x: x[1]["weight"])
         for truck_type, truck_data in sorted_truck_types:
+            if weight >= 35:
+                closest_truck_type = 'open_body_22tyre_35ton'
+                break
             if truck_data["weight"] >= weight:
                 closest_truck_type = truck_type
                 break
