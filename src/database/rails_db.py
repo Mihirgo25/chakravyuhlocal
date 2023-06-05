@@ -328,7 +328,7 @@ def get_cost_booking_data(transform_params):
                     AND shipment_collection_parties.status in ('locked','coe_approved')
                     AND line_item ->> 'unit' = 'per_container'
                 '''
-                search_query  = "AND shipment_fcl_freight_services.origin_{}_id = '{}' AND shipment_fcl_freight_services.destination_{}_id = '{}' limit 2".format(transform_params.get('location_type'), transform_params.get('origin_location_id'),transform_params.get('location_type'), transform_params.get('destination_location_id'))
+                search_query  = "AND shipment_fcl_freight_services.origin_{}_id = '{}' AND shipment_fcl_freight_services.destination_{}_id = '{}'".format(transform_params.get('location_type'), transform_params.get('origin_location_id'),transform_params.get('location_type'), transform_params.get('destination_location_id'))
                 sql += search_query
 
                 cur.execute(sql)
