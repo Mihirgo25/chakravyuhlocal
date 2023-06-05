@@ -20,7 +20,7 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
-
+from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -71,7 +71,12 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.process_fuel_data_delay',
         'schedule': crontab(minute=00,hour=21),
         'options': {'queue' : 'fcl_freight_rate'}
-        }
+        },
+    'adjust_air_freight_dynamic_pricing':{
+        'task': 'celery_worker.adjust_air_freight_dynamic_pricing',
+        'schedule': crontab(minute=00,hour=00),
+        'options': {'queue' : 'fcl_freight_rate'}
+    }
 }
 
 
@@ -388,6 +393,26 @@ def update_fcl_freight_rate_request_in_delay(self, request):
 def process_fuel_data_delay(self):
     try:
         fuel_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_air_freight_rate_delay(self, request):
+    try:
+        return common.create_air_freight_rate(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def adjust_air_freight_dynamic_pricing(self, request):
+    try:
+        return invoice_rates_updation()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

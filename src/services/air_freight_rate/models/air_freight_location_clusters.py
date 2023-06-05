@@ -8,9 +8,9 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class AirFreightClusters(BaseModel):
+class AirFreightLocationClusters(BaseModel):
     id = BigAutoField(primary_key=True)
-    base_airport_id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    base_airport_id = UUIDField(index=True)
     base_airport = BinaryJSONField(null=True)
     status = CharField(index=True, null=True)
     trend_factor = DoubleField(default=1)
@@ -18,4 +18,4 @@ class AirFreightClusters(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     class Meta:
-        table_name = 'air_freight_clusters'
+        table_name = 'air_freight_location_clusters'

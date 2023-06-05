@@ -129,31 +129,47 @@ COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US"}
 
 DEFAULT_WEIGHT_SLABS=[
     {
-        'lower_limit':'0',
-        'upper_limit':'50',
-        'lower_tariff_price':0,
-        'upper_tariff_price':0,
-        'currency':'INR'
+        'lower_limit':0.0,
+        'upper_limit':50,
+        'tariff_price':0,
+        'currency':'INR',
+        'unit':'per_kg'
     },
     {
-        'lower_limit':'51',
-        'upper_limit':'100',
-        'lower_tariff_price':0 ,
-        'upper_tariff_price':0,
-        'currency':'INR'
+        'lower_limit':50.1,
+        'upper_limit':100.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
         },
     {
-        'lower_limit':'101',
-        'upper_limit':'300',
-        'lower_tariff_price':0,
-        'upper_tariff_price':0,
-        'currency':'INR'
+        'lower_limit':100.1,
+        'upper_limit':300.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
     },
     {
-        'lower_limit':'301',
-        'upper_limit':'500',
-        'lower_tariff_price':0,
-        'upper_tariff_price':0,
-        'currency':'INR'
+        'lower_limit':300.1,
+        'upper_limit':500.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },{
+        'lower_limit':500.1,
+        'upper_limit':1000.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    },{
+        'lower_limit':1000.1,
+        'upper_limit':10000,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
     }
+
 ]
