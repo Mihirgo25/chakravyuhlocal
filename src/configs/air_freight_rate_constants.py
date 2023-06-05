@@ -64,3 +64,4 @@ RATE_TYPES = ['general','promotional','consolidated']
 
 AIR_OPERATION_TYPES = ['passenger', 'freighter', 'charter', 'prime', 'lean']
 
+EXPECTED_TAT = 2
