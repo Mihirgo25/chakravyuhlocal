@@ -14,12 +14,12 @@ class MapsApiClient:
         })
 
     def list_locations(self, data={}):
-        if APP_ENV == "production":
+        if APP_ENV != "production":
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
-            return self.client.request('GET', 'list_locations', {}, data)
+            return self.client.request('GET', 'location/list_locations', {}, data)
         return self.client.request('GET', 'list_locations', data, {})
 
     def list_location_cluster(self,data={}):
@@ -54,3 +54,12 @@ class MapsApiClient:
 
     def get_land_route_location_details(self,data = {}):
         return self.client.request('GET','get_land_route_location_details',data)
+
+    def list_operators(self, data={}):
+        if APP_ENV == "production":
+            keys = ['filters', 'includes']
+            for key in keys:
+                if key in data:
+                    data[key] = json.dumps(data[key])
+            return self.client.request('GET', 'list_operators', {}, data)
+        return self.client.request('GET', 'list_operators', data, {})

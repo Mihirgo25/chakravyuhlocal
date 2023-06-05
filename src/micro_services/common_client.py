@@ -29,4 +29,4 @@ class CommonApiClient:
         return self.client.request('POST', 'update_contract_service_task', data)
     
     def create_air_freight_rate(self, data={}):
-        return self.client.request('POST', 'create_air_freight_rate', data)
+        return self.client.request('POST', 'air_freight_rate/create_air_freight_rate', data)

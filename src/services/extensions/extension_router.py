@@ -23,6 +23,5 @@ def create_freight_look_rates_api(request: CreateFreightLookRatesParams):
     except HTTPException as e:
         raise
     except Exception as e:
-        raise
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
