@@ -229,7 +229,7 @@ class FclFreightRate(BaseModel):
       response = {}
       if self.destination_local:
         self.destination_local_data_instance = FclFreightRateLocalData(self.destination_local)
-        response = self.destination_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'export',self.possible_origin_local_charge_codes())
+        response = self.destination_local_data_instance.get_line_item_messages(self.destination_port,self.destination_main_port,self.shipping_line,self.container_size,self.container_type,self.commodity,'import',self.possible_destination_local_charge_codes())
 
       self.destination_local_line_items_error_messages = response.get('line_items_error_messages')
       self.is_destination_local_line_items_error_messages_present = response.get('is_line_items_error_messages_present')
@@ -328,6 +328,9 @@ class FclFreightRate(BaseModel):
         raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
 
     def validate_line_items(self, line_items):
+      if(not line_items or len(line_items)==0):
+        raise HTTPException(status_code=400, detail="line_items required")
+
       codes = [item['code'] for item in line_items]
       if len(set(codes)) != len(codes) and (self.rate_type != "cogo_assured"):
         raise HTTPException(status_code=400, detail="line_items contains duplicates")
@@ -335,7 +338,7 @@ class FclFreightRate(BaseModel):
 
       fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
-      invalid_line_items = [code for code in codes if code not in fcl_freight_charges_dict.keys()]
+      invalid_line_items = [code for code in codes if code.strip() not in fcl_freight_charges_dict.keys()]
 
       if invalid_line_items:
           raise HTTPException(status_code=400, detail="line_items {} are invalid".format(", ".join(invalid_line_items)))
@@ -395,13 +398,14 @@ class FclFreightRate(BaseModel):
             if (validity_start <= t["validity_end"]) & (validity_end >= t["validity_start"]):
               validities.append(t)
 
+          freight_rate_min_price = None
           for t in validities:
             price = []
             new_price =  common.get_money_exchange_for_fcl({'price': t["price"], 'from_currency': t['currency'], 'to_currency':currency})['price']
             price.append(new_price)
             freight_rate_min_price = min(price)
 
-          if freight_rate_min_price < result  and freight_rate_min_price is not None:
+          if freight_rate_min_price is not None and freight_rate_min_price < result:
             result = freight_rate_min_price
 
       return result
