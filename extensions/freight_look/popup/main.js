@@ -13,15 +13,16 @@ const sendRatesToRMS = async (data={})=> {
 }
 
 const getFromWebPage = async () => {
-  const [tab] = await chrome.tabs.query({ active: true });
+  const [tab] = await chrome.tabs.query({active: true });
   const response = await chrome.tabs.sendMessage(tab.id, { rates: true });
+  // do something with response here, not outside the function
   return response
 }
 
 const getRates = async ()=> {
   const response = await getFromWebPage()
   console.log(response)
-  await sendRatesToRMS({ rates: (response || {}).rates || [] })
+  await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination })
 }
 
 document.getElementById("getrates").addEventListener("click", getRates);

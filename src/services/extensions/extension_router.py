@@ -11,7 +11,7 @@ from services.extensions.interactions.create_freight_look_rates import create_fr
 extension_router = APIRouter()
 
 @extension_router.post("/create_freight_look_rates")
-def create_fcl_freight_commodity_cluster_data(request: CreateFreightLookRatesParams):
+def create_freight_look_rates_api(request: CreateFreightLookRatesParams):
     # if resp["status_code"] != 200:
     #     return JSONResponse(status_code=resp["status_code"], content=resp)
     # if resp["isAuthorized"]:
@@ -23,5 +23,6 @@ def create_fcl_freight_commodity_cluster_data(request: CreateFreightLookRatesPar
     except HTTPException as e:
         raise
     except Exception as e:
+        raise
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

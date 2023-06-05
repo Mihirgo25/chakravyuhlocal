@@ -2031,7 +2031,8 @@ const getRatesData = () => {
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     const rates = getRatesData()
+    destination = document.getElementById('ctl00_CP1_txtCity').value
     if (request.rates)
-      sendResponse({ rates: rates });
+      sendResponse({ rates: rates, destination: destination });
   }
 );
