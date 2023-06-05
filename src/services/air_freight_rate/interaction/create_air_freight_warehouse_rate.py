@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from database.db_session import db 
 from services.air_freight_rate.models.air_freight_warehouse_rate import AirFreightWarehouseRates
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from celery_worker import update_multiple_service_objects
 
 def create_air_freight_warehouse_rate(request):
     with db.atomic():
@@ -24,6 +25,9 @@ def execute_transaction_code(request):
     object.line_items=request.get('line_items')
     object.update_line_item_messages()
     object.delete_rate_not_available_entry()
+    update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
+    
+
 
     if object.validate():
         try:

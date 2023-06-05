@@ -17,7 +17,7 @@ import sentry_sdk
 from fastapi import HTTPException
  
 
-
+from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
 from services.air_freight_rate.interaction.get_air_freight_rate import get_air_freight_rate
@@ -521,6 +521,24 @@ def list_air_freight_rate_requests_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_air_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+@air_freight_router.get("/list_air_freight_warehiuse_rates")
+def list_air_freight_warehouse_rates_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_air_freight_warehouse_rates(filters,  page_limit, page)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise

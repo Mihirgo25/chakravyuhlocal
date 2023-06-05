@@ -55,8 +55,9 @@ class AirFreightRateTasks(BaseModel):
     
 
     def validate_service(self):
-        if self.service not in ['air_freight_local']:
-            raise HTTPException (status_code=400, detail='Invalid Service')
+        if self.service:
+            if self.service not in ['air_freight_local']:
+                raise HTTPException (status_code=400, detail='Invalid Service')
         
     def validate_task_type(self):
         if self.task_type not in ['locals_at_actuals', 'locals_purchase_invoice_review']:
@@ -75,8 +76,9 @@ class AirFreightRateTasks(BaseModel):
             raise HTTPException(status_code=400, detail='Invalid Commodity TYPE')
     
     def validate_source(self):
-        if self.source not in ['shipment', 'purchase_invoice', 'contract']:
-            raise HTTPException (status_code=400,detail="invalid source")
+        if self.source:
+            if self.source not in ['shipment', 'purchase_invoice', 'contract']:
+                raise HTTPException (status_code=400,detail="invalid source")
 
     def validate_status(self):
         if self.status not in ['pending', 'completed', 'aborted']:

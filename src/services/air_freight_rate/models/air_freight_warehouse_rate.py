@@ -46,7 +46,8 @@ class AirFreightWarehouseRates(BaseModel):
     performed_by_id=CharField(null=True)
     procured_by_id=CharField(null=True)
     sourced_by_id=CharField(null=True)
-
+    airport=BinaryJSONField(null=True)
+    
     class Meta:
         table_name = 'air_freight_warehouse_rates'
 
