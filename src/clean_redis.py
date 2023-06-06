@@ -188,7 +188,7 @@ def delete_fcl_locals():
         print(idx, id)
         
 def extend_china_rates():
-    file_path = os.path.join(ROOT_DIR, 'CHINA Cogoenvision.xlsx')
+    file_path = os.path.join(ROOT_DIR, 'cn_rates.xlsx')
     df = pd.read_excel(file_path)
     print(df.shape[0])
     result = Parallel(n_jobs=2)(delayed(create_func)(idx, row) for idx, row in df.iterrows())
@@ -219,14 +219,14 @@ def create_func(idx, row):
                     item['price'] = price
                     validity['price'] = price
                     validity['platform_price'] = price
-        
+
         if not create_rate:
             return
-                    
+
         rate.validities = validities
         rate.save()
         # rate.set_platform_prices()
-        
+
         data = {
             'validity_end': validity_end,
             'validity_start': validity_start,
@@ -236,7 +236,7 @@ def create_func(idx, row):
             'destination_local': rate.destination_local,
             'source': 'gri'
         }
-    
+
         id = FclFreightRateAudit.create(
             action_name="create",
             performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
