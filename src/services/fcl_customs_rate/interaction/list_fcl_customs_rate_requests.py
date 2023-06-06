@@ -29,22 +29,7 @@ def list_fcl_customs_rate_requests(filters = {}, page_limit = 10, page = 1, perf
     pagination_data = get_pagination_data(query, page, page_limit)
     query = get_page(query, page, page_limit)
 
-    spot_search_hash = {}
     data = list(query.dicts())
-    spot_search_ids = list(set([str(row['source_id']) for row in data]))
-    try:
-        spot_search_data = spot_search.list_spot_searches({'filters':{'id':spot_search_ids}})['list']
-    except:
-        spot_search_data = []
-
-    for search in spot_search_data:
-        spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
-
-    for value in data:
-        if str(value['source_id']) in spot_search_hash:
-            value['spot_search'] = spot_search_hash[str(value['source_id'])]
-        else:
-            value['spot_search'] = {}
 
     return { 'list': json_encoder(data) } | (pagination_data) | (stats)
 

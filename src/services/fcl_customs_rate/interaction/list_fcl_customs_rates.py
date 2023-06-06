@@ -47,9 +47,9 @@ def apply_location_ids_filter(query, filters):
 
 def apply_importer_exporter_present_filter(query, filters):
     if filters['importer_exporter_present']:
-        return query.where(FclCustomsRate.importer_exporter_id != None)
+        return query.where(FclCustomsRate.importer_exporter_id.is_null(False))
   
-    query = query.where(FclCustomsRate.importer_exporter_id == None)
+    query = query.where(FclCustomsRate.importer_exporter_id.is_null(True))
     return query
 
 def apply_is_rate_available_filter(query, filters):
