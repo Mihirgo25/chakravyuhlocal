@@ -16,7 +16,7 @@ class AirFreightVyuh():
         airline_ids = []
 
         for freight_rate in self.freight_rates:
-            airline_ids.append(freight_rate['airline'])
+            airline_ids.append(freight_rate['airline_id'])
 
         transformation_query = AirFreightRateEstimation.select().where(
             AirFreightRateEstimation.origin_location_id << origin_location_ids,
@@ -64,7 +64,7 @@ class AirFreightVyuh():
         weight_slabs = []
         for rate_weight_slab in rate_weight_slabs:
             for estimation_weight_slab in estimation_weight_slabs:
-                if rate_weight_slab['lower_limit'] >= estimation_weight_slab['lower_limt'] and rate_weight_slab['upper_limit'] <= estimation_weight_slab['upper_limit']:
+                if rate_weight_slab['lower_limit'] >= estimation_weight_slab['lower_limit'] and rate_weight_slab['upper_limit'] <= estimation_weight_slab['upper_limit']:
                     rate_weight_slab = self.get_modified_weight_slab(estimation_weight_slab,rate_weight_slab)
                     weight_slabs.append(rate_weight_slab)
         

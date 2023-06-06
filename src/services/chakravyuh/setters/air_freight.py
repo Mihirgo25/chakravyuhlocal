@@ -114,14 +114,21 @@ class AirFreightVyuh():
 
         return not_available_transformations
     
-        
-    def create_weight_slabs(self,origin_location_id,destination_location_id,location_type):
+    def split_invoice_data(self,previous_invoice_rates):
+        last_2_months=[]
+        last_3rdmonth=[]
+        for invoice in previous_invoice_rates:
+            if datetime.now().month-invoice['invoice_date'].month> 2:
+                last_3rdmonth.append(invoice)
+            else:
+                last_2_months.append(invoice)
+        return last_2_months,last_3rdmonth
+    
+
+    def get_weight_slabs(self,invoice_rates):
         weight_slabs = DEFAULT_WEIGHT_SLABS
-
-        previous_invoice_rates = get_past_invoices(origin_location_id,destination_location_id,location_type)
-
         weight_slabs_dict= {1:[],2:[],3:[],4:[],5:[],6:[]}
-        for invoice_rate in previous_invoice_rates:
+        for invoice_rate in invoice_rates:
             for index,weight_slab in enumerate(weight_slabs):
                 weight=invoice_rate['weight']
                 if weight>=weight_slab['lower_limit'] and weight<=weight_slab['upper_limit']:
@@ -134,10 +141,63 @@ class AirFreightVyuh():
 
         for index,weight_slab in enumerate(weight_slabs):
             if weight_slabs_dict[index+1]:
-                weight_slabs[index]['tariff_price'] = mean(weight_slabs_dict[index+1]) + float(self.new_rate['price'])
+                weight_slabs[index]['tariff_price'] = mean(weight_slabs_dict[index+1])
             new_weight_slabs.append(weight_slabs[index])
         return jsonable_encoder(new_weight_slabs)
+        
+    def create_weight_slabs(self,origin_location_id,destination_location_id,location_type):
+
+        previous_invoice_rates = get_past_invoices(origin_location_id,destination_location_id,location_type)
+
+        prevoius_2month_invoice_rates,previous_3rd_month_rates=self.split_invoice_data(previous_invoice_rates)
+
+
+        latest_weight_slabs=self.get_weight_slabs(prevoius_2month_invoice_rates)
+        old_weight_slabs=self.get_weight_slabs(previous_3rd_month_rates)
+        missing_weight_slabs = self.find_missing_weight_slabs(latest_weight_slabs)
+        missing_weight_slabs_ratios = self.raito_finder(old_weight_slabs,missing_weight_slabs)
+        final_weight_slabs = self.calculate_missing_rate(missing_weight_slabs_ratios,latest_weight_slabs)
+        return final_weight_slabs
     
+
+    def find_missing_weight_slabs(self,weight_slabs):
+        list=[]
+        for index , weight_slab in enumerate(weight_slabs):
+            if weight_slab['tariff_price']==0:
+                list.append(index+1)
+        return list
+    
+    def raito_finder(self,weight_slabs,list):
+        ratios={}
+        for index,weight_slab in enumerate(weight_slabs):
+            for num in list:
+                if weight_slabs[num-1]['tariff_price']!=0.0 and index+1!=num:
+                    ratio=weight_slab['tariff_price']/weight_slabs[num-1]['tariff_price']
+                    ratios[f'{index+1}:{num}'] =ratio
+        return ratios
+    
+    def calculate_missing_rate(self,ratios,latest_weight_slabs):
+        final_weight_slabs = []
+        for index1, weight_slab1 in enumerate( latest_weight_slabs):
+            if weight_slab1['tariff_price']==0.0:
+                for index2,weight_slab2 in enumerate(latest_weight_slabs):
+                    if weight_slab2['tariff_price']!=0.0:
+                        key = "{}:{}".format(index2+1,index1+1)
+                        if key in ratios.keys():
+                            weight_slab1['tariff_price'] = weight_slab2['tariff_price'] / ratios[key]
+                            break
+            final_weight_slabs.append(weight_slab1)
+        
+        for weight_slab in final_weight_slabs:
+            if self.new_rate['weight'] >= weight_slab['lower_limit'] and self.new_rate['weight'] <= weight_slab['upper_limit']:
+                price = self.new_rate['price']
+                if weight_slab['currency']!=self.new_rate['currency']:
+                    price = common.get_money_exchange_for_fcl({"price": price, "from_currency": weight_slab['currency'], "to_currency": 'INR' })['price']
+                weight_slab['tariff_price'] = 0.2*weight_slab['tariff_price'] + 0.8*price
+ 
+        return jsonable_encoder(final_weight_slabs)
+
+
     def get_adjusted_weight_slabs_to_add(self):
 
         weight_slabs = self.create_weight_slabs(self.new_rate['origin_country_id'],self.new_rate['destination_country_id'],'country')
@@ -269,16 +329,15 @@ class AirFreightVyuh():
         if origin_cluster_id:
             origin_cluster_airports = self.get_all_cluster_airports(origin_cluster_id)
             for clutser_airport in origin_cluster_airports:
-                rate_params = self.get_rate_param(clutser_airport['location_id'],destination_airport_id,weight_slabs,clutser_airport['factor'])
+                rate_params = self.get_rate_param(clutser_airport['location_id'],destination_airport_id,weight_slabs,clutser_airport['rate_factor'])
                 all_rates.append(rate_params)
 
 
         if destination_cluster_id:
             destination_cluster_airports = self.get_all_cluster_airports(destination_cluster_id)
             for clutser_airport in destination_cluster_airports:
-                rate_params = self.get_rate_param(origin_airport_id,clutser_airport['location_id'],weight_slabs,clutser_airport['factor'])
+                rate_params = self.get_rate_param(origin_airport_id,clutser_airport['location_id'],weight_slabs,clutser_airport['rate_factor'])
                 all_rates.append(rate_params)
-
         for rate in all_rates:
             producer = AirProducerVyuh(rate=rate)
             producer.extend_rate()
@@ -291,14 +350,14 @@ class AirFreightVyuh():
         
         return  jsonable_encoder(list(locations.dicts()))
     
-    def get_rate_param(self,origin_airport_id,destination_airport_id,weight_slabs,factor = 1):
+    def get_rate_param(self,origin_airport_id,destination_airport_id,weight_slabs,factor=1 ):
         # weight_slabs = self.get_rms_weight_slabs(weight_slabs,factor)
         params = {
-            'origin_aiport_id':origin_airport_id,
+            'origin_airport_id':origin_airport_id,
             'destination_airport_id':destination_airport_id,
             'commodity':self.new_rate.get('commodity'),
             'commodity_type': 'all',
-            'weight_slabs':weight_slabs,
+            'weight_slabs':self.get_rms_weight_slabs(weight_slabs=weight_slabs,factor=factor),
             'airline_id':self.new_rate.get('airline_id'),
             'operation_type':self.new_rate.get('operation_type'),
             'stacking_type': 'stackable',
@@ -321,7 +380,7 @@ class AirFreightVyuh():
         for weight_slab in weight_slabs:
             weight_slab['tariff_price'] = factor*weight_slab['tariff_price']
             new_weight_slabs.append(weight_slab)
-        return new_weight_slabs
+        return jsonable_encoder(new_weight_slabs)
 
 
 

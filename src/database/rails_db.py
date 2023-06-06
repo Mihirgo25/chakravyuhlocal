@@ -303,37 +303,66 @@ def get_past_invoices(origin_location_id,destination_location_id,location_type):
                 with conn.cursor() as cur:
                      
                     sql_query = """
-                        select shipment_air_freight_services.origin_airport_id as origin_airport_id, 
-                        shipment_air_freight_services.origin_country_id as origin_country_id, 
-                        shipment_air_freight_services.destination_airport_id as destination_airport_id,
-                        shipment_air_freight_services.destination_country_id as destination_country_id,
-                        shipment_air_freight_services.operation_type, shipment_air_freight_services.weight,shipment_air_freight_services.commodity,
-                        line_item ->> 'price' as price, line_item ->> 'currency' as currency,shipment_air_freight_services.airline_id from shipment_collection_parties
-                        inner join shipment_air_freight_services on shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
-                        cross join jsonb_array_elements(line_items) as line_item
-                        where shipment_collection_parties.invoice_date > date_trunc('MONTH',CURRENT_DATE - INTERVAL '3 months')::DATE
-                        and shipment_air_freight_services.origin_{}_id = %s
-                        and shipment_air_freight_services.destination_{}_id = %s
-                        and shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') and  line_item ->> 'code' = 'BAS' and
-                        invoice_type in ('purchase_invoice', 'proforma_invoice')
-                        """.format(location_type,location_type)
+                    WITH cte AS (
+                        SELECT 
+                            shipment_air_freight_services.origin_airport_id AS origin_airport_id,
+                            shipment_air_freight_services.shipment_id AS shipment_id,
+                            shipment_air_freight_services.origin_country_id AS origin_country_id,
+                            shipment_air_freight_services.destination_airport_id AS destination_airport_id,
+                            shipment_air_freight_services.destination_country_id AS destination_country_id,
+                            shipment_air_freight_services.operation_type AS operation_type,
+                            shipment_air_freight_services.weight AS weight,
+                            shipment_air_freight_services.commodity AS commodity,
+                            shipment_collection_parties.invoice_date AS invoice_date,
+                            line_item ->> 'price' AS price,
+                            line_item ->> 'currency' AS currency,
+                            shipment_air_freight_services.airline_id AS airline_id,
+                            ROW_NUMBER() OVER (PARTITION BY shipment_air_freight_services.shipment_id ORDER BY shipment_air_freight_services.shipment_id) AS rn
+                        FROM
+                            shipment_collection_parties
+                            INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
+                            CROSS JOIN jsonb_array_elements(line_items) AS line_item
+                        WHERE
+                            shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
+                            AND shipment_air_freight_services.origin_{}_id = %s
+                            AND shipment_air_freight_services.destination_{}_id = %s
+                            AND shipment_collection_parties.status IN ('locked', 'coe_approved', 'finance_rejected')
+                            AND line_item ->> 'code' = 'BAS' and line_item->>'unit' = 'per_kg' and shipment_air_freight_services.operation_type ='passenger'
+                            AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
+                    )
+                    SELECT 
+                    cte.origin_airport_id as origin_airport_id,
+                    cte.origin_country_id as origin_country_id,
+                    cte.destination_airport_id as destination_airport_id,
+                    cte.destination_country_id as destination_country_id,
+                    cte.operation_type as operation_type,
+                    cte.weight as weight,
+                    cte.commodity as commodity,
+                    cte.price as price,
+                    cte.currency as currency,
+                    cte.airline_id as airline_id,
+                    cte.invoice_date as invoice_date
+                    FROM cte
+                    WHERE shipment_id NOT IN (SELECT shipment_id FROM cte WHERE rn > 1) and cte.commodity= 'general'
+                    ORDER BY shipment_id;
+                                """.format(location_type,location_type)
                     cur.execute(sql_query,(origin_location_id,destination_location_id))
                     result = cur.fetchall()
                     cur.close()
-
                 for res in result:
 
                     new_obj = {
-                        "origin_airport_id": str(res[0]),
+                        "origin_airport_id": str(res[0]),   
                         "origin_country_id": str(res[1]),
                         "destination_airport_id": str(res[2]),
                         "destination_country_id": str(res[3]),
                         "operation_type":res[4],
-                        "weight":res[5],
+                        "weight":float(res[5]),
                         "commodity":res[6],
                         "price":str(res[7]),
                         "currency":str(res[8]),
-                        "airline_id":str(res[9])
+                        "airline_id":str(res[9]),
+                        "invoice_date":res[10]
                     }
 
                     all_results.append(new_obj)
@@ -342,7 +371,7 @@ def get_past_invoices(origin_location_id,destination_location_id,location_type):
             return all_results
         except Exception as e:
             # sentry_sdk.capture_exception(e)
-            return result
+            return all_results
         
 def get_invoices():
         all_result =[]
@@ -363,8 +392,8 @@ def get_invoices():
                         inner join shipment_air_freight_services on shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
                         cross join jsonb_array_elements(line_items) as line_item
                         where 
-                         shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') and  line_item ->> 'code' = 'BAS' and
-                        invoice_type in ('purchase_invoice', 'proforma_invoice')
+                        shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') and  line_item ->> 'code' = 'BAS' and
+                        invoice_type in ('purchase_invoice', 'proforma_invoice') and shipment_collection_parties.invoice_date = now()::date -3
                         """
                     cur.execute(sql_query)
                     result = cur.fetchall()
@@ -377,7 +406,7 @@ def get_invoices():
                         "destination_airport_id": str(res[2]),
                         "destination_country_id": str(res[3]),
                         "operation_type":res[4],
-                        "weight":res[5],
+                        "weight":float(res[5]),
                         "commodity":res[6],
                         "price":str(res[7]),
                         "currency":str(res[8]),

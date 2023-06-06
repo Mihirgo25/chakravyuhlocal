@@ -10,11 +10,11 @@ class AirFreightVyuh():
         OPERATION_TYPES = ["passenger","freighter"]
         extended_rates = []
 
-        rate = self.rate
         factor = 2
         for handling_type in HANDLING_TYPES:
             for packing_type in PACKING_TYPES:
                 for operation_type in OPERATION_TYPES:
+                    rate = self.rate
                     rate['handling_type'] = handling_type
                     rate['packing_type'] = packing_type
                     rate['operation_type'] = operation_type
@@ -36,9 +36,8 @@ class AirFreightVyuh():
     def get_weight_slabs(self,weight_slabs,factor):
 
         new_weight_slabs = []
-
         for weight_slab in weight_slabs:
-            weight_slab['tariff_price'] = weight_slab['tariff_price']*factor
+            weight_slab['tariff_price'] = weight_slab['tariff_price']
             new_weight_slabs.append(weight_slab)
         
-        return new_weight_slabs
+        return jsonable_encoder(new_weight_slabs)
