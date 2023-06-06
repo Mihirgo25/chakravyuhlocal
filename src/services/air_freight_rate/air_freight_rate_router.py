@@ -15,7 +15,6 @@ from datetime import datetime,timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
- 
 
 from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
@@ -41,6 +40,7 @@ from services.air_freight_rate.interaction.list_air_freight_rate_feedbacks impor
 from services.air_freight_rate.interaction.list_air_freight_rate_requests import list_air_freight_rate_requests
 from services.air_freight_rate.interaction.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
 from services.air_freight_rate.interaction.list_air_freight_charge_codes import list_air_freight_charge_codes
+from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
 
 air_freight_router = APIRouter()
 
@@ -611,3 +611,23 @@ def get_air_freight_rate_suggestions_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+
+@air_freight_router.post("/update_air_freight_rate_markup")
+def update_air_freight_rate_markup_data(request:UpdateAirFreightRateMarkUp,resp:dict=Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        
+    try:
+        data = update_air_freight_rate_markup(request.dict(exclude_none=True))
+
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+

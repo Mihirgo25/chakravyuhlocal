@@ -347,3 +347,15 @@ class UpdateAirFreightStorageRates(BaseModel):
     bulk_operation_id:str=None
     free_limit:int=None
     slabs:list[Slab]=[]
+
+
+class UpdateAirFreightRateMarkUp(BaseModel):
+    id :str
+    performed_by_id:str
+    bulk_operation_id:str=None
+    validity_id:str=None
+    validity_start:datetime=None
+    validity_end:datetime=None
+
+
+
