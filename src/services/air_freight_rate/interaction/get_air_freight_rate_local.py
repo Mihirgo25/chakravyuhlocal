@@ -5,7 +5,6 @@ def get_air_freight_rate_local(request):
     details={}
     if all_fields_present(request):
         object = find_object(request)
-        print(112)
         if object:
           details = object.detail()
          

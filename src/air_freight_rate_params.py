@@ -126,7 +126,26 @@ class CreateAirFreightRateSurcharge(BaseModel):
     bulk_operation_id:str=None
     rate_sheet_id:str=None
     line_items: list[LineItem]
+class AirSlabsStorage(BaseModel):
+    lower_limit:float
+    upper_limit:float
+    price:float
+    currency:str
 
+    
+class CreateAirFreightRateStorage(BaseModel):
+    rate_sheet_id:str=None
+    performed_by_id:str
+    procured_by_id:str
+    sourced_by_id:str
+    airport_id:str
+    airline_id:str
+    trade_type:str
+    commodity:str
+    service_provider_id:str
+    free_limit:int
+    remarks:list[str]=None
+    slabs:list[AirSlabsStorage]=None
 
 
 class CreateAirFreightRateLocal(BaseModel):
