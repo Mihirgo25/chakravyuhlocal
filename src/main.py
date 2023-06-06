@@ -20,7 +20,6 @@ from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
-
 from micro_services.client import *
 
 sentry_sdk.init(
@@ -90,6 +89,10 @@ if APP_ENV != "production":
 def startup():
     if db.is_closed():
         db.connect()
+    # insert_wagon_type()
+    # insert_dbcargo_rates()
+    # insert_france_germany_rates()
+    # create_rail_haulage_rates()
     # insert()
     # insert_china()
     # run_migration()

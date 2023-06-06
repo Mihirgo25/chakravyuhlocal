@@ -31,18 +31,22 @@ def get_ftl_freight_rates(
     destination_location_id: str = None,
     trip_type: str = "one_way",
     truck_type: str = None,
-    commodity_type: str = None,
-    commodity_weight: float = None,
+    commodity: str = None,
+    weight: str = None,
     truck_body_type: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp['status_code'] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    if weight:
+        weight = float(weight)
+        
     data = get_ftl_freight_rate(
         origin_location_id,
         destination_location_id,
-        commodity_type,
-        commodity_weight,
+        commodity,
+        weight,
         truck_type,
         truck_body_type,
         trip_type,
