@@ -1,5 +1,4 @@
 const sendRatesToRMS = async (data={})=> {
-  console.log(data)
   const url = 'http://localhost:8000/fcl_freight_rate/create_freight_look_rates'
   const response = await fetch(url, {
     method: "POST",
@@ -8,8 +7,7 @@ const sendRatesToRMS = async (data={})=> {
     },
     body: JSON.stringify(data)
   });
-  const jsonData = await response.json();
-  console.log(jsonData);
+  await response.json();
 }
 
 const getFromWebPage = async () => {
@@ -20,9 +18,17 @@ const getFromWebPage = async () => {
 }
 
 const getRates = async ()=> {
-  const response = await getFromWebPage()
-  console.log(response)
-  await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination })
+  const statusEle = document.getElementById('status')
+  statusEle.innerText = 'Adding Rates Please wait....'
+  try {
+    const response = await getFromWebPage()
+    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination })
+    statusEle.style.color = 'green'
+    statusEle.innerText = 'Rates Added Successfully....'
+  } catch(err){
+    statusEle.style.color = 'red'
+    statusEle.innerText = 'Some Error Occured Please try again after sometime....'
+  }
 }
 
 document.getElementById("getrates").addEventListener("click", getRates);

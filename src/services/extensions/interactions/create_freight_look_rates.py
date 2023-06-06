@@ -1,17 +1,18 @@
 from datetime import datetime, timedelta
 from micro_services.client import common, maps
 from configs.global_constants import DEFAULT_AIRLINE_ID, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
+from services.extensions.constants.general import commodity_mappings, commodity_type_mappings
 
 airline_hash = {}
 
 def create_weight_slabs(rate):
     currency = rate['Crny'] or 'INR'
-    rate['NORMAL'] = float(rate['NORMAL'].strip() or 0) or ''
-    rate['+45'] = float(rate['+45'].strip() or 0) or ''
-    rate['+100'] = float(rate['+100'].strip() or 0) or ''
-    rate['+250'] = float(rate['+250'].strip() or 0) or ''
-    rate['+300'] = float(rate['+300'].strip() or 0) or ''
-    rate['+500'] = float(rate['+500'].strip() or 0) or ''
+    rate['NORMAL'] = float(rate.get('NORMAL').strip() or 0) or ''
+    rate['+45'] = float((rate.get('+45') or '').strip() or 0) or ''
+    rate['+100'] = float((rate.get('+100') or '').strip() or 0) or ''
+    rate['+250'] = float((rate.get('+250') or '').strip() or 0) or ''
+    rate['+300'] = float((rate.get('+300') or '').strip() or 0) or ''
+    rate['+500'] = float((rate.get('+500') or '').strip() or 0) or ''
 
     price_0_45 = rate['NORMAL'] or rate['+45'] or rate['+100'] or rate['+250']
     price_45_100 = rate['+45'] or rate['+100'] or rate['+250'] or rate['+300']
@@ -70,13 +71,17 @@ def format_air_freight_rate(rate, locations):
     minimum_rate = 0
     if rate['MIN.'].strip():
         minimum_rate = float(rate['MIN.'].strip())
+    commodity = commodity_mappings.get((rate['SCR'] or '').strip())
+    commodity_type = commodity_type_mappings.get((rate['SCR'] or '').strip())
+    if not commodity or not commodity_type:
+        return None
     rate_obj = {
         'origin_airport_id': locations[rate['Loc .']]['id'],
         'destination_airport_id': rate['destination_airport_id'],
         'weight_slabs': weight_slabs,
         'min_price': minimum_rate,
-        'commodity': 'general',
-        'commodity_type': 'all',
+        'commodity': commodity,
+        'commodity_type': commodity_type,
         'commodity_sub_type': None,
         'operation_type': 'passenger',
         'currency': weight_slabs[0]['currency'],
@@ -131,6 +136,8 @@ def create_air_freight_rate_api(rate, locations):
         airline_id = airline['id']
 
     rate_obj = format_air_freight_rate(rate=rate, locations=locations)
+    if not rate_obj:
+        return rate
     rate_obj['airline_id'] = airline_id
     res = common.create_air_freight_rate(rate_obj)
     return res
@@ -152,6 +159,7 @@ def get_locations(destination, all_port_codes: list = []):
 
 
 def create_freight_look_rates(request):
+    from celery_worker import process_freight_look_rates
     rates = request['rates']
     destination = request.get('destination')
     new_rates = rates
@@ -172,12 +180,13 @@ def create_freight_look_rates(request):
 
     locations = get_locations(destination, all_port_codes=all_port_codes)
 
-    all_rates = []
-
     for rate in proper_json_rates:
-        if rate['SCR'] == 'Dimension':
-            rate['destination_airport_id'] = locations[destination_port_code]['id']
-            new_rate = create_air_freight_rate_api(rate=rate, locations=locations)
-            all_rates.append(new_rate)
+        rate['destination_airport_id'] = locations[destination_port_code]['id']
+        try:
+            process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
+            # new_rate = create_air_freight_rate_api(rate=rate, locations=locations)
+        except Exception as e:
+            print(e)
+        
 
-    return all_rates
+    return True
