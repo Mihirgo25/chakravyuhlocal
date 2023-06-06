@@ -11,7 +11,7 @@ class EUFtlFreightRateEstimator:
         self.path_data = path_data
 
     def estimate(self):
-        currency = 'EUR'
+        currency = 'USD'
         total_path_distance = self.path_data['distance']
         trip_duration = self.path_data['time']
         truck_mileage = self.truck_and_commodity_data['mileage']
@@ -35,13 +35,20 @@ class EUFtlFreightRateEstimator:
                     # constants
                     basic_freight_charges += float(data['process_value'])
 
+        result = {}
+        result['currency']  = currency
+        result["base_rate"] = round(basic_freight_charges,4)
+        result["distance"] = total_path_distance
+        result["trip_duration"] = trip_duration
+        return result
+
 
     def get_applicable_rule_set(self):
         truck_type = self.truck_and_commodity_data["truck_type"]
-        location_ids = list(set([self.location_data_mapping[self.origin_location_id]['country_id'],self.location_data_mapping[self.destination_location_id]['country_id']]))
+        location_ids = list(set([self.location_data_mapping[self.origin_location_id]['continent_id'],self.location_data_mapping[self.destination_location_id]['continent_id']]))
         ftl_freight_rate_rule_set = FtlFreightRateRuleSet.select(FtlFreightRateRuleSet.process_unit,FtlFreightRateRuleSet.process_type,FtlFreightRateRuleSet.process_value,FtlFreightRateRuleSet.process_currency).where(
                 FtlFreightRateRuleSet.location_id << (location_ids),
-                FtlFreightRateRuleSet.location_type == "country",
+                FtlFreightRateRuleSet.location_type == "continent",
                 FtlFreightRateRuleSet.truck_type == truck_type,
                 FtlFreightRateRuleSet.status == 'active'
             )

@@ -20,10 +20,11 @@ class FtlFreightEstimator:
             price = estimator.estimate()
             return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'] }]}
         elif country_category == 'EU':
-            average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','INR')
+            # average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','INR')
+            average_fuel_price = 1.5
             estimator = EUFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
-            return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'] }]}
+            return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'],'trip_duration':price['trip_duration'] }]}
 
     def get_path_from_valhala(self):
         origin_location_id  = self.origin_location_id
@@ -62,6 +63,11 @@ class FtlFreightEstimator:
     def get_country_code(self):
         origin_country_code = self.location_data_mapping[self.origin_location_id]['country_code']
         destination_country_code = self.location_data_mapping[self.destination_location_id]['country_code']
+
+        origin_continent_id = self.location_data_mapping[self.origin_location_id]['continent_id']
+        destination_continent_id = self.location_data_mapping[self.destination_location_id]['continent_id']
         if origin_country_code == 'IN' and destination_country_code == 'IN':
             return 'IN'
+        elif origin_continent_id == '72abc4ba-6368-4501-9a86-8065f5c191f8' and destination_continent_id == '72abc4ba-6368-4501-9a86-8065f5c191f8':
+            return 'EU'
         return 'not_found'
