@@ -1,5 +1,5 @@
 const sendRatesToRMS = async (data={})=> {
-  const url = 'http://localhost:8000/fcl_freight_rate/create_freight_look_rates'
+  const url = 'https://api.cogoport.com/fcl_freight_rate/create_freight_look_rates'
   const response = await fetch(url, {
     method: "POST",
     headers: {
