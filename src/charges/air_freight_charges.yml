@@ -13,6 +13,6 @@ AHFR:
 BASNO:
   name: "No Tax (BAS) - HUMAN REMAINS"
   units: [ 'per_kg' ]
-  condition: commodity == "special_consideration" && commodity_type == "other_special" && commodity_sub_type == "others"
+  condition: '((commodity == "special_consideration") and (commodity_type == "other_special") and (commodity_sub_type == "others"))'
   tags: ['additional_service']
   sac_code: '996531'
