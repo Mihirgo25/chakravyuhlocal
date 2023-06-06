@@ -47,7 +47,7 @@ app.include_router(prefix="/fcl_freight_rate", router=trailer_router)
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
 app.include_router(prefix="/fcl_freight_rate", router=ftl_freight_router)
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
-app.include_router(prefix = "/fcl_freight_rate", router=fcl_customs_router)
+app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router)
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_cfs_router)
 
 

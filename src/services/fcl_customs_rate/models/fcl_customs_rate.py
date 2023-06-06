@@ -152,7 +152,7 @@ class FclCustomsRate(BaseModel):
     def validate_duplicate_line_items(self):
         unique_items = set()
         for customs_line_item in self.customs_line_items:
-            unique_items.add(str(customs_line_item['code']).upper() + str(customs_line_item['location_id']))
+            unique_items.add(str(customs_line_item['code']).upper() + str(customs_line_item.get('location_id') or ''))
 
         if len(self.customs_line_items) != len(unique_items):
             raise HTTPException(status_code=400, detail="Contains Duplicates")

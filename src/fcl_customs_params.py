@@ -24,6 +24,7 @@ class CreateFclCustomsRate(BaseModel):
   procured_by_id: str
   importer_exporter_id: str = None
   customs_line_items: List[FclCustomsLineItems] = None
+  cfs_line_items: List[FclCustomsLineItems] = None
   performed_by_type: str
 
 class DeleteRate(BaseModel):

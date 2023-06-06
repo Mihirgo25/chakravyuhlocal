@@ -2,6 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
+from math import ceil
 
 possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id']
 
@@ -22,13 +23,26 @@ def list_fcl_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
         return {'list': query} 
     
     data = get_data(query)
-  
-    return {'list': data } 
+    if pagination_data_required:
+        pagination_data = get_pagination_data(query, page, page_limit)
+        return {'list': data } | (pagination_data)
+    
+    return {'list': data }
 
 def get_query(sort_by, sort_type, page, page_limit):
   query = FclCustomsRate.select().order_by(eval('FclCustomsRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
   return query
   
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
+    pagination_data = {
+        'page': page,
+        'total': ceil(total_count/page_limit),
+        'total_count': total_count,
+        'page_limit': page_limit
+        }
+    return pagination_data
+
 def get_data(query):
     data = list(query.dicts())
 

@@ -60,11 +60,11 @@ def apply_supply_agent_id_filter(query, filters):
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(FclCustomsRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+    query = query.where(FclCustomsRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than'][:-5]).date())
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(FclCustomsRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
+    query = query.where(FclCustomsRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'][:-5]).date())
     return query
 
 def apply_similar_id_filter(query, filters):
