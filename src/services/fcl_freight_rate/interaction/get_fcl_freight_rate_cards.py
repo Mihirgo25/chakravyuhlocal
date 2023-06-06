@@ -65,6 +65,8 @@ def initialize_freight_query(requirements, prediction_required = False):
 
     if not prediction_required:
         freight_query  = freight_query.where(((FclFreightRate.mode != 'predicted') | (FclFreightRate.mode.is_null(True))))
+    else:
+        freight_query  = freight_query.where(FclFreightRate.mode == 'predicted')
 
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])

@@ -1,6 +1,6 @@
 from peewee import *
 from playhouse.postgres_ext import *
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
+from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
 from services.envision.interaction.get_haulage_freight_predicted_rate import fuel_consumption
 from database.db_session import db
 from micro_services.client import maps
@@ -17,10 +17,10 @@ class INTrailerRateEstimator():
         self.country_code = country_code
 
     def constants_cost(self,distance):
-        constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == "IN"),
-                    (TrailerFreightRateCharges.status == 'active')
-                    ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
+        constants = TrailerFreightRateEstimatorConstant.select().where(
+                    (TrailerFreightRateEstimatorConstant.country_code == "IN"),
+                    (TrailerFreightRateEstimatorConstant.status == 'active')
+                    ).order_by(TrailerFreightRateEstimatorConstant.created_at.desc()).first()
         constants_data = model_to_dict(constants)
 
         handling_rate = constants_data.get('handling')
