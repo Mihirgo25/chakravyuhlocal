@@ -47,9 +47,9 @@ def get_truck_and_commodity_data(truck_type, weight,country_id,trip_type,commodi
             if truck_data["weight"] >= weight:
                 closest_truck_type = truck_type
                 break
-    truck_data = list_trucks_data(filters, sort_by='capacity',sort_type='asc')['list']
-    if truck_data:
-        truck_details = truck_data[0]
+    trucks_data = list_trucks_data(filters, sort_by='capacity',sort_type='asc')['list']
+    if trucks_data:
+        truck_details = trucks_data[0]
     else:
         raise HTTPException(status_code=400, detail="Truck data for these parameters are not available")
     data['truck_body_type'] = truck_body_type or truck_details['body_type']
