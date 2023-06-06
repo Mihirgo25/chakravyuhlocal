@@ -294,70 +294,6 @@ def get_ff_mlo():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return result
-
-def get_cost_booking_data(transform_params):
-    all_result = []
-    try:
-        conn = get_connection()
-        with conn:
-            with conn.cursor() as cur:
-                sql = '''
-                SELECT
-                    shipment_fcl_freight_services.origin_port_id,
-                    shipment_fcl_freight_services.origin_country_id,
-                    shipment_fcl_freight_services.origin_trade_id,
-                    shipment_fcl_freight_services.destination_port_id,
-                    shipment_fcl_freight_services.destination_country_id,
-                    shipment_fcl_freight_services.destination_trade_id,
-                    shipment_fcl_freight_services.container_size,
-                    shipment_fcl_freight_services.container_type,
-                    shipment_collection_parties.line_items,
-                    shipment_fcl_freight_services.containers_count,
-                    shipment_fcl_freight_services.shipping_line_id,
-                    shipment_fcl_freight_services.commodity,
-                    shipment_fcl_freight_services.id
-                FROM
-                    shipment_collection_parties
-                INNER JOIN
-                    shipment_fcl_freight_services ON shipment_collection_parties.shipment_id = shipment_fcl_freight_services.shipment_id
-                CROSS JOIN
-                    jsonb_array_elements(line_items) AS line_item
-                WHERE
-                    line_item ->> 'code' = 'BAS'
-                    AND shipment_collection_parties.invoice_date > now()::date - interval '1 day'
-                    AND shipment_collection_parties.status in ('locked','coe_approved')
-                    AND line_item ->> 'unit' = 'per_container'
-                '''
-                search_query  = "AND shipment_fcl_freight_services.origin_{}_id = '{}' AND shipment_fcl_freight_services.destination_{}_id = '{}'".format(transform_params.get('location_type'), transform_params.get('origin_location_id'),transform_params.get('location_type'), transform_params.get('destination_location_id'))
-                sql += search_query
-
-                cur.execute(sql)
-                result = cur.fetchall()
-                for res in result:
-                    new_obj = {
-                        "origin_port_id": str(res[0]),
-                        "origin_country_id": str(res[1]),
-                        "origin_trade_id": str(res[2]),
-                        "destination_port_id": str(res[3]),
-                        "destination_country_id": str(res[4]),
-                        "destination_trade_id": str(res[5]),
-                        "container_size":res[6],
-                        "container_type":res[7],
-                        "line_items":res[8],
-                        "containers_count":str(res[9]),
-                        "shipping_line_id":str(res[10]),
-                        "commodity":str(res[11]),
-                        "id":str(res[12]),
-                    }
-                    all_result.append(new_obj)
-                cur.close()
-
-        conn.close()
-        return all_result 
-
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return all_result
     
 
 def get_past_cost_booking_data():
@@ -389,10 +325,10 @@ def get_past_cost_booking_data():
                 CROSS JOIN
                     jsonb_array_elements(line_items) AS line_item
                 WHERE
-                    line_item ->> 'code' = 'BAS'
+                    line_item ->> 'code' = 'BAS' 
                     AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
                     AND shipment_collection_parties.status in ('locked','coe_approved')
-                    AND line_item ->> 'unit' = 'per_container'
+                    AND line_item ->> 'unit' = 'per_container';
                 '''
                 cur.execute(sql)
                 result = cur.fetchall()
