@@ -199,52 +199,53 @@ def create_func(idx, row):
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
     from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
     id = str(row['rate_id'])
-    price = float(row['price'])
+    price = float(row['Price'])
     rate = FclFreightRate.select().where(FclFreightRate.id == id).first()
     if not rate:
         print('not_found')
         return
     create_rate = True
     validities = rate.validities
-    validity_end = validities[-1]['validity_end']
-    for validity in validities:
-        validity['validity_start'] = '2023-05-25'
-        if validity['validity_start'] >= validity['validity_end']:
-            print('__|__')
-            create_rate = False
-            continue
-        for item in validity['line_items']:
-            if item['code'] == 'BAS':
-                item['price'] = price
-                validity['price'] = price
-                validity['platform_price'] = price
+    if len(validities):
+        validity_end = validities[-1]['validity_end']
+        validity_start = validities[-1]['validity_start']
+        for validity in validities:
+            if validity['validity_start'] >= validity['validity_end']:
+                print('__|__')
+                create_rate = False
+                continue
+            for item in validity['line_items']:
+                if item['code'] == 'BAS':
+                    item['price'] = price
+                    validity['price'] = price
+                    validity['platform_price'] = price
+        
+        if not create_rate:
+            return
+                    
+        rate.validities = validities
+        rate.save()
+        # rate.set_platform_prices()
+        
+        data = {
+            'validity_end': validity_end,
+            'validity_start': validity_start,
+            'line_items': validities[-1]['line_items'],
+            'weight_limit': rate.weight_limit,
+            'origin_local': rate.origin_local,
+            'destination_local': rate.destination_local,
+            'source': 'gri'
+        }
     
-    if not create_rate:
-        return
-                
-    rate.validities = validities
-    rate.save()
-    rate.set_platform_prices()
-    
-    data = {
-        'validity_end': validity_end,
-        'validity_start': '2023-05-25',
-        'line_items': validities[-1]['line_items'],
-        'weight_limit': rate.weight_limit,
-        'origin_local': rate.origin_local,
-        'destination_local': rate.destination_local,
-        'source': 'rate_extension'
-    }
-
-    id = FclFreightRateAudit.create(
-        action_name="create",
-        performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
-        data=data,
-        object_id=id,
-        object_type="FclFreightRate",
-        source='rate_extension',
-    )
-    print(idx)
+        id = FclFreightRateAudit.create(
+            action_name="create",
+            performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
+            data=data,
+            object_id=id,
+            object_type="FclFreightRate",
+            source='gri',
+        )
+        print(idx)
     
         
         
