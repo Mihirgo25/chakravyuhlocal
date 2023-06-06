@@ -11,6 +11,7 @@ class LoadYmls():
     AIR_FREIGHT_CHARGES=None
     AIR_FREIGHT_LOCAL_CHARGES = None
     AIR_FREIGHT_SURCHARGES = None
+    AIR_FREIGHT_WAREHOUSE_CHARGES=None
     
     def __init__(self):
         self.FCL_FREIGHT_CHARGES = self.load_ymls(os.path.join(ROOT_DIR, "charges", "fcl_freight_charges.yml"))
@@ -20,6 +21,7 @@ class LoadYmls():
         self.AIR_FREIGHT_CHARGES=self.load_ymls(os.path.join(ROOT_DIR,"charges","air_freight_charges.yml"))
         self.AIR_FREIGHT_LOCAL_CHARGES=self.load_ymls(os.path.join(ROOT_DIR,"charges","air_freight_local_charges.yml"))
         self.AIR_FREIGHT_SURCHARGES = self.load_ymls(os.path.join(ROOT_DIR,"charges","air_freight_surcharges.yml"))
+        self.AIR_FREIGHT_WAREHOUSE_CHARGES=self.load_ymls(os.path.join(ROOT_DIR,"charges","air_freight_warehouse_charges.yml"))
 
     def load_ymls(self, file):
         with open(file, 'r') as f:
@@ -35,5 +37,6 @@ FCL_FREIGHT_SEASONAL_CHARGES = yml_obj.FCL_FREIGHT_SEASONAL_CHARGES
 AIR_FREIGHT_CHARGES=yml_obj.AIR_FREIGHT_CHARGES
 AIR_FREIGHT_LOCAL_CHARGES=yml_obj.AIR_FREIGHT_LOCAL_CHARGES
 AIR_FREIGHT_SURCHARGES= yml_obj.AIR_FREIGHT_SURCHARGES
+AIR_FREIGHT_WAREHOUSE_CHARGES=yml_obj.AIR_FREIGHT_WAREHOUSE_CHARGES
 
     

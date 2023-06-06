@@ -20,6 +20,7 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
+from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
 
 # Rate Producers
 
@@ -388,6 +389,15 @@ def update_fcl_freight_rate_request_in_delay(self, request):
 def process_fuel_data_delay(self):
     try:
         fuel_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_air_freight_rate_request_in_delay(self, request):
+    try:
+        update_air_freight_rate_request(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

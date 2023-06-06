@@ -1,5 +1,7 @@
 from database.db_session import db
 from fastapi import HTTPException
+from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
 from services.air_freight_rate.models.air_freight_rate_storage import AirFreightStorageRates 
 def create_air_freight_storage_rate(request):
     with db.atomic():
@@ -29,8 +31,8 @@ def execute_transaction_code(request):
     object.remarks = request.get('remarks')
     object.free_limit = request.get('free_limit')
 
-    # try:
-    object.save()
-    # except:
-    #     raise HTTPException(status_code = 404,detail = 'Error in Saving Object')
+    try:
+        object.save()
+    except:
+        raise HTTPException(status_code = 404,details = 'Error in Saving Object')
     

@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from micro_services.client import *
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
-# from configs.global_constants import COUNTRY_CODES_MAPPING
+from configs.global_constants import COUNTRY_CODE_MAPPING
 import services.ftl_freight_rate.scheduler.fuel_scheduler as fuel_schedulers
 
 
@@ -33,7 +33,7 @@ def process_fuel_data(list_fuel_data, country):
             if start_index + batch_size <= num_batches
             else num_batches
         )
-        country_code = COUNTRY_CODES_MAPPING[country]
+        country_code = COUNTRY_CODE_MAPPING[country]
         if start_index<end_index:
             for fuel_data in list_fuel_data[start_index:end_index]:
                 input = {

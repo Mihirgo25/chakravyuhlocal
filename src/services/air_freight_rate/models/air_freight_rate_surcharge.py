@@ -2,17 +2,15 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from air_freight_rate_params import LineItem
 from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
-
+from celery_worker import get_multiple_service_objects
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
 class BaseModel(Model):
-    line_items: list[LineItem] = []
     class Meta:
         database = db
         only_save_dirty = True
@@ -120,6 +118,8 @@ class AirFreightRateSurcharge(BaseModel):
         
     
     def update_freight_objects(self):
+        from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+
         AirFreightRate.update(surcharge_id=self.id).where(
             (AirFreightRate.origin_airport_id == self.origin_airport_id),
             (AirFreightRate.destination_airport_id == self.destination_airport_id),
@@ -201,6 +201,10 @@ class AirFreightRateSurcharge(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
+    
+    def add_service_objects(response):
+        service_objects=get_multiple_service_objects(response)
+
 
 
 

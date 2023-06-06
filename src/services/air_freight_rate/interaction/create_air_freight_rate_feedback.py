@@ -25,7 +25,9 @@ def create_air_freight_rate_feeback(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
-    rate=AirFreightRate.select().where(AirFreightRate.id==request.get(['id'])).first()
+    print(request['rate_id'])
+    rate=AirFreightRate.select().where(AirFreightRate.id==request['rate_id']).first()
+    print(rate)
 
     if not rate:
         raise HTTPException (status_code=500, detail='id is invalid')
@@ -48,9 +50,12 @@ def execute_transaction_code(request):
         AirFreightRateFeedbacks.performed_by_type==request.get('performed_by_type'),
         AirFreightRateFeedbacks.performed_by_org_id==request.get('performed_by_org_id')
     ).first()
+    print(feedback)
 
     if not feedback:
         feedback=AirFreightRateFeedbacks(**row)
+
+    print(feedback)
 
     create_params =get_create_params(request)
 
@@ -62,12 +67,14 @@ def execute_transaction_code(request):
             setattr(feedback,attr,ids)
         else:
             setattr(feedback,attr,value)
+
+    print(feedback)
     
-    try:
-        if feedback.validate_before_save():
+    # try:
+    if feedback.validate_before_save():
             feedback.save()
-    except:
-        raise  HTTPException(status_code= 400, detail="couldnt validate the object")
+    # except:
+    #     raise  HTTPException(status_code= 400, detail="couldnt validate the object")
 
     create_audit(request,feedback)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
