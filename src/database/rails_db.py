@@ -325,9 +325,10 @@ def get_past_cost_booking_data():
                 CROSS JOIN
                     jsonb_array_elements(line_items) AS line_item
                 WHERE
-                    line_item ->> 'code' = 'BAS' 
+                    line_item ->> 'code' = 'BAS'
+                    AND line_item->> 'currency'='USD'
                     AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
-                    AND shipment_collection_parties.status in ('locked','coe_approved')
+                    AND shipment_collection_parties.status in ('coe_approved')
                     AND line_item ->> 'unit' = 'per_container';
                 '''
                 cur.execute(sql)

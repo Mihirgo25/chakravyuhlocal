@@ -13,8 +13,8 @@ class FclBookingVyuh():
                 new_rate: dict = {}, 
                 what_to_create: dict = {
                 'seaport': True,
-                'country': False,
-                'trade': False
+                'country': True,
+                'trade': True
                 }
             ):
         self.new_rate = jsonable_encoder(new_rate)
@@ -149,13 +149,18 @@ class FclBookingVyuh():
 
         all_prices=[]
 
+        price=0
         for item in self.new_rate['line_items']:
-            if item['code']=='BAS':
                 price=item['price']
+                
+        if price>10000:
+            price=price/float(self.new_rate['containers_count'])
 
+        
         if line_item['currency']!=self.target_currency:
             price = common.get_money_exchange_for_fcl({"price": price, "from_currency": line_item['currency'], "to_currency": self.target_currency })['price']
         all_prices.append(price)
+
 
         size = len(all_prices)
         mean = sum(all_prices) / size
@@ -216,7 +221,19 @@ class FclBookingVyuh():
 
         if new or derived:
             line_items = self.new_rate['line_items'] or []
-        
+            max_bas_price = None
+            max_bas_index = None
+
+            for i, d in enumerate(line_items):
+                if d["code"] == "BAS":
+                    if max_bas_price is None or d["price"] > max_bas_price:
+                        max_bas_price = d["price"]
+                        max_bas_index = i
+
+            max_line_item=line_item[max_bas_index]
+            line_items=[]
+            line_items=max_line_item
+            
 
         for line_item in line_items:
             if line_item['code'] == 'BAS':
@@ -306,8 +323,9 @@ class FclBookingVyuh():
         for affected_transformation in affected_transformations:
             if self.what_to_create[affected_transformation['origin_location_type']]:
                 # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
-                adjust_cost_booking_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
+                adjust_cost_booking_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate,'affected_transformation': affected_transformation, 'new': False }, queue='low')
                 
         for new_transformation in new_transformations_to_add:
-            self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
+            adjust_cost_booking_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'affected_transformation': new_transformation, 'new': True }, queue='low')
+       
         return True
