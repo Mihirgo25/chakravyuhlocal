@@ -253,9 +253,9 @@ class UpdateAirFreightRateTask(BaseModel):
 
 class CreateAirFreightRateFeedbacks(BaseModel):
   source: str
-  source_id: str
+  source_id: str=None
   performed_by_id: str = None
-  performed_by_org_id: str
+  performed_by_org_id: str=None
   performed_by_type: str = None
   rate_id: str
   validity_id: str
@@ -266,23 +266,22 @@ class CreateAirFreightRateFeedbacks(BaseModel):
   preferred_freight_rate: float = None
   preferred_freight_rate_currency: str = None
   preferred_airline_ids: list[str] = []
+  preferred_storage_free_days:int=None
   feedback_type: str
   booking_params: dict = {}
-  cogo_entity_id: str = None
-  origin_port_id: str = None
-  origin_trade_id: str = None
-  origin_country_id: str = None
-  origin_continent_id: str = None
-  destination_port_id: str = None
-  destination_continent_id: str = None
-  destination_trade_id: str = None
-  destination_country_id: str = None
-  commodity: str = None
-  container_size: str = None
-  container_type: str = None
-  service_provider_id: str = None
-  attachment_file_urls: List[str] =[]
-  commodity_description:str=None
+  trade_type:str=None
+#   cogo_entity_id: str = None
+#   origin_airport_id: str = None
+#   origin_trade_id: str = None
+#   origin_country_id: str = None
+#   origin_continent_id: str = None
+#   destination_airport_id: str = None
+#   destination_continent_id: str = None
+#   destination_trade_id: str = None
+#   destination_country_id: str = None
+#   commodity: str = None
+#   service_provider_id: str = None
+#   commodity_description:str=None
 
 class CreateAirFreightRateRequest(BaseModel):
   source: str
@@ -346,4 +345,4 @@ class UpdateAirFreightStorageRates(BaseModel):
     performed_by_id:str=None
     bulk_operation_id:str=None
     free_limit:int=None
-    slabs=list[Slab]=[]
+    slabs:list[Slab]=[]

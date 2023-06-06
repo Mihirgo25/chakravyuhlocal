@@ -188,6 +188,7 @@ class AirFreightRateFeedbacks(BaseModel):
         common.create_communication(data)
         
     def validate_trade_type(self):
+        print(self.trade_type)
         if self.trade_type not in ['import' , 'export' , 'domestic']:
             raise HTTPException (status_code=400, detail='invalid trade_type')
         
@@ -216,15 +217,16 @@ class AirFreightRateFeedbacks(BaseModel):
     def validate_preferred_storage_free_days(self):
         if not  self.preferred_storage_free_days >0.0:
             raise HTTPException(status_code=400, detail='freedays should be greater than zero')
-    
+        
     def validate_feedbacks(self):
         for feedback in self.feedbacks:
             if feedback not in POSSIBLE_FEEDBACKS:
                 raise HTTPException(status_code=400,detail='invalid feedback type')
             
+            
     def validate_perform_by_org_id(self):
         performed_by_org_data=get_organization(id=self.performed_by_org_id)
-        if len(performed_by_org_data) >0 and performed_by_org_data['account_type']=='importer_exporter':
+        if len(performed_by_org_data) >=0 and performed_by_org_data['account_type']=='importer_exporter':
             return True
         else:
             raise HTTPException(status_code=400, detail='invalid org id ')
@@ -232,6 +234,7 @@ class AirFreightRateFeedbacks(BaseModel):
     def validate_source(self):
         if self.source and self.source not in FEEDBACK_SOURCES:
             raise HTTPException(status_code=400,detail='invalid feedback source')
+        print("ok")
         
     def validate_source_id(self):
         if self.source =='spot_search':

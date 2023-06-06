@@ -70,6 +70,7 @@ def create_air_freight_rate_task (request):
        
     create_audit(request,task.id)
     update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
+    
 
     return{
         'id':task.id

@@ -47,7 +47,7 @@ FEEDBACK_SOURCES = ['spot_search', 'checkout']
 
 REQUEST_SOURCES = ['spot_search', 'shipment']
 
-FEEDBACK_SOURCES = ['spot_search', 'checkout']
+FEEDBACK_SOURCES = ['spot_search', 'checkout','rate_sheet']
 
 FEEDBACK_TYPES = ['liked', 'disliked']
 
