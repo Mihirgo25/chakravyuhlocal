@@ -255,7 +255,7 @@ def delete_fcl_cfs_rates_requests(request: DeleteFclCfsRateRequest, resp: dict =
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@fcl_cfs_router.post("update_fcl_cfs_platform_price")
+@fcl_cfs_router.post("/update_fcl_cfs_platform_price")
 def update_fcl_cfs_platform_price(request:UpdateFclCfsRatePlatformPrice, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)

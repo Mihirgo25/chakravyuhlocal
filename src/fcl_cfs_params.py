@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from peewee import *
 from typing import List
-from datetime import date
+from datetime import datetime
 
 class Slab(BaseModel):
   lower_limit: float
@@ -48,7 +48,7 @@ class FclCfsRateRequest(BaseModel):
     preferred_rate: str= None
     preferred_rate_currency: str= None
     # preferred_detention_free_days: int= None
-    cargo_readiness_date: date = None
+    cargo_readiness_date: datetime = None
     remarks:list[str] =[]
     booking_params : dict = {}
     container_size: str = None
