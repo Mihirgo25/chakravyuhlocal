@@ -1,12 +1,8 @@
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from micro_services.client import common
-import sentry_sdk
-from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.chakravyuh.models.cost_booking_estimation import CostBookingEstimation
 from services.chakravyuh.models.cost_booking_estimation_audit import CostBookingEstimationAudit
-from database.rails_db import get_ff_mlo
-from configs.transformation_constants import CONTAINR_TYPE_FACTORS, CONTAINER_SIZE_FACTORS
 
 class FclBookingVyuh():
     def __init__(self,
@@ -19,7 +15,6 @@ class FclBookingVyuh():
             ):
         self.new_rate = jsonable_encoder(new_rate)
         self.target_currency = 'USD'
-        self.ff_mlo = get_ff_mlo()
         self.what_to_create = what_to_create
     
     def create_audits(self, data= {}):
