@@ -214,7 +214,6 @@ class FclFreightVyuh():
                 if line_item['code'] == 'BAS' and line_item['price'] < 2000:
                     transformed_line_item = self.default_transformed_lineitem
                     adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
-                    adjusted_lineitem['price']*=1.10
                     new_lineitems.append(adjusted_lineitem)
                 else:
                     new_lineitems.append(line_item)
@@ -261,6 +260,10 @@ class FclFreightVyuh():
             if (not pt['shipping_line_id'] or pt['shipping_line_id'] == rate['shipping_line_id']):
                 rate_specific_transformations.append(pt)
         new_rate = rate
+        if len(probable_booking_data_transformations)>0:
+            new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
+            return new_rate
+        
         if len(rate_specific_transformations) > 0:
             new_rate = self.apply_rate_transformation(rate=rate, probable_transformations=rate_specific_transformations)
         else:
@@ -269,8 +272,6 @@ class FclFreightVyuh():
         if len(probable_customer_transformations) > 0:
             new_rate = self.apply_customer_transformation(rate=new_rate, probable_customer_transformations=probable_customer_transformations)
 
-        if len(probable_booking_data_transformations)>0:
-            new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
         return new_rate
 
     def apply_dynamic_pricing(self):
