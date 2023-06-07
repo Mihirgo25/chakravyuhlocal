@@ -4,7 +4,7 @@ from micro_services.client import common
 # import sentry_sdk
 from services.chakravyuh.models.air_freight_rate_estimation import AirFreightRateEstimation
 from services.chakravyuh.models.air_freight_rate_estimation_audit import AirFreightRateEstimationAudit
-from database.rails_db import get_ff_mlo,get_past_invoices
+from database.rails_db import get_past_air_invoices
 from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from configs.global_constants import DEFAULT_WEIGHT_SLABS
@@ -25,6 +25,7 @@ class AirFreightVyuh():
         self.weight = new_rate['weight']
         self.what_to_create = what_to_create
         self.weight_slabs = []
+        self.months = 3
     
     def create_audits(self, data= {}):
         AirFreightRateEstimationAudit.create(**data)
@@ -118,7 +119,7 @@ class AirFreightVyuh():
         last_2_months=[]
         last_3rdmonth=[]
         for invoice in previous_invoice_rates:
-            if datetime.now().month-invoice['invoice_date'].month> 2:
+            if datetime.now().month - invoice['invoice_date'].month> 2:
                 last_3rdmonth.append(invoice)
             else:
                 last_2_months.append(invoice)
@@ -141,39 +142,82 @@ class AirFreightVyuh():
 
         for index,weight_slab in enumerate(weight_slabs):
             if weight_slabs_dict[index+1]:
-                weight_slabs[index]['tariff_price'] = mean(weight_slabs_dict[index+1])
-            new_weight_slabs.append(weight_slabs[index])
-        return jsonable_encoder(new_weight_slabs)
+                new_weight_slab = jsonable_encoder(weight_slab)
+                new_weight_slab['tariff_price'] = mean(weight_slabs_dict[index+1])
+            new_weight_slabs.append(new_weight_slab)
+
+        return new_weight_slabs
+    
+    def get_final_invoice_prices(self, origin_location_id, destination_location_id, location_type):
+        
+        past_air_invoices = get_past_air_invoices(origin_location_id, destination_location_id, location_type, self.months)
+
+        actual_invoice_data = []
+
+        for past_air_invoice in past_air_invoices:
+            new_past_air_invoice = {
+                "origin_airport_id": past_air_invoice['origin_airport_id'],   
+                "volume": past_air_invoice['volume'],   
+                "is_stackable": past_air_invoice['is_stackable'],      
+                "origin_country_id": past_air_invoice['origin_country_id'],
+                "destination_airport_id": past_air_invoice['destination_airport_id'],
+                "destination_country_id": past_air_invoice['destination_country_id'],
+                "operation_type": past_air_invoice['operation_type'],
+                "weight": past_air_invoice['weight'],
+                "commodity": past_air_invoice['commodity'],
+                "invoice_date": past_air_invoice['invoice_date'],
+                "airline_id": past_air_invoice['airline_id'],
+                'chargeable_weight': past_air_invoice['chargeable_weight']
+            }
+            line_items = past_air_invoice['line_items']
+            actual_lineitem = None
+            bas_count = 0
+            for line_item in line_items:
+                if line_item['code'] == 'BAS' and line_item['unit'] == 'per_kg':
+                    actual_lineitem = line_item
+                    bas_count = bas_count + 1
+                if line_item['code'] == 'BAS' and line_item['unit'] == 'per_shipment' and not actual_lineitem:
+                    actual_lineitem = line_item
+                    actual_lineitem['price'] = (line_item['price'] / (new_past_air_invoice['chargeable_weight'] or new_past_air_invoice['weight']))
+
+            if actual_lineitem and bas_count <= 1:
+                new_past_air_invoice['price'] = actual_lineitem['price']
+                new_past_air_invoice['unit'] = actual_lineitem['per_kg']
+                new_past_air_invoice['currency'] = actual_lineitem['currency']
+
+            actual_invoice_data.append(new_past_air_invoice)
+
+        return actual_invoice_data
+
         
     def create_weight_slabs(self,origin_location_id,destination_location_id,location_type):
 
-        previous_invoice_rates = get_past_invoices(origin_location_id,destination_location_id,location_type)
+        previous_invoice_rates = self.get_final_invoice_prices(origin_location_id,destination_location_id,location_type)
 
         prevoius_2month_invoice_rates,previous_3rd_month_rates=self.split_invoice_data(previous_invoice_rates)
-
 
         latest_weight_slabs=self.get_weight_slabs(prevoius_2month_invoice_rates)
         old_weight_slabs=self.get_weight_slabs(previous_3rd_month_rates)
         missing_weight_slabs = self.find_missing_weight_slabs(latest_weight_slabs)
-        missing_weight_slabs_ratios = self.raito_finder(old_weight_slabs,missing_weight_slabs)
+        missing_weight_slabs_ratios = self.raito_finder(old_weight_slabs, missing_weight_slabs)
         final_weight_slabs = self.calculate_missing_rate(missing_weight_slabs_ratios,latest_weight_slabs)
         return final_weight_slabs
     
 
     def find_missing_weight_slabs(self,weight_slabs):
-        list=[]
+        missing_slabs =[]
         for index , weight_slab in enumerate(weight_slabs):
             if weight_slab['tariff_price']==0:
-                list.append(index+1)
-        return list
+                missing_slabs.append(index +1)
+        return missing_slabs
     
-    def raito_finder(self,weight_slabs,list):
+    def raito_finder(self,old_weight_slabs,missing_weight_slabs):
         ratios={}
-        for index,weight_slab in enumerate(weight_slabs):
-            for num in list:
-                if weight_slabs[num-1]['tariff_price']!=0.0 and index+1!=num:
-                    ratio=weight_slab['tariff_price']/weight_slabs[num-1]['tariff_price']
-                    ratios[f'{index+1}:{num}'] =ratio
+        for old_slab_index,weight_slab in enumerate(old_weight_slabs):
+            for index in missing_weight_slabs:
+                if old_weight_slabs[index-1]['tariff_price']!= 0 and old_slab_index+1!=index:
+                    ratio=weight_slab['tariff_price'] / old_weight_slabs[index-1]['tariff_price']
+                    ratios[f'{old_slab_index+1}:{index}'] =ratio
         return ratios
     
     def calculate_missing_rate(self,ratios,latest_weight_slabs):
@@ -303,13 +347,19 @@ class AirFreightVyuh():
 
         return True
     
-
-    def insert_rates_to_rms(self):
+    def get_cluster_rate_combinations(self):
         origin_airport_id = self.new_rate['origin_airport_id']
         destination_airport_id = self.new_rate['destination_airport_id']
-        weight_slabs = self.create_weight_slabs(origin_airport_id,destination_airport_id,'airport')
-        clusters  = AirFreightLocationClusters.select(AirFreightLocationClusters.id,AirFreightLocationClusters.base_airport_id).where(AirFreightLocationClusters.base_airport_id in [origin_airport_id,destination_airport_id])
-        clusters = jsonable_encoder(list(clusters.dicts()))
+
+        clusters_query  = AirFreightLocationClusters.select(
+                AirFreightLocationClusters.id,
+                AirFreightLocationClusters.base_airport_id
+            ).where(
+                AirFreightLocationClusters.base_airport_id in [origin_airport_id, destination_airport_id],
+                AirFreightLocationClusters.status == 'active'
+            )
+        clusters = jsonable_encoder(list(clusters_query.dicts()))
+        
         origin_cluster_id = None
         destination_cluster_id = None
 
@@ -318,31 +368,62 @@ class AirFreightVyuh():
                 origin_cluster_id = cluster['id']
             if cluster['base_airport_id'] == destination_airport_id:
                 destination_cluster_id = cluster['id']
+
+        cluster_ids = []
+        if origin_cluster_id:
+            cluster_ids.append(origin_cluster_id)
+        
+        if destination_cluster_id:
+            cluster_ids.append(destination_cluster_id)
+        
+        origin_location_mappings = []
+        destination_location_mappings = []
+        
+        if cluster_ids:
+            location_mappings_query = AirFreightLocationClusterMapping.select(
+                AirFreightLocationClusterMapping.cluster_id,
+                AirFreightLocationClusterMapping.location_id,
+                AirFreightLocationClusterMapping.rate_factor
+            ).where(
+                AirFreightLocationClusterMapping.status == 'active',
+                AirFreightLocationClusterMapping << cluster_ids
+            )
+
+            location_mappings = jsonable_encoder(list(location_mappings_query.dicts()))
+
+            for location_mapping in location_mappings:
+                if location_mapping['cluster_id'] == origin_cluster_id:
+                    origin_location_mappings.append(location_mapping)
+                if location_mapping['cluster_id'] == destination_cluster_id:
+                    destination_location_mappings.append(location_mapping)
+        
+        return origin_location_mappings, destination_location_mappings
+    
+    
+
+    def insert_rates_to_rms(self):
+        origin_airport_id = self.new_rate['origin_airport_id']
+        destination_airport_id = self.new_rate['destination_airport_id']
+        weight_slabs = self.create_weight_slabs(origin_airport_id,destination_airport_id,'airport')
+        
+        origin_cluster_airports, destination_cluster_airports = self.get_cluster_rate_combinations()
+
         all_rates=[]
         all_rates.append(self.get_rate_param(origin_airport_id,destination_airport_id,weight_slabs))
-        if origin_cluster_id:
-            origin_cluster_airports = self.get_all_cluster_airports(origin_cluster_id)
+        if origin_cluster_airports:
             for clutser_airport in origin_cluster_airports:
                 rate_params = self.get_rate_param(clutser_airport['location_id'],destination_airport_id,weight_slabs,clutser_airport['rate_factor'])
                 all_rates.append(rate_params)
 
 
-        if destination_cluster_id:
-            destination_cluster_airports = self.get_all_cluster_airports(destination_cluster_id)
+        if destination_cluster_airports:
             for clutser_airport in destination_cluster_airports:
                 rate_params = self.get_rate_param(origin_airport_id,clutser_airport['location_id'],weight_slabs,clutser_airport['rate_factor'])
                 all_rates.append(rate_params)
+
         for rate in all_rates:
             producer = AirProducerVyuh(rate=rate)
             producer.extend_rate()
-        
-    def get_all_cluster_airports(self,cluster_id):
-        locations = AirFreightLocationClusterMapping.select(AirFreightLocationClusterMapping.location_id,
-                            AirFreightLocationClusterMapping.rate_factor).where(
-                                AirFreightLocationClusterMapping.cluster_id==cluster_id
-                            )
-        
-        return  jsonable_encoder(list(locations.dicts()))
     
     def get_rate_param(self,origin_airport_id,destination_airport_id,weight_slabs,factor=1 ):
         # weight_slabs = self.get_rms_weight_slabs(weight_slabs,factor)
@@ -354,10 +435,10 @@ class AirFreightVyuh():
             'weight_slabs':self.get_rms_weight_slabs(weight_slabs=weight_slabs,factor=factor),
             'airline_id':self.new_rate.get('airline_id'),
             'operation_type':self.new_rate.get('operation_type'),
-            'stacking_type': 'stackable',
+            'stacking_type': 'stackable' if (self.new_rate.get('is_stackable') or self.new_rate.get('is_stackable') == None) else 'non_stackable',
             'shipment_type':'box',
             'currency':self.new_rate['currency'],
-            'price_type':'all_in',
+            'price_type':'net_net',
             'min_price' : weight_slabs[0]['tariff_price'],
             'service_provider_id':DEFAULT_SERVICE_PROVIDER_ID,
             'performed_by_id':DEFAULT_USER_ID,
@@ -365,7 +446,6 @@ class AirFreightVyuh():
             'sourced_by_id':DEFAULT_USER_ID,
             'validity_start': datetime.now(),
             'validity_end': datetime.now()+ timedelta(days=7)
-
         }
         return params
     

@@ -295,7 +295,7 @@ def get_ff_mlo():
         sentry_sdk.capture_exception(e)
         return result
 
-def get_past_invoices(origin_location_id,destination_location_id,location_type):
+def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval, interval_type = 'months', offset=0, limit=50):
         all_results =[]
         try:
             conn = get_connection()
@@ -303,10 +303,11 @@ def get_past_invoices(origin_location_id,destination_location_id,location_type):
                 with conn.cursor() as cur:
                      
                     sql_query = """
-                    WITH cte AS (
                         SELECT 
                             shipment_air_freight_services.origin_airport_id AS origin_airport_id,
-                            shipment_air_freight_services.shipment_id AS shipment_id,
+                            shipment_air_freight_services.volume AS volume,
+                            shipment_air_freight_services.is_stackable AS is_stackable,
+                            shipment_air_freight_services.packages AS packages,
                             shipment_air_freight_services.origin_country_id AS origin_country_id,
                             shipment_air_freight_services.destination_airport_id AS destination_airport_id,
                             shipment_air_freight_services.destination_country_id AS destination_country_id,
@@ -314,55 +315,40 @@ def get_past_invoices(origin_location_id,destination_location_id,location_type):
                             shipment_air_freight_services.weight AS weight,
                             shipment_air_freight_services.commodity AS commodity,
                             shipment_collection_parties.invoice_date AS invoice_date,
-                            line_item ->> 'price' AS price,
-                            line_item ->> 'currency' AS currency,
+                            shipment_collection_parties.line_items,
                             shipment_air_freight_services.airline_id AS airline_id,
-                            ROW_NUMBER() OVER (PARTITION BY shipment_air_freight_services.shipment_id ORDER BY shipment_air_freight_services.shipment_id) AS rn
+                            shipment_air_freight_services.chargeable_weight AS chargeable_weight
                         FROM
                             shipment_collection_parties
                             INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
-                            CROSS JOIN jsonb_array_elements(line_items) AS line_item
                         WHERE
-                            shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
+                            shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '%s %s')::DATE
                             AND shipment_air_freight_services.origin_{}_id = %s
                             AND shipment_air_freight_services.destination_{}_id = %s
                             AND shipment_collection_parties.status IN ('locked', 'coe_approved', 'finance_rejected')
-                            AND line_item ->> 'code' = 'BAS' and line_item->>'unit' = 'per_kg' and shipment_air_freight_services.operation_type ='passenger'
+                            AND shipment_air_freight_services.operation_type ='passenger'
                             AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
-                    )
-                    SELECT 
-                    cte.origin_airport_id as origin_airport_id,
-                    cte.origin_country_id as origin_country_id,
-                    cte.destination_airport_id as destination_airport_id,
-                    cte.destination_country_id as destination_country_id,
-                    cte.operation_type as operation_type,
-                    cte.weight as weight,
-                    cte.commodity as commodity,
-                    cte.price as price,
-                    cte.currency as currency,
-                    cte.airline_id as airline_id,
-                    cte.invoice_date as invoice_date
-                    FROM cte
-                    WHERE shipment_id NOT IN (SELECT shipment_id FROM cte WHERE rn > 1) and cte.commodity= 'general'
-                    ORDER BY shipment_id;
-                                """.format(location_type,location_type)
-                    cur.execute(sql_query,(origin_location_id,destination_location_id))
+                        OFFSET %s LIMIT %s;   
+                        """.format(location_type,location_type)
+                    cur.execute(sql_query,(interval, interval_type, origin_location_id,destination_location_id, offset, limit))
                     result = cur.fetchall()
                     cur.close()
                 for res in result:
-
                     new_obj = {
                         "origin_airport_id": str(res[0]),   
-                        "origin_country_id": str(res[1]),
-                        "destination_airport_id": str(res[2]),
-                        "destination_country_id": str(res[3]),
-                        "operation_type":res[4],
-                        "weight":float(res[5]),
-                        "commodity":res[6],
-                        "price":str(res[7]),
-                        "currency":str(res[8]),
-                        "airline_id":str(res[9]),
-                        "invoice_date":res[10]
+                        "volume": res[1],   
+                        "is_stackable": str(res[2]),   
+                        "packages": res[3],   
+                        "origin_country_id": str(res[4]),
+                        "destination_airport_id": str(res[5]),
+                        "destination_country_id": str(res[6]),
+                        "operation_type":res[7],
+                        "weight":float(res[8]),
+                        "commodity":res[9],
+                        "invoice_date":str(res[10]),
+                        "line_items":str(res[11]),
+                        "airline_id":str(res[12]),
+                        "chargeable_weight": res[13]
                     }
 
                     all_results.append(new_obj)
@@ -373,7 +359,7 @@ def get_past_invoices(origin_location_id,destination_location_id,location_type):
             # sentry_sdk.capture_exception(e)
             return all_results
         
-def get_invoices():
+def get_invoices(days=3, offset=0, limit=50):
         all_result =[]
         try:
             conn = get_connection()
@@ -381,38 +367,52 @@ def get_invoices():
                 with conn.cursor() as cur:
                      
                     sql_query = """
-                        select shipment_air_freight_services.origin_airport_id as origin_airport_id, 
-                        shipment_air_freight_services.origin_country_id as origin_country_id, 
-                        shipment_air_freight_services.destination_airport_id as destination_airport_id,
-                        shipment_air_freight_services.destination_country_id as destination_country_id,
-                        shipment_air_freight_services.operation_type, shipment_air_freight_services.weight,shipment_air_freight_services.commodity,
-                        line_item ->> 'price' as price, line_item ->> 'currency' as currency,
-                        shipment_air_freight_services.airline_id
-                        from shipment_collection_parties
-                        inner join shipment_air_freight_services on shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
-                        cross join jsonb_array_elements(line_items) as line_item
-                        where 
-                        shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') and  line_item ->> 'code' = 'BAS' and
-                        invoice_type in ('purchase_invoice', 'proforma_invoice') and shipment_collection_parties.invoice_date = now()::date -3
+                        SELECT 
+                            shipment_air_freight_services.origin_airport_id AS origin_airport_id,
+                            shipment_air_freight_services.volume AS volume,
+                            shipment_air_freight_services.is_stackable AS is_stackable,
+                            shipment_air_freight_services.packages AS packages,
+                            shipment_air_freight_services.origin_country_id AS origin_country_id,
+                            shipment_air_freight_services.destination_airport_id AS destination_airport_id,
+                            shipment_air_freight_services.destination_country_id AS destination_country_id,
+                            shipment_air_freight_services.operation_type AS operation_type,
+                            shipment_air_freight_services.weight AS weight,
+                            shipment_air_freight_services.commodity AS commodity,
+                            shipment_collection_parties.invoice_date AS invoice_date,
+                            shipment_collection_parties.line_items,
+                            shipment_air_freight_services.airline_id AS airline_id,
+                            shipment_air_freight_services.chargeable_weight AS chargeable_weight
+                        FROM
+                            shipment_collection_parties
+                            INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
+                        WHERE 
+                            shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') 
+                        AND
+                            invoice_type in ('purchase_invoice', 'proforma_invoice') 
+                        AND 
+                            shipment_collection_parties.invoice_date = now()::date - %s
+                        OFFSET %s LIMIT %s;
                         """
-                    cur.execute(sql_query)
+                    cur.execute(sql_query, (days, offset, limit))
                     result = cur.fetchall()
 
                 for res in result:
-
                     new_obj = {
-                        "origin_airport_id": str(res[0]),
-                        "origin_country_id": str(res[1]),
-                        "destination_airport_id": str(res[2]),
-                        "destination_country_id": str(res[3]),
-                        "operation_type":res[4],
-                        "weight":float(res[5]),
-                        "commodity":res[6],
-                        "price":str(res[7]),
-                        "currency":str(res[8]),
-                        "airline_id":str(res[9])
+                        "origin_airport_id": str(res[0]),   
+                        "volume": res[1],   
+                        "is_stackable": str(res[2]),   
+                        "packages": res[3],   
+                        "origin_country_id": str(res[4]),
+                        "destination_airport_id": str(res[5]),
+                        "destination_country_id": str(res[6]),
+                        "operation_type":res[7],
+                        "weight":float(res[8]),
+                        "commodity":res[9],
+                        "invoice_date":str(res[10]),
+                        "line_items":str(res[11]),
+                        "airline_id":str(res[12]),
+                        "chargeable_weight": res[13]
                     }
-
                     all_result.append(new_obj)
                     cur.close()
             conn.close()

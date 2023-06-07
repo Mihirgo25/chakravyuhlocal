@@ -12,7 +12,7 @@ class AirFreightLocationClusters(BaseModel):
     id = BigAutoField(primary_key=True)
     base_airport_id = UUIDField(index=True)
     base_airport = BinaryJSONField(null=True)
-    status = CharField(index=True, null=True)
+    status = CharField(index=True, default='active')
     trend_factor = DoubleField(default=1)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
