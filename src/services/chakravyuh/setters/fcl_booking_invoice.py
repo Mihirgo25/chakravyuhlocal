@@ -217,12 +217,12 @@ class FclBookingVyuh():
 
         if new or derived:
             line_items = self.new_rate['line_items'] or []
-            max_bas_price = None
-            max_bas_index = None
+            max_bas_price = -1
+            max_bas_index = 0
 
             for i, d in enumerate(line_items):
                 if d['code'] == 'BAS':
-                    if max_bas_price is None or d['price'] > max_bas_price:
+                    if  d['price'] > max_bas_price:
                         max_bas_price = d['price']
                         max_bas_index = i
 
