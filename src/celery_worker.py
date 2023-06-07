@@ -12,6 +12,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
+from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
+from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
 from kombu import Exchange, Queue
 from celery.schedules import crontab
@@ -19,6 +21,7 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
+from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 
@@ -69,7 +72,26 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=00,hour=00),
         'options': {'queue' : 'fcl_freight_rate'}
         },
-
+    'process_fuel_data_delays': {
+        'task': 'celery_worker.process_fuel_data_delay',
+        'schedule': crontab(minute=00,hour=21),
+        'options': {'queue' : 'fcl_freight_rate'}
+        },
+    'process_electricity_data_delays': {
+        'task': 'celery_worker.process_electricity_data_delays',
+        'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
+        'options': {'queue' : 'fcl_freight_rate'}
+        },
+    'process_fuel_data_delays': {
+        'task': 'celery_worker.process_fuel_data_delay',
+        'schedule': crontab(minute=00,hour=21),
+        'options': {'queue' : 'fcl_freight_rate'}
+        },
+    'process_electricity_data_delays': {
+        'task': 'celery_worker.process_electricity_data_delays',
+        'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
+        'options': {'queue' : 'fcl_freight_rate'}
+        },
     'fcl_cost_booking_estimation':{
         'task': 'celery_worker.fcl_cost_booking_estimation',
         'schedule': crontab(minute=00,hour=00),
@@ -405,6 +427,35 @@ def create_country_wise_locals_in_delay(self, request):
 def update_fcl_freight_rate_request_in_delay(self, request):
     try:
         update_fcl_freight_rate_request(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def process_fuel_data_delay(self):
+    try:
+        fuel_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def process_electricity_data_delays(self):
+    try:
+        electricity_price_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def process_freight_look_rates(self, rate, locations):
+    try:
+        return create_air_freight_rate_api(rate=rate, locations=locations)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
