@@ -329,7 +329,7 @@ def get_past_cost_booking_data():
                     AND line_item->> 'currency'='USD'
                     AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
                     AND shipment_collection_parties.status in ('coe_approved')
-                    AND line_item ->> 'unit' = 'per_container';
+                    AND line_item ->> 'unit' = 'per_container'
                 '''
                 cur.execute(sql)
                 result = cur.fetchall()

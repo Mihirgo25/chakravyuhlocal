@@ -89,7 +89,7 @@ celery.conf.beat_schedule = {
     }
 }
 
-@celery.task(bind = True, retry_backoff=True,max_retries=5)
+@celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_cost_booking_estimation(self):
     try:
         cost_booking_data = get_past_cost_booking_data()
