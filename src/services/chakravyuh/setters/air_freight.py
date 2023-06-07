@@ -49,6 +49,7 @@ class AirFreightVyuh():
             AirFreightRateEstimation.origin_location_id == self.new_rate['origin_country_id'],
             AirFreightRateEstimation.destination_location_id == self.new_rate['destination_country_id'],
             AirFreightRateEstimation.operation_type == self.new_rate['operation_type'],
+            AirFreightRateEstimation.commodity == self.new_rate['commodity'],
             ((AirFreightRateEstimation.airline_id.is_null(True)) | (AirFreightRateEstimation.airline_id == self.new_rate.get('airline_id'))),
             ((AirFreightRateEstimation.stacking_type.is_null(True)) | (AirFreightRateEstimation.stacking_type == self.new_rate.get('stacking_type'))),
             ((AirFreightRateEstimation.shipment_type.is_null(True)) | (AirFreightRateEstimation.shipment_type == self.new_rate.get('shipment_type'))),
@@ -90,7 +91,6 @@ class AirFreightVyuh():
                 'shipment_type': None
 
             }
-
         ]
         not_available_transformations = []
         
@@ -198,9 +198,9 @@ class AirFreightVyuh():
         return jsonable_encoder(final_weight_slabs)
 
 
-    def get_adjusted_weight_slabs_to_add(self):
+    def get_adjusted_weight_slabs_to_add(self, affected_transformation, new):
 
-        weight_slabs = self.create_weight_slabs(self.new_rate['origin_country_id'],self.new_rate['destination_country_id'],'country')
+        weight_slabs = self.create_weight_slabs(affected_transformation['origin_location_id'], affected_transformation['destination_location_id'], affected_transformation['origin_location_type'])
         new_weight_slabs = []
         for weight_slab in weight_slabs:
             weight_slab['avg_price'] = weight_slab['tariff_price']
@@ -220,15 +220,15 @@ class AirFreightVyuh():
         # else:
         #     adjusted_weight_slabs = self.get_adjusted_weight_slabs_to_add(affected_transformation, new)
         
-        adjusted_weight_slabs = self.get_adjusted_weight_slabs_to_add()
+        adjusted_weight_slabs = self.get_adjusted_weight_slabs_to_add(affected_transformation, new)
 
         if len(adjusted_weight_slabs) == 0:
             return
         
-        # if not transformation_id and new:
-        #     tf = self.get_transformation(affected_transformation)
-        #     if tf:
-        #         transformation_id = tf['id']
+        if not transformation_id and new:
+            tf = self.get_transformation(affected_transformation)
+            if tf:
+                transformation_id = tf['id']
 
         if transformation_id:
             transformation = AirFreightRateEstimation.update(
@@ -246,7 +246,7 @@ class AirFreightVyuh():
                 'action_name': 'update',
                 'source': 'invoice'
             }
-            # self.create_audits(data=data)
+            self.create_audits(data=data)
         else:
             payload = affected_transformation | {
                 'weight_slabs': adjusted_weight_slabs,
@@ -270,8 +270,8 @@ class AirFreightVyuh():
                 'source': 'system'
             }
             affected_transformation['id'] = str(transformation.id)
-            # self.create_audits(data=data)
-            # transformation.set_attribute_objects()
+            self.create_audits(data=data)
+            transformation.set_attribute_objects()
         
         # if not is_relative:
         #     actual_transformation = affected_transformation
@@ -287,7 +287,6 @@ class AirFreightVyuh():
 
 
     def set_estimations(self):
-
         from celery_worker import transform_dynamic_pricing
         
         affected_transformations = self.get_transformations_to_be_affected()
@@ -302,11 +301,6 @@ class AirFreightVyuh():
             self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
             # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
-        return True
-    
-    def set_dynamic_pricing(self):
-        self.set_estimations()
-        self.insert_rates_to_rms()
         return True
     
 
@@ -381,149 +375,8 @@ class AirFreightVyuh():
             weight_slab['tariff_price'] = factor*weight_slab['tariff_price']
             new_weight_slabs.append(weight_slab)
         return jsonable_encoder(new_weight_slabs)
-
-
-
-# above adjust price
-
-    # def get_related_transformations_to_add(self, actual_transformation: dict, commodities: list = [], operation_types:list = []):
-    #     possible_transformations = []
-
-    #     for cs in commodities:
-    #         for ct in operation_types:
-    #             possible_transformations.append({
-    #                 'origin_location_id': actual_transformation['origin_location_id'],
-    #                 'destination_location_id': actual_transformation['destination_location_id'],
-    #                 'origin_location_type': actual_transformation['origin_location_type'],
-    #                 'destination_location_type': actual_transformation['destination_location_type'],
-    #                 'container_type': ct,
-    #                 'container_size': cs,
-    #                 'line_items': [],
-    #                 'shipping_line_id': None,
-    #                 'commodity': None,
-    #                 'payment_term': None,
-    #                 'schedule_type': None
-    #             })
-
-    #     tfs_query = AirFreightRateEstimation.select(
-    #         AirFreightRateEstimation.origin_location_id,
-    #         AirFreightRateEstimation.origin_location_type,
-    #         AirFreightRateEstimation.destination_location_id,
-    #         AirFreightRateEstimation.destination_location_type,
-    #         AirFreightRateEstimation.airline_id,
-    #         AirFreightRateEstimation.commodity,
-    #         AirFreightRateEstimation.stacking_type,
-    #         AirFreightRateEstimation.operation_type,
-    #         AirFreightRateEstimation.created_at,
-    #         AirFreightRateEstimation.updated_at,
-    #         AirFreightRateEstimation.shipment_type,
-    #         AirFreightRateEstimation.line_items,
-    #         AirFreightRateEstimation.id,
-    #         AirFreightRateEstimation.status
-    #     ).where(
-    #         AirFreightRateEstimation.origin_location_id == actual_transformation['origin_location_id'],
-    #         AirFreightRateEstimation.destination_location_id == actual_transformation['destination_location_id'],
-    #         AirFreightRateEstimation.commodity << commodities,
-    #         AirFreightRateEstimation.operation_type << operation_types
-    #     )
-
-    #     already_created_tfs = jsonable_encoder(list(tfs_query.dicts())) or []
-
-    #     already_created_tfs_hash = {}
-
-    #     for act in already_created_tfs:
-    #         key = '{}:{}:{}:{}:{}:{}'.format(
-    #             act['origin_location_id'],
-    #             act['origin_location_type'],
-    #             act['destination_location_id'], 
-    #             act['destination_location_type'],
-    #             act['commodity'],
-    #             act['operation_type']
-    #             )
-    #         line_items = act['line_items'] or []
-
-    #         derived = None
-
-    #         for line_item in line_items:
-    #             if 'derived' in line_item:
-    #                 derived = act['id']
-
-    #         already_created_tfs_hash[key] = derived
-
-    #     not_created_tfs = []
-
-    #     for pst in possible_transformations:
-    #         key = '{}:{}:{}:{}:{}:{}'.format(
-    #             pst['origin_location_id'],
-    #             pst['origin_location_type'],
-    #             pst['destination_location_id'], 
-    #             pst['destination_location_type'],
-    #             pst['commodity'],
-    #             pst['operation_type']
-    #             )
-
-    #         derived = already_created_tfs_hash.get(key)
-    #         if key not in already_created_tfs_hash or derived:
-    #             if derived:
-    #                 pst['id'] = derived
-
-    #             not_created_tfs.append(pst)
-        
-    #     return not_created_tfs
     
-    # def get_relative_price(self, actual_transformation: dict, related_transformation: dict, line_item:dict):
-    #     related_container_type = str(related_transformation['container_type'])
-    #     related_container_size = str(related_transformation['container_size'])
-    #     actual_container_size = str(actual_transformation['container_size'])
-    #     actual_container_type = str(actual_transformation['container_type'])
-
-    #     container_size_factor = CONTAINER_SIZE_FACTORS[actual_container_size]
-    #     container_type_factor = CONTAINR_TYPE_FACTORS[actual_container_type]
-    #     standard_rate_factor = 1 / container_size_factor
-    #     standard_rate_factor = standard_rate_factor / container_type_factor
-    #     realted_csf = CONTAINER_SIZE_FACTORS[related_container_size]
-    #     realted_ctf = CONTAINR_TYPE_FACTORS[related_container_type]
-
-    #     price = line_item['average']
-    #     std_dev = line_item['stand_dev']
-    #     related_rate_average = price * standard_rate_factor * realted_csf * realted_ctf
-    #     lower_limit = related_rate_average - 1 * std_dev # -1 sigma
-    #     upper_limit = related_rate_average + 1 * std_dev # 1 sigma
-        
-    #     return {
-    #         'code': line_item['code'],
-    #         'currency': self.target_currency,
-    #         'upper_limit': round(upper_limit),
-    #         'lower_limit': round(lower_limit),
-    #         'average': related_rate_average,
-    #         'stand_dev': std_dev,
-    #         'size': line_item['size'],
-    #         'unit': line_item['unit'],
-    #         'derived': actual_transformation['id']
-    #     }
-
-    
-    # def relative_price_to_add(self, actual_transformation: dict, related_transformation: dict):
-    #     line_items = actual_transformation['line_items'] or []
-
-    #     new_lineitems = []
-
-    #     for line_item in line_items:
-    #         related_lineitem = self.get_relative_price(actual_transformation, related_transformation, line_item)
-    #         new_lineitems.append(related_lineitem)
-        
-    #     return new_lineitems
-
-    # def adjust_price_for_related_transformations(self, actual_transformation):
-    #     container_sizes = ['20', '40', '40HC', '45HC']
-    #     container_sizes.remove(actual_transformation['container_size']) 
-    #     container_types = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank'] 
-    #     container_types.remove(actual_transformation['container_type'])  
-
-    #     related_transformations_to_add = self.get_related_transformations_to_add(actual_transformation, container_sizes, container_types)
-
-    #     for rtf in related_transformations_to_add:
-    #         # Insert price element to transformations
-    #         rtf['line_items'] = self.relative_price_to_add(actual_transformation, rtf)
-    #         self.adjust_price_for_tranformation(affected_transformation=rtf, new=False, is_relative=True)
-
+    def set_dynamic_pricing(self):
+        self.set_estimations()
+        self.insert_rates_to_rms()
+        return True

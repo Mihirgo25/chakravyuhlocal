@@ -1,8 +1,6 @@
 from services.chakravyuh.models.air_freight_rate_estimation import AirFreightRateEstimation
 from fastapi.encoders import jsonable_encoder
-from configs.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from micro_services.client import common
-from random import randint
 
 class AirFreightVyuh():
     def __init__(self, freight_rates: list = [],requirements: dict = {}):
@@ -22,6 +20,7 @@ class AirFreightVyuh():
             AirFreightRateEstimation.origin_location_id << origin_location_ids,
             AirFreightRateEstimation.destination_location_id << destination_location_ids,
             AirFreightRateEstimation.operation_type == self.requirements['operation_type'],
+            AirFreightRateEstimation.commodity == self.requirements['commodity'],
             ((AirFreightRateEstimation.stacking_type.is_null(True)) | (AirFreightRateEstimation.stacking_type == self.requirements['stacking_type'])),
             ((AirFreightRateEstimation.shipment_type.is_null(True)) | (AirFreightRateEstimation.shipment_type == self.requirements['shipment_type']))
 
@@ -63,10 +62,18 @@ class AirFreightVyuh():
     def get_weight_slab(self,rate_weight_slabs,estimation_weight_slabs):
         weight_slabs = []
         for rate_weight_slab in rate_weight_slabs:
+            found = False
             for estimation_weight_slab in estimation_weight_slabs:
                 if rate_weight_slab['lower_limit'] >= estimation_weight_slab['lower_limit'] and rate_weight_slab['upper_limit'] <= estimation_weight_slab['upper_limit']:
                     rate_weight_slab = self.get_modified_weight_slab(estimation_weight_slab,rate_weight_slab)
                     weight_slabs.append(rate_weight_slab)
+                    found = True
+                    break
+            if not found:
+                estimation_weight_slab = estimation_weight_slabs[0]
+                rate_weight_slab = self.get_modified_weight_slab(estimation_weight_slab,rate_weight_slab)
+                weight_slabs.append(rate_weight_slab)
+
         
         return weight_slabs
 
@@ -98,6 +105,7 @@ class AirFreightVyuh():
  
         if len(probable_transformations)==0:
             return self.freight_rates
+
         probable_customer_transformations = self.get_probable_customer_transformations()
 
         new_freight_rates = []
