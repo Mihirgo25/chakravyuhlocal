@@ -37,7 +37,7 @@ def execute_transaction_code(request):
         
     create_audit(request)
     return{
-        'id':object.id
+        'id':str(object.id)
     }
 
 def create_audit(request):

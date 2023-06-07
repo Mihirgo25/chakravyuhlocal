@@ -357,7 +357,7 @@ class CreateAirFreightWarehouseRates(BaseModel):
     sourced_by_id:str
     bulk_operation_id:str=None
     rate_sheet_id:str=None
-    lineitems:list[WarehouseLineItems]=None
+    line_items:list[WarehouseLineItems]=None
 
 class UpdateAirFreightStorageRates(BaseModel):
     id :str =None
