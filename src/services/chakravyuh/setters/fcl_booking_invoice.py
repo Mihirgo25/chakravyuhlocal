@@ -225,14 +225,14 @@ class FclBookingVyuh():
             max_bas_index = None
 
             for i, d in enumerate(line_items):
-                if d["code"] == "BAS":
-                    if max_bas_price is None or d["price"] > max_bas_price:
-                        max_bas_price = d["price"]
+                if d['code'] == 'BAS':
+                    if max_bas_price is None or d['price'] > max_bas_price:
+                        max_bas_price = d['price']
                         max_bas_index = i
 
-            max_line_item=line_item[max_bas_index]
+            max_line_item=line_items[max_bas_index]
             line_items=[]
-            line_items=max_line_item
+            line_items.append(max_line_item)
             
 
         for line_item in line_items:
