@@ -29,7 +29,7 @@ class CostBookingEstimation(BaseModel):
 
     class Meta:
         table_name = "cost_booking_estimations"
-        indexes = ((('origin_location_id', 'destination_location_id', 'container_size', 'container_type'), True),)
+        indexes = ((('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id'), True),)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
