@@ -191,12 +191,13 @@ def list_fcl_cfs_rates_data(
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
     return_query: bool = False,
+    pagination_data_required: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_fcl_cfs_rate(filters, page_limit, page, sort_by, sort_type, return_query)
+        data = list_fcl_cfs_rate(filters, page_limit, page, sort_by, sort_type,pagination_data_required, return_query)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
