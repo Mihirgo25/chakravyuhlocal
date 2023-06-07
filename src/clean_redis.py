@@ -108,13 +108,13 @@ def delay_func(object):
 
 def delete_rates():
     delete = False
-    file_path = os.path.join(ROOT_DIR, 'Maersk rates to be deleted.xlsx')
+    file_path = os.path.join(ROOT_DIR, 'delete_rates.xlsx')
     a = pd.read_excel(file_path)['rate_id'].to_list()
     for rate in a:
         obj = {
             "id": str(rate),
-            "validity_start": datetime.fromisoformat("2023-04-25"),
-            "validity_end": datetime.fromisoformat("2023-05-12"),
+            "validity_start": datetime.fromisoformat("2023-06-07"),
+            "validity_end": datetime.fromisoformat("2023-06-31"),
             "performed_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
             "sourced_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
             "procured_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
