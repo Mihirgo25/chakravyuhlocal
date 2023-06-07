@@ -82,16 +82,6 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
         'options': {'queue' : 'fcl_freight_rate'}
         },
-    'process_fuel_data_delays': {
-        'task': 'celery_worker.process_fuel_data_delay',
-        'schedule': crontab(minute=00,hour=21),
-        'options': {'queue' : 'fcl_freight_rate'}
-        },
-    'process_electricity_data_delays': {
-        'task': 'celery_worker.process_electricity_data_delays',
-        'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
-        'options': {'queue' : 'fcl_freight_rate'}
-        },
     'fcl_cost_booking_estimation':{
         'task': 'celery_worker.fcl_cost_booking_estimation',
         'schedule': crontab(minute=18,hour=30),
