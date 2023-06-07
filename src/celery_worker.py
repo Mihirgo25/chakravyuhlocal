@@ -84,7 +84,7 @@ celery.conf.beat_schedule = {
         },
     'fcl_cost_booking_estimation':{
         'task': 'celery_worker.fcl_cost_booking_estimation',
-        'schedule': crontab(minute=18,hour=30),
+        'schedule': crontab(minute=30,hour=18),
         'options': {'queue' : 'fcl_freight_rate'}
     }
 }
