@@ -214,6 +214,7 @@ class FclFreightVyuh():
                 if line_item['code'] == 'BAS' and line_item['price'] < 2000:
                     transformed_line_item = self.default_transformed_lineitem
                     adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
+                    adjusted_lineitem['price']*=1.10
                     new_lineitems.append(adjusted_lineitem)
                 else:
                     new_lineitems.append(line_item)
