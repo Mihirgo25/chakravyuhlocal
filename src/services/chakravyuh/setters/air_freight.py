@@ -10,7 +10,7 @@ from services.air_freight_rate.models.air_freight_location_cluster_mapping impor
 from configs.global_constants import DEFAULT_WEIGHT_SLABS
 from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as AirProducerVyuh
 from statistics import mean
-from configs.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
+from configs.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_FACTOR
 from configs.env import DEFAULT_USER_ID
 
 class AirFreightVyuh():
@@ -222,6 +222,15 @@ class AirFreightVyuh():
     
     def calculate_missing_rate(self,ratios,latest_weight_slabs):
         final_weight_slabs = []
+        rate_index = -1
+        for index,weight_slab in latest_weight_slabs:
+            if self.new_rate['weight'] >= weight_slab['lower_limit'] and self.new_rate['weight'] <= weight_slab['upper_limit']:
+                price = self.new_rate['price']
+                if weight_slab['currency']!=self.new_rate['currency']:
+                    price = common.get_money_exchange_for_fcl({"price": price, "from_currency": weight_slab['currency'], "to_currency": 'INR' })['price']
+                weight_slab['tariff_price'] = 0.2*weight_slab['tariff_price'] + 0.8*price
+                rate_index = index
+
         for index1, weight_slab1 in enumerate( latest_weight_slabs):
             if weight_slab1['tariff_price']==0.0:
                 for index2,weight_slab2 in enumerate(latest_weight_slabs):
@@ -230,14 +239,14 @@ class AirFreightVyuh():
                         if key in ratios.keys():
                             weight_slab1['tariff_price'] = weight_slab2['tariff_price'] / ratios[key]
                             break
+                if index1<rate_index:
+                    factor=(pow(DEFAULT_FACTOR,rate_index-index1))
+                    weight_slab1['tariff_price']=price*factor
+                if index1 > rate_index:
+                    factor=(pow(DEFAULT_FACTOR,index1-rate_index))
+                    weight_slab1['tariff_price']=price/factor
             final_weight_slabs.append(weight_slab1)
         
-        for weight_slab in final_weight_slabs:
-            if self.new_rate['weight'] >= weight_slab['lower_limit'] and self.new_rate['weight'] <= weight_slab['upper_limit']:
-                price = self.new_rate['price']
-                if weight_slab['currency']!=self.new_rate['currency']:
-                    price = common.get_money_exchange_for_fcl({"price": price, "from_currency": weight_slab['currency'], "to_currency": 'INR' })['price']
-                weight_slab['tariff_price'] = 0.2*weight_slab['tariff_price'] + 0.8*price
  
         return jsonable_encoder(final_weight_slabs)
 
