@@ -345,8 +345,8 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                         "operation_type":res[7],
                         "weight":float(res[8]),
                         "commodity":res[9],
-                        "invoice_date":str(res[10]),
-                        "line_items":str(res[11]),
+                        "invoice_date":res[10],
+                        "line_items":res[11],
                         "airline_id":str(res[12]),
                         "chargeable_weight": res[13]
                     }
@@ -408,8 +408,8 @@ def get_invoices(days=3, offset=0, limit=50):
                         "operation_type":res[7],
                         "weight":float(res[8]),
                         "commodity":res[9],
-                        "invoice_date":str(res[10]),
-                        "line_items":str(res[11]),
+                        "invoice_date":res[10],
+                        "line_items":res[11],
                         "airline_id":str(res[12]),
                         "chargeable_weight": res[13]
                     }

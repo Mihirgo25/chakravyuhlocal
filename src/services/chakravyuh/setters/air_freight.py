@@ -141,8 +141,8 @@ class AirFreightVyuh():
         new_weight_slabs = []
 
         for index,weight_slab in enumerate(weight_slabs):
+            new_weight_slab = jsonable_encoder(weight_slab)
             if weight_slabs_dict[index+1]:
-                new_weight_slab = jsonable_encoder(weight_slab)
                 new_weight_slab['tariff_price'] = mean(weight_slabs_dict[index+1])
             new_weight_slabs.append(new_weight_slab)
 
@@ -178,14 +178,14 @@ class AirFreightVyuh():
                     bas_count = bas_count + 1
                 if line_item['code'] == 'BAS' and line_item['unit'] == 'per_shipment' and not actual_lineitem:
                     actual_lineitem = line_item
+                    bas_count = bas_count + 1
                     actual_lineitem['price'] = (line_item['price'] / (new_past_air_invoice['chargeable_weight'] or new_past_air_invoice['weight']))
 
-            if actual_lineitem and bas_count <= 1:
+            if actual_lineitem and bas_count == 1:
                 new_past_air_invoice['price'] = actual_lineitem['price']
-                new_past_air_invoice['unit'] = actual_lineitem['per_kg']
+                new_past_air_invoice['unit'] = actual_lineitem['unit']
                 new_past_air_invoice['currency'] = actual_lineitem['currency']
-
-            actual_invoice_data.append(new_past_air_invoice)
+                actual_invoice_data.append(new_past_air_invoice)
 
         return actual_invoice_data
 
@@ -223,7 +223,7 @@ class AirFreightVyuh():
     def calculate_missing_rate(self,ratios,latest_weight_slabs):
         final_weight_slabs = []
         rate_index = -1
-        for index,weight_slab in latest_weight_slabs:
+        for index,weight_slab in enumerate(latest_weight_slabs):
             if self.new_rate['weight'] >= weight_slab['lower_limit'] and self.new_rate['weight'] <= weight_slab['upper_limit']:
                 price = self.new_rate['price']
                 if weight_slab['currency']!=self.new_rate['currency']:
@@ -241,10 +241,10 @@ class AirFreightVyuh():
                             break
                 if index1<rate_index:
                     factor=(pow(DEFAULT_FACTOR,rate_index-index1))
-                    weight_slab1['tariff_price']=price*factor
+                    weight_slab1['tariff_price']=price/factor
                 if index1 > rate_index:
                     factor=(pow(DEFAULT_FACTOR,index1-rate_index))
-                    weight_slab1['tariff_price']=price/factor
+                    weight_slab1['tariff_price']=price*factor
             final_weight_slabs.append(weight_slab1)
         
  

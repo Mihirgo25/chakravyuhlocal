@@ -40,12 +40,12 @@ class AirFreightVyuh():
 
         weight_slabs = rate['weight_slabs']
 
-        original_rate_handling_type = self.rate['handling_type']
-        original_rate_packing_type = self.rate['packing_type']
+        original_rate_handling_type = self.rate['stacking_type']
+        original_rate_packing_type = self.rate['shipment_type']
         original_rate_operation_type = self.rate['operation_type']
 
-        current_rate_handling_type = rate['handling_type']
-        current_rate_packing_type = rate['packing_type']
+        current_rate_handling_type = rate['stacking_type']
+        current_rate_packing_type = rate['shipment_type']
         current_rate_operation_type = rate['operation_type']
 
         handling_type_factor = (HANDLING_TYPE_FACTORS[current_rate_handling_type] or 1) / (HANDLING_TYPE_FACTORS[original_rate_handling_type] or 1)
