@@ -114,7 +114,7 @@ def delete_rates():
         obj = {
             "id": str(rate),
             "validity_start": datetime.fromisoformat("2023-06-07"),
-            "validity_end": datetime.fromisoformat("2023-06-31"),
+            "validity_end": datetime.fromisoformat("2023-06-30"),
             "performed_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
             "sourced_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
             "procured_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
