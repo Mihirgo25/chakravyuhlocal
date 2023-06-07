@@ -186,7 +186,7 @@ class FclBookingVyuh():
         size = new_item['size']
         old_mean = old_item['average']
         new_mean = new_item['average']
-        exp_average = old_mean * 0.8 + new_mean * 0.2
+        exp_average = old_mean * 0.2 + new_mean * 0.8
         old_variance = new_item['stand_dev'] ** 2
         new_variance = ((size - 1) * old_variance + size * (new_mean - old_mean) ** 2) / size
         std_dev = new_variance ** 0.5
