@@ -1,12 +1,10 @@
 from database.db_session import db
-from services.ftl_freight_rate.models.truck import Truck
-from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
-from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
-from services.haulage_freight_rate.models.energy_data import EnergyData
+from services.chakravyuh.models.cost_booking_estimation import CostBookingEstimation
+from services.chakravyuh.models.cost_booking_estimation_audit import CostBookingEstimationAudit
 def create_table():
     # db.connect()
     try:
-        db.create_tables([EnergyData])
+        db.create_tables([CostBookingEstimation, CostBookingEstimationAudit])
         db.close()
         print("created table")
     except:
