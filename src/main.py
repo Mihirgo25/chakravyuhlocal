@@ -20,6 +20,7 @@ from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
+from services.extensions.extension_router import extension_router
 from micro_services.client import *
 
 sentry_sdk.init(
@@ -44,6 +45,7 @@ app.include_router(prefix="/fcl_freight_rate", router=trailer_router)
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
 app.include_router(prefix="/fcl_freight_rate", router=ftl_freight_router)
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
+app.include_router(prefix = "/fcl_freight_rate", router=extension_router)
 
 
 
