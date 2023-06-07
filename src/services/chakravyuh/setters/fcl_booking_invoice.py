@@ -162,7 +162,7 @@ class FclBookingVyuh():
         mean = sum(all_prices) / size
         variance = sum([((x - mean) ** 2) for x in all_prices]) / size
         std_dev = variance ** 0.5
-        lower_limit = mean - 1 * std_dev # -1 sigma
+        lower_limit = mean - 0.5 * std_dev # -1 sigma
         upper_limit = mean + 1 * std_dev # 1 sigma
 
         if line_item.get('size'):
@@ -190,7 +190,7 @@ class FclBookingVyuh():
         old_variance = new_item['stand_dev'] ** 2
         new_variance = ((size - 1) * old_variance + size * (new_mean - old_mean) ** 2) / size
         std_dev = new_variance ** 0.5
-        lower_limit = exp_average - 1 * std_dev # -1 sigma
+        lower_limit = exp_average - 0.5 * std_dev # -1 sigma
         upper_limit = exp_average + 1 * std_dev # 1 sigma
         
         return {

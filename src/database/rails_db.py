@@ -296,7 +296,7 @@ def get_ff_mlo():
         return result
     
 
-def get_past_cost_booking_data():
+def get_past_cost_booking_data(limit, offset):
 
     all_result = []
     try:
@@ -330,8 +330,12 @@ def get_past_cost_booking_data():
                     AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
                     AND shipment_collection_parties.status in ('coe_approved')
                     AND line_item ->> 'unit' = 'per_container'
+                ORDER BY
+                    shipment_collection_parties.updated_at asc
+                LIMIT %s
+                OFFSET %s
                 '''
-                cur.execute(sql)
+                cur.execute(sql, (limit, offset,))
                 result = cur.fetchall()
                 for res in result:
                     new_obj = {

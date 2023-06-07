@@ -92,10 +92,17 @@ celery.conf.beat_schedule = {
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_cost_booking_estimation(self):
     try:
-        cost_booking_data = get_past_cost_booking_data()
-        for booking_data in cost_booking_data:
-            setter = FclBookingVyuhSetters(booking_data)
-            setter.set_dynamic_pricing()
+        limit = 500
+        offset = 0
+        while True: 
+            cost_booking_data = get_past_cost_booking_data(limit, offset)
+            offset += 500
+            if not cost_booking_data:
+                break
+            
+            for booking_data in cost_booking_data:
+                setter = FclBookingVyuhSetters(booking_data)
+                setter.set_dynamic_pricing()
 
     except Exception as exc:
         pass
