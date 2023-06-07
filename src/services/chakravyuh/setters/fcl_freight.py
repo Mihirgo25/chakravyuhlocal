@@ -557,5 +557,6 @@ class FclFreightVyuh():
         for new_transformation in new_transformations_to_add:
             # self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
             transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
+
         
         return True
