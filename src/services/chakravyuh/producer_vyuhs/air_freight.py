@@ -16,8 +16,8 @@ class AirFreightVyuh():
             for packing_type in PACKING_TYPES:
                 for operation_type in OPERATION_TYPES:
                     rate = jsonable_encoder(self.rate)
-                    rate['handling_type'] = handling_type
-                    rate['packing_type'] = packing_type
+                    rate['stacking_type'] = handling_type
+                    rate['shipment_type'] = packing_type
                     rate['operation_type'] = operation_type
                     rate['weight_slabs'] = self.get_weight_slabs(rate)
                     extended_rates.append(rate)
@@ -31,7 +31,7 @@ class AirFreightVyuh():
 
         # queue need to change to air_freight_rate
         for rate_to_create in rates_to_create:
-            rate_to_create = rate_to_create | { 'mode': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
+            rate_to_create = rate_to_create | { 'source': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
             create_air_freight_rate_delay.apply_async(kwargs={ 'request':rate_to_create }, queue='fcl_freight_rate')
 
         return True

@@ -446,15 +446,15 @@ class AirFreightVyuh():
             'operation_type':self.new_rate.get('operation_type'),
             'stacking_type': 'stackable' if (self.new_rate.get('is_stackable') or self.new_rate.get('is_stackable') == None) else 'non_stackable',
             'shipment_type':'box',
-            'currency':self.new_rate['currency'],
+            'currency':'INR',
             'price_type':'net_net',
             'min_price' : weight_slabs[0]['tariff_price'],
             'service_provider_id':DEFAULT_SERVICE_PROVIDER_ID,
             'performed_by_id':DEFAULT_USER_ID,
             'procured_by_id':DEFAULT_USER_ID,
             'sourced_by_id':DEFAULT_USER_ID,
-            'validity_start': datetime.now(),
-            'validity_end': datetime.now()+ timedelta(days=7)
+            'validity_start': datetime.now().date(),
+            'validity_end': datetime.now().date()+ timedelta(days=7)
         }
         return params
     
