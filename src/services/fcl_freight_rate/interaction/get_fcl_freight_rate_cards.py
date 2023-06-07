@@ -165,14 +165,12 @@ def is_charge_present(line_item,charge_code):
     return False
 
 def conditional_line_items(charges, rate, local_rate):
+    
     if charges:
         new_line_items = []
         for item in charges:
             if item.get('conditions'):
                 or_condition, and_condition = get_condition(rate,item.get('conditions'))
-                print(or_condition)
-                print(and_condition)
-                print(eval(or_condition))
                 if eval(and_condition) and eval(or_condition):
                     code = item.get('code')
                     if not is_charge_present(new_line_items,code):
@@ -186,29 +184,6 @@ def conditional_line_items(charges, rate, local_rate):
         return local_rate
     else: 
         return []
-
-def converted_condition(rate,expression,exp_conditions):
-    exp_condition=''
-    count = 0
-    for condition in exp_conditions:
-        count +=1
-        if count == len(exp_conditions):
-            exp_condition += "'{}' {} '{}'".format(rate.get(condition[0]),condition[1],condition[2])
-        else:
-            exp_condition += "'{}' {} '{}' {} ".format(rate.get(condition[0]),condition[1],condition[2],expression)
-    return exp_condition
-
-    
-def get_condition(rate,conditions):
-    or_condition = ''
-    and_condition = ''
-    or_conditions = conditions.get('or_condition')
-    and_conditions = conditions.get('and_condition')
-
-    or_condition=converted_condition(rate,'or',or_conditions)
-    and_condition=converted_condition(rate,'and',and_conditions)
-     
-    return or_condition, and_condition
 
 def get_matching_local(local_type, rate, local_rates, default_lsp):
     matching_locals = {}
@@ -881,22 +856,22 @@ def get_fcl_freight_rate_cards(requirements):
     initial_query = initialize_freight_query(requirements)
     freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
-        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
-        is_predicted = False
-        freight_rates_length = len(freight_rates)
-        if freight_rates_length == 0:
-            get_fcl_freight_predicted_rate(requirements)
-            initial_query = initialize_freight_query(requirements, True)
-            freight_rates = jsonable_encoder(list(initial_query.dicts()))
-            is_predicted = True
-        else:
-            cogofreight_freight_rates_length = 0
-            for val in freight_rates:
-                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
-                    cogofreight_freight_rates_length += 1
+    freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+    is_predicted = False
+    freight_rates_length = len(freight_rates)
+    if freight_rates_length == 0:
+        get_fcl_freight_predicted_rate(requirements)
+        initial_query = initialize_freight_query(requirements, True)
+        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        is_predicted = True
+    else:
+        cogofreight_freight_rates_length = 0
+        for val in freight_rates:
+            if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                cogofreight_freight_rates_length += 1
 
-            if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != freight_rates_length:
-                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+    if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != freight_rates_length:
+        freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
 
     missing_local_rates = get_rates_which_need_locals(freight_rates)
     rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
