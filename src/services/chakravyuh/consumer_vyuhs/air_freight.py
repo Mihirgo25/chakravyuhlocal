@@ -3,10 +3,11 @@ from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 
 class AirFreightVyuh():
-    def __init__(self, freight_rates: list = [],requirements: dict = {}):
+    def __init__(self, freight_rates: list = [],requirements: dict = {},weight: float = 0.0):
         self.freight_rates = freight_rates
         self.requirements = requirements
-        
+        self.weight = weight
+
     def get_probable_rate_transformations(self):
         origin_location_ids = [self.requirements['origin_country_id']]
         destination_location_ids = [self.requirements['destination_country_id']]
@@ -49,38 +50,32 @@ class AirFreightVyuh():
         probable_transformations.sort(key = self.sort_items)
         return probable_transformations[0]
     
-    def get_modified_weight_slab(self,estimation_weight_slab,rate_weight_slab):
+    def get_modified_weight_slab(self,estimation_weight_slab,rate):
 
         avg_price = estimation_weight_slab['avg_price']
-        if estimation_weight_slab['currency']!=rate_weight_slab['currency']:
-            avg_price = common.get_money_exchange_for_fcl({"price": estimation_weight_slab['avg_price'], "from_currency": estimation_weight_slab['currency'], "to_currency": rate_weight_slab['currency'] })['price']
+        if estimation_weight_slab['currency']!=rate['freights'][0]['line_items'][0]['currency']:
+            avg_price = common.get_money_exchange_for_fcl({"price": estimation_weight_slab['avg_price'], "from_currency": estimation_weight_slab['currency'], "to_currency": rate['freights']['line_items'][0]['currency'] })['price']
     
-        rate_weight_slab['tariff_price'] = avg_price
-        return rate_weight_slab
+        rate['freights'][0]['line_items'][0]['price'] = avg_price
+        return rate
 
 
-    def get_weight_slab(self,rate_weight_slabs,estimation_weight_slabs):
-        weight_slabs = []
-        for rate_weight_slab in rate_weight_slabs:
-            found = False
-            for estimation_weight_slab in estimation_weight_slabs:
-                if rate_weight_slab['lower_limit'] >= estimation_weight_slab['lower_limit'] and rate_weight_slab['upper_limit'] <= estimation_weight_slab['upper_limit']:
-                    rate_weight_slab = self.get_modified_weight_slab(estimation_weight_slab,rate_weight_slab)
-                    weight_slabs.append(rate_weight_slab)
-                    found = True
-                    break
-            if not found:
-                estimation_weight_slab = estimation_weight_slabs[0]
-                rate_weight_slab = self.get_modified_weight_slab(estimation_weight_slab,rate_weight_slab)
-                weight_slabs.append(rate_weight_slab)
-
-        
-        return weight_slabs
+    def get_weight_slab(self,estimation_weight_slabs,rate):
+        found = False
+        for estimation_weight_slab in estimation_weight_slabs:
+            if self.weight >= estimation_weight_slab['lower_limit'] and self.weight <= estimation_weight_slab['upper_limit']:
+                rate = self.get_modified_weight_slab(estimation_weight_slab,rate)
+                found = True
+                break
+        if not found:
+            estimation_weight_slab = estimation_weight_slabs[0]
+            rate = self.get_modified_weight_slab(estimation_weight_slab,rate)
+        return rate
+    
 
     def apply_rate_transformation(self, rate, probable_transformations):
         probable_transformation_to_apply = self.get_most_eligible_rate_transformation(probable_transformations)
-        weight_slabs = self.get_weight_slab(rate.get('weight_slabs'),probable_transformation_to_apply.get('weight_slabs'))
-        rate['weight_slabs'] = weight_slabs
+        rate = self.get_weight_slab(probable_transformation_to_apply.get('weight_slabs'),rate)
         return rate
         
 
@@ -100,6 +95,8 @@ class AirFreightVyuh():
         return new_rate
 
     def apply_dynamic_pricing(self):
+        print(self.freight_rates)
+        self.set_requirements(self.freight_rates[0])
 
         probable_transformations = self.get_probable_rate_transformations()
  
@@ -109,7 +106,6 @@ class AirFreightVyuh():
         probable_customer_transformations = self.get_probable_customer_transformations()
 
         new_freight_rates = []
-
         for freight_rate in self.freight_rates:
             new_freight_rate = self.apply_transformation(
                     rate = freight_rate,
@@ -120,5 +116,19 @@ class AirFreightVyuh():
             new_freight_rates.append(new_freight_rate)
         
         return new_freight_rates
+    
+    def set_requirements(self,freight_rate):
+        self.requirements ={
+
+                'origin_airport_id':freight_rate['origin_airport_id'],
+                'destination_airport_id':freight_rate['destination_airport_id'],
+                'origin_country_id':freight_rate['origin_country_id'],
+                'destination_country_id':freight_rate['destination_country_id'],
+                'commodity':freight_rate['commodity'],
+                'airline_id':freight_rate['airline_id'],
+                'operation_type':freight_rate['operation_type'],
+                'stacking_type':freight_rate['operation_type'],
+                'shipment_type':freight_rate['shipment_type']
+                }
     
     
