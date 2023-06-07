@@ -105,7 +105,4 @@ def list_fcl_freight_rate_estimation_trends_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
-from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
-@chakravyuh_router.get('/invoice_rates_updation')
-def invoice():
-    return invoice_rates_updation()
+

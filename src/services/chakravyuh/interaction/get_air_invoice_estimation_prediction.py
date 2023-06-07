@@ -22,7 +22,6 @@ def invoice_rates_updation():
         if bas_count ==1:
             setter = AirFreightVyuhSetters(freight_rate)
             setter.set_dynamic_pricing()
-            break
     return True
         
 

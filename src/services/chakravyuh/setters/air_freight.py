@@ -223,11 +223,11 @@ class AirFreightVyuh():
     def calculate_missing_rate(self,ratios,latest_weight_slabs):
         final_weight_slabs = []
         rate_index = -1
+        price = self.new_rate['price']
         for index,weight_slab in enumerate(latest_weight_slabs):
             if self.new_rate['weight'] >= weight_slab['lower_limit'] and self.new_rate['weight'] <= weight_slab['upper_limit']:
-                price = self.new_rate['price']
                 if weight_slab['currency']!=self.new_rate['currency']:
-                    price = common.get_money_exchange_for_fcl({"price": price, "from_currency": weight_slab['currency'], "to_currency": 'INR' })['price']
+                    price = common.get_money_exchange_for_fcl({"price": price, "from_currency": self.new_rate['currency'], "to_currency": 'INR' })['price']
                 weight_slab['tariff_price'] = 0.2*weight_slab['tariff_price'] + 0.8*price
                 rate_index = index
 
