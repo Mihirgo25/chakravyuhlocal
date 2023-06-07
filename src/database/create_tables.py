@@ -1,11 +1,12 @@
 from database.db_session import db
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
-from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
-from services.haulage_freight_rate.models.wagon_types import WagonTypes
+from services.ftl_freight_rate.models.truck import Truck
+from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
+from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
+from services.haulage_freight_rate.models.energy_data import EnergyData
 def create_table():
     # db.connect()
     try:
-        db.create_tables([TrailerFreightRateCharges, HaulageFreightRateRuleSet, WagonTypes])
+        db.create_tables([EnergyData])
         db.close()
         print("created table")
     except:
