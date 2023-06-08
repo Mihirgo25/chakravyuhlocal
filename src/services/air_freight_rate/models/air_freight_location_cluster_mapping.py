@@ -13,7 +13,6 @@ class AirFreightLocationClusterMapping(BaseModel):
     id = BigAutoField(primary_key=True)
     location_id = UUIDField()
     cluster_id = ForeignKeyField(AirFreightLocationClusters,to_field="id")
-    rate_factor = DoubleField(default=1)
     status = CharField(index=True, default='active')
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
