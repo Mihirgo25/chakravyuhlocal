@@ -176,7 +176,7 @@ def rate_extension():
                 action_name="create",
                 performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
                 data=data,
-                object_id=id,
+                object_id=str(rate.id),
                 object_type="FclFreightRate",
                 source='rate_extension',
             )
