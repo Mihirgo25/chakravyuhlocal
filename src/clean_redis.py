@@ -127,8 +127,17 @@ def delete_rates():
         print('l')  
 
 def rate_extension():
+    from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
     eligible_sp = get_ff_mlo()
-    rates = FclFreightRate.select().where(FclFreightRate.last_rate_available_date == '2023-04-30', FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', FclFreightRate.service_provider_id.in_(eligible_sp), ~FclFreightRate.rate_not_available_entry, FclFreightRate.mode == 'manual')
+    rates = FclFreightRate.select().where(
+        FclFreightRate.last_rate_available_date <= '2023-05-31', 
+        FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', 
+        FclFreightRate.service_provider_id.in_(eligible_sp), 
+        FclFreightRate.last_rate_available_date >= '2023-05-01',
+        FclFreightRate.updated_at >= '2023-05-01',
+        ~FclFreightRate.rate_not_available_entry, 
+        FclFreightRate.mode == 'manual'
+    )
     limit_size = 5000
     count = 0
     while True:
@@ -137,17 +146,40 @@ def rate_extension():
             break
         
         for rate in batch_rates.execute():
+            line_items = []
             validities = rate.validities
             for validity in validities:
-                if validity['validity_end'] == '2023-04-30':
-                    validity['validity_end'] = '2023-05-31'
+                if validity['validity_end'] >= '2023-05-01' and validity['validity_end'] >= '2023-05-31':
+                    validity['validity_end'] = '2023-06-30'
+                    validity['validity_start'] = '2023-06-01'
                     for item in validity['line_items']:
                         if item['code'] == 'BAS':
-                            item['price'] = int(ceil((item['price']*1.07)/10)*10)
+                            item['price'] = item['price']
+                    line_items = validity['line_items']
             rate.validities = validities               
-            rate.last_rate_available_date = '2023-05-31'
+            rate.last_rate_available_date = '2023-06-30'
+            rate.rate_not_available_entry = False
+            rate.tags = ['machine_rate_extension']
             rate.save()
             rate.set_platform_prices()
+            data = {
+            'validity_end': '2023-06-30',
+            'validity_start': '2023-06-01',
+            'line_items': line_items,
+            'weight_limit': rate.weight_limit,
+            'origin_local': rate.origin_local,
+            'destination_local': rate.destination_local,
+            'source': 'machine_rate_extension',
+            }
+
+            id = FclFreightRateAudit.create(
+                action_name="create",
+                performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
+                data=data,
+                object_id=id,
+                object_type="FclFreightRate",
+                source='rate_extension',
+            )
             count += 1
             print(count)
             
