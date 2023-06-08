@@ -2,6 +2,7 @@ from micro_services.client import maps
 from services.ftl_freight_rate.rate_estimators.ftl_freight_rate_estimator import FtlFreightEstimator
 from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
 from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING, PREDICTION_TRUCK_TYPES
+from fastapi import HTTPException
 
 def get_ftl_freight_rate(
     origin_location_id,
@@ -56,6 +57,7 @@ def get_truck_and_commodity_data(truck_type, weight,country_id,trip_type,commodi
     data['commodity'] = commodity
     data['trip_type'] = trip_type
     data['fuel_type'] = truck_details['fuel_type']
+    data['truck_name'] = closest_truck_type
     data['truck_name'] = closest_truck_type
     return data
 

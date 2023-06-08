@@ -33,6 +33,8 @@ DEFAULT_PAYMENT_TERM = "prepaid"
 
 DEFAULT_SERVICE_PROVIDER_ID = '5dc403b3-c1bd-4871-b8bd-35543aaadb36'
 
+DEFAULT_SERVICE_PROVIDER_ID = '5dc403b3-c1bd-4871-b8bd-35543aaadb36'
+
 INTERNAL_BOOKING = {"service_provider_id": "5dc403b3-c1bd-4871-b8bd-35543aaadb36"}
 
 FAK_COMMODITY = "general"
@@ -99,6 +101,10 @@ DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 
 COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US"}
+
+DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
+
+DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
 
 EXPORT_CARGO_HANDLING_TYPES = ['stuffing_at_factory', 'stuffing_at_dock']
 
