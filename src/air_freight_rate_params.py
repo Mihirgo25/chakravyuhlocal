@@ -289,18 +289,21 @@ class CreateAirFreightRateFeedbacks(BaseModel):
   feedback_type: str
   booking_params: dict = {}
   trade_type:str=None
-#   cogo_entity_id: str = None
-#   origin_airport_id: str = None
-#   origin_trade_id: str = None
-#   origin_country_id: str = None
-#   origin_continent_id: str = None
-#   destination_airport_id: str = None
-#   destination_continent_id: str = None
-#   destination_trade_id: str = None
-#   destination_country_id: str = None
-#   commodity: str = None
-#   service_provider_id: str = None
-#   commodity_description:str=None
+  cogo_entity_id: str = None
+  origin_airport_id: str = None
+  origin_trade_id: str = None
+  origin_country_id: str = None
+  origin_continent_id: str = None
+  destination_airport_id: str = None
+  destination_continent_id: str = None
+  destination_trade_id: str = None
+  destination_country_id: str = None
+  commodity: str = None
+  service_provider_id: str = None
+  weight:float=None
+  volume:float=None
+  packages_count:int=None
+  operation_type:str=None
 
 class CreateAirFreightRateRequest(BaseModel):
   source: str
@@ -326,7 +329,6 @@ class CreateAirFreightRateRequest(BaseModel):
   cargo_stacking_type:str=None
   packages_count:int=None
   trade_type:str=None
-  airline_id:str=None
   service_provider_id:str=None
   price_type:str=None
   operation_type:str=None
