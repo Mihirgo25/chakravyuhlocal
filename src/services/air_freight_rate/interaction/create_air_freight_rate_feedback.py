@@ -7,14 +7,16 @@ from services.air_freight_rate.models.air_freight_rate_feedback import AirFreigh
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
 from celery_worker import update_multiple_service_objects
 from celery_worker import send_create_notifications_to_supply_agents_function
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+
 from micro_services.client import *
 
-def create_audit(request,feedback):
+def create_audit(request,feedback_id):
     AirFreightRateAudits.create(
         created_at=datetime.now(),
         updated_at=datetime.now(),
         data={key:value for key , value in request.items() if key != 'performed_by_id'},
-        object_id=feedback.id,
+        object_id=feedback_id,
         object_type='AirFreightRateFeedbacks',
         action_name='create',
         performed_by_id=request['performed_by_id']
@@ -25,9 +27,7 @@ def create_air_freight_rate_feeback(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
-    print(request['rate_id'])
     rate=AirFreightRate.select().where(AirFreightRate.id==request['rate_id']).first()
-    print(rate)
 
     if not rate:
         raise HTTPException (status_code=500, detail='id is invalid')
@@ -50,45 +50,40 @@ def execute_transaction_code(request):
         AirFreightRateFeedbacks.performed_by_type==request.get('performed_by_type'),
         AirFreightRateFeedbacks.performed_by_org_id==request.get('performed_by_org_id')
     ).first()
-    print(feedback)
+
 
     if not feedback:
         feedback=AirFreightRateFeedbacks(**row)
 
-    print(feedback)
-
     create_params =get_create_params(request)
 
-    for attr , value in create_params.items():
+    for attr,value in create_params.items():
         if attr =='preffered_airline_ids' and value:
             ids=[]
             for val in value:
                   ids.append(uuid.UUID(str(val)))
             setattr(feedback,attr,ids)
-        else:
+        else: 
             setattr(feedback,attr,value)
 
-    print(feedback)
-    
-    # try:
-    if feedback.validate_before_save():
+    try:
+        if feedback.validate_before_save():
             feedback.save()
-    # except:
-    #     raise  HTTPException(status_code= 400, detail="couldnt validate the object")
-
-    create_audit(request,feedback)
+    except:
+        raise HTTPException(status_code= 400, detail="couldnt validate the object")
+    create_audit(request,feedback.id)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
     update_likes_dislike_count(rate,request)
 
-    if request['feddback_type']=='disliked':
-        send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
+    # if request['feddback_type']=='disliked':
+        # send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
     return {'id': request['rate_id']}
 
 def update_likes_dislike_count(rate,request):
     validities=rate.validities
-    validity=[validity_object for validity_object in validities if validity_object.id==request.get('validity_id')]
+    validity=[validity_object for validity_object in validities if validity_object['id']==request.get('validity_id')]
     if validity:
         validity=validity[0]
     else:
@@ -117,13 +112,15 @@ def get_create_params(request):
         'origin_trade_id':request.get('origin_trade_id'),
         'destination_airport_id':request.get('destination_airport_id'),
         'destination_country_id':request.get('destination_country_id'),
-        'destiantion_continent_id':request.get('destination_continent_id'),
-        'destination_trade_id':request.get('destinaation_trade_id'),
+        'destination_continent_id':request.get('destination_continent_id'),
+        'destination_trade_id':request.get('destination_trade_id'),
         'commodity':request.get('commodity'),
+        'cogo_entity_id':request.get('cogo_entity_id'),
         'service_provider_id':request.get('service_provider_id'),
         'weight':request.get('weight'),
         'volume':request.get('volume'),
         'packages_count':request.get('packages_count'),
+        'operation_type':request.get('operation_type'),
         'status': 'active'
       }
     loc_ids=[]
