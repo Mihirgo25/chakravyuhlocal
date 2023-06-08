@@ -90,6 +90,7 @@ class UpdateFclCfsRate(BaseModel):
     bulk_operation_id: str = None
     line_items: list[StandardLineItem] = []
     free_limit: int = None
+    performed_by_type: str
     
 class Filters(BaseModel):
   filters: dict = {}

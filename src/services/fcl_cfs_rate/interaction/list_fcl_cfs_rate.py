@@ -66,6 +66,11 @@ def get_data(query):
         FclCfsRate.is_line_items_info_messages_present,
         FclCfsRate.line_items_error_messages,
         FclCfsRate.line_items_info_messages,
+        FclCfsRate.location,
+        FclCfsRate.procured_by_id,
+        FclCfsRate.sourced_by_id,
+        FclCfsRate.sourced_by,
+        FclCfsRate.procured_by,
         FclCfsRate.cargo_handling_type).dicts()
 
     data = list(query_result)
