@@ -165,30 +165,19 @@ def is_charge_present(line_item,charge_code):
     return False
 
 def conditional_line_items(rate, local_rate):
-    request = {
-        'port_id': rate.get('origin_port_id'),
-        "main_port_id": rate.get("origin_main_port_id"),
-        "container_size": rate.get("container_size"),
-        "country_id":rate.get("country_id"),
-        "container_type": rate.get("container_type"),
-        "commodity": rate.get("commodity"),
-        "shipping_line_id": rate.get("shipping_line_id"),
-        "service_provider_id": rate.get("service_provider_id"),
-        "trade_type": rate.get("trade_type")
-    }
     
-    conditional_data=get_conditional_line_items(request)
-
-    if not conditional_data:
-        return []
-
-    new_line_items=[]
-
-    for data in conditional_data:
-        line_items=data.get('data')
-        for line_item in line_items:
-            new_line_items.append(line_item)
+    request_body = {
+    'port_id': rate.get('destination_port_id') if local_rate['trade_type'] == 'export' else rate.get('origin_port_id'),
+    'main_port_id': rate.get('destination_main_port_id') if local_rate['trade_type'] == 'export' else rate.get('origin_main_port_id'),
+    'country_id': rate.get('destination_country_id') if local_rate['trade_type'] == 'export' else rate.get('origin_country_id'),
+    'container_size': rate.get('container_size'),
+    'container_type': rate.get('container_type'),
+    'commodity': rate.get('commodity'),
+    'shipping_line_id': rate.get('shipping_line_id'),
+    'trade_type': local_rate['trade_type']
+}
     
+    new_line_items=get_conditional_line_items(request_body,local_rate)
     local_rate['data']['line_items']=new_line_items
     local_rate['line_items']=new_line_items
     
