@@ -12,7 +12,7 @@ from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as Air
 from statistics import mean
 from configs.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_FACTOR
 from configs.env import DEFAULT_USER_ID
-
+from services.air_freight_rate.models.air_freight_location_cluster_factor import AirFreightLocationClusterFactor
 class AirFreightVyuh():
     def __init__(self,
                 new_rate: dict = {},  
@@ -356,7 +356,21 @@ class AirFreightVyuh():
 
         return True
     
-    def get_cluster_rate_combinations(self):
+    def get_factors(self,origin_location_mappings,destination_location_mappings,origin_cluster_id,destination_cluster_id):
+        locations = origin_location_mappings + destination_location_mappings
+        query = AirFreightLocationClusterFactor.select(
+            AirFreightLocationClusterFactor.rate_factor,
+            AirFreightLocationClusterFactor.cluster_id,
+            AirFreightLocationClusterFactor.location_id).where(
+            AirFreightLocationClusterFactor.location_id << locations,
+            AirFreightLocationClusterFactor.status == 'active',
+            AirFreightLocationClusterFactor.origin_cluster_id == origin_cluster_id,
+            AirFreightLocationClusterFactor.destination_cluster_id == destination_cluster_id
+            )
+        
+        return jsonable_encoder(list(query.dicts()))
+    
+    def get_cluster_rate_combinations(self,weight_slabs):
         origin_airport_id = self.new_rate['origin_airport_id']
         destination_airport_id = self.new_rate['destination_airport_id']
 
@@ -379,58 +393,63 @@ class AirFreightVyuh():
                 destination_cluster_id = cluster['id']
 
         cluster_ids = []
+        is_origin_base = False
+        is_destination_base = False
         if origin_cluster_id:
             cluster_ids.append(origin_cluster_id)
+            is_origin_base = True
         
         if destination_cluster_id:
             cluster_ids.append(destination_cluster_id)
+            is_destination_base = True
         
         origin_location_mappings = []
         destination_location_mappings = []
-        
+        all_rates = []
         if cluster_ids:
             location_mappings_query = AirFreightLocationClusterMapping.select(
                 AirFreightLocationClusterMapping.cluster_id,
                 AirFreightLocationClusterMapping.location_id,
-                AirFreightLocationClusterMapping.rate_factor
             ).where(
-                AirFreightLocationClusterMapping.status == 'active',
-                AirFreightLocationClusterMapping << cluster_ids
+                (((AirFreightLocationClusterMapping.status == 'active')&
+                (AirFreightLocationClusterMapping.cluster_id << cluster_ids)) |
+                (
+                AirFreightLocationClusterMapping.location_id == origin_airport_id if not is_origin_base else AirFreightLocationClusterMapping.location_id ==destination_airport_id
+                ))
             )
-
+            
             location_mappings = jsonable_encoder(list(location_mappings_query.dicts()))
 
             for location_mapping in location_mappings:
-                if location_mapping['cluster_id'] == origin_cluster_id:
-                    origin_location_mappings.append(location_mapping)
-                if location_mapping['cluster_id'] == destination_cluster_id:
-                    destination_location_mappings.append(location_mapping)
+                if is_origin_base and location_mapping['cluster_id'] == origin_cluster_id:
+                    origin_location_mappings.append(location_mapping['location_id'])
+                if is_destination_base and location_mapping['cluster_id'] == destination_cluster_id:
+                    destination_location_mappings.append(location_mapping['location_id'])
+                
+                if not is_origin_base and location_mapping['location_id'] == origin_airport_id:
+                    origin_cluster_id = location_mapping['cluster_id']
         
-        return origin_location_mappings, destination_location_mappings
-    
-    
+                if not is_destination_base and location_mapping['location_id'] == destination_airport_id:
+                    destination_cluster_id = location_mapping['cluster_id']
+
+            factors_mappings = self.get_factors(origin_location_mappings,destination_location_mappings,origin_cluster_id,destination_cluster_id)
+            for factor_mapping in factors_mappings:
+                if factor_mapping['cluster_id'] == origin_cluster_id:
+                    rate_params = self.get_rate_param(factor_mapping['location_id'],destination_airport_id,weight_slabs,factor_mapping['rate_factor'])
+                
+                if factor_mapping['cluster_id'] == destination_cluster_id:
+                    rate_params = self.get_rate_param(origin_airport_id,factor_mapping['location_id'],weight_slabs,factor_mapping['rate_factor'])
+                all_rates.append(rate_params)
+        
+        return all_rates
 
     def insert_rates_to_rms(self):
         origin_airport_id = self.new_rate['origin_airport_id']
         destination_airport_id = self.new_rate['destination_airport_id']
         weight_slabs = self.create_weight_slabs(origin_airport_id,destination_airport_id,'airport')
-        
-        origin_cluster_airports, destination_cluster_airports = self.get_cluster_rate_combinations()
+        rates_to_extend = self.get_cluster_rate_combinations(weight_slabs)
 
-        all_rates=[]
-        all_rates.append(self.get_rate_param(origin_airport_id,destination_airport_id,weight_slabs))
-        if origin_cluster_airports:
-            for clutser_airport in origin_cluster_airports:
-                rate_params = self.get_rate_param(clutser_airport['location_id'],destination_airport_id,weight_slabs,clutser_airport['rate_factor'])
-                all_rates.append(rate_params)
-
-
-        if destination_cluster_airports:
-            for clutser_airport in destination_cluster_airports:
-                rate_params = self.get_rate_param(origin_airport_id,clutser_airport['location_id'],weight_slabs,clutser_airport['rate_factor'])
-                all_rates.append(rate_params)
-
-        for rate in all_rates:
+        for rate in rates_to_extend:
             producer = AirProducerVyuh(rate=rate)
             producer.extend_rate()
     
