@@ -5,6 +5,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rate
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
+from services.conditional_line_items.interaction.get_conditional_line_items import get_conditional_line_items
 from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
@@ -155,7 +156,6 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
             "line_items": local_charge["data"]["line_items"]
         }
         all_formatted_locals.append(new_local_obj)
-    print(all_formatted_locals)
     return all_formatted_locals
 
 def is_charge_present(line_item,charge_code):
@@ -164,26 +164,35 @@ def is_charge_present(line_item,charge_code):
             return True
     return False
 
-def conditional_line_items(charges, rate, local_rate):
+def conditional_line_items(rate, local_rate):
+    request = {
+        'port_id': rate.get('origin_port_id'),
+        "main_port_id": rate.get("origin_main_port_id"),
+        "container_size": rate.get("container_size"),
+        "country_id":rate.get("country_id"),
+        "container_type": rate.get("container_type"),
+        "commodity": rate.get("commodity"),
+        "shipping_line_id": rate.get("shipping_line_id"),
+        "service_provider_id": rate.get("service_provider_id"),
+        "trade_type": rate.get("trade_type")
+    }
     
-    if charges:
-        new_line_items = []
-        for item in charges:
-            if item.get('conditions'):
-                or_condition, and_condition = get_condition(rate,item.get('conditions'))
-                if eval(and_condition) and eval(or_condition):
-                    code = item.get('code')
-                    if not is_charge_present(new_line_items,code):
-                        del item['conditions']
-                        new_line_items.append(item)
-            else:
-                new_line_items.append(item)
+    conditional_data=get_conditional_line_items(request)
 
-        local_rate['data']['line_items'] = new_line_items
-        local_rate['line_items'] = new_line_items
-        return local_rate
-    else: 
+    if not conditional_data:
         return []
+
+    new_line_items=[]
+
+    for data in conditional_data:
+        line_items=data.get('data')
+        for line_item in line_items:
+            new_line_items.append(line_item)
+    
+    local_rate['data']['line_items']=new_line_items
+    local_rate['line_items']=new_line_items
+    
+    return local_rate
 
 def get_matching_local(local_type, rate, local_rates, default_lsp):
     matching_locals = {}
@@ -202,9 +211,9 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
     for local_rate in local_rates:
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
             if shipping_line_id == local_rate['shipping_line_id']:
-                matching_locals[local_rate["service_provider_id"]] = conditional_line_items(local_rate.get('data').get('line_items'), rate, local_rate)
+                matching_locals[local_rate["service_provider_id"]] = conditional_line_items( rate, local_rate)
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
-                default_shipping_line_locals[local_rate["service_provider_id"]] = conditional_line_items(local_rate.get('data').get('line_items'), rate, local_rate)
+                default_shipping_line_locals[local_rate["service_provider_id"]] = conditional_line_items( rate, local_rate)
             
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]

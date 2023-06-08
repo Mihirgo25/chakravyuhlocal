@@ -1,5 +1,6 @@
 from services.conditional_line_items.models.conditional_line_items import ConditionalLineItems
 from database.db_session import db
+from fastapi.encoders import jsonable_encoder
 from fastapi import HTTPException
 
 def get_conditional_line_items(request):
@@ -13,9 +14,13 @@ def get_conditional_line_items(request):
         ((ConditionalLineItems.container_size == request.get('container_size')) | (ConditionalLineItems.container_size.is_null(True))),
         ((ConditionalLineItems.container_type == request.get('container_type')) | (ConditionalLineItems.container_type.is_null(True))),
         ((ConditionalLineItems.commodity == request.get('commodity')) | (ConditionalLineItems.commodity.is_null(True))),
-        ConditionalLineItems.trade_type == request.get('trade_type')
+        # ConditionalLineItems.trade_type == request.get('trade_type')
     ).dicts()
 
-    for i in search_query:
-        print(i)
-    print(search_query)
+    conditional_rate = jsonable_encoder(list(search_query.dicts()))
+
+    return conditional_rate
+
+    # for i in search_query:
+    #     print(i)
+    # print(search_query)

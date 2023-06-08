@@ -1,4 +1,4 @@
-from services.fcl_freight_rate.models.conditional_line_items import ConditionalLineItems
+from services.conditional_line_items.models.conditional_line_items import ConditionalLineItems
 from database.db_session import db
 
 def create_conditional_line_items(request):
