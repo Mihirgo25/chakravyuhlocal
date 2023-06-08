@@ -47,7 +47,7 @@ FEEDBACK_SOURCES = ['spot_search', 'checkout']
 
 REQUEST_SOURCES = ['spot_search', 'shipment']
 
-FEEDBACK_SOURCES = ['spot_search', 'checkout']
+FEEDBACK_SOURCES = ['spot_search', 'checkout','rate_sheet']
 
 FEEDBACK_TYPES = ['liked', 'disliked']
 
@@ -65,3 +65,5 @@ RATE_TYPES = ['general','promotional','consolidated']
 AIR_OPERATION_TYPES = ['passenger', 'freighter', 'charter', 'prime', 'lean']
 
 EXPECTED_TAT = 2
+
+ROLE_IDS_FOR_NOTIFICATIONS = ['70710ab2-0f80-4e12-a4f5-d75660c05315', 'dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']

@@ -2,6 +2,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates 
 def create_air_freight_storage_rate(request):
     with db.atomic():
         return execute_transaction_code(request)

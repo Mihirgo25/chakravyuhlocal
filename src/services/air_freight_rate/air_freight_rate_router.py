@@ -35,6 +35,9 @@ from services.air_freight_rate.interaction.update_air_freight_rate_local import 
 from services.air_freight_rate.interaction.create_air_freight_rate_request import create_air_freight_rate_request
 from services.air_freight_rate.interaction.get_air_freight_rate_stats import get_air_freight_rate_stats
 from services.air_freight_rate.interaction.create_air_freight_rate_not_available import create_air_freight_rate_not_available
+from services.air_freight_rate.interaction.create_air_freight_storage_rate import create_air_freight_storage_rate
+from services.air_freight_rate.interaction.get_air_freight_rate_visibility import get_air_freight_rate_visibility
+from services.air_freight_rate.interaction.get_air_freight_rate_addition_frequency import get_air_freight_rate_addition_frequency
 from services.air_freight_rate.interaction.create_air_freight_warehouse_rate import create_air_freight_warehouse_rate
 from services.air_freight_rate.interaction.list_air_freight_rate_feedbacks import list_air_freight_rate_feedbacks
 from services.air_freight_rate.interaction.list_air_freight_rate_requests import list_air_freight_rate_requests
@@ -169,6 +172,66 @@ def get_air_freight_rate_local_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@air_freight_router.get("/get_air_freight_rate_visibility")
+def get_air_freight_rate_visibility_data(
+    service_provider_id:str,
+    origin_location_id:str=None,
+    destination_location_id:str=None,
+    from_date:datetime=datetime.now(),
+    to_date:datetime=datetime.now(),
+    commodity:str=None,
+    rate_id:str=None,
+    airline_id:str=None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request={
+        'service_provider_id':service_provider_id,
+        'origin_location_id':origin_location_id,
+        'destination_location_id':destination_location_id,
+        'from_date':from_date,
+        'to_date':to_date,
+        'commodity':commodity,
+        'rate_id':rate_id,
+        'airline_id':airline_id,
+        'service_provider_id':service_provider_id,
+    }
+
+    try:
+        data = get_air_freight_rate_visibility(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content = data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@air_freight_router.get("/get_air_freight_rate_addition_frequency")
+def get_air_freight_rate_addition_frequency_data(
+    group_by:str,
+    sort_type:str='desc',
+    
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request={
+        'group_by':group_by,
+        'sort_type':sort_type,
+    }
+
+    try:
+        data = get_air_freight_rate_addition_frequency(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content = data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/update_air_freight_rate_local")
 def update_air_freight_rates_locals(request: UpdateFrieghtRateLocal, resp:dict =Depends(authorize_token)):
@@ -209,6 +272,22 @@ def create_air_freight_rate_local_data(request: CreateAirFreightRateLocal, resp:
 
     try:
         data = create_air_freight_rate_local(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@air_freight_router.post("/create_air_freight_rate_storage")
+def create_air_freight_rate_storage_data(request: CreateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)):
+    # if resp["status_code"] != 200:
+    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    # if resp["isAuthorized"]:
+    #     request.performed_by_id = resp["setters"]["performed_by_id"]
+
+    try:
+        data = create_air_freight_storage_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
@@ -579,6 +658,7 @@ def list_air_freight_warehouse_rates_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
 from services.air_freight_rate.interaction.update_air_freight_storage_rate import update_air_freight_storage_rate
 @air_freight_router.post("/update_air_freight_storage_rates")
 def update_air_freight_storage_rates_data(request:UpdateAirFreightStorageRates,resp:dict=Depends(authorize_token)):
@@ -612,6 +692,19 @@ def get_air_freight_rate_suggestions_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+from services.air_freight_rate.interaction.create_air_freight_rate_feedback import create_air_freight_rate_feeback
+@air_freight_router.post("/create_air_freight_rate_feedback")
+def create_air_freight_rate_feedbacks_data(request:CreateAirFreightRateFeedbacks,resp:dict =Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['status_code'],content=resp)
+    try:
+       return JSONResponse(status_code=200,content=create_air_freight_rate_feeback(request.dict(exclude_none=False)))
+    except HTTPException as e:
+        raise 
+    except Exception as e:
+        print(e)
+        return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
     
 
 

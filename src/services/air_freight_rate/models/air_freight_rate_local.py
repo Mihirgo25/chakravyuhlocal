@@ -208,8 +208,8 @@ class AirFreightRateLocal(BaseModel):
         }
         return loc_data
     
-    def add_service_objects(response):
-        service_objects=get_multiple_service_objects()
+    # def add_service_objects(response):
+    #     service_objects=get_multiple_service_objects()
     
     def set_location_ids(self):
         self.country_id = self.airport.get('country_id')

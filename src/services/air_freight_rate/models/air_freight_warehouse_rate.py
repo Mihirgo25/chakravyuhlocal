@@ -1,5 +1,5 @@
 from peewee import *
-import datetime
+from datetime import datetime
 from database.db_session import db
 from fastapi import HTTPException
 from configs.air_freight_rate_constants import MAX_CARGO_LIMIT
@@ -25,9 +25,10 @@ class AirFreightWarehouseRates(BaseModel):
     commodity = CharField(null=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.now())
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporter_id = UUIDField(null=True)
+    importer_exporter=BinaryJSONField(null=True)
     is_line_items_error_messages_present = BooleanField(null=True)
     is_line_items_info_messages_present = BooleanField(null=True)
     line_items = BinaryJSONField(null=True)
@@ -38,13 +39,17 @@ class AirFreightWarehouseRates(BaseModel):
     priority_score_updated_at = DateTimeField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
     service_provider_id = UUIDField(null=True)
+    service_provider=BinaryJSONField(null=True)
     spot_searches_count = IntegerField(null=True)
     spot_searches_importer_exporters_count = IntegerField(null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.now())
     performed_by_id=CharField(null=True)
+    performed_by=BinaryJSONField(null=True)
     procured_by_id=CharField(null=True)
+    procured_by=BinaryJSONField(null=True)
+    sourced_by=BinaryJSONField(null=True)
     sourced_by_id=CharField(null=True)
     airport=BinaryJSONField(null=True)
     
