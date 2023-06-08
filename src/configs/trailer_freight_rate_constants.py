@@ -9,7 +9,7 @@ CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
 
 CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
 
-CALCULATION_COUNTRY_CODES = ['IN', 'CN', 'US', 'VN', 'CA', 'MX']
+CALCULATION_COUNTRY_CODES = ['IN', 'CN', 'US', 'VN', 'CA', 'MX', 'BR', 'AQ', 'CO']
 
 ROUND_TRIP_FACTOR = 1.5
 

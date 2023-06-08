@@ -6,6 +6,7 @@ from services.trailer_freight_rates.rate_estimators.IN_trailer_estimator import 
 from services.trailer_freight_rates.rate_estimators.US_trailer_estimator import USTrailerRateEstimator
 from services.trailer_freight_rates.rate_estimators.CN_trailer_estimator import CNTrailerRateEstimator
 from services.trailer_freight_rates.rate_estimators.VN_trailer_estimator import VNTrailerRateEstimator
+from services.trailer_freight_rates.rate_estimators.SouthAmerica_trailer_estimator import SouthAmericaTrailerRateEstimator
 
 
 class TrailerFreightEstimator():
@@ -37,6 +38,11 @@ class TrailerFreightEstimator():
         if self.country_code == "VN":
             estimator = VNTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
             return estimator.VN_estimate(container_size, container_type, containers_count, cargo_weight_per_container, trip_type)
+        
+        '''For South America'''
+        if self.country_code == "BR" or self.country_code == "AQ" or self.country_code == "CO":
+            estimator = SouthAmericaTrailerRateEstimator(self.origin_location_id, self.destination_location_id, self.country_code)
+            return estimator.SouthAmerica_estimate(container_size, container_type, containers_count, cargo_weight_per_container, trip_type)
         
         
         return {'list':[]}
