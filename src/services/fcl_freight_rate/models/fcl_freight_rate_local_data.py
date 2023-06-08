@@ -93,14 +93,6 @@ class FclFreightRateLocalData(BaseModel):
                 is_line_items_error_messages_present = True
                 continue
 
-            print('locations',locations)
-            print(code_config.get('locations', []))
-
-            # if len(code_config.get('locations', [])) > 0 and ((locations['location_id']['type'] != 'country') or (locations['location_id']['country_code'].upper() == code_config.get('locations', []))):
-            #     line_items_error_messages[code] = [f"can only contain locations {', '.join(code_config['locations'])}"]
-            #     is_line_items_error_messages_present = True
-            #     continue
-
             if len(code_config.get('locations', [])) > 0:
                 if (location['type']!='country' or location['country_code'].upper() not in code_config.get('locations',[]) for location in locations):
                     line_items_error_messages[code] = [f"can only contain locations {', '.join(code_config['locations'])}"]
