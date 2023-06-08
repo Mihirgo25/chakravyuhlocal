@@ -29,7 +29,7 @@ from services.air_freight_rate.interaction.create_air_freight_rate_task import c
 from services.air_freight_rate.interaction.get_air_freight_rate_local import get_air_freight_rate_local
 from services.air_freight_rate.interaction.get_air_freight_rate_cards import get_air_freight_rate_cards
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
-from services.air_freight_rate.interaction.list_air_freight_rate_local import list_air_freight_rate_locals
+from services.air_freight_rate.interaction.list_air_freight_rate_locals import list_air_freight_rate_locals
 from services.air_freight_rate.interaction.update_air_freight_rate_task import update_air_freight_rate_task_data
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interaction.create_air_freight_rate_request import create_air_freight_rate_request
@@ -44,6 +44,7 @@ from services.air_freight_rate.interaction.list_air_freight_rate_requests import
 from services.air_freight_rate.interaction.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
 from services.air_freight_rate.interaction.list_air_freight_charge_codes import list_air_freight_charge_codes
 from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
+from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
 
 air_freight_router = APIRouter()
 
@@ -694,7 +695,7 @@ def get_air_freight_rate_suggestions_data(
     
 from services.air_freight_rate.interaction.create_air_freight_rate_feedback import create_air_freight_rate_feeback
 @air_freight_router.post("/create_air_freight_rate_feedback")
-def create_air_freight_rate_feedbacks_data(request:CreateAirFreightRateFeedbacks,resp:dict =Depends(authorize_token)):
+def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedbacks, resp: dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:

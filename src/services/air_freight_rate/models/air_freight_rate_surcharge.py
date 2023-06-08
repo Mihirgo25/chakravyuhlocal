@@ -119,8 +119,10 @@ class AirFreightRateSurcharge(BaseModel):
     
     def update_freight_objects(self):
         from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-
-        AirFreightRate.update(surcharge_id=self.id).where(
+        surcharge = {
+            'line_items':self.line_items
+        }
+        AirFreightRate.update(surcharge_id=self.id,surcharge = surcharge).where(
             (AirFreightRate.origin_airport_id == self.origin_airport_id),
             (AirFreightRate.destination_airport_id == self.destination_airport_id),
             (AirFreightRate.commodity == self.commodity) ,
@@ -128,7 +130,7 @@ class AirFreightRateSurcharge(BaseModel):
             (AirFreightRate.operation_type == self.operation_type) ,
             (AirFreightRate.airline_id == self.airline_id) ,
             (AirFreightRate.service_provider == self.service_provider_id),
-            (AirFreightRate.surcharge_id == None),
+            ((AirFreightRate.surcharge_id == None) | (AirFreightRate.surcharge_id == self.id)),
             (AirFreightRate.price_type == "net_net"))
     
     def set_origin_location_ids(self):
