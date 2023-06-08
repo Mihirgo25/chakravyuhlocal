@@ -22,3 +22,5 @@ class AirFreightLocationClusterFactor(BaseModel):
 
     class Meta:
         table_name='air_freight_location_cluster_factor'
+        indexes = (
+        (("origin_cluster_id", "location_id","destination_cluster_id","cluster_id"), True),)
