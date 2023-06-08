@@ -82,6 +82,8 @@ class AirFreightRate(BaseModel):
     updated_at=DateTimeField(default=datetime.datetime.now, index=True,null=True)
     sourced_by_id=UUIDField(null=True,index=True)
     procured_by_id=UUIDField(null=True,index=True)
+    surcharge = BinaryJSONField(null= True)
+    is_surcharge_line_items_error_messages_present = BooleanField(null=True)
 
     class Meta:
         table_name='air_freight_rate_temp'

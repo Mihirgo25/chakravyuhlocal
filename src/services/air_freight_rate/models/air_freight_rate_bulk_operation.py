@@ -17,14 +17,11 @@ from services.air_freight_rate.interaction.list_air_freight_rates import list_ai
 from services.air_freight_rate.models.air_freight_rate import  AirFreightRate
 from services.air_freight_rate.interaction.list_air_freight_rate_locals import list_air_freight_rate_locals
 from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
-from services.air_freight_rate.interaction.list_air_freight_rate_free_days import list_air_freight_rate_free_days
 from services.air_freight_rate.models.air_freight_rate_audit import  AirFreightRateAudits
-from services.air_freight_rate.interaction.delete_air_freight_rate_local import delete_air_freight_rate_local
 from services.air_freight_rate.interaction.update_air_freight_storage_rate import update_air_freight_storage_rate
-from services.air_freight_rate.interaction.list_air_freight_storage_rates import list_air_freight_storage_rates
 from configs.definitions import AIR_FREIGHT_CHARGES,AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
-ACTION_NAMES = ['update_freight_rate', 'delete_freight_rate', 'add_freight_rate,_markup']
-
+from services.air_freight_rate.interaction.list_air_freight_storages_rates import list_air_freight_storage_rates
+ACTION_NAMES = ['update_freight_rate', 'delete_freight_rate', 'add_freight_rate_markup']
 
 class BaseModel(Model):
     class Meta:
@@ -373,7 +370,7 @@ class AirFreightRateBulkOperation(BaseModel):
         for storage in  storage_rates:
             count += 1
 
-            if  AirFreightRateAudits.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
+            if  AirFreightRateAudits.get_or_none(bulk_operation_id=self.id,object_id=storage["air_freight_rate_id"]):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
                 continue

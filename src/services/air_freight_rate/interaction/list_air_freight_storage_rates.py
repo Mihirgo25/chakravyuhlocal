@@ -33,7 +33,37 @@ def apply_location_ids_filter(query,filters):
     return query.where(AirFreightStorageRates.location_ids.contains(locations_ids))
 
 def get_data(query):
-    return 
+    query=query.select(
+        AirFreightStorageRates.airport_id,
+        AirFreightStorageRates.trade_type,
+        AirFreightStorageRates.commodity,
+        AirFreightStorageRates.airline_id,
+        AirFreightStorageRates.service_provider_id,
+        AirFreightStorageRates.free_limit,
+        AirFreightStorageRates.remarks,
+        AirFreightStorageRates.slabs,
+        AirFreightStorageRates.is_slabs_missing
+    )
+    data = list(query.dicts())
+    return data 
+
+def get_query():
+    query=AirFreightStorageRates.select().order_by(AirFreightStorageRates.updated_at.desc())
+    return query
+
+
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
+    params = {
+      'page': page,
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
+      'page_limit': page_limit
+    }
+    return params
+
+
+
 
 
 
