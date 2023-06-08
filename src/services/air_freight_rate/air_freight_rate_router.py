@@ -41,6 +41,7 @@ from services.air_freight_rate.interaction.list_air_freight_rate_requests import
 from services.air_freight_rate.interaction.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
 from services.air_freight_rate.interaction.list_air_freight_charge_codes import list_air_freight_charge_codes
 from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
+from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
 
 air_freight_router = APIRouter()
 
