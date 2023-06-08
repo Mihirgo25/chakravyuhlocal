@@ -428,7 +428,7 @@ def create_air_freight_rate_delay(self, request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def adjust_air_freight_dynamic_pricing(self, request):
+def adjust_air_freight_dynamic_pricing(self):
     try:
         return invoice_rates_updation()
     except Exception as exc:
