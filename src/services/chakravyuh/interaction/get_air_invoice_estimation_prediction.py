@@ -27,11 +27,4 @@ def invoice_rates_updation():
             setter = AirFreightVyuhSetters(freight_rate)
             setter.set_dynamic_pricing()
     return True
-        
-
-
-
-
     
-
-

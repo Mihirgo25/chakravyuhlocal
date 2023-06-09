@@ -420,7 +420,6 @@ def get_invoices(days=3, offset=0, limit=50):
             conn.close()
             return all_result
         except Exception as e:
-            print(e)
             # sentry_sdk.capture_exception(e)
             return all_result
 
