@@ -55,7 +55,7 @@ def initialize_customs_query(request):
 def discard_noneligible_lsps(custom_rates):
     ids = get_eligible_orgs('fcl_customs')
 
-    custom_rates = [rate for rate in custom_rates if rate.get("service_provider_id") in ids]
+    custom_rates = [rate for rate in [custom_rates] if rate.get("service_provider_id") in ids]
     return custom_rates
 
 def build_response_list(request, customs_rates):
