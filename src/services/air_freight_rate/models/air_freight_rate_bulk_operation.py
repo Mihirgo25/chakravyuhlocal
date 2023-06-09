@@ -389,7 +389,6 @@ class AirFreightRateBulkOperation(BaseModel):
             self.save()
     
     def perform_update_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
-        breakpoint()
         data = self.data
         total_count = len(data)
         count = 0

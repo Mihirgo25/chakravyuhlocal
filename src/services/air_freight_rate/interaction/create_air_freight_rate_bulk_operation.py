@@ -11,7 +11,6 @@ def create_air_freight_rate_bulk_operation(request):
     action_name=[key for key in request if key not in ['performed_by_type','performed_by_id', 'service_provider_id', 'procured_by_id', 'sourced_by_id', 'cogo_entity_id']][0]
     data=request[action_name] 
     params = {'action_name':action_name, 'data':data, 'performed_by_id':request.get('performed_by_id')}
-    breakpoint()
     params =  jsonable_encoder(params)
     bulk_operation = AirFreightRateBulkOperation(**params)
     
