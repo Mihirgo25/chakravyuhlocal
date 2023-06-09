@@ -111,7 +111,6 @@ def apply_dynamic_pricing_for_air(weight:float,freight_rates: Json= Query(None),
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        print(freight_rates)
         consumer = AirFreightVyuhConsumer(freight_rates = freight_rates,weight=weight)
         freight_rates = consumer.apply_dynamic_pricing()
         return JSONResponse(status_code=200, content=freight_rates)

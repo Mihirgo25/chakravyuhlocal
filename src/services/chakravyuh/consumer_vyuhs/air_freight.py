@@ -53,10 +53,10 @@ class AirFreightVyuh():
     def get_modified_weight_slab(self,estimation_weight_slab,rate):
 
         avg_price = estimation_weight_slab['avg_price']
-        if estimation_weight_slab['currency']!=rate['freights'][0]['line_items'][0]['currency']:
-            avg_price = common.get_money_exchange_for_fcl({"price": estimation_weight_slab['avg_price'], "from_currency": estimation_weight_slab['currency'], "to_currency": rate['freights']['line_items'][0]['currency'] })['price']
-    
-        rate['freights'][0]['line_items'][0]['price'] = avg_price
+        for rate in rate['freights']:
+            for line_item in rate['line_items']:
+                if line_item['code'] == 'BAS':
+                    line_item['price'] = avg_price
         return rate
 
 
@@ -95,7 +95,6 @@ class AirFreightVyuh():
         return new_rate
 
     def apply_dynamic_pricing(self):
-        print(self.freight_rates)
         self.set_requirements(self.freight_rates[0])
 
         probable_transformations = self.get_probable_rate_transformations()
