@@ -447,7 +447,7 @@ class AirFreightVyuh():
             'commodity':self.new_rate.get('commodity'),
             'commodity_type': 'all' if self.new_rate.get('commodity') == 'general' else 'other_special',
             'commodity_sub_type': 'all' if self.new_rate.get('commodity') == 'general' else 'others',
-            'weight_slabs':self.get_rms_weightslabs(weight_slabs=weight_slabs,factor=factor),
+            'weight_slabs':self.get_rms_weight_slabs(weight_slabs=weight_slabs,factor=factor),
             'airline_id':self.new_rate.get('airline_id'),
             'operation_type':self.new_rate.get('operation_type'),
             'stacking_type': 'stackable' if (self.new_rate.get('is_stackable') or self.new_rate.get('is_stackable') == None) else 'non_stackable',
