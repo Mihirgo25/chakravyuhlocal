@@ -102,8 +102,8 @@ def apply_indirect_filters(query, filters):
 
 def apply_importer_exporter_relevant_rate_filter(query, filters):
     importer_exporter_id = filters["importer_exporter_relevant_rate"]
-    query = query.where(FclFreightRate.importer_exporter_id == importer_exporter_id) | (
-        FclFreightRate.importer_exporter_id == None
+    query = query.where((FclFreightRate.importer_exporter_id == importer_exporter_id) | (
+        FclFreightRate.importer_exporter_id == None)
     )
     return query
 
