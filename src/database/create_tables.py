@@ -1,7 +1,6 @@
 from database.db_session import db
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
-from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
-from services.haulage_freight_rate.models.wagon_types import WagonTypes
+from services.chakravyuh.models.cost_booking_estimation import CostBookingEstimation
+from services.chakravyuh.models.cost_booking_estimation_audit import CostBookingEstimationAudit
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 
 def create_table():
