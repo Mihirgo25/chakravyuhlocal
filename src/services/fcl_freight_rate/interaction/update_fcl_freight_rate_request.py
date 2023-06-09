@@ -35,6 +35,8 @@ def execute_transaction_code(request):
             if object.closing_remarks is not None
             else request.get("closing_remarks")
         )
+    if request.get("relevant_service_provider_ids"):
+        object.relevant_service_provider_ids = request.get("relevant_service_provider_ids")
 
     try:
         object.save()

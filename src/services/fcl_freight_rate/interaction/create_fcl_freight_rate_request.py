@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreight
 from database.db_session import db
 from micro_services.client import *
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
-from celery_worker import create_communication_background, update_multiple_service_objects
+from celery_worker import create_communication_background, update_multiple_service_objects, update_fcl_freight_rate_request_in_delay
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT
@@ -85,6 +85,9 @@ def supply_agents_to_notify(request):
         return { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_port_id'])], 'destination_location': route[str(locations_data['destination_port_id'])]}
     except Exception as e:
         print(e)
+
+def set_relevant_supply_agents(request):
+    update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
 
 def send_notifications_to_supply_agents(request):
