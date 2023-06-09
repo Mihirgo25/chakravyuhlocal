@@ -17,7 +17,7 @@ def create_cluster_factor_mapping():
 
         for loc in location_data:
             if loc['cluster_id'] in cluster_wise_locs:
-                cluster_wise_locs[loc['cluster_id']] = cluster_wise_locs[loc['cluster_id']].append(loc['location_id'])
+                cluster_wise_locs[loc['cluster_id']] = (cluster_wise_locs[loc['cluster_id']]).append(loc['location_id'])
             else:
                 cluster_wise_locs[loc['cluster_id']] = [loc['location_id']]
         
