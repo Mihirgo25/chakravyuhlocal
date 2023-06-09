@@ -220,7 +220,7 @@ def delete_fcl_locals():
         print(idx, id)
         
 def extend_china_rates():
-    file_path = os.path.join(ROOT_DIR, 'cn_rates.xlsx')
+    file_path = os.path.join(ROOT_DIR, 'price_change.xlsx')
     df = pd.read_excel(file_path)
     print(df.shape[0])
     result = Parallel(n_jobs=2)(delayed(create_func)(idx, row) for idx, row in df.iterrows())
@@ -231,7 +231,7 @@ def create_func(idx, row):
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
     from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
     id = str(row['rate_id'])
-    price = float(row['Price'])
+    price = float(row['price'])
     rate = FclFreightRate.select().where(FclFreightRate.id == id).first()
     if not rate:
         print('not_found')
