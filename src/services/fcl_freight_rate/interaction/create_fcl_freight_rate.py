@@ -63,7 +63,7 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
+    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
 
     row = {
         'origin_port_id': request.get('origin_port_id'),
@@ -195,6 +195,9 @@ def create_fcl_freight_rate(request):
 
     if request.get('fcl_freight_rate_request_id'):
         update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+
+    if request.get('fcl_freight_rate_feedback_id'):
+        update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'feedback_line_items': request.get('line_items'), 'performed_by_id': request.get('performed_by_id')})
 
     return {"id": freight.id}
 
