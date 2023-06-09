@@ -1,0 +1,411 @@
+TRCG:
+  name: 'Transportation charges'
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+EDI:
+  name: 'Electronic Data Interchange'
+  units: [ 'per_shipment', 'per_document' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: [ 'additional_service' ]
+  sac_code: '996712'
+WNOC:
+  name: "Wildlife Noc Charges"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+THCG:
+  name: "Terminal Handling Charges"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+COC:
+  name: "Certification of Origin Charges"
+  units: ['per_shipment' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: [ 'additional_service' ]
+  sac_code: '996712'
+FLC:
+  name: "Forklift Charges"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+PDC:
+  name: "Pickup Charges"
+  units: [ 'per_shipment' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: [ 'additional_service' ]
+  sac_code: '996713'
+ADCRC:
+  name: "AD Code Registration"
+  units: [ 'per_shipment' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: [ 'additional_service' ]
+  sac_code: '996713'
+DO:
+  name: 'code not in use'
+  units: ['per_shipment']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service', 'deleted']
+  sac_code: '996712'
+ACMES:
+  name: 'ACMES Charges'
+  units: [ 'per_shipment' ]
+  trade_types: [ 'export' ]
+  condition: true
+  tags: [ 'additional_service' ]
+  sac_code: '996713'
+LBL:
+  name: 'Label & Marking'
+  units: [ 'per_shipment' ]
+  trade_types: [ 'export' ]
+  condition: true
+  tags: [ 'additional_service' ]
+  sac_code: '996713'
+LUC:
+  name: 'Loading/Unloading charges'
+  units: [ 'per_shipment' ]
+  trade_types: [ 'export' ]
+  condition: true
+  tags: [ 'additional_service' ]
+  sac_code: '996713'
+AGC:
+  name: 'Agency Charges'
+  units: ['per_shipment', 'per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+FC:
+  name: "Fumigation Charges"
+  units: ['per_shipment', 'per_package']
+  trade_types: ['export' , 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+EC:
+  name: "Examination charge"
+  units: ['per_package', 'per_shipment', 'per_document']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+LR:
+  name: "Licence Registration"
+  units: ['per_shipment', 'per_kg' , 'per_document']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+##need to remove later
+OCG:
+  name: "Origin Certificate Charge"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+DCG:
+  name: "Destination Certificate Charge"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+OE:
+  name: "Open Examination"
+  units: ['per_package']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+MLR:
+  name: "Meis Licence Registration"
+  units: ['per_shipment', 'per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+DSI:
+  name: "Document Stamp Tax Import"
+  units: ['per_shipment']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WRC:
+  name: "Warai Charge"
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+PLI:
+  name: "Paper Lining Charge"
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WC:
+  name: "Weighment Charge"
+  units: ['per_shipment', 'per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WEH:
+  name: "Weighbridge Fee"
+  units: ['per_shipment', 'per_kg']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WHT:
+  name: "Weighing Charges"
+  units: ['per_shipment', 'per_kg']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+IGT:
+  name: "ICEGATE Charges"
+  units: ['per_shipment','per_awb']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+SAC:
+  name: "Shipping Bill Amendment Charges"
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+#old
+CCO:
+  name: 'Customs Clearance Origin'
+  units: ['per_shipment','per_document']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+CCD:
+  name: 'Customs Clearance Destination'
+  units: ['per_shipment', 'per_document']
+  trade_types: ['import','export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+PYC:
+  name: "Phyto Sanitary Certificate"
+  units: ['per_shipment', 'per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+CTGC:
+  name: 'Cartridge charge'
+  units: ['per_shipment', 'per_kg']
+  trade_types: ['export' ,'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WRSC:
+  name: "Wrapping & Strapping Charges"
+  units: ['per_shipment', 'per_kg', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+LRPC:
+  name: "Lab Report Charges"
+  units: ['per_shipment', 'per_document']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+QDF:
+  name: "Quarantine And Disinfection Fee"
+  units: ['per_shipment', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+PTC:
+  name: "Palletization"
+  units: ['per_shipment', 'per_kg', 'per_package']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+SUR:
+  name: "Export Survey Fee"
+  units: ['per_shipment']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+BTT:
+  name: "Back To Town"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+LC:
+  name: "Landing Certificate"
+  units: ['per_shipment', 'per_kg']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+RPC:
+  name: "Repacking Charges"
+  units: ['per_shipment', 'per packet']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+WHC:
+  name: "Warehouse Charges"
+  trade_types: ['import','export']
+  units: ['per_shipment', 'per_kg', 'per packet']
+  condition: true
+  tags: ['additional_service','customs_clearance']
+  sac_code: '996712'
+MIF:
+  name: "Magnetic Inspection Fee"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+LIDC:
+  name: "License Debiting Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+NOCC:
+  name: "Wild Life/ADC/P&Q NOC Charges"
+  units: ['per_shipment', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+HLC:
+  name: "Handling Charges"
+  units: ['per_shipment', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+MCS:
+  name: "Miscellaneous Charges"
+  units: ['per_shipment', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+ADDCH:
+  name: "Additional Charges"
+  units: ['per_shipment', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+SORCH:
+  name: "Cargo Sorting Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+FCHC:
+  name: "Forklift/Crane/Hydra Charges"
+  units: ['per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+HAZL:
+  name: "HAZ Labelling"
+  units: ['per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+CECC:
+  name: "Chartered Engineer Certificate Charges"
+  units: ['per_shipment', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+MNLC:
+  name: "Marking And Labelling Charges"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['customs_clearance']
+  sac_code: '996712'
+ADSI:
+  name: "Stamp Duty Charges"
+  units: ['per_shipment']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+#Temporary CODE
+CCOV:
+  name: 'Customs Clearance Origin'
+  units: ['per_shipment','per_document']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996712'
+#new
+#DOCG:
+#  name: "Documentation Charges"
+#  units: ['per document']
+#  trade_types: ['import', 'export']
+#  condition: true
+#  tags: ['additional_service']
+#AC:
+#  name: "Amendment charges"
+#  units: ['per_shipment']
+#  trade_types: ['export', 'import' ]
+#  condition: true
+#  tags: ['additional_service']
+#ADS:
+#  name: "Stamp Duty Charges"
+#  units: ['per_shipment', 'per_document']
+#  trade_types: ['import']
+#  condition: true
+#  tags: ['additional_service']
+#IPC:
+#  name: "Insurance Premium Charges"
+#  units: ['per_shipment']
+#  trade_types: ['export', 'import']
+#  condition: true
+#  tags: ['additional_service']
+#CFP:
+#  name: 'Custom Fine & Penalty'
+#  units: ['per_shipment']
+#  trade_types: ['export', 'import']
+#  condition: true
+#  tags: ['additional_service']

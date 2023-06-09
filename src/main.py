@@ -21,6 +21,7 @@ from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
+from services.air_customs_rate.air_customs_router import air_customs_router
 
 from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
 from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
@@ -51,7 +52,7 @@ app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_customs_router)
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_cfs_router)
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router)
-
+app.include_router(prefix = "/air_customs_rate", router=air_customs_router)
 
 
 app.add_middleware(
