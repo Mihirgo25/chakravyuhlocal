@@ -215,7 +215,7 @@ class AirFreightVyuh():
         ratios={}
         for old_slab_index,weight_slab in enumerate(old_weight_slabs):
             for index in missing_weight_slabs:
-                if old_weight_slabs[index-1]['tariff_price']!= 0 and old_slab_index+1!=index:
+                if weight_slab['tariff_price']!= 0 and old_weight_slabs[index-1]['tariff_price']!=0 and old_slab_index+1!=index:
                     ratio=weight_slab['tariff_price'] / old_weight_slabs[index-1]['tariff_price']
                     ratios[f'{old_slab_index+1}:{index}'] =ratio
         return ratios
@@ -465,11 +465,10 @@ class AirFreightVyuh():
         return params
     
     def get_rms_weight_slabs(self,weight_slabs,factor):
-        new_weight_slabs = []
-        for weight_slab in weight_slabs:
+        new_weight_slabs = jsonable_encoder(weight_slabs)
+        for weight_slab in new_weight_slabs:
             weight_slab['tariff_price'] = factor*weight_slab['tariff_price']
-            new_weight_slabs.append(weight_slab)
-        return jsonable_encoder(new_weight_slabs)
+        return new_weight_slabs
     
     def set_dynamic_pricing(self):
         self.set_estimations()
