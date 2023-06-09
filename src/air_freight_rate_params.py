@@ -378,4 +378,43 @@ class UpdateAirFreightRateMarkUp(BaseModel):
     validity_end:datetime=None
 
 
+class AirFreightRate(BaseModel):
+    origin_airport_id: str
+    destination_airport_id: str
+    commodity: str
+    commodity_type: str
+    commodity_sub_type: str = None
+    airline_id: str
+    operation_type: str
+    currency: str
+    price_type: str
+    min_price: float = 0
+    service_provider_id: str
+    density_category: str = 'general'
+    density_ratio: str = None
+    bulk_operation_id: str = None
+    rate_sheet_id: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
+    procured_by_id: str = None
+    sourced_by_id: str = None
+    cogo_entity_id: str = None
+    length: int = 300
+    breadth: int = 300
+    height: int = 300
+    maximum_weight: int = 1000
+    shipment_type: str = 'box'
+    stacking_type: str = 'stackable'
+    rate_type: str = 'general'
+    initial_volume: float = None
+    initial_gross_weight: float = None
+    available_volume: float = None
+    available_gross_weight: float = None
+    weight_slabs: list[WeightSlab]
+    validity_start: datetime
+    validity_end: datetime
+    external_rate_id: str = None
+    mode: str = None
+    flight_uuid: str = None
+    air_freight_rate_request_id: str = None
 

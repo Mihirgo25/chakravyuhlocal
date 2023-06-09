@@ -8,14 +8,13 @@ import sentry_sdk
 from fastapi.responses import JSONResponse
 from typing import Union,List
 import json
-import traceback
 from fastapi.encoders import jsonable_encoder
-from params import *
 from datetime import datetime,timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 
+from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
 from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
@@ -50,8 +49,16 @@ air_freight_router = APIRouter()
 
 
 @air_freight_router.post("/create_air_freight_rate")
-def create_air_freight_rate():
-    return
+def create_air_freight_rate(request: AirFreightRate):
+    # try:
+    rate = create_air_freight_rate_data(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+    # return
 
 @air_freight_router.post("/delete_air_freight_rate")
 def delete_air_freight_rates(request: DeleteAirFreightRate, resp: dict = Depends(authorize_token)):

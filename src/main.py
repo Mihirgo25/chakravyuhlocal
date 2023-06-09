@@ -47,7 +47,7 @@ app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
 app.include_router(prefix="/fcl_freight_rate", router=ftl_freight_router)
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
 
-app.include_router(prefix="/air_freight_rate",router = air_freight_router)
+app.include_router(prefix="/fcl_freight_rate",router = air_freight_router)
 
 
 app.add_middleware(

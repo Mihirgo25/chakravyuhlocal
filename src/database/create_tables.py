@@ -7,11 +7,12 @@ from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreig
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([AirFreightRateFeedbacks])
+        db.create_tables([AirFreightRate])
         db.close()
         print("created table")
     except:
