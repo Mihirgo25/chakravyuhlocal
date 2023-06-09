@@ -2,6 +2,7 @@
 from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from database.db_session import db
+
 def create_clusters(request):
     with db.atomic():
         cluster_params = {
