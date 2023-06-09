@@ -95,7 +95,7 @@ class AirFreightRate(BaseModel):
             raise HTTPException(status_code=400,details='Validity Start is Invalid')
     
         if not validity_end:
-         raise HTTPException(status_code=400, detail="validity_end is Invalid")
+            raise HTTPException(status_code=400, detail="validity_end is Invalid")
 
         if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=120)):
             raise HTTPException(status_code=400, detail="validity_end can not be greater than 120 days from current date")

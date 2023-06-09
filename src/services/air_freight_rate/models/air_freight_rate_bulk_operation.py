@@ -4,23 +4,23 @@ import json
 from playhouse.postgres_ext import *
 from micro_services.client import *
 from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
 from datetime import datetime,timedelta
 from configs.definitions import  AIR_FREIGHT_CHARGES
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from configs. air_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
 from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
 from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
-from services.air_freight_rate.models.air_freight_rate import  AirFreightRate
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.interaction.list_air_freight_rate_locals import list_air_freight_rate_locals
 from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.models.air_freight_rate_audit import  AirFreightRateAudits
 from services.air_freight_rate.interaction.update_air_freight_storage_rate import update_air_freight_storage_rate
 from configs.definitions import AIR_FREIGHT_CHARGES,AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
-from services.air_freight_rate.interaction.list_air_freight_storages_rates import list_air_freight_storage_rates
+from services.air_freight_rate.interaction.list_air_freight_storage_rates import list_air_freight_storage_rates
 ACTION_NAMES = ['update_freight_rate', 'delete_freight_rate', 'add_freight_rate_markup']
 
 class BaseModel(Model):
@@ -34,8 +34,8 @@ class AirFreightRateBulkOperation(BaseModel):
     action_name = CharField(null=True)
     performed_by_id = UUIDField(null=True)
     data = BinaryJSONField(null=True)
-    updated_at=DateTimeField(default=datetime.datetime.now)
-    created_at=DateTimeField(default=datetime.datetime.now)
+    updated_at=DateTimeField(default=datetime.now)
+    created_at=DateTimeField(default=datetime.now)
     service_provider_id = UUIDField(null=True)
 
     class Meta:
@@ -48,25 +48,25 @@ class AirFreightRateBulkOperation(BaseModel):
 
 
     def validate_delete_freight_rate_data(self):
-        return
+        return True
     
 
     def validate_update_freight_rate_data(self):
         data = self.data
-
+    
         if not data['new_end_date']:
             raise HTTPException(status_code=400, detail='new end date is invalid')
         
         if not data['new_start_date']:
             raise HTTPException(status_code=400, detail='new start date is invalid')
         
-        if data['new_end_date'] > (datetime.now().date() + 120):
+        if datetime.fromisoformat(data['new_end_date']).date() > (datetime.now() + timedelta(days=120)).date():
             raise HTTPException(status_code=400, detail='new end date can not be greater than 120 days from current date')
 
-        if data['new_start_date'] < (datetime.now().date() - 15):
+        if datetime.fromisoformat(data['new_end_date']).date()  < (datetime.now() -timedelta(days=15)).date():
             raise HTTPException(status_code=400, detail='new start date can not be less than 15 days from current date')
         
-        if data['new_end_date'] < data['new_start_date']:
+        if datetime.fromisoformat(data['new_end_date']).date() <datetime.fromisoformat(data['new_start_date']).date():
             raise HTTPException(status_code=400, detail='new end date can not be lesser than or equal to start validity')
 
 
@@ -389,6 +389,7 @@ class AirFreightRateBulkOperation(BaseModel):
             self.save()
     
     def perform_update_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        breakpoint()
         data = self.data
         total_count = len(data)
         count = 0

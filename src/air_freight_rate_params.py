@@ -376,6 +376,33 @@ class UpdateAirFreightRateMarkUp(BaseModel):
     validity_id:str=None
     validity_start:datetime=None
     validity_end:datetime=None
+    
+    
+class AddFreightRateMarkup(BaseModel):
+  markup:float
+  markup_type:str
+  markup_currency:str=None
+  validity_id:str = None
+  air_freight_rate_id: str
+  
+class DeleteFreightRate(BaseModel):
+  validity_id:str = None
+  air_freight_rate_id = str
+  
+class UpdateFreightRate(BaseModel):
+    validity_id:str =None
+    air_freight_rate_id: str
+    new_start_date: datetime
+    new_end_date: datetime
+    
+
+class CreateBulkOperation(BaseModel):
+  performed_by_id: str = None
+  delete_freight_rate:DeleteFreightRate=None
+  add_freight_rate_markup:AddFreightRateMarkup=None
+  update_freight_rate:UpdateFreightRate=None
+ 
+
 
 
 class AirFreightRate(BaseModel):

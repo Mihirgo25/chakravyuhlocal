@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from datetime import dattetime ,timedelta
+from datetime import datetime ,timedelta
 from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
 from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 
