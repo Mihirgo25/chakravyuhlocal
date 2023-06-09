@@ -459,8 +459,8 @@ def process_freight_look_rates(self, rate, locations):
             pass
         else:
             raise self.retry(exc= exc)
-@celery.task(bind = True, retry_backoff=True,max_retries=5)
 
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
 def update_fcl_freight_rate_feedback_in_delay(self, request):
     try:
         update_fcl_freight_rate_feedback(request)
