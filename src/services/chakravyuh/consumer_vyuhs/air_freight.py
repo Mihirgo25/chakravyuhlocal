@@ -126,7 +126,7 @@ class AirFreightVyuh():
                 'commodity':freight_rate['commodity'],
                 'airline_id':freight_rate['airline_id'],
                 'operation_type':freight_rate['operation_type'],
-                'stacking_type':freight_rate['operation_type'],
+                'stacking_type':freight_rate['stacking_type'],
                 'shipment_type':freight_rate['shipment_type']
                 }
     

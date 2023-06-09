@@ -381,7 +381,8 @@ def get_invoices(days=3, offset=0, limit=50):
                             shipment_collection_parties.invoice_date AS invoice_date,
                             shipment_collection_parties.line_items,
                             shipment_air_freight_services.airline_id AS airline_id,
-                            shipment_air_freight_services.chargeable_weight AS chargeable_weight
+                            shipment_air_freight_services.chargeable_weight AS chargeable_weight,
+                            shipment_air_freight_services.packages AS packages
                         FROM
                             shipment_collection_parties
                             INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
@@ -411,7 +412,8 @@ def get_invoices(days=3, offset=0, limit=50):
                         "invoice_date":res[10],
                         "line_items":res[11],
                         "airline_id":str(res[12]),
-                        "chargeable_weight": res[13]
+                        "chargeable_weight": res[13],
+                        "packages":res[14]
                     }
                     all_result.append(new_obj)
                     cur.close()

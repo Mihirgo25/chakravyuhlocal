@@ -426,7 +426,8 @@ class AirFreightVyuh():
                 if factor_mapping['cluster_id'] == destination_cluster_id:
                     rate_params = self.get_rate_param(origin_airport_id,factor_mapping['location_id'],weight_slabs,factor_mapping['rate_factor'])
                 all_rates.append(rate_params)
-        
+        rate_params = self.get_rate_param(origin_airport_id,destination_airport_id,weight_slabs)
+        all_rates.append(rate_params)
         return all_rates
 
     def insert_rates_to_rms(self):
@@ -449,7 +450,7 @@ class AirFreightVyuh():
             'airline_id':self.new_rate.get('airline_id'),
             'operation_type':self.new_rate.get('operation_type'),
             'stacking_type': 'stackable' if (self.new_rate.get('is_stackable') or self.new_rate.get('is_stackable') == None) else 'non_stackable',
-            'shipment_type':'box',
+            'shipment_type':self.new_rate['shipment_type'],
             'currency':'INR',
             'price_type':'net_net',
             'min_price' : weight_slabs[0]['tariff_price'],

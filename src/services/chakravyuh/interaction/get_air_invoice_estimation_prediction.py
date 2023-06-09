@@ -20,6 +20,10 @@ def invoice_rates_updation():
             freight_rate['unit'] = actual_lineitem['unit']
             freight_rate['currency'] = actual_lineitem['currency']
         if bas_count ==1:
+            freight_rate['shipment_type'] = 'box'
+            if freight_rate['packages']:
+                package = freight_rate['packages'][0]
+                freight_rate['shipment_type'] = package['packing_type']
             setter = AirFreightVyuhSetters(freight_rate)
             setter.set_dynamic_pricing()
     return True
