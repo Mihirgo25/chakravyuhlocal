@@ -21,6 +21,6 @@ class AirFreightLocationClusterFactor(BaseModel):
     update_at=DateTimeField(default=datetime.now())
 
     class Meta:
-        table_name='air_freight_location_cluster_factor'
+        table_name='air_freight_location_cluster_factors'
         indexes = (
         (("origin_cluster_id", "location_id","destination_cluster_id","cluster_id"), True),)
