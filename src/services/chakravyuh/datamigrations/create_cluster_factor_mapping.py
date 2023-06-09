@@ -24,6 +24,8 @@ def create_cluster_factor_mapping():
     
     for origin_cluster_id in data_list:
         for destination_cluster_id in data_list:
+            if origin_cluster_id == destination_cluster_id:
+                continue
             factor_list = []
             origin_locs = cluster_wise_locs[origin_cluster_id]
             destination_locs = cluster_wise_locs[destination_cluster_id]
