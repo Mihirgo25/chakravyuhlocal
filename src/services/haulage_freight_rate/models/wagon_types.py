@@ -10,7 +10,7 @@ class BaseModel(Model):
         database = db
 class WagonTypes(BaseModel):
     id = BigAutoField(primary_key=True)
-    wagon_type = ForeignKeyField(HaulageFreightRateRuleSet)
+    wagon_type = CharField(index=True, null=True)
     wagon_code = CharField(index=True, null=True)
     name = CharField(index=True, null=True)
     permissible_speed = IntegerField(null=True)

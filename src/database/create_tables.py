@@ -1,4 +1,6 @@
 from database.db_session import db
+from services.chakravyuh.models.cost_booking_estimation import CostBookingEstimation
+from services.chakravyuh.models.cost_booking_estimation_audit import CostBookingEstimationAudit
 from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
 from services.haulage_freight_rate.models.wagon_types import WagonTypes
@@ -12,7 +14,7 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 def create_table():
     # db.connect()
     try:
-        db.create_tables([AirFreightRate])
+        db.create_tables([CostBookingEstimation, CostBookingEstimationAudit])
         db.close()
         print("created table")
     except:
