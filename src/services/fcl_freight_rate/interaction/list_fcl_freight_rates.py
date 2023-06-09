@@ -11,7 +11,7 @@ from fastapi.encoders import jsonable_encoder
 NOT_REQUIRED_FIELDS = ["destination_local_line_items_info_messages",  "origin_local_line_items_info_messages", "origin_local_line_items_error_messages", "destination_local_line_items_error_messages", "destination_location_ids", "origin_location_ids", "omp_dmp_sl_sp", "init_key"]
 
 possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id', 'procured_by_id','rate_type']
-possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id']
+possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id', "importer_exporter_relevant_rate"]
 
 def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, expired_rates_required = False, all_rates_for_cogo_assured = False):
   query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit)
@@ -98,6 +98,15 @@ def apply_indirect_filters(query, filters):
     apply_filter_function = f'apply_{key}_filter'
     query = eval(f'{apply_filter_function}(query, filters)')
   return query
+
+
+def apply_importer_exporter_relevant_rate_filter(query, filters):
+    importer_exporter_id = filters["importer_exporter_relevant_rate"]
+    query = query.where(FclFreightRate.importer_exporter_id == importer_exporter_id) | (
+        FclFreightRate.importer_exporter_id == None
+    )
+    return query
+
 
 def apply_partner_id_filter(query, filters):
   cogo_entity_id = filters['partner_id']
