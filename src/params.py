@@ -880,3 +880,19 @@ class CreateConditionalLineItems(BaseModel):
   container_size: str = None
   container_type: str = None
   commodity: str = None
+
+class UpdateConditionalLineItems(BaseModel):
+  id: str
+  performed_by_id: str=None
+  performed_by_type: str=None
+  charge_code: str = None
+  data: list[LineItem] = None
+
+
+class DeleteConditionalLineItems(BaseModel):
+  id: str
+  performed_by_id: str = None
+  performed_by_type: str = None
+  sourced_by_id: str
+  procured_by_id: str
+

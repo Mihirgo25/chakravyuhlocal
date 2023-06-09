@@ -1,6 +1,7 @@
 from services.conditional_line_items.models.conditional_line_items import ConditionalLineItems
 from services.conditional_line_items.models.conditional_line_items_audit import ConditionalLineItemAudit
 from database.db_session import db
+from fastapi.encoders import jsonable_encoder
 from fastapi import HTTPException
 
 def update_conditional_line_items(request):
@@ -13,9 +14,12 @@ def execute_transaction_code(request):
     if not object:
         raise HTTPException(status_code=400, detail="condition id not found")
     
+    if request.get('charge_codce'):
+        object.charge_code=request['charge_code']
     
-
-
+    if request.get('data'):
+        object.data=request['data']
+        
     try:
         object.save()
     except:
@@ -24,14 +28,16 @@ def execute_transaction_code(request):
         )
 
     create_audit(request, object.id)
-
+    
+    return {
+    'id': object.id
+    }
 
 def find_object(request):
     try:
         return (
             ConditionalLineItems.select()
-            .where(ConditionalLineItems.id == request["id"])
-            .first()
+            .where(ConditionalLineItems.id == request["id"]).first()
         )
     except:
         return None
@@ -42,7 +48,6 @@ def create_audit(request, id):
         action_name="update",
         performed_by_id=request["performed_by_id"],
         data={
-            "closing_remarks": request["closing_remarks"],
             "performed_by_id": request["performed_by_id"],
         },
         object_id=id,
