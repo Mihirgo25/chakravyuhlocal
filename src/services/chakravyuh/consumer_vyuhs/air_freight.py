@@ -50,26 +50,32 @@ class AirFreightVyuh():
         probable_transformations.sort(key = self.sort_items)
         return probable_transformations[0]
     
-    def get_modified_weight_slab(self,estimation_weight_slab,rate):
+    def get_modified_weight_slab(self,estimation_weight_slab,rate,min_price):
 
         avg_price = estimation_weight_slab['avg_price']
         for rate in rate['freights']:
             for line_item in rate['line_items']:
                 if line_item['code'] == 'BAS':
                     line_item['price'] = avg_price
+                    line_item['min_price'] = min_price
+                    line_item['total_price'] = line_item['quantity'] * line_item['price']
+                    if int(line_item['min_price']) > line_item.get('total_price'):
+                        line_item['total_price'] = line_item['min_price']
+                    line_item['currency'] = estimation_weight_slab['currency']
         return rate
 
 
     def get_weight_slab(self,estimation_weight_slabs,rate):
         found = False
+        min_price = estimation_weight_slabs[0]['avg_price']
         for estimation_weight_slab in estimation_weight_slabs:
             if self.weight >= estimation_weight_slab['lower_limit'] and self.weight <= estimation_weight_slab['upper_limit']:
-                rate = self.get_modified_weight_slab(estimation_weight_slab,rate)
+                rate = self.get_modified_weight_slab(estimation_weight_slab,rate,min_price)
                 found = True
                 break
         if not found:
             estimation_weight_slab = estimation_weight_slabs[0]
-            rate = self.get_modified_weight_slab(estimation_weight_slab,rate)
+            rate = self.get_modified_weight_slab(estimation_weight_slab,rate,min_price)
         return rate
     
 

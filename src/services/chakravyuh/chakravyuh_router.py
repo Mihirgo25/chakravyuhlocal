@@ -113,7 +113,8 @@ def apply_dynamic_pricing_for_air(weight:float,freight_rates: Json= Query(None),
     try:
         consumer = AirFreightVyuhConsumer(freight_rates = freight_rates,weight=weight)
         freight_rates = consumer.apply_dynamic_pricing()
-        return JSONResponse(status_code=200, content=freight_rates)
+        response = {'list':freight_rates}
+        return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
     except Exception as e:
