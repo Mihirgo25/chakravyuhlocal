@@ -64,7 +64,7 @@ def create_fcl_freight_rate_data(request):
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
-
+    request = { key: value for key, value in request.items() if value }
     row = {
         'origin_port_id': request.get('origin_port_id'),
         "origin_main_port_id": request.get("origin_main_port_id"),
@@ -82,7 +82,7 @@ def create_fcl_freight_rate(request):
         "mode": request.get("mode", "manual"),
         "accuracy":request.get("accuracy", 100),
         "payment_term": request.get("payment_term", "prepaid"),
-        "schedule_type": request.get("schedule_type", "transhipment"),
+        "schedule_type": request.get("schedule_type", "direct"),
         "rate_not_available_entry": request.get("rate_not_available_entry", False),
         "rate_type": request.get("rate_type", DEFAULT_RATE_TYPE)
     }
@@ -208,7 +208,8 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'destination_country_id': freight.destination_country_id,
         'origin_trade_id': freight.origin_trade_id,
         'destination_trade_id': freight.destination_trade_id,
-        'service_provider_id': freight.service_provider_id
+        'service_provider_id': freight.service_provider_id,
+        'extend_rates_for_existing_system_rates': True
     }
     if row["mode"] == 'manual' and not request.get("is_extended") and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')

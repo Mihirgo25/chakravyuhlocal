@@ -76,7 +76,7 @@ class GlobalClient:
         try:
             response.raise_for_status()
         except httpx.HTTPError as exc:
-            return f"HTTP Exception for {exc.request.url} - {exc}"
+            return f"HTTP Exception for {exc.request.url} - {exc} - {response.content}"
 
         try:
             return json.loads(response.content)

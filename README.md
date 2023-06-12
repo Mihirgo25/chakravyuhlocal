@@ -108,3 +108,18 @@ command.
  * `cdk docs`        open CDK documentation
 
 Enjoy!
+
+
+## Start Celery
+
+```
+$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate
+
+```
+
+## Start Flower
+
+```
+$ celery -A celery_worker.celery flower --port=5555
+
+```
