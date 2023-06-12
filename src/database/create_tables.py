@@ -10,11 +10,14 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
+
 
 def create_table():
     # db.connect()
     try:
         db.create_tables([CostBookingEstimation, CostBookingEstimationAudit])
+        db.create_tables([AirFreightRateBulkOperation])
         db.close()
         print("created table")
     except:

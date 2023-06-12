@@ -103,4 +103,4 @@ def list_fcl_freight_rate_estimation_trends_api(
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
