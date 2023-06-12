@@ -402,9 +402,6 @@ class CreateBulkOperation(BaseModel):
   add_freight_rate_markup:AddFreightRateMarkup=None
   update_freight_rate:UpdateFreightRate=None
  
-
-
-
 class AirFreightRate(BaseModel):
     origin_airport_id: str
     destination_airport_id: str
@@ -458,3 +455,11 @@ class GetAirFreightRateLocal(BaseModel):
     trade_type: str = None
     commodity: str = None
     service_provider_id: str = None
+
+class UpdateAirFreightRateLocal(BaseModel):
+    id: str
+    performed_by_id: str
+    sourced_by_id: str
+    procured_by_id: str
+    bulk_operation_id: str
+    line_items: list[LineItemLocal]
