@@ -231,7 +231,7 @@ def create_func(idx, row):
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
     from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
     id = str(row['rate_id'])
-    price = float(row['price'])
+    price = float(row['Corrected Price'])
     rate = FclFreightRate.select().where(FclFreightRate.id == id).first()
     if not rate:
         print('not_found')
