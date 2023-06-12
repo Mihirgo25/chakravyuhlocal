@@ -30,7 +30,7 @@ def execute_transaction_code(request):
     rate=AirFreightRate.select().where(AirFreightRate.id==request['rate_id']).first()
 
     if not rate:
-        raise HTTPException (status_code=500, detail='id is invalid')
+        raise HTTPException (status_code=500, detail='Rate Id is invalid')
     
     row={
       'air_freight_rate_id': request['rate_id'],

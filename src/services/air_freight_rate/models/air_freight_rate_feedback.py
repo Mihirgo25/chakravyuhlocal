@@ -217,7 +217,7 @@ class AirFreightRateFeedbacks(BaseModel):
         return True
     
     def validate_preferred_storage_free_days(self):
-        if not  self.preferred_storage_free_days >0.0:
+        if not  self.preferred_storage_free_days >=0.0:
             raise HTTPException(status_code=400, detail='freedays should be greater than zero')
         
     def validate_feedbacks(self):
@@ -247,8 +247,12 @@ class AirFreightRateFeedbacks(BaseModel):
            checkout_data = checkout.list_checkouts({'filters':{'id': [str(self.source_id)]}})
            if 'list' in checkout_data and len(checkout_data['list']) != 0:
                return True
-        raise HTTPException(status_code=400, detail='invalid source -id')
+        raise HTTPException(status_code=400, detail='invalid source id')
 
+    def validate_performed_by_id(self):
+        performed_by = get_user(id = self.performed_by_id)
+        if not performed_by:
+            raise HTTPException(status_code=400,detail='Invalid Performed By Id')
 
     def validate_before_save(self):
         self.validate_trade_type()
@@ -258,4 +262,6 @@ class AirFreightRateFeedbacks(BaseModel):
         self.validate_feedbacks()
         self.validate_perform_by_org_id()
         self.validate_source()
+        self.validate_source_id()
+        self.validate_performed_by_id()
         return  True

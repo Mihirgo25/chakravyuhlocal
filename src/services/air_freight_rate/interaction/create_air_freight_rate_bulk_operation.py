@@ -20,7 +20,6 @@ def create_air_freight_rate_bulk_operation(request):
     bulk_operation.save()
     
     
-    print("KING")
     update_multiple_service_objects.apply_async(kwargs={'object':bulk_operation},queue='low')
 
     bulk_operation_perform_action_functions.apply_async(kwargs={'action_name':action_name,
