@@ -9,6 +9,7 @@ class LoadYmls():
     FCL_FREIGHT_CURRENCIES = None
     FCL_FREIGHT_SEASONAL_CHARGES = None
     FCL_CFS_CHARGES  = None
+    FCL_CUSTOMS_CHARGES = None
     FCL_CUSTOMS_CURRENCIES = None
     
     def __init__(self):
