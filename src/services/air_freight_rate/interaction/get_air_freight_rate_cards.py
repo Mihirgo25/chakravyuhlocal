@@ -317,12 +317,25 @@ def get_air_freight_rate_cards(requirements):
         raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
     freight_query = initialize_freight_query(requirements)
     freight_rates = jsonable_encoder(list(freight_query.dicts()))
+
+    is_predicted = False
+
+    if len(freight_rates)==0:
+        
+        freight_rates = initialize_freight_query(requirements)
+        freight_rates = jsonable_encoder(list(freight_rates.dicts()),True)
+        is_predicted = True
+
     freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
 
     surcharges = get_missing_surcharges(freight_rates)
     freight_rates = fill_missing_surcharges(freight_rates,surcharges)
 
     freight_rates = build_response_list(freight_rates,requirements)
+
+    if is_predicted:
+        return
+
 
 
 # NOT USED
