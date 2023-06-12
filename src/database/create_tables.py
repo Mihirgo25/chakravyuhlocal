@@ -21,7 +21,6 @@ def create_table():
     try:
         # db.create_tables([CostBookingEstimation, CostBookingEstimationAudit])
         db.create_tables([AirFreightRate])
-        db.create_tables([AirFreightRate])
         db.close()
         print("created table")
     except:
