@@ -190,7 +190,6 @@ class AirFreightRateFeedbacks(BaseModel):
         common.create_communication(data)
         
     def validate_trade_type(self):
-        print(self.trade_type)
         if self.trade_type not in ['import' , 'export' , 'domestic']:
             raise HTTPException (status_code=400, detail='invalid trade_type')
         
