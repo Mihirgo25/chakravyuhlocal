@@ -15,6 +15,7 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 
+from services.air_freight_rate.interaction.delete_air_freight_rate_feedback import delete_air_freight_rate_feedback
 from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
 from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
@@ -290,9 +291,9 @@ def create_air_freight_rate_local_data(request: CreateAirFreightRateLocal, resp:
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/create_air_freight_rate_storage")
-def create_air_freight_rate_storage_data(request: CreateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+def create_air_freight_rate_storage_data(request: CreateAirFreightRateStorage, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
     # if resp["isAuthorized"]:
     #     request.performed_by_id = resp["setters"]["performed_by_id"]
 
@@ -754,3 +755,15 @@ def create_air_freight_rate_bulk_operation_data(request:CreateBulkOperation, res
     #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
+@air_freight_router.post("/delete_air_freight_rate_feedback")
+def delete_air_freight_rate_feedback_data(request:DeleteAirFreightRateFeedback , resp:dict = Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp["status_code"],content=resp)
+    try:
+        data=delete_air_freight_rate_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e :
+        raise
+    except Exception as e :
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={"success":False, 'error':str(e)})

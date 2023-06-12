@@ -19,7 +19,7 @@ def execute_transaction_code(request):
         if request.get('reverted_rate_id') and request.get('reverted_validity_id'):
             obj.reverted_rate_id=request.get('reverted_rate_id')
             obj.reverted_validity_id=request.get('reverted_validity_id')
-        obj.closed_by=request.get('performed_by_id')
+        obj.closed_by_id=request.get('performed_by_id')
         
         if request.get('closing_remarks'):
             obj.closing_remarks=request.get('closing_remarks')
@@ -31,9 +31,11 @@ def execute_transaction_code(request):
     
 
         create_audit(request,obj.id)
-        update_multiple_service_objects(kwargs={'object':obj},queue='low')
+        update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
 
-        send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')        
+        send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')  
+
+    return {"id":request['air_freight_rate_feedback_ids']}      
 
 def create_audit(request,id):
     AirFreightRateAudits.create(

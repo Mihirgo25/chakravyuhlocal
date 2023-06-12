@@ -4,15 +4,13 @@ from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import update_multiple_service_objects
 from celery_worker import send_create_notifications_to_supply_agents_function
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-
 from micro_services.client import *
 
 def create_audit(request,feedback_id):
-    AirFreightRateAudits.create(
+    AirServiceAudit.create(
         created_at=datetime.now(),
         updated_at=datetime.now(),
         data={key:value for key , value in request.items() if key != 'performed_by_id'},
@@ -23,14 +21,17 @@ def create_audit(request,feedback_id):
         )
 
 def create_air_freight_rate_feeback(request):
+    object_type='Air_Freight_Rate_Feedbacks'
+    query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+    db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
-    
+     
 def execute_transaction_code(request):
     rate=AirFreightRate.select().where(AirFreightRate.id==request['rate_id']).first()
 
     if not rate:
-        raise HTTPException (status_code=500, detail='id is invalid')
+        raise HTTPException (status_code=500, detail='Rate Id is invalid')
     
     row={
       'air_freight_rate_id': request['rate_id'],
@@ -39,7 +40,8 @@ def execute_transaction_code(request):
       'source_id': request['source_id'],
       'performed_by_id': request['performed_by_id'],
       'performed_by_type': request['performed_by_type'],
-      'performed_by_org_id': request['performed_by_org_id']
+      'performed_by_org_id': request['performed_by_org_id'],
+      'trade_type':request['trade_type']
     }
     feedback=AirFreightRateFeedbacks.select().where(
         AirFreightRateFeedbacks.air_freight_rate_id==request.get('air_freight_rate_id'),
@@ -71,13 +73,14 @@ def execute_transaction_code(request):
             feedback.save()
     except:
         raise HTTPException(status_code= 400, detail="couldnt validate the object")
+    
     create_audit(request,feedback.id)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
     update_likes_dislike_count(rate,request)
 
-    # if request['feddback_type']=='disliked':
-        # send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
+    if request['feedback_type']=='disliked':
+        send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
     return {'id': request['rate_id']}
 
