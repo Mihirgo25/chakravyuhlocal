@@ -34,7 +34,7 @@ sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=
 
     return { 'list': data } | (pagination_data)
 
-def get_query(sort_by,sort_type,page,page_limit):
+def get_query(sort_by,sort_type):
     
     query=AirFreightRateLocal.select(
             AirFreightRateLocal.id,
@@ -56,7 +56,7 @@ def get_query(sort_by,sort_type,page,page_limit):
             AirFreightRateLocal.procured_by_id,
             AirFreightRateLocal.sourced_by_id,
             AirFreightRateLocal.updated_at,
-        ).order_by(AirFreightRateLocal.updated_at.desc())
+        ).order_by(eval('AirFreightRateLocal.{}.{}()'.format(sort_by,sort_type)))
     return query
     
 
