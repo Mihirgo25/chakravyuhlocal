@@ -28,8 +28,8 @@ class AirFreightRateLocal(BaseModel):
     commodity_type = CharField(null=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField(null=True)
-    currency = CharField(null=True)
+    created_at = DateTimeField(null=True,default=datetime.datetime.now())
+    # currency = CharField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     is_line_items_error_messages_present = BooleanField(null=True)
     is_line_items_info_messages_present = BooleanField(null=True)
@@ -37,7 +37,7 @@ class AirFreightRateLocal(BaseModel):
     line_items_error_messages = BinaryJSONField(null=True)
     line_items_info_messages = BinaryJSONField(null=True)
     location_ids = ArrayField(field_class=UUIDField, index=True, null=True)
-    min_price = FloatField(null=True)
+    # min_price = FloatField(null=True)
     # priority_score = IntegerField(null=True)
     # priority_score_updated_at = DateTimeField(null=True)
     service_provider = BinaryJSONField(null=True)
@@ -47,7 +47,7 @@ class AirFreightRateLocal(BaseModel):
     storage_rate_id = UUIDField(null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField(null=True,index=True)
+    updated_at = DateTimeField(null=True,index=True,default=datetime.datetime.now())
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
     sourced_by = BinaryJSONField(null=True)
@@ -223,11 +223,11 @@ class AirFreightRateLocal(BaseModel):
         for location in locations:
             if str(self.airport_id) == str(location['id']):
                self.airport = self.get_required_location_data(location)
-        
+    
     def set_airline(self):
         if self.airline or not self.airline_id:
             return
-        airline = get_shipping_line(id=self.shipping_line_id,operator_type='airline')
+        airline = get_shipping_line(id=self.airline_id,operator_type='airline')
         if len(airline) != 0:
             self.airline = {key:str(value) for key,value in airline[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}
 
