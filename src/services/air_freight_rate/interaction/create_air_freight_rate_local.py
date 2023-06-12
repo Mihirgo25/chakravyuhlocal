@@ -23,8 +23,8 @@ def create_audit(request,air_freight_local_id):
 
 def create_air_freight_rate_local(request):
     object_type='Air_Freight_Rate_Local'
-    query=""
-    # db.execute_sql(query)
+    query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+    db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
 
@@ -50,13 +50,16 @@ def execute_transaction_code(request):
     
     if not air_freight_local:
         air_freight_local=AirFreightRateLocal(**row)
-    
+
     old_line_items = air_freight_local.line_items
+    if not old_line_items:
+        old_line_items=[]
     for line_item in request.get('line_items'):
         add_line_item(old_line_items, line_item)
 
     air_freight_local.line_items = old_line_items
     air_freight_local.set_locations()
+    air_freight_local.set_airline()
     air_freight_local.set_location_ids()
     air_freight_local.validate()
     
@@ -67,9 +70,13 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail="rate did not save")
 
     create_audit(request,air_freight_local.id)
+
     air_freight_local.update_freight_objects()
+
     air_freight_local.update_line_item_messages()
+
     air_freight_local.update_foreign_references()
+
     update_multiple_service_objects.apply_async(kwargs={'object':air_freight_local},queue='low')
 
     return {
@@ -85,9 +92,4 @@ def add_line_item(old_line_items,line_item):
             old_line_items[index] = line_item
     if is_new_line_item:
         old_line_items.append(line_item)
-    
     return old_line_items
-
-
-
-
