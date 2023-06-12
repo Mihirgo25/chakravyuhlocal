@@ -66,6 +66,8 @@ COMMODITY_SUB_TYPE = []
 
 RATE_TYPES = ['market_place','promotional','consolidated','cogo_assured']
 
+DEFAULT_RATE_TYPE = 'market_place'
+
 AIR_OPERATION_TYPES = ['passenger', 'freighter', 'charter', 'prime', 'lean']
 
 EXPECTED_TAT = 2
