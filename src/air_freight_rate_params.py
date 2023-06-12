@@ -167,7 +167,6 @@ class CreateAirFreightRateLocal(BaseModel):
 
 class UpdateAirFreightRateSurcharge(BaseModel):
     id: str
-    performed_by_id: str
     procured_by_id: str=None
     sourced_by_id: str=None
     line_items: list[LineItem]
@@ -242,7 +241,6 @@ class CreateAirFrieghtRateNotAvailable(BaseModel):
 
 class UpdateAirFreightRateSurcharge(BaseModel):
     id: str
-    performed_by_id: str
     procured_by_id: str=None
     sourced_by_id: str=None
     line_items: list[LineItem]
