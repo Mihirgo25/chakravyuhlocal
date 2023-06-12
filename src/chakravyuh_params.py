@@ -78,3 +78,8 @@ class PostRevenueTarget(BaseModel):
     total_currency: str = 'USD'
     status: str = 'active'
     
+class MigrationOfCluster(BaseModel):
+    base_airport_id: str
+    location_ids: List[str]
+    map_zone_id: str
+
