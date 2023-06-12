@@ -233,7 +233,7 @@ class AirFreightRate(BaseModel):
         raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
            
     def validate_airline_id(self):
-        airline_data = get_shipping_line(id=self.shipping_line_id)
+        airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'shipping_line':
             self.airline = airline_data[0]
             return True

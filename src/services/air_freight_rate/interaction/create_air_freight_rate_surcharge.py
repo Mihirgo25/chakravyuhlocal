@@ -20,11 +20,11 @@ def create_audit(request,surcharge_id):
 
 def create_air_freight_rate_surcharge(request):
     object_type = 'Air_Freight_Rate_Surcharge'
-    
+    query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+    db.execute_sql(query)    
     with db.atomic():
         return execute_transaction_code(request)
     
-
 def execute_transaction_code(request):
     row = {
         'origin_airport_id' : request.get("origin_airport_id"),
@@ -48,13 +48,10 @@ def execute_transaction_code(request):
     if not surcharge:
         surcharge = AirFreightRateSurcharge(**row)
         surcharge.line_items=request.get('line_items')
-        surcharge.update_freight_objects()
-
-
     else:
         old_line_items= surcharge.line_items
         for line_item in request.get('line_items'):
-            old_line_items=add_line_item(old_line_items, line_item)
+            old_line_items = add_line_item(old_line_items, line_item)
         surcharge.line_items = old_line_items
     
 
@@ -64,11 +61,9 @@ def execute_transaction_code(request):
     surcharge.set_locations()
     surcharge.set_destination_location_ids()
     surcharge.set_origin_location_ids()
-    
+    surcharge.update_freight_objects()
     surcharge.update_line_item_messages()
     surcharge.validate()
-    
-    
     try:
         surcharge.save()
     except Exception:
@@ -87,7 +82,6 @@ def add_line_item(old_line_items, line_item):
         if old_line_item['code'] == line_item['code']:
             is_new_line_item = False
             old_line_items[index] = line_item
-            break
 
     if is_new_line_item:
         old_line_items.append(line_item)
