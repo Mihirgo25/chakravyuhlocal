@@ -15,7 +15,7 @@ def get_connection():
     return conn
 
 
-def get_shipping_line(id=None, short_name=None, operator_type='shipping_line',operator_type='shipping_line'):
+def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
     all_result = []
     try:
         newconnection = get_connection()  
