@@ -25,7 +25,7 @@ from services.extensions.interactions.create_freight_look_rates import create_ai
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
-
+from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -463,6 +463,16 @@ def process_electricity_data_delays(self):
 def process_freight_look_rates(self, rate, locations):
     try:
         return create_air_freight_rate_api(rate=rate, locations=locations)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff = True,max_retries=1)
+def create_air_freight_rate_feedback_for_prediction(self, result):
+    try:
+        create_air_freight_rate_feedback(result)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

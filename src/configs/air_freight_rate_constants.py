@@ -39,6 +39,7 @@ DEFAULT_SERVICE_PROVIDER_ID = '536abfe7-eab8-4a43-a4c3-6ff318ce01b5'
 
 DEFAULT_SOURCED_BY_ID = '7f6f97fd-c17b-4760-a09f-d70b6ad963e8'
 
+
 FEEDBACK_TYPES = ['liked', 'disliked']
 
 POSSIBLE_FEEDBACKS = ['unsatisfactory_rate', 'unsatisfactory_destination_storage', 'unpreferred_airlines']
@@ -67,3 +68,11 @@ AIR_OPERATION_TYPES = ['passenger', 'freighter', 'charter', 'prime', 'lean']
 EXPECTED_TAT = 2
 
 ROLE_IDS_FOR_NOTIFICATIONS = ['70710ab2-0f80-4e12-a4f5-d75660c05315', 'dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
+
+DEFAULT_AIRLINE_IDS= ['e942211b-f46f-4a07-9756-626377218d1d','83af97eb-09a7-4a17-a3ca-561f0bbc0b6f','3a8dc0d2-2bb9-40f4-b9c4-993b6bf273e4']
+
+COGOLENS_URL = 'https://lens.cogoport.com/cogolens/create_air_freight_rate_prediction'
+
+SLAB_WISE_CHANGE_FACTOR = 0.89
+
+COGO_ENVISION_ID = '2dbe768e-929d-4e54-baf0-309ef68c978b'
