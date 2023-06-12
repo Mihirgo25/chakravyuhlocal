@@ -32,9 +32,10 @@ def execute_transaction_code(request):
     object.free_limit = request.get('free_limit')
 
     try:
-        object.save()
+        if object.validate():
+            object.save()
     except:
-        raise HTTPException(status_code = 404,details = 'Error in Saving Object')
+        raise HTTPException(status_code = 404,detail = 'Error in Saving Object')
     
     create_audit(request,object)
     
@@ -45,8 +46,8 @@ def create_audit(request,object):
         action_name='create',
         object_type='AirFreightStorageRates',
         object_id=object.id,
-        performed_by_id=request['performed_by_id'],
-        bulk_operation_id=request['bulk_operation_id'],
+        performed_by_id=request.get('performed_by_id'),
+        bulk_operation_id=request.get('bulk_operation_id'),
         data={k:v for k , v in request.items() if k  in ['slabs','free_limit','remarks']}
     )
         

@@ -4,6 +4,7 @@ from playhouse.postgres_ext import *
 from database.db_session import db
 import datetime
 import pytz
+from configs.air_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def create_air_freight_rate_data(request):
     with db.atomic():
@@ -19,7 +20,7 @@ def create_air_freight_rate(request):
         raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
     if request['density_ratio'] and request['density_ratio'].split(':')[0]!= '1':
         raise HTTPException(status_code='400',detail='should be in the form of 1:x')
-    if len(set(slab['currency'] for slab in request['weight_slabs']))!=1 or  request['weight_slabs'][0]['currency'] != request['currency']:
+    if len(set(slab['currency'] for slab in request['weight_slabs']))!=1 or request['weight_slabs'][0]['currency'] != request['currency']:
         raise HTTPException(status_code='400', detail='currency invalid')
     
     
@@ -47,9 +48,10 @@ def create_air_freight_rate(request):
         "stacking_type":request.get("stacking_type"),
         "shipment_type":request.get("shipment_type"),
         "operation_type":request.get("operation_type"),
-        "source":request.get("source"),
+        "mode": request.get("mode", "manual"),
+        "accuracy":request.get("accuracy", 100),
         "cogo_entity_id":request.get("cogo_entity_id"),
-        "rate_type":request.get("rate_type"),
+        "rate_type":request.get("rate_type", DEFAULT_RATE_TYPE),
         "price_type":price_type
     }
 
@@ -58,27 +60,22 @@ def create_air_freight_rate(request):
         AirFreightRate.select()
         .where(
             AirFreightRate.init_key == init_key,
+            AirFreightRate.rate_type == row['rate_type']
         )
         .first()
     )
-
    
     if not freight:
         freight = AirFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
 
-
-
     freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
     
-    
-    if request['rate_sheet_id']:
+    if request.get('rate_sheet_id'):
         request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_start'), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
         request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_end'), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
-
-
-    validity_id=freight.set_validities(request.get("validity_start"),request.get("validity_end"),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
+    validity_id = freight.set_validities(request.get("validity_start"),request.get("validity_end"),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
     freight.set_last_rate_available_date(request)
 
     new_record = (freight.id is None)

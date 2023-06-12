@@ -30,6 +30,7 @@ sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=
 
     pagination_data=get_pagination_data(query,page,page_limit,pagination_data_required)
     query = query.paginate(page, page_limit)
+    print(query)
     data = jsonable_encoder(list(query.dicts()))
 
     return { 'list': data } | (pagination_data)
