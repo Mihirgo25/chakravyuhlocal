@@ -102,13 +102,8 @@ class AirFreightRate(BaseModel):
         table_name = 'air_freight_rates_temp1'
 
 
-<<<<<<< HEAD
     def validate_validity_object(self,validity_start,validity_end):
         
-=======
-    def validate_validity_object(self, validity_start, validity_end):
-
->>>>>>> d517885202f393fa52033b7a6210df71f9fc5322
         if not validity_start:
             raise HTTPException(status_code=400,details='Validity Start is Invalid')
     
