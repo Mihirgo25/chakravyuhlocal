@@ -1,3 +1,6 @@
+AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
+DEFAULT_SERVICE_PROVIDER_ID = '5dc403b3-c1bd-4871-b8bd-35543aaadb36'
+DEFAULT_FACTOR = 0.89
 from configs.global_constants import *
 
 RATE_ENTITY_MAPPING = {
@@ -62,6 +65,8 @@ HANDLING_TYPE = ["stackable", "non_stackable"]
 COMMODITY_SUB_TYPE = []
 
 RATE_TYPES = ['market_place','promotional','consolidated','cogo_assured']
+
+DEFAULT_RATE_TYPE = 'market_place'
 
 AIR_OPERATION_TYPES = ['passenger', 'freighter', 'charter', 'prime', 'lean']
 

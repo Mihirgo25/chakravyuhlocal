@@ -13,7 +13,7 @@ possible_indirect_filters = ['location_ids']
 def list_air_freight_rate_locals(filters={},page_limit=10,page=1,
 sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=False):
     
-    query=get_query(sort_by,sort_type,page,page_limit)
+    query=get_query(sort_by,sort_type)
 
     if filters:
         if type(filters) != dict:

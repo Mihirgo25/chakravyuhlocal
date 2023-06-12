@@ -78,7 +78,7 @@ class AirFreightRate(BaseModel):
     surcharge = BinaryJSONField(null=True)
     surcharge_id = UUIDField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
-    validities = BinaryJSONField(constraints=[SQL("DEFAULT '[]'::jsonb")], null=True)
+    validities = BinaryJSONField(default = [], null=True)
     warehouse_rate_id = UUIDField(null=True)
     weight_slabs = BinaryJSONField(null=True)
     mode = CharField(default = 'manual', null = True)
@@ -102,8 +102,13 @@ class AirFreightRate(BaseModel):
         table_name = 'air_freight_rates_temp1'
 
 
+<<<<<<< HEAD
     def validate_validity_object(self,validity_start,validity_end):
         
+=======
+    def validate_validity_object(self, validity_start, validity_end):
+
+>>>>>>> d517885202f393fa52033b7a6210df71f9fc5322
         if not validity_start:
             raise HTTPException(status_code=400,details='Validity Start is Invalid')
     
@@ -118,7 +123,6 @@ class AirFreightRate(BaseModel):
 
         if validity_end <= validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
-        return True
         
 
     def validate_shipment_type(self):
@@ -233,7 +237,7 @@ class AirFreightRate(BaseModel):
         raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
            
     def validate_airline_id(self):
-        airline_data = get_shipping_line(id=self.shipping_line_id)
+        airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'shipping_line':
             self.airline = airline_data[0]
             return True

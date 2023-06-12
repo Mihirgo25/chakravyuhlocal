@@ -10,37 +10,29 @@ def get_air_freight_rate_surcharge(request):
         if object:
           details = object.detail()
     else:
-      object=None
+      return {}
 
     if not object:
       object = AirFreightRateSurcharge()
       for key in list(request.keys()):
         setattr(object, key, request[key])
     return details | ({'surcharge_charge_codes': object.possible_charge_codes()})
+
 def all_fields_present(request):
     if request.get('origin_airport_id') and request.get('destination_airport_id') and request.get('operation_type') and request.get('commodity') and request.get('airline_id') and request.get('operation_type') and request.get('service_provider_id'):
         return True
     return False
 
 def find_object(request):
-    row = {
-        'origin_airport_id' : request.get("origin_airport_id"),
-        'destination_airport_id' : request.get("destination_airport_id"),
-        'commodity' : request.get("commodity"),
-        'airline_id': request.get("airline_id"),
-        'operation_type':request.get('operation_type'),
-        'service_provider_id':request.get('service_provider_id')
-        }
     
     try:
-        objects = AirFreightRateSurcharge.get(**row)
-        
+        object = AirFreightRateSurcharge.select().where(AirFreightRateSurcharge.origin_airport_id==request['origin_airport_id'],
+                                                         AirFreightRateSurcharge.destination_airport_id==request.get('destination_airport_id'),
+                                                         AirFreightRateSurcharge.commodity==request.get('commodity'),
+                                                         AirFreightRateSurcharge.airline_id==request.get('airline_id'),
+                                                         AirFreightRateSurcharge.operation_type==request.get('operation_type'),
+                                                         AirFreightRateSurcharge.service_provider_id==request.get('service_provider_id')).first()
+
     except:
         raise HTTPException(status_code=400, detail="no surcharge entry with the given id exists")
-    return objects
-
-def get_object_params(request):
-    return request
-
-
-
+    return object

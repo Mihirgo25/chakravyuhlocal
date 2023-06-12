@@ -6,11 +6,11 @@ from math import ceil
 import json
 
 
-possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_info_messages_present', 'operation_type']
+possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type']
 possible_indirect_filters = ['location_ids']
 
-def list_air_freight_rate_surcharges(filters = {}, page_limit =10, page = 1, pagination_data_required=True, return_query = False):
-    query = get_query()
+def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pagination_data_required=True, return_query = False, sort_by='update_at', sort_type = 'desc'):
+    query = get_query(sort_by,sort_type)
 
     if filters:
         if type(filters) != dict:
@@ -23,7 +23,7 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit =10, page = 1, pag
    
                
     if return_query: 
-        return { 'list': str(query) }
+        return { 'list': jsonable_encoder(list(query.dicts())) }
     
     pagination_data = get_pagination_data(query,page, page_limit, pagination_data_required)
     query = query.paginate(page, page_limit)
@@ -31,7 +31,7 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit =10, page = 1, pag
 
     return { 'list': data } | (pagination_data)
 
-def get_query():
+def get_query(sort_by,sort_type):
     query = AirFreightRateSurcharge.select(
             AirFreightRateSurcharge.id,
             AirFreightRateSurcharge.origin_airport_id,
@@ -43,7 +43,7 @@ def get_query():
             AirFreightRateSurcharge.commodity_type,
             AirFreightRateSurcharge.commodity,
             AirFreightRateSurcharge.service_provider
-    ).order_by(AirFreightRateSurcharge.updated_at.desc())
+    ).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
