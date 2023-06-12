@@ -25,8 +25,6 @@ class AirFreightRateFeedbacks(BaseModel):
     feedback_type = CharField(null=True)
     feedbacks = ArrayField(field_class=CharField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    outcome = CharField(null=True)
-    outcome_object_id = UUIDField(null=True)
     performed_by_id = UUIDField(null=True)
     performed_by=BinaryJSONField(null=True)
     performed_by_org_id = UUIDField(null=True)
@@ -64,6 +62,8 @@ class AirFreightRateFeedbacks(BaseModel):
     operation_type = CharField(null=True)
     closed_by=BinaryJSONField(null=True)
     airline_id=UUIDField(null=True)
+    reverted_rate_id=UUIDField(null=True)
+    reverted_validity_id=UUIDField(null=True)
     service_provider = BinaryJSONField(null=True)
 
 
