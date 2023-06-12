@@ -1,0 +1,1 @@
+DEFAULT_RATE_TYPE = 'market_place'
