@@ -89,7 +89,8 @@ def set_relevant_supply_agents(request):
 
     route = {key['id']:key['display_name'] for key in route_data}
     try:
-        return { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_port_id'])], 'destination_location': route[str(locations_data['destination_port_id'])]}
+        request_info = { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_port_id'])], 'destination_location': route[str(locations_data['destination_port_id'])]}
+        send_notifications_to_supply_agents(request, request_info)
     except Exception as e:
         print(e)
 
