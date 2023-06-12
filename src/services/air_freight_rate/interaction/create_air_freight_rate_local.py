@@ -2,7 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_local import AirFreightRa
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
-
+from celery_worker import update_multiple_service_objects
 
 
 def create_audit(request,air_freight_local_id):
@@ -34,7 +34,9 @@ def execute_transaction_code(request):
         'airline_id':request.get('airline_id'),
         'trade_type':request.get('trade_type'),
         'commodity':request.get('commodity'),
-        'service_provider_id':request.get('service_provider_id')
+        'service_provider_id':request.get('service_provider_id'),
+        'commodity_type': request.get('commodity_type'),
+        'rate_type': request.get('rate_type')
     }
 
     air_freight_local=AirFreightRateLocal.select().where(
@@ -42,17 +44,20 @@ def execute_transaction_code(request):
         AirFreightRateLocal.airline_id ==request.get('airline_id'),
         AirFreightRateLocal.trade_type == request.get('trade_type'),
         AirFreightRateLocal.commodity== request.get('commodity'),
+        AirFreightRateLocal.commodity_type == request.get('commodity_type'),
+        AirFreightRateLocal.rate_type == request.get('rate_type'),
         AirFreightRateLocal.service_provider_id==request.get('service_provider_id')).first()
     
     if not air_freight_local:
         air_freight_local=AirFreightRateLocal(**row)
-        air_freight_local.line_items=request.get('line_items')
-        air_freight_local.update_freight_objects()
-        
     
+    old_line_items = air_freight_local.line_items
+    for line_item in request.get('line_items'):
+        add_line_item(old_line_items, line_item)
+
+    air_freight_local.line_items = old_line_items
     air_freight_local.set_locations()
     air_freight_local.set_location_ids()
-    air_freight_local.update_line_item_messages()
     air_freight_local.validate()
     
     
@@ -62,8 +67,27 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail="rate did not save")
 
     create_audit(request,air_freight_local.id)
+    air_freight_local.update_freight_objects()
+    air_freight_local.update_line_item_messages()
+    air_freight_local.update_foreign_references()
+    update_multiple_service_objects.apply_async(kwargs={'object':air_freight_local},queue='low')
 
     return {
       'id': str(air_freight_local.id)
     }
+
+
+def add_line_item(old_line_items,line_item):
+    is_new_line_item = True
+    for index,old_line_item in enumerate(old_line_items or []):
+        if old_line_item['code'] == line_item['code']:
+            is_new_line_item = False
+            old_line_items[index] = line_item
+    if is_new_line_item:
+        old_line_items.append(line_item)
+    
+    return old_line_items
+
+
+
 

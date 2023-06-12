@@ -50,6 +50,7 @@ class LineItemLocal(BaseModel):
     price: float
     currency: str
     remarks: list[str] = None
+    slabs: list[Slab]
 class LocalData(BaseModel):
     line_items: list[TaskLineItem]=None
 
@@ -150,19 +151,18 @@ class CreateAirFreightRateStorage(BaseModel):
 
 class CreateAirFreightRateLocal(BaseModel):
     airport_id:str
-    airline_id:str=None
-    trade_type:str=None
-    commodity:str=None
-    commodity_type:str=None
-    service_provider_id:str=None
-    performed_by_id:str=None
-    procured_by_id:str=None
-    sourced_by_id:str=None
+    airline_id:str
+    trade_type:str
+    commodity:str
+    commodity_type:str
+    service_provider_id:str
+    performed_by_id:str
+    procured_by_id:str
+    sourced_by_id:str
     bulk_operation_id:str=None
     rate_sheet_id:str=None
     rate_type:str='general'
     line_items: list[LineItemLocal]=None
-    slabs:list[Slab]=None
 
 
 class UpdateAirFreightRateSurcharge(BaseModel):
@@ -451,3 +451,10 @@ class DeleteAirFreightRateFeedback(BaseModel):
     performed_by_id:str=None
     reverted_rate_id:str 
     reverted_validity_id:str
+
+class GetAirFreightRateLocal(BaseModel):
+    airport_id: str = None
+    airline_id: str = None
+    trade_type: str = None
+    commodity: str = None
+    service_provider_id: str = None

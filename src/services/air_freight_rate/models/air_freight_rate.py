@@ -144,6 +144,7 @@ class AirFreightRate(BaseModel):
     def validate_price_type(self):
         if self.price_type not in PRICE_TYPES:
             raise HTTPException(status_code = 400,details = 'Invalid Price Type')
+        
     def validations(self):
         self.validate_shipment_type()
         self.validate_stacking_type()
