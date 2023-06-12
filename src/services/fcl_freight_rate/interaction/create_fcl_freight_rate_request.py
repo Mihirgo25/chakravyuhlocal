@@ -5,7 +5,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from celery_worker import create_communication_background, update_multiple_service_objects, update_fcl_freight_rate_request_in_delay
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
-from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT
+from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID
 
 
 def create_fcl_freight_rate_request(request):
@@ -51,7 +51,7 @@ def execute_transaction_code(request):
 
         update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
 
-        send_notifications_to_supply_agents(request)
+        set_relevant_supply_agents(request)
 
         return {
         'id': request_object.id
@@ -61,20 +61,27 @@ def get_create_params(request):
     expiration_time = datetime.now() + timedelta(seconds = EXPECTED_TAT_RATE_FEEDBACK_REVERT * 60 * 60)
     return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id']} | ({'status': 'active' , 'expiration_time': expiration_time})
 
-def supply_agents_to_notify(request):
-
-    locations_data = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.origin_country_id, FclFreightRateRequest.origin_continent_id, FclFreightRateRequest.origin_trade_id, FclFreightRateRequest.destination_port_id, FclFreightRateRequest.destination_country_id, FclFreightRateRequest.destination_continent_id, FclFreightRateRequest.destination_trade_id).where(FclFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
-    origin_locations = list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['origin_port_id', 'origin_country_id', 'origin_continent_id', 'origin_trade_id']]))
-    destination_locations =   list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['destination_port_id', 'destination_country_id', 'destination_continent_id', 'destination_trade_id']]))
-
-    supply_agents_data = get_partner_users_by_expertise('fcl_freight', origin_locations, destination_locations)
+def get_relevant_supply_agents(service, origin_locations, destination_locations):
+    supply_agents_data = get_partner_users_by_expertise(service, origin_locations, destination_locations)
     supply_agents_list = list(set([item['partner_user_id'] for item in supply_agents_data]))
 
-    supply_agents_user_data = get_partner_users(supply_agents_list)
+    supply_agents_user_data = get_partner_users(supply_agents_list, role_ids= list(RATE_FEEDBACK_RELEVANT_ROLE_ID.values()))
     if supply_agents_user_data:
         supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data]))
     else:
         supply_agents_user_ids=[]
+    return supply_agents_user_ids
+
+
+def set_relevant_supply_agents(request):
+    locations_data = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.origin_country_id, FclFreightRateRequest.origin_continent_id, FclFreightRateRequest.origin_trade_id, FclFreightRateRequest.destination_port_id, FclFreightRateRequest.destination_country_id, FclFreightRateRequest.destination_continent_id, FclFreightRateRequest.destination_trade_id).where(FclFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
+    origin_locations = list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['origin_port_id', 'origin_country_id', 'origin_continent_id', 'origin_trade_id']]))
+    destination_locations =   list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['destination_port_id', 'destination_country_id', 'destination_continent_id', 'destination_trade_id']]))
+
+    supply_agents_user_ids = get_relevant_supply_agents('fcl_freight', origin_locations, destination_locations)
+
+    update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'relevant_service_provider_ids': supply_agents_user_ids})
+
     try:
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_port_id']),str(locations_data['destination_port_id'])]}})['list']
     except Exception as e:
@@ -86,13 +93,10 @@ def supply_agents_to_notify(request):
     except Exception as e:
         print(e)
 
-def set_relevant_supply_agents(request):
-    update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
 
-def send_notifications_to_supply_agents(request):
+def send_notifications_to_supply_agents(request, request_info):
 
-    request_info = supply_agents_to_notify(request)
     if request_info['user_ids']:
         data = {
         'type': 'platform_notification',
