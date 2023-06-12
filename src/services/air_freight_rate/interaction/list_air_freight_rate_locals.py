@@ -30,6 +30,7 @@ sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=
 
     pagination_data=get_pagination_data(query,page,page_limit,pagination_data_required)
     query = query.paginate(page, page_limit)
+    print(query)
     data = jsonable_encoder(list(query.dicts()))
     return { 'list': data } | (pagination_data)
 
@@ -47,11 +48,11 @@ def get_query(sort_by,sort_type,page,page_limit):
             AirFreightRateLocal.service_provider_id,
             AirFreightRateLocal.is_line_items_info_messages_present,
             AirFreightRateLocal.rate_type,
-            AirFreightRateLocal.bookings_count,
-            AirFreightRateLocal.bookings_importer_exporters_count,
+            # AirFreightRateLocal.bookings_count,
+            # AirFreightRateLocal.bookings_importer_exporters_count,
             AirFreightRateLocal.commodity_type,
             AirFreightRateLocal.created_at,
-            AirFreightRateLocal.currency,
+            # AirFreightRateLocal.currency,
             AirFreightRateLocal.is_line_items_error_messages_present,
             AirFreightRateLocal.is_line_items_info_messages_present,
             AirFreightRateLocal.line_items,

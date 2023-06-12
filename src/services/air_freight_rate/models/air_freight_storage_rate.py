@@ -20,7 +20,7 @@ class AirFreightStorageRates(BaseModel):
     commodity = CharField(null=True,index=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now())
     free_limit = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     importer_exporter_id = UUIDField(null=True,index= True)
@@ -33,7 +33,7 @@ class AirFreightStorageRates(BaseModel):
     slabs = BinaryJSONField(null=True)
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True,index = True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now())
 
     class Meta:
         table_name = 'air_freight_storage_rates'

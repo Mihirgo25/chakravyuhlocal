@@ -291,9 +291,9 @@ def create_air_freight_rate_local_data(request: CreateAirFreightRateLocal, resp:
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/create_air_freight_rate_storage")
-def create_air_freight_rate_storage_data(request: CreateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+def create_air_freight_rate_storage_data(request: CreateAirFreightRateStorage, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
     # if resp["isAuthorized"]:
     #     request.performed_by_id = resp["setters"]["performed_by_id"]
 

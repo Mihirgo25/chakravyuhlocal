@@ -48,7 +48,7 @@ def execute_transaction_code(request):
     
     if request_object.validate():
         request_object.save()
-    print(1234)
+
 
     create_audit(request, request_object.id)
 
@@ -61,9 +61,6 @@ def execute_transaction_code(request):
     return {
     'id': str(request_object.id)
     }
-
-
-
 
 def get_create_params(request):
     return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id']} | ({'status': 'active'})
@@ -83,5 +80,3 @@ def create_audit(request, request_object_id):
         object_type = 'AirFreightRateRequest',
         object_id = request_object_id
     )
-
-
