@@ -8,7 +8,9 @@ def get_shipping_lines_for_prediction(origin_location_ids, destination_location_
             FclFreightRateEstimation.destination_location_id << destination_location_ids,
             FclFreightRateEstimation.container_size == container_size,
             FclFreightRateEstimation.container_type == container_type
-        )
+        ).limit(10)
+    
+    print(query)
     
     estimations = list(query.dicts())
 
