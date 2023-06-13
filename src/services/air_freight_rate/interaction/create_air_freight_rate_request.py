@@ -2,7 +2,7 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from datetime import *
 from playhouse.postgres_ext import *
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_services_audit import  AirServiceAudit
 from celery_worker import update_multiple_service_objects
 def create_air_freight_rate_request(request):
     with db.atomic():
@@ -72,8 +72,7 @@ def create_audit(request, request_object_id):
     if request.get('cargo_readiness_date'):
         request['cargo_readiness_date'] = request.get('cargo_readiness_date').isoformat()
 
-# change to air service audits
-    AirFreightRateAudits.create(
+    AirServiceAudit.create(
         action_name = 'create',
         performed_by_id = performed_by_id,
         data = request,

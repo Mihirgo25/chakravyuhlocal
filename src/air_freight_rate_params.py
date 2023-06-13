@@ -468,3 +468,8 @@ class CreateAirFreightRateNotAvailable(BaseModel):
     commodity: str
     performed_by_id: str = None
     performed_by_type: str = None
+
+class UpdateAirFreightWarehouseRate(BaseModel):
+    id:str
+    performed_by_id:str=None
+    line_items: list[WarehouseLineItems] = None

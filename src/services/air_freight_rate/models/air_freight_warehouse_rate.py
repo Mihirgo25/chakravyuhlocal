@@ -45,8 +45,6 @@ class AirFreightWarehouseRates(BaseModel):
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.now())
-    performed_by_id=CharField(null=True)
-    performed_by=BinaryJSONField(null=True)
     procured_by_id=CharField(null=True)
     procured_by=BinaryJSONField(null=True)
     sourced_by=BinaryJSONField(null=True)
@@ -95,13 +93,20 @@ class AirFreightWarehouseRates(BaseModel):
             self.location_ids = [uuid.UUID(str(x)) for x in [self.airport_id, self.country_id, self.trade_id] if x is not None]
         else:
             raise HTTPException(status_code=500,detail='Invalid airport')
-
+    
+    def validate_duplicate_line_items(self):
+        line_items = []
+        for line_item in self.line_items:
+            if line_item['code'] in line_items:
+                raise HTTPException(status_code = 400, detail = 'Duplicate Line Items')
+            line_items.append(line_item['code'])
 
     def validate(self):
         self.validate_trade_type()
         self.validate_commodity()
         self.validate_service_provider_id()
         self.validate_airport_id()
+        self.validate_duplicate_line_items()
         
         return True
 

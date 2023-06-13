@@ -20,6 +20,7 @@ class AirFreightRateAudits(BaseModel):
     object_id = UUIDField(null=True,index=True)
     object_type = CharField(null=True,index = True)
     performed_by_id = UUIDField(index=True)
+    # performed_by:BinaryJSONField(null=True)
     rate_sheet_id = UUIDField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.now(),index=True)
     validity_id = UUIDField(null=True,index=True)
