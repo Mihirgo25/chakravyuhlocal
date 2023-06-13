@@ -14,8 +14,8 @@ def execute_transaction_code(request):
     if not object:
         raise HTTPException(status_code=400, detail="Freight rate feedback id not found")
 
-    if request.get("feedback_line_items"):
-        object.feedback_line_items = request.get("feedback_line_items")
+    if request.get("feedback_validities"):
+        object.feedback_validities = request.get("feedback_validities")
 
     try:
         object.save()
@@ -43,7 +43,7 @@ def create_audit(request, freight_rate_feedback_id):
         action_name="update",
         performed_by_id=request["performed_by_id"],
         data={
-            "feedback_line_items": request["feedback_line_items"]
+            "feedback_validities": request.get("feedback_validities")
         },
         object_id=freight_rate_feedback_id,
         object_type="FclFreightRateFeedback",

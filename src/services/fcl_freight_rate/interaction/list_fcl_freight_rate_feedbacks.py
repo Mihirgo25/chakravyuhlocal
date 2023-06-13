@@ -12,10 +12,10 @@ from peewee import fn, SQL,Window
 from math import ceil
 from micro_services.client import spot_search
 from database.rails_db import get_organization
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status', 'origin_port_id', 'destination_port_id', 'commodity', 'container_size', 'container_type', 'source']
+possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status']
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id', 'relevant_service_provider_id']
 
-def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False, is_dashboard_required = False):
+def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = FclFreightRateFeedback.select()
 
     if filters:
@@ -32,7 +32,7 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     pagination_data = get_pagination_data(query, page, page_limit)
 
     query = get_page(query, page, page_limit)
-    data = get_data(query,spot_search_details_required,booking_details_required,is_dashboard_required) 
+    data = get_data(query,spot_search_details_required,booking_details_required) 
 
     return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
@@ -143,7 +143,7 @@ def apply_similar_id_filter(query, filters):
 
     return query
 
-def get_data(query, spot_search_details_required, booking_details_required, is_dashboard_required):
+def get_data(query, spot_search_details_required, booking_details_required):
     if not booking_details_required:
         query = query.select(
             FclFreightRateFeedback.id,
@@ -241,19 +241,6 @@ def get_data(query, spot_search_details_required, booking_details_required, is_d
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
         new_data.append(object)
-
-    if is_dashboard_required:
-        for object in data:
-            if 'booking_params' in object and 'rate_card' in object['booking_params'] and object['booking_params']['rate_card']:
-                for line_item in object['booking_params']['rate_card'].get('line_items'):
-                    if line_item['code'] == 'BAS':
-                        object['old_price'] = line_item['price']
-            if object.get('feedback_line_items'):
-                for feedback_line_item in object['feedback_line_items']:
-                    if feedback_line_item['code'] == "BAS":
-                        object['new_price'] = feedback_line_item['price']
-            if object.get('old_price') and object.get('new_price'):
-                object['deviation'] = (object['new_price'] - object['old_price'])/object['new_price'] * 100
     return new_data
 
 def get_pagination_data(query, page, page_limit):

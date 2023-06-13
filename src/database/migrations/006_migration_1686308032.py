@@ -39,7 +39,7 @@ SQL = pw.SQL
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
-    migrator.add_fields(FclFreightRateFeedback, feedback_line_items = BinaryJSONField(null=True))
+    migrator.add_fields(FclFreightRateFeedback, feedback_validities = BinaryJSONField(null=True))
 
 
 
