@@ -1,6 +1,8 @@
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from fastapi import HTTPException
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import shipment
 def delete_air_freight_rate_requests(request):
@@ -22,9 +24,21 @@ def execute_transaction_code(request):
         request_object.closed_by_id = request.get('performed_by_id')
         if request.get('closing_remarks'):
             request_object.closing_remarks = request.get('closing_remarks')
-        
-        # if request_object.q
-        # here
+        if request.source == 'shipment' and request.source_id:
+            air_freight_rate = AirFreightRate.select().where(AirFreightRate.id == request.get('rate_id')).first()
+            if not air_freight_rate:
+                continue
+            air_freight_rate_validity = None
+            for validity in air_freight_rate.validities:
+                if validity.id == request.get('validity_id'):
+                    air_freight_rate_validity = validity
+            if air_freight_rate_validity:
+                if is_valid_params(air_freight_rate,air_freight_rate_validity,request_object) and collection_parties_present(request_object):
+                    update_buy_line_items(air_freight_rate_validity,request_object)
+            
+            AirFreightRateAudits.create(**get_audit_params)
+            # send_closed_notifications_to_sales_agent
+    return {'air_freight_rate_request_ids':request.get('air_freight_rate_request_ids')}
 
 
 def is_valid_params(air_freight_rate, air_freight_rate_validity, air_freight_rate_request):
@@ -81,14 +95,24 @@ def update_buy_line_items(air_freight_rate_validity,obj):
                     }
                 ]
             }
-
+            
             response = shipment.update_shipment_buy_quotations(params)
-
+            if 'ids' not in response:
+                raise HTTPException(status_code = 400,detail = 'COULD NOT UPDATE BUY QUOTATION')
             # error catcing
         else:
             raise HTTPException(status_code=404,detail='Weight Slab not consistent')
 
-        
+
+def get_audit_params(request):
+    data = {key:value for key,value in request.items() if key not in ['air_freight_rate_request_ids']}
+
+    return {
+      'action_name': 'delete',
+      'performed_by_id': request.get('performed_by_id'),
+      'data': data
+    }
+
 
 
 
