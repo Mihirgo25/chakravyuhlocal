@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates 
+from celery_worker import update_multiple_service_objects,get_multiple_service_objects
 
 def create_air_freight_storage_rate(request):
     object_type='Air_Freight_Storage_Rates'
@@ -34,11 +35,15 @@ def execute_transaction_code(request):
     object.slabs = request.get('slabs')
     object.remarks = request.get('remarks')
     object.free_limit = request.get('free_limit')
+    object.procured_by_id=request.get('procured_by_id')
+    object.sourced_by_id=request.get('sourced_by_id')
 
     object.update_special_attributes()
 
     object.update_foreign_objects()
 
+    update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
+    
     try:
         if object.validate():
             object.save()
