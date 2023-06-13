@@ -139,7 +139,7 @@ def rate_extension():
         FclFreightRate.mode == 'manual',
         FclFreightRate.tags.contains('machine_rate_extension')
     )
-    limit_size = 5000
+    limit_size = 256332
     count = 0
     while True:
         batch_rates = rates.limit(limit_size)
