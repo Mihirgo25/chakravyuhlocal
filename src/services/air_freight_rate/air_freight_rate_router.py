@@ -15,6 +15,7 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 
+from services.air_freight_rate.interaction.get_air_freight_storage_rate import get_air_freight_storage_rate
 from services.air_freight_rate.interaction.delete_air_freight_rate_feedback import delete_air_freight_rate_feedback
 from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
 from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
@@ -758,6 +759,33 @@ def create_air_freight_rate_storage_data(request: CreateAirFreightStorageRate, r
 
     try:
         data = create_air_freight_storage_rate(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@air_freight_router.get("/get_air_freight_storage_rate")
+def get_air_freight_storage_rate_data(
+    airport_id:str,
+    airline_id:str,
+    trade_type:str,
+    commodity:str,
+    service_provider_id:str,
+    resp:dict = Depends(authorize_token)
+):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['status_code'],content=resp)
+    request={
+        'airport_id':airport_id,
+        'airline_id':airline_id,
+        'trade_type':trade_type,
+        'commodity':commodity,
+        'service_provider_id':service_provider_id
+    }
+    try:
+        data = get_air_freight_storage_rate(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
