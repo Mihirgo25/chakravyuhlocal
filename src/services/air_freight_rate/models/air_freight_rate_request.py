@@ -19,6 +19,7 @@ class BaseModel(Model):
 class AirFreightRateRequest(BaseModel):
     booking_params = BinaryJSONField(null=True)
     cargo_readiness_date = DateTimeField(null=True)
+    cogo_entity_id = UUIDField(null = True)
     cargo_stacking_type = CharField(null=True)
     closed_by_id = UUIDField(null=True)
     closing_remarks = ArrayField(field_class=CharField, null=True)

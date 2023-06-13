@@ -15,6 +15,8 @@ def execute_transaction_code(request):
     if not object:
         raise HTTPException(status_code=400, detail="ID IS INVALID")
     
+    object.status = request.get('status')
+    object.remarks = request.get('remarks')
     if request.get("closing_remarks"):
         if "rate_added" in request.get("closing_remarks"):
             object.reverted_rates_count = (
@@ -30,7 +32,7 @@ def execute_transaction_code(request):
         object.closing_remarks = (
             object.closing_remarks.append(request.get("closing_remarks"))
             if object.closing_remarks is not None
-            else request.get("closing_remarks")
+            else [request.get("closing_remarks")]
         )
 
     try :
