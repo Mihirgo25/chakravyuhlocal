@@ -13,7 +13,7 @@ possible_indirect_filters = ['location_ids']
 def list_air_freight_rate_locals(filters={},page_limit=10,page=1,
 sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=False):
     
-    query=get_query(sort_by,sort_type,page,page_limit)
+    query=get_query(sort_by,sort_type)
 
     if filters:
         if type(filters) != dict:
@@ -26,44 +26,47 @@ sort_by='update_at',pagination_data_required=True,sort_type='desc',return_query=
         query = apply_indirect_filters(query, indirect_filters)
         
     if return_query: 
-        return { 'list': str(query) }
+        return { 'list': jsonable_encoder(list(query.dicts())) }
 
     pagination_data=get_pagination_data(query,page,page_limit,pagination_data_required)
     query = query.paginate(page, page_limit)
+    print(query)
     data = jsonable_encoder(list(query.dicts()))
+
     return { 'list': data } | (pagination_data)
 
-def get_query(sort_by,sort_type,page,page_limit):
+def get_query(sort_by,sort_type):
     
     query=AirFreightRateLocal.select(
             AirFreightRateLocal.id,
             AirFreightRateLocal.airport_id,
-            AirFreightRateLocal.country_id,
-            AirFreightRateLocal.trade_id,
-            AirFreightRateLocal.continent_id,
             AirFreightRateLocal.trade_type,
             AirFreightRateLocal.commodity,
             AirFreightRateLocal.airline_id,
             AirFreightRateLocal.service_provider_id,
-            AirFreightRateLocal.is_line_items_info_messages_present,
             AirFreightRateLocal.rate_type,
-            AirFreightRateLocal.bookings_count,
-            AirFreightRateLocal.bookings_importer_exporters_count,
             AirFreightRateLocal.commodity_type,
             AirFreightRateLocal.created_at,
-            AirFreightRateLocal.currency,
             AirFreightRateLocal.is_line_items_error_messages_present,
             AirFreightRateLocal.is_line_items_info_messages_present,
             AirFreightRateLocal.line_items,
             AirFreightRateLocal.line_items_error_messages,
             AirFreightRateLocal.line_items_info_messages,
-            AirFreightRateLocal.location_ids,
-            AirFreightRateLocal.service_provider_id,
-            AirFreightRateLocal.trade_id,
-            AirFreightRateLocal.trade_type,
-        ).order_by(AirFreightRateLocal.updated_at.desc())
+            AirFreightRateLocal.procured_by,
+            AirFreightRateLocal.sourced_by,
+            AirFreightRateLocal.procured_by_id,
+            AirFreightRateLocal.sourced_by_id,
+            AirFreightRateLocal.updated_at,
+        ).order_by(eval('AirFreightRateLocal.{}.{}()'.format(sort_by,sort_type)))
     return query
     
+
+def apply_location_ids_filter(query,filters):
+    location_ids = filters['location_ids']
+    query = query.where(
+        AirFreightRateLocal.location_ids.contains(location_ids)
+    )
+    return query
 
 def apply_indirect_filters(query,filters):
     
@@ -84,3 +87,5 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
         "total_count": total_count,
         "page_limit": page_limit
     }
+# where need to change column name or front end
+# object[:organization_detail] = service_objects[:organization][object[:service_provider_id].to_sym] rescue nil

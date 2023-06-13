@@ -31,7 +31,6 @@ def update_air_freight_rate_markup(request):
 
 def execute_transaction_code(request):
     object = AirFreightRate.select().where(AirFreightRate.id==request["id"]).first()
-    breakpoint()
     if not object:
         raise HTTPException(status_code=400, detail=" Rate not found")
     for t in object.validities:

@@ -13,6 +13,7 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request impor
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
+from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
 from kombu import Exchange, Queue
 from celery.schedules import crontab
@@ -20,8 +21,12 @@ from datetime import datetime,timedelta
 import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
+from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
+from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
+from database.rails_db import get_past_cost_booking_data
+from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
-
+from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -29,6 +34,7 @@ from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as Fcl
 # Dynamic Pricing
 
 from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
+from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhinvoiceSetters
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -72,8 +78,53 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.process_fuel_data_delay',
         'schedule': crontab(minute=00,hour=21),
         'options': {'queue' : 'fcl_freight_rate'}
-        }
+        },
+    'adjust_air_freight_dynamic_pricing':{
+        'task': 'celery_worker.adjust_air_freight_dynamic_pricing',
+        'schedule': crontab(minute=00,hour=00),
+        'options': {'queue' : 'fcl_freight_rate'}
+    },
+    'process_electricity_data_delays': {
+        'task': 'celery_worker.process_electricity_data_delays',
+        'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
+        'options': {'queue' : 'fcl_freight_rate'}
+    },
+    'fcl_cost_booking_estimation':{
+        'task': 'celery_worker.fcl_cost_booking_estimation',
+        'schedule': crontab(minute=30,hour=18),
+        'options': {'queue' : 'fcl_freight_rate'}
+    }
 }
+
+@celery.task(bind = True, retry_backoff=True,max_retries=1)
+def fcl_cost_booking_estimation(self):
+    try:
+        limit = 500
+        offset = 0
+        while True: 
+            cost_booking_data = get_past_cost_booking_data(limit, offset)
+            offset += 500
+            if not cost_booking_data:
+                break
+            
+            for booking_data in cost_booking_data:
+                setter = FclBookingVyuhSetters(booking_data)
+                setter.set_dynamic_pricing()
+
+    except Exception as exc:
+        pass
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def adjust_cost_booking_dynamic_pricing(self, new_rate,affected_transformation,new):
+    try:
+        fcl_freight_vyuh = FclBookingVyuhinvoiceSetters(new_rate=new_rate)
+        fcl_freight_vyuh.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=new)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
@@ -398,6 +449,57 @@ def process_fuel_data_delay(self):
 def update_air_freight_rate_request_in_delay(self, request):
     try:
         update_air_freight_rate_request(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def process_electricity_data_delays(self):
+    try:
+        electricity_price_scheduler()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_air_freight_rate_delay(self, request):
+    try:
+        return common.create_air_freight_rate(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def adjust_air_freight_dynamic_pricing(self):
+    try:
+        return True
+        # return invoice_rates_updation()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def process_freight_look_rates(self, rate, locations):
+    try:
+        return create_air_freight_rate_api(rate=rate, locations=locations)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff = True,max_retries=1)
+def create_air_freight_rate_feedback_for_prediction(self, result):
+    try:
+        create_air_freight_rate_feedback(result)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

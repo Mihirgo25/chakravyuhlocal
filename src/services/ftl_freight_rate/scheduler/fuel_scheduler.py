@@ -103,12 +103,12 @@ def get_scrapped_data_for_usa():
     }
     response = requests.get(url, headers=headers)
     html = response.content
-    scrapper = BeautifulSoup(html, "html.parser",features="lxml")
+    scrapper = BeautifulSoup(html, "html.parser")
     table_body = scrapper.find("tbody")
     table_list = table_body.findAll("td")
     fuel_data_for_usa = []
     start = 0
-    while start < (len(table_list)):
+    while start < (len(table_list))-5:
         region_name = table_list[start].a.text
         region_name = region_name.replace("\n", "").replace(" ", "")
         fuel_data = {}

@@ -6,6 +6,7 @@ from configs.air_freight_rate_constants import *
 from micro_services.client import *
 from database.rails_db import *
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+import datetime
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -20,16 +21,14 @@ class AirFreightRateFeedbacks(BaseModel):
     booking_params = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.datetime.now)
     feedback_type = CharField(null=True)
     feedbacks = ArrayField(field_class=CharField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    outcome = CharField(null=True)
-    outcome_object_id = UUIDField(null=True)
     performed_by_id = UUIDField(null=True)
     performed_by=BinaryJSONField(null=True)
     performed_by_org_id = UUIDField(null=True)
-    performed_by_org=UUIDField(null=True)
+    performed_by_org=BinaryJSONField(null=True)
     performed_by_type = CharField(null=True)
     preferred_airline_ids = ArrayField(field_class=UUIDField, null=True)
     preferred_airlines=BinaryJSONField(null=True)
@@ -42,7 +41,7 @@ class AirFreightRateFeedbacks(BaseModel):
     source_id = UUIDField(null=True)
     status = CharField(null=True)
     trade_type = CharField(null=True)
-    updated_at = DateTimeField()
+    updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
     origin_airport_id=UUIDField(null=True)
     origin_country_id=UUIDField(null=True)
@@ -63,6 +62,9 @@ class AirFreightRateFeedbacks(BaseModel):
     operation_type = CharField(null=True)
     closed_by=BinaryJSONField(null=True)
     airline_id=UUIDField(null=True)
+    reverted_rate_id=UUIDField(null=True)
+    reverted_validity_id=UUIDField(null=True)
+    service_provider = BinaryJSONField(null=True)
 
 
     class Meta:
@@ -188,7 +190,6 @@ class AirFreightRateFeedbacks(BaseModel):
         common.create_communication(data)
         
     def validate_trade_type(self):
-        print(self.trade_type)
         if self.trade_type not in ['import' , 'export' , 'domestic']:
             raise HTTPException (status_code=400, detail='invalid trade_type')
         
@@ -215,18 +216,19 @@ class AirFreightRateFeedbacks(BaseModel):
         return True
     
     def validate_preferred_storage_free_days(self):
-        if not  self.preferred_storage_free_days >0.0:
+        if not  self.preferred_storage_free_days >=0.0:
             raise HTTPException(status_code=400, detail='freedays should be greater than zero')
         
     def validate_feedbacks(self):
-        for feedback in self.feedbacks:
-            if feedback not in POSSIBLE_FEEDBACKS:
-                raise HTTPException(status_code=400,detail='invalid feedback type')
+        if self.feedbacks:
+            for feedback in self.feedbacks:
+                if feedback not in POSSIBLE_FEEDBACKS:
+                    raise HTTPException(status_code=400,detail='invalid feedback type')
             
             
     def validate_perform_by_org_id(self):
         performed_by_org_data=get_organization(id=self.performed_by_org_id)
-        if len(performed_by_org_data) >=0 and performed_by_org_data['account_type']=='importer_exporter':
+        if len(performed_by_org_data) >=0 and performed_by_org_data[0]['account_type']=='importer_exporter':
             return True
         else:
             raise HTTPException(status_code=400, detail='invalid org id ')
@@ -234,7 +236,6 @@ class AirFreightRateFeedbacks(BaseModel):
     def validate_source(self):
         if self.source and self.source not in FEEDBACK_SOURCES:
             raise HTTPException(status_code=400,detail='invalid feedback source')
-        print("ok")
         
     def validate_source_id(self):
         if self.source =='spot_search':
@@ -245,8 +246,12 @@ class AirFreightRateFeedbacks(BaseModel):
            checkout_data = checkout.list_checkouts({'filters':{'id': [str(self.source_id)]}})
            if 'list' in checkout_data and len(checkout_data['list']) != 0:
                return True
-        raise HTTPException(status_code=400, detail='invalid source -id')
+        raise HTTPException(status_code=400, detail='invalid source id')
 
+    def validate_performed_by_id(self):
+        performed_by = get_user(id = self.performed_by_id)
+        if not performed_by:
+            raise HTTPException(status_code=400,detail='Invalid Performed By Id')
 
     def validate_before_save(self):
         self.validate_trade_type()
@@ -256,4 +261,6 @@ class AirFreightRateFeedbacks(BaseModel):
         self.validate_feedbacks()
         self.validate_perform_by_org_id()
         self.validate_source()
+        self.validate_source_id()
+        self.validate_performed_by_id()
         return  True

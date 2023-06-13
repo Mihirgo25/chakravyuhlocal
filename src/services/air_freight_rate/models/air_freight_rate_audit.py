@@ -17,15 +17,12 @@ class AirFreightRateAudits(BaseModel):
     created_at = DateTimeField(default=datetime.now(),index=True)
     data = BinaryJSONField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    object_id = UUIDField(null=True)
-    object_type = CharField(null=True)
-    performed_by_id = UUIDField(null=True)
+    object_id = UUIDField(null=True,index=True)
+    object_type = CharField(null=True,index = True)
+    performed_by_id = UUIDField(index=True)
     rate_sheet_id = UUIDField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.now(),index=True)
-    validity_id = UUIDField(null=True)
+    validity_id = UUIDField(null=True,index=True)
 
     class Meta:
         table_name = 'air_freight_rate_audits'
-        indexes = (
-            (('object_type', 'object_id'), False),
-        )

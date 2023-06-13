@@ -8,14 +8,15 @@ import sentry_sdk
 from fastapi.responses import JSONResponse
 from typing import Union,List
 import json
-import traceback
 from fastapi.encoders import jsonable_encoder
-from params import *
+from air_freight_rate_params import *
 from datetime import datetime,timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 
+from services.air_freight_rate.interaction.delete_air_freight_rate_feedback import delete_air_freight_rate_feedback
+from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
 from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
 from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
 from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
@@ -29,7 +30,7 @@ from services.air_freight_rate.interaction.create_air_freight_rate_task import c
 from services.air_freight_rate.interaction.get_air_freight_rate_local import get_air_freight_rate_local
 from services.air_freight_rate.interaction.get_air_freight_rate_cards import get_air_freight_rate_cards
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
-from services.air_freight_rate.interaction.list_air_freight_rate_local import list_air_freight_rate_locals
+from services.air_freight_rate.interaction.list_air_freight_rate_locals import list_air_freight_rate_locals
 from services.air_freight_rate.interaction.update_air_freight_rate_task import update_air_freight_rate_task_data
 from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interaction.create_air_freight_rate_request import create_air_freight_rate_request
@@ -38,19 +39,31 @@ from services.air_freight_rate.interaction.create_air_freight_rate_not_available
 from services.air_freight_rate.interaction.create_air_freight_storage_rate import create_air_freight_storage_rate
 from services.air_freight_rate.interaction.get_air_freight_rate_visibility import get_air_freight_rate_visibility
 from services.air_freight_rate.interaction.get_air_freight_rate_addition_frequency import get_air_freight_rate_addition_frequency 
+
 from services.air_freight_rate.interaction.create_air_freight_warehouse_rate import create_air_freight_warehouse_rate
 from services.air_freight_rate.interaction.list_air_freight_rate_feedbacks import list_air_freight_rate_feedbacks
 from services.air_freight_rate.interaction.list_air_freight_rate_requests import list_air_freight_rate_requests
 from services.air_freight_rate.interaction.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
 from services.air_freight_rate.interaction.list_air_freight_charge_codes import list_air_freight_charge_codes
 from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
+from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
+from services.air_freight_rate.interaction.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
+
 
 air_freight_router = APIRouter()
 
 
 @air_freight_router.post("/create_air_freight_rate")
-def create_air_freight_rate():
-    return
+def create_air_freight_rate(request: AirFreightRate):
+    # try:
+    rate = create_air_freight_rate_data(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+    # return
 
 @air_freight_router.post("/delete_air_freight_rate")
 def delete_air_freight_rates(request: DeleteAirFreightRate, resp: dict = Depends(authorize_token)):
@@ -279,9 +292,9 @@ def create_air_freight_rate_local_data(request: CreateAirFreightRateLocal, resp:
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/create_air_freight_rate_storage")
-def create_air_freight_rate_storage_data(request: CreateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+def create_air_freight_rate_storage_data(request: CreateAirFreightRateStorage, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
     # if resp["isAuthorized"]:
     #     request.performed_by_id = resp["setters"]["performed_by_id"]
 
@@ -455,10 +468,8 @@ def get_air_freight_rate_cards_data(
     weight:float =None,
     price_type:str=None,
     cogo_entity_id:str=None,
-    
     volume:float =None,
     additional_services:List[str]=[],
-    predicted_rate_creation_required:bool=True,
     resp: dict = Depends(authorize_token)):
 
     if resp["status_code"] != 200:
@@ -475,7 +486,6 @@ def get_air_freight_rate_cards_data(
         'volume':volume,
         'cogo_entity_id':cogo_entity_id,
         'additional_services':additional_services,
-        'predicted_rate_creation_required':predicted_rate_creation_required,
         'commodity_sub_type':commodity_sub_type,
         'commodity_sub_type_code':commodity_sub_type_code,
         'price_type':price_type,
@@ -483,7 +493,6 @@ def get_air_freight_rate_cards_data(
         'trade_type':trade_type,
         'packing_type':packing_type,
         'handling_type':handling_type
-
     }
 
     # try:
@@ -694,7 +703,7 @@ def get_air_freight_rate_suggestions_data(
     
 from services.air_freight_rate.interaction.create_air_freight_rate_feedback import create_air_freight_rate_feeback
 @air_freight_router.post("/create_air_freight_rate_feedback")
-def create_air_freight_rate_feedbacks_data(request:CreateAirFreightRateFeedbacks,resp:dict =Depends(authorize_token)):
+def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedbacks, resp: dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
@@ -723,4 +732,35 @@ def update_air_freight_rate_markup_data(request:UpdateAirFreightRateMarkUp,resp:
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
 
+@air_freight_router.post("create_air_freight_rate_bulk_operations")
+def create_air_freight_rate_bulk_operation_data(request:CreateBulkOperation, resp: dict = Depends(authorize_token)):
+    # if resp["status_code"] != 200:
+    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    # if resp["isAuthorized"]:
+    #     request.performed_by_id = resp["setters"]["performed_by_id"]
+    #     # request.performed_by_type = resp["setters"]["performed_by_type"]
+    # try:
+   
+    data = create_air_freight_rate_bulk_operation(request.dict(exclude_none=True))
+    return JSONResponse(content=jsonable_encoder(data))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+@air_freight_router.post("/delete_air_freight_rate_feedback")
+def delete_air_freight_rate_feedback_data(request:DeleteAirFreightRateFeedback , resp:dict = Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp["status_code"],content=resp)
+    try:
+        data=delete_air_freight_rate_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e :
+        raise
+    except Exception as e :
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={"success":False, 'error':str(e)})
