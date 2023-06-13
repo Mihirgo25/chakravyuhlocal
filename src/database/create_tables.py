@@ -19,6 +19,7 @@ from services.air_freight_rate.models.air_freight_rate_bulk_operation import Air
 def create_table():
     # db.connect()
     try:
+        # db.create_tables([CostBookingEstimation, CostBookingEstimationAudit])
         db.create_tables([AirFreightRate])
         db.close()
         print("created table")

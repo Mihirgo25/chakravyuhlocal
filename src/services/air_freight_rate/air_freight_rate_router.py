@@ -467,10 +467,8 @@ def get_air_freight_rate_cards_data(
     weight:float =None,
     price_type:str=None,
     cogo_entity_id:str=None,
-    
     volume:float =None,
     additional_services:List[str]=[],
-    predicted_rate_creation_required:bool=True,
     resp: dict = Depends(authorize_token)):
 
     if resp["status_code"] != 200:
@@ -487,7 +485,6 @@ def get_air_freight_rate_cards_data(
         'volume':volume,
         'cogo_entity_id':cogo_entity_id,
         'additional_services':additional_services,
-        'predicted_rate_creation_required':predicted_rate_creation_required,
         'commodity_sub_type':commodity_sub_type,
         'commodity_sub_type_code':commodity_sub_type_code,
         'price_type':price_type,
@@ -495,7 +492,6 @@ def get_air_freight_rate_cards_data(
         'trade_type':trade_type,
         'packing_type':packing_type,
         'handling_type':handling_type
-
     }
 
     # try:
