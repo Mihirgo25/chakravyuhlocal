@@ -22,8 +22,8 @@ def insert_rates_to_rms(create_params):
     return create_params
 
 def relevant_shipping_lines(request):
-    origin_location_ids = [request['origin_port_id'], request['origin_trade_id'], request['origin_country_id']]
-    destination_location_ids = [request['destination_port_id'], request['destination_trade_id'], request['destination_country_id']]
+    origin_location_ids = [request['origin_port_id'], request['origin_country_id']]
+    destination_location_ids = [request['destination_port_id'], request['destination_country_id']]
     container_size = request['container_size']
     container_type = request['container_type']
     sl_ids = get_shipping_lines_for_prediction(origin_location_ids, destination_location_ids, container_size, container_type)
