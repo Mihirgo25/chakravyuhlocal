@@ -19,13 +19,13 @@ class CreateFclCustomsRate(BaseModel):
   container_type: str
   commodity: str = None
   service_provider_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   sourced_by_id: str
   procured_by_id: str
   importer_exporter_id: str = None
   customs_line_items: List[FclCustomsLineItems] = None
   cfs_line_items: List[FclCustomsLineItems] = None
-  performed_by_type: str
+  performed_by_type: str = None
 
 class DeleteRate(BaseModel):
   filters:dict={}
@@ -38,13 +38,13 @@ class AddMarkup(BaseModel):
   markup_currency: str = None
 
 class CreateFclCustomsRateBulkOperation(BaseModel):
-  performed_by_id: str
+  performed_by_id: str = None
   service_provider_id: str
   sourced_by_id: str
   procured_by_id: str
   delete_rate: DeleteRate = None
   add_markup: AddMarkup = None
-  performed_by_type: str
+  performed_by_type: str = None
 
 class CreateFclCustomsRateNotAvailable(BaseModel):
   location_id: str
@@ -53,15 +53,15 @@ class CreateFclCustomsRateNotAvailable(BaseModel):
   container_size: str
   container_type: str
   commodity: str = None
-  performed_by_type: str
-  performed_by_id: str
+  performed_by_type: str = None
+  performed_by_id: str = None
 
 class CreateFclCustomsRateRequest(BaseModel):
   source: str
   source_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_org_id: str
-  performed_by_type: str
+  performed_by_type: str = None
   preferred_customs_rate: float = None
   preferred_customs_rate_currency: str = None
   # preferred_detention_free_days: int = None
@@ -81,9 +81,9 @@ class CreateFclCustomsRateRequest(BaseModel):
 class CreateFclCustomsRateFeedback(BaseModel):
   source: str
   source_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_org_id: str
-  performed_by_type: str
+  performed_by_type: str = None
   rate_id: str
   likes_count: int
   dislikes_count: int
@@ -106,8 +106,8 @@ class UpdateFclCustomsRatePlatformPrices(BaseModel):
   container_type: str 
   commodity: str = None
   trade_type:str
-  performed_by_id: str
-  performed_by_type: str
+  performed_by_id: str = None
+  performed_by_type: str = None
   importer_exporter_id: str = None
   is_customs_line_items_error_messages_present: bool = False
   is_cfs_line_items_error_messages_present: bool = False
@@ -116,19 +116,19 @@ class UpdateFclCustomsRatePlatformPrices(BaseModel):
 class DeleteFclCustomsRateFeedback(BaseModel):
  fcl_customs_rate_feedback_ids: list[str] 
  closing_remarks: list[str] = []
- performed_by_id: str
- performed_by_type: str
+ performed_by_id: str = None
+ performed_by_type: str = None
 
 
 class DeleteFclCustomsRateRequest(BaseModel):
  fcl_customs_rate_request_ids: list[str] 
  closing_remarks: list[str] = []
- performed_by_id: str
- performed_by_type: str  
+ performed_by_id: str = None
+ performed_by_type: str  = None
 
 class UpdateFclCustomsRate(BaseModel):
   id: str
-  performed_by_id: str
+  performed_by_id: str = None
   sourced_by_id: str
   procured_by_id: str
   bulk_operation_id: str = None
@@ -139,12 +139,12 @@ class UpdateFclCustomsRate(BaseModel):
 class DeleteFclCustomsRateFeedback(BaseModel):
  fcl_customs_rate_feedback_ids: list[str] 
  closing_remarks: list[str] = []
- performed_by_id: str
+ performed_by_id: str = None
  performed_by_type: str = None
 
 class DeleteFclCustomsRate(BaseModel):
   id: str
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
   sourced_by_id: str
@@ -153,5 +153,5 @@ class DeleteFclCustomsRate(BaseModel):
 class DeleteFclCustomsRateRequest(BaseModel):
   fcl_customs_rate_request_ids: list[str] 
   closing_remarks: list[str] = []
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None

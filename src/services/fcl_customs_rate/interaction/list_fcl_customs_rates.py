@@ -3,6 +3,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 from math import ceil
+from micro_services.client import common
 
 possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id']
 
@@ -45,6 +46,9 @@ def get_pagination_data(query, page, page_limit):
 
 def get_data(query):
     data = list(query.dicts())
+    for object in data:
+        object['total_price_currency'] = 'INR'
+        object['total_price'] = get_total_price(object.get('customs_line_items'), object['total_price_currency'])
 
     return data
 
@@ -70,3 +74,10 @@ def apply_is_rate_available_filter(query, filters):
     rate_not_available_entry = not filters.get('is_rate_available')
     query = query.where(FclCustomsRate.rate_not_available_entry == rate_not_available_entry)
     return query 
+
+def get_total_price(line_items, total_price_currency):
+    total_price = 0
+    for line_item in line_items:
+        total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": total_price_currency})['price']
+    
+    return total_price

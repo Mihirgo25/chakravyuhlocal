@@ -47,7 +47,7 @@ def create_fcl_customs_rate(request):
   create_audit(request, customs_rate.id)
 
   customs_rate.update_platform_prices_for_other_service_providers()
-  delay_fcl_customs_functions.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request,},queue = 'low')
+  delay_fcl_customs_functions.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
 
   return {'id': customs_rate.id}
 
