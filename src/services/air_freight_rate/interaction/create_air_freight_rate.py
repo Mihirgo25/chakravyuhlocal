@@ -69,33 +69,44 @@ def create_air_freight_rate(request):
         freight = AirFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
+    
+    freight.set_locations()
+    freight.set_origin_location_ids()
+    freight.set_destination_location_ids()
+    freight.sourced_by_id = request.get("sourced_by_id")
+    freight.procured_by_id = request.get("procured_by_id")
 
-    
-    
     freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
-    
     
     if request.get('rate_sheet_id'):
         request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_start'), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
         request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_end'), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
 
-
-    validity_id=freight.set_validities(request.get("validity_start"),request.get("validity_end"),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
+    validity_id = freight.set_validities(request.get("validity_start").date(),request.get("validity_end").date(),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
     freight.set_last_rate_available_date()
-    freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
-    
-    if request.get('rate_sheet_id'):
-        request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_start'), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
-        request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_end'), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
-    validity_id = freight.set_validities(request.get("validity_start"),request.get("validity_end"),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
-    freight.set_last_rate_available_date(request)
 
     new_record = (freight.id is None)
-    if new_record:
-        freight.update_foreign_references(request)
+    set_object_parameters(freight, request)
+    freight.validate_before_save()
+    try:
+        freight.save()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="rate did not save")
+
+    # if new_record:
+    #     freight.update_foreign_references(request)
     
 
 
+def set_object_parameters(freight, request):
+    freight.maximum_weight = request.get('maximum_weight')
+    freight.length = request.get('length')
+    freight.breadth = request.get('breadth')
+    freight.height = request.get('height')
+    freight.weight_slabs = request.get('weight_slabs')
+    freight.rate_not_available_entry = False
+    freight.flight_uuid = request.get('flight_uuid')
+    freight.external_rate_id = request.get('external_rate_id')
 
 
 
