@@ -501,3 +501,14 @@ class UpdateAirFreightRateLocal(BaseModel):
     procured_by_id: str
     bulk_operation_id: str
     line_items: list[LineItemLocal]
+
+class CreateAirFreightRateNotAvailable(BaseModel):
+    origin_airport_id: str
+    origin_country_id: str = None
+    origin_trade_id: str = None
+    destination_airport_id: str
+    destination_country_id: str = None
+    destination_trade_id: str = None
+    commodity: str
+    performed_by_id: str = None
+    performed_by_type: str = None
