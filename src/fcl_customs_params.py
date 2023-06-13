@@ -94,7 +94,7 @@ class CreateFclCustomsRateFeedback(BaseModel):
   preferred_customs_rate_currency: str = None
   feedback_type: str
   booking_params: dict ={}
-  location_id: str = None
+  port_id: str = None
   country_id: str = None
   trade_type: str = None
   trade_id: str = None
