@@ -30,6 +30,7 @@ from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices impor
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
 
 # Rate Producers
 
@@ -495,8 +496,7 @@ def delay_fcl_customs_functions(self,fcl_customs_object,request):
     try:
         if not FclCustomsRate.select().where(FclCustomsRate.service_provider_id==request["service_provider_id"], FclCustomsRate.rate_not_available_entry==False).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-
-            get_multiple_service_objects(fcl_customs_object)
+        get_multiple_service_objects(fcl_customs_object)
 
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
@@ -509,7 +509,7 @@ def delay_fcl_cfs_functions(self,fcl_cfs_object,request):
     try:
         if not FclCfsRate.select().where(FclCfsRate.service_provider_id==request["service_provider_id"], FclCfsRate.rate_not_available_entry==False).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-            get_multiple_service_objects(fcl_cfs_object)
+        get_multiple_service_objects(fcl_cfs_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -577,3 +577,11 @@ def process_freight_look_rates(self, rate, locations):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True, max_retries=1)
+def create_fcl_customs_migration(self,request):
+    try:
+        return create_fcl_customs_rate_data(request)
+    except Exception as e:
+        print(request)
+        return e

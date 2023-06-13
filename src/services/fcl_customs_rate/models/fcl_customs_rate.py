@@ -53,6 +53,7 @@ class FclCustomsRate(BaseModel):
     service_provider = BinaryJSONField(null=True)
     location = BinaryJSONField(null=True)
     importer_exporter = BinaryJSONField(null=True)
+    zone_id = UUIDField(index=True,null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
@@ -85,7 +86,7 @@ class FclCustomsRate(BaseModel):
 
         location = maps.list_locations({'filters':{'id': self.location_id}})['list']
         if location:
-            self.location = location[0]
+            self.location= location[0]  
         else:
             self.location = []
 
@@ -179,7 +180,6 @@ class FclCustomsRate(BaseModel):
         return result
     
     def get_mandatory_line_items(self):
-        print(self.mandatory_charge_codes(),'line')
         selected_line_items = [line_item for line_item in self.customs_line_items if line_item.get('code').upper() in self.mandatory_charge_codes()]
         return selected_line_items
     
@@ -301,7 +301,6 @@ class FclCustomsRate(BaseModel):
 
         for line_item in self.customs_line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
-
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CUSTOMS_CHARGES.get(code)
 

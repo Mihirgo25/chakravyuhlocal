@@ -26,6 +26,7 @@ class CreateFclCustomsRate(BaseModel):
   customs_line_items: List[FclCustomsLineItems] = None
   cfs_line_items: List[FclCustomsLineItems] = None
   performed_by_type: str = None
+  zone_id:str=None
 
 class DeleteRate(BaseModel):
   filters:dict={}

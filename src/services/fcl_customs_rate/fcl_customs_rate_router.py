@@ -27,6 +27,9 @@ from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_feedback impo
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_request import delete_fcl_customs_rate_request
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate import update_fcl_customs_rate
+from celery_worker import create_fcl_customs_migration
+
+import csv 
 
 fcl_customs_router = APIRouter()
 
@@ -406,3 +409,18 @@ def update_fcl_customs_rate_data(request: UpdateFclCustomsRate, resp: dict = Dep
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_customs_router.get("/data_migration")
+def migration_data():
+    with open("D:\Cogoport\data_analysis\migration\export_data.csv",'r') as f:
+        reader = csv.DictReader(f)
+        fieldnames = [field for field in reader.fieldnames if field.strip() != '']
+        i = 0
+        for row in reader:
+            data = {field: row[field] for field in fieldnames}
+            customs_line_items = list(eval(data['customs_line_items']))
+            data['customs_line_items'] = customs_line_items
+            create_fcl_customs_migration.delay(data)
+            
+
+    
