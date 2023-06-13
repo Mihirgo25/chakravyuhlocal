@@ -154,6 +154,7 @@ class AirFreightRateSurcharge(BaseModel):
         for line_item in self.line_items:
             if line_item['code'] in line_items.keys():
                 raise HTTPException(status_code = 400, details = 'Duplicate Line Items')
+            line_items[line_item['code']] = True
         
     def possible_charge_codes(self):
         commodity = self.commodity
