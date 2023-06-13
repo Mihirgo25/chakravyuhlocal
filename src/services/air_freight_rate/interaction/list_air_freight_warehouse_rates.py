@@ -64,20 +64,3 @@ def get_pagination_data(query,page,page_limit):
     'page_limit': page_limit
     }
     return pagination_data
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-

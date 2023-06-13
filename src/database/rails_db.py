@@ -52,7 +52,7 @@ def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
         sentry_sdk.capture_exception(e)
         return all_result
 
-def get_organization(id=None, short_name=None):
+def get_organization(id=None, short_name=None,account_type = 'importer_exporter'):
     all_result = []
     try:
         conn = get_connection()
@@ -60,7 +60,7 @@ def get_organization(id=None, short_name=None):
             with conn.cursor() as cur:
                 if short_name:
                     sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type, organizations.kyc_status, organizations.status from organizations where organizations.short_name = %s and status = %s and account_type = %s'
-                    cur.execute(sql, (short_name,'active','importer_exporter',))
+                    cur.execute(sql, (short_name,'active',account_type,))
                 else:
                     if not isinstance(id, list):
                         id = (id,)
