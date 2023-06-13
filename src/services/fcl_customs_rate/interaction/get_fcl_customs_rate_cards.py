@@ -2,6 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from configs.global_constants import CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
 from configs.fcl_customs_rate_constants import LOCATION_HIERARCHY
 from configs.definitions import FCL_CUSTOMS_CHARGES
+from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_eligible_orgs
 import sentry_sdk, traceback
@@ -12,6 +13,7 @@ def get_fcl_customs_rate_cards(request):
         customs_rates = jsonable_encoder(list(query.dicts()))
 
         if len(customs_rates) > 0:
+            customs_rates = get_zone_wise_customs_rates()
             customs_rates = discard_noneligible_lsps(request)
             rate_cards = build_response_list(request, customs_rates)
 
@@ -143,3 +145,28 @@ def group_by_key(customs_rates, request):
         except KeyError:
             result[key] = [item]
     return result
+
+
+def get_zone_wise_customs_rates(request):
+    location_data = maps.list_locations({'filters':{'id': request.get('port_id')}})['list']
+    if location_data:
+        zone_id = location_data[0].get('zone_id')
+
+        zone_wise_rates = FclCustomsRate.select(
+            FclCustomsRate.customs_line_items,
+            FclCustomsRate.service_provider_id,
+            FclCustomsRate.importer_exporter_id,
+            FclCustomsRate.location_type,
+            FclCustomsRate.location_id
+            ).where(
+            FclCustomsRate.zone_id << zone_id,
+            FclCustomsRate.container_size == request.get('container_size'),
+            FclCustomsRate.container_type == request.get('container_type'),
+            FclCustomsRate.commodity == request.get('commodity'),
+            FclCustomsRate.trade_type == request.get('trade_type'),
+            FclCustomsRate.is_customs_line_items_error_messages_present == False,
+            FclCustomsRate.rate_not_available_entry == False,
+            ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
+        )
+
+        

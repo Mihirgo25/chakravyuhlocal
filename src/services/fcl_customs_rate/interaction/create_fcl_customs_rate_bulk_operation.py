@@ -12,7 +12,6 @@ def create_fcl_customs_rate_bulk_operation(request):
         params = get_bulk_operation_params(request, action_name, data)
         bulk_operation_customs = FclCustomsRateBulkOperation(**params)
         eval(f"bulk_operation_customs.validate_{action_name}_data()")
-        update_multiple_service_objects.apply_async(kwargs={'object':bulk_operation_customs},queue='low')
 
         bulk_operation_customs.save()
 

@@ -26,7 +26,7 @@ class FclCustomsRateRequest(BaseModel):
     cargo_readiness_date = DateTimeField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     booking_params = BinaryJSONField(null=True)
-    request_type = CharField(null=True)
+    # request_type = CharField(null=True)
     status = CharField(index=True, null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     closed_by_id = UUIDField(index=True, null=True)

@@ -28,7 +28,6 @@ class FclCustomsRateBulkOperation(BaseModel):
     data = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.now())
     service_provider_id = UUIDField(index=True, null=True)
-    service_provider = BinaryJSONField(null = True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.now()
