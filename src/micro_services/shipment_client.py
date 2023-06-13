@@ -26,3 +26,10 @@ class ShipmentApiClient:
     
     def update_shipment_buy_quotations(self,data={}):
         return self.client.request('POST','update_shipment_buy_quotations',data)
+    
+    def list_shipments(self,data = {}):
+        return self.client.request('GET','list_shipments',data)
+    
+    def list_shipment_sell_quotations(self,data={}):
+        return self.client.request('GET','list_shipment_sell_quotations',data)
+        
