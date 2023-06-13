@@ -160,6 +160,7 @@ def rate_extension():
                             item['price'] = item['price']
                     line_items = validity['line_items']
             count += 1
+            print(count)
             if not is_change:
                 continue
             rate.validities = validities               
@@ -186,8 +187,6 @@ def rate_extension():
                 object_type="FclFreightRate",
                 source='rate_extension',
             )
-            
-            print(count)
             
 def correct_local():
     rates = FclFreightRateLocal.select().where(FclFreightRateLocal.is_line_items_error_messages_present, ~FclFreightRateLocal.rate_not_available_entry, FclFreightRateLocal.updated_at >= '2023-04-26')
