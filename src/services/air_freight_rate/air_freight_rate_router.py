@@ -457,6 +457,8 @@ def get_air_freight_rate_cards_data(
     validity_end:datetime,
     packages_count:int,
     trade_type:str,
+    weight: float,
+    volume:float,
     commodity:str='general',
     commodity_type:str='all',
     commodity_sub_type:str =None,
@@ -464,10 +466,8 @@ def get_air_freight_rate_cards_data(
     airline_id:str=None,
     packing_type:str ='box',
     handling_type:str = 'stackable',
-    weight:float =None,
     price_type:str=None,
     cogo_entity_id:str=None,
-    volume:float =None,
     additional_services:List[str]=[],
     resp: dict = Depends(authorize_token)):
 
@@ -483,6 +483,7 @@ def get_air_freight_rate_cards_data(
         'validity_start':validity_start,
         'weight':weight,
         'volume':volume,
+        'commodity_type':commodity_type,
         'cogo_entity_id':cogo_entity_id,
         'additional_services':additional_services,
         'commodity_sub_type':commodity_sub_type,
