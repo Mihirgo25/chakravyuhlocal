@@ -7,6 +7,7 @@ import pandas as pd, numpy as np, concurrent.futures
 from micro_services.client import maps
 from configs.env import DEFAULT_USER_ID
 from libs.get_distance import get_distance
+from services.chakravyuh.interaction.get_shipping_lines_for_prediction import get_shipping_lines_for_prediction
     
 def insert_rates_to_rms(create_params):
     from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data    
@@ -19,6 +20,17 @@ def insert_rates_to_rms(create_params):
         create_param['predicted_price'] = final_bas_price_to_rms
 
     return create_params
+
+def relevant_shipping_lines(request):
+    origin_location_ids = [request['origin_port_id'], request['origin_trade_id'], request['origin_country_id']]
+    destination_location_ids = [request['destination_port_id'], request['destination_trade_id'], request['destination_country_id']]
+    container_size = request['container_size']
+    container_type = request['container_type']
+    sl_ids = get_shipping_lines_for_prediction(origin_location_ids, destination_location_ids, container_size, container_type)
+
+    if len(sl_ids):
+        return sl_ids
+    return SHIPPING_LINES_FOR_PREDICTION
 
 
 def get_fcl_freight_predicted_rate(request):
@@ -53,7 +65,7 @@ def get_fcl_freight_predicted_rate(request):
     elif len(destination_main_port_ids) > 2:
         destination_main_port_ids = destination_main_port_ids[:2]
 
-    all_shipping_lines = SHIPPING_LINES_FOR_PREDICTION
+    all_shipping_lines = relevant_shipping_lines(request)
     if request.get('shipping_line_id'):
         all_shipping_lines = [request.get('shipping_line_id')]
 

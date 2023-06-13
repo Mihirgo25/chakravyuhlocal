@@ -13,17 +13,11 @@ class FclFreightVyuh():
     def __init__(self,
                 new_rate: dict = {}, 
                 current_validities: dict = [], 
-                what_to_create: dict = {
-                'seaport': True,
-                'country': False,
-                'trade': False
-                }
             ):
         self.new_rate = jsonable_encoder(new_rate)
         self.current_validities = current_validities
         self.target_currency = 'USD'
         self.ff_mlo = get_ff_mlo()
-        self.what_to_create = what_to_create
     
     def create_audits(self, data= {}):
         FclFreightRateEstimationAudit.create(**data)
@@ -69,9 +63,15 @@ class FclFreightVyuh():
                 FclFreightRateEstimation.schedule_type.is_null(True),
                 FclFreightRateEstimation.payment_term.is_null(True),
                 FclFreightRateEstimation.commodity.is_null(True),
-                FclFreightRateEstimation.shipping_line_id.is_null(True),
                 FclFreightRateEstimation.status == 'active'
-            ).limit(1)
+            )
+        
+        if payload['shipping_line_id']:
+            created_tf = created_tf.where(FclFreightRateEstimation.shipping_line_id == payload['shipping_line_id'])
+        else:
+            created_tf = created_tf.where(FclFreightRateEstimation.shipping_line_id.is_null(True))
+        
+        created_tf = created_tf.limit(1)
 
         price_estimations = jsonable_encoder(list(created_tf.dicts()))
         if len(price_estimations):
@@ -107,6 +107,19 @@ class FclFreightVyuh():
                 'payment_term': None,
                 'schedule_type': None
             },
+            # {
+            #     "origin_location_id": self.new_rate['origin_trade_id'],
+            #     "origin_location_type": 'trade',
+            #     'destination_location_id': self.new_rate['destination_trade_id'],
+            #     'destination_location_type': 'trade',
+            #     'container_size': self.new_rate['container_size'],
+            #     'container_type': self.new_rate['container_type'],
+            #     'line_items': [],
+            #     'shipping_line_id': None,
+            #     'commodity': None,
+            #     'payment_term': None,
+            #     'schedule_type': None
+            # },
             {
                 "origin_location_id": self.new_rate['origin_trade_id'],
                 "origin_location_type": 'trade',
@@ -115,7 +128,34 @@ class FclFreightVyuh():
                 'container_size': self.new_rate['container_size'],
                 'container_type': self.new_rate['container_type'],
                 'line_items': [],
-                'shipping_line_id': None,
+                'shipping_line_id': self.new_rate['shipping_line_id'],
+                'commodity': None,
+                'payment_term': None,
+                'schedule_type': None
+            },
+            {
+                "origin_location_id": self.new_rate['origin_port_id'],
+                "origin_location_type": 'seaport',
+                'destination_location_id': self.new_rate['destination_port_id'],
+                'destination_location_type': 'seaport',
+                'container_size': self.new_rate['container_size'],
+                'container_type': self.new_rate['container_type'],
+                'line_items': [],
+                'shipping_line_id': self.new_rate['shipping_line_id'],
+                'commodity': None,
+                'payment_term': None,
+                'schedule_type': None
+
+            },
+            {
+                "origin_location_id": self.new_rate['origin_country_id'],
+                "origin_location_type": 'country',
+                'destination_location_id': self.new_rate['destination_country_id'],
+                'destination_location_type': 'country',
+                'container_size': self.new_rate['container_size'],
+                'container_type': self.new_rate['container_type'],
+                'line_items': [],
+                'shipping_line_id': self.new_rate['shipping_line_id'],
                 'commodity': None,
                 'payment_term': None,
                 'schedule_type': None
@@ -134,10 +174,10 @@ class FclFreightVyuh():
                     mht['destination_location_type'] == adt['destination_location_type'] and
                     mht['container_size'] == adt['container_size'] and
                     mht['container_type'] == adt['container_type'] and
+                    mht['shipping_line_id'] == adt['shipping_line_id'] and
                     adt['schedule_type'] == None and
                     adt['payment_term'] == None and
-                    adt['commodity'] == None and
-                    adt['shipping_line_id'] == None
+                    adt['commodity'] == None
 
                 ):
                     is_available = True
@@ -328,7 +368,7 @@ class FclFreightVyuh():
                     'container_type': ct,
                     'container_size': cs,
                     'line_items': [],
-                    'shipping_line_id': None,
+                    'shipping_line_id': actual_transformation['shipping_line_id'],
                     'commodity': None,
                     'payment_term': None,
                     'schedule_type': None
@@ -354,8 +394,11 @@ class FclFreightVyuh():
             FclFreightRateEstimation.origin_location_id == actual_transformation['origin_location_id'],
             FclFreightRateEstimation.destination_location_id == actual_transformation['destination_location_id'],
             FclFreightRateEstimation.container_type << container_types,
-            FclFreightRateEstimation.container_size << container_sizes
+            FclFreightRateEstimation.container_size << container_sizes,
         )
+
+        if actual_transformation['shipping_line_id']:
+            tfs_query = tfs_query.where(FclFreightRateEstimation.shipping_line_id == actual_transformation['shipping_line_id'])
 
         already_created_tfs = jsonable_encoder(list(tfs_query.dicts())) or []
 
@@ -368,7 +411,8 @@ class FclFreightVyuh():
                 act['destination_location_id'], 
                 act['destination_location_type'],
                 act['container_type'],
-                act['container_size']
+                act['container_size'],
+                act['shipping_line_id']
                 )
             line_items = act['line_items'] or []
 
@@ -389,7 +433,8 @@ class FclFreightVyuh():
                 pst['destination_location_id'], 
                 pst['destination_location_type'],
                 pst['container_type'],
-                pst['container_size']
+                pst['container_size'],
+                pst['shipping_line_id']
                 )
 
             derived = already_created_tfs_hash.get(key)
@@ -461,7 +506,6 @@ class FclFreightVyuh():
     
     
     def adjust_price_for_tranformation(self, affected_transformation, new: bool=False, is_relative: bool = False):
-        from celery_worker import update_multiple_service_objects
         transformation_id = affected_transformation.get('id')
         if is_relative:
             adjusted_line_items = affected_transformation['line_items']
@@ -537,7 +581,7 @@ class FclFreightVyuh():
 
 
 
-    def set_dynamic_pricing(self):
+    def set_dynamic_pricing(self, what_to_create={}):
         '''
           Main Function to set dynamic pricing bounds  
         '''  
@@ -550,7 +594,9 @@ class FclFreightVyuh():
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
 
         for affected_transformation in affected_transformations:
-            if self.what_to_create[affected_transformation['origin_location_type']]:
+            at = affected_transformation
+            key = '{}:{}:{}:{}:{}'.format(at['origin_location_id'], at['destination_location_id'], at['container_size'], at['container_type'], at['shipping_line_id'])
+            if what_to_create[key] or (not what_to_create and at['origin_location_type'] == 'seaport'):
                 # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
                 transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
