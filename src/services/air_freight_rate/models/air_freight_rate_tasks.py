@@ -40,6 +40,7 @@ class AirFreightRateTasks(BaseModel):
     completion_data=BinaryJSONField(null=True)
     completed_at=DateTimeField(default=datetime.datetime.now(),null=True)
     completed_by_id=UUIDField(null=True)
+    completed_by=BinaryJSONField(null=True)
     created_at=DateTimeField(default=datetime.datetime.now(),null=True)
     updated_at=DateTimeField(default=datetime.datetime.now(),null=True)
     job_data=BinaryJSONField(null=True)

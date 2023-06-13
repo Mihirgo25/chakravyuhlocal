@@ -2,16 +2,16 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from micro_services.client import organization
 from playhouse.shortcuts import model_to_dict
 
+
 def create_air_freight_rate_not_available(request):
     request = request.__dict__
-    present_service_provider_ids = AirFreightRate.select(AirFreightRate.service_provider_id).distinct().where(
+    present_service_provider_query = AirFreightRate.select(AirFreightRate.service_provider_id).distinct().where(
         AirFreightRate.origin_airport_id==request.get('origin_airport_id'),
         AirFreightRate.destination_airport_id == request.get('destination_airport_id'),
-        AirFreightRate.commodity == request.get('commodity'),
+        AirFreightRate.commodity == request.get('commodity')
     )
     present_service_provider_ids = [model_to_dict(item)['service_provider_id'] for item in present_service_provider_ids.execute()]
 
-    print(present_service_provider_ids)
 
     for service_provider_id in list(set(find_service_provider_ids(request)).difference(set(present_service_provider_ids))):
         AirFreightRate.create(
@@ -35,6 +35,5 @@ def find_service_provider_ids(request):
         'destination_trade_id': request.get('destination_trade_id'),
         'commodity': request.get('commodity')
     }
-    })
-    print(service_provider_ids)
+    })['ids']
     return service_provider_ids

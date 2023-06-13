@@ -5,7 +5,7 @@ from configs.air_freight_rate_constants import ROLE_IDS_FOR_NOTIFICATIONS
 
 
 def send_air_freight_rate_task_notification(task_id):
-    task=AirFreightRateTasks.select().where(AirFreightRateTasks.id==task_id).dicts().get()
+    task=AirFreightRateTasks.select().where(AirFreightRateTasks.id==task_id).first()
 
     send_communication(task.airline_id,task.airport_id)
     return {}

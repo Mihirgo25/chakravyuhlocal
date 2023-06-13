@@ -5,12 +5,11 @@ from micro_services.client import organization
 def get_air_freight_rate_visibility(request):
     response_object = {'reason': '', 'is_rate_available': False, 'is_visible': False }
 
-    org_details = get_organization(id=request['service_provider_id'])[0]
+    org_details = get_organization(id = request['service_provider_id'],account_type = 'service_provider')[0]
     
     org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})
     
-    if org_services_data:
-            
+    if 'list' in org_services_data:
             org_services_data = org_services_data['list']
     else:
         org_services_data = []
@@ -22,9 +21,10 @@ def get_air_freight_rate_visibility(request):
         response_object['reason'] += kyc_and_service_status
 
     air_freight_rate_data=get_air_freght_rate_data(request)
-    if (not air_freight_rate_data) or ((not request['from_date']) or (not request['to_date'])):
+    
+    if (not air_freight_rate_data) or ((not request.get('from_date')) or (not request.get('to_date'))):
         response_object['is_visible'] = False
-        if (not request['from_date']) or (not request['to_date']):
+        if (not request.get('from_date')) or (not request.get('to_date')):
             response_object['is_visible'] = False
         return response_object
     
@@ -49,7 +49,7 @@ def is_kyc_verified_and_service_validation_status(org_details,org_services):
 
 def get_air_freght_rate_data(request):
     air_freight_rate_data = None
-    if request['rate_id']:
+    if request.get('rate_id'):
         air_freight_rate_data = AirFreightRate.select().where(AirFreightRate.id == request['rate_id']).first()
     else:
         air_freight_rate_data = AirFreightRate.select().where(

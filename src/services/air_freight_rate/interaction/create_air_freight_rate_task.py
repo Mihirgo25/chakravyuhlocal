@@ -54,19 +54,20 @@ def create_air_freight_rate_task (request):
     else:
         task.source_count=1
 
-    if request.get('rate') is not None:
+    if request.get('rate'):
         task.job_data={'rate':request.get('rate')}
     task.status='pending'
 
-    if request.get('shipment_id') is not None:
+    if request.get('shipment_id'):
         try:
             sid = shipment.get_shipment({'id':request['shipment_id']})['summary']['serial_id']
             task.shipment_serial_ids.append(sid)
+            task.shipment_serial_ids = list(set(task.shipment_serial_ids))
         except:
-            sid = None
+            raise HTTPException(status_code = 400, detail = "SID doesn't Exist")
 
     if not task.validate():
-        raise HTTPException(status_code =500,detail='unable to create taskk')
+        raise HTTPException(status_code =500,detail='unable to create task')
     else:
         task.save()
        
