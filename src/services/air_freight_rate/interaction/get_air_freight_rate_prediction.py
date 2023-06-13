@@ -15,7 +15,8 @@ def get_air_freight_rate_prediction(request):
     
     
     density_category = get_density_category(request.get('weight'), request.get('volume'), request.get('trade_type'))
-    params = get_params_for_model(currency)
+
+    params = get_params_for_model(currency,request)
     cogolens_url = COGOLENS_URL
     results = []
     for param in params:
@@ -90,7 +91,7 @@ def get_air_freight_rate_prediction(request):
     
 
 def get_density_category(gross_weight,gross_volume,trade_type):
-    ratio = round((gross_volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO / gross_weight.to_f),4)
+    ratio = round((gross_volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO / float(gross_weight)),4)
     chargeable_weight = get_chargeable_weight(gross_weight,gross_volume)
     if trade_type == 'import':
         low_density_lower_limit = AIR_IMPORTS_LOW_DENSITY_RATIO
