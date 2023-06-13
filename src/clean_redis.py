@@ -130,13 +130,14 @@ def rate_extension():
     from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
     eligible_sp = get_ff_mlo()
     rates = FclFreightRate.select().where(
-        FclFreightRate.last_rate_available_date <= '2023-05-31', 
+        FclFreightRate.last_rate_available_date == '2023-06-30', 
         FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', 
-        FclFreightRate.service_provider_id.in_(eligible_sp), 
-        FclFreightRate.last_rate_available_date >= '2023-05-01',
-        FclFreightRate.updated_at >= '2023-05-01',
+        FclFreightRate.service_provider_id.in_(eligible_sp),
+        FclFreightRate.updated_at >= '2023-06-08',
+        FclFreightRate.updated_at <= '2023-06-09',
         ~FclFreightRate.rate_not_available_entry, 
-        FclFreightRate.mode == 'manual'
+        FclFreightRate.mode == 'manual',
+        FclFreightRate.tags.contains('machine_rate_extension')
     )
     limit_size = 5000
     count = 0
@@ -148,14 +149,19 @@ def rate_extension():
         for rate in batch_rates.execute():
             line_items = []
             validities = rate.validities
+            is_change = False
             for validity in validities:
-                if validity['validity_end'] >= '2023-05-01' and validity['validity_end'] >= '2023-05-31':
+                if validity['validity_start'] >= '2023-05-01' and validity['validity_end'] <= '2023-05-31':
+                    is_change = True
                     validity['validity_end'] = '2023-06-30'
                     validity['validity_start'] = '2023-06-01'
                     for item in validity['line_items']:
                         if item['code'] == 'BAS':
                             item['price'] = item['price']
                     line_items = validity['line_items']
+            count += 1
+            if not is_change:
+                continue
             rate.validities = validities               
             rate.last_rate_available_date = '2023-06-30'
             rate.rate_not_available_entry = False
@@ -180,7 +186,7 @@ def rate_extension():
                 object_type="FclFreightRate",
                 source='rate_extension',
             )
-            count += 1
+            
             print(count)
             
 def correct_local():
