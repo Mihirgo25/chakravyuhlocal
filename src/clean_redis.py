@@ -141,52 +141,51 @@ def rate_extension():
     )
     limit_size = 256332
     count = 0
-    while True:
-        batch_rates = rates.limit(limit_size)
-        if not batch_rates.exists():
-            break
-        
-        for rate in batch_rates.execute():
-            line_items = []
-            validities = rate.validities
-            is_change = False
-            for validity in validities:
-                if validity['validity_start'] >= '2023-05-01' and validity['validity_end'] <= '2023-05-31':
-                    is_change = True
-                    validity['validity_end'] = '2023-06-30'
-                    validity['validity_start'] = '2023-06-01'
-                    for item in validity['line_items']:
-                        if item['code'] == 'BAS':
-                            item['price'] = item['price']
-                    line_items = validity['line_items']
-            count += 1
-            print(count)
-            if not is_change:
-                continue
-            rate.validities = validities               
-            rate.last_rate_available_date = '2023-06-30'
-            rate.rate_not_available_entry = False
-            rate.tags = ['machine_rate_extension']
-            rate.save()
-            rate.set_platform_prices()
-            data = {
-            'validity_end': '2023-06-30',
-            'validity_start': '2023-06-01',
-            'line_items': line_items,
-            'weight_limit': rate.weight_limit,
-            'origin_local': rate.origin_local,
-            'destination_local': rate.destination_local,
-            'source': 'machine_rate_extension',
-            }
-
-            id = FclFreightRateAudit.create(
-                action_name="create",
-                performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
-                data=data,
-                object_id=str(rate.id),
-                object_type="FclFreightRate",
-                source='rate_extension',
-            )
+    # while True:
+    batch_rates = rates.limit(limit_size)
+    if not batch_rates.exists():
+        return
+    
+    for rate in batch_rates.execute():
+        line_items = []
+        validities = rate.validities
+        is_change = False
+        for validity in validities:
+            if validity['validity_start'] >= '2023-05-01' and validity['validity_end'] <= '2023-05-31':
+                is_change = True
+                validity['validity_end'] = '2023-06-30'
+                validity['validity_start'] = '2023-06-01'
+                for item in validity['line_items']:
+                    if item['code'] == 'BAS':
+                        item['price'] = item['price']
+                line_items = validity['line_items']
+        count += 1
+        print(count)
+        if not is_change:
+            continue
+        rate.validities = validities               
+        rate.last_rate_available_date = '2023-06-30'
+        rate.rate_not_available_entry = False
+        rate.tags = ['machine_rate_extension']
+        rate.save()
+        rate.set_platform_prices()
+        data = {
+        'validity_end': '2023-06-30',
+        'validity_start': '2023-06-01',
+        'line_items': line_items,
+        'weight_limit': rate.weight_limit,
+        'origin_local': rate.origin_local,
+        'destination_local': rate.destination_local,
+        'source': 'machine_rate_extension',
+        }
+        id = FclFreightRateAudit.create(
+            action_name="create",
+            performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
+            data=data,
+            object_id=str(rate.id),
+            object_type="FclFreightRate",
+            source='rate_extension',
+        )
             
 def correct_local():
     rates = FclFreightRateLocal.select().where(FclFreightRateLocal.is_line_items_error_messages_present, ~FclFreightRateLocal.rate_not_available_entry, FclFreightRateLocal.updated_at >= '2023-04-26')
