@@ -19,7 +19,9 @@ class BaseModel(Model):
         only_save_dirty = True
 class AirFreightStorageRates(BaseModel):
     airline_id = UUIDField(null=True,index=True)
+    airline=BinaryJSONField(null=True)
     airport_id = UUIDField(null=True,index=True)
+    airport=BinaryJSONField(null=True)
     commodity = CharField(null=True,index=True)
     continent_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
@@ -33,8 +35,13 @@ class AirFreightStorageRates(BaseModel):
     priority_score_updated_at = DateTimeField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=CharField, null=True)
     service_provider_id = UUIDField(null=True,index=True)
+    service_provider=BinaryJSONField(null=True)
     slabs = BinaryJSONField(null=True)
     trade_id = UUIDField(null=True)
+    procured_by_id=UUIDField(null=True)
+    procured_by=BinaryJSONField(null=True)
+    sourced_by_id=UUIDField(null=True)
+    sourced_by=BinaryJSONField(null=True)
     trade_type = CharField(null=True,index = True)
     updated_at = DateTimeField(default=datetime.datetime.now())
 

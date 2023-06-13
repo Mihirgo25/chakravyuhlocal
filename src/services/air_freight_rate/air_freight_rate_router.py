@@ -750,8 +750,8 @@ def delete_air_freight_rate_feedback_data(request:DeleteAirFreightRateFeedback ,
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"success":False, 'error':str(e)})
     
-@air_freight_router.post("/create_air_freight_rate_storage")
-def create_air_freight_rate_storage_data(request: CreateAirFreightStorageRate, resp: dict = Depends(authorize_token)):
+@air_freight_router.post("/create_air_freight_storage_rate")
+def create_air_freight_storage_rate_data(request: CreateAirFreightStorageRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     # if resp["isAuthorized"]:
