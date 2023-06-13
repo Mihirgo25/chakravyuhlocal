@@ -4,7 +4,7 @@ def get_shipping_lines_for_prediction(origin_location_ids, destination_location_
     query =  FclFreightRateEstimation.select(
         FclFreightRateEstimation.shipping_line_id
         ).where(
-            FclFreightRateEstimation.origin_location << origin_location_ids,
+            FclFreightRateEstimation.origin_location_id << origin_location_ids,
             FclFreightRateEstimation.destination_location_id << destination_location_ids,
             FclFreightRateEstimation.container_size == container_size,
             FclFreightRateEstimation.container_type == container_type
@@ -15,8 +15,8 @@ def get_shipping_lines_for_prediction(origin_location_ids, destination_location_
     shipping_line_ids = []
 
     for estimation in  estimations:
-        sl_id = str(estimation['shipping_line_id'])
+        sl_id = estimation['shipping_line_id']
         if sl_id:
-            shipping_line_ids.append(sl_id)
+            shipping_line_ids.append(str(sl_id))
     
     return shipping_line_ids
