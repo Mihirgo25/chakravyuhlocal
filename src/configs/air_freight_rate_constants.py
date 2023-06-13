@@ -65,9 +65,9 @@ HANDLING_TYPE = ["stackable", "non_stackable"]
 
 COMMODITY_SUB_TYPE = []
 
-RATE_TYPES = ['market_place','promotional','consolidated','cogo_assured']
+RATE_TYPES = ['market_place','promotional','consolidated','cogo_assured','general']
 
-DEFAULT_RATE_TYPE = 'market_place'
+DEFAULT_RATE_TYPE = 'general'
 
 AIR_OPERATION_TYPES = ['passenger', 'freighter', 'charter', 'prime', 'lean']
 
