@@ -169,7 +169,7 @@ class AirFreightRateSurcharge(BaseModel):
         return charge_codes
     
     def validate_service_provider_id(self):
-        service_provider_data = get_organization(id=str(self.service_provider_id),operator_type='airline')
+        service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
@@ -177,7 +177,7 @@ class AirFreightRateSurcharge(BaseModel):
     
     def validate_airline_id(self):
         airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
-        if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'shipping_line':
+        if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
         raise HTTPException(status_code = 400, details = 'Airline Id Is Not Valid')    
