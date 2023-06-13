@@ -10,7 +10,7 @@ from peewee import fn
 from micro_services.client import spot_search
 from database.rails_db import get_organization
 
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'location_id', 'trade_id', 'service_provider_id']
+possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'status', 'closed_by_id', 'country_id', 'trade_type', 'port_id', 'trade_id', 'service_provider_id']
 
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'supply_agent_id']
 
@@ -47,16 +47,16 @@ def apply_indirect_filters(query, filters):
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_customs', filters['relevant_supply_agent'])
-    location_id = [t['location_id'] for t in expertises]
-    query = query.where((FclCustomsRateFeedback.location_id << location_id) |
-                    (FclCustomsRateFeedback.country_id << location_id))
+    port_id = [t['port_id'] for t in expertises]
+    query = query.where((FclCustomsRateFeedback.port_id << port_id) |
+                    (FclCustomsRateFeedback.country_id << port_id))
     return query
 
 def apply_supply_agent_id_filter(query, filters):
     expertises = get_organization_service_experties('fcl_customs', filters['supply_agent_id'])
-    location_id = [t['location_id'] for t in expertises]
-    query = query.where((FclCustomsRateFeedback.location_id << location_id) |
-                    (FclCustomsRateFeedback.country_id << location_id))
+    port_id = [t['port_id'] for t in expertises]
+    query = query.where((FclCustomsRateFeedback.port_id << port_id) |
+                    (FclCustomsRateFeedback.country_id << port_id))
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
@@ -68,10 +68,10 @@ def apply_validity_end_less_than_filter(query, filters):
     return query
 
 def apply_similar_id_filter(query, filters):
-    feedback_data = (FclCustomsRateFeedback.select(FclCustomsRateFeedback.location_id, FclCustomsRateFeedback.commodity, FclCustomsRateFeedback.trade_type).where(FclCustomsRateFeedback.id==filters['similar_id'])).first()
+    feedback_data = (FclCustomsRateFeedback.select(FclCustomsRateFeedback.port_id, FclCustomsRateFeedback.commodity, FclCustomsRateFeedback.trade_type).where(FclCustomsRateFeedback.id==filters['similar_id'])).first()
     if feedback_data:
         query = query.where(FclCustomsRateFeedback.id != filters.get('similar_id'))
-        query = query.where(FclCustomsRateFeedback.location_id == feedback_data.location_id, FclCustomsRateFeedback.commodity == feedback_data.commodity, FclCustomsRateFeedback.trade_type == feedback_data.trade_type)
+        query = query.where(FclCustomsRateFeedback.port_id == feedback_data.port_id, FclCustomsRateFeedback.commodity == feedback_data.commodity, FclCustomsRateFeedback.trade_type == feedback_data.trade_type)
     return query
 
 def get_data(query, spot_search_details_required):
