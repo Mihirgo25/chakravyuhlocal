@@ -50,7 +50,7 @@ def create_audit(request,freight_id):
     audit_data={}
     audit_data["validity_id"]=request["validity_id"]
 
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         bulk_operation_id=request.get('bulk_operation_id'),
         action_name='delete',
         data=audit_data,
