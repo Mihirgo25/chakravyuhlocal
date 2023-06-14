@@ -195,7 +195,7 @@ class AirFreightRateFeedbacks(BaseModel):
         
     def validate_feedback_type(self):
         if self.feedback_type not in FEEDBACK_TYPES:
-            raise HTTPException(status_code= 400, detail='invalid fedback type')
+            raise HTTPException(status_code= 400, detail='invalid feedback type')
         
     def validate_preferred_airline_ids(self):
         if not self.preferred_airline_ids:
@@ -223,12 +223,12 @@ class AirFreightRateFeedbacks(BaseModel):
         if self.feedbacks:
             for feedback in self.feedbacks:
                 if feedback not in POSSIBLE_FEEDBACKS:
-                    raise HTTPException(status_code=400,detail='invalid feedback type')
+                    raise HTTPException(status_code=400,detail='invalid feedback')
             
             
     def validate_perform_by_org_id(self):
         performed_by_org_data=get_organization(id=self.performed_by_org_id)
-        if len(performed_by_org_data) >=0 and performed_by_org_data[0]['account_type']=='importer_exporter':
+        if len(performed_by_org_data) >0 and performed_by_org_data[0]['account_type']=='importer_exporter':
             return True
         else:
             raise HTTPException(status_code=400, detail='invalid org id ')
@@ -254,13 +254,14 @@ class AirFreightRateFeedbacks(BaseModel):
             raise HTTPException(status_code=400,detail='Invalid Performed By Id')
 
     def validate_before_save(self):
+
         self.validate_trade_type()
         self.validate_feedback_type()
         self.validate_preferred_airline_ids()
         self.validate_preferred_storage_free_days()
         self.validate_feedbacks()
-        self.validate_perform_by_org_id()
+        # self.validate_perform_by_org_id()
         self.validate_source()
-        self.validate_source_id()
-        self.validate_performed_by_id()
+        # self.validate_source_id()
+        # self.validate_performed_by_id()
         return  True
