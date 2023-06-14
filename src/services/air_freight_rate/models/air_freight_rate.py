@@ -240,9 +240,9 @@ class AirFreightRate(BaseModel):
         if self.operation_type not in AIR_OPERATION_TYPES:
             raise HTTPException(status_code = 400, details = 'Invalid Operation Type')  
 
-    def update_foreign_references(self):
+    def update_foreign_references(self, price_type):
         self.update_local_references()
-        if self.price_type != 'all_in':
+        if price_type != 'all_in':
             self.update_surcharge_reference()
     
     def update_local_references(self):
@@ -260,31 +260,34 @@ class AirFreightRate(BaseModel):
 
         origin_local_id = None
         destination_local_id = None
-
+        origin_local_found = False
+        destination_local_found = False
         for local in locals:
-            if local['airport_id'] == self.origin_airport_id and local['trade_type'] == 'export':
+            if origin_local_found and destination_local_found:
+                continue
+            if not origin_local_found and local['airport_id'] == self.origin_airport_id and local['trade_type'] == 'export':
                 origin_local_id = local['id']
-            
-            if local['airport_id'] == self.destination_airport_id and local['trade_type'] == 'import':
+                origin_local_found = True
+            if not destination_local_found and local['airport_id'] == self.destination_airport_id and local['trade_type'] == 'import':
                 destination_local_id = local['id']
-        
+                destination_local_found  = True
         self.origin_local_id = origin_local_id
         self.destination_local_id = destination_local_id
-        self.save()
     
     def update_surcharge_reference(self):
-
-        surcharge = AirFreightRateSurcharge.select(AirFreightRateSurcharge.id).where(
-            AirFreightRateSurcharge.origin_airport_id == self.origin_airport_id,
-            AirFreightRateSurcharge.destination_airport_id == self.destination_airport_id,
-            AirFreightRateSurcharge.commodity == self.commodity,
-            AirFreightRateSurcharge.commodity_type == self.commodity_type,
-            AirFreightRateSurcharge.airline_id == self.airline_id,
-            AirFreightRateSurcharge.service_provider_id == self.service_provider_id
+        surcharge_object = AirFreightRateSurcharge.select().where(
+            (AirFreightRateSurcharge.origin_airport_id == self.origin_airport_id) &
+            (AirFreightRateSurcharge.destination_airport_id == self.destination_airport_id) &
+            (AirFreightRateSurcharge.commodity == self.commodity) &
+            (AirFreightRateSurcharge.commodity_type == self.commodity_type) &
+            (AirFreightRateSurcharge.airline_id == self.airline_id) &
+            (AirFreightRateSurcharge.service_provider_id == self.service_provider_id)
         ).first()
-
-        if surcharge:
-            self.surcharge_id = surcharge.id 
+        if surcharge_object:
+            surcharge_object_id = surcharge_object.id
+            surcharge = jsonable_encoder(list(surcharge.dicts())) 
+            self.surcharge_id = surcharge_object_id
+            self.surchage = surcharge[0]
     
     def detail(self):
         details =  {

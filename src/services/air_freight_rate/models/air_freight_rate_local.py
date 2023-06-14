@@ -57,6 +57,10 @@ class AirFreightRateLocal(BaseModel):
     class Meta:
         table_name = 'air_freight_rate_locals'
 
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRateLocal, self).save(*args, **kwargs)
+
     
     def validate_duplicate_line_items(self):
         line_item_codes = [t.code.upper() for t in self.line_items]

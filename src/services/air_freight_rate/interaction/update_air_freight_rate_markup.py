@@ -1,7 +1,7 @@
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from fastapi import FastAPI, HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from database.db_session import db
 
 
@@ -11,7 +11,7 @@ def create_audit(request):
         "validity_start": str(request.get("validity_start")),
         "validity_end": str(request.get("validity_end")),
     }
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         action_name="edit",
         performed_by_id=request.get("performed_by_id"),
         bulk_operation_id=request.get("bulk_operation_id"),

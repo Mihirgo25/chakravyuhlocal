@@ -5,6 +5,35 @@ from database.db_session import db
 import datetime
 import pytz
 from configs.air_freight_rate_constants import DEFAULT_RATE_TYPE
+from fastapi.encoders import jsonable_encoder
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+
+def create_audit(request, freight_id):
+
+    rate_type = request.get('rate_type')
+
+    audit_data = {}
+    audit_data["validity_start"] = request["validity_start"].isoformat()
+    audit_data["validity_end"] = request["validity_end"].isoformat()
+    audit_data["line_items"] = request.get("line_items")
+    audit_data["weight_limit"] = request.get("weight_limit")
+    audit_data["origin_local"] = request.get("origin_local")
+    audit_data["destination_local"] = request.get("destination_local")
+    audit_data["is_extended"] = request.get("is_extended")
+    audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
+    audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
+
+    id = AirFreightRateAudit.create(
+        bulk_operation_id=request.get("bulk_operation_id"),
+        rate_sheet_id=request.get("rate_sheet_id"),
+        action_name="create",
+        performed_by_id=request["performed_by_id"],
+        data=audit_data,
+        object_id=freight_id,
+        object_type="FclFreightRate",
+        source=request.get("source"),
+    )
+    return id
 
 def create_air_freight_rate_data(request):
     with db.atomic():
@@ -88,13 +117,17 @@ def create_air_freight_rate(request):
     new_record = (freight.id is None)
     set_object_parameters(freight, request)
     freight.validate_before_save()
+
+    if new_record:
+        freight.update_foreign_references(row['price_type'])
+    
     try:
         freight.save()
     except Exception as e:
         raise HTTPException(status_code=400, detail="rate did not save")
+    
+    create_audit(request, freight.id)
 
-    # if new_record:
-    #     freight.update_foreign_references(request)
     
 
 
