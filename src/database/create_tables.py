@@ -7,14 +7,14 @@ from services.air_freight_rate.models.air_freight_location_clusters import AirFr
 from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
 from services.haulage_freight_rate.models.wagon_types import WagonTypes
-from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
-from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
+# from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+# from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+# from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
-from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+# from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
-from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
+# from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
 
 
 def create_table():
