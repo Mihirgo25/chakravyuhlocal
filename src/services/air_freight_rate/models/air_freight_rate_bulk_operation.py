@@ -173,7 +173,7 @@ class AirFreightRateBulkOperation(BaseModel):
         
         for freight in  data:
             count += 1
-            if  AirFreightRateAudits.select().where(AirFreightRateAudits.bulk_operation_id==self.id,AirFreightRateAudits.object_id==freight["air_freight_rate_id"]):
+            if  AirFreightRateAudit.select().where(AirFreightRateAudit.bulk_operation_id==self.id,AirFreightRateAudit.object_id==freight["air_freight_rate_id"]):
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue
@@ -197,7 +197,7 @@ class AirFreightRateBulkOperation(BaseModel):
         for freight in data:
             count += 1
             object = AirFreightRate.select().where(AirFreightRate.id == freight['air_freight_rate_id']).first()
-            if AirFreightRateAudits.select().where(AirFreightRateAudits.bulk_operation_id==self.id,AirFreightRateAudits.object_id==freight["id"]).first():
+            if AirFreightRateAudit.select().where(AirFreightRateAudit.bulk_operation_id==self.id,AirFreightRateAudit.object_id==freight["id"]).first():
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue
@@ -248,7 +248,7 @@ class AirFreightRateBulkOperation(BaseModel):
         for freight in air_freight_rates:
             count += 1
 
-            if AirFreightRateAudits.select().where(AirFreightRateAudits.bulk_operation_id==self.id,AirFreightRateAudits.object_id==freight["id"]):
+            if AirFreightRateAudit.select().where(AirFreightRateAudit.bulk_operation_id==self.id,AirFreightRateAudit.object_id==freight["id"]):
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue
@@ -296,7 +296,7 @@ class AirFreightRateBulkOperation(BaseModel):
         for local in local_rates:
             count += 1
 
-            if  AirFreightRateAudits.get_or_none('bulk_operation_id' == self.id,object_id = local['id']):
+            if  AirFreightRateAudit.get_or_none('bulk_operation_id' == self.id,object_id = local['id']):
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue
@@ -378,7 +378,7 @@ class AirFreightRateBulkOperation(BaseModel):
         for storage in  storage_rates:
             count += 1
 
-            if  AirFreightRateAudits.get_or_none(bulk_operation_id=self.id,object_id=storage["air_freight_rate_id"]):
+            if  AirFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=storage["air_freight_rate_id"]):
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue
@@ -403,7 +403,7 @@ class AirFreightRateBulkOperation(BaseModel):
         for freight in  data:
             count += 1
             
-            if  AirFreightRateAudits.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
+            if  AirFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue

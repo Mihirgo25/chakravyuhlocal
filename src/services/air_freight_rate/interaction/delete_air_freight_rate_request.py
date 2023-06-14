@@ -2,7 +2,7 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import shipment
 def delete_air_freight_rate_requests(request):
@@ -36,7 +36,7 @@ def execute_transaction_code(request):
                 if is_valid_params(air_freight_rate,air_freight_rate_validity,request_object) and collection_parties_present(request_object):
                     update_buy_line_items(air_freight_rate_validity,request_object)
             
-            AirFreightRateAudits.create(**get_audit_params)
+            AirFreightRateAudit.create(**get_audit_params)
             # send_closed_notifications_to_sales_agent
     return {'air_freight_rate_request_ids':request.get('air_freight_rate_request_ids')}
 
