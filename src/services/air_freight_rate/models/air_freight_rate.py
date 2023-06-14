@@ -467,12 +467,12 @@ class AirFreightRate(BaseModel):
                     validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
-                if validity_object.get('validity_start') >= validity_start and validity_object.get('validity_end') > validity_end: 
+                if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end: 
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
-                if validity_object.get('validity_start') < validity_start and validity_object.get('validity_end') > validity_end:
+                if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
                     new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))

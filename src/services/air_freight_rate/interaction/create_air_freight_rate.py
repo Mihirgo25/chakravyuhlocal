@@ -135,6 +135,9 @@ def create_air_freight_rate(request):
     if request.get('air_freight_rate_request_id'):
         update_air_freight_rate_request_in_delay({'air_freight_rate_request_id': request.get('air_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
+    return {
+        "id": freight.id
+    }
     
 
 
