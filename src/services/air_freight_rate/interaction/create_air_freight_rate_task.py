@@ -2,13 +2,13 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from fastapi import HTTPException
 from micro_services.client import *
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.interaction.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
 
 
 def create_audit(request,task_id):
 
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         action_name='create',
         data=request,
         performed_by_id=request.get('performed_by_id'),

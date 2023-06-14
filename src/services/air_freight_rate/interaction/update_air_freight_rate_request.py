@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from database.db_session import db 
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from uuid import UUID
 
 def update_air_freight_rate_request(request):
@@ -48,7 +48,7 @@ def execute_transaction_code(request):
     }
     
 def create_audit(request,air_freight_rate_request_id):
-        AirFreightRateAudits.create(
+        AirFreightRateAudit.create(
         action_name="update",
         performed_by_id=request["performed_by_id"],
         data={

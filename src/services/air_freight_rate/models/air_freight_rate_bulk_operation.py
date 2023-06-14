@@ -17,7 +17,7 @@ from services.air_freight_rate.interaction.list_air_freight_rates import list_ai
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.interaction.list_air_freight_rate_locals import list_air_freight_rate_locals
 from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
-from services.air_freight_rate.models.air_freight_rate_audit import  AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import  AirFreightRateAudit
 from services.air_freight_rate.interaction.update_air_freight_storage_rate import update_air_freight_storage_rate
 from configs.definitions import AIR_FREIGHT_CHARGES,AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
 from services.air_freight_rate.interaction.list_air_freight_storage_rates import list_air_freight_storage_rates
@@ -433,7 +433,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
 
 def create_audit(id):
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         bulk_operation_id = id
     )
 

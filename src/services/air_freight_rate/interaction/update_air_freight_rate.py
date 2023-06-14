@@ -5,7 +5,7 @@ import json
 from playhouse.postgres_ext import *
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 def update_air_freight_rate(request):
       with db.atomic():
         return execute(request)
@@ -90,7 +90,7 @@ def create_audit(request,object_id):
     update_data['available_gross_weight']=request.get('available_gross_weight')
     update_data['weight_slabs']=request.get('weight_slabs')
 
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         bulk_operation_id=request.get('bulk_operation_id'),
         action_name='update',
         data=update_data,

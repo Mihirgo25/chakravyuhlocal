@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 
 def get_air_freight_rate_audit(request):
 
@@ -11,7 +11,7 @@ def get_air_freight_rate_audit(request):
         AirFreightRate.updated_at
     ).where(AirFreightRate.id==request['id']).first()
 
-    # audit=AirFreightRateAudits.select(AirFreightRateAudits.performed_by_id).where(AirFreightRateAudits.object_id==request['id'],AirFreightRateAudits.action_name=='create').order_by(AirFreightRateAudits.updated_at.desc()).first()
+    # audit=AirFreightRateAudit.select(AirFreightRateAudit.performed_by_id).where(AirFreightRateAudit.object_id==request['id'],AirFreightRateAudit.action_name=='create').order_by(AirFreightRateAudit.updated_at.desc()).first()
     if object :
         return{
             "procured_by":object.procured_by,

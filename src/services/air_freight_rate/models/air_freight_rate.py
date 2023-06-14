@@ -103,7 +103,7 @@ class AirFreightRate(BaseModel):
         return super(AirFreightRate, self).save(*args, **kwargs)
     
     class Meta:
-        table_name = 'air_freight_rates_temp1_clone'
+        table_name = 'air_freight_rates_temp1'
 
 
     def validate_validity_object(self,validity_start,validity_end):
@@ -240,9 +240,9 @@ class AirFreightRate(BaseModel):
         if self.operation_type not in AIR_OPERATION_TYPES:
             raise HTTPException(status_code = 400, details = 'Invalid Operation Type')  
 
-    def update_foreign_references(self):
+    def update_foreign_references(self, price_type):
         self.update_local_references()
-        if self.price_type != 'all_in':
+        if price_type != 'all_in':
             self.update_surcharge_reference()
     
     def update_local_references(self):
@@ -260,31 +260,34 @@ class AirFreightRate(BaseModel):
 
         origin_local_id = None
         destination_local_id = None
-
+        origin_local_found = False
+        destination_local_found = False
         for local in locals:
-            if local['airport_id'] == self.origin_airport_id and local['trade_type'] == 'export':
+            if origin_local_found and destination_local_found:
+                continue
+            if not origin_local_found and local['airport_id'] == self.origin_airport_id and local['trade_type'] == 'export':
                 origin_local_id = local['id']
-            
-            if local['airport_id'] == self.destination_airport_id and local['trade_type'] == 'import':
+                origin_local_found = True
+            if not destination_local_found and local['airport_id'] == self.destination_airport_id and local['trade_type'] == 'import':
                 destination_local_id = local['id']
-        
+                destination_local_found  = True
         self.origin_local_id = origin_local_id
         self.destination_local_id = destination_local_id
-        self.save()
     
     def update_surcharge_reference(self):
-
-        surcharge = AirFreightRateSurcharge.select(AirFreightRateSurcharge.id).where(
-            AirFreightRateSurcharge.origin_airport_id == self.origin_airport_id,
-            AirFreightRateSurcharge.destination_airport_id == self.destination_airport_id,
-            AirFreightRateSurcharge.commodity == self.commodity,
-            AirFreightRateSurcharge.commodity_type == self.commodity_type,
-            AirFreightRateSurcharge.airline_id == self.airline_id,
-            AirFreightRateSurcharge.service_provider_id == self.service_provider_id
+        surcharge_object = AirFreightRateSurcharge.select().where(
+            (AirFreightRateSurcharge.origin_airport_id == self.origin_airport_id) &
+            (AirFreightRateSurcharge.destination_airport_id == self.destination_airport_id) &
+            (AirFreightRateSurcharge.commodity == self.commodity) &
+            (AirFreightRateSurcharge.commodity_type == self.commodity_type) &
+            (AirFreightRateSurcharge.airline_id == self.airline_id) &
+            (AirFreightRateSurcharge.service_provider_id == self.service_provider_id)
         ).first()
-
-        if surcharge:
-            self.surcharge_id = surcharge.id 
+        if surcharge_object:
+            surcharge_object_id = surcharge_object.id
+            surcharge = jsonable_encoder(list(surcharge.dicts())) 
+            self.surcharge_id = surcharge_object_id
+            self.surchage = surcharge[0]
     
     def detail(self):
         details =  {
@@ -462,12 +465,12 @@ class AirFreightRate(BaseModel):
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    validity_object['validity_end'] = validity_start - datetime.timedelta(minutes=1)
+                    validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object.get(validity_start) >= validity_start and validity_object.get('validity_end') > validity_end: 
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    validity_object['validity_start'] = validity_end + datetime.timedelta(minutes=1)
+                    validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object.get('validity_start') < validity_start and validity_object.get('validity_end') > validity_end:
@@ -508,7 +511,8 @@ class AirFreightRate(BaseModel):
             new_validities.append(AirFreightRateValidity(**new_validity_object))
             self.min_price = new_validity_object["min_price"]
 
-        new_validities = sorted(new_validities, key=lambda x: x.validity_end)
+        new_validities = sorted(new_validities, key=lambda x: x.validity_end.strftime('%Y-%m-%d') if isinstance(x.validity_end, datetime.date) else x.validity_end)
+
         
         for validity in new_validities:
             validity_instance = AirFreightRateValidity(validity)
@@ -542,7 +546,7 @@ class AirFreightRate(BaseModel):
 
         return final_old_weight_slabs
 
-    def merge_slab(old_weight_slabs,new_weight_slab):
+    def merge_slab(self,old_weight_slabs,new_weight_slab):
         final_old_weight_slabs=[]
         for old_weight_slab in old_weight_slabs:
             if old_weight_slab['lower_limit'] >= int(new_weight_slab['upper_limit']):
@@ -572,7 +576,7 @@ class AirFreightRate(BaseModel):
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue
-        final_old_weight_slabs.append(new_weight_slab)
+            final_old_weight_slabs.append(new_weight_slab)
 
         
         return final_old_weight_slabs
