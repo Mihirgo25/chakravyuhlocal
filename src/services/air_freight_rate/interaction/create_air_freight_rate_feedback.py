@@ -67,10 +67,9 @@ def execute_transaction_code(request):
             setattr(feedback,attr,ids)
         else: 
             setattr(feedback,attr,value)
-
+    feedback.validate_before_save()
     try:
-        if feedback.validate_before_save():
-            feedback.save()
+        feedback.save()
     except:
         raise HTTPException(status_code= 400, detail="couldnt validate the object")
     
