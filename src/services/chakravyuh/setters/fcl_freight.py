@@ -596,7 +596,7 @@ class FclFreightVyuh():
         for affected_transformation in affected_transformations:
             at = affected_transformation
             key = '{}:{}:{}:{}:{}'.format(at['origin_location_id'], at['destination_location_id'], at['container_size'], at['container_type'], at['shipping_line_id'])
-            if what_to_create[key] or (not what_to_create and at['origin_location_type'] == 'seaport'):
+            if (not what_to_create and at['origin_location_type'] == 'seaport') or (key in what_to_create and what_to_create[key]) :
                 # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
                 transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
