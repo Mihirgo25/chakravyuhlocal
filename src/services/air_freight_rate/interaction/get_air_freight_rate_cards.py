@@ -91,7 +91,7 @@ def build_response_object(freight_rate,requirements,is_predicted):
     
     
 
-    # add_surcharge_object(freight_rate,response_object,requirements)
+    add_surcharge_object(freight_rate,response_object,requirements)
 
     if not is_predicted:
         response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], get_chargeable_weight(requirements)) 
@@ -279,7 +279,6 @@ def get_surcharges(requirements,rates):
         AirFreightRateSurcharge.airline_id << airline_ids,
         AirFreightRateSurcharge.service_provider_id << service_provider_ids
     )
-    print(surcharges_query)
 
     surcharges_results = jsonable_encoder(list(surcharges_query.dicts()))
     # formated_surchages = []
@@ -299,7 +298,7 @@ def get_matching_surchages(freight_rate,surcharges):
     for surcharge in surcharges:
         if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == freight_rate['service_provider_id']:
             return {'line_items':surcharge['line_items']}  
-    return None
+    return {'line_items':[]}
 
 def fill_missing_surcharges(freight_rates,surcharges):
     new_freight_rates = []
