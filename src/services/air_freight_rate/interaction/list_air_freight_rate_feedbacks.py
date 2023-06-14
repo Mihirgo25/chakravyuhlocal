@@ -216,7 +216,6 @@ def get_stats(filters, is_stats_required, performed_by_id):
         query = get_filters(direct_filters, query, AirFreightRateFeedbacks)
         query = apply_indirect_filters(query, indirect_filters)
 
-    # query = get_join_query(query)
     query = (
         query
         .select(
@@ -244,37 +243,4 @@ def get_stats(filters, is_stats_required, performed_by_id):
         stats = {}
     return { 'stats': stats }
 
-# def get_total(query, performed_by_id):
-#     try:
-#         query = query.select(AirFreightRateFeedbacks.id)
 
-#         return {'get_total':query.count()}
-#     except:
-#         return {'get_total' : 0}
-
-# def get_total_closed_by_user(query, performed_by_id):
-#     try:
-#         query = query.select(AirFreightRateFeedbacks.id)
-
-#         return {'get_total_closed_by_user':query.where(AirFreightRateFeedbacks.status == 'inactive', AirFreightRateFeedbacks.closed_by_id == performed_by_id).count() }
-#     except:
-#         return {'get_total_closed_by_user':0}
-
-
-# def get_total_opened_by_user(query, performed_by_id):
-#     try:
-#         query = query.select(AirFreightRateFeedbacks.id)
-
-#         return {'get_total_opened_by_user' : query.where(AirFreightRateFeedbacks.status == 'active', AirFreightRateFeedbacks.performed_by_id == performed_by_id).count() }
-#     except:
-#         return {'get_total_opened_by_user' : 0}
-
-# def get_status_count(query, performed_by_id):
-#     try:
-#         query = query.select(AirFreightRateFeedbacks.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(AirFreightRateFeedbacks.status)
-#         result = {}
-#         for row in query.execute():
-#             result[row.status] = row.count_all
-#         return {'get_status_count' : result}
-#     except:
-#         return {'get_status_count' : 0}
