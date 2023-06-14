@@ -18,7 +18,8 @@ class FclFreightRateAudit(BaseModel):
     object_type = CharField(null=True)
     performed_by_id = UUIDField(index=True)
     rate_sheet_id = UUIDField(index=True, null=True)
-    source = CharField(null=True)
+    source = CharField(index=True,null=True)
+    extended_from_object_id=UUIDField(index=True, null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     def save(self, *args, **kwargs):

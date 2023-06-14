@@ -831,7 +831,7 @@ class DeleteLocalRate(BaseModel):
 class CreateBulkOperation(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
-  service_provider_id:str
+  service_provider_id:str=None
   procured_by_id:str
   sourced_by_id:str
   cogo_entity_id:str=None
