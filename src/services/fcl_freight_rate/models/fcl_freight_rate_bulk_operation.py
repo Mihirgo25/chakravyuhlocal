@@ -335,6 +335,18 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+
+        if data.get('rate_reference_type') and data.get('rate_id'):
+            select_field = "{}_id".format(data['rate_reference_type'])
+            
+            reference_object_ids = FclFreightRateAudit.select(getattr(FclFreightRateAudit, select_field)).where(FclFreightRateAudit.object_id == data['rate_id'])
+            reference_object_ids = [audit_data[select_field] for audit_data in list(reference_object_ids.dicts())] 
+            
+            rate_ids = FclFreightRateAudit.select(FclFreightRateAudit.object_id).where(getattr(FclFreightRateAudit, select_field) << reference_object_ids)
+            rate_ids = [str(result['object_id']) for result in (rate_ids.dicts())]
+
+            filters = filters |  {'id': rate_ids} 
+            
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())

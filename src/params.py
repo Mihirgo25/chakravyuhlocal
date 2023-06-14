@@ -765,6 +765,8 @@ class DeleteFreightRate(BaseModel):
   filters:dict={}
   validity_start: datetime
   validity_end: datetime
+  rate_reference_type: str = None
+  rate_id: str = None
 
 class AddFreightRateMarkup(BaseModel):
   filters:dict={}
