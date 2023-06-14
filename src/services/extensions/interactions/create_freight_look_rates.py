@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from micro_services.client import common, maps
 from configs.global_constants import DEFAULT_AIRLINE_ID, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
 from services.extensions.constants.general import commodity_mappings, commodity_type_mappings
+from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 
 airline_hash = {}
 
@@ -139,7 +140,8 @@ def create_air_freight_rate_api(rate, locations):
     if not rate_obj:
         return rate
     rate_obj['airline_id'] = airline_id
-    res = common.create_air_freight_rate(rate_obj)
+    res = create_draft_air_freight_rate(rate_obj)
+    # res = common.create_air_freight_rate(rate_obj)
     return res
 
 def get_locations(destination, all_port_codes: list = []):
