@@ -279,7 +279,6 @@ def get_surcharges(requirements,rates):
         AirFreightRateSurcharge.airline_id << airline_ids,
         AirFreightRateSurcharge.service_provider_id << service_provider_ids
     )
-    print(surcharges_query)
 
     surcharges_results = jsonable_encoder(list(surcharges_query.dicts()))
     # formated_surchages = []
