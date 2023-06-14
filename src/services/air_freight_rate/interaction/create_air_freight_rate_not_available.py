@@ -22,7 +22,7 @@ def create_air_freight_rate_not_available(request):
     return True
 
 def find_service_provider_ids(request):
-    service_provider_ids_response = organization.get_eligible_service_organizations_for_chakravyuh({
+    service_provider_ids_response = organization.get_eligible_service_organizations({
     'service': 'air_freight',
     'data': {
         'origin_airport_id': request.get('origin_airport_id'),
