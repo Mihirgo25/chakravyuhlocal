@@ -1,6 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from fastapi import FastAPI, HTTPException
-from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from database.db_session import db
 
@@ -31,12 +30,13 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail=" Rate not found")
 
     for t in object.validities:
-        if t.get("id") == request.get("id"):
-            t["validity_start"] = request.get("validity_start")
-            t["validity_end"] = request.get("validity_end")
+        if t.get("id") == request.get("validity_id"):
+            print("asdfghjkl",type(t['validity_start']))
+            t["validity_start"] = str(request.get("validity_start").date())
+            t["validity_end"] = str(request.get("validity_end").date())
             object.set_validities(
-                request.get("validity_start"),
-                request.get("validity_end"),
+                request.get("validity_start").date(),
+                request.get("validity_end").date(),
                 t.get("min_price"),
                 None,
                 t.get("weight_slabs"),

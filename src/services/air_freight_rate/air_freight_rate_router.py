@@ -707,11 +707,9 @@ def update_air_freight_rate_markup_data(request:UpdateAirFreightRateMarkUp,resp:
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        
+        request.performed_by_id = resp["setters"]["performed_by_id"]      
     try:
         data = update_air_freight_rate_markup(request.dict(exclude_none=True))
-
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
