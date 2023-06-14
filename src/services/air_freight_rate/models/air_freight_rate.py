@@ -103,7 +103,7 @@ class AirFreightRate(BaseModel):
         return super(AirFreightRate, self).save(*args, **kwargs)
     
     class Meta:
-        table_name = 'air_freight_rates_temp1_clone'
+        table_name = 'air_freight_rates_temp1'
 
 
     def validate_validity_object(self,validity_start,validity_end):
@@ -462,12 +462,12 @@ class AirFreightRate(BaseModel):
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    validity_object['validity_end'] = validity_start - datetime.timedelta(minutes=1)
+                    validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object.get(validity_start) >= validity_start and validity_object.get('validity_end') > validity_end: 
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    validity_object['validity_start'] = validity_end + datetime.timedelta(minutes=1)
+                    validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object.get('validity_start') < validity_start and validity_object.get('validity_end') > validity_end:
@@ -508,7 +508,8 @@ class AirFreightRate(BaseModel):
             new_validities.append(AirFreightRateValidity(**new_validity_object))
             self.min_price = new_validity_object["min_price"]
 
-        new_validities = sorted(new_validities, key=lambda x: x.validity_end)
+        new_validities = sorted(new_validities, key=lambda x: x.validity_end.strftime('%Y-%m-%d') if isinstance(x.validity_end, datetime.date) else x.validity_end)
+
         
         for validity in new_validities:
             validity_instance = AirFreightRateValidity(validity)
@@ -542,7 +543,7 @@ class AirFreightRate(BaseModel):
 
         return final_old_weight_slabs
 
-    def merge_slab(old_weight_slabs,new_weight_slab):
+    def merge_slab(self,old_weight_slabs,new_weight_slab):
         final_old_weight_slabs=[]
         for old_weight_slab in old_weight_slabs:
             if old_weight_slab['lower_limit'] >= int(new_weight_slab['upper_limit']):
@@ -572,7 +573,7 @@ class AirFreightRate(BaseModel):
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue
-        final_old_weight_slabs.append(new_weight_slab)
+            final_old_weight_slabs.append(new_weight_slab)
 
         
         return final_old_weight_slabs

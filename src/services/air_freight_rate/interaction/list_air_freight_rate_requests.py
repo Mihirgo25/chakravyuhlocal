@@ -1,6 +1,7 @@
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import *
+from configs.air_freight_rate_constants import RATE_ENTITY_MAPPING
 from math import ceil
 from peewee import fn, SQL
 import concurrent.futures, json
@@ -61,6 +62,14 @@ def apply_indirect_filters(query, filters):
       query = eval(f'{apply_filter_function}(query, filters)')
   return query
 
+def apply_partner_id_filter(query,filters):
+    filter_entity_id = filters['partner_id']
+    allowed_entity_ids = None
+    if filter_entity_id in RATE_ENTITY_MAPPING:
+        allowed_entity_ids = RATE_ENTITY_MAPPING[filter_entity_id]
+    
+    query =  query.where(AirFreightRateRequest.cogo_entity_id << allowed_entity_ids)
+
 def apply_validity_start_greater_than_filter(query, filters):
     return query.where(AirFreightRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
 
@@ -68,7 +77,7 @@ def apply_validity_end_less_than_filter(query, filters):
     return query.where(AirFreightRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
 
 def apply_relevant_supply_agent_filter(query, filters):
-    expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
+    expertises = get_partner_user_experties('air_freight', filters['relevant_supply_agent'])
     origin_airport_id = [t['origin_location_id'] for t in expertises]
     destination_airport_id =  [t['destination_location_id'] for t in expertises]
     query = query.where((AirFreightRateRequest.origin_airport_id << origin_airport_id) | (AirFreightRateRequest.origin_country_id << origin_airport_id) | (AirFreightRateRequest.origin_continent_id << origin_airport_id) | (AirFreightRateRequest.origin_trade_id << origin_airport_id))

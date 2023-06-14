@@ -12,8 +12,8 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class AirFreightRateValidity(BaseModel):
-    validity_start: datetime
-    validity_end: datetime
+    validity_start: datetime.date
+    validity_end: datetime.date
     min_price: float
     id: str
     currency: str
