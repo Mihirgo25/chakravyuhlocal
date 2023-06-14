@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID, VN_ENTITY_ID
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
@@ -847,6 +847,11 @@ def get_fcl_freight_rate_cards(requirements):
                     freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
             else:
                 is_predicted = True
+        
+        if is_predicted and requirements['cogo_entity_id'] == VN_ENTITY_ID:
+            return {
+                "list": []
+            }
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
