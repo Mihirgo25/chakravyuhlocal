@@ -471,3 +471,10 @@ class UpdateAirFreightWarehouseRate(BaseModel):
     id:str
     performed_by_id:str=None
     line_items: list[WarehouseLineItems] = None
+
+class UpdateAirFreightRateRequest(BaseModel):
+    air_freight_rate_request_id:str
+    closing_remarks:list[str]=None
+    status:str=None
+    remarks:str=None
+    performed_by_id:str=None

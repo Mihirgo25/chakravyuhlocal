@@ -33,6 +33,8 @@ class AirFreightRateRequest(BaseModel):
     destination_country_id = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    reverted_by_user_ids = ArrayField(field_class=UUIDField, null=True)
+    reverted_rates_count=IntegerField(null=True)
     inco_term = CharField(null=True)
     origin_airport_id = UUIDField(null=True)
     origin_airport = BinaryJSONField(null=True)

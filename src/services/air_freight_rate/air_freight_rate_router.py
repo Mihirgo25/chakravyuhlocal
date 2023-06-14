@@ -830,6 +830,7 @@ def update_air_freight_warehouse_rate_data(request:UpdateAirFreightWarehouseRate
     except Exception as e :
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"success":False,"error":str(e)})
+    
 from services.air_freight_rate.interaction.get_air_freight_rate_audit import get_air_freight_rate_audit
 @air_freight_router.get("/get_air_freight_rate_audit")
 def get_air_freight_rate_audit_data(id:str,resp:dict = Depends(authorize_token)):
@@ -846,3 +847,17 @@ def get_air_freight_rate_audit_data(id:str,resp:dict = Depends(authorize_token))
     except Exception as e :
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
+
+from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
+@air_freight_router.post("update_air_freight_rate_request")
+def update_air_freight_rate_request_data(request:UpdateAirFreightRateRequest, resp:dict = Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['status_code'],content=resp)
+    try:
+        data=update_air_freight_rate_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        print(e)
+        return JSONResponse(status_code=500 , content={"success":False,"error":str(e)})
