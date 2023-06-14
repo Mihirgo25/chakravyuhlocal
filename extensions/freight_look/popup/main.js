@@ -1,5 +1,5 @@
-const sendRatesToRMS = async (data={})=> {
-  const url = 'https://api.cogoport.com/fcl_freight_rate/create_freight_look_rates'
+const sendRatesToRMS = async (data={}, url)=> {
+  const url = `https://api.cogoport.com/fcl_freight_rate/${url}`
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -22,7 +22,7 @@ const getFreightLookRates = async ()=> {
   statusEle.innerText = 'Adding Freight Look Rates Please wait....'
   try {
     const response = await getFromWebPage('freight_look')
-    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination })
+    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination }, 'create_freight_look_rates')
     statusEle.style.color = 'green'
     statusEle.innerText = 'Rates Added Successfully....'
   } catch(err){
@@ -36,7 +36,7 @@ const getNewMaxRates = async ()=> {
   statusEle.innerText = 'Adding New Max Rates Please wait....'
   try {
     const response = await getFromWebPage('new_max')
-    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination })
+    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination }, 'create_new_max_rates')
     statusEle.style.color = 'green'
     statusEle.innerText = 'Rates Added Successfully....'
   } catch(err){
@@ -50,7 +50,7 @@ const getWebCargoRates = async ()=> {
   statusEle.innerText = 'Adding Web Cargo Rates Please wait....'
   try {
     const response = await getFromWebPage('web_cargo')
-    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination })
+    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination }, 'create_web_cargo_rates')
     statusEle.style.color = 'green'
     statusEle.innerText = 'Rates Added Successfully....'
   } catch(err){
