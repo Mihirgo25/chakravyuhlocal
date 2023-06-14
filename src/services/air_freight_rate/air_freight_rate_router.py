@@ -266,15 +266,14 @@ def update_air_freight_rates_locals(request: UpdateFrieghtRateLocal, resp:dict =
 def create_air_freight_rate_not_available_data(request: CreateAirFrieghtRateNotAvailable, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    data = create_air_freight_rate_not_available(request)
-    if data:
-        try:
-            return JSONResponse(status_code = 200, content = {'success': True})
-        except Exception as e:
-            # sentry_sdk.capture_exception(e)
-            print(e)
-            # return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })x
-    return JSONResponse(status_code=400, content={ "success": False, 'error': 'No data available' })
+    try:
+        data = create_air_freight_rate_not_available(request.dict(exclude_none=True))
+        return JSONResponse(status_code = 200, content = jsonable_encoder(data))
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        print(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
 
 
 @air_freight_router.post("/create_air_freight_rate_local")

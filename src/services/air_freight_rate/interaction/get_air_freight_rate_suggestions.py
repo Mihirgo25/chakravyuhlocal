@@ -21,7 +21,7 @@ def get_air_freight_rate_suggestions(validity_start,validity_end,searched_origin
 
     return { 'list': air_freight_rate_ids }
 
-def get_air_freight_rates(filters,searched_origin_airport_id,searched_destination_airport_id,validity_start,validity_end):
+def get_air_freight_rates(filters,searched_origin_airport_id,searched_destination_airport_id,validity_start):
     query = AirFreightRate.select()
     if filters:
         for key in filters:
@@ -35,7 +35,7 @@ def get_grouped_rates(air_freight_rates,validity_start,validity_end):
     groupings = {}
     
     for freight_rate in air_freight_rates:
-        key = ":".join(freight_rate['origin_airport_id'],freight_rate['destination_airport_id'])
+        key = "{}:{}".format(freight_rate['origin_airport_id'],freight_rate['destination_airport_id'])
         if key in groupings.keys():
             groupings[key] = groupings[key] + [freight_rate]
         else:
@@ -47,7 +47,7 @@ def get_grouped_rates(air_freight_rates,validity_start,validity_end):
         min_price = 10000000
         min_rate = rates[0]
         for rate in rates: 
-            key = ":".join(rate['origin_airport_id'],rate['destination_airport_id'])
+            key = "{}:{}".format(rate['origin_airport_id'],rate['destination_airport_id'])
             min_validty_price = 1000000
             for validity in rate['validities']:
                 if validity['validity_end'] >= max(validity_start,datetime.now().date() and (validity['validity_start'] <= validity_end or validity['validity_start'] >= validity_end)):

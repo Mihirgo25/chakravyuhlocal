@@ -4,16 +4,14 @@ from playhouse.shortcuts import model_to_dict
 
 
 def create_air_freight_rate_not_available(request):
-    request = request.__dict__
     present_service_provider_query = AirFreightRate.select(AirFreightRate.service_provider_id).distinct().where(
         AirFreightRate.origin_airport_id==request.get('origin_airport_id'),
         AirFreightRate.destination_airport_id == request.get('destination_airport_id'),
         AirFreightRate.commodity == request.get('commodity')
     )
-    present_service_provider_ids = [model_to_dict(item)['service_provider_id'] for item in present_service_provider_ids.execute()]
+    present_service_provider_ids = [model_to_dict(item)['service_provider_id'] for item in present_service_provider_query.execute()]
 
-
-    for service_provider_id in list(set(find_service_provider_ids(request)).difference(set(present_service_provider_ids))):
+    for service_provider_id in set(present_service_provider_ids)-set(find_service_provider_ids(request)):
         AirFreightRate.create(
             origin_airport_id = request['origin_airport_id'],
             destination_airport_id = request['destination_airport_id'],
@@ -24,7 +22,7 @@ def create_air_freight_rate_not_available(request):
     return True
 
 def find_service_provider_ids(request):
-    service_provider_ids = organization.get_eligible_service_organizations({
+    service_provider_ids_response = organization.get_eligible_service_organizations_for_chakravyuh({
     'service': 'air_freight',
     'data': {
         'origin_airport_id': request.get('origin_airport_id'),
@@ -35,5 +33,9 @@ def find_service_provider_ids(request):
         'destination_trade_id': request.get('destination_trade_id'),
         'commodity': request.get('commodity')
     }
-    })['ids']
+    })
+    if service_provider_ids_response['ids']:
+        service_provider_ids=service_provider_ids_response['ids']
+    else:
+        service_provider_ids=[]
     return service_provider_ids
