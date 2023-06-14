@@ -7,9 +7,20 @@
     <link rel="stylesheet" href="./main.css" />
   </head>
   <body>
-    <h1>AIR RATE PRODUCER</h1>
-    <p id="status" style="margin-top: 10px;font-size: 16px;margin-bottom: 10px;">Click On Button To Add Rates</p>
-    <button id="getrates">Insert Rates To RMS</button>
+    <h1>COGO AIR RATE PRODUCER</h1>
+    <p id="status" class="status"></p>
+    <div class="source">
+      <p class="source_name">Freight Look Rates</p>
+      <button id="get_freight_look_rates" >Insert To RMS</button>
+    </div>
+    <div class="source">
+      <p class="source_name">New Max Rates</p>
+      <button id="get_new_max_rates" >Insert To RMS</button>
+    </div>
+    <div class="source">
+      <p class="source_name">Web Cargo Rates</p>
+      <button id="get_web_cargo_rates">Insert To RMS</button>
+    </div>
     <script src="./main.js" type="module"></script>
   </body>
 </html>
