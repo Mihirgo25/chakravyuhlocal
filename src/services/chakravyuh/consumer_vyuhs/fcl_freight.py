@@ -180,6 +180,11 @@ class FclFreightVyuh():
 
         validities = rate['validities'] or []
 
+        is_shipping_line = False
+
+        if probable_transformation_to_apply['shipping_line_id']:
+            is_shipping_line = True
+
         new_validities = []
 
         for validity in validities:
@@ -202,7 +207,7 @@ class FclFreightVyuh():
         
         rate['validities'] = new_validities
 
-        return rate
+        return rate, is_shipping_line
     
     def apply_default_transformation(self, rate):
         validities = rate['validities'] or []
@@ -260,14 +265,17 @@ class FclFreightVyuh():
             if (not pt['shipping_line_id'] or pt['shipping_line_id'] == rate['shipping_line_id']):
                 rate_specific_transformations.append(pt)
         new_rate = rate
-        if len(probable_booking_data_transformations)>0:
-            new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
-            return new_rate
-        
+
+        is_shipping_line = False
+
         if len(rate_specific_transformations) > 0:
-            new_rate = self.apply_rate_transformation(rate=rate, probable_transformations=rate_specific_transformations)
+            new_rate, is_shipping_line = self.apply_rate_transformation(rate=rate, probable_transformations=rate_specific_transformations)
         else:
             new_rate = self.apply_default_transformation(rate=rate)
+        
+        if not is_shipping_line and len(probable_booking_data_transformations)>0:
+            new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
+            return new_rate
             
         if len(probable_customer_transformations) > 0:
             new_rate = self.apply_customer_transformation(rate=new_rate, probable_customer_transformations=probable_customer_transformations)

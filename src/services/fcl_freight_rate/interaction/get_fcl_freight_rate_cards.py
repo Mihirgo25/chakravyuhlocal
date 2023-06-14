@@ -63,11 +63,6 @@ def initialize_freight_query(requirements, prediction_required = False):
 
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
 
-    if not prediction_required:
-        freight_query  = freight_query.where(((FclFreightRate.mode != 'predicted') | (FclFreightRate.mode.is_null(True))))
-    else:
-        freight_query  = freight_query.where(FclFreightRate.mode == 'predicted')
-
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
 
@@ -835,13 +830,23 @@ def get_fcl_freight_rate_cards(requirements):
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
             is_predicted = True
         else:
-            cogofreight_freight_rates_length = 0
+            predicted_rates_length = 0
             for val in freight_rates:
-                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
-                    cogofreight_freight_rates_length += 1
-
-            if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != freight_rates_length:
-                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+                if val['mode'] == 'predicted':
+                    predicted_rates_length = predicted_rates_length + 1
+            
+            if predicted_rates_length != freight_rates_length:
+                freight_rates = list(filter(lambda item: item['mode'] != 'predicted', freight_rates))
+                new_freight_rates_length = len(freight_rates)
+                cogofreight_freight_rates_length = 0
+                for val in freight_rates:
+                    if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                        cogofreight_freight_rates_length += 1
+                
+                if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != new_freight_rates_length:
+                    freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+            else:
+                is_predicted = True
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
