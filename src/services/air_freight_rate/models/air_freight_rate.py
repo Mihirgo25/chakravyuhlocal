@@ -377,27 +377,26 @@ class AirFreightRate(BaseModel):
     
 
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
-      return # todo check if we need to develop autoquotation
-      if not self.last_rate_available_date:
-          return
-      data={
-              "rate_id": self.id,
-              "service": "air_freight",
-              "performed_by_id": performed_by_id,
-              "procured_by_id": procured_by_id,
-              "last_updated_at": self.updated_at.replace(microsecond=0).isoformat(),
-              "last_rate_available_date": datetime.datetime.strptime(str(self.last_rate_available_date), '%Y-%m-%d').date().isoformat(),
-              "price": self.get_price_for_trade_requirement(),
-              "price_currency": "INR",
-              "is_origin_local_missing": (not self.origin_local or not 'line_items' in self.origin_local or len(self.origin_local['line_items']) == 0),
-              "is_destination_local_missing": (not self.destination_local or not 'line_items' in self.destination_local or len(self.destination_local['line_items']) == 0),
-              "rate_params": {
-                  "origin_location_id": self.origin_airport_id,
-                  "destination_location_id": self.destinationair_port_id,
-                  "commodity": self.commodity,
-                  "operation_type": self.operation_type
-
-              }
+        # todo check if we need to develop autoquotation
+        if self.last_rate_available_date is None:
+            return
+        data={
+            "rate_id": self.id,
+            "service": "air_freight",
+            "performed_by_id": performed_by_id,
+            "procured_by_id": procured_by_id,
+            "last_updated_at": self.updated_at.replace(microsecond=0).isoformat(),
+            "last_rate_available_date": datetime.datetime.strptime(str(self.last_rate_available_date), '%Y-%m-%d').date().isoformat(),
+            "price": self.get_price_for_trade_requirement(),
+            "price_currency": "INR",
+            "is_origin_local_missing": (not self.origin_local or not 'line_items' in self.origin_local or len(self.origin_local['line_items']) == 0),
+            "is_destination_local_missing": (not self.destination_local or not 'line_items' in self.destination_local or len(self.destination_local['line_items']) == 0),
+            "rate_params": {
+                "origin_location_id": self.origin_airport_id,
+                "destination_location_id": self.destinationair_port_id,
+                "commodity": self.commodity,
+                "operation_type": self.operation_type
+            }
           }
       # common.create_organization_trade_requirement_rate_mapping(data)
 

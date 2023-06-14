@@ -41,6 +41,8 @@ def create_air_freight_rate_data(request):
 
     
 def create_air_freight_rate(request):
+    from celery_worker import delay_air_functions, update_air_freight_rate_request_in_delay
+
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
     if request['density_category']=='general':
@@ -128,6 +130,11 @@ def create_air_freight_rate(request):
     
     create_audit(request, freight.id)
 
+    delay_air_functions.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
+
+    if request.get('air_freight_rate_request_id'):
+        update_air_freight_rate_request_in_delay({'air_freight_rate_request_id': request.get('air_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+
     
 
 
@@ -140,6 +147,7 @@ def set_object_parameters(freight, request):
     freight.rate_not_available_entry = False
     freight.flight_uuid = request.get('flight_uuid')
     freight.external_rate_id = request.get('external_rate_id')
+    freight.currency = request.get('currency')
 
 
 
