@@ -152,3 +152,22 @@ AVERAGE_GLOBAL_CO2_EMISSION = 104
 GENERALIZED_WEIGHT_OF_ECONOMY = 0.25
 
 EUROPE_INFLATION_RATES = [0.0018,0.0103,0.0185,0.0111,0.0048,0.0164,0.0522]
+
+LOCATION_PAIR_HIERARCHY = {
+    'pincode:pincode' : 1,
+    'seaport:seaport' : 2,
+    'pincode:seaport' : 3,
+    'seaport:pincode' : 4,
+    'pincode:city' : 5,
+    'seaport:city' : 6,
+    'city:pincode' : 7,
+    'city:seaport' : 8,
+    'city:city' : 9,
+    'pincode:country' : 10,
+    'seaport:country' : 11,
+    'country:pincode' : 12,
+    'country:seaport' : 13,
+    'city:country' : 14,
+    'country:city' : 15,
+    'country:country' : 16,
+  }

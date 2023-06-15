@@ -1,0 +1,190 @@
+IHE:
+  name: "Inland Haulage Export"
+  units: ['per_container']
+  condition: (origin_location[:is_icd] && (transport_modes & ['rail']).count > 0)
+  tags: [ 'mandatory', 'slab_cargo_weight_per_container', 'haulage', 'rail' ]
+IHI:
+  name: "Inland Haulage Import"
+  units: ['per_container']
+  condition: (destination_location[:is_icd] && (transport_modes & ['rail']).count > 0)
+  tags: [ 'mandatory', 'slab_cargo_weight_per_container', 'haulage', 'rail' ]
+CTC:
+  name: "Container Tracking Charges"
+  units: ['per_container']
+  condition: true
+  tags: [ 'shipment_execution_service', 'additional_service', 'haulage', 'rail', 'barge' ]
+GENS:
+  name: "Genset charges"
+  units: ['per_container']
+  condition: container_type == 'refer'
+  tags: ['shipment_execution_service', 'additional_service', 'haulage', 'rail', 'barge']
+ICDSC:
+  name: "ICD Development & Surveyor Charges"
+  units: ['per_container']
+  condition: true
+  tags: [ 'haulage', 'rail' ]
+ICDHCI:
+  name: "ICD(ICD Stuffing) Handling Charges"
+  units: ['per_container']
+  condition: true
+  tags: [ 'haulage', 'rail' ]
+ICDHCF:
+  name: "ICD(Factory Stuffing) Handling Charges"
+  units: ['per_container']
+  condition: true
+  tags: [ 'haulage', 'rail' ]
+WEH:
+  name: "Weighbridge Fee"
+  units: ['per_container']
+  condition: true
+  tags: ['trailer']
+WC:
+  name: "Weighment Charge"
+  units: ['per_container']
+  condition: true
+  tags: ['trailer']
+SURT:
+  name: "Surveying Charge"
+  units: ['per_container']
+  condition: true
+  tags: ['trailer']
+LOLO:
+  name: "Lift on/Lift off charge"
+  units: ['per_container']
+  condition: true
+  tags: ['trailer']
+VDC:
+  name: "Vehicle Detention Charge "
+  units: ['per_container']
+  condition: true
+  tags: ['trailer']
+RTC:
+  name: "Trip Charge"
+  units: ['per_container']
+  condition: (transport_modes & ['trailer', 'barge']).count > 0
+  tags: ['trailer', 'slab_cargo_weight_per_container','barge']
+TI:
+  name: "Transit insurance"
+  units: ['per_container']
+  condition: true
+  tags: ['trailer', 'barge']
+FSC:
+  name: "Fuel Surcharge"
+  units: ['per_container']
+  condition: true
+  tags: ['trailer', 'barge']
+MSTP:
+  name: "Multistop"
+  units: ["per_shipment"]
+  condition: true
+  tags: ['trailer', 'barge']
+CHL:
+  name: "Chasis Haulage"
+  units: ["per_container"]
+  condition: true
+  tags: ['trailer']
+WHT:
+  name: "Weighing Charges"
+  units: ["per_container"]
+  condition: true
+  tags: ['trailer', 'barge']
+OE:
+  name: "Open Examination"
+  units: ["per_container"]
+  condition: true
+  tags: ['trailer']
+PC:
+  name: "Parking Charges"
+  units: ["per_container"]
+  condition: true
+  tags: ['shipment_execution_service', 'trailer']
+OWC:
+  name: "On Wheel Charges"
+  units: ["per_container"]
+  condition: true
+  tags: ['trailer']
+RAI:
+  name: "Rail Freight"
+  units: ["per_container"]
+  condition: true
+  tags: ['trailer']
+BAS:
+  name: 'Basic Freight'
+  units: ['per_trailer','per_container']
+  condition: true
+  tags: ['mandatory', 'trailer', 'barge']
+FSC:
+  name: 'Fuel Surcharge'
+  units: ['per_trailer', 'percentage_of_freight', 'per_container']
+  condition: true
+  tags: ['mandatory', 'trailer', 'barge']
+RAF:
+  name: "Rail Freight"
+  units: [ 'per_container' ]
+  condition: true
+  tags: [ 'rail' ]
+OHC:
+  name: "From Handling Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['barge']
+DHC:
+  name: "To Handling CHARGE"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['barge']
+TPT:
+  name: "TPT Surcharge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['barge']
+CWHC:
+  name: "Conatainer Warehouse Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+RCDC:
+  name: "Detention Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+CWMC:
+  name: "Container Weighment Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+WMC:
+  name: "Weighment Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+ROWC:
+  name: "Railway Over weight Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+RRDC:
+  name: "Rake Detention Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+LPAY:
+  name: "Late Pay Charge"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+IAT:
+  name: "IFB Agro TRansportation"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+IAFC:
+  name: "IFB Agro Freight"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
+IAHC:
+  name: "IFB Agro Handling"
+  units: [ 'per_container' ]
+  condition: true
+  tags: ['additional_service']
