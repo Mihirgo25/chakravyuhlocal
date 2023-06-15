@@ -70,6 +70,10 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         if data['validity_end'] < data['validity_start']:
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
+        
+        if data['rates_greater_than_price'] > data['rates_less_than_price']:
+            raise HTTPException(status_code=400, detail='lower_limit cannot be less than upper_limit')
+        
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
 
@@ -91,6 +95,9 @@ class FclFreightRateBulkOperation(BaseModel):
         
         if data['validity_end'].date() < data['validity_start'].date():
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
+        
+        if data['rates_greater_than_price'] > data['rates_less_than_price']:
+            raise HTTPException(status_code=400, detail='lower_limit cannot be less than upper_limit')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
