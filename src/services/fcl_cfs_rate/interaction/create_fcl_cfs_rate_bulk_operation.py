@@ -26,7 +26,6 @@ def create_fcl_cfs_rate_bulk_operation(request):
         bulk_operation = FclCfsRateBulkOperation.create(**params)
 
         eval(f"bulk_operation.validate_{action_name}_data()")
-        update_multiple_service_objects.apply_async(kwargs={'object':bulk_operation},queue='low')
 
         bulk_operation.save()
 

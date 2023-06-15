@@ -21,6 +21,7 @@ class FclCustomsRate(BaseModel):
     country_id = UUIDField(index=True)
     trade_id = UUIDField(index=True)
     continent_id = UUIDField(index=True)
+    zone_id = UUIDField(index=True)
     trade_type = CharField(null=True)
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
