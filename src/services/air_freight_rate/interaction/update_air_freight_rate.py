@@ -76,7 +76,6 @@ def execute(request):
     }
 
 def create_audit(request,object_id):
-    print('in audi')
     update_data={}
     update_data['validity_start']=datetime.strftime(request.get('validity_start'),'%Y-%m-%d')
     update_data['validity_end']=datetime.strftime(request.get('validity_end'),'%Y-%m-%d')
