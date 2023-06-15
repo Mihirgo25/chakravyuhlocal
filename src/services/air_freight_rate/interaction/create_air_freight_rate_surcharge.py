@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
 from celery_worker import update_multiple_service_objects
+from celery_worker import update_multiple_service_objects
 
 def create_audit(request,surcharge_id):
     audit_data={}
@@ -63,6 +64,8 @@ def execute_transaction_code(request):
     surcharge.update_freight_objects()
     surcharge.update_line_item_messages()
     surcharge.validate()
+    surcharge.sourced_by_id = request.get('sourced_by_id')
+    surcharge.procured_by_id = request.get('procured_by_id')
     try:
         surcharge.save()
     except Exception:
@@ -71,6 +74,7 @@ def execute_transaction_code(request):
 
     
     create_audit(request,surcharge.id)
+    update_multiple_service_objects.apply_async(kwargs={'object':surcharge},queue='low')
 
     return {
       'id': str(surcharge.id)

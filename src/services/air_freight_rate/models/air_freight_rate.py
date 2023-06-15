@@ -15,6 +15,7 @@ from services.air_freight_rate.models.air_freight_rate_validity import AirFreigh
 from configs.definitions import AIR_FREIGHT_CHARGES
 from air_freight_rate_params import WeightSlab
 import json
+from playhouse.shortcuts import model_to_dict
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -293,10 +294,10 @@ class AirFreightRate(BaseModel):
             (AirFreightRateSurcharge.service_provider_id == self.service_provider_id)
         ).first()
         if surcharge_object:
-            surcharge_object_id = surcharge_object.id
-            surcharge = jsonable_encoder(list(surcharge.dicts())) 
-            self.surcharge_id = surcharge_object_id
-            self.surchage = surcharge[0]
+            surcharge = model_to_dict(surcharge_object)
+            surcharge_data = {key:value for key,value in surcharge.items() if key in ['line_items_error_messages','line_items_info_messages','is_line_items_error_messages_present','is_line_items_info_messages_present']}
+            self.surcharge_id = surcharge_object.id
+            self.surcharge = surcharge_data
     
     def detail(self):
         details =  {
