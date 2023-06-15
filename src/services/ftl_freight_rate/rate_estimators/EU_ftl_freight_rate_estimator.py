@@ -13,7 +13,7 @@ class EUFtlFreightRateEstimator:
     def estimate(self):
         currency = 'EUR'
         total_path_distance = self.path_data['distance']
-        trip_duration = self.path_data['time']
+        trip_duration = total_path_distance/75  #approx 75kmph
         truck_mileage = self.truck_and_commodity_data['mileage']
         truck_weight = self.truck_and_commodity_data['weight']
         basic_freight_charges = 0
