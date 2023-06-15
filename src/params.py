@@ -776,6 +776,8 @@ class AddFreightRateMarkup(BaseModel):
   line_item_code:str='BAS'
   validity_start:datetime
   validity_end:datetime
+  rate_reference_type: str = None
+  rate_id: str = None
 
 class AddLocalRateMarkup(BaseModel):
   filters:dict={}
