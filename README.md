@@ -1,5 +1,5 @@
 
-# Welcome to Dynamic Pricing Engine 
+# Welcome to Dynamic Pricing Engine
 
 To manually create a virtualenv on MacOS and Linux:
 
@@ -108,3 +108,18 @@ command.
  * `cdk docs`        open CDK documentation
 
 Enjoy!
+
+
+## Start Celery
+
+```
+$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate
+
+```
+
+## Start Flower
+
+```
+$ celery -A celery_worker.celery flower --port=5555
+
+```

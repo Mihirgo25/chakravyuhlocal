@@ -31,6 +31,8 @@ PREDICTED_RATES_SERVICE_PROVIDER_IDS = ["6cc6b696-60f6-480b-bcbe-92cc8e642531"]
 
 DEFAULT_PAYMENT_TERM = "prepaid"
 
+DEFAULT_SERVICE_PROVIDER_ID = '5dc403b3-c1bd-4871-b8bd-35543aaadb36'
+
 INTERNAL_BOOKING = {"service_provider_id": "5dc403b3-c1bd-4871-b8bd-35543aaadb36"}
 
 FAK_COMMODITY = "general"
@@ -125,4 +127,55 @@ ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 
+
 COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
+
+DEFAULT_WEIGHT_SLABS=[
+    {
+        'lower_limit':0.0,
+        'upper_limit':50,
+        'tariff_price':0,
+        'currency':'INR',
+        'unit':'per_kg'
+    },
+    {
+        'lower_limit':50.1,
+        'upper_limit':100.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+        },
+    {
+        'lower_limit':100.1,
+        'upper_limit':300.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },
+    {
+        'lower_limit':300.1,
+        'upper_limit':500.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },{
+        'lower_limit':500.1,
+        'upper_limit':1000.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    },{
+        'lower_limit':1000.1,
+        'upper_limit':10000,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    }
+
+]
+DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
+
+DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"

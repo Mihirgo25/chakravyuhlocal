@@ -14,3 +14,20 @@ CONTAINER_SIZE_FACTORS = {
     '40HC': 1.5,
     '45HC': 2
 }
+
+HANDLING_TYPE_FACTORS = {
+    'stackable': 1,
+    'non_stackable': 1
+}
+
+PACKING_TYPE_FACTORS = {
+    'pallet': 1,
+    'box': 1,
+    'crate': 1,
+    'loose': 1
+}
+
+OPERATION_TYPE_FACTORS = {
+    'passenger': 1,
+    'freighter': 1
+}

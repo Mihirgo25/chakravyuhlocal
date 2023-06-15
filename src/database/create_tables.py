@@ -1,12 +1,9 @@
 from database.db_session import db
-from services.ftl_freight_rate.models.truck import Truck
-from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
-from services.ftl_freight_rate.models.ftl_services_audit import FtlServiceAudit
-
+from services.air_freight_rate.models.draft_air_freight_rate import DraftAirFreightRate
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FtlFreightRateRuleSet])
+        db.create_tables([DraftAirFreightRate])
         db.close()
         print("created table")
     except:
