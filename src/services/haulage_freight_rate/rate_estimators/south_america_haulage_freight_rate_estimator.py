@@ -7,6 +7,7 @@ from playhouse.postgres_ext import SQL
 from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
     get_transit_time,
 )
+from configs.haulage_freight_rate_constants import SOUTH_AMERICA_INFLATION_FACTOR
 
 
 class SouthAmericaHaulageFreightRateEstimator:
@@ -24,7 +25,7 @@ class SouthAmericaHaulageFreightRateEstimator:
 
     def estimate(self):
         """
-        Primary Function to estimate north america prices
+        Primary Function to estimate north america(mainly chile & bolivia) prices
         """
         final_price = self.get_north_america_rates(
             query=self.query,
@@ -84,5 +85,5 @@ class SouthAmericaHaulageFreightRateEstimator:
         surcharge = 0.15 * price
         development_charges = 0.05 * price
         final_price = price + surcharge + development_charges
-
+        final_price = final_price*SOUTH_AMERICA_INFLATION_FACTOR
         return final_price
