@@ -1,16 +1,16 @@
 from services.haulage_freight_rate.rate_estimators.india_haulage_freight_rate_estimator import (
     IndiaHaulageFreightRateEstimator,
 )
-from services.haulage_freight_rate.rate_estimators.china_haulage_freight_rate_estimation import (
+from services.haulage_freight_rate.rate_estimators.china_haulage_freight_rate_estimator import (
     ChinaHaulageFreightRateEstimator,
 )
-from services.haulage_freight_rate.rate_estimators.europe_haulage_freight_rate_estimation import (
+from services.haulage_freight_rate.rate_estimators.europe_haulage_freight_rate_estimator import (
     EuropeHaulageFreightRateEstimator,
 )
-from services.haulage_freight_rate.rate_estimators.vietnam_haulage_freight_rate_estimation import (
+from services.haulage_freight_rate.rate_estimators.vietnam_haulage_freight_rate_estimator import (
     VietnamHaulageFreightRateEstimator,
 )
-from services.haulage_freight_rate.rate_estimators.north_america_haulage_freight_rate_estimation import (
+from services.haulage_freight_rate.rate_estimators.north_america_haulage_freight_rate_estimator import (
     NorthAmericaHaulageFreightRateEstimator,
 )
 from services.haulage_freight_rate.rate_estimators.generalized_haulage_freight_rate_estimator import (
