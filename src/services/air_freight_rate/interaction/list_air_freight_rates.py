@@ -13,7 +13,7 @@ POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'orig
 POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at']
 
 
-def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False):
+def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = False):
 
   query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit,older_rates_required)
   if filters:
@@ -25,7 +25,12 @@ def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
     query = get_filters(direct_filters, query, AirFreightRate)
     query = apply_indirect_filters(query, indirect_filters)
 
-    # { list: data }.merge!(pagination_data)
+  pagination_data = get_pagination_data(query,page,page_limit,pagination_data_required)
+
+  query = query.paginate(page,page_limit)
+  data = get_data(query=query)
+  return {'list':jsonable_encoder(data) }| (pagination_data)
+
 
 def get_query(all_rates_for_cogo_assured,sort_by, sort_type, page, page_limit,older_rates_required):
     if all_rates_for_cogo_assured:
@@ -174,21 +179,20 @@ def get_data(query):
         validity['density_ratio'] = '1:1'
       else:
         validity['density_ratio'] = "1:{}".format(int(validity['min_density_weight']))
-      
-      if validity.get('status') and not (validity.get('validity_end') > beginning_of_day and validity.get('validity_end') <= now):
+      validity_end = datetime.fromisoformat(validity['validity_end'])
+      if validity.get('status') and not (validity_end > beginning_of_day and validity_end <= now):
         validity['validity_id'] = validity['id']
         del validity['id']
-        rate.update(validity)
+        rate['validity'] = validity
+        rate['is_origin_local_missing'] = rate['origin_local']['is_line_items_error_messages_present']
+        rate['is_destination_local_missing'] = rate['destination_local']['is_line_items_error_messages_present']
+        if rate['price_type']!='all_in':
+          rate['is_surcharge_missing'] = rate['surcharge']['is_line_items_error_messages_present'] if rate['surcharge'] else None
+        results.append(rate)
 
-        #  return
-         
+    results = sorted(results, key = lambda rate: rate['validity']['validity_end'], reverse=True)
 
-
-
-
-
-
-
+    return results
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
     if not pagination_data_required:
