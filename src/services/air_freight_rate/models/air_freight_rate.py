@@ -195,10 +195,12 @@ class AirFreightRate(BaseModel):
 
     def get_required_location_data(self, location):
         loc_data = {
-          "id": location["id"],
-          "name": location["name"],
+            "id": location["id"],
+          "type":location['type'],
+          "name":location['name'],
+          "display_name": location["display_name"],
           "is_icd": location["is_icd"],
-          "airport_code": location["port_code"],
+          "port_code": location["port_code"],
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],

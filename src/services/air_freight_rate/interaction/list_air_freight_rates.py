@@ -77,7 +77,9 @@ def apply_destination_location_ids_filter(query,filters):
   return query
 
 def apply_is_rate_about_to_expire_filter(query, filters):
-  query = query.where(AirFreightRate.last_rate_available_date != None).where(AirFreightRate.last_rate_available_date >= datetime.now().date()).where(AirFreightRate.last_rate_available_date < (datetime.now().date() + timedelta(days = SEARCH_START_DATE_OFFSET)))
+  query = query.where(AirFreightRate.last_rate_available_date.is_null(False),
+                      AirFreightRate.last_rate_available_date >= datetime.now().date(),
+                      AirFreightRate.last_rate_available_date < (datetime.now().date() + timedelta(days = SEARCH_START_DATE_OFFSET)))
   return query
 
 def apply_is_rate_not_available_filter(query,filters):
@@ -183,9 +185,9 @@ def get_data(query):
       if validity.get('status') and not (validity_end > beginning_of_day and validity_end <= now):
         validity['validity_id'] = validity['id']
         del validity['id']
-        rate['validity'] = validity
-        rate['is_origin_local_missing'] = rate['origin_local']['is_line_items_error_messages_present']
-        rate['is_destination_local_missing'] = rate['destination_local']['is_line_items_error_messages_present']
+        rate = rate | validity
+        rate['is_origin_local_missing'] = rate['origin_local']['is_line_items_error_messages_present'] if rate['origin_local'] else None
+        rate['is_destination_local_missing'] = rate['destination_local']['is_line_items_error_messages_present'] if rate['destination_local'] else None
         if rate['price_type']!='all_in':
           rate['is_surcharge_missing'] = rate['surcharge']['is_line_items_error_messages_present'] if rate['surcharge'] else None
         results.append(rate)

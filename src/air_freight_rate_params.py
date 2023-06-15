@@ -67,8 +67,8 @@ class DeleteAirFreightRate(BaseModel):
 class UpdateAirFreightRate(BaseModel):
     id: str
     validity_id: str = None
-    validity_start: datetime = None
-    validity_end: datetime = None
+    validity_start: date = None
+    validity_end: date = None
     currency: str = None
     min_price: float = None
     performed_by_id: str = None
@@ -121,7 +121,8 @@ class CreateAirFreightRateSurcharge(BaseModel):
     airline_id: str
     operation_type: str
     service_provider_id: str
-    performed_by_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
     procured_by_id: str
     sourced_by_id: str
     bulk_operation_id: str = None
@@ -145,7 +146,7 @@ class CreateAirFreightRateLocal(BaseModel):
 
 class UpdateAirFreightRateSurcharge(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
     procured_by_id: str = None
     sourced_by_id: str = None
     line_items: list[LineItem]
@@ -219,12 +220,6 @@ class CreateAirFrieghtRateNotAvailable(BaseModel):
     destination_trade_id: str
     commodity: str
 
-class UpdateAirFreightRateSurcharge(BaseModel):
-    id: str
-    performed_by_id: str
-    procured_by_id: str = None
-    sourced_by_id: str = None
-    line_items: list[LineItem]
 
 class CreateAirFreightRateTask(BaseModel):
     service: str = None
