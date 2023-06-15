@@ -12,12 +12,14 @@ def get_fcl_customs_rate_cards(request):
         query = initialize_customs_query(request)
         customs_rates = jsonable_encoder(list(query.dicts()))
 
-        if len(customs_rates) > 0:
-            customs_rates = get_zone_wise_customs_rates()
-            customs_rates = discard_noneligible_lsps(request)
-            rate_cards = build_response_list(request, customs_rates)
-
-            return {'list':rate_cards}
+        if len(customs_rates) == 0:
+            zone_query = get_zone_wise_customs_rates(request)
+            customs_rates = jsonable_encoder(list(zone_query.dicts())) 
+        customs_rates = discard_noneligible_lsps(customs_rates)
+        if request.get('port_id') != customs_rates[0].get('location_id'):
+            customs_rates = create_predicted_custom_rate(customs_rates,request)
+        rate_cards = build_response_list(request, customs_rates)
+        return {'list':rate_cards}
 
         return {'list':[]} 
        
@@ -28,7 +30,7 @@ def get_fcl_customs_rate_cards(request):
         return {
             "list": []
         }
-
+ 
 def initialize_customs_query(request):
     location_ids = list(filter(None, [request.get('port_id'), request.get('country_id')]))
     query = FclCustomsRate.select(
@@ -169,4 +171,40 @@ def get_zone_wise_customs_rates(request):
             ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
         )
 
+def create_predicted_custom_rate(customs_rates,request):
+    for rate in customs_rates:
+        line_items = rate['customs_line_items']
+        code_prices = {}
+
+        for line_item in line_items:
+            code = line_item['code']
+            price = line_item['price']
+            
+            if code in code_prices:
+                code_prices[code].append(price)
+            else:
+                code_prices[code] = [price]
         
+    average_items = []
+    
+    for code, prices in code_prices.items():
+        average_price = sum(prices) / len(prices)
+        average_item = {
+            'code': code,
+            'unit': 'per_container',
+            'price': average_price,
+            'remarks': [],
+            'currency': 'INR',
+            'location_id': None
+        }
+        average_items.append(average_item)
+    rates = sorted(customs_rates, key = lambda x: LOCATION_HIERARCHY[x['location_type']] )
+    predicted_customs_rate = rates[0]
+    predicted_customs_rate['customs_line_items'] = average_items
+    predicted_customs_rate['importer_exporter_id'] = None
+    predicted_customs_rate['location_id'] = request['port_id']
+    return predicted_customs_rate
+
+
+
+            
