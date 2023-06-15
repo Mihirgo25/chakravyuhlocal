@@ -767,6 +767,7 @@ class DeleteFreightRate(BaseModel):
   validity_end: datetime
   rate_reference_type: str = None
   rate_id: str = None
+  line_item_code:str='BAS'
   rates_greater_than_price: float = None
   rates_less_than_price: float = None
 
@@ -808,10 +809,12 @@ class ExtendFreightRate(BaseModel):
   markup : float
   markup_currency : str = None
   line_item_code : str = 'BAS '
+
 class UpdateWeightLimit(BaseModel):
   filters: dict={}
   free_limit : int
   slabs : List[Slab] = None
+
 class UpdateFreeDays(BaseModel):
   filters: dict={}
   free_days_type:str
@@ -826,6 +829,7 @@ class AddFreightLineItem(BaseModel):
   currency : str
   validity_start : datetime
   validity_end : datetime
+
 class UpdateFreeDaysLimit(BaseModel):
   filters: dict={}
   free_limit : int

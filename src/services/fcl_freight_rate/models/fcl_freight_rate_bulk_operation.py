@@ -350,21 +350,26 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
                 continue
+            
+            for validities in freight['validities']:
+                count=count+1
+                line_item = [t for t in validities['line_items'] if t['code'] == data['line_item_code']][0]
+                if is_price_in_range(data,line_item['price']):
 
-            delete_fcl_freight_rate({
-                'id': str(freight["id"]),
-                'performed_by_id': self.performed_by_id,
-                'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
-                'validity_end': datetime.strptime(data['validity_end'],"%Y-%m-%d"),
-                'bulk_operation_id': self.id,
-                'sourced_by_id': sourced_by_id,
-                'procured_by_id': procured_by_id,
-                'payment_term': data.get('payment_term'),
-                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
-            })
+                    delete_fcl_freight_rate({
+                        'id': str(freight["id"]),
+                        'performed_by_id': self.performed_by_id,
+                        'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
+                        'validity_end': datetime.strptime(data['validity_end'],"%Y-%m-%d"),
+                        'bulk_operation_id': self.id,
+                        'sourced_by_id': sourced_by_id,
+                        'procured_by_id': procured_by_id,
+                        'payment_term': data.get('payment_term'),
+                        'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
+                    })
 
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
+                    self.progress = int((count * 100.0) / total_count)
+                    self.save()
 
 
     def perform_delete_local_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
