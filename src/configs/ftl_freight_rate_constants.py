@@ -234,9 +234,18 @@ DISTANCE_FACTOR = {
 
 # lower and upper limit are Capacity of Vehicle
 TRUCK_TYPES_MAPPING = {
-    'small' : {'lower_limit':0,'upper_limit':2.3},
-    'medium' : {'lower_limit':2.3,'upper_limit':10.1},
-    'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    'IN':
+    {
+        'small' : {'lower_limit':0,'upper_limit':2.3},
+        'medium' : {'lower_limit':2.3,'upper_limit':10.1},
+        'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    },
+    'EU':
+    {
+        'small' : {'lower_limit':0,'upper_limit':3.5},
+        'medium' : {'lower_limit':3.5,'upper_limit':12},
+        'heavy': {'lower_limit':12,'upper_limit':154.3}
+    }
 }
 
 # 40% addtional basic freight for round trip
@@ -253,6 +262,9 @@ ADDITIONAL_CHARGE = 0.2
 MINIMUM_APPLICABLE_CHARGE = 400
 USA_FUEL_DATA_LINK = "https://gasprices.aaa.com/state-gas-price-averages/"
 
+EUROPE_FUEL_DATA_LINK = "https://www.cargopedia.net/europe-fuel-prices/"
+
+CHINA_FUEL_DATA_LINKS = "https://www.globalpetrolprices.com/China/diesel_prices/"
 INDIA_FUEL_DATA_LINKS = {
     "https://www.ndtv.com/fuel-prices/petrol-price-in-india": [
         "tbl-container b_rad4 tbl-scrolling",
@@ -279,3 +291,9 @@ INDIA_FUEL_DATA_LINKS = {
 # EUROPE
 
 EU_BASIC_CHARGE_LIST = {'distance_factor','time_factor','capacity_factor','constant'}
+
+EUROPE_ID = '72abc4ba-6368-4501-9a86-8065f5c191f8'
+
+MEDITERRANEAN_ID = 'f5aefa8e-9a81-4b6d-889c-81678605458a'
+
+DEFAULT_TOLL_PRICE_EU = 0.253

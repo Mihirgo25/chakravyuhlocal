@@ -125,4 +125,4 @@ ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 
-COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US"}
+COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}

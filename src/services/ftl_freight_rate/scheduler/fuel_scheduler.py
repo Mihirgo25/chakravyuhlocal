@@ -1,5 +1,5 @@
 
-from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS
+from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS, EUROPE_FUEL_DATA_LINK, CHINA_FUEL_DATA_LINKS
 import requests
 import time
 import copy
@@ -12,7 +12,7 @@ import services.ftl_freight_rate.scheduler.fuel_scheduler as fuel_schedulers
 
 
 def fuel_scheduler():
-    list_of_countries = ["india", "usa"]
+    list_of_countries = ["europe","india", "usa", "china"]
 
     for country in list_of_countries:
         list_fuel_data = getattr(
@@ -54,7 +54,7 @@ def process_fuel_data(list_fuel_data, country):
                     create_fuel_data(fuel_data)
         else:
             pass
-            
+
 
 
 def get_fuel_data_list(scrapped_fuel_data, list_location_data):
@@ -103,7 +103,7 @@ def get_scrapped_data_for_usa():
     }
     response = requests.get(url, headers=headers)
     html = response.content
-    scrapper = BeautifulSoup(html, "html.parser",features="lxml")
+    scrapper = BeautifulSoup(html, "html.parser")
     table_body = scrapper.find("tbody")
     table_list = table_body.findAll("td")
     fuel_data_for_usa = []
@@ -129,5 +129,62 @@ def get_scrapped_data_for_usa():
                 )
 
             fuel_data_for_usa.append(copy.deepcopy(fuel_data))
-            start += 5
+        start += 5
     return fuel_data_for_usa
+
+def get_scrapped_data_for_europe():
+    url = EUROPE_FUEL_DATA_LINK
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    table = soup.find_all('table')[0]
+    rows = table.find_all('tr')
+
+    fuel_data_for_europe = []
+    for row in rows:
+        fuel_data = {}
+        cols = row.find_all('td')
+        cols = [col.text.strip() for col in cols]
+        if cols == []:
+            continue
+
+        for fuel_type in ["petrol", "diesel"]:
+            fuel_data["currency"] = "EUR"
+            fuel_data["fuel_unit"] = "Lt"
+            fuel_data["location_type"] = "country"
+            fuel_data["fuel_type"] = fuel_type
+
+            if cols[0]=='Czechia':
+                fuel_data['location_name'] = 'Czech Republic'
+            elif cols[0]=='North Macedonia':
+                fuel_data['location_name'] = 'Macedonia'
+            else:
+                fuel_data['location_name'] = cols[0]
+
+            if fuel_type == 'petrol' and cols[1]!='–':
+                fuel_data['fuel_price'] = cols[1]
+            elif fuel_type == 'diesel' and cols[2]!='–':
+                fuel_data['fuel_price'] = cols[2]
+            else:
+                continue
+
+            fuel_data_for_europe.append(copy.deepcopy(fuel_data))
+    return fuel_data_for_europe
+
+def get_scrapped_data_for_china():
+    url = CHINA_FUEL_DATA_LINKS
+    response = requests.get(url)
+    scrapper = BeautifulSoup(response.text, 'html.parser')
+    table_body = scrapper.find('tbody')
+    table_header = table_body.find('td').text
+    diesel_price=float(table_header)
+
+    fuel_data_for_china = []
+    fuel_data = {}
+    fuel_data["location_name"] = 'china'
+    fuel_data["currency"] = "CNY"
+    fuel_data["fuel_unit"] = "Lt"
+    fuel_data["location_type"] = "country"
+    fuel_data["fuel_type"] = 'diesel'
+    fuel_data["fuel_price"] = diesel_price
+    fuel_data_for_china.append(fuel_data)
+    return fuel_data_for_china
