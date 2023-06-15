@@ -849,7 +849,7 @@ def get_air_freight_rate_audit_data(id:str,resp:dict = Depends(authorize_token))
         return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
 
 from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
-@air_freight_router.post("update_air_freight_rate_request")
+@air_freight_router.post("/update_air_freight_rate_request")
 def update_air_freight_rate_request_data(request:UpdateAirFreightRateRequest, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)

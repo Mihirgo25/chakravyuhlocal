@@ -52,10 +52,10 @@ class AirFreightRate(BaseModel):
     importer_exporter = BinaryJSONField(null=True)
     importer_exporter_id = UUIDField(null=True)
     is_best_price = BooleanField(null=True)
-    is_destination_local_line_items_error_messages_present = BooleanField(null=True)
-    is_destination_local_line_items_info_messages_present = BooleanField(null=True)
-    is_origin_local_line_items_error_messages_present = BooleanField(null=True)
-    is_origin_local_line_items_info_messages_present = BooleanField(null=True)
+    # is_destination_local_line_items_error_messages_present = BooleanField(null=True)
+    # is_destination_local_line_items_info_messages_present = BooleanField(null=True)
+    # is_origin_local_line_items_error_messages_present = BooleanField(null=True)
+    # is_origin_local_line_items_info_messages_present = BooleanField(null=True)
     last_rate_available_date = DateTimeField(index=True, null=True)
     length = IntegerField(null=True)
     maximum_weight = IntegerField(null=True)
@@ -68,8 +68,8 @@ class AirFreightRate(BaseModel):
     origin_local = BinaryJSONField(null=True)
     origin_local_id = UUIDField(null=True)
     origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    origin_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    origin_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # origin_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # origin_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_storage_id = UUIDField(null=True)
     origin_trade_id = UUIDField(null=True)
     price_type = CharField(null=True)
@@ -93,10 +93,10 @@ class AirFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True)
-    is_surcharge_line_items_error_messages_present = BooleanField(null=True)
-    is_surcharge_line_items_info_messages_present = BooleanField(null=True)
-    surcharge_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    surcharge_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # is_surcharge_line_items_error_messages_present = BooleanField(null=True)
+    # is_surcharge_line_items_info_messages_present = BooleanField(null=True)
+    # surcharge_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # surcharge_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
@@ -238,7 +238,7 @@ class AirFreightRate(BaseModel):
 
     def validate_operation_type(self):
         if self.operation_type not in AIR_OPERATION_TYPES:
-            raise HTTPException(status_code = 400, details = 'Invalid Operation Type')  
+            raise HTTPException(status_code = 400, details = 'Invalid Operation Type')
 
     def update_foreign_references(self, price_type):
         self.update_local_references()
@@ -262,17 +262,24 @@ class AirFreightRate(BaseModel):
         destination_local_id = None
         origin_local_found = False
         destination_local_found = False
+        origin_local = None
+        destination_local = None
         for local in locals:
+            
             if origin_local_found and destination_local_found:
                 continue
-            if not origin_local_found and local['airport_id'] == self.origin_airport_id and local['trade_type'] == 'export':
+            if not origin_local_found and str(local['airport_id']) == str(self.origin_airport_id) and local['trade_type'] == 'export':
                 origin_local_id = local['id']
+                origin_local = {key:value for key,value in local.items() if key in ['line_items_error_messages','line_items_info_messages','is_line_items_error_messages_present','is_line_items_info_messages_present']}
                 origin_local_found = True
-            if not destination_local_found and local['airport_id'] == self.destination_airport_id and local['trade_type'] == 'import':
+            if not destination_local_found and str(local['airport_id']) == str(self.destination_airport_id) and local['trade_type'] == 'import':
                 destination_local_id = local['id']
+                destination_local = {key:value for key,value in local.items() if key in ['line_items_error_messages','line_items_info_messages','is_line_items_error_messages_present','is_line_items_info_messages_present']}
                 destination_local_found  = True
         self.origin_local_id = origin_local_id
         self.destination_local_id = destination_local_id
+        self.origin_local = origin_local
+        self.destination_local = destination_local
     
     def update_surcharge_reference(self):
         surcharge_object = AirFreightRateSurcharge.select().where(
