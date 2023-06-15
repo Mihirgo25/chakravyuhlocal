@@ -513,6 +513,7 @@ def delay_air_functions(self,air_object,request):
         if not AirFreightRate.select().where(AirFreightRate.service_provider_id==request["service_provider_id"], AirFreightRate.rate_not_available_entry==False, AirFreightRate.rate_type == DEFAULT_RATE_TYPE).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
+        common.create_saas_air_schedule_airport_pair({'origin_airport_id':request.get("origin_airport_id"), 'destination_airport_id':request.get("destination_airport_id")})
         get_multiple_service_objects(air_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':

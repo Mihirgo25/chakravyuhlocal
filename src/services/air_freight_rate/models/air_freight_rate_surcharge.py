@@ -113,7 +113,6 @@ class AirFreightRateSurcharge(BaseModel):
         self.line_items_info_messages = line_items_info_messages
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
-        self.save()
         
     
     # check
