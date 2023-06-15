@@ -64,7 +64,7 @@ def create_fcl_freight_rate_data(request):
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
-
+    request = { key: value for key, value in request.items() if value }
     row = {
         'origin_port_id': request.get('origin_port_id'),
         "origin_main_port_id": request.get("origin_main_port_id"),
