@@ -63,6 +63,7 @@ class FclFreightRateFeedback(BaseModel):
     destination_port = BinaryJSONField(null=True)
     attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
     commodity_description=CharField(null=True)
+    relevant_supply_agent_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

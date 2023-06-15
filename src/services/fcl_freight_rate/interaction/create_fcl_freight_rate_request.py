@@ -51,7 +51,7 @@ def execute_transaction_code(request):
 
         update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
 
-        set_relevant_supply_agents(request)
+        set_relevant_supply_agents(request, request_object.id)
 
         return {
         'id': request_object.id
@@ -73,14 +73,14 @@ def get_relevant_supply_agents(service, origin_locations, destination_locations)
     return supply_agents_user_ids
 
 
-def set_relevant_supply_agents(request):
+def set_relevant_supply_agents(request, fcl_freight_rate_request_id):
     locations_data = FclFreightRateRequest.select(FclFreightRateRequest.origin_port_id, FclFreightRateRequest.origin_country_id, FclFreightRateRequest.origin_continent_id, FclFreightRateRequest.origin_trade_id, FclFreightRateRequest.destination_port_id, FclFreightRateRequest.destination_country_id, FclFreightRateRequest.destination_continent_id, FclFreightRateRequest.destination_trade_id).where(FclFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
     origin_locations = list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['origin_port_id', 'origin_country_id', 'origin_continent_id', 'origin_trade_id']]))
     destination_locations =   list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['destination_port_id', 'destination_country_id', 'destination_continent_id', 'destination_trade_id']]))
 
     supply_agents_user_ids = get_relevant_supply_agents('fcl_freight', origin_locations, destination_locations)
 
-    update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'relevant_service_provider_ids': supply_agents_user_ids})
+    update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': fcl_freight_rate_request_id, 'relevant_supply_agent_ids': supply_agents_user_ids, 'performed_by_id': request.get('performed_by_id')})
 
     try:
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_port_id']),str(locations_data['destination_port_id'])]}})['list']

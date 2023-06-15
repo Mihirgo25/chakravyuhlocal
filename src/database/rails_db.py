@@ -242,6 +242,7 @@ def get_partner_users(ids, status = 'active', role_ids = None):
         conn.close()
         return all_result
     except Exception as e:
+        print(e)
         sentry_sdk.capture_exception(e)
         return all_result
 
