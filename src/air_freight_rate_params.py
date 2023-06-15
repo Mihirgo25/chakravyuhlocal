@@ -55,8 +55,8 @@ class LineItemLocal(BaseModel):
     min_price: float
     price: float
     currency: str
-    remarks: list[str] = None
-    slabs: list[Slab]
+    remarks: list[str] = []
+    slabs: list[Slab] = []
 
 
 class LocalData(BaseModel):
@@ -190,19 +190,19 @@ class ListSlab(BaseModel):
 
 class CreateAirFreightRateLocal(BaseModel):
     airport_id: str
-    airline_id: str = None
-    trade_type: str = None
-    commodity: str = None
-    commodity_type: str = None
-    service_provider_id: str = None
-    performed_by_id: str = None
-    procured_by_id: str = None
-    sourced_by_id: str = None
+    airline_id: str
+    trade_type: str
+    commodity: str
+    commodity_type: str
+    service_provider_id: str
+    performed_by_id: str
+    procured_by_id: str
+    sourced_by_id: str
     bulk_operation_id: str = None
     rate_sheet_id: str = None
     rate_type: str = "general"
-    line_items: list[LineItemLocal] = None
-    slabs: list[Slab] = None
+    line_items: list[LineItemLocal]
+
 
 
 class LocalSlabs(BaseModel):

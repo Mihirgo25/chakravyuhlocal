@@ -50,6 +50,9 @@ def execute_transaction_code(request):
     
     if not air_freight_local:
         air_freight_local=AirFreightRateLocal(**row)
+        air_freight_local.set_locations()
+        air_freight_local.set_airline()
+        air_freight_local.set_location_ids()
 
     old_line_items = air_freight_local.line_items
     if not old_line_items:
@@ -58,9 +61,8 @@ def execute_transaction_code(request):
         add_line_item(old_line_items, line_item)
 
     air_freight_local.line_items = old_line_items
-    air_freight_local.set_locations()
-    air_freight_local.set_airline()
-    air_freight_local.set_location_ids()
+    air_freight_local.sourced_by_id = request.get('sourced_by_id')
+    air_freight_local.procured_by_id = request.get('procured_by_id')
     air_freight_local.validate()
     
     

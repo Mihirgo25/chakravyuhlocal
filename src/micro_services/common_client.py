@@ -30,3 +30,6 @@ class CommonApiClient:
     
     def create_air_freight_rate(self, data={}):
         return self.client.request('POST', 'air_freight_rate/create_air_freight_rate', data)
+    
+    def create_saas_air_schedule_airport_pair(self, data={}):
+        return self.client.request('POST', 'create_saas_air_schedule_airport_pair', data)

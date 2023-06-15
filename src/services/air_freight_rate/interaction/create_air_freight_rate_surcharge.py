@@ -2,7 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreig
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
-import pdb
+from celery_worker import update_multiple_service_objects
 
 def create_audit(request,surcharge_id):
     audit_data={}
@@ -19,9 +19,9 @@ def create_audit(request,surcharge_id):
     return id
 
 def create_air_freight_rate_surcharge(request):
-    object_type = 'Air_Freight_Rate_Surcharge'
-    query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
-    db.execute_sql(query)    
+    # object_type = 'Air_Freight_Rate_Surcharge'
+    # query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+    # db.execute_sql(query)    
     with db.atomic():
         return execute_transaction_code(request)
     
@@ -56,7 +56,6 @@ def execute_transaction_code(request):
     
 
     
-    # print(surcharge.__dict__)
     
     surcharge.set_locations()
     surcharge.set_destination_location_ids()
@@ -64,6 +63,8 @@ def execute_transaction_code(request):
     surcharge.update_freight_objects()
     surcharge.update_line_item_messages()
     surcharge.validate()
+    surcharge.sourced_by_id = request.get('sourced_by_id')
+    surcharge.procured_by_id = request.get('procured_by_id')
     try:
         surcharge.save()
     except Exception:
@@ -71,6 +72,7 @@ def execute_transaction_code(request):
 
     
     create_audit(request,surcharge.id)
+    update_multiple_service_objects.apply_async(kwargs={'object':surcharge},queue='low')
 
     return {
       'id': str(surcharge.id)
