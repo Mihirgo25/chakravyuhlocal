@@ -19,7 +19,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
-from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_rate_ids
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_rate_ids,is_price_in_range
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 MARKUP_TYPES = ['net','percent','absolute']
@@ -447,18 +447,21 @@ class FclFreightRateBulkOperation(BaseModel):
 
                 validity_object['line_items'].remove(line_item)
 
-                if data['markup_type'].lower() == 'percent':
-                    markup = float(data['markup'] * line_item['price']) / 100 
-                else:
-                    markup = data['markup']
-                
-                if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+               
+                if is_price_in_range(data,line_item['price']):
 
-                if data['markup_type'].lower() == 'absolute':
-                    line_item['price'] = markup
-                else:
-                    line_item['price'] = line_item['price'] + markup
+                    if data['markup_type'].lower() == 'percent':
+                        markup = float(data['markup'] * line_item['price']) / 100 
+                    else:
+                        markup = data['markup']
+                    
+                    if data['markup_type'].lower() == 'net':
+                        markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+
+                    if data['markup_type'].lower() == 'absolute':
+                        line_item['price'] = markup
+                    else:
+                        line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0 
