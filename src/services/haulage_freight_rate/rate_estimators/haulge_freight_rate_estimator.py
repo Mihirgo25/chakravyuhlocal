@@ -19,6 +19,9 @@ from services.haulage_freight_rate.rate_estimators.generalized_haulage_freight_r
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import (
     HaulageFreightRateRuleSet,
 )
+from services.haulage_freight_rate.rate_estimators.south_america_haulage_freight_rate_estimator import (
+    SouthAmericaHaulageFreightRateEstimator,
+)
 import services.haulage_freight_rate.interactions.get_estimated_haulage_freight_rate as get_estimated_haulage_freight_rate
 from configs.haulage_freight_rate_constants import (
     CONTAINER_TYPE_CLASS_MAPPINGS,
@@ -58,6 +61,10 @@ class HaulageFreightRateEstimator:
         self.container_size = container_size
 
     def estimate(self):
+        input = {"origin_location_id": self.origin_location_id, "destination_location_id": self.destination_location_id}
+        data = maps.get_is_land_service_possible(input)
+        if not data["route_status"]:
+            raise HTTPException(status_code=400, detail="route not possible")
         locations_data, location_category, country_code = self.get_location_data_and_category()
         self.convert_general_params_to_estimation_params(location_category)
 
@@ -124,6 +131,19 @@ class HaulageFreightRateEstimator:
 
         elif location_category == "north_america":
             estimator = NorthAmericaHaulageFreightRateEstimator(
+                self.query,
+                self.commodity,
+                self.load_type,
+                self.containers_count,
+                self.distance,
+                self.container_type,
+                self.cargo_weight_per_container,
+                self.permissable_carrying_capacity,
+                self.container_size,
+                self.transit_time,
+            )
+        elif location_category == "south_america":
+            estimator = SouthAmericaHaulageFreightRateEstimator(
                 self.query,
                 self.commodity,
                 self.load_type,
