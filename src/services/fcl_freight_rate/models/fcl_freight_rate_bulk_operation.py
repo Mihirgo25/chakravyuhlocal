@@ -19,6 +19,8 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_rate_ids
+
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 MARKUP_TYPES = ['net','percent','absolute']
 
@@ -307,7 +309,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         'commodity': freight["commodity"],
                         'shipping_line_id': str(freight["shipping_line_id"]),
                         'importer_exporter_id': str(freight["importer_exporter_id"]) if freight['importer_exporter_id'] else None,
-                        'service_provider_id': str(freight["service_provider_id"]),
+                        'service_provider_id': str(freight["service_provider_id"]) if freight['service_provider_id'] else None,
                         'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
                         'bulk_operation_id': self.id,
                         'performed_by_id': self.performed_by_id,
@@ -330,13 +332,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if data.get('rate_reference_type') and data.get('rate_id'):
             select_field = "{}_id".format(data['rate_reference_type'])
-            
-            reference_object_ids = FclFreightRateAudit.select(getattr(FclFreightRateAudit, select_field)).where(FclFreightRateAudit.object_id == data['rate_id'])
-            reference_object_ids = [audit_data[select_field] for audit_data in list(reference_object_ids.dicts())] 
-            
-            rate_ids = FclFreightRateAudit.select(FclFreightRateAudit.object_id).where(getattr(FclFreightRateAudit, select_field) << reference_object_ids)
-            rate_ids = [str(result['object_id']) for result in (rate_ids.dicts())]
 
+            rate_ids = get_rate_ids(select_field, data['rate_id'])
             filters = filters |  {'id': rate_ids} 
             
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
@@ -410,6 +407,12 @@ class FclFreightRateBulkOperation(BaseModel):
         data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
+        if data.get('rate_reference_type') and data.get('rate_id'):
+            select_field = "{}_id".format(data['rate_reference_type'])
+  
+            rate_ids = get_rate_ids(select_field, data['rate_id'])
+            filters = filters |  {'id': rate_ids} 
+            
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -477,7 +480,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         'commodity': freight["commodity"],
                         'shipping_line_id': str(freight["shipping_line_id"]),
                         'importer_exporter_id': str(freight["importer_exporter_id"]) if freight['importer_exporter_id'] else None,
-                        'service_provider_id': str(freight["service_provider_id"]),
+                        'service_provider_id': str(freight["service_provider_id"]) if freight['service_provider_id'] else None,
                         'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
                         'bulk_operation_id': self.id,
                         'performed_by_id': self.performed_by_id,

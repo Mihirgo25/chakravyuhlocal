@@ -767,6 +767,8 @@ class DeleteFreightRate(BaseModel):
   validity_end: datetime
   rate_reference_type: str = None
   rate_id: str = None
+  rates_greater_than_price: float = None
+  rates_less_than_price: float = None
 
 class AddFreightRateMarkup(BaseModel):
   filters:dict={}
@@ -776,6 +778,10 @@ class AddFreightRateMarkup(BaseModel):
   line_item_code:str='BAS'
   validity_start:datetime
   validity_end:datetime
+  rate_reference_type: str = None
+  rate_id: str = None
+  rates_greater_than_price: float = None
+  rates_less_than_price: float = None
 
 class AddLocalRateMarkup(BaseModel):
   filters:dict={}
@@ -831,7 +837,7 @@ class DeleteLocalRate(BaseModel):
 class CreateBulkOperation(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
-  service_provider_id:str
+  service_provider_id:str=None
   procured_by_id:str
   sourced_by_id:str
   cogo_entity_id:str=None

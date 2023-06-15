@@ -279,6 +279,6 @@ class FclFreightVyuh():
         rates_to_create = self.get_rate_combinations_to_extend()
 
         for rate_to_create in rates_to_create:
-            self.create_fcl_freight_rate(rate_to_create)
+            self.create_fcl_freight_rate(rate_to_create | {'extended_from_id' : self.rate['id']})
 
         return True
