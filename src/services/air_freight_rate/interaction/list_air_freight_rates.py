@@ -43,7 +43,7 @@ def get_query(all_rates_for_cogo_assured,sort_by, sort_type, page, page_limit,ol
 
        )
     query = query.order_by(eval('AirFreightRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
-
+    return query
 def apply_indirect_filters(query, filters):
   for key in filters:
     apply_filter_function = f'apply_{key}_filter'
@@ -175,8 +175,12 @@ def get_data(query):
       else:
         validity['density_ratio'] = "1:{}".format(int(validity['min_density_weight']))
       
-      if validity.get('status') and not(validity.get('validity_end') > beginning_of_day and validity.get('validity_end') <= now):
-         return
+      if validity.get('status') and not (validity.get('validity_end') > beginning_of_day and validity.get('validity_end') <= now):
+        validity['validity_id'] = validity['id']
+        del validity['id']
+        rate.update(validity)
+
+        #  return
          
 
 
