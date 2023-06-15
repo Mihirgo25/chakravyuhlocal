@@ -170,6 +170,7 @@ def get_zone_wise_customs_rates(request):
             FclCustomsRate.rate_not_available_entry == False,
             ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
         )
+        return zone_wise_rates
 
 def create_predicted_custom_rate(customs_rates,request):
     for rate in customs_rates:
