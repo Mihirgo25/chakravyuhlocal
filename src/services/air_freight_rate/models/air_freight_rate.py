@@ -384,7 +384,7 @@ class AirFreightRate(BaseModel):
     
 
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
-        # todo check if we need to develop autoquotation
+        return
         if self.last_rate_available_date is None:
             return
         data={
@@ -400,7 +400,7 @@ class AirFreightRate(BaseModel):
             "is_destination_local_missing": (not self.destination_local or not 'line_items' in self.destination_local or len(self.destination_local['line_items']) == 0),
             "rate_params": {
                 "origin_location_id": self.origin_airport_id,
-                "destination_location_id": self.destinationair_port_id,
+                "destination_location_id": self.destination_airport_id,
                 "commodity": self.commodity,
                 "operation_type": self.operation_type
             }

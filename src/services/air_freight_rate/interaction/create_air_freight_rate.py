@@ -127,6 +127,7 @@ def create_air_freight_rate(request):
     create_audit(request, freight.id)
 
     delay_air_functions.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
+    freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
 
     if request.get('air_freight_rate_request_id'):
         update_air_freight_rate_request_in_delay({'air_freight_rate_request_id': request.get('air_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
