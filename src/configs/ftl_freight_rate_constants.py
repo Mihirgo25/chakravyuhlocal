@@ -290,10 +290,12 @@ INDIA_FUEL_DATA_LINKS = {
 
 # EUROPE
 
-EU_BASIC_CHARGE_LIST = {'distance_factor','time_factor','capacity_factor','constant'}
+EU_BASIC_CHARGE_LIST = {'distance_factor','time_factor','capacity_factor','loading_charge'}
 
 EUROPE_ID = '72abc4ba-6368-4501-9a86-8065f5c191f8'
 
 MEDITERRANEAN_ID = 'f5aefa8e-9a81-4b6d-889c-81678605458a'
+
+EU_ZONE = (EUROPE_ID, MEDITERRANEAN_ID)
 
 DEFAULT_TOLL_PRICE_EU = 0.253

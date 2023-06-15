@@ -33,8 +33,8 @@ class EUFtlFreightRateEstimator:
                 elif data['process_type'] == 'capacity_factor':
                     # capacity
                     basic_freight_charges += ((truck_weight) * float(data['process_value']))
-                elif data['process_type'] == 'constant':
-                    # constants
+                elif data['process_type'] == 'loading_charge':
+                    # loading charges
                     basic_freight_charges += float(data['process_value'])
         result = {}
         result['currency']  = currency
@@ -73,21 +73,19 @@ class EUFtlFreightRateEstimator:
         return self.average_fuel_price/truck_mileage
 
     def get_toll_factor(self):
+
         country_rule_set = self.get_applicable_rule_set_country()
+        if not country_rule_set:
+            return DEFAULT_TOLL_PRICE_EU
+
         toll_value = 0
+        is_origin_destination_rule_present = len(country_rule_set) == 2
+        for data in country_rule_set:
+            toll_value += float(data['process_value'])
 
-        if len(country_rule_set)==2:
-            for data in country_rule_set:
-                toll_value += float(data['process_value'])
-            toll_value = toll_value / 2
+        if not is_origin_destination_rule_present:
+            toll_value += DEFAULT_TOLL_PRICE_EU
 
-        elif len(country_rule_set)==1:
-            toll_value = DEFAULT_TOLL_PRICE_EU
-            for data in country_rule_set:
-                toll_value += float(data['process_value'])
-            toll_value = toll_value / 2
-
-        else:
-            toll_value = DEFAULT_TOLL_PRICE_EU
+        toll_value = toll_value / 2
 
         return toll_value

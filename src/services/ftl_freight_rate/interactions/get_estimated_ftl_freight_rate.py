@@ -2,7 +2,7 @@ from micro_services.client import maps
 from services.ftl_freight_rate.rate_estimators.ftl_freight_rate_estimator import FtlFreightEstimator
 from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
 from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING,PREDICTION_TRUCK_TYPES
-from configs.ftl_freight_rate_constants import EUROPE_ID,MEDITERRANEAN_ID
+from configs.ftl_freight_rate_constants import EU_ZONE
 
 def get_ftl_freight_rate(
     origin_location_id,
@@ -59,7 +59,7 @@ def get_country_code(location_data_mapping,origin_location_id,destination_locati
     destination_continent_id = location_data_mapping[destination_location_id]['continent_id']
     if origin_country_code == 'IN' and destination_country_code == 'IN':
         return 'IN'
-    elif origin_continent_id in (EUROPE_ID,MEDITERRANEAN_ID) and destination_continent_id in (EUROPE_ID,MEDITERRANEAN_ID):
+    elif origin_continent_id in EU_ZONE and destination_continent_id in EU_ZONE:
         return 'EU'
     return 'not_found'
 
