@@ -20,7 +20,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days impor
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
-
+MARKUP_TYPES = ['net','percent','absolute']
 
 class BaseModel(Model):
     class Meta:
@@ -80,10 +80,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if float(data['markup']) == 0:
             raise HTTPException(status_code=400, detail='markup cannot be 0')
-    
-        markup_types = ['net', 'percent']
 
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         if data['validity_end'].date() < datetime.now().date():
@@ -111,10 +109,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if float(data['markup']) == 0:
             raise HTTPException(status_code=400, detail='markup cannot be 0')
-        
-        markup_types = ['net', 'percent']
 
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
@@ -214,18 +210,14 @@ class FclFreightRateBulkOperation(BaseModel):
         if  [x for x in data['container_types'] if x not in CONTAINER_TYPES]!=[]:
             raise HTTPException(status_code=400, detail='container_types is invalid')
         
-        markup_types = ['net', 'percent']
-
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
 
         
     def validate_extend_freight_rate_to_icds_data(self):
         data = self.data
 
-        markup_types = ['net', 'percent']
-
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
     
         
@@ -460,7 +452,10 @@ class FclFreightRateBulkOperation(BaseModel):
                 if data['markup_type'].lower() == 'net':
                     markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
-                line_item['price'] = line_item['price'] + markup
+                if data['markup_type'].lower() == 'absolute':
+                    line_item['price'] = markup
+                else:
+                    line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0 
@@ -532,8 +527,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
                 if data['markup_type'].lower() == 'net':
                     markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
-
-                line_item['price'] = line_item['price'] + markup
+                
+                if data['markup_type'].lower() == 'absolute':
+                    line_item['price'] = markup
+                else:
+                    line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0 
@@ -831,7 +829,10 @@ class FclFreightRateBulkOperation(BaseModel):
                 if data['markup_type'].lower() == 'net':
                     markup = common.get_money_exchange_for_fcl({'from_currency':data['markup_currency'], 'to_currency':line_item['currency'], 'price':markup})['price']
 
-                line_item['price'] = line_item['price'] + markup
+                if data['markup_type'].lower() == 'absolute':
+                    line_item['price'] = markup
+                else:
+                    line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0
@@ -919,7 +920,10 @@ class FclFreightRateBulkOperation(BaseModel):
             if data['markup_type'].lower() == 'net':
                 markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
-            line_item['price'] = line_item['price'] + markup
+            if data['markup_type'].lower() == 'absolute':
+                line_item['price'] = markup
+            else:  
+                line_item['price'] = line_item['price'] + markup
             
             if line_item['price'] < 0:
                 line_item['price'] = 0
