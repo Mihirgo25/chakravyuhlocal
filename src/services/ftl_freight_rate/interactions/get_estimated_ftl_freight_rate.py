@@ -1,7 +1,8 @@
 from micro_services.client import maps
 from services.ftl_freight_rate.rate_estimators.ftl_freight_rate_estimator import FtlFreightEstimator
 from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
-from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING
+from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING,PREDICTION_TRUCK_TYPES
+
 
 def get_ftl_freight_rate(
     origin_location_id,
@@ -12,26 +13,27 @@ def get_ftl_freight_rate(
     truck_body_type: None,
     trip_type
 ):
-
+    
     ids = [origin_location_id, destination_location_id]
     location_data_mapping = get_location_data_mapping(ids)
     country_id = location_data_mapping[origin_location_id]['country_id']
+    country_category = get_country_code(location_data_mapping,origin_location_id,destination_location_id)
     truck_and_commodity_data = get_truck_and_commodity_data(
-        truck_type, weight,country_id,trip_type,commodity,truck_body_type
+        country_category,truck_type, weight,country_id,trip_type,commodity,truck_body_type
     )
-    rate_estimator = FtlFreightEstimator(origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data)
+    rate_estimator = FtlFreightEstimator(origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,country_category)
+    
     return rate_estimator.estimate()
 
-def get_truck_and_commodity_data(truck_type, weight,country_id,trip_type,commodity=None,truck_body_type = None):
-    data = {}
+def get_truck_and_commodity_data(country_category,truck_type, weight,country_id,trip_type,commodity=None,truck_body_type = None):
     filters = {
         'country_id':country_id
     }
-    if truck_type:
+    if truck_type and truck_type in PREDICTION_TRUCK_TYPES:
         filters['truck_name'] = truck_type
     else:
         default_truck_type = ''
-        for truck_type, weight_limit_data in TRUCK_TYPES_MAPPING.items():
+        for truck_type, weight_limit_data in TRUCK_TYPES_MAPPING[country_category].items():
             if weight > weight_limit_data['lower_limit'] and weight <= weight_limit_data['upper_limit']:
                 default_truck_type = truck_type
                 break
@@ -39,16 +41,8 @@ def get_truck_and_commodity_data(truck_type, weight,country_id,trip_type,commodi
         filters['truck_type'] = default_truck_type
 
     truck_details = list_trucks_data(filters, sort_by='capacity',sort_type='asc')['list'][0]
-    data['truck_body_type'] = truck_body_type or truck_details['body_type']
-    data["truck_type"] = truck_details["truck_type"]
-    data["mileage"] = truck_details["mileage"]
-    data["mileage_unit"] = truck_details["mileage_unit"]
-    data["weight"] = weight or truck_details["capacity"]
-    data['commodity'] = commodity
-    data['trip_type'] = trip_type
-    data['fuel_type'] = truck_details['fuel_type']
-    return data
-
+    truck_and_commodity_data = get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type)
+    return truck_and_commodity_data
 
 def get_location_data_mapping(ids: list):
     location_data = maps.list_locations({"filters": {"id": ids}})["list"]
@@ -56,3 +50,30 @@ def get_location_data_mapping(ids: list):
     for data in location_data:
         location_mapping[data["id"]] = data
     return location_mapping
+
+def get_country_code(location_data_mapping,origin_location_id,destination_location_id):
+    origin_country_code = location_data_mapping[origin_location_id]['country_code']
+    destination_country_code = location_data_mapping[destination_location_id]['country_code']
+    origin_continent_id = location_data_mapping[origin_location_id]['continent_id']
+    destination_continent_id = location_data_mapping[destination_location_id]['continent_id']
+    if origin_country_code == 'IN' and destination_country_code == 'IN':
+        return 'IN'
+    elif origin_country_code == "US" and destination_country_code == "US":
+        return 'US'
+    return 'not_found'
+
+
+
+
+def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type):
+    truck_and_commodity_data = {
+        'truck_body_type':truck_body_type or truck_details['body_type'],
+        'truck_type':truck_details["truck_type"],
+        'mileage':truck_details["mileage"],
+        'mileage_unit':truck_details["mileage_unit"],
+        'weight':weight or truck_details["capacity"],
+        'commodity':commodity,
+        'trip_type':trip_type,
+        'fuel_type':truck_details['fuel_type']
+    }
+    return truck_and_commodity_data

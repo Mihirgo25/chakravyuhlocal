@@ -234,9 +234,18 @@ DISTANCE_FACTOR = {
 
 # lower and upper limit are Capacity of Vehicle
 TRUCK_TYPES_MAPPING = {
-    'small' : {'lower_limit':0,'upper_limit':2.3},
-    'medium' : {'lower_limit':2.3,'upper_limit':10.1},
-    'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    'IN':
+    {
+        'small' : {'lower_limit':0,'upper_limit':2.3},
+        'medium' : {'lower_limit':2.3,'upper_limit':10.1},
+        'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    }, 
+    'US':
+    {
+        'small' : {'lower_limit':0,'upper_limit':9999},
+        'medium' : {'lower_limit':9999,'upper_limit':28000},
+        'heavy': {'lower_limit':28000,'upper_limit':120000}
+    }
 }
 
 # 40% addtional basic freight for round trip
@@ -244,13 +253,14 @@ ROUND_TRIP_CHARGE = 0.4
 
 # Loading charges 150/tonn same for unloading so 300
 LOADING_UNLOADING_CHARGES = 300
-
+LOADING_UNLOADING_CHARGES_US = 0.04
 # HAZ commodity or reefer truck body type 20% extra basic freight charge.
 ADDITIONAL_CHARGE = 0.2
 
 
 # Minimum charges for driver if distance is less than 300
 MINIMUM_APPLICABLE_CHARGE = 400
+
 USA_FUEL_DATA_LINK = "https://gasprices.aaa.com/state-gas-price-averages/"
 
 INDIA_FUEL_DATA_LINKS = {
