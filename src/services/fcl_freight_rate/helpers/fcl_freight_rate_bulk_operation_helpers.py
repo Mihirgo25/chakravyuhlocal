@@ -1,4 +1,4 @@
-from models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 
 def get_rate_ids(select_field, id):
     reference_object_ids = FclFreightRateAudit.select(getattr(FclFreightRateAudit, select_field)).where(FclFreightRateAudit.object_id == id)
