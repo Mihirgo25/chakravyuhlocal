@@ -30,6 +30,7 @@ from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices impor
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
 
 # Rate Producers
@@ -577,6 +578,16 @@ def process_freight_look_rates(self, rate, locations):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True, max_retries=5)
+def celery_create_fcl_customs_rate(self, request):
+    try:
+        return create_fcl_customs_rate(request)
+    except Exception as e:
+        if type(e).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= e)
         
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def create_fcl_customs_migration(self,request):
