@@ -462,7 +462,7 @@ class FclFreightRate(BaseModel):
       self.validities = main_validities
 
 
-    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, gri_tag = None, code_to_compare_price = None,rate_price_greater_than=None, rate_price_less_than=None):
+    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, gri_tag = None, price_range_params={}):
         new_validities = []
         new_tags = {}
         if not schedule_type:
@@ -500,10 +500,10 @@ class FclFreightRate(BaseModel):
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
 
-            line_item = [t for t in validity_object['line_items'] if t['code'] == code_to_compare_price]
+            line_item = [t for t in validity_object['line_items'] if t['code'] == price_range_params['line_item_code']]
             price_to_compare=line_item[0]['price'] if line_item else None
             
-            if not is_price_in_range(rate_price_greater_than, rate_price_less_than,price_to_compare):
+            if not is_price_in_range(price_range_params['rates_greater_than_price'], price_range_params['rates_less_than_price'],price_to_compare):
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 new_tags[id] = previous_tag
                 continue

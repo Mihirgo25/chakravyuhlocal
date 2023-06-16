@@ -369,9 +369,9 @@ class FclFreightRateBulkOperation(BaseModel):
                 'procured_by_id': procured_by_id,
                 'payment_term': data.get('payment_term'),
                 'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE),
-                'rate_price_greater_than':data.get('rates_greater_than_price'),
-                'rate_price_less_than':data.get('rates_less_than_price'),
-                'code_to_compare_price':data.get('line_item_code'),
+                'rates_greater_than_price':data.get('rates_greater_than_price'),
+                'rates_less_than_price':data.get('rates_less_than_price'),
+                'line_item_code':data.get('line_item_code'),
             })
             self.progress = int((count * 100.0) / total_count)
             self.save()
