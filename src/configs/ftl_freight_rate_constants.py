@@ -243,8 +243,8 @@ TRUCK_TYPES_MAPPING = {
     'EU':
     {
         'small' : {'lower_limit':0,'upper_limit':3.5},
-        'medium' : {'lower_limit':3.5,'upper_limit':12},
-        'heavy': {'lower_limit':12,'upper_limit':154.3}
+        'medium' : {'lower_limit':3.5,'upper_limit':9},
+        'heavy': {'lower_limit':9,'upper_limit':154.3}
     }
 }
 
