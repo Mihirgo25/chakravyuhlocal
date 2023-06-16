@@ -560,6 +560,10 @@ class FclFreightRate(BaseModel):
           new_validity.pop('_dirty')
           main_validities.append(new_validity)
         self.validities = main_validities
+        
+        validity_ids = [validity['id'] for validity in main_validities]
+        new_tags = {key: value for key, value in new_tags.items() if key in validity_ids}
+
         self.tags = new_tags
         
     def delete_rate_not_available_entry(self):
