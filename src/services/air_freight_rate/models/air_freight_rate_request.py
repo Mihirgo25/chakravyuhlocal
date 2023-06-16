@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from micro_services.client import *
 from database.rails_db import *
 from playhouse.postgres_ext import *
-from datetime import datetime
+import datetime
 
 
 class UnknownField(object):
@@ -29,7 +29,7 @@ class AirFreightRateRequest(BaseModel):
     commodity = CharField(null=True)
     commodity_sub_type = CharField(null=True)
     commodity_type = CharField(null=True)
-    created_at = DateTimeField(default=datetime.now())
+    created_at = DateTimeField(index=True, default=datetime.datetime.now)
     destination_airport_id = UUIDField(null=True)
     destination_airport = BinaryJSONField(null=True)
     destination_continent_id = UUIDField(null=True)
@@ -74,12 +74,16 @@ class AirFreightRateRequest(BaseModel):
     source_id = UUIDField(null=True)
     status = CharField(null=True, default="active")
     trade_type = CharField(null=True)
-    updated_at = DateTimeField(default=datetime.now())
+    updated_at = DateTimeField(default=datetime.datetime.now)
     volume = DoubleField(null=True)
     weight = DoubleField(null=True)
 
     class Meta:
-        table_name = "air_freight_rate_requests"
+        table_name = 'air_freight_rate_requests'
+
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRateRequest, self).save(*args, **kwargs)
 
     def validate(self):
         # self.validate_source()

@@ -323,6 +323,7 @@ class CreateAirFreightRateRequest(BaseModel):
     origin_airport_id: str
     origin_trade_id: str = None
     packages: list[Item] = None
+    airline_id: str = None
 
 
 class WarehouseLineItems(BaseModel):
