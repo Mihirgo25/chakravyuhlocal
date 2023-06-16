@@ -6,6 +6,7 @@ from fcl_cfs_params import *
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
+
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs_rates
 from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate import get_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
@@ -26,6 +27,7 @@ def create_fcl_cfs_rate(request: CreateFclCfsRate, resp: dict = Depends(authoriz
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_cfs_rates(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -37,7 +39,7 @@ def create_fcl_cfs_rate(request: CreateFclCfsRate, resp: dict = Depends(authoriz
     
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate_request')
-def create_fcl_cfs_rate_requests(request: FclCfsRateRequest, resp: dict = Depends(authorize_token)): #
+def create_fcl_cfs_rate_requests(request: CreateFclCfsRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -78,23 +80,6 @@ def create_fcl_customs_rate_bulk_operation_data(request: CreateFclCfsRateBulkOpe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_cfs_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-
-@fcl_cfs_router.post('/update_fcl_cfs_rate')
-def update_fcl_cfs_rates(request: UpdateFclCfsRate, resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        data = update_fcl_cfs_rate(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
@@ -271,4 +256,20 @@ def update_fcl_cfs_platform_price(request:UpdateFclCfsRatePlatformPrice, resp: d
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-                                  
+    
+
+@fcl_cfs_router.post('/update_fcl_cfs_rate')
+def update_fcl_cfs_rates(request: UpdateFclCfsRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = update_fcl_cfs_rate(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

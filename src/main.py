@@ -47,8 +47,8 @@ app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Tra
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
-app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router)
-app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router)
+app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
+app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
 
 
 

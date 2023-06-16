@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 import sentry_sdk, traceback
 from fastapi import HTTPException
 import json
+
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_bulk_operation import create_fcl_customs_rate_bulk_operation
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_feedback import create_fcl_customs_rate_feedback
@@ -19,17 +20,10 @@ from services.fcl_customs_rate.interaction.list_fcl_customs_rate_requests import
 from services.fcl_customs_rate.interaction.list_fcl_customs_rate_feedbacks import list_fcl_customs_rate_feedbacks
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate import update_fcl_customs_rate
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
-from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_feedback import delete_fcl_customs_rate_feedback
-from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_request import delete_fcl_customs_rate_request
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
 from services.fcl_customs_rate.interaction.get_fcl_customs_rate_cards import get_fcl_customs_rate_cards
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_feedback import delete_fcl_customs_rate_feedback
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate_request import delete_fcl_customs_rate_request
-from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
-from services.fcl_customs_rate.interaction.update_fcl_customs_rate import update_fcl_customs_rate
-from celery_worker import create_fcl_customs_migration
-
-import csv 
 
 fcl_customs_router = APIRouter()
 
@@ -393,34 +387,3 @@ def update_fcl_customs_rate_platform_prices_data(request: UpdateFclCustomsRatePl
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
-@fcl_customs_router.post("/update_fcl_customs_rate")
-def update_fcl_customs_rate_data(request: UpdateFclCustomsRate, resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        data = update_fcl_customs_rate(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@fcl_customs_router.get("/data_migration")
-def migration_data():
-    with open("D:\Cogoport\data_analysis\migration\export_data.csv",'r') as f:
-        reader = csv.DictReader(f)
-        fieldnames = [field for field in reader.fieldnames if field.strip() != '']
-        i = 0
-        for row in reader:
-            data = {field: row[field] for field in fieldnames}
-            customs_line_items = list(eval(data['customs_line_items']))
-            data['customs_line_items'] = customs_line_items
-            create_fcl_customs_migration.delay(data)
-            
-
-    

@@ -9,7 +9,7 @@ from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rat
 from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate import delete_fcl_cfs_rate
 from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from configs.definitions import FCL_CFS_CHARGES,FCL_CUSTOMS_CURRENCIES
+from configs.definitions import FCL_CFS_CHARGES,FCL_FREIGHT_CURRENCIES
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate import update_fcl_cfs_rate
 ACTION_NAMES = ['delete_rate']
 
@@ -81,7 +81,7 @@ class FclCfsRateBulkOperation(Model):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = FCL_CUSTOMS_CURRENCIES
+        currencies = FCL_FREIGHT_CURRENCIES
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=400, detail='markup currency is invalid')

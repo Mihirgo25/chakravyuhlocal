@@ -31,15 +31,16 @@ class CreateFclCfsRate(BaseModel):
   container_type: str
   commodity: str = None
   service_provider_id: str
-  performed_by_id: str = None
   sourced_by_id: str
   procured_by_id: str
   cargo_handling_type: str
   importer_exporter_id: str = None
   line_items: list[StandardLineItem]
   free_days: list[FreeDaysType]
+  performed_by_id: str = None
+  performed_by_type: str = None
 
-class FclCfsRateRequest(BaseModel):
+class CreateFclCfsRateRequest(BaseModel):
     source: str 
     source_id:str 
     performed_by_id : str

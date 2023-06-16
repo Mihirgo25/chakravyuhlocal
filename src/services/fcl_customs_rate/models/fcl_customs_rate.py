@@ -21,7 +21,6 @@ class FclCustomsRate(BaseModel):
     country_id = UUIDField(index=True)
     trade_id = UUIDField(index=True)
     continent_id = UUIDField(index=True)
-    zone_id = UUIDField(index=True)
     trade_type = CharField(null=True)
     container_size = CharField(null=True, index=True)
     container_type = CharField(null=True, index=True)
@@ -87,7 +86,8 @@ class FclCustomsRate(BaseModel):
 
         location = maps.list_locations({'filters':{'id': self.location_id}})['list']
         if location:
-            self.location= location[0]  
+            self.location= location[0]
+            self.zone_id = location[0].get('zone_id')  
         else:
             self.location = []
 
