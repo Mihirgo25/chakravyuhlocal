@@ -16,6 +16,7 @@ from configs.global_constants import DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAU
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_prices import update_fcl_freight_rate_platform_prices
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import is_price_in_range
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -461,7 +462,7 @@ class FclFreightRate(BaseModel):
       self.validities = main_validities
 
 
-    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term):
+    def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, code_to_compare_price = None,rate_price_greater_than=None, rate_price_less_than=None ):
         new_validities = []
         if not schedule_type:
           schedule_type = DEFAULT_SCHEDULE_TYPES
@@ -495,6 +496,12 @@ class FclFreightRate(BaseModel):
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
             validity_start = validity_start
             validity_end = validity_end
+            line_item = [t for t in validity_object['line_items'] if t['code'] ==code_to_compare_price][0]
+            price_to_compare=line_item['price']
+            
+            if not is_price_in_range(rate_price_greater_than, rate_price_less_than,price_to_compare):
+                new_validities.append(FclFreightRateValidity(**validity_object))
+                continue
             if (validity_object['schedule_type'] not in [None, schedule_type] and not deleted):
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 continue

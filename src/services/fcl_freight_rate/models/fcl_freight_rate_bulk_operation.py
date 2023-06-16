@@ -358,26 +358,23 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.progress = int((count * 100.0) / total_count)
                 self.save()
                 continue
-            
-            for validities in freight['validities']:
-                count=count+1
-                line_item = [t for t in validities['line_items'] if t['code'] == data['line_item_code']][0]
-                if is_price_in_range(data,line_item['price']):
 
-                    delete_fcl_freight_rate({
-                        'id': str(freight["id"]),
-                        'performed_by_id': self.performed_by_id,
-                        'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
-                        'validity_end': datetime.strptime(data['validity_end'],"%Y-%m-%d"),
-                        'bulk_operation_id': self.id,
-                        'sourced_by_id': sourced_by_id,
-                        'procured_by_id': procured_by_id,
-                        'payment_term': data.get('payment_term'),
-                        'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
-                    })
-
-                    self.progress = int((count * 100.0) / total_count)
-                    self.save()
+            delete_fcl_freight_rate({
+                'id': str(freight["id"]),
+                'performed_by_id': self.performed_by_id,
+                'validity_start': datetime.strptime(data['validity_start'],"%Y-%m-%d"),
+                'validity_end': datetime.strptime(data['validity_end'],"%Y-%m-%d"),
+                'bulk_operation_id': self.id,
+                'sourced_by_id': sourced_by_id,
+                'procured_by_id': procured_by_id,
+                'payment_term': data.get('payment_term'),
+                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE),
+                'rate_price_greater_than':data.get('rates_greater_than_price'),
+                'rate_price_less_than':data.get('rates_less_than_price'),
+                'code_to_compare_price':data.get('line_item_code'),
+            })
+            self.progress = int((count * 100.0) / total_count)
+            self.save()
 
 
     def perform_delete_local_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
@@ -461,20 +458,21 @@ class FclFreightRateBulkOperation(BaseModel):
                 validity_object['line_items'].remove(line_item)
 
                
-                if is_price_in_range(data,line_item['price']):
+                if not is_price_in_range(data,line_item['price']):
+                    continue
+                
+                if data['markup_type'].lower() == 'percent':
+                    markup = float(data['markup'] * line_item['price']) / 100 
+                else:
+                    markup = data['markup']
+                
+                if data['markup_type'].lower() == 'net':
+                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
-                    if data['markup_type'].lower() == 'percent':
-                        markup = float(data['markup'] * line_item['price']) / 100 
-                    else:
-                        markup = data['markup']
-                    
-                    if data['markup_type'].lower() == 'net':
-                        markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
-
-                    if data['markup_type'].lower() == 'absolute':
-                        line_item['price'] = markup
-                    else:
-                        line_item['price'] = line_item['price'] + markup
+                if data['markup_type'].lower() == 'absolute':
+                    line_item['price'] = markup
+                else:
+                    line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0 

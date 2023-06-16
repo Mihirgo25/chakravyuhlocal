@@ -8,10 +8,8 @@ def get_rate_ids(select_field, id):
     rate_ids = [str(result['object_id']) for result in (rate_ids.dicts())]
     return rate_ids
 
-def is_price_in_range(data, price):
-    lower_limit = data.get('rates_greater_than_price')
-    upper_limit = data.get('rates_less_than_price')
-
+def is_price_in_range(lower_limit,upper_limit, price):
+    
     if lower_limit is not None and price <= lower_limit:
         return False
 
