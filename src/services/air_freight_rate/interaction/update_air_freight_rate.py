@@ -5,7 +5,7 @@ import json
 from playhouse.postgres_ext import *
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 def update_air_freight_rate(request):
       with db.atomic():
         return execute(request)
@@ -76,7 +76,6 @@ def execute(request):
     }
 
 def create_audit(request,object_id):
-    print('in audi')
     update_data={}
     update_data['validity_start']=datetime.strftime(request.get('validity_start'),'%Y-%m-%d')
     update_data['validity_end']=datetime.strftime(request.get('validity_end'),'%Y-%m-%d')
@@ -90,7 +89,7 @@ def create_audit(request,object_id):
     update_data['available_gross_weight']=request.get('available_gross_weight')
     update_data['weight_slabs']=request.get('weight_slabs')
 
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         bulk_operation_id=request.get('bulk_operation_id'),
         action_name='update',
         data=update_data,
@@ -106,13 +105,13 @@ def validate_validity_object(validity_start, validity_end):
 
     if not validity_end:
         raise HTTPException(status_code=400, detail="validity_end is invalid")
-    if validity_end.date() > (datetime.now().date() + timedelta(days=60)):
+    if validity_end > (datetime.now().date() + timedelta(days=60)):
         raise HTTPException(status_code=400, detail="validity_end can not be greater than 60 days from current date")
 
-    if validity_end.date() < (datetime.now().date() +timedelta(days=2)):
+    if validity_end < (datetime.now().date() +timedelta(days=2)):
         raise HTTPException(status_code=400, detail="validity_end can not be less than 2 days from current date")
 
-    if validity_start.date() < (datetime.now().date() - timedelta(days=15)):
+    if validity_start < (datetime.now().date() - timedelta(days=15)):
         raise HTTPException(status_code=400, detail="validity_start can not be less than 15 days from current date")
 
     if validity_end < validity_start:

@@ -22,4 +22,4 @@ class AuthApiClient:
         return self.client.request('POST', 'create_organization_serviceable_port', data)
 
     def get_eligible_service_organizations(self, data):
-        return self.client.request('GET','get_eligible_service_organizations', data)
+        return self.client.request('GET','get_eligible_service_organizations_for_chakravyuh', data)

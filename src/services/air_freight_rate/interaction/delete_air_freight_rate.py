@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from playhouse.postgres_ext import *
 from database.db_session import db
 
@@ -50,7 +50,7 @@ def create_audit(request,freight_id):
     audit_data={}
     audit_data["validity_id"]=request["validity_id"]
 
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         bulk_operation_id=request.get('bulk_operation_id'),
         action_name='delete',
         data=audit_data,

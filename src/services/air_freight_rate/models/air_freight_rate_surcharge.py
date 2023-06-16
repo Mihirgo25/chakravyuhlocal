@@ -113,7 +113,6 @@ class AirFreightRateSurcharge(BaseModel):
         self.line_items_info_messages = line_items_info_messages
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
-        self.save()
         
     
     # check
@@ -224,9 +223,12 @@ class AirFreightRateSurcharge(BaseModel):
 
     def get_required_location_data(self, location):
         loc_data = {
-          "id": location["id"],
-          "name": location["name"],
-          "airport_code": location["port_code"],
+            "id": location["id"],
+          "type":location['type'],
+          "name":location['name'],
+          "display_name": location["display_name"],
+          "is_icd": location["is_icd"],
+          "port_code": location["port_code"],
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],

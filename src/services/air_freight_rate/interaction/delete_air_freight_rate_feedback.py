@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from database.db_session import db 
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 def delete_air_freight_rate_feedback(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -38,7 +38,7 @@ def execute_transaction_code(request):
     return {"id":request['air_freight_rate_feedback_ids']}      
 
 def create_audit(request,id):
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         action_name='delete',
         performed_by_id=request.get('performed_by_id'),
         data={key:value for key,value in request.items() if key not in ['air_freight_rate_feedback_ids'] },

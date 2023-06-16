@@ -7,8 +7,11 @@ from database.rails_db import *
 from playhouse.postgres_ext import *
 from datetime import datetime
 
+
 class UnknownField(object):
-    def __init__(self, *_, **__): pass
+    def __init__(self, *_, **__):
+        pass
+
 
 class BaseModel(Model):
     class Meta:
@@ -19,7 +22,7 @@ class BaseModel(Model):
 class AirFreightRateRequest(BaseModel):
     booking_params = BinaryJSONField(null=True)
     cargo_readiness_date = DateTimeField(null=True)
-    cogo_entity_id = UUIDField(null = True)
+    cogo_entity_id = UUIDField(null=True)
     cargo_stacking_type = CharField(null=True)
     closed_by_id = UUIDField(null=True)
     closing_remarks = ArrayField(field_class=CharField, null=True)
@@ -28,11 +31,13 @@ class AirFreightRateRequest(BaseModel):
     commodity_type = CharField(null=True)
     created_at = DateTimeField(default=datetime.now())
     destination_airport_id = UUIDField(null=True)
-    destination_airport=BinaryJSONField(null=True)
+    destination_airport = BinaryJSONField(null=True)
     destination_continent_id = UUIDField(null=True)
     destination_country_id = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    reverted_by_user_ids = ArrayField(field_class=UUIDField, null=True)
+    reverted_rates_count = IntegerField(null=True)
     inco_term = CharField(null=True)
     origin_airport_id = UUIDField(null=True)
     origin_airport = BinaryJSONField(null=True)
@@ -45,25 +50,36 @@ class AirFreightRateRequest(BaseModel):
     performed_by = BinaryJSONField(null=True)
     performed_by_org_id = CharField(null=True)
     performed_by_type = CharField(null=True)
-    preferred_airline_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
+    airline_id = UUIDField(null=True)
+    service_provider_id = UUIDField(null=True)
+    service_provider = BinaryJSONField(null=True)
+    airline_id = BinaryJSONField(null=True)
+    price_type = CharField(null=True)
+    operation_type = CharField(null=True)
+    preferred_airline_ids = ArrayField(
+        constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True
+    )
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
     remarks = ArrayField(field_class=CharField, null=True)
     request_type = CharField(null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_freight_rate_requests_serial_id_seq'::regclass)")])
+    serial_id = BigIntegerField(
+        constraints=[
+            SQL("DEFAULT nextval('air_freight_rate_requests_serial_id_seq'::regclass)")
+        ]
+    )
     source = CharField(null=True)
     source_id = UUIDField(null=True)
-    status = CharField(null=True)
+    status = CharField(null=True, default="active")
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.now())
     volume = DoubleField(null=True)
     weight = DoubleField(null=True)
 
     class Meta:
-        table_name = 'air_freight_rate_requests'
-
+        table_name = "air_freight_rate_requests"
 
     def validate(self):
         # self.validate_source()
@@ -77,10 +93,11 @@ class AirFreightRateRequest(BaseModel):
         if self.source and self.source not in REQUEST_SOURCES:
             raise HTTPException(status_code=400, detail="Invalid source")
 
-
     def validate_source_id(self):
-        if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+        if self.source == "spot_search":
+            spot_search_data = spot_search.list_spot_searches(
+                {"filters": {"id": [str(self.source_id)]}}
+            )["list"]
             if len(spot_search_data) == 0:
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
 
@@ -90,12 +107,15 @@ class AirFreightRateRequest(BaseModel):
         if data:
             pass
         else:
-            raise HTTPException(status_code=400, detail='Invalid Performed by ID')
+            raise HTTPException(status_code=400, detail="Invalid Performed by ID")
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
-        if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
-            raise HTTPException(status_code=400, detail='Invalid Account Type')
+        if (
+            len(performed_by_org_data) == 0
+            or performed_by_org_data[0]["account_type"] != "importer_exporter"
+        ):
+            raise HTTPException(status_code=400, detail="Invalid Account Type")
 
     def validate_preferred_airline_ids(self):
         if not self.preferred_airline_ids:
@@ -104,7 +124,68 @@ class AirFreightRateRequest(BaseModel):
             # need to change the name to get operators name
             airline_data = get_shipping_line(id=self.preferred_airline_ids)
             if len(airline_data) != len(self.preferred_airline_ids):
-                raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
+                raise HTTPException(status_code=400, detail="Invalid Shipping Line ID")
             self.preferred_airlines = airline_data
-            self.preferred_airline_ids = [uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids]
+            self.preferred_airline_ids = [
+                uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids
+            ]
 
+    def send_closed_notification_to_sales_agent(self):
+        location_pair = (
+            AirFreightRateRequest.select(
+                AirFreightRateRequest.origin_airport_id,
+                AirFreightRateRequest.destination_airport_id,
+            )
+            .where(AirFreightRateRequest.source_id == self.source_id)
+            .limit(1)
+            .dicts()
+            .get()
+        )
+        location_pair_data = maps.list_locations(
+            {
+                "filters": {
+                    "id": [
+                        str(location_pair("origin_airport_id")),
+                        str(location_pair["destination_airport_id"]),
+                    ]
+                }
+            }
+        )["list"]
+        location_pair_name = {
+            data["id"]: data["display_name"] for data in location_pair_data
+        }
+
+        try:
+            importer_exporter_id = spot_search.get_spot_search(
+                {"id": str(self.source_id)}
+            )["detail"]["importer_exporter_id"]
+        except:
+            importer_exporter_id = None
+        origin_location = location_pair_name[str(location_pair["origin_airport_id"])]
+        destination_location = location_pair_name[
+            str(location_pair["destination_airport"])
+        ]
+
+        data = {
+            "user_id": self.performed_by_id,
+            "type": "platform_notification",
+            "service": "air_freight_rate",
+            "service_id": self.id,
+            "template_name": "freight_rate_request_completed_notification"
+            if "rate_added" in self.closing_remarks
+            else "freight_rate_request_closed_notification",
+            "variables": {
+                "service_type": "air freight",
+                "origin_location": origin_location,
+                "destination_location": destination_location,
+                "remarks": None
+                if "rate_added" in self.closing_remarks
+                else "Reason: {}.".format(
+                    self.closing_remarks[0].lower().replace("_", " ")
+                ),
+                "request_serial_id": str(self.serial_id),
+                "spot_search_id": str(self.source_id),
+                "importer_exporter_id": importer_exporter_id,
+            },
+        }
+        common.create_communication(data)

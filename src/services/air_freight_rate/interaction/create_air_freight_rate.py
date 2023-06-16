@@ -5,6 +5,35 @@ from database.db_session import db
 import datetime
 import pytz
 from configs.air_freight_rate_constants import DEFAULT_RATE_TYPE
+from fastapi.encoders import jsonable_encoder
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+
+def create_audit(request, freight_id):
+
+    rate_type = request.get('rate_type')
+
+    audit_data = {}
+    audit_data["validity_start"] = request["validity_start"].isoformat()
+    audit_data["validity_end"] = request["validity_end"].isoformat()
+    audit_data["line_items"] = request.get("line_items")
+    audit_data["weight_limit"] = request.get("weight_limit")
+    audit_data["origin_local"] = request.get("origin_local")
+    audit_data["destination_local"] = request.get("destination_local")
+    audit_data["is_extended"] = request.get("is_extended")
+    audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
+    audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
+
+    id = AirFreightRateAudit.create(
+        bulk_operation_id=request.get("bulk_operation_id"),
+        rate_sheet_id=request.get("rate_sheet_id"),
+        action_name="create",
+        performed_by_id=request["performed_by_id"],
+        data=audit_data,
+        object_id=freight_id,
+        object_type="FclFreightRate",
+        source=request.get("source"),
+    )
+    return id
 
 def create_air_freight_rate_data(request):
     with db.atomic():
@@ -12,6 +41,8 @@ def create_air_freight_rate_data(request):
 
     
 def create_air_freight_rate(request):
+    from celery_worker import delay_air_functions, update_air_freight_rate_request_in_delay
+
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
     if request['density_category']=='general':
@@ -69,10 +100,9 @@ def create_air_freight_rate(request):
         freight = AirFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
-    
-    freight.set_locations()
-    freight.set_origin_location_ids()
-    freight.set_destination_location_ids()
+        freight.set_locations()
+        freight.set_origin_location_ids()
+        freight.set_destination_location_ids()
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
 
@@ -84,17 +114,27 @@ def create_air_freight_rate(request):
 
     validity_id = freight.set_validities(request.get("validity_start").date(),request.get("validity_end").date(),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
     freight.set_last_rate_available_date()
-
-    new_record = (freight.id is None)
     set_object_parameters(freight, request)
     freight.validate_before_save()
+
+    freight.update_foreign_references(row['price_type'])
+    
     try:
         freight.save()
     except Exception as e:
         raise HTTPException(status_code=400, detail="rate did not save")
+    
+    create_audit(request, freight.id)
 
-    # if new_record:
-    #     freight.update_foreign_references(request)
+    delay_air_functions.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
+    freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
+
+    if request.get('air_freight_rate_request_id'):
+        update_air_freight_rate_request_in_delay({'air_freight_rate_request_id': request.get('air_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+
+    return {
+        "id": freight.id
+    }
     
 
 
@@ -107,6 +147,7 @@ def set_object_parameters(freight, request):
     freight.rate_not_available_entry = False
     freight.flight_uuid = request.get('flight_uuid')
     freight.external_rate_id = request.get('external_rate_id')
+    freight.currency = request.get('currency')
 
 
 

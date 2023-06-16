@@ -82,3 +82,20 @@ COGOLENS_URL = 'https://lens.cogoport.com/cogolens/create_air_freight_rate_predi
 SLAB_WISE_CHANGE_FACTOR = 0.89
 
 COGO_ENVISION_ID = '2dbe768e-929d-4e54-baf0-309ef68c978b'
+
+AIRLINE_IDS_WITH_CUSTOM_WEIGHT_SLABS = ["6e557d55-82df-43a1-b609-d613292bcbf7",
+ "3aa76fac-6f7d-40bb-b15d-e6336b334c25",
+ "7f7558bf-d370-45e7-bad3-2ffbb31e3081",
+ "fdb31d6f-049b-4fee-8bd9-c943fbcba160",
+ "e997f000-26c4-42dc-a432-824f80a91998",
+ "eb130aeb-e21b-47dd-a35f-7e24991f8de3"]
+
+CUSTOM_WEIGHT_SLABS = [{"lower_limit":"0", "upper_limit":"45"},
+ {"lower_limit":"45.1", "upper_limit":"100"},
+ {"lower_limit":"100.1", "upper_limit":"250"},
+ {"lower_limit":"250.1", "upper_limit":"500"}]
+
+DEFAULT_WEIGHT_SLABS = [{"lower_limit":"0", "upper_limit":"45"},
+ {"lower_limit":"45.1", "upper_limit":"100"},
+ {"lower_limit":"100.1", "upper_limit":"250"},
+ {"lower_limit":"250.1", "upper_limit":"500"}]
