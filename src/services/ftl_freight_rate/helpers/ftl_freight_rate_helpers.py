@@ -10,7 +10,7 @@ def get_land_route_from_valhalla(location_ids):
         'number_of_locations': '5',
         'is_authorization_required': 'false'
     }
-    return maps.get_land_route_location_details(params)
+    return maps.get_land_route_from_valhalla(params)
 
 def get_road_route(origin_location_id, destination_location_id):
 

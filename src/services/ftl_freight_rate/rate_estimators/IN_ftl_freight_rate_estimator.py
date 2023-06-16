@@ -1,4 +1,4 @@
-from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,HAZ_CLASSES,ADDITIONAL_CHARGE,ROUND_TRIP_CHARGE,LOADING_UNLOADING_CHARGES,MINIMUM_APPLICABLE_CHARGE
+from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,HAZ_CLASSES,ADDITIONAL_CHARGE,ROUND_TRIP_CHARGE,LOADING_UNLOADING_CHARGES,MINIMUM_APPLICABLE_CHARGE,TRUCK_CAPACITY_RATE_FACTOR,DISTANCE_RATE_FACTOR,CLOSED_BODY_CHARGES_FOR_7,CLOSED_BODY_CHARGES_FOR_14
 from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
 class INFtlFreightRateEstimator:
     def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data):
@@ -14,34 +14,59 @@ class INFtlFreightRateEstimator:
         total_path_distance = self.path_data['distance']
         truck_mileage = self.truck_and_commodity_data['mileage']
         basic_freight_charges = (self.average_fuel_price*total_path_distance)/truck_mileage
-        
+        additional_charges = 0
         applicable_rule_set = self.get_applicable_rule_set()
         for data in applicable_rule_set:
             if data['process_type'] in BASIC_CHARGE_LIST:
-                process_unit = data['process_unit']
-                if data['process_type'] == 'driver':
-                    basic_freight_charges += (float(data['process_value'])*self.get_driver_charges_factor(total_path_distance))
-                else:
-                    basic_freight_charges += (float(data['process_value'])*(total_path_distance))
-
-
+                additional_charges += (float(data['process_value']))
+        truck_capacity = self.truck_and_commodity_data['weight']
+        rate_factor_for_distance = 1
+        
+        for truck_capacity_limit,rate_factor in TRUCK_CAPACITY_RATE_FACTOR.items():
+            if truck_capacity  >= float(truck_capacity_limit) :
+                rate_factor_for_distance = rate_factor
+                break
+       
+        basic_freight_charges += (rate_factor_for_distance*additional_charges*total_path_distance)
+        basic_freight_charges += truck_capacity*LOADING_UNLOADING_CHARGES
         if self.truck_and_commodity_data['commodity'] in HAZ_CLASSES or self.truck_and_commodity_data['truck_body_type'] == 'reefer':
             basic_freight_charges += ADDITIONAL_CHARGE*basic_freight_charges
-
-        weight = self.truck_and_commodity_data['weight']
-        basic_freight_charges += weight*LOADING_UNLOADING_CHARGES
+        
+        if self.truck_and_commodity_data['truck_body_type'] == 'closed':
+            if truck_capacity == 7.5:
+                basic_freight_charges = basic_freight_charges*CLOSED_BODY_CHARGES_FOR_7
+            if truck_capacity > 14:
+                basic_freight_charges = basic_freight_charges*CLOSED_BODY_CHARGES_FOR_14                
+        
+        
+       
+        distance_factor_key_based_on_truck_capacity = 1 if truck_capacity/14 >= 1 else 0
+        distance_factor_data  = None
+        for distance_factor in DISTANCE_RATE_FACTOR[distance_factor_key_based_on_truck_capacity]:
+            if total_path_distance > distance_factor['lower_limit'] and total_path_distance <= distance_factor['upper_limit']:
+                distance_factor_data = distance_factor
+                break
+            
+        if distance_factor_data is not None:
+            if distance_factor_data.get('linear_decreasing'):
+                distance_range = distance_factor_data.get('upper_limit')-distance_factor_data.get('lower_limit')
+                basic_freight_charges = (distance_factor_data.get('rate_factor')*(total_path_distance/distance_range)*basic_freight_charges)
+            else:
+                basic_freight_charges = (distance_factor_data.get('rate_factor')*basic_freight_charges)
+         
         if self.truck_and_commodity_data['trip_type'] == 'round_trip':
             basic_freight_charges += ROUND_TRIP_CHARGE*basic_freight_charges
+       
         result = {}
         result['currency']  = currency
         result["base_rate"] = round(basic_freight_charges,4)
         result["distance"] = total_path_distance
         return result
 
-    def get_driver_charges_factor(self,total_distance):
-        if total_distance <= 300:
-            return MINIMUM_APPLICABLE_CHARGE
-        return total_distance
+    # def get_driver_charges_factor(self,total_distance):
+    #     if total_distance <= 300:
+    #         return MINIMUM_APPLICABLE_CHARGE
+    #     return total_distance
 
     def get_applicable_rule_set(self):
         truck_type = self.truck_and_commodity_data["truck_type"]
