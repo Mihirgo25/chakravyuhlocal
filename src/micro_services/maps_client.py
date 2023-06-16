@@ -14,7 +14,7 @@ class MapsApiClient:
         })
 
     def list_locations(self, data={}):
-        if True:
+        if APP_ENV == "production":
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:

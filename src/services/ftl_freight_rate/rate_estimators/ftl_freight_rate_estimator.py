@@ -24,8 +24,6 @@ class FtlFreightEstimator:
             average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','USD')
             estimator = USFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
-            
-            
             return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'] }]}
         
 
@@ -61,7 +59,6 @@ class FtlFreightEstimator:
             avg_fuel_price += float(fuel_price_data['fuel_price'])
         if len(all_fuel_price)!=0:
             return avg_fuel_price / len(all_fuel_price)
-        print(avg_fuel_price)
         return avg_fuel_price
 
 
