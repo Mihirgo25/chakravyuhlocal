@@ -36,16 +36,14 @@ docs_url = None if APP_ENV == "production" else "/docs"
 app = FastAPI(docs_url=docs_url, debug=True)
 
 
-app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
-app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router)
-
-app.include_router(prefix="/fcl_freight_rate", router=envision_router)
-app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router)
-app.include_router(prefix="/fcl_freight_rate", router=trailer_router)
-app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
-app.include_router(prefix="/fcl_freight_rate", router=ftl_freight_router)
-app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
-app.include_router(prefix = "/fcl_freight_rate", router=extension_router)
+app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'])
+app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['FTL Freight Rate'])
+app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Predictions'])
+app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'])
+app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'])
+app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
+app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
+app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
 
 
 
@@ -118,5 +116,9 @@ def read_root():
 
 
 @app.get("/fcl_freight_rate/health")
+def get_health_check():
+    return JSONResponse(status_code=200, content={ "status": 'ok' })
+
+@app.get("/fcl_freight_rate/health_check")
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
