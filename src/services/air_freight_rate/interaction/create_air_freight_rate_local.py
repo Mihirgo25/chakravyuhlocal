@@ -4,23 +4,6 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
 from celery_worker import update_multiple_service_objects
 
-
-def create_audit(request,air_freight_local_id):
-    audit_data={}
-    audit_data['data'] = request.get('data')
-    audit_data['selected_suggested_rate_id'] = request.get('selected_suggested_rate_id')
-
-    id =AirServiceAudit.create(
-        action_name = 'create',
-        rate_sheet_id = request.get('rate_sheet_id'),
-        bulk_operation_id=request.get('bulk_operation_id'),
-        data = audit_data,
-        object_id = air_freight_local_id,
-        object_type = 'AirFreightRateLocal')
-    
-    return id
-
-
 def create_air_freight_rate_local(request):
     object_type='Air_Freight_Rate_Local'
     query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
@@ -93,3 +76,18 @@ def add_line_item(old_line_items,line_item):
     if is_new_line_item:
         old_line_items.append(line_item)
     return old_line_items
+
+def create_audit(request,air_freight_local_id):
+    audit_data={}
+    audit_data['data'] = request.get('data')
+    audit_data['selected_suggested_rate_id'] = request.get('selected_suggested_rate_id')
+
+    id =AirServiceAudit.create(
+        action_name = 'create',
+        rate_sheet_id = request.get('rate_sheet_id'),
+        bulk_operation_id=request.get('bulk_operation_id'),
+        data = audit_data,
+        object_id = air_freight_local_id,
+        object_type = 'AirFreightRateLocal')
+    
+    return id

@@ -48,7 +48,7 @@ from services.air_freight_rate.interaction.list_air_freight_charge_codes import 
 from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
 from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.interaction.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
-
+from services.air_freight_rate.interaction.get_air_freight_local_rate_cards import get_air_freight_local_rate_cards
 
 air_freight_router = APIRouter()
 
@@ -224,19 +224,15 @@ def get_air_freight_rate_visibility_data(
 @air_freight_router.get("/get_air_freight_rate_addition_frequency")
 def get_air_freight_rate_addition_frequency_data(
     group_by:str,
+    filters: str = None,
     sort_type:str='desc',
-    
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    request={
-        'group_by':group_by,
-        'sort_type':sort_type,
-    }
 
     try:
-        data = get_air_freight_rate_addition_frequency(request)
+        data = get_air_freight_rate_addition_frequency(group_by,filters,sort_type)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content = data)
     except HTTPException as e:
@@ -338,14 +334,14 @@ def list_air_freight_rate_locals_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    try:
-        data = list_air_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    # try:
+    data = list_air_freight_rate_locals(filters = filters,page_limit= page_limit, page=page,sort_by= sort_by,sort_type= sort_type, return_query= return_query)
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/update_air_freight_rate_surcharge")
 def update_air_freight_rate_surcharge_data(request: UpdateAirFreightRateSurcharge, resp:dict = Depends(authorize_token)):
@@ -423,7 +419,7 @@ def list_air_freight_rate_surcharges_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_air_freight_rate_surcharges(filters, page_limit, page, pagination_data_required,return_query)
+        data = list_air_freight_rate_surcharges(filters=filters, page_limit=page_limit, page=page, pagination_data_required=pagination_data_required,return_query=return_query)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
