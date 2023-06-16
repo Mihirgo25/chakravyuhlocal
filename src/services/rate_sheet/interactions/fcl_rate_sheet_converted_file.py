@@ -1449,7 +1449,7 @@ def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procure
 
     if validation.get('valid'):
         object['rate_sheet_validation'] = True
-        celery_create_fcl_customs_rate.apply_async(kwargs={'request':request_params},queue='fcl_customs_rate')
+        celery_create_fcl_customs_rate.apply_async(kwargs={'request':request_params},queue='fcl_freight_rate')
     else:
         print(validation.get('error'))
     return validation

@@ -41,7 +41,7 @@ def execute_transaction_code(request):
       raise HTTPException(status_code=500, detail='CFS Request did not save')
 
 
-    create_audit_for_cfs_request(request)
+    create_audit_for_cfs_request(request, cfs_request.id)
     update_multiple_service_objects.apply_async(kwargs={'object':cfs_request},queue = 'low')
     send_notifications_to_supply_agents_cfs_request.apply_async(kwargs={'object':cfs_request}, queue = 'low')
 
