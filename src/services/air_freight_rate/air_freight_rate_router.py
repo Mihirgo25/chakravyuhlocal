@@ -1094,3 +1094,25 @@ def list_air_freight_rate_tasks_data(
     # except Exception as e :
     #     print(e)
     #     return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
+@air_freight_router.get("/get_air_freight_local_rate_cards")
+def get_air_freight_local_rate_cards_data(
+    airport_id:str,
+    trade_type:str,
+    commodity :str,
+    commodity_type :str,
+    packages_count:int,
+    weight :float,
+    volume:float,
+    airline_id:str=None,
+    additional_services: List[str] = [],
+    resp:dict =Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['status_code'],content=resp)
+    # try:
+    data=get_air_freight_local_rate_cards(airport_id=airport_id,trade_type=trade_type,commodity=commodity,commodity_type=commodity_type,packages_count=packages_count,weight=weight,volume=volume,airline_id=airline_id,additional_services=additional_services)
+    return JSONResponse(status_code=200, content=data)
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e :
+    #     print(e)
+    #     return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
