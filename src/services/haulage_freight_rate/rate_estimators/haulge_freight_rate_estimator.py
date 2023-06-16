@@ -36,6 +36,7 @@ POSSIBLE_LOCATION_CATEGORY = [
     "europe",
     "north_america",
     "vietnam",
+    "south_america",
     "generalized",
 ]
 from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import *
@@ -188,6 +189,7 @@ class HaulageFreightRateEstimator:
         locations_data, location_category, country_code = get_country_filter(
             self.origin_location_id, self.destination_location_id
         )
+        
         if location_category not in POSSIBLE_LOCATION_CATEGORY:
             return {"is_price_estimated": False, "price": None}
 
