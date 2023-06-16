@@ -11,17 +11,18 @@ def get_fcl_customs_rate_cards(request):
     try:
         query = initialize_customs_query(request)
         customs_rates = jsonable_encoder(list(query.dicts()))
+        customs_rates = []
 
         if len(customs_rates) == 0:
             zone_query = get_zone_wise_customs_rates(request)
             customs_rates = jsonable_encoder(list(zone_query.dicts())) 
+
         customs_rates = discard_noneligible_lsps(customs_rates)
         if request.get('port_id') != customs_rates[0].get('location_id'):
-            customs_rates = create_predicted_custom_rate(customs_rates,request)
+            customs_rates = get_average_zone_custom_rate(customs_rates,request)
+
         rate_cards = build_response_list(request, customs_rates)
         return {'list':rate_cards}
-
-        return {'list':[]} 
        
     except Exception as e:
         traceback.print_exc()
@@ -149,10 +150,10 @@ def group_by_key(customs_rates, request):
 
 
 def get_zone_wise_customs_rates(request):
-    location_data = maps.list_locations({'filters':{'id': request.get('port_id')}})['list']
+    location_data = maps.list_locations({'filters':{'id': request.get('port_id')}})
+
     if location_data:
         zone_id = location_data[0].get('zone_id')
-
         zone_wise_rates = FclCustomsRate.select(
             FclCustomsRate.customs_line_items,
             FclCustomsRate.service_provider_id,
@@ -160,51 +161,52 @@ def get_zone_wise_customs_rates(request):
             FclCustomsRate.location_type,
             FclCustomsRate.location_id
             ).where(
-            FclCustomsRate.zone_id << zone_id,
+            FclCustomsRate.zone_id == zone_id,
             FclCustomsRate.container_size == request.get('container_size'),
             FclCustomsRate.container_type == request.get('container_type'),
-            FclCustomsRate.commodity == request.get('commodity'),
             FclCustomsRate.trade_type == request.get('trade_type'),
             FclCustomsRate.is_customs_line_items_error_messages_present == False,
             FclCustomsRate.rate_not_available_entry == False,
-            ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
+            ((FclCustomsRate.commodity == request.get('commodity')) | (FclCustomsRate.commodity.is_null(True))),
+            ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True)))
         )
         return zone_wise_rates
+    return []
 
-def create_predicted_custom_rate(customs_rates,request):
+def get_average_zone_custom_rate(customs_rates,request):
     for rate in customs_rates:
         line_items = rate['customs_line_items']
         code_prices = {}
+        units = {}
 
         for line_item in line_items:
             code = line_item['code']
             price = line_item['price']
+            unit = line_item['unit']
             
             if code in code_prices:
                 code_prices[code].append(price)
             else:
                 code_prices[code] = [price]
+            units[code] = unit
         
     average_items = []
-    
+
     for code, prices in code_prices.items():
         average_price = sum(prices) / len(prices)
         average_item = {
             'code': code,
-            'unit': 'per_container',
+            'unit': units[code],
             'price': average_price,
             'remarks': [],
             'currency': 'INR',
             'location_id': None
         }
         average_items.append(average_item)
+
     rates = sorted(customs_rates, key = lambda x: LOCATION_HIERARCHY[x['location_type']] )
     predicted_customs_rate = rates[0]
     predicted_customs_rate['customs_line_items'] = average_items
     predicted_customs_rate['importer_exporter_id'] = None
-    predicted_customs_rate['location_id'] = request['port_id']
-    return predicted_customs_rate
-
-
-
-            
+    predicted_customs_rate['location_id'] = request.get('port_id')
+    return [predicted_customs_rate]
