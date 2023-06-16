@@ -4,7 +4,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from datetime import datetime
 from playhouse.postgres_ext import *
-from celery_worker import send_create_notifications_to_supply_agents_function
+from celery_worker import send_create_notifications_to_supply_agents_function, set_relevant_supply_agents_function
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
 from micro_services.client import *
@@ -70,6 +70,7 @@ def execute_transaction_code(request):
     # update_likes_dislikes_count(rate, request)
     if request['feedback_type'] == 'disliked':
         send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
+        set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
 
     return {'id': request['rate_id']}
 
