@@ -245,20 +245,16 @@ class AirFreightRateFeedbacks(BaseModel):
 
     def validate_preferred_airline_ids(self):
         if not self.preferred_airline_ids:
-            return True
+            pass
         if self.preferred_airline_ids:
-            ids = []
-            for sl_id in self.preferred_airline_ids:
-                ids.append(str(sl_id))
-
-            airlines = get_shipping_line(id=ids)
-            airlines_hash = {}
-            for sl in airlines:
-                airlines_hash[sl["id"]] = sl
-            for airline_id in self.preferred_airline_ids:
-                if not str(airline_id) in airlines_hash:
-                    raise HTTPException(status_code=400, detail="invalid airlines")
-            self.preferred_airlines = airlines
+            # need to change the name to get operators name
+            airline_data = get_shipping_line(id=self.preferred_airline_ids)
+            if len(airline_data) != len(self.preferred_airline_ids):
+                raise HTTPException(status_code=400, detail="Invalid Shipping Line ID")
+            self.preferred_airlines = airline_data
+            self.preferred_airline_ids = [
+                uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids
+            ]
         return True
 
     def validate_preferred_storage_free_days(self):
