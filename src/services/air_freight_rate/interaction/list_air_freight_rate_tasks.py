@@ -11,9 +11,9 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 import json
 from fastapi.encoders import jsonable_encoder
-
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
+
 POSSIBLE_DIRECT_FILTERS = ['airport_id', 'logistics_service_type', 'commodity', 'airline_id', 'trade_type', 'status', 'task_type']
 POSSIBLE_INDIRECT_FILTERS = ['updated_at_greater_than', 'updated_at_less_than']
 
@@ -80,6 +80,7 @@ def get_existing_system_rates(airport_ids,commodities,trade_types,airline_ids,co
 
 def get_shipment_and_sell_quotations(all_shipment_serial_ids):
     shipments = shipment.list_shipments({'filters': { 'serial_id': all_shipment_serial_ids},'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})
+    print("erty",shipments)
     shipment_ids = []
     shipment_dict = {}
     for shipment_data in shipments:
@@ -251,6 +252,6 @@ def get_stats(filters,stats_required):
     return {
         'stats': stats
     }
-def get_query(sort_type,sort_by):
+def get_query(sort_by,sort_type):
     query = AirFreightRateTasks.select().order_by(eval('AirFreightRateTasks.{}.{}()'.format(sort_by, sort_type)))
     return query

@@ -36,27 +36,7 @@ sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query
 
 def get_query(sort_by,sort_type):
     
-    query=AirFreightRateLocal.select(
-            AirFreightRateLocal.id,
-            AirFreightRateLocal.airport_id,
-            AirFreightRateLocal.trade_type,
-            AirFreightRateLocal.commodity,
-            AirFreightRateLocal.airline_id,
-            AirFreightRateLocal.service_provider_id,
-            AirFreightRateLocal.rate_type,
-            AirFreightRateLocal.commodity_type,
-            AirFreightRateLocal.created_at,
-            AirFreightRateLocal.is_line_items_error_messages_present,
-            AirFreightRateLocal.is_line_items_info_messages_present,
-            AirFreightRateLocal.line_items,
-            AirFreightRateLocal.line_items_error_messages,
-            AirFreightRateLocal.line_items_info_messages,
-            AirFreightRateLocal.procured_by,
-            AirFreightRateLocal.sourced_by,
-            AirFreightRateLocal.procured_by_id,
-            AirFreightRateLocal.sourced_by_id,
-            AirFreightRateLocal.updated_at,
-        ).order_by(eval('AirFreightRateLocal.{}.{}()'.format(sort_by,sort_type)))
+    query=AirFreightRateLocal.select().order_by(eval('AirFreightRateLocal.{}.{}()'.format(sort_by,sort_type)))
     return query
     
 

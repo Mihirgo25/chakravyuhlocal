@@ -239,7 +239,8 @@ class AirFreightRateLocal(BaseModel):
         loc_data = {
           "id": location["id"],
           "name": location["name"],
-          "airport_code": location["port_code"],
+          "display_name":location['display_name'],
+          "port_code": location["port_code"],
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],

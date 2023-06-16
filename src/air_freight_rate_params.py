@@ -141,23 +141,6 @@ class CreateAirFreightRateSurcharge(BaseModel):
     rate_sheet_id: str = None
     line_items: list[LineItem]
 
-
-class CreateAirFreightRateLocal(BaseModel):
-    airport_id: str
-    airline_id: str
-    trade_type: str
-    commodity: str
-    commodity_type: str
-    service_provider_id: str
-    performed_by_id: str
-    procured_by_id: str
-    sourced_by_id: str
-    bulk_operation_id: str = None
-    rate_sheet_id: str = None
-    rate_type: str = "general"
-    line_items: list[LineItemLocal] = None
-
-
 class UpdateAirFreightRateSurcharge(BaseModel):
     id: str
     performed_by_id: str = None
@@ -196,7 +179,7 @@ class CreateAirFreightRateLocal(BaseModel):
     commodity: str
     commodity_type: str
     service_provider_id: str
-    performed_by_id: str
+    performed_by_id: str=None
     procured_by_id: str
     sourced_by_id: str
     bulk_operation_id: str = None
