@@ -783,6 +783,7 @@ class AddFreightRateMarkup(BaseModel):
   rate_id: str = None
   rates_greater_than_price: float = None
   rates_less_than_price: float = None
+  gri_tag: str = None
 
 class AddLocalRateMarkup(BaseModel):
   filters:dict={}
