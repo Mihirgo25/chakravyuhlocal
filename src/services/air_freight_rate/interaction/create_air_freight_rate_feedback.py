@@ -1,4 +1,5 @@
 from datetime import datetime
+import time 
 from database.db_session import db 
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
@@ -28,8 +29,8 @@ def create_air_freight_rate_feeback(request):
         return execute_transaction_code(request)
      
 def execute_transaction_code(request):
+    start = time.time()
     rate=AirFreightRate.select().where(AirFreightRate.id==request['rate_id']).first()
-
     if not rate:
         raise HTTPException (status_code=500, detail='Rate Id is invalid')
     
@@ -63,14 +64,13 @@ def execute_transaction_code(request):
         if attr =='preffered_airline_ids' and value:
             ids=[]
             for val in value:
-                  ids.append(uuid.UUID(str(val)))
+                ids.append(uuid.UUID(str(val)))
             setattr(feedback,attr,ids)
         else: 
             setattr(feedback,attr,value)
-
+    feedback.validate_before_save()
     try:
-        if feedback.validate_before_save():
-            feedback.save()
+        feedback.save()
     except:
         raise HTTPException(status_code= 400, detail="couldnt validate the object")
     
@@ -82,6 +82,8 @@ def execute_transaction_code(request):
     if request['feedback_type']=='disliked':
         send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
+    end = time.time()
+    print(end - start)
     return {'id': request['rate_id']}
 
 def update_likes_dislike_count(rate,request):

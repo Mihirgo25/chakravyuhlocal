@@ -216,7 +216,7 @@ class AirFreightRateFeedbacks(BaseModel):
         return True
     
     def validate_preferred_storage_free_days(self):
-        if not  self.preferred_storage_free_days >=0.0:
+        if not self.preferred_storage_free_days >=0.0:
             raise HTTPException(status_code=400, detail='freedays should be greater than zero')
         
     def validate_feedbacks(self):

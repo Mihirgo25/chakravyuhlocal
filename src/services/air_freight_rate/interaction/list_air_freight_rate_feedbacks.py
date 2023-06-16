@@ -1,8 +1,9 @@
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from configs.air_freight_rate_constants import RATE_ENTITY_MAPPING
+from configs.air_freight_rate_constants import RATE_ENTITY_MAPPING,AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from playhouse.shortcuts import model_to_dict
 from libs.get_filters import get_filters
+from typing import Optional
 from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
@@ -151,10 +152,14 @@ def get_data(query, spot_search_details_required, booking_details_required):
             AirFreightRateFeedbacks.destination_airport,
             AirFreightRateFeedbacks.weight,
             AirFreightRateFeedbacks.volume,
-            AirFreightRateFeedbacks.airline_id
+            AirFreightRateFeedbacks.airline_id,
+            AirFreightRateFeedbacks.reverted_rate_id
         )
     data = list(query.dicts())
     service_provider_ids = []
+    air_freight_rate_ids = [row['air_freight_rate_id'] for row in data]
+    air_freight_rates = list(AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities).where(AirFreightRate.id.in_(air_freight_rate_ids)).dicts())
+    air_freight_rate_mappings = {k['id']: k for k in air_freight_rates}
     for item in data:
         if 'booking_params' in item and 'rate_card' in item['booking_params'] and item['booking_params']['rate_card'] and 'service_rates' in item['booking_params']['rate_card'] and item['booking_params']['rate_card']['service_rates']:
             service_rates = item['booking_params']['rate_card']['service_rates'] or {}
@@ -177,8 +182,10 @@ def get_data(query, spot_search_details_required, booking_details_required):
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for object in data:
+        reverted_rate = None
+        if object['reverted_rate_id']:
+            reverted_rate = air_freight_rate_mappings[object['reverted_rate_id']]
         if 'booking_params' in object:
-
             if object['booking_params'].get('rate_card', {}).get('service_rates', {}):
                 for key, value in object['booking_params']['rate_card']['service_rates'].items():
                     service_provider = value.get('service_provider_id', None)
@@ -186,8 +193,39 @@ def get_data(query, spot_search_details_required, booking_details_required):
                         value['service_provider'] = service_providers_hash.get(service_provider)
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
+        add_reverted_data(object,reverted_rate)
         new_data.append(object)
     return new_data
+
+
+def get_chargeable_weight(weight: Optional[float], volume: Optional[float]) -> Optional[float]:
+    if not weight or not volume:
+        return None
+
+    volumetric_weight = volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+    chargeable_weight = max(volumetric_weight, weight)
+
+    return round(chargeable_weight, 2)
+
+def add_reverted_data(object, reverted_rate):
+    object["reverted_rate_data"] = {}
+    if reverted_rate:
+        object["reverted_rate_data"]["commodity"] = reverted_rate.get("commodity")
+        object["reverted_rate_data"]["commodity_type"] = reverted_rate.get("commodity_type")
+        object["reverted_rate_data"]["commodity_sub_type"] = reverted_rate.get("commodity_sub_type")
+        object["reverted_rate_data"]["operation_type"] = reverted_rate.get("operation_type")
+        object["reverted_rate_data"]["stacking_type"] = reverted_rate.get("stacking_type")
+        object["reverted_rate_data"]["shipment_type"] = reverted_rate.get("shipment_type")
+        object["reverted_rate_data"]["price_type"] = reverted_rate.get("price_type", None)
+        reverted_validity_data = next((t for t in reverted_rate.get("validities", []) if t.get("id") == object.get("reverted_validity_id")), {})
+        object["reverted_rate_data"]["min_price"] = reverted_validity_data.get("min_price", None)
+        object["reverted_rate_data"]["weight_slabs"] = reverted_validity_data.get("weight_slabs", [])
+        chargeable_weight = get_chargeable_weight(object.get("weight"), object.get("volume"))
+        for weight_slab in reverted_validity_data.get("weight_slabs", []):
+            if weight_slab.get("lower_limit") >= chargeable_weight and weight_slab.get("upper_limit") <= chargeable_weight:
+                object["price"] = weight_slab.get("tarrif_price", None)
+                break
+        object["reverted_rate_data"]["currency"] = reverted_validity_data.get("currency", None)
 
 def get_pagination_data(query, page, page_limit):
     total_count = query.count()
