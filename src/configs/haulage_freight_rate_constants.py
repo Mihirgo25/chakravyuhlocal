@@ -1,3 +1,6 @@
+
+from configs.global_constants import *
+
 DEFAULT_PERMISSIBLE_CARRYING_CAPACITY = 54.90
 
 DESTINATION_TERMINAL_CHARGES_INDIA = 15
@@ -170,4 +173,43 @@ LOCATION_PAIR_HIERARCHY = {
     'city:country' : 14,
     'country:city' : 15,
     'country:country' : 16,
+
+}
+HAULAGE_FREIGHT_TYPES = ['carrier', 'merchant']
+
+TRANSPORT_MODES = ['rail', 'barge', 'trailer']
+
+TRAILER_TYPES = ['flat_bed', 'semi_flat_bed', 'xl_bed']
+
+TRIP_TYPES = ['one_way', 'round_trip']
+
+COMMODITY = ['general', 'dangerous', 'temp_controlled']
+
+HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS = {
+    'standard':  [None] + HAZ_CLASSES + COMMODITY,
+    'refer':  [None] + COMMODITY,
+    'open_top':  [None] + COMMODITY,
+    'open_side':  [None] + COMMODITY,
+    'flat_rack':  [None] + COMMODITY,
+    'iso_tank':  [None] + HAZ_CLASSES + COMMODITY,
+    'conventional_end_opening':  COMMODITY,
+    'high_cube_end_opening':  COMMODITY,
+    'side_access':  COMMODITY,
+    'refrigerated':  COMMODITY,
+    'flat_rack_collapsible':  COMMODITY,
+    'platform':  COMMODITY,
+    'tank':  COMMODITY,
+    'high_cube_refrigerated':  COMMODITY,
+    'ss_tank':  COMMODITY,
+    'ms_tank':  COMMODITY,
+    'ss_volve_tank':  COMMODITY,
+    'ms_volve_tank':  COMMODITY,
+    'ss_blank_tank':  COMMODITY,
+    'ms_blank_tank':  COMMODITY,
+    'ss_hc_tank':  COMMODITY,
+    'ms_hc_tank':  COMMODITY,
+    'ss_blank_hc_tank':  COMMODITY,
+    'ms_blank_hc_tank':  COMMODITY,
+    'ss_normal_tank':  COMMODITY,
+    'ms_normal_tank':  COMMODITY
   }
