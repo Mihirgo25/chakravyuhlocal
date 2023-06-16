@@ -231,7 +231,7 @@ DISTANCE_FACTOR = {
     'km':1,
     'mi':0.621371
 }
-# distance factor for basis on ranges of distances.
+# distance factor for rate limiting basis on ranges of distances.
 DISTANCE_RATE_FACTOR = {
     0:[{'lower_limit':0,'upper_limit':50,'rate_factor':3.5},{'lower_limit':50,'upper_limit':500,'rate_factor':2.2,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.94}],
     1:[{'lower_limit':0,'upper_limit':50,'rate_factor':1.5},{'lower_limit':50,'upper_limit':500,'rate_factor':0.4,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.95}]
