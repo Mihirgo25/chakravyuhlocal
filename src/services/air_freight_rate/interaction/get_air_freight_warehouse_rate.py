@@ -7,7 +7,7 @@ def get_air_freight_wareohouse_data(request):
 
     if all_fields_present(request):
         object=find_object(request)
-     
+    
         if object:
             details=object.detail()
     else:
@@ -17,7 +17,7 @@ def get_air_freight_wareohouse_data(request):
         object=AirFreightWarehouseRates()
         for key in list(request.keys()):
             setattr(object,key,request[key])
-        return details | ({'warehouse_charge_codes':object.possible_charge_codes()})
+    return details | ({'warehouse_charge_codes':object.possible_charge_codes()})
 
 
 def all_fields_present(request):

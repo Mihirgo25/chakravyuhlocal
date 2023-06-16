@@ -28,9 +28,8 @@ def get_density_wise_rate_card(
         low_density_lower_limit = AIR_EXPORTS_LOW_DENSITY_RATIO
         high_density_upper_limit = AIR_EXPORTS_HIGH_DENSITY_RATIO
     freights = []
-
     if ratio > low_density_lower_limit:
-        closest_density_match = None
+        closest_density_match = {}
         minimum_possible = MAX_VALUE
         density_rate_category = "low_density"
         for freight in response_object["freights"]:
@@ -49,8 +48,7 @@ def get_density_wise_rate_card(
             ):
                 minimum_possible = density_difference
                 closest_density_match = freight
-
-        if closest_density_match:
+        if len(closest_density_match):
             freights.append(closest_density_match)
     elif ratio <= high_density_upper_limit and chargeable_weight >= 100:
         density_rate_category = "high_density"

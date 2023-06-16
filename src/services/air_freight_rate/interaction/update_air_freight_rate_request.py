@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from database.db_session import db 
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from uuid import UUID
 
 def update_air_freight_rate_request(request):
@@ -15,6 +15,8 @@ def execute_transaction_code(request):
     if not object:
         raise HTTPException(status_code=400, detail="ID IS INVALID")
     
+    object.status = request.get('status')
+    object.remarks = request.get('remarks')
     if request.get("closing_remarks"):
         if "rate_added" in request.get("closing_remarks"):
             object.reverted_rates_count = (
@@ -30,7 +32,7 @@ def execute_transaction_code(request):
         object.closing_remarks = (
             object.closing_remarks.append(request.get("closing_remarks"))
             if object.closing_remarks is not None
-            else request.get("closing_remarks")
+            else [request.get("closing_remarks")]
         )
 
     try :
@@ -46,7 +48,7 @@ def execute_transaction_code(request):
     }
     
 def create_audit(request,air_freight_rate_request_id):
-        AirFreightRateAudits.create(
+        AirFreightRateAudit.create(
         action_name="update",
         performed_by_id=request["performed_by_id"],
         data={

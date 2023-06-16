@@ -6,12 +6,17 @@ from configs.air_freight_rate_constants import *
 from playhouse.postgres_ext import *
 from micro_services.client import *
 from database.rails_db import *
+from schema import Schema, Optional
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
 from configs.global_constants import *
+from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from configs.definitions import AIR_FREIGHT_CHARGES
 from air_freight_rate_params import WeightSlab
+import json
+from playhouse.shortcuts import model_to_dict
+
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -48,10 +53,10 @@ class AirFreightRate(BaseModel):
     importer_exporter = BinaryJSONField(null=True)
     importer_exporter_id = UUIDField(null=True)
     is_best_price = BooleanField(null=True)
-    is_destination_local_line_items_error_messages_present = BooleanField(null=True)
-    is_destination_local_line_items_info_messages_present = BooleanField(null=True)
-    is_origin_local_line_items_error_messages_present = BooleanField(null=True)
-    is_origin_local_line_items_info_messages_present = BooleanField(null=True)
+    # is_destination_local_line_items_error_messages_present = BooleanField(null=True)
+    # is_destination_local_line_items_info_messages_present = BooleanField(null=True)
+    # is_origin_local_line_items_error_messages_present = BooleanField(null=True)
+    # is_origin_local_line_items_info_messages_present = BooleanField(null=True)
     last_rate_available_date = DateTimeField(index=True, null=True)
     length = IntegerField(null=True)
     maximum_weight = IntegerField(null=True)
@@ -64,8 +69,8 @@ class AirFreightRate(BaseModel):
     origin_local = BinaryJSONField(null=True)
     origin_local_id = UUIDField(null=True)
     origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    origin_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    origin_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # origin_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # origin_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     origin_storage_id = UUIDField(null=True)
     origin_trade_id = UUIDField(null=True)
     price_type = CharField(null=True)
@@ -89,14 +94,14 @@ class AirFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True)
-    is_surcharge_line_items_error_messages_present = BooleanField(null=True)
-    is_surcharge_line_items_info_messages_present = BooleanField(null=True)
-    surcharge_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    surcharge_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # is_surcharge_line_items_error_messages_present = BooleanField(null=True)
+    # is_surcharge_line_items_info_messages_present = BooleanField(null=True)
+    # surcharge_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # surcharge_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
 
     def save(self, *args, **kwargs):
-      self.updated_at = datetime.datetime.now()
-      return super(AirFreightRate, self).save(*args, **kwargs)
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRate, self).save(*args, **kwargs)
     
     class Meta:
         table_name = 'air_freight_rates_temp1'
@@ -106,19 +111,14 @@ class AirFreightRate(BaseModel):
         
         if not validity_start:
             raise HTTPException(status_code=400,details='Validity Start is Invalid')
-    
         if not validity_end:
             raise HTTPException(status_code=400, detail="validity_end is Invalid")
-
         if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=120)):
             raise HTTPException(status_code=400, detail="validity_end can not be greater than 120 days from current date")
-
         if validity_start.date() < (datetime.datetime.now().date() - datetime.timedelta(days=15)):
             raise HTTPException(status_code=400, detail="validity_start can not be less than 15 days from current date")
-
         if validity_end <= validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
-        
 
     def validate_shipment_type(self):
         if self.shipment_type not in PACKING_TYPE:
@@ -144,7 +144,7 @@ class AirFreightRate(BaseModel):
         if self.price_type not in PRICE_TYPES:
             raise HTTPException(status_code = 400,details = 'Invalid Price Type')
         
-    def validations(self):
+    def validate_before_save(self):
         self.validate_shipment_type()
         self.validate_stacking_type()
         self.validate_commodity()
@@ -153,19 +153,19 @@ class AirFreightRate(BaseModel):
 
         if self.length < 0:
             raise HTTPException(status_code = 400,details = 'Length Should Be Positive Value')
-        
         if self.breadth < 0:
             raise HTTPException(status_code = 400,details = 'Bredth Should Be Positive Value')
-
         if self.height < 0:
             raise HTTPException(status_code = 400,details = 'Height Should Be Positive Value')
         
         if self.rate_type not in RATE_TYPES:
             raise HTTPException(status_code = 400,details = 'Invalid Rate Type')
+        
         self.validate_available_volume_and_gross_weight()
         self.validate_origin_destination_country()
         self.validate_service_provider_id()
         self.validate_airline_id()
+        self.validate_operation_type()
         return True
     
     def validate_available_volume_and_gross_weight(self):
@@ -181,12 +181,11 @@ class AirFreightRate(BaseModel):
 
       ids = [str(self.origin_airport_id), str(self.destination_airport_id)]
 
-      obj = {'filters':{"id": ids, "type":'seaport'}}
+      obj = {'filters':{"id": ids, "type":'airport'}}
       locations_response = maps.list_locations(obj)
       locations = []
       if 'list' in locations_response:
         locations = locations_response["list"]
-
 
       for location in locations:
         if str(self.origin_airport_id) == str(location['id']):
@@ -197,10 +196,12 @@ class AirFreightRate(BaseModel):
 
     def get_required_location_data(self, location):
         loc_data = {
-          "id": location["id"],
-          "name": location["name"],
+            "id": location["id"],
+          "type":location['type'],
+          "name":location['name'],
+          "display_name": location["display_name"],
           "is_icd": location["is_icd"],
-          "airport_code": location["port_code"],
+          "port_code": location["port_code"],
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
@@ -216,9 +217,9 @@ class AirFreightRate(BaseModel):
 
     def set_destination_location_ids(self):
       self.destination_country_id = self.destination_airport.get('country_id')
-      self.destination_continent_id = self.destination_aorport.get('continent_id')
+      self.destination_continent_id = self.destination_airport.get('continent_id')
       self.destination_trade_id = self.destination_airport.get('trade_id')
-      self.destination_location_ids = [uuid.UUID(str(self.destination_port_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
+      self.destination_location_ids = [uuid.UUID(str(self.destination_airport_id)),uuid.UUID(str(self.destination_country_id)),uuid.UUID(str(self.destination_trade_id)),uuid.UUID(str(self.destination_continent_id))]
 
     def validate_origin_destination_country(self):
         if self.origin_airport['country_code'] == self.destination_airport['country_code']:
@@ -233,18 +234,18 @@ class AirFreightRate(BaseModel):
            
     def validate_airline_id(self):
         airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
-        if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'shipping_line':
+        if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
         raise HTTPException(status_code = 400, details = 'Airline Id Is Not Valid')    
 
     def validate_operation_type(self):
         if self.operation_type not in AIR_OPERATION_TYPES:
-            raise HTTPException(status_code = 400, details = 'Invalid Operation Type')  
+            raise HTTPException(status_code = 400, details = 'Invalid Operation Type')
 
-    def update_foreign_references(self):
+    def update_foreign_references(self, price_type):
         self.update_local_references()
-        if self.price_type != 'all_in':
+        if price_type != 'all_in':
             self.update_surcharge_reference()
     
     def update_local_references(self):
@@ -262,31 +263,41 @@ class AirFreightRate(BaseModel):
 
         origin_local_id = None
         destination_local_id = None
-
+        origin_local_found = False
+        destination_local_found = False
+        origin_local = None
+        destination_local = None
         for local in locals:
-            if local['airport_id'] == self.origin_airport_id and local['trade_type'] == 'export':
-                origin_local_id = local['id']
             
-            if local['airport_id'] == self.destination_airport_id and local['trade_type'] == 'import':
+            if origin_local_found and destination_local_found:
+                continue
+            if not origin_local_found and str(local['airport_id']) == str(self.origin_airport_id) and local['trade_type'] == 'export':
+                origin_local_id = local['id']
+                origin_local = {key:value for key,value in local.items() if key in ['line_items_error_messages','line_items_info_messages','is_line_items_error_messages_present','is_line_items_info_messages_present']}
+                origin_local_found = True
+            if not destination_local_found and str(local['airport_id']) == str(self.destination_airport_id) and local['trade_type'] == 'import':
                 destination_local_id = local['id']
-        
+                destination_local = {key:value for key,value in local.items() if key in ['line_items_error_messages','line_items_info_messages','is_line_items_error_messages_present','is_line_items_info_messages_present']}
+                destination_local_found  = True
         self.origin_local_id = origin_local_id
         self.destination_local_id = destination_local_id
-        self.save()
+        self.origin_local = origin_local
+        self.destination_local = destination_local
     
     def update_surcharge_reference(self):
-
-        surcharge = AirFreightRateSurcharge.select(AirFreightRateSurcharge.id).where(
-            AirFreightRateSurcharge.origin_airport_id == self.origin_airport_id,
-            AirFreightRateSurcharge.destination_airport_id == self.destination_airport_id,
-            AirFreightRateSurcharge.commodity == self.commodity,
-            AirFreightRateSurcharge.commodity_type == self.commodity_type,
-            AirFreightRateSurcharge.airline_id == self.airline_id,
-            AirFreightRateSurcharge.service_provider_id == self.service_provider_id
+        surcharge_object = AirFreightRateSurcharge.select().where(
+            (AirFreightRateSurcharge.origin_airport_id == self.origin_airport_id) &
+            (AirFreightRateSurcharge.destination_airport_id == self.destination_airport_id) &
+            (AirFreightRateSurcharge.commodity == self.commodity) &
+            (AirFreightRateSurcharge.commodity_type == self.commodity_type) &
+            (AirFreightRateSurcharge.airline_id == self.airline_id) &
+            (AirFreightRateSurcharge.service_provider_id == self.service_provider_id)
         ).first()
-
-        if surcharge:
-            self.surcharge_id = surcharge.id 
+        if surcharge_object:
+            surcharge = model_to_dict(surcharge_object)
+            surcharge_data = {key:value for key,value in surcharge.items() if key in ['line_items_error_messages','line_items_info_messages','is_line_items_error_messages_present','is_line_items_info_messages_present']}
+            self.surcharge_id = surcharge_object.id
+            self.surcharge = surcharge_data
     
     def detail(self):
         details =  {
@@ -368,37 +379,34 @@ class AirFreightRate(BaseModel):
     
     def set_last_rate_available_date(self):
         new_validities = []
-        if self.validities is not None:
-            for validity in self.validities:
-                if validity['status']:
-                    new_validities.append(validity)
-        
+        for validity in self.validities:
+            if validity['status']:
+                new_validities.append(validity)
         if new_validities:
             self.last_rate_available_date = new_validities[-1]['validity_end']
     
 
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
-      return # todo check if we need to develop autoquotation
-      if not self.last_rate_available_date:
-          return
-      data={
-              "rate_id": self.id,
-              "service": "air_freight",
-              "performed_by_id": performed_by_id,
-              "procured_by_id": procured_by_id,
-              "last_updated_at": self.updated_at.replace(microsecond=0).isoformat(),
-              "last_rate_available_date": datetime.datetime.strptime(str(self.last_rate_available_date), '%Y-%m-%d').date().isoformat(),
-              "price": self.get_price_for_trade_requirement(),
-              "price_currency": "INR",
-              "is_origin_local_missing": (not self.origin_local or not 'line_items' in self.origin_local or len(self.origin_local['line_items']) == 0),
-              "is_destination_local_missing": (not self.destination_local or not 'line_items' in self.destination_local or len(self.destination_local['line_items']) == 0),
-              "rate_params": {
-                  "origin_location_id": self.origin_airport_id,
-                  "destination_location_id": self.destinationair_port_id,
-                  "commodity": self.commodity,
-                  "operation_type": self.operation_type
-
-              }
+        return
+        if self.last_rate_available_date is None:
+            return
+        data={
+            "rate_id": self.id,
+            "service": "air_freight",
+            "performed_by_id": performed_by_id,
+            "procured_by_id": procured_by_id,
+            "last_updated_at": self.updated_at.replace(microsecond=0).isoformat(),
+            "last_rate_available_date": datetime.datetime.strptime(str(self.last_rate_available_date), '%Y-%m-%d').date().isoformat(),
+            "price": self.get_price_for_trade_requirement(),
+            "price_currency": "INR",
+            "is_origin_local_missing": (not self.origin_local or not 'line_items' in self.origin_local or len(self.origin_local['line_items']) == 0),
+            "is_destination_local_missing": (not self.destination_local or not 'line_items' in self.destination_local or len(self.destination_local['line_items']) == 0),
+            "rate_params": {
+                "origin_location_id": self.origin_airport_id,
+                "destination_location_id": self.destination_airport_id,
+                "commodity": self.commodity,
+                "operation_type": self.operation_type
+            }
           }
       # common.create_organization_trade_requirement_rate_mapping(data)
 
@@ -431,92 +439,108 @@ class AirFreightRate(BaseModel):
             if density_ratio:
                 min_density_weight=float(density_ratio.replace(' ','').split(':')[-1])
                 max_density_weight=MAX_CARGO_LIMIT
-        if self.validities is not None:   
-            for validity_object in self.validities:
-                if not validity_object.get("density_category"):
-                    validity_object['density_category'] = 'general'
-
-                if validity_object.get('status') ==False:
-                    new_validities.append(validity_object)
-                    continue
-                if validity_object.get("density_category") == 'high_density'  and  not deleted and  validity_object.get("density_category") == density_category:
-                    if validity_object.get('min_density_weight') < min_density_weight and validity_object.get('max_density_weight') > min_density_weight:
-                        validity_object['max_density_weight'] = min_density_weight
-                    if validity_object.get('min_density_weight') > min_density_weight and max_density_weight > validity_object.get('min_density_weight'):
-                        max_density_weight = validity_object.get('min_density_weight')
-
-                if validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight") or  rate_type in ["promotional", "consolidated"]:
-                    if validity_object.get("validity_start") > validity_end:
-                        new_validities.append(validity_object)
-                        continue
-                    if validity_object.get("validity_end") < validity_start:
-                        new_validities.append(validity_object)
-                        continue
-                    if float(min_price) == 0.0:
-                        min_price = validity_object.get("min_price")
-
-                    if validity_object.get('validity_start') >= validity_start and validity_object.get('validity_end') <= validity_end and validity_id != validity_object.get('id'):
-                        new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                        validity_object['status'] = False
-                        new_validities.append(validity_object)
-                        continue
-                    if validity_object.get('validity_start') < validity_start and validity_object.get('validity_end') <= validity_end:
-                        new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                        validity_object['validity_end'] = validity_start - datetime.timedelta(minutes=1)
-                        new_validities.append(validity_object)
-                        continue
-                    if validity_object.get(validity_start) >= validity_start and validity_object.get('validity_end') > validity_end: 
-                        new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                        validity_object['validity_start'] = validity_end + datetime.timedelta(minutes=1)
-                        new_validities.append(validity_object)
-                        continue
-                    if validity_object.get('validity_start') < validity_start and validity_object.get('validity_end') > validity_end:
-                        new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                        new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
-                        new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
-                        # params = self.audits.where(validity_id: old_validity1.id, action_name: ['create', 'update']).order('air_freight_rate_audits.created_at desc').first.as_json
-                        # self.audits.create!(params.except('id', 'created_at', 'updated_at').merge!('validity_id' => old_validity2.id))
-                        continue
-                else:
-                    new_validities.append(validity_object)
                 
-                if validity_id and validity_id == validity_object.get('id') and deleted:
-                    validity_object['weight_slabs'] = new_weight_slabs
-                    new_validities.append(validity_object)
-                    self.min_price = validity_object.get("min_price")
+        for validity_object in self.validities:
+            validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
+            validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
+            validity_start = validity_start
+            validity_end = validity_end
+            if not validity_object.get("density_category"):
+                validity_object['density_category'] = 'general'
+
+            if validity_object.get('status') ==False:
+                new_validities.append(AirFreightRateValidity(**validity_object))
+                continue
+            if validity_object.get("density_category") == 'high_density'  and  not deleted and  validity_object.get("density_category") == density_category:
+                if validity_object.get('min_density_weight') < min_density_weight and validity_object.get('max_density_weight') > min_density_weight:
+                    validity_object['max_density_weight'] = min_density_weight
+                if validity_object.get('min_density_weight') > min_density_weight and max_density_weight > validity_object.get('min_density_weight'):
+                    max_density_weight = validity_object.get('min_density_weight')
+
+            if validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight") or rate_type in ["promotional", "consolidated"]:
+                if validity_object_validity_start > validity_end:
+                    new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
+                if validity_object_validity_end < validity_start:
+                    new_validities.append(AirFreightRateValidity(**validity_object))
+                    continue
+                if float(min_price) == 0.0:
+                    min_price = validity_object.get("min_price")
 
-                if not deleted:
-                    new_validity_object = {
-                    "validity_start": validity_start,
-                    "validity_end": validity_end,
-                    "min_price": min_price,
-                    "currency": currency,
-                    "weight_slabs": new_weight_slabs,
-                    "id": uuid.uuid1(),
-                    "likes_count": 0,
-                    "dislikes_count": 0,
-                    "status": True,
-                    "density_category": density_category,
-                    "min_density_weight": min_density_weight,
-                    "max_density_weight": max_density_weight,
-                    "initial_volume": available_volume,
-                    "available_volume": available_volume,
-                    "initial_gross_weight": available_gross_weight,
-                    "available_gross_weight": available_gross_weight
-                    }
-                
-                new_validities.push(AirFreightRateValidity(**new_validity_object))
-                self.min_price = new_validity_object["min_price"]
-                new_validities = sorted(new_validities, key=lambda x: x['validity_end'])
-                self.validities = new_validities
-                if not deleted:
-                    return new_validity_object['id']
+                if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end and validity_id != validity_object.get('id'):
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    validity_object['status'] = False
+                    new_validities.append(AirFreightRateValidity(**validity_object))
+                    continue
+                if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
+                    new_validities.append(AirFreightRateValidity(**validity_object))
+                    continue
+                if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end: 
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
+                    new_validities.append(AirFreightRateValidity(**validity_object))
+                    continue
+                if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
+                    new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
+                    # params = self.audits.where(validity_id: old_validity1.id, action_name: ['create', 'update']).order('air_freight_rate_audits.created_at desc').first.as_json
+                    # self.audits.create!(params.except('id', 'created_at', 'updated_at').merge!('validity_id' => old_validity2.id))
+                    continue
+            else:
+                new_validities.append(AirFreightRateValidity(**validity_object))
+    
+            if validity_id and validity_id == validity_object.get('id') and deleted:
+                validity_object['weight_slabs'] = new_weight_slabs
+                new_validities.append(AirFreightRateValidity(**validity_object))
+                self.min_price = validity_object.get("min_price")
+                continue
 
+        if not deleted:
+            new_validity_object = {
+            "validity_start": validity_start,
+            "validity_end": validity_end,
+            "min_price": min_price,
+            "currency": currency,
+            "weight_slabs": new_weight_slabs,
+            "id": uuid.uuid1(),
+            "likes_count": 0,
+            "dislikes_count": 0,
+            "status": True,
+            "density_category": density_category,
+            "min_density_weight": min_density_weight,
+            "max_density_weight": max_density_weight,
+            "initial_volume": available_volume,
+            "available_volume": available_volume,
+            "initial_gross_weight": available_gross_weight,
+            "available_gross_weight": available_gross_weight
+            }
+            new_validities.append(AirFreightRateValidity(**new_validity_object))
+            self.min_price = new_validity_object["min_price"]
 
+        new_validities = sorted(new_validities, key=lambda x: x.validity_end.strftime('%Y-%m-%d') if isinstance(x.validity_end, datetime.date) else x.validity_end)
 
+        
+        for validity in new_validities:
+            validity_instance = AirFreightRateValidity(validity)
+            validity_instance.validations()
 
-
+        main_validities=[]
+        for new_validity in new_validities:
+          new_validity.weight_slabs = [dict(weight_slabs) for weight_slabs in new_validity.weight_slabs]
+          new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).split(' ')[0], '%Y-%m-%d').date().isoformat()
+          new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).split(' ')[0], '%Y-%m-%d').date().isoformat()
+          new_validity = vars(new_validity)
+          new_validity['id'] = str(new_validity['__data__']['id'])
+          new_validity.pop('__data__')
+          new_validity.pop('__rel__')
+          new_validity.pop('_dirty')
+          main_validities.append(new_validity)
+        self.validities = main_validities
+        if not deleted:
+            return new_validity_object['id']
 
 
     def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs):
@@ -531,7 +555,7 @@ class AirFreightRate(BaseModel):
 
         return final_old_weight_slabs
 
-    def merge_slab(old_weight_slabs,new_weight_slab):
+    def merge_slab(self,old_weight_slabs,new_weight_slab):
         final_old_weight_slabs=[]
         for old_weight_slab in old_weight_slabs:
             if old_weight_slab['lower_limit'] >= int(new_weight_slab['upper_limit']):
@@ -561,93 +585,7 @@ class AirFreightRate(BaseModel):
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue
-        final_old_weight_slabs.append(new_weight_slab)
+            final_old_weight_slabs.append(new_weight_slab)
 
         
         return final_old_weight_slabs
-
-
-class AirFreightRateValidity(BaseModel):
-    validity_start: datetime
-    validity_end: datetime
-    min_price: float
-    id: str
-    currency: str
-    status: bool = True
-    likes_count: int = None
-    dislikes_count: int = None
-    weight_slabs: list[WeightSlab] = []
-    density_category: str = 'general'
-    initial_volume: float = None
-    available_volume: float = None
-    initial_gross_weight: float = None
-    available_gross_weight: float = None
-    min_density_weight: float = None
-    max_density_weight: float = None
-
-    # class Config:
-    #     orm_mode = True
-    #     exclude = ('validity_start', 'validity_end')
-
-    def validations(self):
-        if self.initial_volume and self.initial_volume < 0:
-            raise HTTPException(status_code=400,details = 'Initial Volume Should Be Positive')
-
-        if self.available_volume and self.available_volume < 0:
-            raise HTTPException(status_code=400,details = 'Available Volume Should Be Positive')
-        
-        if self.initial_gross_weight and self.initial_gross_weight < 0:
-            raise HTTPException(status_code=400,details = 'Initial Gross Weight Be Positive')
-        
-        if self.available_gross_weight and self.available_gross_weight < 0:
-            raise HTTPException(status_code=400,details = 'Available Gross Weight Be Positive')
-        
-        if self.min_density_weight and self.min_density_weight < 0:
-            raise HTTPException(status_code=400,details = 'Minimum Density Weight Be Positive')
-        
-        if self.max_density_weight and self.max_density_weight < 0:
-            raise HTTPException(status_code=400,details = 'Maximum Density Weight Be Positive')
-        
-        self.validate_weight_slabs()
-        return True
-    
-    def validate_weight_slabs(self):
-        now = datetime.now()
-        beginning_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        if not self.status and self.validity_end < beginning_of_day:
-            return
-        lower_limits = []
-        upper_limits = []
-        check = False
-        for slab in self.weight_slabs:
-            if float(slab.get('upper_limit')) <= float(slab.get('lower_limit')):
-                check = True
-            lower_limits.append(slab.get('lower_limit'))
-            upper_limits.append(slab.ge('upper_limit'))
-        
-        if check:
-            raise HTTPException(status_code = 400,details = 'Invalid Weight Slabs')
-        
-        itr = 0
-
-        while itr < len(upper_limits)-1:
-            if float(upper_limits[itr]) >= float(lower_limits[itr+1]):
-                raise HTTPException(status_code = 400,details = 'Weight Slabs OverLapping')
-            itr = itr +1
-
-
-
-
-
-
-    
-
-
-    
-
-
-
-
-
-

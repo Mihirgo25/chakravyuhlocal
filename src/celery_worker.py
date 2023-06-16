@@ -9,6 +9,7 @@ from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
@@ -500,6 +501,20 @@ def process_freight_look_rates(self, rate, locations):
 def create_air_freight_rate_feedback_for_prediction(self, result):
     try:
         create_air_freight_rate_feedback(result)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def delay_air_functions(self,air_object,request):
+    try:
+        if not AirFreightRate.select().where(AirFreightRate.service_provider_id==request["service_provider_id"], AirFreightRate.rate_not_available_entry==False, AirFreightRate.rate_type == DEFAULT_RATE_TYPE).exists():
+            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+
+        common.create_saas_air_schedule_airport_pair({'origin_airport_id':request.get("origin_airport_id"), 'destination_airport_id':request.get("destination_airport_id")})
+        get_multiple_service_objects(air_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

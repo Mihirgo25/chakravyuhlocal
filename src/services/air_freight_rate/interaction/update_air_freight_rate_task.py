@@ -2,7 +2,7 @@ from datetime import datetime
 from database.db_session import db
 from fastapi import HTTPException
 from celery_worker import update_multiple_service_objects
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from configs.air_freight_rate_constants import * 
 from services.air_freight_rate.interaction.create_air_freight_rate_local import create_air_freight_rate_local
@@ -11,7 +11,7 @@ from micro_services.client import *
 def create_audit(request):
     data = {key:str(value) for key, value in request.items() if key not in ['performed_by_id','id'] and not value == None}
 
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         action_name = 'update',
         performed_by_id = request['performed_by_id'],
         data = data,
@@ -35,12 +35,11 @@ def validate_closing_remarks(request):
 def execute_transaction_code(request):
     request['service_provider_id']=DEFAULT_SERVICE_PROVIDER_ID
     request['sourced_by_id']=DEFAULT_SOURCED_BY_ID
-    request['procured_by_id']=request.get('performed_by_id')
+    request['procured_by_id']=DEFAULT_PROCURED_BY_ID
 
     task=AirFreightRateTasks.select().where(AirFreightRateTasks.id==request.get('id')).first()
 
-    
-    
+
     if not task:
         raise HTTPException(status_code=400,detail=f"{request.get('id')} is invalid")
     
@@ -71,7 +70,7 @@ def create_air_freight_local_rate(task,request):
       'service_provider_id': request['service_provider_id'],
       'procured_by_id': request['procured_by_id'],
       'sourced_by_id': request['sourced_by_id'],
-    #  'source': 'tech_ops_dashboard', #todo we dont't store source for air local (should be added to audit?)
+     'source': 'tech_ops_dashboard', #todo we dont't store source for air local (should be added to audit?)
       'trade_type': task.trade_type,
       'airport_id': task.airport_id,
       'commodity': task.commodity,
@@ -79,7 +78,10 @@ def create_air_freight_local_rate(task,request):
       'airline_id': task.airline_id,
       'line_items': rate['line_items']
     }
-    return create_air_freight_rate_local(create_params)
+    try:
+        id = create_air_freight_rate_local(create_params)
+    except Exception as e:
+        raise HTTPException(status_code = 400, detail = 'Error while creating Local')
 
 def update_shipment_local_charges(task,request):
     rate=task.completion_data['rate']
@@ -111,15 +113,14 @@ def get_update_params(request):
             'rate':request.get('rate')
         }
     }
-    if request['status']:
+    if request.get('status'):
         update_params={'completion_data':{ 'closing_remarks':request['closing_remarks']}}
     update_params['completed_by_id'] = request['performed_by_id']
-    update_params['completed_at'] = datetime.strftime(datetime.now(),'%Y-%m-%d')
-    if request['status']:
+    update_params['completed_at'] = datetime.now()
+    if request.get('status'):
         update_params['status'] = request['status']
     else:
         update_params['status'] = 'completed'
-    print(update_params,'hahahahahah')
     return update_params
 
 

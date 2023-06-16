@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta, date
 from peewee import *
 from typing import List
-from dateutil.relativedelta import relativedelta
 
 
 class WeightSlab(BaseModel):
@@ -56,8 +55,8 @@ class LineItemLocal(BaseModel):
     min_price: float
     price: float
     currency: str
-    remarks: list[str] = None
-    slabs: list[Slab]
+    remarks: list[str] = []
+    slabs: list[Slab] = []
 
 
 class LocalData(BaseModel):
@@ -77,8 +76,8 @@ class DeleteAirFreightRate(BaseModel):
 class UpdateAirFreightRate(BaseModel):
     id: str
     validity_id: str = None
-    validity_start: datetime = None
-    validity_end: datetime = None
+    validity_start: date = None
+    validity_end: date = None
     currency: str = None
     min_price: float = None
     performed_by_id: str = None
@@ -134,34 +133,13 @@ class CreateAirFreightRateSurcharge(BaseModel):
     airline_id: str
     operation_type: str
     service_provider_id: str
-    performed_by_id: str
+    performed_by_id: str = None
+    performed_by_type: str = None
     procured_by_id: str
     sourced_by_id: str
     bulk_operation_id: str = None
     rate_sheet_id: str = None
     line_items: list[LineItem]
-
-
-class AirSlabsStorage(BaseModel):
-    lower_limit: float
-    upper_limit: float
-    price: float
-    currency: str
-
-
-class CreateAirFreightRateStorage(BaseModel):
-    rate_sheet_id: str = None
-    performed_by_id: str
-    procured_by_id: str
-    sourced_by_id: str
-    airport_id: str
-    airline_id: str
-    trade_type: str
-    commodity: str
-    service_provider_id: str
-    free_limit: int
-    remarks: list[str] = None
-    slabs: list[AirSlabsStorage] = None
 
 
 class CreateAirFreightRateLocal(BaseModel):
@@ -182,7 +160,7 @@ class CreateAirFreightRateLocal(BaseModel):
 
 class UpdateAirFreightRateSurcharge(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
     procured_by_id: str = None
     sourced_by_id: str = None
     line_items: list[LineItem]
@@ -213,19 +191,19 @@ class ListSlab(BaseModel):
 
 class CreateAirFreightRateLocal(BaseModel):
     airport_id: str
-    airline_id: str = None
-    trade_type: str = None
-    commodity: str = None
-    commodity_type: str = None
-    service_provider_id: str = None
-    performed_by_id: str = None
-    procured_by_id: str = None
-    sourced_by_id: str = None
+    airline_id: str
+    trade_type: str
+    commodity: str
+    commodity_type: str
+    service_provider_id: str
+    performed_by_id: str
+    procured_by_id: str
+    sourced_by_id: str
     bulk_operation_id: str = None
     rate_sheet_id: str = None
     rate_type: str = "general"
-    line_items: list[LineItemLocal] = None
-    slabs: list[Slab] = None
+    line_items: list[LineItemLocal]
+
 
 
 class LocalSlabs(BaseModel):
@@ -263,13 +241,6 @@ class CreateAirFrieghtRateNotAvailable(BaseModel):
     destination_trade_id: str
     commodity: str
 
-
-class UpdateAirFreightRateSurcharge(BaseModel):
-    id: str
-    performed_by_id: str
-    procured_by_id: str = None
-    sourced_by_id: str = None
-    line_items: list[LineItem]
 
 
 class CreateAirFreightRateTask(BaseModel):
@@ -395,10 +366,10 @@ class CreateAirFreightWarehouseRates(BaseModel):
 
 class UpdateAirFreightStorageRates(BaseModel):
     id: str = None
-    performed_by_id: str = None
+    performed_by_id: str
     bulk_operation_id: str = None
     free_limit: int = None
-    slabs: list[Slab] = []
+    slabs: list[Slab] = None
 
 
 class UpdateAirFreightRateMarkUp(BaseModel):
@@ -502,6 +473,22 @@ class UpdateAirFreightRateLocal(BaseModel):
     bulk_operation_id: str
     line_items: list[LineItemLocal]
 
+
+class CreateAirFreightStorageRate(BaseModel):
+    rate_sheet_id: str = None
+    performed_by_id: str
+    procured_by_id: str
+    sourced_by_id: str
+    airport_id: str
+    airline_id: str
+    trade_type: str
+    commodity: str
+    service_provider_id: str
+    free_limit: int
+    remarks: list[str] = []
+    slabs: list[Slab] = None
+
+
 class CreateAirFreightRateNotAvailable(BaseModel):
     origin_airport_id: str
     origin_country_id: str = None
@@ -512,3 +499,25 @@ class CreateAirFreightRateNotAvailable(BaseModel):
     commodity: str
     performed_by_id: str = None
     performed_by_type: str = None
+
+
+class UpdateAirFreightWarehouseRate(BaseModel):
+    id: str
+    performed_by_id: str = None
+    line_items: list[WarehouseLineItems] = None
+
+
+class UpdateAirFreightRateRequest(BaseModel):
+    air_freight_rate_request_id: str
+    closing_remarks: list[str] = None
+    status: str = None
+    remarks: str = None
+    performed_by_id: str = None
+
+
+class DeleteAirFreightRateRequest(BaseModel):
+    air_freight_rate_request_ids: list[str]
+    closing_remarks: list[str] = None
+    rate_id: str
+    validity_id: str
+    performed_by_id: str

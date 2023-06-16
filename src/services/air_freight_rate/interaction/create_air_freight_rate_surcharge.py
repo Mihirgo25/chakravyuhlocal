@@ -2,7 +2,8 @@ from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreig
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
-import pdb
+from celery_worker import update_multiple_service_objects
+from celery_worker import update_multiple_service_objects
 
 def create_audit(request,surcharge_id):
     audit_data={}
@@ -20,7 +21,7 @@ def create_audit(request,surcharge_id):
 
 def create_air_freight_rate_surcharge(request):
     object_type = 'Air_Freight_Rate_Surcharge'
-    query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+    query="create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
     db.execute_sql(query)    
     with db.atomic():
         return execute_transaction_code(request)
@@ -48,6 +49,9 @@ def execute_transaction_code(request):
     if not surcharge:
         surcharge = AirFreightRateSurcharge(**row)
         surcharge.line_items=request.get('line_items')
+        surcharge.set_locations()
+        surcharge.set_destination_location_ids()
+        surcharge.set_origin_location_ids()
     else:
         old_line_items= surcharge.line_items
         for line_item in request.get('line_items'):
@@ -55,22 +59,22 @@ def execute_transaction_code(request):
         surcharge.line_items = old_line_items
     
 
-    
-    # print(surcharge.__dict__)
-    
-    surcharge.set_locations()
-    surcharge.set_destination_location_ids()
-    surcharge.set_origin_location_ids()
+    surcharge.procured_by_id = request.get('procured_by_id')
+    surcharge.sourced_by_id = request.get('sourced_by_id')
     surcharge.update_freight_objects()
     surcharge.update_line_item_messages()
     surcharge.validate()
+    surcharge.sourced_by_id = request.get('sourced_by_id')
+    surcharge.procured_by_id = request.get('procured_by_id')
     try:
         surcharge.save()
     except Exception:
         raise HTTPException(status_code=400, detail="rate did not save")
+    update_multiple_service_objects.apply_async(kwargs={'object':surcharge},queue='low')
 
     
     create_audit(request,surcharge.id)
+    update_multiple_service_objects.apply_async(kwargs={'object':surcharge},queue='low')
 
     return {
       'id': str(surcharge.id)

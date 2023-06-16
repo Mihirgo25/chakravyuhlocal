@@ -2,13 +2,13 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from fastapi import HTTPException
 from micro_services.client import *
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudits
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.interaction.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
 
 
 def create_audit(request,task_id):
 
-    AirFreightRateAudits.create(
+    AirFreightRateAudit.create(
         action_name='create',
         data=request,
         performed_by_id=request.get('performed_by_id'),
@@ -54,19 +54,20 @@ def create_air_freight_rate_task (request):
     else:
         task.source_count=1
 
-    if request.get('rate') is not None:
+    if request.get('rate'):
         task.job_data={'rate':request.get('rate')}
     task.status='pending'
 
-    if request.get('shipment_id') is not None:
+    if request.get('shipment_id'):
         try:
             sid = shipment.get_shipment({'id':request['shipment_id']})['summary']['serial_id']
             task.shipment_serial_ids.append(sid)
+            task.shipment_serial_ids = list(set(task.shipment_serial_ids))
         except:
-            sid = None
+            raise HTTPException(status_code = 400, detail = "SID doesn't Exist")
 
     if not task.validate():
-        raise HTTPException(status_code =500,detail='unable to create taskk')
+        raise HTTPException(status_code =500,detail='unable to create task')
     else:
         task.save()
        
