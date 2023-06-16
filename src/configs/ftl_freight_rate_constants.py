@@ -231,13 +231,13 @@ DISTANCE_FACTOR = {
     'km':1,
     'mi':0.621371
 }
-
+# distance factor for basis on ranges of distances.
 DISTANCE_RATE_FACTOR = {
     0:[{'lower_limit':0,'upper_limit':50,'rate_factor':3.5},{'lower_limit':50,'upper_limit':500,'rate_factor':2.2,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.94}],
     1:[{'lower_limit':0,'upper_limit':50,'rate_factor':1.5},{'lower_limit':50,'upper_limit':500,'rate_factor':0.4,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.95}]
 } 
 
-# Rate factor for calculating prices basis on distance of shipment
+# overall rate factor basis on capacity of the truck
 TRUCK_CAPACITY_RATE_FACTOR = {
     "0": 1,
     "1": 1,
@@ -300,7 +300,7 @@ ADDITIONAL_CHARGE = 0.2
 
 # closed body charges for 7.5 Ton truck
 CLOSED_BODY_CHARGES_FOR_7 = 1.3
-# closed body charges for greatern than 14 Ton truck
+# closed body charges for greater than 14 Ton truck
 CLOSED_BODY_CHARGES_FOR_14 = 1.25
 # Minimum charges for driver if distance is less than 300
 MINIMUM_APPLICABLE_CHARGE = 400

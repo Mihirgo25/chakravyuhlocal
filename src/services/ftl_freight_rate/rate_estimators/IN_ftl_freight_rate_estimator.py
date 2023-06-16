@@ -63,11 +63,6 @@ class INFtlFreightRateEstimator:
         result["distance"] = total_path_distance
         return result
 
-    # def get_driver_charges_factor(self,total_distance):
-    #     if total_distance <= 300:
-    #         return MINIMUM_APPLICABLE_CHARGE
-    #     return total_distance
-
     def get_applicable_rule_set(self):
         truck_type = self.truck_and_commodity_data["truck_type"]
         location_ids = list(set([self.location_data_mapping[self.origin_location_id]['country_id'],self.location_data_mapping[self.destination_location_id]['country_id']]))
