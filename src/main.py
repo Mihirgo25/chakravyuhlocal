@@ -22,6 +22,7 @@ from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
 from micro_services.client import *
+from services.haulage_freight_rate.datamigrations.south_america_migration import insert_south_america
 
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -91,6 +92,7 @@ if APP_ENV != "production":
 def startup():
     if db.is_closed():
         db.connect()
+    insert_south_america()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()

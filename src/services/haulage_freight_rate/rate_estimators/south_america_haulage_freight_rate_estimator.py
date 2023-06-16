@@ -9,7 +9,9 @@ from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import (
 )
 from configs.haulage_freight_rate_constants import SOUTH_AMERICA_INFLATION_FACTOR
 
-
+from configs.haulage_freight_rate_constants import (
+    DEFAULT_MAX_WEIGHT_LIMIT
+)
 class SouthAmericaHaulageFreightRateEstimator:
     def __init__(self, query, commodity, load_type, containers_count, distance, container_type, cargo_weight_per_container, permissable_carrying_capacity, container_size, transit_time):
         self.query = query
@@ -25,9 +27,9 @@ class SouthAmericaHaulageFreightRateEstimator:
 
     def estimate(self):
         """
-        Primary Function to estimate north america(mainly chile & bolivia) prices
+        Primary Function to estimate south america(mainly chile & bolivia) prices
         """
-        final_price = self.get_north_america_rates(
+        final_price = self.get_south_america_rates(
             query=self.query,
             commodity=self.commodity,
             load_type=self.load_type,
@@ -41,7 +43,7 @@ class SouthAmericaHaulageFreightRateEstimator:
         )
         return final_price
 
-    def get_north_america_rates(
+    def get_south_america_rates(
         self,
         query,
         commodity,
@@ -56,32 +58,34 @@ class SouthAmericaHaulageFreightRateEstimator:
     ):
         final_data = {}
         final_data["distance"] = location_pair_distance
-        final_data["currency"] = "USD"
-        final_data["country_code"] = "US"
+        query = query.where(
+            HaulageFreightRateRuleSet.container_type == container_size,
+            HaulageFreightRateRuleSet.train_load_type == load_type,
+            HaulageFreightRateRuleSet.country_code == 'NA'
+        ).order_by(SQL("base_price ASC"))
 
-        wagon_upper_limit = (
-            HaulageFreightRateRuleSet.select()
-            .where(
-                HaulageFreightRateRuleSet.commodity_class_type == commodity,
-                HaulageFreightRateRuleSet.distance >= location_pair_distance,
-                HaulageFreightRateRuleSet.train_load_type == load_type,
-                HaulageFreightRateRuleSet.currency == "USD",
-                HaulageFreightRateRuleSet.country_code == "US",
-            )
-            .order_by(HaulageFreightRateRuleSet.distance)
-        )
-
-        wagon_price_upper_limit = [model_to_dict(item) for item in wagon_upper_limit]
-
-        if not wagon_price_upper_limit:
+        if query.count() == 0:
             raise HTTPException(status_code=400, detail="rates not present")
+        price = model_to_dict(query.first())
+        currency = price["currency"]
+        price_per_container = float(price["base_price"])
+        running_base_price_per_carton_km = float(price["running_base_price"])
+        base_price = price_per_container
+        if not cargo_weight_per_container:
+            cargo_weight_per_container = DEFAULT_MAX_WEIGHT_LIMIT[container_size]
+        running_base_price = (
+            running_base_price_per_carton_km
+            * cargo_weight_per_container
+            * float(location_pair_distance)
+        )
+        indicative_price = base_price + running_base_price
 
-        price = wagon_price_upper_limit[0]["base_price"]
-        final_data["base_price"] = self.apply_surcharges_for_north_america(float(price))
-
+        final_data["base_price"] = self.apply_surcharges_for_south_america(indicative_price)
+        final_data["currency"] = currency
+        final_data["transit_time"] = transit_time
         return final_data
 
-    def apply_surcharges_for_north_america(self, price):
+    def apply_surcharges_for_south_america(self, price):
         surcharge = 0.15 * price
         development_charges = 0.05 * price
         final_price = price + surcharge + development_charges
