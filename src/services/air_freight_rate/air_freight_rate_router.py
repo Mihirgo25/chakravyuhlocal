@@ -838,24 +838,17 @@ from services.air_freight_rate.interaction.create_air_freight_rate_feedback impo
 
 
 @air_freight_router.post("/create_air_freight_rate_feedback")
-def create_air_freight_rate_feedback_data(
-    request: CreateAirFreightRateFeedbacks, resp: dict = Depends(authorize_token)
-):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
+def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedbacks, resp: dict = Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
-        return JSONResponse(
-            status_code=200,
-            content=create_air_freight_rate_feeback(request.dict(exclude_none=False)),
-        )
+       return JSONResponse(status_code=200,content=create_air_freight_rate_feeback(request.dict(exclude_none=False)))
     except HTTPException as e:
-        raise
+        raise 
     except Exception as e:
         print(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
-
+        return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
+    
 
 @air_freight_router.post("/update_air_freight_rate_markup")
 def update_air_freight_rate_markup_data(
