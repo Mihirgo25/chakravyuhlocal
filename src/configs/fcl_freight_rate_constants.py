@@ -208,7 +208,7 @@ RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 
 DEFAULT_RATE_TYPE = 'market_place'
 
-CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
+CONTAINER_SIZES = ["20", "40", "40HC", "45HC"]
 
 CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
 

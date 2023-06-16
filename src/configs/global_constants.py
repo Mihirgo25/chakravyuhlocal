@@ -89,7 +89,7 @@ OPEN_TOP_COMMODITIES = ["in_gauge_cargo"]
 
 OPEN_SIDE_COMMODITIES = []
 
-FLAT_RACK_COMMODITIES = ['in_gauge_cargo']
+FLAT_RACK_COMMODITIES = ["in_gauge_cargo"]
 
 TRADE_TYPES = ["import", "export", "domestic"]
 
@@ -155,13 +155,32 @@ IMPORT_CARGO_HANDLING_TYPES = ['direct_port_delivery', 'delivery_from_dock', 'de
 
 PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
 
-ISO_TANK_COMMODITIES = ['non_haz_solids', 'non_haz_liquids', 'non_haz_gases']
+ISO_TANK_COMMODITIES = ["non_haz_solids", "non_haz_liquids", "non_haz_gases"]
 
-CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
+CONTAINER_SIZES = ["20", "40", "40HC", "45HC"]
 
-CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
+CONTAINER_TYPES = [
+     "standard",
+     "refer",
+     "open_top",
+     "open_side",
+     "flat_rack",
+     "iso_tank",
+ ]
 
-ALL_COMMODITIES = STANDARD_COMMODITIES + REFER_COMMODITIES + OPEN_TOP_COMMODITIES + OPEN_SIDE_COMMODITIES + FLAT_RACK_COMMODITIES + ISO_TANK_COMMODITIES + HAZ_CLASSES
+ALL_COMMODITIES = list(
+     set(
+         (
+             STANDARD_COMMODITIES
+             + REFER_COMMODITIES
+             + OPEN_TOP_COMMODITIES
+             + OPEN_SIDE_COMMODITIES
+             + FLAT_RACK_COMMODITIES
+             + ISO_TANK_COMMODITIES
+             + HAZ_CLASSES
+         )
+     )
+ )
 
 CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
 

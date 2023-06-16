@@ -862,33 +862,3 @@ class UpdateRateProperties(BaseModel):
   volume_count: int = 0
   value_props: List[dict] = []
   t_n_c: List[str] = []
-
-class StandardLineItem(BaseModel):
-  code: str
-  unit: str
-  price: float
-  currency: str
-  remarks: list[str] = []
-  slabs: list[Slab] = []
-
-class FreeDaysType(BaseModel):
-  free_days_type:str
-  free_limit:int
-  slabs: list[Slab]
-
-
-class CreateFclCfsRate(BaseModel):
-  rate_sheet_id:str = None
-  location_id: str
-  trade_type: str
-  container_size: str
-  container_type: str
-  commodity: str = None
-  service_provider_id: str
-  performed_by_id: str
-  sourced_by_id: str
-  procured_by_id: str
-  cargo_handling_type: str
-  importer_exporter_id: str = None
-  line_items: list[StandardLineItem]
-  free_days: list[FreeDaysType]
