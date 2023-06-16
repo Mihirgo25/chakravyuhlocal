@@ -17,7 +17,6 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_platform_pric
 from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
-
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
