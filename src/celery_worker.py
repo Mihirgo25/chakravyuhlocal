@@ -588,11 +588,3 @@ def celery_create_fcl_customs_rate(self, request):
             pass
         else:
             raise self.retry(exc= e)
-        
-@celery.task(bind = True, retry_backoff=True, max_retries=1)
-def create_fcl_customs_migration(self,request):
-    try:
-        return create_fcl_customs_rate_data(request)
-    except Exception as e:
-        print(request)
-        return e

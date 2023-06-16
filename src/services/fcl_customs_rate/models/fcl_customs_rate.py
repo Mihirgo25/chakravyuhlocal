@@ -305,7 +305,7 @@ class FclCustomsRate(BaseModel):
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CUSTOMS_CHARGES.get(code)
 
-            code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in line_items.get('tags', [])}
+            code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in code_config.get('tags', [])}
 
             if not code_config:
                 self.customs_line_items_error_messages[code] = ['is invalid']
