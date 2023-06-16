@@ -31,7 +31,7 @@ class CreateFclCfsRate(BaseModel):
   container_type: str
   commodity: str = None
   service_provider_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   sourced_by_id: str
   procured_by_id: str
   cargo_handling_type: str
@@ -84,13 +84,13 @@ class CreateFclCfsRateNotAvailable(BaseModel):
 
 class UpdateFclCfsRate(BaseModel):
     id: str 
-    performed_by_id: str 
+    performed_by_id: str = None
     sourced_by_id: str 
     procured_by_id: str 
     bulk_operation_id: str = None
     line_items: list[StandardLineItem] = []
     free_limit: int = None
-    performed_by_type: str
+    performed_by_type: str = None
     
 class Filters(BaseModel):
   filters: dict = {}
@@ -104,7 +104,7 @@ class AddMarkUp(BaseModel):
 
   
 class CreateFclCfsRateBulkOperation(BaseModel):
-  performed_by_id: str 
+  performed_by_id: str = None
   service_provider_id: str 
   sourced_by_id: str 
   procured_by_id: str 
