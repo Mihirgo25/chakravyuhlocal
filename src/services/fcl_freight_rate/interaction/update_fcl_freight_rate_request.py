@@ -14,7 +14,6 @@ def update_fcl_freight_rate_request(request):
 
 def execute_transaction_code(request):
     object = find_object(request)
-    print(request)
 
     if not object:
         raise HTTPException(status_code=400, detail="Freight rate request id not found")
