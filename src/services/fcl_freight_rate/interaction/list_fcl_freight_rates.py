@@ -22,8 +22,6 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
       if filters.get('rate_type') == 'all':
         filters['rate_type'] = RATE_TYPES
     direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-    if direct_filters['service_provider_id']==None:
-      del direct_filters['service_provider_id']
       
     query = get_filters(direct_filters, query, FclFreightRate)
     query = apply_indirect_filters(query, indirect_filters)

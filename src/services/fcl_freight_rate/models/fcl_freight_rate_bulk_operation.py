@@ -98,7 +98,7 @@ class FclFreightRateBulkOperation(BaseModel):
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
         
         if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
-            raise HTTPException(status_code=400, detail='lower_limit cannot be greater than upper_limit')
+            raise HTTPException(status_code=400, detail='rates_greater_than_price cannot be greater than rates_less_than_price')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
@@ -413,9 +413,13 @@ class FclFreightRateBulkOperation(BaseModel):
         if cogo_entity_id == 'None':
             cogo_entity_id = None
 
+        other_filters = { 'service_provider_id': self.service_provider_id , 'importer_exporter_present': False, 'partner_id': cogo_entity_id }
+        if not other_filters['service_provider_id']:
+            other_filters.pop('service_provider_id', None)
+        
         data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
         data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
-        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+        filters = (data['filters'] or {}) | other_filters
 
         if data.get('rate_reference_type') and data.get('rate_id'):
             select_field = "{}_id".format(data['rate_reference_type'])
