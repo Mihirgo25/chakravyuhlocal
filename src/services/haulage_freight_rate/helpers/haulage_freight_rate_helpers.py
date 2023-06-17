@@ -65,6 +65,18 @@ def get_country_filter(origin_location, destination_location):
         "country_code"
     ] in ["US", "CA", "MX"]:
         location_category = "north_america"
+    if locations_data[0]["country_code"] in [
+        "BO",
+        "AG",
+        "CL",
+        "BR",
+    ] and locations_data[-1]["country_code"] in [
+        "BO",
+        "AG",
+        "CL",
+        "BR",
+    ]:
+        location_category = "south_america"
     country_code = locations_data[0]["country_code"]
     return locations_data, location_category, country_code
 
