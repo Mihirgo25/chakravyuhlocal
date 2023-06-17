@@ -57,8 +57,13 @@ class MapsApiClient:
         return self.client.request('GET','get_land_route_location_details',data)
 
     def get_land_route_location_details(self,data = {}):
-        from configs.env import RUBY_ADDRESS_URL
-        self.client.url.set('http://10.10.11.244:8000/location')
-        res=  self.client.request('GET','get_land_route_location_details',data)
-        self.client.url.set(RUBY_ADDRESS_URL)
-        return res
+        return self.client.request('GET','get_land_route_location_details',data)
+
+    def list_operators(self, data={}):
+        if APP_ENV == "production":
+            keys = ['filters', 'includes']
+            for key in keys:
+                if key in data:
+                    data[key] = json.dumps(data[key])
+            return self.client.request('GET', 'list_operators', {}, data)
+        return self.client.request('GET', 'list_operators', data, {})
