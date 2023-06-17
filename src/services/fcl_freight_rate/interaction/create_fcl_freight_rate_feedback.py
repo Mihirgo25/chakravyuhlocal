@@ -69,7 +69,6 @@ def execute_transaction_code(request):
 
     # update_likes_dislikes_count(rate, request)
     if request['feedback_type'] == 'disliked':
-        send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
 
     return {'id': request['rate_id']}

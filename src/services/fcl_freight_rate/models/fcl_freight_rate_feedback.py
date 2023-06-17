@@ -184,7 +184,6 @@ class FclFreightRateFeedback(BaseModel):
 
     def get_relevant_supply_agents(self, service, origin_locations, destination_locations):
         supply_agents_list = get_partner_users_by_expertise(service, origin_locations, destination_locations)
-
         supply_agents_list = list(set(t['partner_user_id'] for t in supply_agents_list))
 
         supply_agents_user_ids = get_partner_users(supply_agents_list, role_ids= list(RATE_FEEDBACK_RELEVANT_ROLE_ID.values()))
@@ -193,8 +192,8 @@ class FclFreightRateFeedback(BaseModel):
 
         return supply_agents_user_ids
 
-    def send_create_notifications_to_supply_agents(self):
-        feedback_info = self.supply_agents_to_notify()
+    def send_create_notifications_to_supply_agents(self, supply_agent_notification_params):
+        feedback_info = supply_agent_notification_params
         commodity = ''
         if 'commodity_type' in feedback_info and feedback_info['commodity_type']:
             commodity = feedback_info['commodity_type'].upper()
@@ -229,6 +228,7 @@ class FclFreightRateFeedback(BaseModel):
             FclFreightRate.destination_country_id,
             FclFreightRate.destination_continent_id,
             FclFreightRate.destination_trade_id,
+            FclFreightRate.commodity,
         ).where(FclFreightRate.id == self.fcl_freight_rate_id).first()
 
         if locations_data:
@@ -256,8 +256,21 @@ class FclFreightRateFeedback(BaseModel):
         supply_agents_user_ids = self.get_relevant_supply_agents('fcl_freight', origin_locations, destination_locations)
 
         update_fcl_freight_rate_feedback({'fcl_freight_rate_feedback_id': self.id, 'relevant_supply_agent_ids': supply_agents_user_ids, 'performed_by_id': request.get('performed_by_id')})
-        
-       
+
+        route = maps.list_locations({'filters':{'id': [str(locations_data.origin_port_id), str(locations_data.destination_port_id)]}})['list']
+        route = {t['id']:t['display_name'] for t in route}
+
+        supply_agent_notification_params = {
+          'user_ids': supply_agents_user_ids,
+          'origin_location': route[str(locations_data.origin_port_id)],
+          'destination_location': route[str(locations_data.destination_port_id)],
+          'commodity': locations_data.commodity
+        }
+
+        self.send_create_notifications_to_supply_agents(supply_agent_notification_params)
+
+        return supply_agents_user_ids
+
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(
