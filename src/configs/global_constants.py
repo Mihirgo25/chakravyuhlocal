@@ -187,3 +187,6 @@ RATE_FEEDBACK_RELEVANT_ROLE_ID = {
     'supply_owner_vietnam' : UUID('e0aa356c-2e4c-4cfd-b279-a6d3cdfa4edb'),
     'coe_head_vietnam' : UUID('0e68d129-6f07-4324-95ee-88731b35c0c4')
 }
+CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
+
+INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'

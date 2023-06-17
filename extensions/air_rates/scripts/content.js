@@ -2007,7 +2007,7 @@ const getOptions = ()=> {
     d.push(text)
 }
 }
-const getRatesData = () => {
+const getFreightLookRatesData = () => {
   const a = document.getElementsByClassName('gridViewNew')
   const b = a[0].getElementsByTagName('tr')
   rates = []
@@ -2028,11 +2028,28 @@ const getRatesData = () => {
   return rates
 }
 
+const getNewMaxRatesData = () => {
+  return []
+}
+
+const getWebCargoRatesData = () => {
+  return []
+}
+
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    const rates = getRatesData()
-    destination = document.getElementById('ctl00_CP1_txtCity').value
-    if (request.rates)
+    if (request.rates === 'freight_look') {
+      const rates = getFreightLookRatesData()
+      destination = document.getElementById('ctl00_CP1_txtCity').value
       sendResponse({ rates: rates, destination: destination });
+    } 
+    if (request.rates === 'new_max') {
+      const rates = getNewMaxRatesData()
+      sendResponse({ rates: rates, destination: destination });
+    }  
+    if (request.rates === 'web_cargo'){
+      const rates = getWebCargoRatesData()
+      sendResponse({ rates: rates, destination: destination });
+    }
   }
 );
