@@ -15,7 +15,7 @@ def get_connection():
     return conn
 
 
-def get_shipping_line(id=None, short_name=None):
+def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
     all_result = []
     try:
         newconnection = get_connection()  
@@ -23,7 +23,7 @@ def get_shipping_line(id=None, short_name=None):
             with newconnection.cursor() as cur:
                 if short_name:
                     sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.short_name = %s and operators.status = %s and operators.operator_type = %s'
-                    cur.execute(sql, (short_name,'active','shipping_line',))
+                    cur.execute(sql, (short_name,'active',operator_type,))
                 else:
                     if not isinstance(id, list):
                         id = (id,)
@@ -294,3 +294,209 @@ def get_ff_mlo():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return result
+
+def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval, interval_type = 'months', offset=0, limit=50):
+        all_results =[]
+        try:
+            conn = get_connection()
+            with conn:
+                with conn.cursor() as cur:
+                     
+                    sql_query = """
+                        SELECT 
+                            shipment_air_freight_services.origin_airport_id AS origin_airport_id,
+                            shipment_air_freight_services.volume AS volume,
+                            shipment_air_freight_services.is_stackable AS is_stackable,
+                            shipment_air_freight_services.packages AS packages,
+                            shipment_air_freight_services.origin_country_id AS origin_country_id,
+                            shipment_air_freight_services.destination_airport_id AS destination_airport_id,
+                            shipment_air_freight_services.destination_country_id AS destination_country_id,
+                            shipment_air_freight_services.operation_type AS operation_type,
+                            shipment_air_freight_services.weight AS weight,
+                            shipment_air_freight_services.commodity AS commodity,
+                            shipment_collection_parties.invoice_date AS invoice_date,
+                            shipment_collection_parties.line_items,
+                            shipment_air_freight_services.airline_id AS airline_id,
+                            shipment_air_freight_services.chargeable_weight AS chargeable_weight
+                        FROM
+                            shipment_collection_parties
+                            INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
+                        WHERE
+                            shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '%s months')::DATE
+                            AND shipment_air_freight_services.origin_{}_id = %s
+                            AND shipment_air_freight_services.destination_{}_id = %s
+                            AND shipment_collection_parties.status IN ('locked', 'coe_approved', 'finance_rejected')
+                            AND shipment_air_freight_services.operation_type ='passenger'
+                            AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
+                        OFFSET %s LIMIT %s;   
+                        """.format(location_type,location_type)
+                    cur.execute(sql_query,(interval, origin_location_id,destination_location_id, offset, limit))
+                    result = cur.fetchall()
+                    cur.close()
+                for res in result:
+                    new_obj = {
+                        "origin_airport_id": str(res[0]),   
+                        "volume": res[1],   
+                        "is_stackable": str(res[2]),   
+                        "packages": res[3],   
+                        "origin_country_id": str(res[4]),
+                        "destination_airport_id": str(res[5]),
+                        "destination_country_id": str(res[6]),
+                        "operation_type":res[7],
+                        "weight":float(res[8]),
+                        "commodity":res[9],
+                        "invoice_date":res[10],
+                        "line_items":res[11],
+                        "airline_id":str(res[12]),
+                        "chargeable_weight": res[13]
+                    }
+
+                    all_results.append(new_obj)
+                    cur.close()
+            conn.close()
+            return all_results
+        except Exception as e:
+            # sentry_sdk.capture_exception(e)
+            return all_results
+        
+def get_invoices(days=3, offset=0, limit=50):
+        all_result =[]
+        try:
+            conn = get_connection()
+            with conn:
+                with conn.cursor() as cur:
+                     
+                    sql_query = """
+                        SELECT 
+                            shipment_air_freight_services.origin_airport_id AS origin_airport_id,
+                            shipment_air_freight_services.volume AS volume,
+                            shipment_air_freight_services.is_stackable AS is_stackable,
+                            shipment_air_freight_services.packages AS packages,
+                            shipment_air_freight_services.origin_country_id AS origin_country_id,
+                            shipment_air_freight_services.destination_airport_id AS destination_airport_id,
+                            shipment_air_freight_services.destination_country_id AS destination_country_id,
+                            shipment_air_freight_services.operation_type AS operation_type,
+                            shipment_air_freight_services.weight AS weight,
+                            shipment_air_freight_services.commodity AS commodity,
+                            shipment_collection_parties.invoice_date AS invoice_date,
+                            shipment_collection_parties.line_items,
+                            shipment_air_freight_services.airline_id AS airline_id,
+                            shipment_air_freight_services.chargeable_weight AS chargeable_weight,
+                            shipment_air_freight_services.packages AS packages
+                        FROM
+                            shipment_collection_parties
+                            INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
+                        WHERE 
+                            shipment_collection_parties.status in ('locked', 'coe_approved','finance_rejected') 
+                        AND
+                            invoice_type in ('purchase_invoice', 'proforma_invoice') 
+                        AND 
+                            shipment_collection_parties.invoice_date = now()::date - %s
+                        OFFSET %s LIMIT %s;
+                        """
+                    cur.execute(sql_query, (days, offset, limit))
+                    result = cur.fetchall()
+
+                for res in result:
+                    new_obj = {
+                        "origin_airport_id": str(res[0]),   
+                        "volume": res[1],   
+                        "is_stackable": str(res[2]),   
+                        "packages": res[3],   
+                        "origin_country_id": str(res[4]),
+                        "destination_airport_id": str(res[5]),
+                        "destination_country_id": str(res[6]),
+                        "operation_type":res[7],
+                        "weight":float(res[8]),
+                        "commodity":res[9],
+                        "invoice_date":res[10],
+                        "line_items":res[11],
+                        "airline_id":str(res[12]),
+                        "chargeable_weight": res[13],
+                        "packages":res[14]
+                    }
+                    all_result.append(new_obj)
+                    cur.close()
+            conn.close()
+            return all_result
+        except Exception as e:
+            # sentry_sdk.capture_exception(e)
+            return all_result
+
+
+
+                    
+            
+    
+
+def get_past_cost_booking_data(limit, offset):
+
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                sql = '''
+                SELECT
+                    shipment_fcl_freight_services.origin_port_id,
+                    shipment_fcl_freight_services.origin_country_id,
+                    shipment_fcl_freight_services.origin_trade_id,
+                    shipment_fcl_freight_services.destination_port_id,
+                    shipment_fcl_freight_services.destination_country_id,
+                    shipment_fcl_freight_services.destination_trade_id,
+                    shipment_fcl_freight_services.container_size,
+                    shipment_fcl_freight_services.container_type,
+                    shipment_collection_parties.line_items,
+                    shipment_fcl_freight_services.containers_count,
+                    shipment_fcl_freight_services.shipping_line_id,
+                    shipment_fcl_freight_services.commodity,
+                    shipment_fcl_freight_services.id
+                FROM
+                    shipment_collection_parties
+                INNER JOIN
+                    shipment_fcl_freight_services ON shipment_collection_parties.shipment_id = shipment_fcl_freight_services.shipment_id
+                CROSS JOIN
+                    jsonb_array_elements(line_items) AS line_item
+                WHERE
+                    line_item ->> 'code' = 'BAS'
+                    AND line_item->> 'currency'='USD'
+                    AND shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '3 months')::DATE
+                    AND shipment_collection_parties.status in ('coe_approved')
+                    AND line_item ->> 'unit' = 'per_container'
+                ORDER BY
+                    shipment_collection_parties.updated_at asc
+                LIMIT %s
+                OFFSET %s
+                '''
+                cur.execute(sql, (limit, offset,))
+                result = cur.fetchall()
+                for res in result:
+                    new_obj = {
+                        "origin_port_id": str(res[0]),
+                        "origin_country_id": str(res[1]),
+                        "origin_trade_id": str(res[2]),
+                        "destination_port_id": str(res[3]),
+                        "destination_country_id": str(res[4]),
+                        "destination_trade_id": str(res[5]),
+                        "container_size":res[6],
+                        "container_type":res[7],
+                        "line_items":res[8],
+                        "containers_count":str(res[9]),
+                        "shipping_line_id":str(res[10]),
+                        "commodity":str(res[11]),
+                        "id":str(res[12]),
+                        "origin_location_ids":[str(res[0]),str(res[1]),str(res[2])],
+                        "destination_location_ids":[str(res[3]),str(res[4]),str(res[5])]
+                    }
+                    all_result.append(new_obj)
+                cur.close()
+
+        conn.close()
+        return all_result 
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
+    
+
+

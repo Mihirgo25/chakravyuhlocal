@@ -13,7 +13,7 @@ test_key = {
         'service_provider_id': '5dc403b3-c1bd-4871-b8bd-35543aaadb36', 
         'validity_start': datetime.datetime(2023, 5, 9, 0, 0, tzinfo=datetime.timezone.utc), 
         'validity_end': datetime.datetime(2023, 5, 31, 4, 50, tzinfo=datetime.timezone.utc), 
-        'schedule_type': 'transhipment', 
+        'schedule_type': 'direct', 
         'payment_term': 'prepaid', 
         'line_items': [{'code': 'BAS', 'unit': 'per_container', 'price': 2350.0, 'currency': 'USD', 'slabs': []}], 
         'performed_by_id': '1eb3f218-0aee-4189-9ab0-001e0851d682', 

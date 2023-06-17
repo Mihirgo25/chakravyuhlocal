@@ -9,7 +9,7 @@ CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
 
 CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
 
-CALCULATION_COUNTRY_CODES = ['IN', 'CN', 'US', 'VN', 'CA', 'MX', 'BR', 'AQ', 'CO']
+CALCULATION_COUNTRY_CODES = ['IN', 'CN', 'US', 'VN', 'CA', 'MX', 'BR', 'AQ', 'CO', 'SG', 'AE', 'ID', 'RU']
 
 ROUND_TRIP_FACTOR = 1.5
 
@@ -17,7 +17,7 @@ DEFAULT_TRIP_TYPE = "one_way"
 
 DEFAULT_CALCULATION_COUNTRY_CODE = "US"
 
-CALCULATION_CURRENCY_CODES = ['INR', 'CNY','USD', 'VND']
+CALCULATION_CURRENCY_CODES = ['INR', 'CNY', 'USD', 'VND', 'SGD', 'AED', 'IDR', 'RUB']
 
 DEFAULT_FUEL_PRICES = {
     "INR": 107,
@@ -26,6 +26,10 @@ DEFAULT_FUEL_PRICES = {
     "VND": 25000,
     "CAD": 1.58,
     "MXN": 24.16,
+    "IDR": 12686,
+    "RUB": 51,
+    "AED": 2.95,
+    "SGD": 2.5
 }
 
 DEFAULT_SERVICE_PROVIDER_ID = '5dc403b3-c1bd-4871-b8bd-35543aaadb36'
@@ -54,5 +58,9 @@ COUNTRY_CURRENCY_CODE_MAPPING = {
     'US': 'USD',
     'CA': 'CAD',
     'MX': 'MXN',
-    'VN': 'VND'
+    'VN': 'VND',
+    'SG': 'SGD',
+    'ID': 'IDR',
+    'AE': 'AED',
+    'RU': 'RUB'
 }
