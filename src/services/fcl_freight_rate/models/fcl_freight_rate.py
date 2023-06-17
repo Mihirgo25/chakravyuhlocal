@@ -399,11 +399,11 @@ class FclFreightRate(BaseModel):
               validities.append(t)
 
           freight_rate_min_price = None
+          price = []
           for t in validities:
-            price = []
             new_price =  common.get_money_exchange_for_fcl({'price': t["price"], 'from_currency': t['currency'], 'to_currency':currency})['price']
             price.append(new_price)
-            freight_rate_min_price = min(price)
+          freight_rate_min_price = min(price)
 
           if freight_rate_min_price is not None and freight_rate_min_price < result:
             result = freight_rate_min_price
