@@ -344,8 +344,10 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id']:
             del filters['service_provider_id']
         
-        rate_ids = get_relevant_rate_ids_from_audits(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
-        filters = filters |  {'id': rate_ids}            
+        rate_ids = get_relevant_rate_ids_from_audits(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters.get('id'))
+        if rate_ids:
+            filters = filters |  {'id': rate_ids}  
+                  
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())
@@ -374,6 +376,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 'rates_greater_than_price':data.get('rates_greater_than_price'),
                 'rates_less_than_price':data.get('rates_less_than_price'),
                 'comparison_charge_code':data.get('comparison_charge_code'),
+                'comparison_currency':data.get('comparison_currency')
             })
             self.progress = int((count * 100.0) / total_count)
             self.save()
@@ -425,8 +428,9 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id']:
             del filters['service_provider_id']
 
-        rate_ids = get_relevant_rate_ids_from_audits(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
-        filters = filters |  {'id': rate_ids}
+        rate_ids = get_relevant_rate_ids_from_audits(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters.get('id'))
+        if rate_ids:
+            filters = filters |  {'id': rate_ids}
             
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
