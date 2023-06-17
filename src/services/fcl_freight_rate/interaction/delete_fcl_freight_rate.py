@@ -21,11 +21,11 @@ def execute_transaction_code(request):
         request['validity_end'] = datetime.strptime(validity_end , '%Y-%m-%d')
 
     price_range_params={
-        'line_item_code':request['line_item_code'],
+        'comparison_charge_code':request['comparison_charge_code'],
         'rates_greater_than_price':request['rates_greater_than_price'],
         'rates_less_than_price':request['rates_less_than_price']
     }
-    object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,price_range_params)
+    object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,None, request['payment_term'], price_range_params)
     object.set_platform_prices(object.rate_type)
     object.set_is_best_price()
     object.set_last_rate_available_date()

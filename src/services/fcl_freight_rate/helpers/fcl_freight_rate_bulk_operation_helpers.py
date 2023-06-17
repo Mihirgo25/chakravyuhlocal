@@ -1,12 +1,20 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 
-def get_rate_ids(select_field, id):
-    reference_object_ids = FclFreightRateAudit.select(getattr(FclFreightRateAudit, select_field)).where(FclFreightRateAudit.object_id == id)
-    reference_object_ids = [audit_data[select_field] for audit_data in list(reference_object_ids.dicts())] 
-    
-    rate_ids = FclFreightRateAudit.select(FclFreightRateAudit.object_id).where(getattr(FclFreightRateAudit, select_field) << reference_object_ids)
-    rate_ids = [str(result['object_id']) for result in (rate_ids.dicts())]
-    return rate_ids
+def get_relevant_rate_ids(rate_sheet_id, apply_to_extended_rates, object_ids):
+    if object_ids and not isinstance(object_ids, list):
+        object_ids = [object_ids]
+
+    query = FclFreightRateAudit.select(FclFreightRateAudit.object_id)
+    if(rate_sheet_id and apply_to_extended_rates and object_ids):
+        query = query.where((FclFreightRateAudit.rate_sheet_id == rate_sheet_id) | (FclFreightRateAudit.extended_from_object_id << object_ids)) 
+    elif rate_sheet_id and not (apply_to_extended_rates or object_ids):
+        query = query.where(FclFreightRateAudit.rate_sheet_id == rate_sheet_id)
+    elif not rate_sheet_id and apply_to_extended_rates and object_ids:
+        query = query.where(FclFreightRateAudit.extended_from_object_id << object_ids) 
+    else:
+        return []
+
+    return [str(result['object_id']) for result in (query.dicts())]
 
 def is_price_in_range(lower_limit,upper_limit, price):
     

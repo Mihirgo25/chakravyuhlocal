@@ -152,7 +152,7 @@ def create_fcl_freight_rate(request):
             request.get("schedule_type"),
             False,
             request.get("payment_term"),
-            request.get('gri_tag')
+            request.get('tag')
         )
 
     freight.set_platform_prices(row["rate_type"])

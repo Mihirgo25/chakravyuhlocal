@@ -19,7 +19,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
-from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_rate_ids,is_price_in_range
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids,is_price_in_range
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 MARKUP_TYPES = ['net','percent','absolute']
@@ -338,11 +338,9 @@ class FclFreightRateBulkOperation(BaseModel):
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
-        if data.get('rate_reference_type') and data.get('rate_id'):
-            select_field = "{}_id".format(data['rate_reference_type'])
+        rate_ids = get_relevant_rate_ids(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
 
-            rate_ids = get_rate_ids(select_field, data['rate_id'])
-            filters = filters |  {'id': rate_ids} 
+        filters = filters |  {'id': rate_ids} 
             
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
@@ -371,7 +369,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE),
                 'rates_greater_than_price':data.get('rates_greater_than_price'),
                 'rates_less_than_price':data.get('rates_less_than_price'),
-                'line_item_code':data.get('line_item_code'),
+                'comparison_charge_code':data.get('comparison_charge_code'),
             })
             self.progress = int((count * 100.0) / total_count)
             self.save()
@@ -420,13 +418,11 @@ class FclFreightRateBulkOperation(BaseModel):
         data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
         data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
         filters = (data['filters'] or {}) | other_filters
-
-        if data.get('rate_reference_type') and data.get('rate_id'):
-            select_field = "{}_id".format(data['rate_reference_type'])
-  
-            rate_ids = get_rate_ids(select_field, data['rate_id'])
-            filters = filters |  {'id': rate_ids} 
-            
+        
+        
+        rate_ids = get_relevant_rate_ids(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
+        filters = filters |  {'id': rate_ids} 
+                    
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -508,7 +504,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     'validity_end': validity_object['validity_end'],
                     'line_items': validity_object['line_items'],
                     'source': 'rms_upload',
-                    'gri_tag': data.get('gri_tag')
+                    'tag': data.get('tag')
                 })
            
             self.progress = int((count * 100.0) / total_count)
