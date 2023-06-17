@@ -14,14 +14,12 @@ class MapsApiClient:
         })
 
     def list_locations(self, data={}):
-        # if APP_ENV == "production":
-        self.client.url.set('https://api.cogoport.com/location')
-        keys = ['filters', 'includes']
-        for key in keys:
-            if key in data:
-                data[key] = json.dumps(data[key])
-        return self.client.request('GET', 'list_locations', {}, data)
-        return self.client.request('GET', 'list_locations', data, {})
+        if APP_ENV == "production":
+            keys = ['filters', 'includes']
+            for key in keys:
+                if key in data:
+                    data[key] = json.dumps(data[key])
+            return self.client.request('GET', 'list_locations', {}, data)
 
     def list_location_cluster(self,data={}):
         if APP_ENV == "production":
@@ -51,10 +49,9 @@ class MapsApiClient:
     def get_land_route_from_valhalla(self,data = {}):
         data['is_authorization_required'] = False
         data = json.dumps(data)
-        self.client.url.set('https://api.cogoport.com/location')
         return self.client.request('GET','get_land_route_location_details',data)
 
-    def a(self,data = {}):
+    def get_land_route_location_details(self,data = {}):
         return self.client.request('GET','get_land_route_location_details',data)
 
     def list_operators(self, data={}):
@@ -62,6 +59,6 @@ class MapsApiClient:
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
-                    data[key] = json.dumps(maps.get_land_route_location_detailsdata[key])
+                    data[key] = json.dumps(data[key])
             return self.client.request('GET', 'list_operators', {}, data)
         return self.client.request('GET', 'list_operators', data, {})
