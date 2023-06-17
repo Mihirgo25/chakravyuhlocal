@@ -83,8 +83,20 @@ class FclCustomsRate(BaseModel):
     def set_location(self):
         if self.location or (not self.location_id):
             return
-
-        location = maps.list_locations({'filters':{'id': self.location_id}})['list']
+        
+        required_params = {
+            "id": True,
+            "name": True,
+            "is_icd": True,
+            "port_code": True,
+            "country_id": True,
+            "continent_id": True,
+            "trade_id": True,
+            "country_code": True,
+            "zone_id":True
+        }
+        
+        location = maps.list_locations({'filters':{'id': self.location_id},'includes':required_params})['list']
         if location:
             self.location= location[0]
             self.zone_id = location[0].get('zone_id')  
