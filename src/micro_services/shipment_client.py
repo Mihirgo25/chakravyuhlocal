@@ -31,5 +31,5 @@ class ShipmentApiClient:
         return self.client.request('GET','list_shipments',data)
     
     def list_shipment_sell_quotations(self,data={}):
-        return self.client.request('GET','list_shipment_sell_quotations',data)
+        return self.client.request('GET','list_shipment_sell_quotation_for_chakravyuh',data)
         

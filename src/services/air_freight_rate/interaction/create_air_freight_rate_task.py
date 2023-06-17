@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from micro_services.client import *
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.interaction.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
+from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_audit(request,task_id):
@@ -21,7 +23,6 @@ def execute(request):
         return  create_air_freight_rate_task(request)
     
 def create_air_freight_rate_task (request):
-    from celery_worker import update_multiple_service_objects
      
     row={
       'service': request.get('service'),
@@ -63,36 +64,26 @@ def create_air_freight_rate_task (request):
             sid = shipment.get_shipment({'id':request['shipment_id']})['summary']['serial_id']
             task.shipment_serial_ids.append(sid)
             task.shipment_serial_ids = list(set(task.shipment_serial_ids))
+            print(task.shipment_serial_ids)
         except:
             raise HTTPException(status_code = 400, detail = "SID doesn't Exist")
 
-    if not task.validate():
-        raise HTTPException(status_code =500,detail='unable to create task')
-    else:
+    task.validate()
+
+    try:
         task.save()
+    except:
+        raise HTTPException(status_code =500,detail='unable to create task')
+
+    print('12')
        
     create_audit(request,task.id)
-    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-    send_air_freight_rate_task_notification.apply_async(kwargs={'task_id':task.id},queue='low')
 
+    # update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
+    get_multiple_service_objects(task)
+
+    # send_air_freight_rate_task_notification.apply_async(kwargs={'task_id':task.id},queue='low')
+    
     return{
         'id':task.id
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

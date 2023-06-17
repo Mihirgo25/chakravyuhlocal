@@ -457,6 +457,7 @@ def create_air_freight_rate_task_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = create_air_freight_rate_task(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1105,11 +1106,12 @@ def get_air_freight_local_rate_cards_data(
     volume:float,
     airline_id:str=None,
     additional_services: List[str] = [],
+    inco_term:str=None,
     resp:dict =Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     # try:
-    data=get_air_freight_local_rate_cards(airport_id=airport_id,trade_type=trade_type,commodity=commodity,commodity_type=commodity_type,packages_count=packages_count,weight=weight,volume=volume,airline_id=airline_id,additional_services=additional_services)
+    data=get_air_freight_local_rate_cards(airport_id=airport_id,trade_type=trade_type,commodity=commodity,commodity_type=commodity_type,packages_count=packages_count,weight=weight,volume=volume,airline_id=airline_id,additional_services=additional_services,inco_term=inco_term)
     return JSONResponse(status_code=200, content=data)
     # except HTTPException as e:
     #     raise
