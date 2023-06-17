@@ -1,9 +1,7 @@
 import datetime
-
 from fastapi import HTTPException
 from peewee import *
 from playhouse.postgres_ext import *
-
 from configs.definitions import FCL_CFS_CHARGES
 from configs.fcl_cfs_rate_constants import (CONTAINER_TYPE_COMMODITY_MAPPINGS,FREE_DAYS_TYPES)
 from configs.global_constants import (CONTAINER_SIZES, CONTAINER_TYPES,EXPORT_CARGO_HANDLING_TYPES,IMPORT_CARGO_HANDLING_TYPES, TRADE_TYPES)
