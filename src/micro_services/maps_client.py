@@ -20,6 +20,7 @@ class MapsApiClient:
                 if key in data:
                     data[key] = json.dumps(data[key])
             return self.client.request('GET', 'list_locations', {}, data)
+        return self.client.request('GET', 'list_locations', data, {})
 
     def list_location_cluster(self,data={}):
         if APP_ENV == "production":
