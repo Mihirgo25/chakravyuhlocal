@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from micro_services.client import common
 
-def get_relevant_rate_ids(rate_sheet_id, apply_to_extended_rates, object_ids):
+def get_relevant_rate_ids_from_audits(rate_sheet_id, apply_to_extended_rates, object_ids):
     if object_ids and not isinstance(object_ids, list):
         object_ids = [object_ids]
 

@@ -48,7 +48,7 @@ class FclFreightVyuh():
         envision_cluster_rates = []
         # envision_cluster_rates = get_fcl_freight_relevant_envision_extensions()
 
-        all_rates=[ rate |{'extended_from_object_id' : self.rate['id']} for rate in  extension_rule_set_rates + service_lane_rates + envision_cluster_rates]
+        all_rates=[ rate | {'extended_from_object_id' : self.rate['id']} for rate in  extension_rule_set_rates + service_lane_rates + envision_cluster_rates]
 
         return all_rates
     

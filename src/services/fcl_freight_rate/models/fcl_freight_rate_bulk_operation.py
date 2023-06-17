@@ -19,7 +19,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
-from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids,is_price_in_range
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits,is_price_in_range
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 MARKUP_TYPES = ['net','percent','absolute']
@@ -344,7 +344,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id']:
             del filters['service_provider_id']
         
-        rate_ids = get_relevant_rate_ids(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
+        rate_ids = get_relevant_rate_ids_from_audits(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
         filters = filters |  {'id': rate_ids}            
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
@@ -425,7 +425,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id']:
             del filters['service_provider_id']
 
-        rate_ids = get_relevant_rate_ids(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
+        rate_ids = get_relevant_rate_ids_from_audits(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
         filters = filters |  {'id': rate_ids}
             
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
