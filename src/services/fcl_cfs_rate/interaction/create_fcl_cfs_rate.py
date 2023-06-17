@@ -20,7 +20,7 @@ def create_audit_for_cfs_rate(request, cfs_object_id):
         data = audit_data        
     )    
 
-def create_fcl_cfs_rates(request):
+def create_fcl_cfs_rate(request):
     with db.atomic():
         return execute_transaction_code(request)
     
