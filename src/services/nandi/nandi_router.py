@@ -179,7 +179,6 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
         if 'freight' not in fcl_freight:
             fcl_freight = create_fcl_freight_rate_data(request)
         request['rate_id'] = fcl_freight['freight'].get('id')
-
         draft_fcl_freight = create_draft_fcl_freight_rate_data(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(draft_fcl_freight))
     except HTTPException as e:
