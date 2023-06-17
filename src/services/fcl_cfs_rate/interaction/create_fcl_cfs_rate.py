@@ -64,6 +64,7 @@ def execute_transaction_code(request):
         cfs_object.delete_rate_not_available_entry()
 
     cfs_object.update_line_item_messages()
+    cfs_object.validate_before_save()
 
     try:
         cfs_object.save()

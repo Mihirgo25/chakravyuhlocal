@@ -28,7 +28,6 @@ class FclCustomsRate(BaseModel):
     service_provider_id = UUIDField(index=True)
     importer_exporter_id = UUIDField(null=True)
     containers_count = IntegerField(null=True)
-    # importer_exporters_count = IntegerField(null=True)
     customs_line_items = BinaryJSONField(null=True)
     cfs_line_items = BinaryJSONField(null=True)
     platform_price = IntegerField(null=True)

@@ -1,4 +1,4 @@
-from configs.global_constants import TRADE_TYPES,HAZ_CLASSES,STANDARD_COMMODITIES
+from configs.global_constants import HAZ_CLASSES,STANDARD_COMMODITIES
 REQUEST_SOURCES = ['spot_search']
 
 TRADE_TYPES =  ['import', 'export', 'domestic']

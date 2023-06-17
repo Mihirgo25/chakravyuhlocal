@@ -51,7 +51,6 @@ def get_create_params(request):
     return {
         'preferred_rate': request.get('preferred_rate'),
         'preferred_rate_currency': request.get('preferred_rate_currency'),
-        # 'preferred_detention_free_days': request.get('preferred_detention_free_days'),
         'cargo_readiness_date': request.get('cargo_readiness_date'),
         'remarks': request.get('remarks'),
         'booking_params': request.get('booking_params'),

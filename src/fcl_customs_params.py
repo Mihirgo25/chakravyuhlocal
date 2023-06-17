@@ -63,8 +63,6 @@ class CreateFclCustomsRateRequest(BaseModel):
   performed_by_type: str = None
   preferred_customs_rate: float = None
   preferred_customs_rate_currency: str = None
-  # preferred_detention_free_days: int = None
-  # preferred_storage_free_days: int = None
   cargo_readiness_date: date = None
   remarks: list[str] = []
   booking_params: dict = {}

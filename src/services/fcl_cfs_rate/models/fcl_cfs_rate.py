@@ -5,11 +5,8 @@ from peewee import *
 from playhouse.postgres_ext import *
 
 from configs.definitions import FCL_CFS_CHARGES
-from configs.fcl_cfs_rate_constants import (CONTAINER_TYPE_COMMODITY_MAPPINGS,
-                                            FREE_DAYS_TYPES)
-from configs.global_constants import (CONTAINER_SIZES, CONTAINER_TYPES,
-                                      EXPORT_CARGO_HANDLING_TYPES,
-                                      IMPORT_CARGO_HANDLING_TYPES, TRADE_TYPES)
+from configs.fcl_cfs_rate_constants import (CONTAINER_TYPE_COMMODITY_MAPPINGS,FREE_DAYS_TYPES)
+from configs.global_constants import (CONTAINER_SIZES, CONTAINER_TYPES,EXPORT_CARGO_HANDLING_TYPES,IMPORT_CARGO_HANDLING_TYPES, TRADE_TYPES)
 from database.db_session import db
 from database.rails_db import *
 from micro_services.client import common, maps
@@ -75,16 +72,6 @@ class FclCfsRate(BaseModel):
             error_message = f"{', '.join(required_free_days)} is required"
             raise HTTPException(status_code=400, detail=error_message)
 
-    # def possible_cfs_charge_codes(self):
-    #     self.set_location()
-    #     fcl_cfs_charges = FCL_CFS_CHARGES
-    #     location = self.location
-
-    #     charge_codes = {}
-    #     for code, config in fcl_cfs_charges.items():
-    #         if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types'] and self.cargo_handling_type in config.get('tags'):
-    #             charge_codes[code] = config
-    #     return charge_codes
     
     def validate_duplicate_line_items(self):
         unique_items = set()
@@ -150,7 +137,15 @@ class FclCfsRate(BaseModel):
             self.continent_id = uuid.UUID(location_data.get('continent_id')) if self.continent_id is None else self.continent_id
             self.location_ids = [self.location_id,self.country_id,self.trade_id,self.continent_id]
 
-    
+    def validate_before_save(self):
+        self.set_location()
+        self.validate_duplicate_line_items()
+        self.validate_invalid_line_items()
+        self.validate_trade_type()
+        self.validate_container_size()
+        self.validate_container_type()
+        self.validate_commodity()
+
     def mandatory_cfs_charge_codes(self):
         return [
             code.upper() for code, config in (self.possible_cfs_charge_codes() or {}).items()
@@ -353,27 +348,6 @@ class FclCfsRate(BaseModel):
             }
         }
 
-class FclCfsRateLineItem(Model):
-    code = CharField()
-    unit = CharField()
-    price = DecimalField(decimal_places=2)
-    currency = CharField()
-    remarks = ArrayField(CharField)
-    slabs = ArrayField(CharField)
-
-    class Meta:
-        database = db
-
-    def validate(self):
-        super().validate()
-        if not self.code:
-           raise HTTPException( status_code =401 ,detail = 'Code is required.')
-        if not self.unit:
-            raise HTTPException( status_code =401 ,detail ='Unit is required.')
-        if not self.price:
-            raise HTTPException( status_code =401 ,detail ='Price is required.')
-        if self.price and self.price < 0:
-            raise HTTPException( status_code =401 ,detail = 'Price cannot be negative')
         
 
   

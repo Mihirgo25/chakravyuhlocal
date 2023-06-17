@@ -3,7 +3,6 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from micro_services.client import *
 from database.rails_db import *
-# from micro_services.partner_client import PartnerApiClient
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 import datetime
 from fastapi import HTTPException

@@ -64,6 +64,10 @@ class FclCfsRateBulkOperation(Model):
 
     def validate_delete_rate_data(self):
         pass
+    
+    def validate_action_name(self):
+        if self.action_name not in ACTION_NAMES:
+            raise HTTPException(status_code=400,detail='Invalid action Name')
 
     def validate_add_markup_data(self):
         data = self.data

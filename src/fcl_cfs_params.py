@@ -48,7 +48,6 @@ class CreateFclCfsRateRequest(BaseModel):
     performed_by_type: str
     preferred_rate: str= None
     preferred_rate_currency: str= None
-    # preferred_detention_free_days: int= None
     cargo_readiness_date: datetime = None
     remarks:list[str] =[]
     booking_params : dict = {}
