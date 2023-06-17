@@ -83,7 +83,6 @@ class PostFclFreightRate(BaseModel):
   value_props: List[dict] = []
   t_n_c: list = []
   validities:List[dict] = None
-  fcl_freight_rate_feedback_id: str = None
 
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):

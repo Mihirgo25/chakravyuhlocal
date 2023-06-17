@@ -1,5 +1,4 @@
 from services.nandi.models.draft_fcl_freight_rate import DraftFclFreightRate
-from services.nandi.models.draft_fcl_freight_rate_audit import DraftFclFreightRateAudit
 from database.db_session import db
 from fastapi import HTTPException
 
@@ -23,21 +22,6 @@ def create_draft_fcl_freight_rate(request):
     try:
        draft_freight.save()
     except Exception as e:
-        raise HTTPException(status_code=400, detail="draft fcl did not save")
+        raise HTTPException(status_code=400, detail="rate did not save")
 
-    create_audit(request, draft_freight.id)
     return {'id': draft_freight.id}
-
-def create_audit(request, draft_fcl_id):
-
-    try:
-        DraftFclFreightRateAudit.create(
-        action_name = 'create',
-        performed_by_id = request['performed_by_id'],
-        data = request.get("data"),
-        source = request.get("source"),
-        object_id = draft_fcl_id,
-        object_type = 'DraftFclFreightRate'
-      )
-    except:
-      raise HTTPException(status_code=500, detail='draft fcl freight audit did not save')

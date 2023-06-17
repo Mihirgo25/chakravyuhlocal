@@ -40,7 +40,6 @@ class CreateFclFreightDraft(BaseModel):
   sourced_by_id: str
   source: str = None
   rate_not_available_entry: bool = False
-  rate_type: str = 'market_place'
 
 class UpdateDraftFclFreightRate(BaseModel):
   performed_by_id: str = None

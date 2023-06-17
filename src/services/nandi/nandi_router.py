@@ -173,16 +173,12 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
             'commodity': request.get('commodity'),
             'shipping_line_id': request.get('shipping_line_id'),
             'service_provider_id': request.get('service_provider_id'),
-            'importer_exporter_id': request.get('importer_exporter_id'),
-            'rate_type': request.get('rate_type')
+            'importer_exporter_id': request.get('importer_exporter_id')
         }
         fcl_freight = get_fcl_freight_rate(get_fcl_params)
-
         if 'freight' not in fcl_freight:
             fcl_freight = create_fcl_freight_rate_data(request)
-            request['rate_id'] = fcl_freight.get('id')
-        else:
-            request['rate_id'] = fcl_freight['freight'].get('id')
+        request['rate_id'] = fcl_freight['freight'].get('id')
 
         draft_fcl_freight = create_draft_fcl_freight_rate_data(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(draft_fcl_freight))
