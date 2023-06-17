@@ -98,7 +98,7 @@ class FclFreightRateBulkOperation(BaseModel):
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
         
         if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
-            raise HTTPException(status_code=400, detail='lower_limit cannot be greater than upper_limit')
+            raise HTTPException(status_code=400, detail='rates_greater_than_price cannot be greater than rates_less_than_price')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
@@ -369,9 +369,9 @@ class FclFreightRateBulkOperation(BaseModel):
                 'procured_by_id': procured_by_id,
                 'payment_term': data.get('payment_term'),
                 'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE),
-                'rate_price_greater_than':data.get('rates_greater_than_price'),
-                'rate_price_less_than':data.get('rates_less_than_price'),
-                'code_to_compare_price':data.get('line_item_code'),
+                'rates_greater_than_price':data.get('rates_greater_than_price'),
+                'rates_less_than_price':data.get('rates_less_than_price'),
+                'line_item_code':data.get('line_item_code'),
             })
             self.progress = int((count * 100.0) / total_count)
             self.save()
@@ -413,9 +413,13 @@ class FclFreightRateBulkOperation(BaseModel):
         if cogo_entity_id == 'None':
             cogo_entity_id = None
 
+        other_filters = { 'service_provider_id': self.service_provider_id , 'importer_exporter_present': False, 'partner_id': cogo_entity_id }
+        if not other_filters['service_provider_id']:
+            other_filters.pop('service_provider_id', None)
+        
         data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
         data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
-        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+        filters = (data['filters'] or {}) | other_filters
 
         if data.get('rate_reference_type') and data.get('rate_id'):
             select_field = "{}_id".format(data['rate_reference_type'])

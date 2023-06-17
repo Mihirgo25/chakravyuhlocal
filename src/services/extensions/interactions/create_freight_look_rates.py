@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from micro_services.client import common, maps
 from configs.global_constants import DEFAULT_AIRLINE_ID, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
 from services.extensions.constants.general import commodity_mappings, commodity_type_mappings
+from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 
 airline_hash = {}
 
@@ -96,7 +97,8 @@ def format_air_freight_rate(rate, locations):
         'stacking_type': 'stackable',
         'validity_start': datetime.now(),
         'validity_end': datetime.now() + timedelta(days=7),
-        'source': 'freight_look'
+        'source': 'freight_look',
+        'meta_data': rate['meta_data'] | { 'origin':locations[rate['Loc .']]['name'] }
     }
     return rate_obj
 
@@ -123,6 +125,7 @@ def create_proper_json(rates):
 def create_air_freight_rate_api(rate, locations):
     airline = None
     airline_id = DEFAULT_AIRLINE_ID
+    airline_name = 'deafult'
     if rate['A. Name'].lower() in airline_hash:
         airline = airline_hash[rate['A. Name'].lower()]
     elif 'A. Name' in rate and rate['A. Name']:
@@ -134,12 +137,15 @@ def create_air_freight_rate_api(rate, locations):
        
     if airline and 'id' in airline:
         airline_id = airline['id']
+        airline_name = airline['short_name']
 
     rate_obj = format_air_freight_rate(rate=rate, locations=locations)
     if not rate_obj:
         return rate
     rate_obj['airline_id'] = airline_id
-    res = common.create_air_freight_rate(rate_obj)
+    rate_obj['meta_data']['airline'] = airline_name
+    res = create_draft_air_freight_rate(rate_obj)
+    # res = common.create_air_freight_rate(rate_obj)
     return res
 
 def get_locations(destination, all_port_codes: list = []):
@@ -182,6 +188,8 @@ def create_freight_look_rates(request):
 
     for rate in proper_json_rates:
         rate['destination_airport_id'] = locations[destination_port_code]['id']
+        rate['meta_data'] = {}
+        rate['meta_data']['destination'] = locations[destination_port_code]['name']
         try:
             process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
             # new_rate = create_air_freight_rate_api(rate=rate, locations=locations)
