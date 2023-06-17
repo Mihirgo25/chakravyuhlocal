@@ -52,6 +52,7 @@ from services.air_freight_rate.interaction.list_air_freight_rates import list_ai
 from services.air_freight_rate.interaction.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
 from services.air_freight_rate.interaction.get_air_freight_local_rate_cards import get_air_freight_local_rate_cards
 from services.air_freight_rate.interaction.get_weight_slabs_for_airline import get_weight_slabs_for_airline
+from services.air_freight_rate.interaction.create_air_freight_rate_feedback import create_air_freight_rate_feeback
 
 air_freight_router = APIRouter()
 
@@ -831,12 +832,6 @@ def get_air_freight_rate_suggestions_data(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
-
-
-from services.air_freight_rate.interaction.create_air_freight_rate_feedback import (
-    create_air_freight_rate_feeback,
-)
-
 
 @air_freight_router.post("/create_air_freight_rate_feedback")
 def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedbacks, resp: dict = Depends(authorize_token)):
