@@ -62,3 +62,4 @@ class MapsApiClient:
                 if key in data:
                     data[key] = json.dumps(data[key])
             return self.client.request('GET', 'list_operators', {}, data)
+        return self.client.request('GET', 'list_operators', data, {})
