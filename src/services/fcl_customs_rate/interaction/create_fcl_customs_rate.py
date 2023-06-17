@@ -18,7 +18,6 @@ def create_fcl_customs_rate(request):
         FclCustomsRate.container_type==request.get('container_type'),
         FclCustomsRate.commodity == request.get('commodity'),
         FclCustomsRate.service_provider_id==request.get('service_provider_id'),
-        FclCustomsRate.commodity == request.get('commodity'),
         FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')).first()
       
   if not customs_rate:
