@@ -1,4 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from micro_services.client import common
 
 def get_relevant_rate_ids(rate_sheet_id, apply_to_extended_rates, object_ids):
     if object_ids and not isinstance(object_ids, list):
@@ -16,8 +17,11 @@ def get_relevant_rate_ids(rate_sheet_id, apply_to_extended_rates, object_ids):
 
     return [str(result['object_id']) for result in (query.dicts())]
 
-def is_price_in_range(lower_limit,upper_limit, price):
-    
+def is_price_in_range(lower_limit,upper_limit, price,markup_currency,currency):
+
+    if  markup_currency!=currency :
+        price=common.get_money_exchange_for_fcl({"price": price, "from_currency": currency, "to_currency": markup_currency })['price']
+
     if lower_limit is not None and price <= lower_limit:
         return False
 

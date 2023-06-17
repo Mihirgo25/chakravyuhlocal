@@ -767,6 +767,7 @@ class DeleteFreightRate(BaseModel):
   validity_end: datetime
   rate_sheet_id: str = None
   apply_to_extended_rates: bool = False
+  comparison_currency:str='USD'
   comparison_charge_code:str='BAS'
   rates_greater_than_price: float = None
   rates_less_than_price: float = None
@@ -775,7 +776,7 @@ class AddFreightRateMarkup(BaseModel):
   filters:dict={}
   markup:float
   markup_type:str
-  markup_currency:str=None
+  markup_currency:str='USD'
   line_item_code:str='BAS'
   validity_start:datetime
   validity_end:datetime

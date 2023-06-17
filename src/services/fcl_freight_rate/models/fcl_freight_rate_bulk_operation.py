@@ -260,7 +260,10 @@ class FclFreightRateBulkOperation(BaseModel):
         procured_by_ids = data.get('procured_by_ids')
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
-
+        
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
@@ -338,10 +341,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         rate_ids = get_relevant_rate_ids(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
-
-        filters = filters |  {'id': rate_ids} 
-            
+        filters = filters |  {'id': rate_ids}            
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())
@@ -381,6 +385,9 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -410,19 +417,17 @@ class FclFreightRateBulkOperation(BaseModel):
         data = self.data
         if cogo_entity_id == 'None':
             cogo_entity_id = None
-
-        other_filters = { 'service_provider_id': self.service_provider_id , 'importer_exporter_present': False, 'partner_id': cogo_entity_id }
-        if not other_filters['service_provider_id']:
-            other_filters.pop('service_provider_id', None)
         
         data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
         data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
-        filters = (data['filters'] or {}) | other_filters
+        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
         
-        
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+
         rate_ids = get_relevant_rate_ids(data.get('rate_sheet_id'),data['apply_to_extended_rates'],filters['id'])
-        filters = filters |  {'id': rate_ids} 
-                    
+        filters = filters |  {'id': rate_ids}
+            
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -458,7 +463,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 validity_object['line_items'].remove(line_item)
 
                
-                if not is_price_in_range(data.get('rate_price_greater_than'),data.get('rate_price_less_than'), line_item['price']):
+                if not is_price_in_range(data.get('rate_price_greater_than'),data.get('rate_price_less_than'), line_item['price'],data['markup_currency'],line_item['currency']):
                     continue
                 
                 if data['markup_type'].lower() == 'percent':
@@ -516,6 +521,9 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -590,6 +598,9 @@ class FclFreightRateBulkOperation(BaseModel):
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         free_days = list_fcl_freight_rate_free_days(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -622,6 +633,10 @@ class FclFreightRateBulkOperation(BaseModel):
         if cogo_entity_id == 'None':
             cogo_entity_id = None
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+        
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -697,6 +712,9 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -730,6 +748,9 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -763,6 +784,9 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -798,6 +822,9 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -880,6 +907,9 @@ class FclFreightRateBulkOperation(BaseModel):
             cogo_entity_id = None
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id' : cogo_entity_id })
 
+        if not filters['service_provider_id']:
+            del filters['service_provider_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']

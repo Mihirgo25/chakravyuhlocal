@@ -502,8 +502,9 @@ class FclFreightRate(BaseModel):
 
             line_item = [t for t in validity_object['line_items'] if t['code'] == other_params['comparison_charge_code']]
             price_to_compare=line_item[0]['price'] if line_item else None
+            currency=line_item[0]['currency'] if line_item else None
             
-            if not is_price_in_range(other_params['rates_greater_than_price'], other_params['rates_less_than_price'],price_to_compare):
+            if not is_price_in_range(other_params['rates_greater_than_price'], other_params['rates_less_than_price'],price_to_compare,other_params['comparision_currency'],currency):
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 new_tags[id] = previous_tag
                 continue
