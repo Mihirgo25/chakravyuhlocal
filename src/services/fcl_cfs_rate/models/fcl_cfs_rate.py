@@ -62,7 +62,7 @@ class FclCfsRate(BaseModel):
         return super(FclCfsRate, self).save(*args, **kwargs)
     
     class Meta:
-        table_name = 'fcl_cfs_rate'
+        table_name = 'fcl_cfs_rates'
 
     def validate_mandatory_free_days(self):
         free_days = [free_day.get('free_days_type') for free_day in self.free_days]

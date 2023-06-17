@@ -1,7 +1,7 @@
 from peewee import *
 from database.db_session import db
 from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from celery_worker import send_notifications_to_supply_agents_cfs_request, update_multiple_service_objects
 

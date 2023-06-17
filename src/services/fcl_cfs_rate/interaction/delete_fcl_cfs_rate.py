@@ -1,5 +1,5 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate import *
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from datetime import datetime
 

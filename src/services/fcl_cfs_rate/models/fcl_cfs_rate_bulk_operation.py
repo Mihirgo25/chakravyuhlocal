@@ -7,7 +7,7 @@ import datetime
 from fastapi import HTTPException
 from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate import delete_fcl_cfs_rate
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.definitions import FCL_CFS_CHARGES,FCL_FREIGHT_CURRENCIES
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate import update_fcl_cfs_rate

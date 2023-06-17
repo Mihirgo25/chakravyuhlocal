@@ -1,6 +1,6 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
 
