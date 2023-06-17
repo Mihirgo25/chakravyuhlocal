@@ -17,20 +17,6 @@ def validate_fcl_customs_object(module, object):
     return response
 
 def get_customs_object(object):
-    object['location_id'] = get_location_id(object.get('location'))
-    if object.get('location'):
-        del object['location']
-
-    for line_item in object.get('customs_line_items'):
-        line_item['location_id'] = get_location_id(line_item.get('location'))
-        if line_item.get('location'):
-            del line_item['location']
-
-    for line_item in object.get('cfs_line_items'):
-        line_item['location_id'] = get_location_id(line_item.get('location'))
-        if line_item.get('location'):
-            del line_item['location']
-
     res = {
         'location_id': object.get('location_id'),
         'trade_type': object.get('trade_type'),

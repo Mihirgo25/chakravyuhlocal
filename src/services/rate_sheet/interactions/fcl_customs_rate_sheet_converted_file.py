@@ -98,7 +98,7 @@ def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procure
         if t['line_item_type'] == 'customs_clearance':
             object['customs_line_items'].append(line_item)
         else:
-            object['cfs_line_items'].append(line_item) ##### ask
+            object['cfs_line_items'].append(line_item)
     object["rate_sheet_id"] = params['rate_sheet_id']
     object["performed_by_id"] = created_by_id
     object["service_provider_id"] = params['service_provider_id']
