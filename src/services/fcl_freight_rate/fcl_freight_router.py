@@ -1850,7 +1850,7 @@ def get_suggested_cogo_assured_fcl_freight_rates_data(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@fcl_freight_router.get("/list_fcl_freight_rate_deviation")
+@fcl_freight_router.get("/list_fcl_freight_rate_deviations")
 def list_fcl_freight_rate_deviation(
     filters: str = None,
     page_limit: int = 10,

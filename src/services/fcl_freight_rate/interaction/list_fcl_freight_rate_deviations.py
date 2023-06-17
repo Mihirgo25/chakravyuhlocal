@@ -80,7 +80,6 @@ def get_data(query):
         if object.get('old_price') and object.get('new_price'):
             if object['old_price_currency'] != object['new_price_currency']:
                 object['new_price'] = common.get_money_exchange_for_fcl({"price":object['new_price'], "from_currency":object['new_price_currency'], "to_currency":object['old_price_currency']})['price']
-                print('hgffdtfdtf',object['new_price'])
             object['deviation'] = (object['new_price'] - object['old_price'])/object['new_price'] * 100
     return data
 
