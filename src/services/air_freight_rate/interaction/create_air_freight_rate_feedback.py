@@ -42,7 +42,6 @@ def execute_transaction_code(request):
       'performed_by_id': request['performed_by_id'],
       'performed_by_type': request['performed_by_type'],
       'performed_by_org_id': request['performed_by_org_id'],
-      'trade_type':request['trade_type']
     }
     feedback=AirFreightRateFeedback.select().where(
         AirFreightRateFeedback.air_freight_rate_id==request.get('air_freight_rate_id'),
@@ -109,37 +108,6 @@ def get_create_params(request,rate):
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'trade_type': request.get('trade_type'),
-        'origin_airport_id':request.get('origin_airport_id'),
-        'origin_country_id':request.get('origin_country_id'),
-        'origin_continent_id':request.get('origin_continent_id'),
-        'origin_trade_id':request.get('origin_trade_id'),
-        'destination_airport_id':request.get('destination_airport_id'),
-        'destination_country_id':request.get('destination_country_id'),
-        'destination_continent_id':request.get('destination_continent_id'),
-        'destination_trade_id':request.get('destination_trade_id'),
-        'commodity':request.get('commodity'),
-        'cogo_entity_id':request.get('cogo_entity_id'),
-        'service_provider_id':request.get('service_provider_id'),
-        'weight':request.get('weight'),
-        'volume':request.get('volume'),
-        'packages_count':request.get('packages_count'),
-        'operation_type':request.get('operation_type'),
         'status': 'active',
-        'airline_id':rate.airline_id
       }
-    loc_ids=[]
-    if request.get('origin_airport_id'):
-        loc_ids.append(request.get('origin_airport_id'))
-    if request.get('destination_airport_id'):
-        loc_ids.append(request.get('destination_airport_id'))
-
-    obj={'filters':{"id":loc_ids}}
-    locations=maps.list_locations(obj)['list']
-    locations_hash={}
-    for loc in locations:
-        locations_hash[loc['id']]=loc
-    if request.get('origin_airport_id'):
-        params['origin_airport']=locations_hash[request.get('origin_airport_id')]
-    if request.get('destination_airport_id'):
-        params['destination_airport']=locations_hash[request.get('destination_airport_id')]
     return params
