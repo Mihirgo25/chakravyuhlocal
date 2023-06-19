@@ -1,3 +1,6 @@
+from uuid import UUID
+
+
 HAZ_CLASSES = [
     "gases-2.1",
     "gases-2.2",
@@ -129,6 +132,61 @@ DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US"}
 
+DEFAULT_WEIGHT_SLABS=[
+    {
+        'lower_limit':0.0,
+        'upper_limit':50,
+        'tariff_price':0,
+        'currency':'INR',
+        'unit':'per_kg'
+    },
+    {
+        'lower_limit':50.1,
+        'upper_limit':100.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+        },
+    {
+        'lower_limit':100.1,
+        'upper_limit':300.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },
+    {
+        'lower_limit':300.1,
+        'upper_limit':500.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },{
+        'lower_limit':500.1,
+        'upper_limit':1000.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    },{
+        'lower_limit':1000.1,
+        'upper_limit':10000,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    }
+
+]
 DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
 
 DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+
+RATE_FEEDBACK_RELEVANT_ROLE_ID = {
+    'supplier_relations_manager' : UUID('568c5939-3721-4444-a0ff-4c0298bc948d'),
+    'supply_owner_vietnam' : UUID('e0aa356c-2e4c-4cfd-b279-a6d3cdfa4edb'),
+    'coe_head_vietnam' : UUID('0e68d129-6f07-4324-95ee-88731b35c0c4')
+}
+CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
+
+INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'

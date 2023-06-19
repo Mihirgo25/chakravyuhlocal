@@ -55,7 +55,7 @@ class PostFclFreightRate(BaseModel):
   importer_exporter_id: str = None
   validity_start: datetime
   validity_end: datetime
-  schedule_type: str = 'transhipment'
+  schedule_type: str = 'direct'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
   line_items: List[UpdateLineItem]=None
@@ -149,7 +149,7 @@ class UpdateFclFreightRate(BaseModel):
   bulk_operation_id: str = None
   validity_start: datetime = None
   validity_end: datetime = None
-  schedule_type: str = 'transhipment'
+  schedule_type: str = 'direct'
   payment_term: str = 'prepaid'
   line_items: list[UpdateLineItem] = []
   weight_limit: FreeDay = None
@@ -235,7 +235,7 @@ class ExtendCreateFclFreightRate(BaseModel):
   importer_exporter_id: str = None
   validity_start: datetime
   validity_end: datetime
-  schedule_type: str = 'transhipment'
+  schedule_type: str = 'direct'
   fcl_freight_rate_request_id: str = None
   payment_term: str = 'prepaid'
   line_items: List[UpdateLineItem]
