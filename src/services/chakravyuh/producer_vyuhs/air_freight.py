@@ -24,14 +24,14 @@ class AirFreightVyuh():
         
         return extended_rates
 
-    def extend_rate(self):
+    def extend_rate(self, source = 'rate_extension'):
         from celery_worker import create_air_freight_rate_delay
 
         rates_to_create = self.get_rate_combinations_to_extend()
 
         # queue need to change to air_freight_rate
         for rate_to_create in rates_to_create:
-            rate_to_create = rate_to_create | { 'source': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
+            rate_to_create = rate_to_create | { 'source': source, 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
             create_air_freight_rate_delay.apply_async(kwargs={ 'request':rate_to_create }, queue='fcl_freight_rate')
 
         return True
