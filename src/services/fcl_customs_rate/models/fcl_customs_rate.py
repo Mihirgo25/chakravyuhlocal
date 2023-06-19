@@ -53,6 +53,10 @@ class FclCustomsRate(BaseModel):
     location = BinaryJSONField(null=True)
     importer_exporter = BinaryJSONField(null=True)
     zone_id = UUIDField(index=True,null=True)
+    mode = CharField(default = 'manual', null = True)
+    tags = BinaryJSONField(null=True)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
+    accuracy = FloatField(default = 100, null = True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

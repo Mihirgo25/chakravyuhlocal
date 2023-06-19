@@ -157,9 +157,6 @@ RATE_FEEDBACK_RELEVANT_ROLE_ID = {
     'supply_owner_vietnam' : UUID('e0aa356c-2e4c-4cfd-b279-a6d3cdfa4edb'),
     'coe_head_vietnam' : UUID('0e68d129-6f07-4324-95ee-88731b35c0c4')
 }
-EXPORT_CARGO_HANDLING_TYPES = ['stuffing_at_factory', 'stuffing_at_dock']
-
-IMPORT_CARGO_HANDLING_TYPES = ['direct_port_delivery', 'delivery_from_dock', 'destuffing_at_dock', 'dpd_without_cfs', 'dpd_cfs_dock_destuffing', 'dpd_cfs_factory_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
 
 PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
 
