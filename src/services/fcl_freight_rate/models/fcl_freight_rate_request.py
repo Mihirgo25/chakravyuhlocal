@@ -2,7 +2,6 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
-from configs.fcl_freight_rate_constants import REQUEST_SOURCES
 import datetime
 from micro_services.client import *
 from database.rails_db import *
@@ -20,7 +19,7 @@ class FclFreightRateRequest(BaseModel):
     cogo_entity_id = UUIDField(index=True, null = True)
     closed_by_id = UUIDField(index=True, null=True)
     closed_by = BinaryJSONField(null=True)
-    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     commodity = CharField(index=True, null=True)
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
@@ -48,15 +47,15 @@ class FclFreightRateRequest(BaseModel):
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     preferred_shipping_lines = BinaryJSONField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
-    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     request_type = CharField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_request_serial_id_seq'::regclass)")])
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default = datetime.datetime.now)
-    attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
-    commodity_description = CharField(null=True)
+    attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    commodity_description = TextField(null=True)
     reverted_rates_count = IntegerField(null=True)
     reverted_by_user_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     expiration_time = DateTimeField(null = True)
