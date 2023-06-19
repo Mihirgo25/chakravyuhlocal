@@ -291,6 +291,9 @@ class FclFreightVyuh():
             
             all_prices.append(converted_price)
         
+        if len(all_prices) == 0:
+            return None
+        
         size = len(all_prices)
         mean = sum(all_prices) / size
         variance = sum([((x - mean) ** 2) for x in all_prices]) / size
@@ -350,6 +353,8 @@ class FclFreightVyuh():
         for line_item in line_items:
             if line_item['code'] == 'BAS':
                 new_line_item = self.get_lower_and_upper_limit_for_transformation_line_item(line_item, affected_transformation)
+                if not new_line_item:
+                    continue
                 new_line_item = self.new_sigma_values(line_item, new_line_item)
                 new_line_items.append(new_line_item)
 
