@@ -340,19 +340,19 @@ class AirFreightVyuh():
 
 
     def set_estimations(self):
-        from celery_worker import transform_dynamic_pricing
+        from celery_worker import transform_air_dynamic_pricing
         
         affected_transformations = self.get_transformations_to_be_affected()
         new_transformations_to_add = self.get_transformations_to_be_added(affected_transformations)
 
         for affected_transformation in affected_transformations:
             if self.what_to_create[affected_transformation['origin_location_type']]:
-                self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
-                # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
+                # self.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=False)
+                transform_air_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'affected_transformation': affected_transformation, 'new': False }, queue='low')
         
         for new_transformation in new_transformations_to_add:
-            self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
-            # transform_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'current_validities': self.current_validities, 'affected_transformation': new_transformation, 'new': True }, queue='low')
+            # self.adjust_price_for_tranformation(affected_transformation=new_transformation, new=True)
+            transform_air_dynamic_pricing.apply_async(kwargs={ 'new_rate': self.new_rate, 'affected_transformation': new_transformation, 'new': True }, queue='low')
 
         return True
     
@@ -431,13 +431,13 @@ class AirFreightVyuh():
         return all_rates
 
     def insert_rates_to_rms(self):
+        from celery_worker import extend_air_freight_rates
         origin_airport_id = self.new_rate['origin_airport_id']
         destination_airport_id = self.new_rate['destination_airport_id']
         weight_slabs = self.create_weight_slabs(origin_airport_id,destination_airport_id,'airport')
         rates_to_extend = self.get_cluster_rate_combinations(weight_slabs)
         for rate in rates_to_extend:
-            producer = AirProducerVyuh(rate=rate)
-            producer.extend_rate()
+            extend_air_freight_rates.apply_async(kwargs={ 'rate': rate, 'source': 'invoice' }, queue='low')
     
     def get_rate_param(self,origin_airport_id,destination_airport_id,weight_slabs,factor=1 ):
         # weight_slabs = self.get_rms_weight_slabs(weight_slabs,factor)
