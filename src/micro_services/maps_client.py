@@ -63,3 +63,6 @@ class MapsApiClient:
                     data[key] = json.dumps(data[key])
             return self.client.request('GET', 'list_operators', {}, data)
         return self.client.request('GET', 'list_operators', data, {})
+    
+    def get_is_land_service_possible(self,data = {}):
+        return self.client.request('GET','is_land_service_possible',data)
