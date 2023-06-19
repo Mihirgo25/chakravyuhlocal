@@ -1,6 +1,5 @@
 
 from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS, EUROPE_FUEL_DATA_LINK, CHINA_FUEL_DATA_LINKS
-import requests
 import time
 import copy
 from bs4 import BeautifulSoup
@@ -9,6 +8,7 @@ from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
 from configs.global_constants import COUNTRY_CODES_MAPPING
 import services.ftl_freight_rate.scheduler.fuel_scheduler as fuel_schedulers
+import httpx
 
 
 def fuel_scheduler():
@@ -74,8 +74,9 @@ def get_scrapped_data_for_india():
     urls = INDIA_FUEL_DATA_LINKS
     fuel_data_for_india = []
     for url, data_set in urls.items():
-        request = requests.get(url)
-        scrapper = BeautifulSoup(request.text, "html")
+        with httpx.Client() as client:
+            response = client.get(url)
+        scrapper = BeautifulSoup(response.text, "html")
         data = scrapper.find("div", {"class": data_set[0]})
         table_data = data.find_all("td")
         link_data = data.find_all("a")
@@ -101,7 +102,8 @@ def get_scrapped_data_for_usa():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    response = requests.get(url, headers=headers)
+    with httpx.Client() as client:
+        response = client.get(url,headers=headers)
     html = response.content
     scrapper = BeautifulSoup(html, "html.parser")
     table_body = scrapper.find("tbody")
@@ -134,7 +136,8 @@ def get_scrapped_data_for_usa():
 
 def get_scrapped_data_for_europe():
     url = EUROPE_FUEL_DATA_LINK
-    response = requests.get(url)
+    with httpx.Client() as client:
+        response = client.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
     table = soup.find_all('table')[0]
     rows = table.find_all('tr')
@@ -172,7 +175,8 @@ def get_scrapped_data_for_europe():
 
 def get_scrapped_data_for_china():
     url = CHINA_FUEL_DATA_LINKS
-    response = requests.get(url)
+    with httpx.Client() as client:
+        response = client.get(url)
     scrapper = BeautifulSoup(response.text, 'html.parser')
     table_body = scrapper.find('tbody')
     table_header = table_body.find('td').text
