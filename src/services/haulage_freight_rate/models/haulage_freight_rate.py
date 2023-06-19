@@ -399,6 +399,8 @@ class HaulageFreightRate(BaseModel):
             if config.get('condition') is not None and eval(str(config['condition'])) and bool([set(self.transport_modes)] & set([config['tags']])):
                 charge_codes[code] = config
 
+        return charge_codes
+
     def mandatory_charge_codes(self,possible_charge_codes):
 
         charge_codes = {}

@@ -3,5 +3,5 @@ from datetime import date
 
 
 def update_haulage_rate_platform_prices(request):
-    return
+    return "Hello"
     
