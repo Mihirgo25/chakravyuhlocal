@@ -58,8 +58,8 @@ def get_air_freght_rate_data(request):
         air_freight_rate_data = AirFreightRate.select().where(
             AirFreightRate.origin_airport_id  == request.get('origin_location_id'),
             AirFreightRate.destination_airport_id == request.get('destination_location_id'),
-            AirFreightRate.service_provider_id  ==  request('service_provider_id'),
+            AirFreightRate.service_provider_id  ==  request.get('service_provider_id'),
             AirFreightRate.commodity  ==  request.get('commodity'),
-            AirFreightRate.airline_id  ==  request('airline_id'),
+            AirFreightRate.airline_id  ==  request.get('airline_id'),
             ~AirFreightRate.rate_not_available_entry).first()
     return air_freight_rate_data

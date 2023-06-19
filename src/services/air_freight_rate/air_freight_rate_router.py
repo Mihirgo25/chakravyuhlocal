@@ -892,6 +892,8 @@ def delete_air_freight_rate_feedback_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         data = delete_air_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))

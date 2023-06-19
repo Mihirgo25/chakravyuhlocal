@@ -104,7 +104,7 @@ class AirFreightRate(BaseModel):
         return super(AirFreightRate, self).save(*args, **kwargs)
     
     class Meta:
-        table_name = 'air_freight_rates_temp1_clone'
+        table_name = 'air_freight_rates_temp'
 
 
     def validate_validity_object(self,validity_start,validity_end):
@@ -196,7 +196,7 @@ class AirFreightRate(BaseModel):
 
     def get_required_location_data(self, location):
         loc_data = {
-            "id": location["id"],
+          "id": location["id"],
           "type":location['type'],
           "name":location['name'],
           "display_name": location["display_name"],
