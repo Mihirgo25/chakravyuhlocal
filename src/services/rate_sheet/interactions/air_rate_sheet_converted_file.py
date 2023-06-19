@@ -481,7 +481,7 @@ def process_air_freight_local(params, converted_file, update):
                     last_row = list(row.values())
                     # Create previous rate if previous rate was valid
                     if is_previous_rate_valid:
-                        create_air_freight_freight_rate(
+                        create_air_freight_local_rate(
                             params,
                             converted_file,
                             rows,
@@ -545,7 +545,7 @@ def process_air_freight_local(params, converted_file, update):
                 list_opt = []
                 if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
-                    create_air_freight_freight_rate(
+                    create_air_freight_local_rate(
                         params,
                         converted_file,
                         rows,
@@ -569,7 +569,7 @@ def process_air_freight_local(params, converted_file, update):
                 is_previous_rate_valid = False
                 rows = []
     if rows and is_previous_rate_valid and not invalidated:
-        create_air_freight_freight_rate(
+        create_air_freight_local_rate(
             params,
             converted_file,
             rows,
@@ -612,7 +612,6 @@ def process_air_freight_local(params, converted_file, update):
 
 
 
-
 def write_air_freight_local_object(rows, csv, params, converted_file, last_row):
     object_validity = validate_air_freight_object(converted_file.get("module"), rows)
     if object_validity["valid"]:
@@ -631,3 +630,104 @@ def write_air_freight_local_object(rows, csv, params, converted_file, last_row):
             print("no csv")
     converted_file["rates_count"] = int(converted_file["rates_count"]) + 1
     return object_validity
+
+
+
+def create_air_freight_local_rate(
+    params,
+    converted_file,
+    rows,
+    created_by_id,
+    procured_by_id,
+    sourced_by_id,
+    csv_writer,
+    last_row,
+):
+    from celery_worker import (
+        create_air_,
+    )
+
+    keys_to_extract = [
+        "commodity",
+        "operation_type",
+        "min_price",
+        "currency",
+        "validity_start",
+        "validity_end",
+        "commodity_type",
+        "commodity_sub_type",
+        "packing_type",
+        "handling_type",
+        "price_type",
+        "density_category",
+        "density_ratio",
+    ]
+    object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    object["commodity"] = object["commodity"].lower().strip()
+    object["commodity_type"] = object["commodity_type"].lower().strip()
+    object["commodity_sub_type"] = object["commodity_sub_type"].lower().strip()
+    object["currency"] = object["currency"].upper().strip()
+    object["price_type"] = object["price_type"].lower().strip()
+    object["density_category"] = object["density_category"].lower().strip()
+    object["density_ratio"] = "1:{}".format(object["density_ratio"].strip())
+
+    object["validity_start"] = convert_date_format(object.get("validity_start"))
+    object["validity_end"] = convert_date_format(object.get("validity_end"))
+
+    object["length"] = 300
+    object["bredth"] = 300
+    object["height"] = 300
+
+    object["rate_type"] = "general"
+    object["initial_volume"] = None
+    object["available_volume"] = None
+    object["initial_gross_weight"] = None
+    object["available_gross_weight"] = None
+    object["weight_slabs"] = []
+
+    object["origin_airport_id"] = get_airport_id(
+        rows[0]["origin_airport"].upper().strip(),
+        rows[0]["origin_country"].upper().strip(),
+    )
+    object["destination_airport_id"] = get_airport_id(
+        rows[0]["destination_airport"].upper().strip(),
+        rows[0]["destination_country"].upper().strip(),
+    )
+    object["airline_id"] = get_airline_id(rows[0]["airline"].strip())
+    object["shipment_type"] = object["packing_type"]
+    object["weight_slabs"] = []
+
+    for slab in rows:
+        weight_slab = {}
+        weight_slab["lower_limit"] = slab["lower_limit"].strip()
+        weight_slab["upper_limit"] = slab["upper_limit"].strip()
+        weight_slab["tariff_price"] = slab["tariff_price"].strip()
+        weight_slab["currency"] = object["currency"]
+        weight_slab["unit"] = object["unit"]
+        object["weight_slabs"].append(weight_slab)
+
+    # object["service_provider_id"] = params.get('service_provider_id')
+    # object["cogo_entity_id"] = params.get('cogo_entity_id')
+    object["source"] = "rate_sheet"
+
+    operation_types = object["operation_type"].lower().split(",")
+    packing_types = object["packing_types"].lower().split(",")
+    handling_types = object["handling_types"].lower().split(",")
+
+    for operation in operation_types:
+        object["operation_type"] = operation
+        for packing in packing_types:
+            object["packing_type"] = packing
+            for handling in handling_types:
+                object["handling_type"] = handling
+                request_params = object
+                validation = write_air_freight_freight_object(
+                    request_params, csv_writer, params, converted_file, last_row
+                )
+                if validation.get("valid"):
+                    object["rate_sheet_validation"] = True
+                    create_air_freight_rate_delay.apply_async(
+                        kwargs={"request": object}, queue="air_freight_rate"
+                    )
+                else:
+                    print(validation.get("error"))
