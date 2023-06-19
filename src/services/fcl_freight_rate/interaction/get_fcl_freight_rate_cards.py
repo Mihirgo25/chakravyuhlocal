@@ -52,7 +52,7 @@ def initialize_freight_query(requirements, prediction_required = False):
     FclFreightRate.container_type == requirements['container_type'],
     FclFreightRate.commodity == requirements['commodity'],
     ~FclFreightRate.rate_not_available_entry,
-    # ((FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
+    ((FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
     )
     rate_constant_mapping_key = requirements['cogo_entity_id']
 
@@ -135,7 +135,7 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id << list(service_provider_ids.keys()),
         (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry))
-        # (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
+        (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
     )
 
     if len(main_port_ids) == 2:
@@ -185,14 +185,12 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['origin_main_port_id']
     if trade_type == 'import' and rate['destination_main_port_id']:
         main_port_id = rate['destination_main_port_id']
-    
     for local_rate in local_rates:
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
             if shipping_line_id == local_rate['shipping_line_id']:
                 matching_locals[local_rate["service_provider_id"]] = conditional_line_items( rate, local_rate)
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
                 default_shipping_line_locals[local_rate["service_provider_id"]] = conditional_line_items( rate, local_rate)
-            
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
     if default_lsp in default_shipping_line_locals:
