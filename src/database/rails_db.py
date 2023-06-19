@@ -216,7 +216,7 @@ def get_organization_stakeholders(stakeholder_type, stakeholder_id):
         sentry_sdk.capture_exception(e)
         return org_ids
 
-def get_partner_users(ids, status = 'active'):
+def get_partner_users(ids, status = 'active', role_ids = None):
     if not ids:
         return []
     all_result = []
@@ -226,7 +226,11 @@ def get_partner_users(ids, status = 'active'):
             with conn.cursor() as cur:
                 ids = tuple(ids)
                 sql = 'select partner_users.user_id, partner_users.id from partner_users where status = %s and id IN %s'
-                cur.execute(sql, ( status, ids,))
+                if role_ids:
+                    sql += 'and partner_users.role_ids && %s'
+                    cur.execute(sql, ( status, ids, role_ids))
+                else:
+                    cur.execute(sql, ( status, ids,))
                 result = cur.fetchall()
                 for res in result:
                     new_obj = {
