@@ -210,6 +210,16 @@ def send_create_notifications_to_supply_agents_function(self, object):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
+def set_relevant_supply_agents_function(self, object, request):
+    try:
+        object.set_relevant_supply_agents(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
 def send_notifications_to_supply_agents_local_request(self, object):
     try:
         object.send_notifications_to_supply_agents()
