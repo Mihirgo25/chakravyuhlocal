@@ -26,6 +26,7 @@ from services.extensions.interactions.create_freight_look_rates import create_ai
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 
 # Rate Producers
 
@@ -521,3 +522,14 @@ def extend_air_freight_rates(self, rate, source = 'rate_extension'):
             pass
         else:
             raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def update_fcl_freight_rate_feedback_in_delay(self, request):
+    try:
+        update_fcl_freight_rate_feedback(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+            
