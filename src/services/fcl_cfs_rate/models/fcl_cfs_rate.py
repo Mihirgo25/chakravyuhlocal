@@ -74,15 +74,14 @@ class FclCfsRate(BaseModel):
     def validate_duplicate_line_items(self):
         unique_items = set()
         for cfs_line_item in self.line_items:
-            unique_items.add(str(cfs_line_item['code']).upper() + str(cfs_line_item['location_id']))
+            unique_items.add(str(cfs_line_item['code']).upper() + str(cfs_line_item.get('location_id')))
 
         if len(self.line_items) != len(unique_items):
             raise HTTPException(status_code=400, detail="Contains Duplicates")
         
     def validate_invalid_line_items(self):
-        cfs_line_item_codes = [str(t.code) for t in self.line_items]
-        possible_cfs_charge_codes = [str(t[0]) for t in self.possible_cfs_charge_codes]
-
+        cfs_line_item_codes = [str(t['code']) for t in self.line_items]
+        possible_cfs_charge_codes = [str(t) for t in self.possible_cfs_charge_codes()]
         invalid_customs_line_items = [t for t in cfs_line_item_codes if t not in possible_cfs_charge_codes]
         if invalid_customs_line_items:
             raise HTTPException(status_code=400, detail="Invalid line items")
