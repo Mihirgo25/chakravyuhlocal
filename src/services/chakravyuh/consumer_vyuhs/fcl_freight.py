@@ -2,6 +2,8 @@ from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRat
 from services.chakravyuh.models.cost_booking_estimation import CostBookingEstimation
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
+from configs.global_constants import CHINA_COUNTRY_ID, HAZ_CLASSES, INDIA_COUNTRY_ID
+from configs.transformation_constants import CHINA_MINIMUM_RATES
 from datetime import datetime
 
 class FclFreightVyuh():
@@ -127,6 +129,25 @@ class FclFreightVyuh():
 
         return line_item 
     
+    def get_adhoc_rate(self, price):
+        if self.requirements['origin_country_id'] == CHINA_COUNTRY_ID and self.requirements['destination_country_id'] == INDIA_COUNTRY_ID:
+            container_type = self.requirements['container_type']
+            container_size = self.requirements['container_size']
+            commodity = self.requirements['commodity']
+            C_CLASS = 'NON_HAZ'
+            if commodity in HAZ_CLASSES:
+                C_CLASS = 'HAZ'
+            try:
+                min_price = CHINA_MINIMUM_RATES[container_size][C_CLASS][container_type]
+                if price > min_price:
+                    return price
+                return min_price
+            except:
+                return price
+        return price
+            
+
+    
     def apply_periodic_pricing(self, lower_limit, upper_limit):
         datetime_new = datetime.now()
         hour = datetime_new.hour
@@ -150,7 +171,9 @@ class FclFreightVyuh():
 
         final_price = lower_limit + price_delta
 
-        return int(final_price)
+        price_to_send = self.get_adhoc_rate(int(final_price))
+
+        return price_to_send
 
     
     def get_line_item_price(self, line_item, tranformed_lineitem):

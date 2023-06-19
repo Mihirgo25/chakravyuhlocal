@@ -35,7 +35,8 @@ def execute_transaction_code(request):
             if object.closing_remarks is not None
             else request.get("closing_remarks")
         )
-
+    if request.get("relevant_supply_agent_ids"):
+        object.relevant_supply_agent_ids = (UUID(id) for id in request.get("relevant_supply_agent_ids"))
     try:
         object.save()
     except:
@@ -62,8 +63,8 @@ def create_audit(request, freight_rate_request_id):
         action_name="update",
         performed_by_id=request["performed_by_id"],
         data={
-            "closing_remarks": request["closing_remarks"],
-            "performed_by_id": request["performed_by_id"],
+            "closing_remarks": request.get("closing_remarks"),
+            "performed_by_id": request.get("performed_by_id"),
         },
         object_id=freight_rate_request_id,
         object_type="FclFreightRateRequest",
