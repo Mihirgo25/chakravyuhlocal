@@ -137,9 +137,9 @@ def process_air_freight_freight(params, converted_file, update):
                 "density_category",
                 "density_ratio",
             ]
-            blank_field = None
+            blank_field = []
             is_main_rate_row = False
-            if row["origin_port"]:
+            if row["origin_airport"]:
                 is_main_rate_row = True
 
             if valid_hash(row, present_field, blank_field):
@@ -259,8 +259,6 @@ def process_air_freight_freight(params, converted_file, update):
         update.status = "partially_complete"
         converted_file["status"] = "partially_complete"
 
-    print(update.status, converted_file, "3")
-
     set_processed_percent(percent_completed, params)
     try:
         os.remove(get_original_file_path(converted_file))
@@ -370,6 +368,252 @@ def create_air_freight_freight_rate(
 
 
 def write_air_freight_freight_object(rows, csv, params, converted_file, last_row):
+    object_validity = validate_air_freight_object(converted_file.get("module"), rows)
+    if object_validity["valid"]:
+        csv.writerow(last_row)
+        converted_file["valid_rates_count"] = (
+            int(converted_file["valid_rates_count"]) + 1
+        )
+    else:
+        try:
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
+            csv.writerow(list_opt)
+            csv.writerow([])
+            csv.writerow(last_row)
+        except:
+            print("no csv")
+    converted_file["rates_count"] = int(converted_file["rates_count"]) + 1
+    return object_validity
+
+
+def process_air_freight_local(params, converted_file, update):
+    valid_headers = [
+        "airport",
+        "country",
+        "airline",
+        "trade_type",
+        "commodity",
+        "commodity_type",
+        "code",
+        "unit",
+        "min_price",
+        "base_price",
+        "currency",
+        "lower_limit",
+        "upper_limit",
+        "price",
+        "remark1",
+        "remark2",
+        "remark3",
+    ]
+
+    total_lines = 0
+    original_path = get_original_file_path(converted_file)
+    rows = []
+    params["rate_sheet_id"] = params["id"]
+    rate_sheet = RateSheetAudit.get(
+        (RateSheetAudit.object_id == params["rate_sheet_id"])
+        & (RateSheetAudit.action_name == "update")
+    )
+    rate_sheet = jsonable_encoder(rate_sheet)["__data__"]
+    created_by_id = rate_sheet["performed_by_id"]
+    procured_by_id = rate_sheet["procured_by_id"]
+    sourced_by_id = rate_sheet["sourced_by_id"]
+    index = -1 if index < 0 else index
+    file_path = original_path
+    edit_file = open(get_file_path(converted_file), "w")
+    last_row = []
+    invalidated = False
+    with open(file_path, "rb") as f:
+        result = chardet.detect(f.read())
+        encoding = result["encoding"]
+
+    with open(original_path, mode="rt", encoding=encoding) as file:
+        # Read converted file for porcessing
+        csv_writer = csv.writer(edit_file)
+        input_file = csv.DictReader(file)
+        headers = input_file.fieldnames
+
+        if len(set(valid_headers) & set(headers)) != len(headers):
+            error_file = ["invalid header"]
+            csv_writer.writerow(error_file)
+            invalidated = True
+
+        for row in input_file:
+            total_lines += 1
+        # Set Initial Rate Sheets count
+        set_total_line(converted_file, total_lines)
+        set_processed_percent(0, converted_file)
+        csv_writer.writerow(headers)
+        file.seek(0)
+        next(file)
+        is_previous_rate_valid = True
+        for row in input_file:
+            if invalidated:
+                break
+            index += 1
+            if not "".join(list(row.values())).strip():
+                continue
+            for k, v in row.items():
+                if v == "":
+                    row[k] = None
+            present_field = [
+                "airport",
+                "country",
+                "airline",
+                "trade_type",
+                "commodity",
+                "commodity_type",
+                "code",
+                "unit",
+                "min_price",
+                "base_price",
+                "currency",
+            ]
+            blank_field = []
+            is_main_rate_row = False
+            if row["airport"]:
+                is_main_rate_row = True
+
+            if valid_hash(row, present_field, blank_field):
+                if rows:
+                    last_row = list(row.values())
+                    # Create previous rate if previous rate was valid
+                    if is_previous_rate_valid:
+                        create_air_freight_freight_rate(
+                            params,
+                            converted_file,
+                            rows,
+                            created_by_id,
+                            procured_by_id,
+                            sourced_by_id,
+                            csv_writer,
+                            last_row,
+                        )
+                    else:
+                        is_previous_rate_valid = True
+                    # Set Processing percent
+                    set_current_processing_line(index - 1, converted_file)
+                    percent = (
+                        get_current_processing_line(converted_file) / total_lines
+                    ) * 100
+                    set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
+                rows = [row]
+
+            elif rows and (
+                valid_hash(
+                    row,
+                    ["lower_limit", "upper_limit", "tariff_price"],
+                    [
+                        "airport",
+                        "country",
+                        "airline",
+                        "trade_type",
+                        "commodity",
+                        "commodity_type",
+                        "code",
+                        "unit",
+                        "min_price",
+                        "base_price",
+                        "currency",
+                    ],
+                )
+                or valid_hash(
+                    row,
+                    ["code", "unit", "min_price", "base_price", "currency"],
+                    [
+                        "airport",
+                        "country",
+                        "airline",
+                        "trade_type",
+                        "commodity",
+                        "commodity_type",
+                        "lower_limit",
+                        "upper_limit",
+                        "price",
+                    ],
+                )
+            ):
+                rows.append(row)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
+            else:
+                list_opt = []
+                if rows and is_previous_rate_valid and is_main_rate_row:
+                    last_row = list(row.values())
+                    create_air_freight_freight_rate(
+                        params,
+                        converted_file,
+                        rows,
+                        created_by_id,
+                        procured_by_id,
+                        sourced_by_id,
+                        csv_writer,
+                        last_row,
+                    )
+                    set_current_processing_line(index - 1, converted_file)
+                    percent = (
+                        get_current_processing_line(converted_file) / total_lines
+                    ) * 100
+                    set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                list_opt.append("Invalid Row")
+                csv_writer.writerow(list_opt)
+                if is_previous_rate_valid:
+                    converted_file["rates_count"] += 1
+                is_previous_rate_valid = False
+                rows = []
+    if rows and is_previous_rate_valid and not invalidated:
+        create_air_freight_freight_rate(
+            params,
+            converted_file,
+            rows,
+            created_by_id,
+            procured_by_id,
+            sourced_by_id,
+            csv_writer,
+            "",
+        )
+    set_current_processing_line(total_lines, converted_file)
+    try:
+        valid = converted_file.get("valid_rates_count")
+        total = converted_file.get("rates_count")
+        percent_completed = (valid / total) * 100
+    except:
+        valid = 0
+        total = 0
+        percent_completed = 0
+    percent = (get_current_processing_line(converted_file) / total_lines) * 100
+    converted_file["percent"] = percent_completed
+    edit_file.flush()
+    converted_file["file_url"] = upload_media_file(get_file_path(converted_file))
+    edit_file.close()
+    if valid == total and total != 0:
+        update.status = "complete"
+        converted_file["status"] = "complete"
+    elif valid == 0:
+        update.status = "uploaded"
+        converted_file["status"] = "invalidated"
+    else:
+        update.status = "partially_complete"
+        converted_file["status"] = "partially_complete"
+
+    set_processed_percent(percent_completed, params)
+    try:
+        os.remove(get_original_file_path(converted_file))
+        os.remove(get_file_path(converted_file))
+    except:
+        return
+
+
+
+
+def write_air_freight_local_object(rows, csv, params, converted_file, last_row):
     object_validity = validate_air_freight_object(converted_file.get("module"), rows)
     if object_validity["valid"]:
         csv.writerow(last_row)
