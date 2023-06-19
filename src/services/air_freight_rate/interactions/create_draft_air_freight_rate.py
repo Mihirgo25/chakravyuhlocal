@@ -1,4 +1,5 @@
 from services.air_freight_rate.models.draft_air_freight_rate import DraftAirFreightRate
+from datetime import datetime
 
 def create_draft_air_freight_rate(request):
     meta_data = request.get('meta_data') or {}
@@ -21,8 +22,8 @@ def create_draft_air_freight_rate(request):
         'rate_type': request.get('rate_type'),
         'service_provider_id': request.get('service_provider_id'),
         'stacking_type': request.get('stacking_type'),
-        'validity_start': request.get('validity_start').date(),
-        'validity_end': request.get('validity_end').date(),
+        'validity_start': datetime.fromisoformat(str(request.get('validity_start'))).date(),
+        'validity_end': datetime.fromisoformat(str(request.get('validity_end'))).date(),
         'source': request.get('source'),
         'airline_id': request.get('airline_id'),
         'meta_data': meta_data
