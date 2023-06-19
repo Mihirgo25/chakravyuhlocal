@@ -25,10 +25,10 @@ def list_fcl_freight_rate_deviations(filters = {}, page_limit=10, page=1):
         FclFreightRateFeedback.container_type,
         FclFreightRateFeedback.origin_port,
         FclFreightRateFeedback.destination_port,
-        FclFreightRateFeedback.feedback_validities
+        FclFreightRateFeedback.reverted_validities
     ).where(
         FclFreightRateFeedback.feedback_type == 'disliked',
-        FclFreightRateFeedback.feedback_validities.is_null(False) | FclFreightRateFeedback.preferred_freight_rate.is_null(False))
+        FclFreightRateFeedback.reverted_validities.is_null(False) | FclFreightRateFeedback.preferred_freight_rate.is_null(False))
 
     if filters:
         if type(filters) != dict:
@@ -71,8 +71,8 @@ def get_data(query):
                     object['old_price'] = line_item['price']
                     object['old_price_currency'] = line_item['currency']
                     break
-        if object.get('feedback_validities') and len(object['feedback_validities']) > 0:
-            for feedback_line_item in object['feedback_validities'][0]['line_items']:
+        if object.get('reverted_validities') and len(object['reverted_validities']) > 0:
+            for feedback_line_item in object['reverted_validities'][0]['line_items']:
                 if feedback_line_item['code'] == "BAS":
                     object['new_price'] = feedback_line_item['price']
                     object['new_price_currency'] = feedback_line_item['currency']

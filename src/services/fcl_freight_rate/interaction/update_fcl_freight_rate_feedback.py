@@ -21,8 +21,8 @@ def execute_transaction_code(request):
     if request.get("relevant_supply_agent_ids"):
         object.relevant_supply_agent_ids = (UUID(id) for id in request.get("relevant_supply_agent_ids"))
 
-    if request.get("feedback_validities"):
-        object.feedback_validities = request.get("feedback_validities")
+    if request.get("reverted_validities"):
+        object.reverted_validities = request.get("reverted_validities")
     try:
         object.save()
     except:
