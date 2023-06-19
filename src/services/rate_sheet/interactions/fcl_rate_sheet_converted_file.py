@@ -9,9 +9,6 @@ from services.rate_sheet.interactions.validate_fcl_freight_object import validat
 from database.db_session import rd
 
 from fastapi.encoders import jsonable_encoder
-
-from datetime import datetime
-import dateutil.parser as parser
 from database.rails_db import get_shipping_line, get_organization
 from services.rate_sheet.helpers import *
 import chardet
@@ -92,14 +89,6 @@ def get_shipping_line_id(shipping_line_name):
     except:
         shipping_line_id = None
     return shipping_line_id
-
-
-def convert_date_format(date):
-    if not date:
-        return date
-    parsed_date = parser.parse(date, dayfirst=True)
-    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
-
 
 
 def append_in_final_csv(csv, row):
