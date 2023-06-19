@@ -5,7 +5,6 @@ import datetime
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from fastapi import HTTPException
 from micro_services.client import *
-from celery_worker import get_multiple_service_objects
 from database.rails_db import *
 from configs.air_freight_rate_constants import *
 from configs.global_constants import *
