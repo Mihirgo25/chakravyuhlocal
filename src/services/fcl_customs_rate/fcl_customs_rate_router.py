@@ -264,7 +264,7 @@ def get_fcl_cutsoms_rate_cards_data(
     container_size: str,
     container_type: str,
     containers_count: int,
-    cargo_handling_type: str,
+    cargo_handling_type: str = None,
     trade_type: str = None,
     include_confirmed_inventory_rates: bool = True,
     importer_exporter_id: str = None,
