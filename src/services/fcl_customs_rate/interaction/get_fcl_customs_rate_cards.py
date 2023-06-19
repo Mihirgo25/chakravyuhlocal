@@ -1,8 +1,7 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
-from configs.global_constants import CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
+from configs.global_constants import CONFIRMED_INVENTORY
 from configs.fcl_customs_rate_constants import LOCATION_HIERARCHY
 from configs.definitions import FCL_CUSTOMS_CHARGES
-from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_eligible_orgs
 import sentry_sdk, traceback
@@ -13,7 +12,7 @@ def get_fcl_customs_rate_cards(request):
         query = initialize_customs_query(request)
         customs_rates = jsonable_encoder(list(query.dicts()))
 
-        if len(customs_rates) == 0:
+        if len(customs_rates) == 0 and request.get('port_id'):
             customs_rates = get_zone_average_customs_rate(request)
 
         customs_rates = discard_noneligible_lsps(customs_rates)
@@ -36,7 +35,8 @@ def initialize_customs_query(request):
         FclCustomsRate.service_provider_id,
         FclCustomsRate.importer_exporter_id,
         FclCustomsRate.location_type,
-        FclCustomsRate.location_id
+        FclCustomsRate.location_id,
+        FclCustomsRate.mode
     ).where(
       FclCustomsRate.container_size == request.get('container_size'),
       FclCustomsRate.container_type == request.get('container_type'),
@@ -86,7 +86,7 @@ def build_response_object(result, request):
       'importer_exporter_id': result.get('importer_exporter_id'),
       'location_id': result.get('location_id'),
       'line_items': [],
-      'source': 'predicted' if result.get('service_provider_id') in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates',
+      'source': "predicted" if result.get('mode') == 'predicted' else "spot_rates",
       'tags': []
     }
 

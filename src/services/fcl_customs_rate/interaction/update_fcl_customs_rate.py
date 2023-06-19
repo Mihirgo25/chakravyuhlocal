@@ -38,7 +38,7 @@ def execute_transaction_code(request):
 
 def find_rate_object(request):
     try:
-        rate_object = FclCustomsRate.get_by_id(request['id'])
+        rate_object = FclCustomsRate.select().where(FclCustomsRate.id == request['id']).first()
     except:
         rate_object = None
     return rate_object

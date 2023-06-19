@@ -1,4 +1,4 @@
-from fcl_customs_params import *
+from services.fcl_customs_rate.fcl_customs_params import *
 from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder

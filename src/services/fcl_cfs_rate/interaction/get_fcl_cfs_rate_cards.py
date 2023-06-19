@@ -1,6 +1,6 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from configs.fcl_cfs_rate_constants import LOCATION_HIERARCHY
-from configs.global_constants import PREDICTED_RATES_SERVICE_PROVIDER_IDS,CONFIRMED_INVENTORY
+from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import FCL_CFS_CHARGES
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_eligible_orgs
@@ -36,8 +36,16 @@ def ignore_non_eligible_service_providers(freight_rates):
     return freight_rates
 
 def initialize_query(request):
-    query = FclCfsRate.select().where(
-        FclCfsRate.location_id == request.get('port_id'),
+    location_ids = list(filter(None, [request.get('port_id'), request.get('country_id')]))
+    query = FclCfsRate.select(
+        FclCfsRate.line_items,
+        FclCfsRate.service_provider_id,
+        FclCfsRate.importer_exporter_id,
+        FclCfsRate.free_days,
+        FclCfsRate.location_type,
+        FclCfsRate.mode
+    ).where(
+        FclCfsRate.location_id << location_ids,
         FclCfsRate.container_size == request.get('container_size'),
         FclCfsRate.container_type == request.get('container_type'),
         FclCfsRate.commodity == request.get('commodity'),
@@ -60,11 +68,11 @@ def build_response_list(query_results, request):
     for key, results in grouped_query_results.items():
         results = sort_results(results)
 
-        result = find_result_with_importer_exporter(results)
-        if not result:
-            result = results[0]
+        customer_specific_rate = find_result_with_importer_exporter(results)
+        if not customer_specific_rate:
+            customer_specific_rate = results[0]
 
-        response_object = build_response_object(result, request)
+        response_object = build_response_object(customer_specific_rate, request)
 
         if response_object:
             result_list.append(response_object)
@@ -97,7 +105,7 @@ def build_response_object(result, request):
         "importer_exporter_id": result.get("importer_exporter_id"),
         "line_items": [],
         "free_days": [free_day | {"unit": "per_day"} for free_day in result.get("free_days",[])],
-        "source": "predicted" if result["service_provider_id"] in PREDICTED_RATES_SERVICE_PROVIDER_IDS else "spot_rates",
+        "source": "predicted" if result.get('mode') == 'predicted' else "spot_rates",
         "tags": []
     }
 

@@ -68,10 +68,21 @@ def apply_validity_end_less_than_filter(query, filters):
     return query
 
 def apply_similar_id_filter(query, filters):
-    feedback_data = (FclCustomsRateFeedback.select(FclCustomsRateFeedback.port_id, FclCustomsRateFeedback.commodity, FclCustomsRateFeedback.trade_type).where(FclCustomsRateFeedback.id==filters['similar_id'])).first()
+    feedback_data = FclCustomsRateFeedback.select(
+            FclCustomsRateFeedback.port_id, 
+            FclCustomsRateFeedback.commodity, 
+            FclCustomsRateFeedback.trade_type
+        ).where(
+            FclCustomsRateFeedback.id==filters['similar_id']
+        ).first()
+    
     if feedback_data:
         query = query.where(FclCustomsRateFeedback.id != filters.get('similar_id'))
-        query = query.where(FclCustomsRateFeedback.port_id == feedback_data.port_id, FclCustomsRateFeedback.commodity == feedback_data.commodity, FclCustomsRateFeedback.trade_type == feedback_data.trade_type)
+        query = query.where(
+            FclCustomsRateFeedback.port_id == feedback_data.port_id, 
+            FclCustomsRateFeedback.commodity == feedback_data.commodity, 
+            FclCustomsRateFeedback.trade_type == feedback_data.trade_type
+        )
     return query
 
 def get_data(query, spot_search_details_required):
@@ -129,7 +140,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
 
-    query = FclCustomsRateFeedback.select()
+    query = FclCustomsRateFeedback.select(FclCustomsRateFeedback.id)
 
     if filters:
         if 'status' in filters:

@@ -78,7 +78,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
 
-    query = FclCfsRateRequest.select()
+    query = FclCfsRateRequest.select(FclCfsRateRequest.id)
 
     if filters:
         if 'status' in filters:

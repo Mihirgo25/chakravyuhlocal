@@ -30,7 +30,7 @@ def execute_transaction_code(request):
 
 def find_object(id):
     try:
-        object = FclCfsRate.get_or_none(id=id)
+        object = FclCfsRate.select().where(FclCfsRate.id == id).first()
     except:
         object = None
     return object

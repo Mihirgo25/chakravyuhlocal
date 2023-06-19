@@ -16,8 +16,8 @@ ACTION_NAMES = ['delete_rate']
 
 class FclCfsRateBulkOperation(Model):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True, index=True)
-    service_provider_id = CharField(null = True)
-    performed_by_id = CharField(null = True)
+    service_provider_id = UUIDField(null = True)
+    performed_by_id = UUIDField(null = True)
     data = BinaryJSONField(null=True)
     progress = IntegerField(null=True)
     action_name = CharField(null=True)

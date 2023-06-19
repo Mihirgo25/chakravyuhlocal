@@ -3,12 +3,12 @@ from fastapi import HTTPException
 from peewee import *
 from playhouse.postgres_ext import *
 from configs.definitions import FCL_CFS_CHARGES
-from configs.fcl_cfs_rate_constants import (CONTAINER_TYPE_COMMODITY_MAPPINGS,FREE_DAYS_TYPES)
-from configs.global_constants import (CONTAINER_SIZES, CONTAINER_TYPES,EXPORT_CARGO_HANDLING_TYPES,IMPORT_CARGO_HANDLING_TYPES, TRADE_TYPES)
+from configs.fcl_cfs_rate_constants import CONTAINER_TYPE_COMMODITY_MAPPINGS,FREE_DAYS_TYPES, EXPORT_CARGO_HANDLING_TYPES, IMPORT_CARGO_HANDLING_TYPES
+from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES, TRADE_TYPES
 from database.db_session import db
 from database.rails_db import *
 from micro_services.client import common, maps
-
+from configs.fcl_freight_rate_constants import RATE_TYPES
 
 class BaseModel(Model):
     class Meta:
@@ -28,7 +28,6 @@ class FclCfsRate(BaseModel):
     importer_exporter_id = UUIDField(null=True)
     containers_count = IntegerField(null=True)
     trade_type = CharField(index=True, null= True)
-    line_items = BinaryJSONField(default = [], null=True)
     line_items = BinaryJSONField(default = [], null=True)
     free_limit = IntegerField(null=True)
     platform_price = IntegerField(null=True)
@@ -51,6 +50,10 @@ class FclCfsRate(BaseModel):
     location = BinaryJSONField(null=True)
     free_days = BinaryJSONField(null=True)
     importer_exporter = BinaryJSONField(null=True)
+    mode = CharField(default = 'manual', null = True)
+    tags = BinaryJSONField(null=True)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
+    accuracy = FloatField(default = 100, null = True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

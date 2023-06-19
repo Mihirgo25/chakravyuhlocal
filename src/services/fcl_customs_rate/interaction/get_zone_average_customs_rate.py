@@ -87,5 +87,7 @@ def get_create_params(request, line_items):
         'procured_by_id' : DEFAULT_USER_ID,
         'sourced_by_id' : DEFAULT_USER_ID,
         'customs_line_items' : line_items,
-        'performed_by_id' : DEFAULT_USER_ID
+        'performed_by_id' : DEFAULT_USER_ID,
+        'mode' : 'predicted',
+        'accuracy' : 60 
     }

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import List
 from fastapi.encoders import jsonable_encoder
-from fcl_cfs_params import *
+from services.fcl_cfs_rate.fcl_cfs_params import *
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
@@ -95,7 +95,7 @@ def get_cfs_rate_cards(trade_type: str,
                        container_size: str,
                        container_type: str,
                        containers_count: int, 
-                       bls_count: int,
+                       bls_count: int = 1,
                        importer_exporter_id: str = None,
                        country_id: str = None,
                        commodity: str = None,
