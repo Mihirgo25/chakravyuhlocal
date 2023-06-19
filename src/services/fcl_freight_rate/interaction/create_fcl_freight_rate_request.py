@@ -47,11 +47,12 @@ def execute_transaction_code(request):
     if request_object.validate():
         request_object.save()
 
+        set_relevant_supply_agents(request, request_object.id)
+
         create_audit(request, request_object.id)
 
         update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
 
-        set_relevant_supply_agents(request, request_object.id)
 
         return {
         'id': request_object.id
