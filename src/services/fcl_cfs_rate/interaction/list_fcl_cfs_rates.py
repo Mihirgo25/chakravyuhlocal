@@ -8,7 +8,7 @@ from micro_services.client import common
 possible_direct_filters = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type']
 possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available']
 
-def list_fcl_cfs_rate(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required=False,return_query = False):
+def list_fcl_cfs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required=False,return_query = False):
     query = get_query(sort_by, sort_type, page, page_limit)
     if filters:
         if type(filters) != dict:

@@ -55,6 +55,7 @@ def create_audit_for_cfs_delete(request, object):
     data = get_delete_params_for_cfs(request)
     FclCfsRateAudit.create(
         action_name = 'delete',
+        bulk_operation_id = request.get('bulk_operation_id'),
         object_id = object.id,
         performed_by_id = request.get('performed_by_id'),
         data = data,

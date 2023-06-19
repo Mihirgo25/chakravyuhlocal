@@ -6,7 +6,7 @@ from database.db_session import db
 
 def create_audit_for_updating_cfs(request, cfs_object_id):
     audit_data = {
-        "cfs_line_items": request.get('cfs_line_items')
+        "line_items": request.get('line_items')
     }
 
     FclCfsRateAudit.create(

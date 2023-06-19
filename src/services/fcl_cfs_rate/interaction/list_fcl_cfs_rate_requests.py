@@ -12,7 +12,7 @@ possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_th
 
 possible_direct_filters = ['port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id']
 
-def list_fcl_cfs_rate_request(filters, page_limit=10, page=1, is_stats_required=True, performed_by_id=None):
+def list_fcl_cfs_rate_requests(filters, page_limit=10, page=1, is_stats_required=True, performed_by_id=None):
     query = FclCfsRateRequest.select()
     if filters:
         if type(filters) != dict:

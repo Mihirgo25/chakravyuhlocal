@@ -24,13 +24,11 @@ import concurrent.futures
 from services.envision.interaction.create_fcl_freight_rate_prediction_feedback import create_fcl_freight_rate_prediction_feedback
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
-from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate_platform_prices import update_fcl_customs_rate_platform_prices
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices 
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
-from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
 
 # Rate Producers
@@ -592,7 +590,7 @@ def process_freight_look_rates(self, rate, locations):
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
 def celery_create_fcl_customs_rate(self, request):
     try:
-        return create_fcl_customs_rate(request)
+        return create_fcl_customs_rate_data(request)
     except Exception as e:
         if type(e).__name__ == 'HTTPException':
             pass

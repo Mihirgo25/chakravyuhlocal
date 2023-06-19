@@ -5,7 +5,7 @@ from micro_services.client import *
 from database.rails_db import *
 import datetime
 from fastapi import HTTPException
-from services.fcl_cfs_rate.interaction.list_fcl_cfs_rate import list_fcl_cfs_rate
+from services.fcl_cfs_rate.interaction.list_fcl_cfs_rates import list_fcl_cfs_rates
 from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate import delete_fcl_cfs_rate
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
@@ -37,7 +37,7 @@ class FclCfsRateBulkOperation(Model):
         
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False})
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-        fcl_cfs_rates = list_fcl_cfs_rate(filters = filters, return_query = True, page_limit = page_limit)['list']
+        fcl_cfs_rates = list_fcl_cfs_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
         fcl_cfs_rates = list(fcl_cfs_rates.dicts())
 
         total_count = len(fcl_cfs_rates)
@@ -96,7 +96,7 @@ class FclCfsRateBulkOperation(Model):
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
-        fcl_cfs_rates = list_fcl_cfs_rate(filters = filters, return_query = True, page_limit = page_limit)['list']
+        fcl_cfs_rates = list_fcl_cfs_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
         fcl_cfs_rates = list(fcl_cfs_rates.dicts())
 
         total_count = len(fcl_cfs_rates)
