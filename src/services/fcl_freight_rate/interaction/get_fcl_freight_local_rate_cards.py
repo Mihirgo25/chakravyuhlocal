@@ -52,7 +52,7 @@ def initialize_local_query(request):
         FclFreightRateLocal.container_size == request['container_size'], 
         FclFreightRateLocal.container_type == request['container_type'], 
         FclFreightRateLocal.trade_type == request['trade_type'],
-        # ~ FclFreightRateLocal.is_line_items_error_messages_present,
+        ~ FclFreightRateLocal.is_line_items_error_messages_present,
         FclFreightRateLocal.service_provider_id.in_(service_provider_ids))
 
     if request['commodity'] in HAZ_CLASSES:
