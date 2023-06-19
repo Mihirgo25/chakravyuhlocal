@@ -23,17 +23,21 @@ from services.envision.interaction.create_fcl_freight_rate_prediction_feedback i
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_request import update_fcl_freight_rate_request
 from services.chakravyuh.interaction.get_air_invoice_estimation_prediction import invoice_rates_updation
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
+from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
+from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
+from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as AirFreightVyuhProducer
 
 # Dynamic Pricing
 
 from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhinvoiceSetters
+from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -415,6 +419,17 @@ def transform_dynamic_pricing(self, new_rate, current_validities, affected_trans
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind=True, retry_backoff=True,max_retries=3)
+def transform_air_dynamic_pricing(self, new_rate, affected_transformation, new):
+    try:
+        air_freight_vyuh = AirFreightVyuhSetter(new_rate=new_rate)
+        air_freight_vyuh.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=new)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def adjust_fcl_freight_dynamic_pricing(self, new_rate, current_validities):
     try:
@@ -468,7 +483,8 @@ def process_electricity_data_delays(self):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def create_air_freight_rate_delay(self, request):
     try:
-        return common.create_air_freight_rate(request)
+        return create_draft_air_freight_rate(request)
+        # return common.create_air_freight_rate(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -478,8 +494,8 @@ def create_air_freight_rate_delay(self, request):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def adjust_air_freight_dynamic_pricing(self):
     try:
-        return True
-        # return invoice_rates_updation()
+        # return True
+        return invoice_rates_updation()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -495,3 +511,25 @@ def process_freight_look_rates(self, rate, locations):
             pass
         else:
             raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def extend_air_freight_rates(self, rate, source = 'rate_extension'):
+    try:
+        air_freight_vyuh = AirFreightVyuhProducer(rate=rate)
+        air_freight_vyuh.extend_rate(source=source)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def update_fcl_freight_rate_feedback_in_delay(self, request):
+    try:
+        update_fcl_freight_rate_feedback(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+            
