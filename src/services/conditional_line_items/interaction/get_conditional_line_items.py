@@ -28,7 +28,3 @@ def get_conditional_line_items(request,local_rate):
                 new_line_items.append(line_item)
 
     return new_line_items
-
-    # for i in search_query:
-    #     print(i)
-    # print(search_query)

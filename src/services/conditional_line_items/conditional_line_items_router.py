@@ -42,28 +42,28 @@ def get_conditional_line_items_data(
     country_id: str = None,
     resp: dict = Depends(authorize_token)
 ):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    request = {
-        'port_id':port_id,
-        'main_port_id':main_port_id,
-        'country_id': country_id,
-        'container_size' : container_size,
-        'container_type' : container_type,
-        'commodity' : commodity,
-        'shipping_line_id' : shipping_line_id,
-        'trade_type':trade_type
-    }
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        request = {
+            'port_id':port_id,
+            'main_port_id':main_port_id,
+            'country_id': country_id,
+            'container_size' : container_size,
+            'container_type' : container_type,
+            'commodity' : commodity,
+            'shipping_line_id' : shipping_line_id,
+            'trade_type':trade_type
+        }
 
-    data = get_conditional_line_items(request)
-    data = jsonable_encoder(data)
-    return JSONResponse(status_code=200, content=data)
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        data = get_conditional_line_items(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @conditional_line_items_router.post("/update_conditional_line_items")

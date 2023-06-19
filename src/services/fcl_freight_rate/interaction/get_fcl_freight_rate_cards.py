@@ -158,12 +158,6 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         all_formatted_locals.append(new_local_obj)
     return all_formatted_locals
 
-def is_charge_present(line_item,charge_code):
-    for item in line_item:
-        if item['code']==charge_code:
-            return True
-    return False
-
 def conditional_line_items(rate, local_rate):
     
     request_body = {
@@ -850,52 +844,52 @@ def get_fcl_freight_rate_cards(requirements):
             }]
         }]
     """
-    # try:
-    initial_query = initialize_freight_query(requirements)
-    freight_rates = jsonable_encoder(list(initial_query.dicts()))
-
-    freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
-    is_predicted = False
-    freight_rates_length = len(freight_rates)
-    if freight_rates_length == 0:
-        get_fcl_freight_predicted_rate(requirements)
-        initial_query = initialize_freight_query(requirements, True)
+    try:
+        initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
-        is_predicted = True
-    else:
-        cogofreight_freight_rates_length = 0
-        for val in freight_rates:
-            if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
-                cogofreight_freight_rates_length += 1
 
-    if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != freight_rates_length:
-        freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+        is_predicted = False
+        freight_rates_length = len(freight_rates)
+        if freight_rates_length == 0:
+            get_fcl_freight_predicted_rate(requirements)
+            initial_query = initialize_freight_query(requirements, True)
+            freight_rates = jsonable_encoder(list(initial_query.dicts()))
+            is_predicted = True
+        else:
+            cogofreight_freight_rates_length = 0
+            for val in freight_rates:
+                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                    cogofreight_freight_rates_length += 1
 
-    missing_local_rates = get_rates_which_need_locals(freight_rates)
-    rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
-    rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
-    local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
-    freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
-    missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
+        if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != freight_rates_length:
+            freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
 
-    if len(missing_free_weight_limit) > 0:
-        free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
-        freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
-    freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
-    freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
-    
-    if is_predicted:
-        fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
-        freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
-    
-    freight_rates = build_response_list(freight_rates, requirements)
-    return {
-        "list" : freight_rates
-    }
-    # except Exception as e:
-    #     traceback.print_exc()
-    #     sentry_sdk.capture_exception(e)
-    #     print(e, 'Error In Fcl Freight Rate Cards')
-    #     return {
-    #         "list": []
-    #     }
+        missing_local_rates = get_rates_which_need_locals(freight_rates)
+        rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
+        rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
+        local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
+        freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
+        missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
+
+        if len(missing_free_weight_limit) > 0:
+            free_weight_limits = get_missing_weight_limit(requirements, missing_free_weight_limit)
+            freight_rates = fill_missing_weight_limit_in_rates(freight_rates, free_weight_limits, requirements)
+        freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
+        freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
+        
+        if is_predicted:
+            fcl_freight_vyuh = FclFreightVyuh(freight_rates, requirements)
+            freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
+        
+        freight_rates = build_response_list(freight_rates, requirements)
+        return {
+            "list" : freight_rates
+        }
+    except Exception as e:
+        traceback.print_exc()
+        sentry_sdk.capture_exception(e)
+        print(e, 'Error In Fcl Freight Rate Cards')
+        return {
+            "list": []
+        }

@@ -20,15 +20,10 @@ class UpdateLineItem(BaseModel):
   remarks: list[str] = None
   slabs: list[Slab] = []
 
-
 class FreeDay(BaseModel):
   free_limit: float
   slabs: list[Slab] = []
   remarks: list[str] = []
-
-class LocalConditions(BaseModel):
-  or_condition: list[list[str]] = []
-  and_condition: list[list[str]] = []
 
 class LineItem(BaseModel):
   location_id: str = None
@@ -47,7 +42,6 @@ class LocalData(BaseModel):
   plugin: FreeDay = None
 
 
-  
 class PostFclFreightRate(BaseModel):
   origin_main_port_id: str = None
   origin_port_id: str
