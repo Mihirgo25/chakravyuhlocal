@@ -58,7 +58,7 @@ def execute_transaction_code(request):
     if not feedback:
         feedback=AirFreightRateFeedbacks(**row)
 
-    create_params =get_create_params(request)
+    create_params =get_create_params(request,rate)
 
     for attr,value in create_params.items():
         if attr =='preffered_airline_ids' and value:
@@ -98,7 +98,7 @@ def update_likes_dislike_count(rate,request):
 
     rate.save()
     
-def get_create_params(request):
+def get_create_params(request,rate):
     params={ 
         'feedbacks': request.get('feedbacks'),
         'remarks': request.get('remarks'),
@@ -124,7 +124,8 @@ def get_create_params(request):
         'volume':request.get('volume'),
         'packages_count':request.get('packages_count'),
         'operation_type':request.get('operation_type'),
-        'status': 'active'
+        'status': 'active',
+        'airline_id':rate.airline_id
       }
     loc_ids=[]
     if request.get('origin_airport_id'):

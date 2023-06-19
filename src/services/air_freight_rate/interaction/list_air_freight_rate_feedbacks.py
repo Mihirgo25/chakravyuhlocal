@@ -153,7 +153,8 @@ def get_data(query, spot_search_details_required, booking_details_required):
             AirFreightRateFeedbacks.weight,
             AirFreightRateFeedbacks.volume,
             AirFreightRateFeedbacks.airline_id,
-            AirFreightRateFeedbacks.reverted_rate_id
+            AirFreightRateFeedbacks.reverted_rate_id,
+            AirFreightRateFeedbacks.trade_type
         )
     data = list(query.dicts())
     service_provider_ids = []
