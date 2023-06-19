@@ -10,7 +10,7 @@ from services.haulage_freight_rate.models.wagon_types import WagonTypes
 # from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 # from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-# from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+# from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 # from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit

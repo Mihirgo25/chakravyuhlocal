@@ -251,7 +251,7 @@ class UpdateAirFreightRateTask(BaseModel):
     closing_remarks: str = None
 
 
-class CreateAirFreightRateFeedbacks(BaseModel):
+class CreateAirFreightRateFeedback(BaseModel):
     source: str
     source_id: str = None
     performed_by_id: str = None

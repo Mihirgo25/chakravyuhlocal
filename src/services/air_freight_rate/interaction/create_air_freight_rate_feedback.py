@@ -4,7 +4,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import update_multiple_service_objects
 from celery_worker import send_create_notifications_to_supply_agents_function
@@ -16,7 +16,7 @@ def create_audit(request,feedback_id):
         updated_at=datetime.now(),
         data={key:value for key , value in request.items() if key != 'performed_by_id'},
         object_id=feedback_id,
-        object_type='AirFreightRateFeedbacks',
+        object_type='AirFreightRateFeedback',
         action_name='create',
         performed_by_id=request['performed_by_id']
         )
@@ -44,19 +44,19 @@ def execute_transaction_code(request):
       'performed_by_org_id': request['performed_by_org_id'],
       'trade_type':request['trade_type']
     }
-    feedback=AirFreightRateFeedbacks.select().where(
-        AirFreightRateFeedbacks.air_freight_rate_id==request.get('air_freight_rate_id'),
-        AirFreightRateFeedbacks.validity_id==request.get('validity_id'),
-        AirFreightRateFeedbacks.source==request.get('source'),
-        AirFreightRateFeedbacks.source_id==request.get('source_id'),
-        AirFreightRateFeedbacks.performed_by_id==request.get('performed_by_id'),
-        AirFreightRateFeedbacks.performed_by_type==request.get('performed_by_type'),
-        AirFreightRateFeedbacks.performed_by_org_id==request.get('performed_by_org_id')
+    feedback=AirFreightRateFeedback.select().where(
+        AirFreightRateFeedback.air_freight_rate_id==request.get('air_freight_rate_id'),
+        AirFreightRateFeedback.validity_id==request.get('validity_id'),
+        AirFreightRateFeedback.source==request.get('source'),
+        AirFreightRateFeedback.source_id==request.get('source_id'),
+        AirFreightRateFeedback.performed_by_id==request.get('performed_by_id'),
+        AirFreightRateFeedback.performed_by_type==request.get('performed_by_type'),
+        AirFreightRateFeedback.performed_by_org_id==request.get('performed_by_org_id')
     ).first()
 
 
     if not feedback:
-        feedback=AirFreightRateFeedbacks(**row)
+        feedback=AirFreightRateFeedback(**row)
 
     create_params =get_create_params(request,rate)
 

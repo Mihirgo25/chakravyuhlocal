@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import HTTPException
 from database.db_session import db 
-from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 def delete_air_freight_rate_feedback(request):
@@ -48,7 +48,7 @@ def create_audit(request,id):
 
 def find_object(request):
     try:
-        objects=AirFreightRateFeedbacks.select().where(AirFreightRateFeedbacks.id<<request['air_freight_rate_feedback_ids'],AirFreightRateFeedbacks.status=='active').execute()
+        objects=AirFreightRateFeedback.select().where(AirFreightRateFeedback.id<<request['air_freight_rate_feedback_ids'],AirFreightRateFeedback.status=='active').execute()
     except:
         objects=None
     return objects

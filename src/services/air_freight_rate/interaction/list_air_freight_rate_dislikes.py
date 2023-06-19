@@ -1,4 +1,4 @@
-from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from libs.get_filters import get_filters
@@ -23,7 +23,7 @@ def list_air_freight_rate_dislikes(filters = {}, page_limit = 10, page = 1):
         
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   
-        query = get_filters(direct_filters, query, AirFreightRateFeedbacks)
+        query = get_filters(direct_filters, query, AirFreightRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
 
     pagination_data = get_pagination_data(query, page, page_limit)
@@ -73,8 +73,8 @@ def get_data(query):
     return data 
 
 def get_query():
-    query = AirFreightRateFeedbacks.select(AirFreightRateFeedbacks, AirFreightRate.origin_trade_id, AirFreightRate.destination_trade_id, AirFreightRate.airline).join(AirFreightRate, on = (AirFreightRateFeedbacks.air_freight_rate_id == AirFreightRate.id)
-    ).where(AirFreightRateFeedbacks.feedback_type == 'disliked')
+    query = AirFreightRateFeedback.select(AirFreightRateFeedback, AirFreightRate.origin_trade_id, AirFreightRate.destination_trade_id, AirFreightRate.airline).join(AirFreightRate, on = (AirFreightRateFeedback.air_freight_rate_id == AirFreightRate.id)
+    ).where(AirFreightRateFeedback.feedback_type == 'disliked')
     return query
 
 def apply_indirect_filters(query, filters):
@@ -94,7 +94,7 @@ def apply_trade_lane_filter(query, filters):
         fn.count((fn.CONCAT(AirFreightRate.origin_airport_id, ' || ', AirFreightRate.destination_port_id)).distinct()).alias('port_pair_count'),
         AirFreightRate.origin_trade_id,
         AirFreightRate.destination_trade_id
-    ).where(AirFreightRateFeedbacks.feedbacks.cast('VARCHAR') != '{}').group_by(
+    ).where(AirFreightRateFeedback.feedbacks.cast('VARCHAR') != '{}').group_by(
         AirFreightRate.origin_trade_id,
         AirFreightRate.destination_trade_id
     )
@@ -111,16 +111,16 @@ def apply_shipping_line_filter(query, filters):
         ).alias('feedbacks'),
         fn.count((fn.CONCAT(AirFreightRate.origin_airport_id, ' || ', AirFreightRate.destination_airport_id)).distinct()).alias('port_pair_count'),
         AirFreightRate.shipping_line_id
-    ).where(AirFreightRateFeedbacks.feedbacks.cast('VARCHAR') != '{}').group_by(
+    ).where(AirFreightRateFeedback.feedbacks.cast('VARCHAR') != '{}').group_by(
         AirFreightRate.shipping_line_id
     )
     
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+    query = query.where(AirFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
+    query = query.where(AirFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):

@@ -1,4 +1,4 @@
-from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from configs.air_freight_rate_constants import RATE_ENTITY_MAPPING,AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from playhouse.shortcuts import model_to_dict
@@ -19,7 +19,7 @@ possible_indirect_filters = ['relevant_supply_agent','origin_airport_id', 'desti
 
 
 def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
-    query = AirFreightRateFeedbacks.select()
+    query = AirFreightRateFeedback.select()
 
     if filters:
         if type(filters) != dict:
@@ -27,7 +27,7 @@ def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
-        query = get_filters(direct_filters, query, AirFreightRateFeedbacks)
+        query = get_filters(direct_filters, query, AirFreightRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
@@ -39,7 +39,7 @@ def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     return {'list': jsonable_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
-    query = query.order_by(AirFreightRateFeedbacks.created_at.desc(nulls='LAST')).paginate(page, page_limit)
+    query = query.order_by(AirFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
     return query
 
 def apply_indirect_filters(query, filters):
@@ -53,108 +53,108 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('air_freight', filters['relevant_supply_agent'])
     origin_airport_id = [t['origin_location_id'] for t in expertises]
     destination_airport_id = [t['destination_location_id'] for t in expertises]
-    query = query.where((AirFreightRateFeedbacks.origin_airport_id << origin_airport_id) |
-                    (AirFreightRateFeedbacks.origin_country_id << origin_airport_id) |
-                    (AirFreightRateFeedbacks.origin_continent_id << origin_airport_id) |
-                    (AirFreightRateFeedbacks.origin_trade_id << origin_airport_id))
-    query = query.where((AirFreightRateFeedbacks.destination_airport_id << destination_airport_id) |
-                    (AirFreightRateFeedbacks.destination_country_id << destination_airport_id) |
-                    (AirFreightRateFeedbacks.destination_continent_id << destination_airport_id) |
-                    (AirFreightRateFeedbacks.destination_trade_id << destination_airport_id))
+    query = query.where((AirFreightRateFeedback.origin_airport_id << origin_airport_id) |
+                    (AirFreightRateFeedback.origin_country_id << origin_airport_id) |
+                    (AirFreightRateFeedback.origin_continent_id << origin_airport_id) |
+                    (AirFreightRateFeedback.origin_trade_id << origin_airport_id))
+    query = query.where((AirFreightRateFeedback.destination_airport_id << destination_airport_id) |
+                    (AirFreightRateFeedback.destination_country_id << destination_airport_id) |
+                    (AirFreightRateFeedback.destination_continent_id << destination_airport_id) |
+                    (AirFreightRateFeedback.destination_trade_id << destination_airport_id))
     return query
 
 
 def apply_cogo_entity_id_filter(query, filters):
     filter_entity_id = filters['cogo_entity_id']
-    query = query.where((AirFreightRateFeedbacks.cogo_entity_id == filter_entity_id) | (AirFreightRateFeedbacks.cogo_entity_id.is_null(True)))
+    query = query.where((AirFreightRateFeedback.cogo_entity_id == filter_entity_id) | (AirFreightRateFeedback.cogo_entity_id.is_null(True)))
     return query
 
 def apply_service_provider_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.service_provider_id == filters['service_provider_id'])
+    query = query.where(AirFreightRateFeedback.service_provider_id == filters['service_provider_id'])
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+    query = query.where(AirFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
 
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
+    query = query.where(AirFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
 
     return query
 
 def apply_origin_airport_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.origin_airport_id == filters['origin_airport_id'])
+    query = query.where(AirFreightRateFeedback.origin_airport_id == filters['origin_airport_id'])
     return query
 
 def apply_destination_airport_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.destination_airport_id == filters['destination_airport_id'])
+    query = query.where(AirFreightRateFeedback.destination_airport_id == filters['destination_airport_id'])
     return query
 
 def apply_origin_country_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.origin_country_id == filters['origin_country_id'])
+    query = query.where(AirFreightRateFeedback.origin_country_id == filters['origin_country_id'])
     return query
 
 def apply_destination_country_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedbacks.destination_country_id == filters['destination_country_id'])
+    query = query.where(AirFreightRateFeedback.destination_country_id == filters['destination_country_id'])
     return query
 
 def apply_airline_id_filter(query,filters):
-    query = query.where(AirFreightRateFeedbacks.airline_id == filters['airline_id'])
+    query = query.where(AirFreightRateFeedback.airline_id == filters['airline_id'])
 
 def apply_similar_id_filter(query, filters):
-    feedback_data = (AirFreightRateFeedbacks.select(AirFreightRateFeedbacks.origin_airport_id, AirFreightRateFeedbacks.destination_airport_id, AirFreightRateFeedbacks.operation_type , AirFreightRateFeedbacks.commodity).where(AirFreightRateFeedbacks.id == filters['similar_id'])).first()
+    feedback_data = (AirFreightRateFeedback.select(AirFreightRateFeedback.origin_airport_id, AirFreightRateFeedback.destination_airport_id, AirFreightRateFeedback.operation_type , AirFreightRateFeedback.commodity).where(AirFreightRateFeedback.id == filters['similar_id'])).first()
     if feedback_data:
-        query = query.where(AirFreightRateFeedbacks.id != filters.get('similar_id'))
-        query = query.where(AirFreightRateFeedbacks.origin_airport_id == feedback_data.origin_airport_id, AirFreightRateFeedbacks.destination_airport_id == feedback_data.destination_airport_id, AirFreightRateFeedbacks.operation_type == feedback_data.operation_type, AirFreightRateFeedbacks.commodity == feedback_data.commodity)
+        query = query.where(AirFreightRateFeedback.id != filters.get('similar_id'))
+        query = query.where(AirFreightRateFeedback.origin_airport_id == feedback_data.origin_airport_id, AirFreightRateFeedback.destination_airport_id == feedback_data.destination_airport_id, AirFreightRateFeedback.operation_type == feedback_data.operation_type, AirFreightRateFeedback.commodity == feedback_data.commodity)
     return query
 
 def get_data(query, spot_search_details_required, booking_details_required):
     if not booking_details_required:
         query = query.select(
-            AirFreightRateFeedbacks.id,
-            AirFreightRateFeedbacks.cogo_entity_id,
-            AirFreightRateFeedbacks.closed_by_id,
-            AirFreightRateFeedbacks.closed_by,
-            AirFreightRateFeedbacks.closing_remarks,
-            AirFreightRateFeedbacks.created_at,
-            AirFreightRateFeedbacks.air_freight_rate_id,
-            AirFreightRateFeedbacks.feedback_type,
-            AirFreightRateFeedbacks.feedbacks,
-            AirFreightRateFeedbacks.performed_by_id,
-            AirFreightRateFeedbacks.performed_by,
-            AirFreightRateFeedbacks.performed_by_org_id,
-            AirFreightRateFeedbacks.performed_by_org,
-            AirFreightRateFeedbacks.performed_by_type,
-            AirFreightRateFeedbacks.preferred_freight_rate,
-            AirFreightRateFeedbacks.preferred_freight_rate_currency,
-            AirFreightRateFeedbacks.preferred_airline_ids,
-            AirFreightRateFeedbacks.preferred_airlines,
-            AirFreightRateFeedbacks.remarks,
-            AirFreightRateFeedbacks.serial_id,
-            AirFreightRateFeedbacks.source,
-            AirFreightRateFeedbacks.source_id,
-            AirFreightRateFeedbacks.status,
-            AirFreightRateFeedbacks.updated_at,
-            AirFreightRateFeedbacks.validity_id,
-            AirFreightRateFeedbacks.origin_airport_id,
-            AirFreightRateFeedbacks.origin_continent_id,
-            AirFreightRateFeedbacks.origin_trade_id,
-            AirFreightRateFeedbacks.origin_country_id,
-            AirFreightRateFeedbacks.destination_airport_id,
-            AirFreightRateFeedbacks.destination_continent_id,
-            AirFreightRateFeedbacks.destination_trade_id,
-            AirFreightRateFeedbacks.destination_country_id,
-            AirFreightRateFeedbacks.commodity,
-            AirFreightRateFeedbacks.operation_type,
-            AirFreightRateFeedbacks.service_provider_id,
-            AirFreightRateFeedbacks.origin_airport,
-            AirFreightRateFeedbacks.destination_airport,
-            AirFreightRateFeedbacks.weight,
-            AirFreightRateFeedbacks.volume,
-            AirFreightRateFeedbacks.airline_id,
-            AirFreightRateFeedbacks.reverted_rate_id,
-            AirFreightRateFeedbacks.trade_type
+            AirFreightRateFeedback.id,
+            AirFreightRateFeedback.cogo_entity_id,
+            AirFreightRateFeedback.closed_by_id,
+            AirFreightRateFeedback.closed_by,
+            AirFreightRateFeedback.closing_remarks,
+            AirFreightRateFeedback.created_at,
+            AirFreightRateFeedback.air_freight_rate_id,
+            AirFreightRateFeedback.feedback_type,
+            AirFreightRateFeedback.feedbacks,
+            AirFreightRateFeedback.performed_by_id,
+            AirFreightRateFeedback.performed_by,
+            AirFreightRateFeedback.performed_by_org_id,
+            AirFreightRateFeedback.performed_by_org,
+            AirFreightRateFeedback.performed_by_type,
+            AirFreightRateFeedback.preferred_freight_rate,
+            AirFreightRateFeedback.preferred_freight_rate_currency,
+            AirFreightRateFeedback.preferred_airline_ids,
+            AirFreightRateFeedback.preferred_airlines,
+            AirFreightRateFeedback.remarks,
+            AirFreightRateFeedback.serial_id,
+            AirFreightRateFeedback.source,
+            AirFreightRateFeedback.source_id,
+            AirFreightRateFeedback.status,
+            AirFreightRateFeedback.updated_at,
+            AirFreightRateFeedback.validity_id,
+            AirFreightRateFeedback.origin_airport_id,
+            AirFreightRateFeedback.origin_continent_id,
+            AirFreightRateFeedback.origin_trade_id,
+            AirFreightRateFeedback.origin_country_id,
+            AirFreightRateFeedback.destination_airport_id,
+            AirFreightRateFeedback.destination_continent_id,
+            AirFreightRateFeedback.destination_trade_id,
+            AirFreightRateFeedback.destination_country_id,
+            AirFreightRateFeedback.commodity,
+            AirFreightRateFeedback.operation_type,
+            AirFreightRateFeedback.service_provider_id,
+            AirFreightRateFeedback.origin_airport,
+            AirFreightRateFeedback.destination_airport,
+            AirFreightRateFeedback.weight,
+            AirFreightRateFeedback.volume,
+            AirFreightRateFeedback.airline_id,
+            AirFreightRateFeedback.reverted_rate_id,
+            AirFreightRateFeedback.trade_type
         )
     data = list(query.dicts())
     service_provider_ids = []
@@ -242,7 +242,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {}
 
-    query = AirFreightRateFeedbacks.select()
+    query = AirFreightRateFeedback.select()
 
     if filters:
         if 'status' in filters:
@@ -252,17 +252,17 @@ def get_stats(filters, is_stats_required, performed_by_id):
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
-        query = get_filters(direct_filters, query, AirFreightRateFeedbacks)
+        query = get_filters(direct_filters, query, AirFreightRateFeedback)
         query = apply_indirect_filters(query, indirect_filters)
 
     query = (
         query
         .select(
-            fn.count(AirFreightRateFeedbacks.id).over().alias('get_total'),
-          fn.count(AirFreightRateFeedbacks.id).filter(AirFreightRateFeedbacks.status == 'active').over().alias('get_status_count_active'),
-        fn.count(AirFreightRateFeedbacks.id).filter(AirFreightRateFeedbacks.status == 'inactive').over().alias('get_status_count_inactive'),
-        fn.count(AirFreightRateFeedbacks.id).filter((AirFreightRateFeedbacks.status=='inactive') & (AirFreightRateFeedbacks.closed_by_id==performed_by_id)).over().alias('get_total_closed_by_user'),
-        fn.count(AirFreightRateFeedbacks.id).filter((AirFreightRateFeedbacks.status=='active')  & (AirFreightRateFeedbacks.performed_by_id==performed_by_id)).over().alias('get_total_opened_by_user'),
+            fn.count(AirFreightRateFeedback.id).over().alias('get_total'),
+          fn.count(AirFreightRateFeedback.id).filter(AirFreightRateFeedback.status == 'active').over().alias('get_status_count_active'),
+        fn.count(AirFreightRateFeedback.id).filter(AirFreightRateFeedback.status == 'inactive').over().alias('get_status_count_inactive'),
+        fn.count(AirFreightRateFeedback.id).filter((AirFreightRateFeedback.status=='inactive') & (AirFreightRateFeedback.closed_by_id==performed_by_id)).over().alias('get_total_closed_by_user'),
+        fn.count(AirFreightRateFeedback.id).filter((AirFreightRateFeedback.status=='active')  & (AirFreightRateFeedback.performed_by_id==performed_by_id)).over().alias('get_total_opened_by_user'),
 
          )
     ).limit(1)

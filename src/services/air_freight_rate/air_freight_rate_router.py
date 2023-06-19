@@ -834,7 +834,7 @@ def get_air_freight_rate_suggestions_data(
         )
 
 @air_freight_router.post("/create_air_freight_rate_feedback")
-def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedbacks, resp: dict = Depends(authorize_token)):
+def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedback, resp: dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
