@@ -344,7 +344,7 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id']:
             del filters['service_provider_id']
 
-        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_no'))
+        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
         
         rate_ids = get_relevant_rate_ids_from_audits(rate_sheet_id,data['apply_to_extended_rates'],filters.get('id'))
         if rate_ids:

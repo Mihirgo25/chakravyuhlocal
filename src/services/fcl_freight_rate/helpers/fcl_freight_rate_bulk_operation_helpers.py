@@ -29,6 +29,6 @@ def is_price_in_range(lower_limit,upper_limit, price,markup_currency,currency):
         return False
     return True
 
-def get_rate_sheet_id(rate_sheet_serial_no):
-    rate_sheet_id=RateSheet.select(RateSheet.id).where(RateSheet.serial_id==rate_sheet_serial_no).first()
+def get_rate_sheet_id(rate_sheet_serial_id):
+    rate_sheet_id=RateSheet.select(RateSheet.id).where(RateSheet.serial_id==rate_sheet_serial_id).first()
     return rate_sheet_id

@@ -765,7 +765,7 @@ class DeleteFreightRate(BaseModel):
   filters:dict={}
   validity_start: datetime
   validity_end: datetime
-  rate_sheet_serial_no: int= 0
+  rate_sheet_serial_id: int= 0
   apply_to_extended_rates: bool = False
   comparison_currency:str='USD'
   comparison_charge_code:str='BAS'
@@ -780,7 +780,7 @@ class AddFreightRateMarkup(BaseModel):
   line_item_code:str='BAS'
   validity_start:datetime
   validity_end:datetime
-  rate_sheet_serial_no: int = 0
+  rate_sheet_serial_id: int = 0
   apply_to_extended_rates: bool = False
   rates_greater_than_price: float = None
   rates_less_than_price: float = None
