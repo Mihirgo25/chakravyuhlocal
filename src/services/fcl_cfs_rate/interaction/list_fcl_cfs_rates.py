@@ -4,8 +4,9 @@ from peewee import *
 import json
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from micro_services.client import common
+from configs.fcl_freight_rate_constants import RATE_TYPES
 
-possible_direct_filters = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type']
+possible_direct_filters = ['id', 'location_id', 'country_code', 'trade_id', 'content_id', 'trade_type', 'service_provider id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'cargo_handling_type','rate_type']
 possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available']
 
 def list_fcl_cfs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required=False,return_query = False):
@@ -13,6 +14,9 @@ def list_fcl_cfs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updat
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
+
+        if filters.get('rate_type') == 'all':
+            filters['rate_type'] = RATE_TYPES
         
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   

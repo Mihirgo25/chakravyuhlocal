@@ -4,8 +4,9 @@ from libs.get_applicable_filters import get_applicable_filters
 import json
 from math import ceil
 from micro_services.client import common
+from configs.fcl_freight_rate_constants import RATE_TYPES
 
-possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id']
+possible_direct_filters = ['id', 'location_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'service_provider_id', 'importer_exporter_id', 'commodity', 'container_type', 'container_size', 'is_customs_line_items_info_messages_present', 'is_customs_line_items_error_messages_present', 'is_cfs_line_items_info_messages_present', 'is_cfs_line_items_error_messages_present', 'procured_by_id', 'rate_type']
 
 possible_indirect_filters = ['location_ids', 'importer_exporter_present', 'is_rate_available']
 
@@ -14,6 +15,9 @@ def list_fcl_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
+        
+        if filters.get('rate_type') == 'all':
+            filters['rate_type'] = RATE_TYPES
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   

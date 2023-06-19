@@ -144,6 +144,7 @@ def get_fcl_cfs_rate_data(location_id: str = None,
                     service_provider_id: str = None,
                     importer_exporter_id: str = None,
                     cargo_handling_type: str = None,
+                    rate_type: str = "market_place",
                     resp: dict = Depends(authorize_token)
                     ):
     if resp["status_code"] != 200:
@@ -156,7 +157,8 @@ def get_fcl_cfs_rate_data(location_id: str = None,
         'commodity': commodity,
         'service_provider_id': service_provider_id,
         'importer_exporter_id': importer_exporter_id,
-        'cargo_handling_type': cargo_handling_type
+        'cargo_handling_type': cargo_handling_type,
+        'rate_type' : rate_type
     }
     try:
         data = get_fcl_cfs_rate(request)

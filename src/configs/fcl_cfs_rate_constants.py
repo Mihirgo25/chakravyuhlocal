@@ -33,4 +33,15 @@ FREE_DAYS_TYPES = [
 
 EXPORT_CARGO_HANDLING_TYPES = ['stuffing_at_factory', 'stuffing_at_dock']
 
-IMPORT_CARGO_HANDLING_TYPES = ['direct_port_delivery', 'delivery_from_dock', 'destuffing_at_dock', 'dpd_without_cfs', 'dpd_cfs_dock_destuffing', 'dpd_cfs_factory_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+IMPORT_CARGO_HANDLING_TYPES = [
+    'direct_port_delivery', 
+    'delivery_from_dock', 
+    'destuffing_at_dock', 
+    'dpd_without_cfs', 
+    'dpd_cfs_dock_destuffing', 
+    'dpd_cfs_factory_destuffing', 
+    'enpanelled_cfs_dock_destuffing', 
+    'enpanelled_cfs_factory_destuffing', 
+    'non_enpanelled_cfs_dock_destuffing', 
+    'non_enpanelled_cfs_factory_destuffing'
+    ]

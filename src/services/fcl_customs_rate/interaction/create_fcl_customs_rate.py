@@ -2,6 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from database.db_session import db
 from fastapi import HTTPException
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def create_fcl_customs_rate_data(request):
     with db.atomic():
@@ -18,7 +19,8 @@ def create_fcl_customs_rate(request):
         FclCustomsRate.container_type==request.get('container_type'),
         FclCustomsRate.commodity == request.get('commodity'),
         FclCustomsRate.service_provider_id==request.get('service_provider_id'),
-        FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')).first()
+        FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id'),
+        FclCustomsRate.rate_type == request.get('rate_type')).first()
       
   if not customs_rate:
     customs_rate = FclCustomsRate(**params)
@@ -58,7 +60,10 @@ def get_create_object_params(request):
       'container_type' : request.get('container_type'),
       'service_provider_id': request.get('service_provider_id'),
       'commodity' : request.get('commodity'),
-      'importer_exporter_id' : request.get('importer_exporter_id')
+      'importer_exporter_id' : request.get('importer_exporter_id'),
+      'accuracy': request.get('accuracy', 100),
+      'mode' : request.get('mode','manual'),
+      "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE)
     }
 
 def create_audit(request, customs_rate_id):

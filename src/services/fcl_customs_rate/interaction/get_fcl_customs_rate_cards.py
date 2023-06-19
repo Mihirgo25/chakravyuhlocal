@@ -36,7 +36,8 @@ def initialize_customs_query(request):
         FclCustomsRate.importer_exporter_id,
         FclCustomsRate.location_type,
         FclCustomsRate.location_id,
-        FclCustomsRate.mode
+        FclCustomsRate.mode,
+        FclCustomsRate.rate_type
     ).where(
       FclCustomsRate.container_size == request.get('container_size'),
       FclCustomsRate.container_type == request.get('container_type'),
@@ -81,12 +82,18 @@ def build_response_list(request, customs_rates):
 
     
 def build_response_object(result, request):
+    source = 'spot_rates'
+    if result.get('mode') == 'predicted':
+        source = 'predicted'
+    elif result.get('rate_type') != 'market_place':
+        source = result.get('rate_type')
+
     response_object = {
       'service_provider_id': result.get('service_provider_id'),
       'importer_exporter_id': result.get('importer_exporter_id'),
       'location_id': result.get('location_id'),
       'line_items': [],
-      'source': "predicted" if result.get('mode') == 'predicted' else "spot_rates",
+      'source': source,
       'tags': []
     }
 

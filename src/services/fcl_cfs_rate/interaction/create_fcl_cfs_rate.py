@@ -4,6 +4,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from celery_worker import delay_fcl_cfs_functions
 from database.db_session import db
 from fastapi import HTTPException
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {
@@ -33,7 +34,10 @@ def execute_transaction_code(request):
         "commodity": request.get("commodity"),
         "service_provider_id": request.get("service_provider_id"),
         "cargo_handling_type": request.get("cargo_handling_type"),
-        "importer_exporter_id": request.get("importer_exporter_id")
+        "importer_exporter_id": request.get("importer_exporter_id"),
+        "accuracy": request.get('accuracy', 100),
+        "mode" : request.get('mode','manual'),
+        "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE)
     }
 
     cfs_object = FclCfsRate.select().where(
@@ -44,7 +48,8 @@ def execute_transaction_code(request):
         FclCfsRate.commodity == request.get("commodity"), 
         FclCfsRate.service_provider_id == request.get("service_provider_id"), 
         FclCfsRate.cargo_handling_type == request.get("cargo_handling_type"),
-        FclCfsRate.importer_exporter_id == request.get("importer_exporter_id")).first()
+        FclCfsRate.importer_exporter_id == request.get("importer_exporter_id"),
+        FclCfsRate.rate_type == request.get('rate_type')).first()
 
     if not cfs_object:
         cfs_object = FclCfsRate(**params)

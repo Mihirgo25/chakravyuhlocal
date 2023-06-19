@@ -62,7 +62,12 @@ def apply_supply_agent_id_filter(query, filters):
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclCfsRateRequest.select().where(FclCfsRateRequest.id == filters['similar_id']).dicts().get()
     query = query.where(FclCfsRateRequest.id != filters['similar_id'])
-    return query.where(FclCfsRateRequest.port_id == rate_request_obj.get('port_id'), FclCfsRateRequest.container_size == rate_request_obj.get('container_size'), FclCfsRateRequest.container_type == rate_request_obj.get('container_type'), FclCfsRateRequest.commodity == rate_request_obj.get('commodity'))
+    query = query.where(
+        FclCfsRateRequest.port_id == rate_request_obj.get('port_id'), 
+        FclCfsRateRequest.container_size == rate_request_obj.get('container_size'), 
+        FclCfsRateRequest.container_type == rate_request_obj.get('container_type'), 
+        FclCfsRateRequest.commodity == rate_request_obj.get('commodity'))
+    return query
 
 def get_pagination_data(query, page, page_limit):
     total_count = query.count()

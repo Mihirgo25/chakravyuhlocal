@@ -1,5 +1,6 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from micro_services.client import organization
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def find_service_providers(request):
     ids = organization.get_eligible_service_organizations({
@@ -23,6 +24,7 @@ def create_fcl_customs_rate_not_available(request):
       FclCustomsRate.container_size == request.get('container_size'),
       FclCustomsRate.container_type == request.get('container_type'),
       FclCustomsRate.commodity == request.get('commodity'),
+      FclCustomsRate.rate_type == DEFAULT_RATE_TYPE,
       FclCustomsRate.importer_exporter_id == None
     ).dicts()
 

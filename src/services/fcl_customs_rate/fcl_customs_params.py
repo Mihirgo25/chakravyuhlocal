@@ -25,6 +25,8 @@ class CreateFclCustomsRate(BaseModel):
   customs_line_items: List[FclCustomsLineItems] = None
   cfs_line_items: List[FclCustomsLineItems] = None
   performed_by_type: str = None
+  mode: str = None
+  rate_type: str = 'market_place'
 
 class DeleteRate(BaseModel):
   filters:dict={}
@@ -132,11 +134,13 @@ class UpdateFclCustomsRate(BaseModel):
   performed_by_type: str = None
   customs_line_items: list[FclCustomsLineItems] = None
   cfs_line_items: list[FclCustomsLineItems] = None
+  rate_type: str = 'market_place'
 
 class DeleteFclCustomsRate(BaseModel):
   id: str
+  sourced_by_id: str
+  procured_by_id: str
   performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
-  sourced_by_id: str
-  procured_by_id: str
+  rate_type: str = 'market_place'

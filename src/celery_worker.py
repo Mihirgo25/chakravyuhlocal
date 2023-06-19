@@ -535,7 +535,7 @@ def update_cfs_rate_platform_prices(self, request):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def delay_fcl_customs_functions(self,fcl_customs_object,request):
     try:
-        if not FclCustomsRate.select(FclCustomsRate.id).where(FclCustomsRate.service_provider_id==request["service_provider_id"], FclCustomsRate.rate_not_available_entry==False).exists():
+        if not FclCustomsRate.select(FclCustomsRate.id).where(FclCustomsRate.service_provider_id==request["service_provider_id"], FclCustomsRate.rate_not_available_entry==False, FclCustomsRate.rate_type == DEFAULT_RATE_TYPE).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
         get_multiple_service_objects(fcl_customs_object)
 
@@ -548,7 +548,7 @@ def delay_fcl_customs_functions(self,fcl_customs_object,request):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def delay_fcl_cfs_functions(self,fcl_cfs_object,request):
     try:
-        if not FclCfsRate.select(FclCustomsRate.id).where(FclCfsRate.service_provider_id==request["service_provider_id"], FclCfsRate.rate_not_available_entry==False).exists():
+        if not FclCfsRate.select(FclCfsRate.id).where(FclCfsRate.service_provider_id==request["service_provider_id"], FclCfsRate.rate_not_available_entry==False, FclCfsRate.rate_type == DEFAULT_RATE_TYPE).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
         get_multiple_service_objects(fcl_cfs_object)
     except Exception as exc:

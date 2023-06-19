@@ -166,6 +166,7 @@ def get_fcl_customs_rate_data(
     service_provider_id: str = None,
     importer_exporter_id: str = None,
     trade_type: str = None,
+    rate_type: str = 'market_place',
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -179,6 +180,7 @@ def get_fcl_customs_rate_data(
         'service_provider_id': service_provider_id,
         'importer_exporter_id': importer_exporter_id,
         'trade_type': trade_type,
+        'rate_type' : rate_type
     }
 
     try:

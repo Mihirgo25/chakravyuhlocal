@@ -11,6 +11,7 @@ from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fc
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate import update_fcl_customs_rate
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
 
@@ -86,7 +87,9 @@ class FclCustomsRateBulkOperation(BaseModel):
                 'performed_by_id': self.performed_by_id,
                 'bulk_operation_id': self.id,
                 'procured_by_id': procured_by_id,
-                'sourced_by_id': sourced_by_id
+                'sourced_by_id': sourced_by_id,
+                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
+
             })
 
             self.progress = int((count * 100.0) / total_count)

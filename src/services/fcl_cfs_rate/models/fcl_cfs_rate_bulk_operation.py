@@ -11,6 +11,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.definitions import FCL_CFS_CHARGES,FCL_FREIGHT_CURRENCIES
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate import update_fcl_cfs_rate
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 ACTION_NAMES = ['delete_rate']
 
 
@@ -57,6 +58,7 @@ class FclCfsRateBulkOperation(Model):
                 'bulk_operation_id': self.id,
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
+                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
             })
 
             self.progress = int((count * 100.0) / total_count)

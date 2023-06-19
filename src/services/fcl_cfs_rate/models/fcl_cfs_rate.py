@@ -183,6 +183,7 @@ class FclCfsRate(BaseModel):
             (FclCfsRate.container_size == self.container_size),
             (FclCfsRate.container_type == self.container_type),
             (FclCfsRate.commodity == self.commodity),
+            (FclCfsRate.rate_type == self.rate_type),
             (FclCfsRate.service_provider_id != self.service_provider_id),
             ((FclCfsRate.importer_exporter_id == self.importer_exporter_id) | (FclCfsRate.importer_exporter_id.is_null(True))),
             (FclCfsRate.cargo_handling_type == self.cargo_handling_type)

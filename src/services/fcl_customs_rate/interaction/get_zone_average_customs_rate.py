@@ -5,6 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from configs.env import DEFAULT_USER_ID
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
 from celery_worker import celery_create_fcl_customs_rate
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def get_zone_wise_rate_query(request):
     location_data = maps.list_locations({'includes':{'zone_id':True}, 'filters':{'id': request.get('port_id')}})['list']
@@ -89,5 +90,6 @@ def get_create_params(request, line_items):
         'customs_line_items' : line_items,
         'performed_by_id' : DEFAULT_USER_ID,
         'mode' : 'predicted',
-        'accuracy' : 60 
+        'accuracy' : 75,
+        'rate_type' : DEFAULT_RATE_TYPE
     }

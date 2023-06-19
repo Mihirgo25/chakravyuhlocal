@@ -39,6 +39,8 @@ class CreateFclCfsRate(BaseModel):
   free_days: list[FreeDaysType]
   performed_by_id: str = None
   performed_by_type: str = None
+  rate_type: str = 'market_place'
+  mode: str = None
 
 class CreateFclCfsRateRequest(BaseModel):
     source: str 
@@ -64,6 +66,7 @@ class DeleteFclCfsRate(BaseModel):
     bulk_operation_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
+    rate_type: str = 'market_place'
 
 class DeleteFclCfsRateRequest(BaseModel):
   fcl_cfs_rate_request_ids: List[str]
@@ -91,6 +94,7 @@ class UpdateFclCfsRate(BaseModel):
     line_items: list[StandardLineItem] = []
     free_limit: int = None
     performed_by_type: str = None
+    rate_type: str = 'market_place'
     
 class Filters(BaseModel):
   filters: dict = {}

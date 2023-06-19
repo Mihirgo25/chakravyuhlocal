@@ -43,7 +43,8 @@ def initialize_query(request):
         FclCfsRate.importer_exporter_id,
         FclCfsRate.free_days,
         FclCfsRate.location_type,
-        FclCfsRate.mode
+        FclCfsRate.mode,
+        FclCfsRate.rate_type
     ).where(
         FclCfsRate.location_id << location_ids,
         FclCfsRate.container_size == request.get('container_size'),
@@ -100,12 +101,18 @@ def find_result_with_importer_exporter(results):
     return None
 
 def build_response_object(result, request):
+    source = 'spot_rates'
+    if result.get('mode') == 'predicted':
+        source = 'predicted'
+    elif result.get('rate_type') != 'market_place':
+        source = result.get('rate_type')
+
     response_object = {
         "service_provider_id": result.get("service_provider_id"),
         "importer_exporter_id": result.get("importer_exporter_id"),
         "line_items": [],
         "free_days": [free_day | {"unit": "per_day"} for free_day in result.get("free_days",[])],
-        "source": "predicted" if result.get('mode') == 'predicted' else "spot_rates",
+        "source": source,
         "tags": []
     }
 

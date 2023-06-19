@@ -2,6 +2,7 @@ import services.rate_sheet.interactions.validate_fcl_customs_object as validate_
 from micro_services.client import maps
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from fastapi import HTTPException
+from configs.fcl_freight_rate_constants import RATE_TYPES,DEFAULT_RATE_TYPE
 
 def validate_fcl_customs_object(module, object):
     response = {}
@@ -24,16 +25,16 @@ def get_customs_object(object):
         'container_type': object.get('container_type'),
         'commodity': object.get('commodity'),
         'service_provider_id': object.get('service_provider_id'),
-        'importer_exporter_id': object.get('importer_exporter_id')
+        'importer_exporter_id': object.get('importer_exporter_id'),
+        'rate_type':object.get('rate_type',DEFAULT_RATE_TYPE)
     }
     validation = {}
     validation['error'] = ''
     custom = FclCustomsRate(**res)
-    # for line_item in object.get('customs_line_items'):
-    #     print(line_item['price'])
-    #     if not (str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
-    #         print('errorrrrr')
-    #         validation['error'] += 'is_invalid'
+
+    if 'rate_type' in object and object['rate_type'] and object['rate_type'] not in RATE_TYPES:
+        validation['error']+=  ' ' + f"{object['rate_type']} is invalid, valid rate types are {RATE_TYPES}"
+
     custom.customs_line_items = object.get('customs_line_items')
     custom.cfs_line_items = object.get('cfs_line_items')
     try:

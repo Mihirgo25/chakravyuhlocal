@@ -1,5 +1,6 @@
 from database.rails_db import get_organization
 from micro_services.client import organization
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 
 def get_fcl_customs_rate_visibility(request):
@@ -42,13 +43,14 @@ def get_fcl_customs_rate_data(request):
     fcl_customs_rate_data = None
 
     if request.get('rate_id'):
-        fcl_customs_rate_data = FclCustomsRate.select().where(FclCustomsRate.id == request['rate_id']).first()
+        fcl_customs_rate_data = FclCustomsRate.select(FclCustomsRate.id).where(FclCustomsRate.id == request['rate_id']).first()
     else:
-        fcl_customs_rate_data = FclCustomsRate.select().where(
+        fcl_customs_rate_data = FclCustomsRate.select(FclCustomsRate.id).where(
             FclCustomsRate.location_id == request.get('location_id'),
             FclCustomsRate.container_size == request.get('container_size'),
             FclCustomsRate.container_type == request.get('container_type'),
             FclCustomsRate.commodity == request.get('commodity'),
             FclCustomsRate.service_provider_id == request.get('service_provider_id'),
+            FclCustomsRate.rate_type == DEFAULT_RATE_TYPE,
             ~FclCustomsRate.rate_not_available_entry).first()
     return fcl_customs_rate_data

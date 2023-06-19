@@ -112,7 +112,7 @@ class FclCustomsRate(BaseModel):
         raise HTTPException(status_code=400, detail="Invalid trade type")
 
     def valid_uniqueness(self):
-        uniqueness = FclCustomsRate.select().where(
+        uniqueness = FclCustomsRate.select(FclCustomsRate.id).where(
             FclCustomsRate.location_id == self.location_id,
             FclCustomsRate.trade_type == self.trade_type,
             FclCustomsRate.container_size == self.container_size,
@@ -215,6 +215,7 @@ class FclCustomsRate(BaseModel):
             FclCustomsRate.commodity == self.commodity,
             ((FclCustomsRate.importer_exporter_id == self.importer_exporter_id) | (FclCustomsRate.importer_exporter_id.is_null(True))),
             FclCustomsRate.is_customs_line_items_error_messages_present == False,
+            FclCustomsRate.rate_type == self.rate_type,
             ~FclCustomsRate.service_provider_id == self.service_provider_id
         ).execute()
 
