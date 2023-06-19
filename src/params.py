@@ -20,6 +20,7 @@ class UpdateLineItem(BaseModel):
   remarks: list[str] = None
   slabs: list[Slab] = []
 
+
 class FreeDay(BaseModel):
   free_limit: float
   slabs: list[Slab] = []
@@ -40,6 +41,7 @@ class LocalData(BaseModel):
   detention: FreeDay = None
   demurrage: FreeDay = None
   plugin: FreeDay = None
+
 
 
 class PostFclFreightRate(BaseModel):

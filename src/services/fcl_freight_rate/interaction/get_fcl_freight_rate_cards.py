@@ -391,7 +391,6 @@ def build_local_line_item_object(line_item, request):
         "unit": line_item["unit"],
         "price": line_item["price"],
         "currency": line_item["currency"],
-        "conditions":line_item.get('conditions'),
         "remarks": line_item["remarks"] if 'remarks' in line_item else []
     }
 
@@ -865,8 +864,8 @@ def get_fcl_freight_rate_cards(requirements):
                     if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
                         cogofreight_freight_rates_length += 1
                 
-            if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != new_freight_rates_length:
-                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+                if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != new_freight_rates_length:
+                    freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
             else:
                 is_predicted = True
         
