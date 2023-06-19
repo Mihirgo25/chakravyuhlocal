@@ -108,6 +108,19 @@ def get_create_params(request,rate):
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'trade_type': request.get('trade_type'),
+        'origin_airport_id':request.get('origin_airport_id'),
+        'origin_country_id':request.get('origin_country_id'),
+        'origin_continent_id':request.get('origin_continent_id'),
+        'origin_trade_id':request.get('origin_trade_id'),
+        'destination_airport_id':request.get('destination_airport_id'),
+        'destination_country_id':request.get('destination_country_id'),
+        'destination_continent_id':request.get('destination_continent_id'),
+        'destination_trade_id':request.get('destination_trade_id'),
+        'commodity':request.get('commodity'),
+        'cogo_entity_id':request.get('cogo_entity_id'),
+        'service_provider_id':request.get('service_provider_id'),
+        'operation_type':request.get('operation_type'),
         'status': 'active',
+        'airline_id':request.get('airline_id')
       }
     return params

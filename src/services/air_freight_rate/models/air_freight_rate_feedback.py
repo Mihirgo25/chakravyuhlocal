@@ -58,6 +58,19 @@ class AirFreightRateFeedback(BaseModel):
     closed_by = BinaryJSONField(null=True)
     reverted_rate_id = UUIDField(null=True)
     reverted_validity_id = UUIDField(null=True)
+    origin_airport_id = UUIDField(null=True, index=True)
+    origin_country_id = UUIDField(null=True, index=True)
+    origin_continent_id = UUIDField(null=True, index=True)
+    origin_trade_id = UUIDField(null=True, index=True)
+    destination_airport_id = UUIDField(null=True, index=True)
+    destination_country_id = UUIDField(null=True, index=True)
+    destination_continent_id = UUIDField(null=True, index=True)
+    destination_trade_id = UUIDField(null=True, index=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
+    service_provider_id = UUIDField(null=True, index=True)
+    commodity = TextField(null=True)
+    operation_type = TextField(null=True)
+    airline_id=UUIDField(null=True,index=True)
 
     class Meta:
         table_name = "air_freight_rate_feedbacks"
@@ -239,9 +252,11 @@ class AirFreightRateFeedback(BaseModel):
         return True
 
     def validate_preferred_storage_free_days(self):
-        if not  self.preferred_storage_free_days >=0.0:
-            raise HTTPException(status_code=400, detail='freedays should be greater than zero')
-        
+        if not self.preferred_storage_free_days >= 0.0:
+            raise HTTPException(
+                status_code=400, detail="freedays should be greater than zero"
+            )
+
     def validate_feedbacks(self):
         if self.feedbacks:
             for feedback in self.feedbacks:
