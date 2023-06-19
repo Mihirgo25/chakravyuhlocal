@@ -1,4 +1,4 @@
-from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,HAZ_CLASSES,ADDITIONAL_CHARGE,ROUND_TRIP_CHARGE,LOADING_UNLOADING_CHARGES_US,MINIMUM_APPLICABLE_CHARGE
+from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,HAZ_CLASSES,ADDITIONAL_CHARGE,ROUND_TRIP_CHARGE,LOADING_UNLOADING_CHARGES_US,MINIMUM_APPLICABLE_CHARGE, KILOMETRE_TO_MILE
 from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
 class USFtlFreightRateEstimator:
     def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data):
@@ -11,7 +11,7 @@ class USFtlFreightRateEstimator:
 
     def estimate(self):
         currency = 'USD'
-        total_path_distance = self.path_data['distance']*0.621371
+        total_path_distance = self.path_data['distance']*KILOMETRE_TO_MILE
         truck_mileage = self.truck_and_commodity_data['mileage']
         basic_freight_charges = (self.average_fuel_price*total_path_distance)/truck_mileage
         applicable_rule_set = self.get_applicable_rule_set()

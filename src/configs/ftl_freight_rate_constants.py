@@ -314,6 +314,9 @@ CLOSED_BODY_CHARGES_FOR_14 = 1.25
 # Minimum charges for driver if distance is less than 300
 MINIMUM_APPLICABLE_CHARGE = 400
 
+#kilometres to miles
+KILOMETRE_TO_MILE = 0.621371
+
 USA_FUEL_DATA_LINK = "https://gasprices.aaa.com/state-gas-price-averages/"
 
 INDIA_FUEL_DATA_LINKS = {

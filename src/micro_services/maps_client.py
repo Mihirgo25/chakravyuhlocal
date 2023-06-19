@@ -19,11 +19,7 @@ class MapsApiClient:
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
-            from configs.env import RUBY_ADDRESS_URL
-            self.client.url.set('https://api.cogoport.com/location')
-            res= self.client.request('GET', 'list_locations', {}, data)
-            self.client.url.set(RUBY_ADDRESS_URL)
-            return res
+            return self.client.request('GET', 'list_locations', {}, data)
         return self.client.request('GET', 'list_locations', data, {})
 
     def list_location_cluster(self,data={}):
@@ -67,6 +63,3 @@ class MapsApiClient:
                     data[key] = json.dumps(data[key])
             return self.client.request('GET', 'list_operators', {}, data)
         return self.client.request('GET', 'list_operators', data, {})
-
-    def get_is_land_service_possible(self,data = {}):
-        return self.client.request('GET','is_land_service_possible',data)
