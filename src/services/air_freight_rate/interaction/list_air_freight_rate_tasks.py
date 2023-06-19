@@ -24,8 +24,8 @@ def list_air_freight_rate_tasks(filters={},page_limit=10,page=1,sort_by = 'creat
             filters = json.loads(filters)
         direct_filters, indirect_filters = get_applicable_filters(filters, POSSIBLE_DIRECT_FILTERS, POSSIBLE_INDIRECT_FILTERS)
     
-        # query = get_filters(direct_filters, query, AirFreightRateTasks)
-        # query = apply_indirect_filters(query, indirect_filters)
+        query = get_filters(direct_filters, query, AirFreightRateTasks)
+        query = apply_indirect_filters(query, indirect_filters)
 
     pagination_data=get_pagination_data(query,page,page_limit)
 
@@ -124,7 +124,8 @@ def get_data(query,filters):
             all_shipment_serial_ids.extend(data['shipment_serial_ids'])
     
     all_shipment_serial_ids = list(set(all_shipment_serial_ids))
-    # shipments_dict,shipment_quotation_dict = get_shipment_and_sell_quotations(all_shipment_serial_ids)
+    if all_shipment_serial_ids:
+        shipments_dict,shipment_quotation_dict = get_shipment_and_sell_quotations(all_shipment_serial_ids)
 
     existing_system_rates = get_existing_system_rates(airport_ids,commodities,trade_types,airline_ids,commodity_types)
     for object in data_list:
@@ -150,19 +151,19 @@ def get_data(query,filters):
                 
                 object['closable'] = False
                 serial_ids = []
-                # if object.get('shipment_serial_ids'):
-                #     for serial_id in object.get('shipment_serial_ids'):
-                #         for shipment in shipments_dict[serial_id]:
-                #             if shipment['state'] in ['cancelled', 'aborted']:
-                #                 serial_ids.append(serial_id)
-                #                 break
-                #             for quotation in shipment_quotation_dict[shipment['id']]:
-                #                 if quotation['line_item']:
-                #                     serial_ids.append(serial_id)
-                #                     break
+                if object.get('shipment_serial_ids'):
+                    for serial_id in object.get('shipment_serial_ids'):
+                        for shipment in shipments_dict[serial_id]:
+                            if shipment['state'] in ['cancelled', 'aborted']:
+                                serial_ids.append(serial_id)
+                                break
+                            for quotation in shipment_quotation_dict[shipment['id']]:
+                                if quotation['line_item']:
+                                    serial_ids.append(serial_id)
+                                    break
                     
-                #     if len(set(object.get('shipment_serial_ids')).difference(set(serial_ids))):
-                #         object['closable'] = True
+                    if len(set(object.get('shipment_serial_ids')).difference(set(serial_ids))):
+                        object['closable'] = True
                 object['purchase_invoice_rate'] = object['job_data']['rate']
                 del object['job_data']
 
@@ -242,8 +243,8 @@ def get_stats(filters,stats_required):
         status = result.air_freight_task_status
         trade_type = result.air_freight_task_trade_type
         count = result.count_all
-        stats[status[trade_type]] += count
-        stats[status['total']] += count
+        stats[status][trade_type] += count
+        stats[status]['total'] += count
 
     return {
         'stats': stats
