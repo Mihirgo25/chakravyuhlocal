@@ -97,7 +97,6 @@ def build_local_line_items(result, response_object, request):
     response_object['line_items'] = []
 
     for line_item in result['data'].get('line_items'):
-
         if (line_item.get('location_id')) and (line_item['location_id'] not in [request['port_id'], request['country_id']]):
             continue
 

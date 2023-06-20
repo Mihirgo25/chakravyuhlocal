@@ -4,47 +4,39 @@ def conditional_line_items(rate, local_rate):
         if item.get('conditions'):
             operator = item['conditions'].get('operator')
             values = item['conditions'].get('values')
-            if operator == "or":
-                condition_met = False
-                for val in values:
-                    key = val[0]
-                    operator = val[1]
-                    operand = val[2]
-                    if isinstance(operand, list):
-                        if operator == "IN" or "in":
-                            if rate.get(key) in operand:
-                                condition_met = True
-                            else:
-                                condition_met = False
-                                break
-                    else:
-                        if eval("'{}' {} '{}'".format(rate.get(key),operator,operand)):
-                            condition_met = True
-                            break
-                if condition_met:
-                    new_line_items.append(item)
-            elif operator == "and":
-                condition_met = True
-                for val in values:
-                    key = val[0]
-                    operator = val[1]
-                    operand = val[2]
-                    if isinstance(operand, list):
-                        if operator == "IN" or "in":
-                            if rate.get(key) in operand:
-                                condition_met = True
-                            else:
-                                condition_met = False
-                                break
-                    else:
-                        if not eval("'{}' {} '{}'".format(rate.get(val[0]),val[1],val[2])):
-                            condition_met = False
-                            break
-                if condition_met:
-                    new_line_items.append(item)
+            condition_met = evaluate_conditions(rate, operator, values)
+            if condition_met:
+                new_line_items.append(item)
         else:
             new_line_items.append(item)
     local_rate['data']['line_items'] = new_line_items
     local_rate['line_items'] = new_line_items
-
     return local_rate
+
+def evaluate_conditions(rate, operator, values):
+    if operator == "or":
+        return any(check_condition(rate, val) for val in values)
+    elif operator == "and":
+        return all(check_condition(rate, val) for val in values)
+    else:
+        return False
+
+def check_condition(rate, condition):
+    key = condition[0]
+    operator = condition[1].lower()
+    operand = condition[2]
+    if isinstance(operand, list):
+        if operator =="in":
+            return rate.get(key) in operand
+        elif operator =="not_in":
+            return rate.get(key) not in operand
+    else:
+        if operator == "equal_to" and rate.get(key) == operand:
+            return True
+        elif operator == "not_equal_to" and rate.get(key) != operand:
+            return True
+        elif operator == "greater_than" and rate.get(key) > operand:
+            return True
+        elif operator == "less_than" and rate.get(key) < operand:
+            return True
+    return False

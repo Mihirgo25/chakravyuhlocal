@@ -151,7 +151,6 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
             "line_items": local_charge["data"]["line_items"]
         }
         all_formatted_locals.append(new_local_obj)
-        
     return all_formatted_locals
 
 def get_matching_local(local_type, rate, local_rates, default_lsp):
@@ -166,6 +165,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
     if trade_type == 'export' and rate['origin_main_port_id']:
         main_port_id = rate['origin_main_port_id']
     if trade_type == 'import' and rate['destination_main_port_id']:
+        
         main_port_id = rate['destination_main_port_id']
     for local_rate in local_rates:
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
