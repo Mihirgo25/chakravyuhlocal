@@ -28,6 +28,7 @@ from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
 from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -515,6 +516,16 @@ def delay_air_functions(self,air_object,request):
 
         common.create_saas_air_schedule_airport_pair({'origin_airport_id':request.get("origin_airport_id"), 'destination_airport_id':request.get("destination_airport_id")})
         get_multiple_service_objects(air_object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_air_local_rate_delay(self, request):
+    try:
+        return create_fcl_freight_rate_local(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
