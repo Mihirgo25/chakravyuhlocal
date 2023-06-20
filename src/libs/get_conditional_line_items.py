@@ -23,7 +23,6 @@ def evaluate_conditions(rate, operator, values):
     if operator == "or":
         return any(check_condition(rate, val) for val in values)
     if operator == "and":
-        print(values)
         return all(check_condition(rate, val) for val in values)
     return False
 
