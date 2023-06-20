@@ -46,6 +46,7 @@ app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, 
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
 
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
