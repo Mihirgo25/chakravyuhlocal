@@ -41,13 +41,21 @@ def get_truck_and_commodity_data(country_category,truck_type, weight,country_id,
         filters['capacity_greater_equal_than'] = weight
         filters['truck_type'] = default_truck_type
         sorted_truck_types = sorted(PREDICTION_TRUCK_TYPES.items(), key=lambda x: x[1]["weight"])
+
+        truck_weight = weight
+
+        if country_category == 'US':
+            truck_weight = truck_weight/1000
+
         for truck_type, truck_data in sorted_truck_types:
-            if weight >= 35:
+            if truck_weight >= 35:
                 closest_truck_type = 'open_body_22tyre_35ton'
                 break
-            if truck_data["weight"] >= weight:
+            if truck_data["weight"] >= truck_weight:
                 closest_truck_type = truck_type
                 break
+
+
     trucks_data = list_trucks_data(filters, sort_by='capacity',sort_type='asc')['list']
 
     if trucks_data:
@@ -61,6 +69,7 @@ def get_truck_and_commodity_data(country_category,truck_type, weight,country_id,
 
 
 def get_location_data_mapping(ids: list):
+
     location_data = maps.list_locations({"filters": {"id": ids}})["list"]
     location_mapping = {}
     for data in location_data:
@@ -77,6 +86,8 @@ def get_country_code(location_data_mapping,origin_location_id,destination_locati
         return 'IN'
     elif origin_continent_id in EU_ZONE and destination_continent_id in EU_ZONE:
         return 'EU'
+    elif origin_country_code == 'US' and destination_country_code == 'US':
+        return 'US'
     return 'not_found'
 
 def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type,closest_truck_type):
