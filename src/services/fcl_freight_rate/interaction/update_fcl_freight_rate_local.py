@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
+from services.fcl_freight_rate.helpers.common_helpers import get_normalized_line_items
 from database.db_session import db
 
 
@@ -36,7 +37,7 @@ def execute_transaction_code(request):
   fcl_freight_local.selected_suggested_rate_id = request.get('selected_suggested_rate_id')
 
   if request.get('data') and request['data'].get('line_items'):
-      fcl_freight_local.data = fcl_freight_local.data | {'line_items':request['data']['line_items']}
+      fcl_freight_local.data = fcl_freight_local.data | {'line_items':get_normalized_line_items(request['data']['line_items'])}
 
   if request.get('data') and request['data'].get('detention'):
     if fcl_freight_local.detention_id:

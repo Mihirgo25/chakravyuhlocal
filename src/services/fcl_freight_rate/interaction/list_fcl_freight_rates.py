@@ -75,6 +75,7 @@ def get_data(query, expired_rates_required):
           'validity_end': validity_object['validity_end'],
           'price': validity_object['price'],
           'platform_price': platform_price,
+          'market_price': validity_object.get('market_price') or validity_object['price'],
           'currency': validity_object['currency'],
           'is_rate_about_to_expire': (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') >= datetime.now()) & (datetime.strptime(validity_object['validity_end'],'%Y-%m-%d') < (datetime.now() + timedelta(days = SEARCH_START_DATE_OFFSET))),
           'is_best_price': (validity_object['price'] == platform_price),

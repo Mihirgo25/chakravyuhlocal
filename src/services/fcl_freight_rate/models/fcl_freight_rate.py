@@ -475,8 +475,11 @@ class FclFreightRate(BaseModel):
             currency = currency_lists[0]
             if len(set(currency_lists)) != 1:
                 price = float(sum(common.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
+                market_price = float(sum(common.get_money_exchange_for_fcl({"price": item['market_price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             else:
-                price = float(sum(item["price"] for item in line_items))
+                price = float(sum(item["price"] for item in line_items))   
+                market_price = float(sum(item["price"] for item in line_items))   
+                     
             id = str(uuid.uuid4())
             new_validity_object = {
                 "validity_start": validity_start,
@@ -484,6 +487,7 @@ class FclFreightRate(BaseModel):
                 "line_items": line_items,
                 "price": price,
                 "currency": currency,
+                "market_price": market_price,
                 "schedule_type": schedule_type,
                 "payment_term": payment_term,
                 "id": id,
@@ -495,7 +499,7 @@ class FclFreightRate(BaseModel):
 
         for validity_object in self.validities:
             id = validity_object['id']
-            previous_tag = (self.tags or {}).get(id)
+            previous_tag = self.tags.get(id) if isinstance(self.tags, dict) else None
             
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()

@@ -7,6 +7,7 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
+from services.fcl_freight_rate.helpers.common_helpers import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 
 def add_rate_properties(request,freight_id):
@@ -137,7 +138,7 @@ def create_fcl_freight_rate(request):
         freight.validate_line_items(request.get("line_items"))
 
     source = request.get("source")
-    line_items = request.get("line_items")
+    line_items = get_normalized_line_items(request.get("line_items"))
 
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
@@ -289,6 +290,7 @@ def validate_value_props(v_props):
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
+
 
 
     
