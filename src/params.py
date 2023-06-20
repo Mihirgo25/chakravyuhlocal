@@ -863,33 +863,3 @@ class UpdateRateProperties(BaseModel):
   volume_count: int = 0
   value_props: List[dict] = []
   t_n_c: List[str] = []
-
-class CreateConditionalLineItems(BaseModel):
-  performed_by_id: str = None
-  performed_by_type: str = None
-  port_id: str = None
-  main_port_id: str = None
-  country_id: str = None
-  shipping_line_id: str = None 
-  trade_type: str
-  charge_code: str = None
-  data: list[LineItem] = None
-  container_size: str = None
-  container_type: str = None
-  commodity: str = None
-
-class UpdateConditionalLineItems(BaseModel):
-  id: str
-  performed_by_id: str=None
-  performed_by_type: str=None
-  charge_code: str = None
-  data: list[LineItem] = None
-
-
-class DeleteConditionalLineItems(BaseModel):
-  id: str
-  performed_by_id: str = None
-  performed_by_type: str = None
-  sourced_by_id: str
-  procured_by_id: str
-
