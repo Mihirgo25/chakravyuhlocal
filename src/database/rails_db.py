@@ -363,7 +363,7 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
             # sentry_sdk.capture_exception(e)
             return all_results
         
-def get_invoices(days=3, offset=0, limit=50):
+def get_invoices(days=1, offset=0, limit=5000):
         all_result =[]
         try:
             conn = get_connection()
@@ -395,7 +395,7 @@ def get_invoices(days=3, offset=0, limit=50):
                         AND
                             invoice_type in ('purchase_invoice', 'proforma_invoice') 
                         AND 
-                            shipment_collection_parties.invoice_date = now()::date - %s
+                            shipment_collection_parties.invoice_date >= now()::date - %s
                         OFFSET %s LIMIT %s;
                         """
                     cur.execute(sql_query, (days, offset, limit))
