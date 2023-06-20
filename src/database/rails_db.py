@@ -216,7 +216,7 @@ def get_organization_stakeholders(stakeholder_type, stakeholder_id):
         sentry_sdk.capture_exception(e)
         return org_ids
 
-def get_partner_users(ids, status = 'active'):
+def get_partner_users(ids, status = 'active', role_ids = None):
     if not ids:
         return []
     all_result = []
@@ -226,7 +226,11 @@ def get_partner_users(ids, status = 'active'):
             with conn.cursor() as cur:
                 ids = tuple(ids)
                 sql = 'select partner_users.user_id, partner_users.id from partner_users where status = %s and id IN %s'
-                cur.execute(sql, ( status, ids,))
+                if role_ids:
+                    sql += 'and partner_users.role_ids && %s'
+                    cur.execute(sql, ( status, ids, role_ids))
+                else:
+                    cur.execute(sql, ( status, ids,))
                 result = cur.fetchall()
                 for res in result:
                     new_obj = {
@@ -359,7 +363,7 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
             # sentry_sdk.capture_exception(e)
             return all_results
         
-def get_invoices(days=3, offset=0, limit=50):
+def get_invoices(days=1, offset=0, limit=5000):
         all_result =[]
         try:
             conn = get_connection()
@@ -391,7 +395,7 @@ def get_invoices(days=3, offset=0, limit=50):
                         AND
                             invoice_type in ('purchase_invoice', 'proforma_invoice') 
                         AND 
-                            shipment_collection_parties.invoice_date = now()::date - %s
+                            shipment_collection_parties.invoice_date >= now()::date - %s
                         OFFSET %s LIMIT %s;
                         """
                     cur.execute(sql_query, (days, offset, limit))
