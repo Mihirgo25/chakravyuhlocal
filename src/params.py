@@ -19,6 +19,7 @@ class UpdateLineItem(BaseModel):
   currency: str
   remarks: list[str] = None
   slabs: list[Slab] = []
+  conditions: dict={}
 
 
 class FreeDay(BaseModel):

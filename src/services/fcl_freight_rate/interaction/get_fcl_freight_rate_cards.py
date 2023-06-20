@@ -6,7 +6,7 @@ from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_da
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
-from libs.get_conditional_line_items import conditional_line_items
+from libs.get_conditional_line_items import get_filtered_line_items
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
@@ -14,7 +14,6 @@ from database.rails_db import get_shipping_line, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
-from micro_services.client import maps
 import traceback
 
 def initialize_freight_query(requirements, prediction_required = False):
@@ -134,8 +133,8 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.commodity == commodity,
         FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id << list(service_provider_ids.keys()),
-        (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
-        (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
+        # (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
+        # (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
     )
 
     if len(main_port_ids) == 2:
@@ -165,14 +164,17 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
     if trade_type == 'export' and rate['origin_main_port_id']:
         main_port_id = rate['origin_main_port_id']
     if trade_type == 'import' and rate['destination_main_port_id']:
-        
         main_port_id = rate['destination_main_port_id']
     for local_rate in local_rates:
+        old_line_items=local_rate['data']['line_items']
+        new_line_items=get_filtered_line_items(rate,old_line_items)
+        local_rate['data']['line_items']=new_line_items
+        local_rate['line_items']=new_line_items
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
             if shipping_line_id == local_rate['shipping_line_id']:
-                matching_locals[local_rate["service_provider_id"]] = conditional_line_items( rate, local_rate)
+                matching_locals[local_rate["service_provider_id"]] = local_rate
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
-                default_shipping_line_locals[local_rate["service_provider_id"]] = conditional_line_items( rate, local_rate)
+                default_shipping_line_locals[local_rate["service_provider_id"]] =local_rate
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
     if default_lsp in default_shipping_line_locals:
@@ -821,6 +823,7 @@ def get_fcl_freight_rate_cards(requirements):
     try:
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        print(freight_rates)
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
         is_predicted = False
