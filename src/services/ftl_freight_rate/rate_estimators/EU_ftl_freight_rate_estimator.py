@@ -56,25 +56,43 @@ class EUFtlFreightRateEstimator:
 
     def get_applicable_rule_set_continent(self):
         truck_type = self.truck_and_commodity_data["truck_type"]
-        location_ids = list(set([self.location_data_mapping[self.origin_location_id]['continent_id'],self.location_data_mapping[self.destination_location_id]['continent_id']]))
-        ftl_freight_rate_rule_set = FtlFreightRateRuleSet.select(FtlFreightRateRuleSet.process_unit,FtlFreightRateRuleSet.process_type,FtlFreightRateRuleSet.process_value,FtlFreightRateRuleSet.process_currency).where(
-                FtlFreightRateRuleSet.location_id << (location_ids),
-                FtlFreightRateRuleSet.location_type == "continent",
-                FtlFreightRateRuleSet.truck_type == truck_type,
-                FtlFreightRateRuleSet.status == 'active'
-            )
+        location_ids = list(set([
+            self.location_data_mapping[self.origin_location_id]['continent_id'],
+            self.location_data_mapping[self.destination_location_id]['continent_id']
+            ]))
+
+        ftl_freight_rate_rule_set = FtlFreightRateRuleSet.select(
+            FtlFreightRateRuleSet.process_unit,
+            FtlFreightRateRuleSet.process_type,
+            FtlFreightRateRuleSet.process_value,
+            FtlFreightRateRuleSet.process_currency
+        ).where(
+            FtlFreightRateRuleSet.location_id << (location_ids),
+            FtlFreightRateRuleSet.location_type == "continent",
+            FtlFreightRateRuleSet.truck_type == truck_type,
+            FtlFreightRateRuleSet.status == 'active'
+        )
         final_data = list(ftl_freight_rate_rule_set.dicts())
         return final_data
 
     def get_applicable_rule_set_country(self):
         truck_type = self.truck_and_commodity_data["truck_type"]
-        location_ids = list(set([self.location_data_mapping[self.origin_location_id]['country_id'],self.location_data_mapping[self.destination_location_id]['country_id']]))
-        ftl_freight_rate_rule_set = FtlFreightRateRuleSet.select(FtlFreightRateRuleSet.process_unit,FtlFreightRateRuleSet.process_type,FtlFreightRateRuleSet.process_value,FtlFreightRateRuleSet.process_currency).where(
-                FtlFreightRateRuleSet.location_id << (location_ids),
-                FtlFreightRateRuleSet.location_type == "country",
-                FtlFreightRateRuleSet.truck_type == truck_type,
-                FtlFreightRateRuleSet.status == 'active'
-            )
+        location_ids = list(set([
+            self.location_data_mapping[self.origin_location_id]['country_id'],
+            self.location_data_mapping[self.destination_location_id]['country_id']
+            ]))
+
+        ftl_freight_rate_rule_set = FtlFreightRateRuleSet.select(
+            FtlFreightRateRuleSet.process_unit,
+            FtlFreightRateRuleSet.process_type,
+            FtlFreightRateRuleSet.process_value,
+            FtlFreightRateRuleSet.process_currency
+        ).where(
+            FtlFreightRateRuleSet.location_id << (location_ids),
+            FtlFreightRateRuleSet.location_type == "country",
+            FtlFreightRateRuleSet.truck_type == truck_type,
+            FtlFreightRateRuleSet.status == 'active'
+        )
         final_data = list(ftl_freight_rate_rule_set.dicts())
         return final_data
 
@@ -83,7 +101,6 @@ class EUFtlFreightRateEstimator:
         return self.average_fuel_price/truck_mileage
 
     def get_toll_factor(self):
-
         country_rule_set = self.get_applicable_rule_set_country()
         if not country_rule_set:
             return DEFAULT_TOLL_PRICE_EU
@@ -97,5 +114,4 @@ class EUFtlFreightRateEstimator:
             toll_value += DEFAULT_TOLL_PRICE_EU
 
         toll_value = toll_value / 2
-
         return toll_value

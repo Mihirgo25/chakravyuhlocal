@@ -20,17 +20,40 @@ class FtlFreightEstimator:
             average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','INR')
             estimator = INFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
-            return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'], 'truck_type': self.truck_and_commodity_data['truck_name']}]}
+            return {'list' : [
+                {
+                    'is_price_estimated': bool(price),
+                    'base_price': price['base_rate'],
+                    'distance':price['distance'],
+                    'currency':price['currency'],
+                    'truck_type': self.truck_and_commodity_data['truck_name']
+                }]}
+
         elif self.country_category == 'EU':
             average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','EUR')
             estimator = EUFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
-            return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'], 'truck_type': self.truck_and_commodity_data['truck_name']}]}
+            return {'list' : [
+                {
+                    'is_price_estimated': bool(price),
+                    'base_price': price['base_rate'],
+                    'distance':price['distance'],
+                    'currency':price['currency'],
+                    'truck_type': self.truck_and_commodity_data['truck_name']
+                }]}
+
         elif self.country_category == 'US':
             average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','USD')
             estimator = USFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
-            return {'list' : [{ 'is_price_estimated': bool(price), 'base_price': price['base_rate'],'distance':price['distance'],'currency':price['currency'], 'truck_type': self.truck_and_commodity_data['truck_name'] }]}
+            return {'list' : [
+                {
+                    'is_price_estimated': bool(price),
+                    'base_price': price['base_rate'],
+                    'distance':price['distance'],
+                    'currency':price['currency'],
+                    'truck_type': self.truck_and_commodity_data['truck_name']
+                }]}
 
 
     def get_path_from_valhala(self):
@@ -53,7 +76,10 @@ class FtlFreightEstimator:
             location_ids = path_data
 
         location_ids = list(set(location_ids))
-        all_fuel_price = FuelData.select(FuelData.fuel_price, FuelData.fuel_unit).where(
+        all_fuel_price = FuelData.select(
+            FuelData.fuel_price,
+            FuelData.fuel_unit
+        ).where(
             FuelData.location_id << location_ids,
             FuelData.location_type << location_types,
             FuelData.fuel_type == fuel_type,
