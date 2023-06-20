@@ -167,7 +167,6 @@ def add_freight_objects(freight_query_result, response_object, requirements):
         if not freight_object:
             continue
         response_object['freights'].append(freight_object)
-    
     return len(response_object['freights'])>0
 
 def build_freight_object(freight_validity,required_weight,requirements):
@@ -204,7 +203,6 @@ def build_freight_object(freight_validity,required_weight,requirements):
             required_slab = weight_slab
             break
     
-   
     if not required_slab:
         return
     
@@ -241,7 +239,6 @@ def build_freight_object(freight_validity,required_weight,requirements):
     line_item['name'] = 'Basic Freight'
     line_item['source'] = 'system'
     freight_object['line_items'].append(line_item)
-    
     
     return freight_object
 
