@@ -35,6 +35,7 @@ class LineItem(BaseModel):
   market_price: float = None 
   remarks: list[str] = None
   slabs: list[Slab] = None
+  conditions: dict={}
 
 class LocalData(BaseModel):
   line_items: list[LineItem]=None

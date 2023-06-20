@@ -1,6 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate_local_agent import FclFreightRateLocalAgent
-from services.conditional_line_items.interaction.get_conditional_line_items import get_conditional_line_items
 from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
 from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, DEFAULT_SHIPPING_LINE_ID
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
@@ -96,10 +95,6 @@ def build_response_object(result, request):
 
 def build_local_line_items(result, response_object, request):
     response_object['line_items'] = []
-
-    new_line_items=get_conditional_line_items(request,result)
-    
-    result['data']['line_items']=new_line_items
 
     for line_item in result['data'].get('line_items'):
 

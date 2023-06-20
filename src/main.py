@@ -20,7 +20,6 @@ from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
-from services.conditional_line_items.conditional_line_items_router import conditional_line_items_router
 from services.extensions.extension_router import extension_router
 from micro_services.client import *
 
@@ -45,8 +44,6 @@ app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Tra
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
-
-app.include_router(prefix = "/fcl_freight_rate", router = conditional_line_items_router)
 
 
 app.add_middleware(

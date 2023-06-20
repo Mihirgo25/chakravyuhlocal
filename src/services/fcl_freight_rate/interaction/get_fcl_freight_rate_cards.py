@@ -5,8 +5,8 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rate
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
-from services.conditional_line_items.interaction.get_conditional_line_items import get_conditional_line_items
 from datetime import datetime, timedelta
+from libs.get_conditional_line_items import conditional_line_items
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
@@ -67,6 +67,8 @@ def initialize_freight_query(requirements, prediction_required = False):
 
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
+    
+    print(freight_query)
 
     return freight_query
 
@@ -151,26 +153,8 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
             "line_items": local_charge["data"]["line_items"]
         }
         all_formatted_locals.append(new_local_obj)
+        
     return all_formatted_locals
-
-def conditional_line_items(rate, local_rate):
-    
-    request_body = {
-    'port_id': rate.get('destination_port_id') if local_rate['trade_type'] == 'export' else rate.get('origin_port_id'),
-    'main_port_id': rate.get('destination_main_port_id') if local_rate['trade_type'] == 'export' else rate.get('origin_main_port_id'),
-    'country_id': rate.get('destination_country_id') if local_rate['trade_type'] == 'export' else rate.get('origin_country_id'),
-    'container_size': rate.get('container_size'),
-    'container_type': rate.get('container_type'),
-    'commodity': rate.get('commodity'),
-    'shipping_line_id': rate.get('shipping_line_id'),
-    'trade_type': local_rate['trade_type']
-}
-    
-    new_line_items=get_conditional_line_items(request_body,local_rate)
-    local_rate['data']['line_items']=new_line_items
-    local_rate['line_items']=new_line_items
-    
-    return local_rate
 
 def get_matching_local(local_type, rate, local_rates, default_lsp):
     matching_locals = {}
