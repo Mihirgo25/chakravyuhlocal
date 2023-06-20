@@ -43,10 +43,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclCustomsRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than'][:-5]).date())
+    return query.where(FclCustomsRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than'].split('T')[0]).date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclCustomsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'][:-5]).date())
+    return query.where(FclCustomsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'].split('T')[0]).date())
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_customs', filters['relevant_supply_agent'])

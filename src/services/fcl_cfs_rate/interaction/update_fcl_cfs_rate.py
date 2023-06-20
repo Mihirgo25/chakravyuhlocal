@@ -32,7 +32,8 @@ def execute_transaction_code(request):
         'procured_by_id':request.get('procured_by_id'),
         'sourced_by_id':request.get('sourced_by_id'),
         'line_items':request.get('line_items'),
-        'free_limit':request.get('free_limit')
+        'free_limit':request.get('free_limit'),
+        'rate_type':request.get('rate_type')
     }
 
     for key in list(update_params.keys()):

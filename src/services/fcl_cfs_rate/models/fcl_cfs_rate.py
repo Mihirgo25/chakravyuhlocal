@@ -127,7 +127,7 @@ class FclCfsRate(BaseModel):
         if self.location is not None or self.location_id is None:
             return True
         
-        location = maps.list_locations({ 'filters': { 'id': self.location_id } })
+        location = maps.list_locations({ 'filters': { 'id': str(self.location_id) } })
         if location['list']:
             location_data = location['list'][0]
             self.location = location_data
@@ -194,7 +194,8 @@ class FclCfsRate(BaseModel):
         for rate in rates:
             rate_min_price=0
             currency = self.line_items[0].get('currency')
-            for line_item in rate.line_items:
+            print(rate)
+            for line_item in rate.get('line_items'):
                 rate_min_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": currency })['price']
             
 
