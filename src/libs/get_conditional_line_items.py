@@ -1,4 +1,4 @@
-def get_filtered_line_items(rate, line_items:list):
+def get_filtered_line_items(rate:dict, line_items:list):
     '''
         Line Items are added based on the conditions 
         given by user
