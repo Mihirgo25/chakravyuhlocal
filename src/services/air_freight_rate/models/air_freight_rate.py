@@ -538,7 +538,7 @@ class AirFreightRate(BaseModel):
           new_validity.pop('_dirty')
           main_validities.append(new_validity)
         self.validities = main_validities
-        if not deleted:
+        if not deleted and new_weight_slabs:
             return new_validity_object['id']
 
 
