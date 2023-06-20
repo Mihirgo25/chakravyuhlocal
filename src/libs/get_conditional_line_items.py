@@ -25,16 +25,13 @@ def conditional_line_items(rate, local_rate):
                     new_line_items.append(item)
             elif operator == "and":
                 condition_met = True
-                print('hello')
                 for val in values:
                     key = val[0]
                     operator = val[1]
                     operand = val[2]
                     if isinstance(operand, list):
                         if operator == "IN" or "in":
-                            print('inside and and in')
                             if rate.get(key) in operand:
-                                print('hello world')
                                 condition_met = True
                             else:
                                 condition_met = False
