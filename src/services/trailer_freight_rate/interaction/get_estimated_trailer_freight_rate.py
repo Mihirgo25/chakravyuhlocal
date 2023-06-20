@@ -1,4 +1,4 @@
-from services.trailer_freight_rates.rate_estimators.trailer_freight_estimator import TrailerFreightEstimator
+from services.trailer_freight_rate.rate_estimators.trailer_freight_estimator import TrailerFreightEstimator
 from configs.trailer_freight_rate_constants import *
 from micro_services.client import maps
 from fastapi import HTTPException

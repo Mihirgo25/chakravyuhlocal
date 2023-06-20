@@ -1,12 +1,12 @@
 from peewee import *
 from playhouse.postgres_ext import *
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
+from services.trailer_freight_rate.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
 from services.envision.interaction.get_haulage_freight_predicted_rate import fuel_consumption
 from database.db_session import db
 from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from configs.trailer_freight_rate_constants import *
-from services.trailer_freight_rates.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
+from services.trailer_freight_rate.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
 
 class VNTrailerRateEstimator():
 

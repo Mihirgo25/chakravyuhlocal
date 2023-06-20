@@ -1,5 +1,5 @@
 from database.db_session import db
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
+from services.trailer_freight_rate.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
 def create_table():
     # db.connect()
     try:
