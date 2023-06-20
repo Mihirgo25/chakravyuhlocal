@@ -322,7 +322,7 @@ class FclCustomsRate(BaseModel):
             code_config = FCL_CUSTOMS_CHARGES.get(code)
 
             code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in code_config.get('tags', [])}
-
+            location = self.location
             if not code_config:
                 self.customs_line_items_error_messages[code] = ['is invalid']
                 self.is_customs_line_items_error_messages_present = True
