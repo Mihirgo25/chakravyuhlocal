@@ -1,5 +1,4 @@
-from micro_services import client
-from micro_services.client import maps,organization
+from micro_services.client import maps,organization,shipment
 from datetime import datetime,timedelta
 from services.envision.interaction.get_air_freight_predicted_rate import predict_air_freight_rate
 from configs.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,AIR_EXPORTS_HIGH_DENSITY_RATIO,AIR_EXPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_HIGH_DENSITY_RATIO,DEFAULT_AIRLINE_IDS,COGOLENS_URL,SLAB_WISE_CHANGE_FACTOR,DEFAULT_SERVICE_PROVIDER_ID,COGO_ENVISION_ID
@@ -15,29 +14,20 @@ def get_air_freight_rate_prediction(request):
     
     
     density_category = get_density_category(request.get('weight'), request.get('volume'), request.get('trade_type'))
-
     params = get_params_for_model(currency,request)
-    cogolens_url = COGOLENS_URL
     results = []
     for param in params:
         try:
+            param['date'] = datetime.now()
             result = predict_air_freight_rate(param)
             results.append(result)
         except Exception as e:
             pass
     change_factor = SLAB_WISE_CHANGE_FACTOR
-    
     for result in results:
-            create_air_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':results}, queue = 'low')
-            
-    for result in results:
-        price = result.get('predicted_price')
-    
-        for weight_slab in weight_slabs:
-            weight_slab['tariff_price'] = price
-            price *= change_factor
+        create_air_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':results}, queue = 'low')
         
-        input_for_eligible_service = {
+    input_for_eligible_service = {
             'service': 'air_freight',
             'data': {
                 'origin_airport_id': request.get('origin_airport_id'),
@@ -45,28 +35,33 @@ def get_air_freight_rate_prediction(request):
             }
         }
         
-        current_datetime = request.get('cargo_clearance_date')
-        validity_start = current_datetime
-        next_day_datetime = current_datetime + timedelta(days=3)
-        validity_end = next_day_datetime
-        
-        service_provider_id_eligible = organization.get_eligible_service_organizations(input_for_eligible_service)
-        
-        if service_provider_id_eligible is None:
-            service_provider_id_eligible = DEFAULT_SERVICE_PROVIDER_ID
-        
-        cogo_envision_id = COGO_ENVISION_ID
-        
+    current_datetime = request.get('cargo_clearance_date')
+    validity_start = current_datetime
+    next_day_datetime = current_datetime + timedelta(days=3)
+    validity_end = next_day_datetime
+    
+    service_provider_id_eligible = organization.get_eligible_service_organizations(input_for_eligible_service)
+    if service_provider_id_eligible is None:
+        service_provider_id_eligible = DEFAULT_SERVICE_PROVIDER_ID
+    
+    cogo_envision_id = COGO_ENVISION_ID
+            
+    for result in results:
+        price = result.get('predicted_price')
+    
+        for weight_slab in weight_slabs:
+            weight_slab['tariff_price'] = price
+            price *= change_factor
         try:
             create_air_freight_rate_data({
                 'origin_airport_id' : request['origin_airport_id'],
                 'destination_airport_id' : request['destination_airport_id'],
                 'commodity' : request.get('commodity'),
                 'commodity_type' : request.get('commodity_type'),
-                'airline_id' : request['airline_id'],
+                'airline_id' : result['airline_id'],
                 'operation_type' : 'passenger',
                 'density_category' : density_category,
-                'currency' : request['currency'],
+                'currency' : currency,
                 'price_type' :'all_in',
                 'service_provider_id' :service_provider_id_eligible,
                 'performed_by_id' : cogo_envision_id,
@@ -77,10 +72,13 @@ def get_air_freight_rate_prediction(request):
                 'validity_start' : validity_start,
                 'validity_end' : validity_end,
                 'weight_slabs' : weight_slabs,
-                'min_price' : request['predicted_price'],
-                'source' : 'predicted'}
+                'min_price' : result['predicted_price'],
+                'length': 300,
+                'breadth': 300,
+                'height': 300,
+                'mode' : 'predicted'}
             )
-        except:
+        except Exception as e:
             pass
 
     return True
@@ -121,7 +119,8 @@ def get_params_for_model(currency,request):
     data['origin_airport_id'] = request.get('origin_airport_id')
     data['destination_Airport_id'] = request.get('destination_airport_id')
     data['no_of_airlines'] = no_of_airlines
-    top_three_airline_ids = client.request('GET','get_previous_shipment_airlines',{},data)
+    # top_three_airline_ids = shipment.get_previous_shipment_airlines(data)
+    top_three_airline_ids = []
     if len(top_three_airline_ids) < no_of_airlines:
         for airline_id in default_airlines_ids:
             if len(top_three_airline_ids) >= no_of_airlines:
@@ -142,6 +141,6 @@ def get_params_for_model(currency,request):
         }
         params.append(same_parameter.copy())
 
-    return { "params": params }
+    return params
     
     

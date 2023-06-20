@@ -49,7 +49,7 @@ def create_air_freight_rate(request):
         request['density_ratio']='1:1'
     if request['commodity'] == 'special_consideration' and not request.get('commodity_subtype'):
         raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
-    if request['density_ratio'] and request['density_ratio'].split(':')[0]!= '1':
+    if request.get('density_ratio') and request['density_ratio'].split(':')[0]!= '1':
         raise HTTPException(status_code='400',detail='should be in the form of 1:x')
     if len(set(slab['currency'] for slab in request['weight_slabs']))!=1 or request['weight_slabs'][0]['currency'] != request['currency']:
         raise HTTPException(status_code='400', detail='currency invalid')
@@ -58,7 +58,7 @@ def create_air_freight_rate(request):
     request['weight_slabs'] = sorted(request.get('weight_slabs'), key=lambda x: x['lower_limit'])
 
 
-    if request['rate_type'] in ["promotional" ,"consolidated"]:
+    if request.get('rate_type') in ["promotional" ,"consolidated"]:
         price_type="all_in"
     else:
         price_type=request.get('price_type')
@@ -111,8 +111,10 @@ def create_air_freight_rate(request):
     if request.get('rate_sheet_id'):
         request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_start'), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
         request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_end'), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
-
-    validity_id = freight.set_validities(request.get("validity_start").date(),request.get("validity_end").date(),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
+    predicted = False
+    if request.get('mode') == 'predicted':
+        predicted = True
+    validity_id = freight.set_validities(request.get("validity_start").date(),request.get("validity_end").date(),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"),predicted)
     freight.set_last_rate_available_date()
     set_object_parameters(freight, request)
     freight.validate_before_save()

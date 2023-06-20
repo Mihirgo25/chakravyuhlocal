@@ -523,7 +523,7 @@ def get_air_freight_rate_cards_data(
     origin_airport_id: str,
     destination_airport_id: str,
     validity_start: datetime,
-    cargo_clearance_date: date,
+    cargo_clearance_date: datetime,
     validity_end: datetime,
     packages_count: int,
     trade_type: str,
