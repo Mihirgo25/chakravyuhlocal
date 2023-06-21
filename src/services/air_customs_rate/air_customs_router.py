@@ -16,7 +16,7 @@ from services.air_customs_rate.interaction.get_air_customs_rate_visibility impor
 from services.air_customs_rate.interaction.get_air_customs_rate import get_air_customs_rate
 from services.air_customs_rate.interaction.list_air_customs_rates import list_air_customs_rates
 from services.air_customs_rate.interaction.list_air_customs_rate_requests import list_air_customs_rate_requests
-# from services.air_customs_rate.interaction.list_air_customs_rate_feedbacks import list_air_customs_rate_feedbacks
+from services.air_customs_rate.interaction.list_air_customs_rate_feedbacks import list_air_customs_rate_feedbacks
 from services.air_customs_rate.interaction.update_air_customs_rate import update_air_customs_rate
 from services.air_customs_rate.interaction.delete_air_customs_rate import delete_air_customs_rate
 from services.air_customs_rate.interaction.delete_air_customs_rate_feedback import delete_air_customs_rate_feedback
@@ -194,6 +194,7 @@ def get_air_customs_rate_data(
 def list_air_customs_rate_feedbacks_data(
     filters: str = None,
     spot_search_details_required: bool = False,
+    customer_details_required: bool = False,
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
@@ -204,7 +205,7 @@ def list_air_customs_rate_feedbacks_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_air_customs_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
+        data = list_air_customs_rate_feedbacks(filters, spot_search_details_required, customer_details_required, page_limit, page, performed_by_id, is_stats_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise

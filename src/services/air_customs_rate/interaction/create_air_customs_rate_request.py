@@ -63,7 +63,7 @@ def supply_agents_to_notify(request):
     airport_ids = locations_data.get('airport_id')
     route_data = []
     try:
-        route_data = maps.list_locations({'filters':{'id':airport_ids}})['list']####################
+        route_data = maps.list_locations({'filters':{'id':airport_ids}})['list']
     except Exception as e:
         print(e)
 
