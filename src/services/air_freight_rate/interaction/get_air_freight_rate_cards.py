@@ -174,7 +174,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     freight_validity['min_density_weight'] = freight_validity['min_density_weight'] if  freight_validity.get('min_density_weight') else 0.01
     freight_validity['max_density_weight'] = freight_validity['max_density_weight'] if  freight_validity.get('max_density_weight') else MAX_CARGO_LIMIT
     
-    if datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() > requirements.get('validity_end').date() or datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date').date() < datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() or requirements.get('cargo_clearance_date').date() >datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date() or not freight_validity['status']:
+    if datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() > requirements.get('validity_end').date() or datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() or requirements.get('cargo_clearance_date') >datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date() or not freight_validity['status']:
         return
     
     freight_object = {
