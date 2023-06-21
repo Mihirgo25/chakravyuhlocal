@@ -28,45 +28,41 @@ def get_truck_and_commodity_data(country_category,truck_type, weight,country_id,
     filters = {
         'country_id':country_id
     }
+    
+    truck_weight = get_truck_weight_according_to_country(country_category, weight)
+    
     if truck_type:
         closest_truck_type = truck_type
         filters['truck_name'] = truck_type
     else:
         default_truck_type = ''
         for truck_type, weight_limit_data in TRUCK_TYPES_MAPPING[country_category].items():
-            if weight > weight_limit_data['lower_limit'] and weight <= weight_limit_data['upper_limit']:
+            if truck_weight > weight_limit_data['lower_limit'] and truck_weight <= weight_limit_data['upper_limit']:
                 default_truck_type = truck_type
                 break
-        filters['capacity_greater_equal_than'] = weight
+        filters['capacity_greater_equal_than'] = truck_weight
         filters['truck_type'] = default_truck_type
         sorted_truck_types = sorted(PREDICTION_TRUCK_TYPES.items(), key=lambda x: x[1]["weight"])
         
-        truck_weight = weight
-        
-        if country_category == 'US':
-            truck_weight = truck_weight/1000
-
         for truck_type, truck_data in sorted_truck_types:
-            if truck_weight >= 35:
+            if weight >= 35:
                 closest_truck_type = 'open_body_22tyre_35ton'
                 break
-            if truck_data["weight"] >= truck_weight:
+            if truck_data["weight"] >= weight:
                 closest_truck_type = truck_type
                 break
         
-
     trucks_data = list_trucks_data(filters, sort_by='capacity',sort_type='asc')['list']
     if trucks_data:
         truck_details = trucks_data[0]
     else:
         raise HTTPException(status_code=400, detail="Truck data for these parameters are not available")
     
-    truck_and_commodity_data = get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type, closest_truck_type)
+    truck_and_commodity_data = get_additional_truck_and_commodity_data(truck_details,truck_body_type,truck_weight,commodity,trip_type, closest_truck_type)
     return truck_and_commodity_data
     
 
 def get_location_data_mapping(ids: list):
-
     location_data = maps.list_locations({"filters": {"id": ids}})["list"]
     location_mapping = {}
     for data in location_data:
@@ -97,3 +93,13 @@ def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight
         'truck_name': closest_truck_type
     }
     return truck_and_commodity_data
+
+def get_truck_weight_according_to_country(country_code,weight):
+    if weight is None:
+        return 0
+    if country_code == 'IN':
+        return weight
+    if country_code == 'US':
+        return weight * 2000
+    if country_code == 'EU':
+        return weight

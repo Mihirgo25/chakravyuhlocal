@@ -15,28 +15,22 @@ class USFtlFreightRateEstimator:
         truck_mileage = self.truck_and_commodity_data['mileage']
         basic_freight_charges = (self.average_fuel_price*total_path_distance)/truck_mileage
         applicable_rule_set = self.get_applicable_rule_set()
-        total_charges=0
-
+        
         for data in applicable_rule_set:
             if data['process_type'] in BASIC_CHARGE_LIST:
                 process_unit = data['process_unit']
                 if data['process_type'] == 'driver':
                     basic_freight_charges += (float(data['process_value'])*self.get_driver_charges_factor(total_path_distance))
-                    total_charges += float(data['process_value'])
                 else:
                     basic_freight_charges += (float(data['process_value'])*(total_path_distance))
-                    total_charges += float(data['process_value'])
         if self.truck_and_commodity_data['commodity'] in HAZ_CLASSES or self.truck_and_commodity_data['truck_body_type'] == 'reefer':
             basic_freight_charges += ADDITIONAL_CHARGE*basic_freight_charges
-        
         weight = self.truck_and_commodity_data['weight']
         basic_freight_charges += weight*LOADING_UNLOADING_CHARGES_US
-        total_charges += LOADING_UNLOADING_CHARGES_US
-    
+        
         if self.truck_and_commodity_data['trip_type'] == 'round_trip':
             basic_freight_charges += ROUND_TRIP_CHARGE*basic_freight_charges
-            total_charges += ROUND_TRIP_CHARGE   
-    
+        
         result = {}
         result['currency']  = currency
         result["base_rate"] = round(basic_freight_charges,4)
