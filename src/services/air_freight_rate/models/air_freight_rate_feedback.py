@@ -20,7 +20,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 
-class AirFreightRateFeedbacks(BaseModel):
+class AirFreightRateFeedback(BaseModel):
     air_freight_rate_id = UUIDField(null=True)
     booking_params = BinaryJSONField(null=True)
     closed_by_id = UUIDField(null=True)
@@ -55,28 +55,22 @@ class AirFreightRateFeedbacks(BaseModel):
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
-    origin_airport_id = UUIDField(null=True)
-    origin_country_id = UUIDField(null=True)
-    origin_continent_id = UUIDField(null=True)
-    origin_trade_id = UUIDField(null=True)
-    destination_airport_id = UUIDField(null=True)
-    destination_continent_id = UUIDField(null=True)
-    destination_trade_id = UUIDField(null=True)
-    destination_country_id = UUIDField(null=True)
-    commodity = CharField(null=True)
-    service_provider_id = UUIDField(null=True)
-    origin_airport = BinaryJSONField(null=True)
-    destination_airport = BinaryJSONField(null=True)
-    weight = DoubleField(null=True)
-    volume = DoubleField(null=True)
-    packages_count = IntegerField(null=True)
-    cogo_entity_id = UUIDField(null=True)
-    operation_type = CharField(null=True)
     closed_by = BinaryJSONField(null=True)
-    airline_id = UUIDField(null=True)
     reverted_rate_id = UUIDField(null=True)
     reverted_validity_id = UUIDField(null=True)
-    service_provider = BinaryJSONField(null=True)
+    origin_airport_id = UUIDField(null=True, index=True)
+    origin_country_id = UUIDField(null=True, index=True)
+    origin_continent_id = UUIDField(null=True, index=True)
+    origin_trade_id = UUIDField(null=True, index=True)
+    destination_airport_id = UUIDField(null=True, index=True)
+    destination_country_id = UUIDField(null=True, index=True)
+    destination_continent_id = UUIDField(null=True, index=True)
+    destination_trade_id = UUIDField(null=True, index=True)
+    cogo_entity_id = UUIDField(null=True, index=True)
+    service_provider_id = UUIDField(null=True, index=True)
+    commodity = TextField(null=True)
+    operation_type = TextField(null=True)
+    airline_id=UUIDField(null=True,index=True)
 
     class Meta:
         table_name = "air_freight_rate_feedbacks"
@@ -245,26 +239,24 @@ class AirFreightRateFeedbacks(BaseModel):
 
     def validate_preferred_airline_ids(self):
         if not self.preferred_airline_ids:
-            return True
+            pass
         if self.preferred_airline_ids:
-            ids = []
-            for sl_id in self.preferred_airline_ids:
-                ids.append(str(sl_id))
-
-            airlines = get_shipping_line(id=ids)
-            airlines_hash = {}
-            for sl in airlines:
-                airlines_hash[sl["id"]] = sl
-            for airline_id in self.preferred_airline_ids:
-                if not str(airline_id) in airlines_hash:
-                    raise HTTPException(status_code=400, detail="invalid airlines")
-            self.preferred_airlines = airlines
+            # need to change the name to get operators name
+            airline_data = get_shipping_line(id=self.preferred_airline_ids)
+            if len(airline_data) != len(self.preferred_airline_ids):
+                raise HTTPException(status_code=400, detail="Invalid Shipping Line ID")
+            self.preferred_airlines = airline_data
+            self.preferred_airline_ids = [
+                uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids
+            ]
         return True
 
     def validate_preferred_storage_free_days(self):
-        if not  self.preferred_storage_free_days >=0.0:
-            raise HTTPException(status_code=400, detail='freedays should be greater than zero')
-        
+        if not self.preferred_storage_free_days >= 0.0:
+            raise HTTPException(
+                status_code=400, detail="freedays should be greater than zero"
+            )
+
     def validate_feedbacks(self):
         if self.feedbacks:
             for feedback in self.feedbacks:

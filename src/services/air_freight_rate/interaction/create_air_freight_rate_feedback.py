@@ -4,7 +4,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedbacks
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import update_multiple_service_objects
 from celery_worker import send_create_notifications_to_supply_agents_function
@@ -16,7 +16,7 @@ def create_audit(request,feedback_id):
         updated_at=datetime.now(),
         data={key:value for key , value in request.items() if key != 'performed_by_id'},
         object_id=feedback_id,
-        object_type='AirFreightRateFeedbacks',
+        object_type='AirFreightRateFeedback',
         action_name='create',
         performed_by_id=request['performed_by_id']
         )
@@ -42,23 +42,22 @@ def execute_transaction_code(request):
       'performed_by_id': request['performed_by_id'],
       'performed_by_type': request['performed_by_type'],
       'performed_by_org_id': request['performed_by_org_id'],
-      'trade_type':request['trade_type']
     }
-    feedback=AirFreightRateFeedbacks.select().where(
-        AirFreightRateFeedbacks.air_freight_rate_id==request.get('air_freight_rate_id'),
-        AirFreightRateFeedbacks.validity_id==request.get('validity_id'),
-        AirFreightRateFeedbacks.source==request.get('source'),
-        AirFreightRateFeedbacks.source_id==request.get('source_id'),
-        AirFreightRateFeedbacks.performed_by_id==request.get('performed_by_id'),
-        AirFreightRateFeedbacks.performed_by_type==request.get('performed_by_type'),
-        AirFreightRateFeedbacks.performed_by_org_id==request.get('performed_by_org_id')
+    feedback=AirFreightRateFeedback.select().where(
+        AirFreightRateFeedback.air_freight_rate_id==request.get('air_freight_rate_id'),
+        AirFreightRateFeedback.validity_id==request.get('validity_id'),
+        AirFreightRateFeedback.source==request.get('source'),
+        AirFreightRateFeedback.source_id==request.get('source_id'),
+        AirFreightRateFeedback.performed_by_id==request.get('performed_by_id'),
+        AirFreightRateFeedback.performed_by_type==request.get('performed_by_type'),
+        AirFreightRateFeedback.performed_by_org_id==request.get('performed_by_org_id')
     ).first()
 
 
     if not feedback:
-        feedback=AirFreightRateFeedbacks(**row)
+        feedback=AirFreightRateFeedback(**row)
 
-    create_params =get_create_params(request)
+    create_params =get_create_params(request,rate)
 
     for attr,value in create_params.items():
         if attr =='preffered_airline_ids' and value:
@@ -82,8 +81,6 @@ def execute_transaction_code(request):
     if request['feedback_type']=='disliked':
         send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
-    end = time.time()
-    print(end - start)
     return {'id': request['rate_id']}
 
 def update_likes_dislike_count(rate,request):
@@ -100,7 +97,7 @@ def update_likes_dislike_count(rate,request):
 
     rate.save()
     
-def get_create_params(request):
+def get_create_params(request,rate):
     params={ 
         'feedbacks': request.get('feedbacks'),
         'remarks': request.get('remarks'),
@@ -122,25 +119,8 @@ def get_create_params(request):
         'commodity':request.get('commodity'),
         'cogo_entity_id':request.get('cogo_entity_id'),
         'service_provider_id':request.get('service_provider_id'),
-        'weight':request.get('weight'),
-        'volume':request.get('volume'),
-        'packages_count':request.get('packages_count'),
         'operation_type':request.get('operation_type'),
-        'status': 'active'
+        'status': 'active',
+        'airline_id':request.get('airline_id')
       }
-    loc_ids=[]
-    if request.get('origin_airport_id'):
-        loc_ids.append(request.get('origin_airport_id'))
-    if request.get('destination_airport_id'):
-        loc_ids.append(request.get('destination_airport_id'))
-
-    obj={'filters':{"id":loc_ids}}
-    locations=maps.list_locations(obj)['list']
-    locations_hash={}
-    for loc in locations:
-        locations_hash[loc['id']]=loc
-    if request.get('origin_airport_id'):
-        params['origin_airport']=locations_hash[request.get('origin_airport_id')]
-    if request.get('destination_airport_id'):
-        params['destination_airport']=locations_hash[request.get('destination_airport_id')]
     return params

@@ -3,6 +3,7 @@ from services.air_freight_rate.models.air_freight_rate_request import (
     AirFreightRateRequest,
 )
 from datetime import *
+from fastapi import HTTPException
 from micro_services.client import *
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from playhouse.postgres_ext import *
@@ -56,23 +57,18 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():
-        if attr == "preffered_airline_ids" and value:
-            ids = []
-            for val in value:
-                ids.append(uuid.UUID(str(val)))
-            setattr(request_object, attr, ids)
-        else:
-            setattr(request_object, attr, value)
-
-    if request_object.validate():
-        request_object.save()
+        setattr(request_object, attr, value)
+    
+    request_object.set_locations()
+    request_object.validate()
+    if not request_object.save():
+        raise HTTPException(status_code = 500, detail = 'Error while saving')
 
     create_audit(request, request_object.id)
 
     update_multiple_service_objects.apply_async(
         kwargs={"object": request_object}, queue="low"
     )
-
     air_freight_rate_request = (
         AirFreightRateRequest.select(
             AirFreightRateRequest.origin_airport_id,
@@ -80,10 +76,11 @@ def execute_transaction_code(request):
             AirFreightRateRequest.commodity,
             AirFreightRateRequest.weight,
         )
-        .where(AirFreightRateRequest.id == request_object.id)
-        .where(AirFreightRateRequest.status == "active")
+        .where(AirFreightRateRequest.id == request_object.id,
+               AirFreightRateRequest.status == "active")
         .first()
     )
+
     if air_freight_rate_request:
         airports = get_locations(air_freight_rate_request)
         if airports:
@@ -101,14 +98,14 @@ def get_locations(air_freight_rate_request):
     location_ids = list(
         set(
             [
-                air_freight_rate_request["origin_airport_id"],
-                air_freight_rate_request["destination_airport_id"],
+                str(air_freight_rate_request.origin_airport_id),
+                str(air_freight_rate_request.destination_airport_id),
             ]
         )
     )
-    locations = maps.list_locations({"filters": {"id": location_ids}})["list"]
+    locations = maps.list_locations({"filters": {"id": location_ids}})['list']
     for location in locations:
-        if air_freight_rate_request["origin_airport_id"] == location["id"]:
+        if str(air_freight_rate_request.origin_airport_id) == str(location.get('id')):
             origin_location = location
         else:
             destination_location = location
@@ -150,7 +147,7 @@ def create_audit(request, request_object_id):
 def send_notification_for_rates_not_found(
     request, request_object, air_freight_rate_request, airports
 ):
-    commodity = air_freight_rate_request["commodity"]
+    commodity = air_freight_rate_request.commodity
     notification_data = {
         "type": "platform_notification",
         "user_id": request.get("performed_by_id"),
@@ -161,7 +158,7 @@ def send_notification_for_rates_not_found(
             "origin_port": airports[0],
             "destination_port": airports[1],
             "commodity": commodity,
-            "weight": air_freight_rate_request["weight"],
+            "weight": air_freight_rate_request.weight,
         },
     }
     create_communication_background.apply_async(

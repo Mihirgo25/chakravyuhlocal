@@ -2,8 +2,6 @@ from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreig
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
-from celery_worker import update_multiple_service_objects
-from celery_worker import update_multiple_service_objects
 
 def create_audit(request,surcharge_id):
     audit_data={}
@@ -27,6 +25,8 @@ def create_air_freight_rate_surcharge(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
+    from celery_worker import update_multiple_service_objects
+
     row = {
         'origin_airport_id' : request.get("origin_airport_id"),
         'destination_airport_id' : request.get("destination_airport_id"),
@@ -70,8 +70,6 @@ def execute_transaction_code(request):
         surcharge.save()
     except Exception:
         raise HTTPException(status_code=400, detail="rate did not save")
-    update_multiple_service_objects.apply_async(kwargs={'object':surcharge},queue='low')
-
     
     create_audit(request,surcharge.id)
     update_multiple_service_objects.apply_async(kwargs={'object':surcharge},queue='low')

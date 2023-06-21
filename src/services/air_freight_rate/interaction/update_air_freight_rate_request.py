@@ -15,7 +15,6 @@ def execute_transaction_code(request):
     if not object:
         raise HTTPException(status_code=400, detail="ID IS INVALID")
     
-    object.status = request.get('status')
     object.remarks = request.get('remarks')
     if request.get("closing_remarks"):
         if "rate_added" in request.get("closing_remarks"):

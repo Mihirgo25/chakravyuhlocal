@@ -48,7 +48,7 @@ def get_density_wise_rate_card(
             ):
                 minimum_possible = density_difference
                 closest_density_match = freight
-        if len(closest_density_match):
+        if closest_density_match:
             freights.append(closest_density_match)
     elif ratio <= high_density_upper_limit and chargeable_weight >= 100:
         density_rate_category = "high_density"

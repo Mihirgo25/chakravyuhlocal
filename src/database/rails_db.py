@@ -31,9 +31,7 @@ def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
                         id = tuple(id)
                     sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.id in %s'
                     cur.execute(sql, (id,))
-
                 result = cur.fetchall()
-
                 for res in result:
                     all_result.append(
                         {
@@ -51,6 +49,7 @@ def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+    
 
 def get_organization(id=None, short_name=None,account_type = 'importer_exporter'):
     all_result = []

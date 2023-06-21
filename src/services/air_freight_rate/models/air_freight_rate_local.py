@@ -5,7 +5,6 @@ import datetime
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from fastapi import HTTPException
 from micro_services.client import *
-from celery_worker import get_multiple_service_objects
 from database.rails_db import *
 from configs.air_freight_rate_constants import *
 from configs.global_constants import *
@@ -60,14 +59,6 @@ class AirFreightRateLocal(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(AirFreightRateLocal, self).save(*args, **kwargs)
-
-    
-    def validate_duplicate_line_items(self):
-        line_item_codes = [t.code.upper() for t in self.line_items]
-        unique_line_item_codes = set(line_item_codes)
-
-        if len(unique_line_item_codes) != len(line_item_codes):
-            self.errors.add('line_items', 'contains duplicates')
     
     def detail(self):
         return {

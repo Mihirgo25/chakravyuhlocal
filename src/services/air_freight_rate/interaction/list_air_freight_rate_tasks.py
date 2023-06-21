@@ -22,7 +22,6 @@ def list_air_freight_rate_tasks(filters={},page_limit=10,page=1,sort_by = 'creat
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
         direct_filters, indirect_filters = get_applicable_filters(filters, POSSIBLE_DIRECT_FILTERS, POSSIBLE_INDIRECT_FILTERS)
     
         query = get_filters(direct_filters, query, AirFreightRateTasks)
@@ -31,10 +30,8 @@ def list_air_freight_rate_tasks(filters={},page_limit=10,page=1,sort_by = 'creat
     pagination_data=get_pagination_data(query,page,page_limit)
 
     query=query.paginate(page,page_limit)
-
     data=get_data(query,filters)
-
-    stats=get_stats(filters)
+    stats=get_stats(filters,stats_required)
     return{
         'list':jsonable_encoder(data)
     } | (pagination_data) |(stats)
@@ -79,8 +76,7 @@ def get_existing_system_rates(airport_ids,commodities,trade_types,airline_ids,co
     return jsonable_encoder(list(existing_system_rates.dicts()))
 
 def get_shipment_and_sell_quotations(all_shipment_serial_ids):
-    shipments = shipment.list_shipments({'filters': { 'serial_id': all_shipment_serial_ids},'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})
-    print("erty",shipments)
+    shipments = shipment.list_shipments({'filters': { 'serial_id': all_shipment_serial_ids},'page_limit':1000})
     shipment_ids = []
     shipment_dict = {}
     for shipment_data in shipments:
@@ -128,86 +124,87 @@ def get_data(query,filters):
             all_shipment_serial_ids.extend(data['shipment_serial_ids'])
     
     all_shipment_serial_ids = list(set(all_shipment_serial_ids))
-
-    shipments_dict,shipment_quotation_dict = get_shipment_and_sell_quotations(all_shipment_serial_ids)
+    if all_shipment_serial_ids:
+        shipments_dict,shipment_quotation_dict = get_shipment_and_sell_quotations(all_shipment_serial_ids)
 
     existing_system_rates = get_existing_system_rates(airport_ids,commodities,trade_types,airline_ids,commodity_types)
     for object in data_list:
-        if object['status'] == 'completed':
-            continue
-        created_at_date = object['created_at'].date()
-        next_date = object['created_at'] + timedelta(days = 1)
 
-        object['expiration_time'] = object['created_at'] + timedelta(seconds = EXPECTED_TAT * 60 * 60)
-        object['skipped_time'] = 0
+        if filters['status']== object['status']:
+            if object['status'] != 'completed':
+                created_at_date = datetime.fromisoformat(object['created_at']).date()
+                next_date = datetime.fromisoformat(object['created_at']).date()+ timedelta(days = 1)
 
-        if object['created_at'] < datetime.strptime("{} 04:00:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S'):
-            object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
-        elif object['created_at'] > datetime.strptime("{} 13:00:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S'):
-            object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
-        else:
-            skipped_time = int((object['created_at'] + timedelta(seconds = EXPECTED_TAT * 60 * 60)).timestamp()) - int(datetime.strptime("{} 13:00:00".format(str(created_at_date.date())), '%Y-%m-%d %H:%M:%S').timestamp())
-            skipped_time = max([0, skipped_time])
-            if skipped_time > 0:
-                object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time) 
-        
-        object['closable'] = False
-        serial_ids = []
-        if object.get('shipment_serial_ids'):
-            for serial_id in object.get('shipment_serial_ids'):
-                for shipment in shipments_dict[serial_id]:
-                    if shipment['state'] in ['cancelled', 'aborted']:
-                        serial_ids.append(serial_id)
-                        break
-                    for quotation in shipment_quotation_dict[shipment['id']]:
-                        if quotation['line_item']:
-                            serial_ids.append(serial_id)
-                            break
-            
-            if len(set(object.get('shipment_serial_ids')).difference(set(serial_ids))):
-                object['closable'] = True
-        object['purchase_invoice_rate'] = object['job_data']['rate']
-        del object['job_data']
+                object['expiration_time'] = datetime.fromisoformat(object['created_at']) + timedelta(seconds = EXPECTED_TAT * 60 * 60)
+                object['skipped_time'] = 0
 
-
-        if filters and 'status' in filters and filters['status'] == 'completed':
-            rate = object['completion_data'].get('rate')
-
-            rate['total_price'] = 0
-            rate['total_price_currency'] = rate['line_items'][0]['currency'] or 'INR'
-            
-            for line_item in rate['line_items']:
-                line_item['name'] = air_freight_local_charges[line_item['code']]['name']
-                if line_item['currency']!=rate['total_price_currency']:
-                    rate['total_price'] += common.get_money_exchange_for_fcl({'from_currency': line_item['currency'], 'to_currency': rate['total_price_currency'], 'price': line_item['price']})['price']
+                if datetime.fromisoformat(object['created_at']) < datetime.strptime("{} 04:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S'):
+                    object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
+                elif datetime.fromisoformat(object['created_at']) > datetime.strptime("{} 13:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S'):
+                    object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(next_date)), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
                 else:
-                    rate['total_price'] = line_item['price']
-            object['rate'] = rate
+                    skipped_time = int((datetime.fromisoformat(object['created_at']) + timedelta(seconds = EXPECTED_TAT * 60 * 60)).timestamp()) - int(datetime.strptime("{} 13:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S').timestamp())
+                    skipped_time = max([0, skipped_time])
+                    if skipped_time > 0:
+                        object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time)
 
-            object['expiration_time'] = object['created_at'] + timedelta(hours = 6)
+                
+                object['closable'] = False
+                serial_ids = []
+                if object.get('shipment_serial_ids'):
+                    for serial_id in object.get('shipment_serial_ids'):
+                        for shipment in shipments_dict[serial_id]:
+                            if shipment['state'] in ['cancelled', 'aborted']:
+                                serial_ids.append(serial_id)
+                                break
+                            for quotation in shipment_quotation_dict[shipment['id']]:
+                                if quotation['line_item']:
+                                    serial_ids.append(serial_id)
+                                    break
+                    
+                    if len(set(object.get('shipment_serial_ids')).difference(set(serial_ids))):
+                        object['closable'] = True
+                object['purchase_invoice_rate'] = object['job_data']['rate']
+                del object['job_data']
 
-            object['completion_time'] = int(datetime.fromisoformat(object['completed_at']).timestamp()) - int(object['created_at'].timestamp())
 
-            object['completed_at'] = str(datetime.fromisoformat(object['completed_at']))
+            if filters and 'status' in filters and filters['status'] == 'completed':
+                rate = object['completion_data'].get('rate')
+
+                rate['total_price'] = 0
+                rate['total_price_currency'] = rate['line_items'][0]['currency'] or 'INR'
+                
+                for line_item in rate['line_items']:
+                    line_item['name'] = air_freight_local_charges[line_item['code']]['name']
+                    if line_item['currency']!=rate['total_price_currency']:
+                        rate['total_price'] += common.get_money_exchange_for_fcl({'from_currency': line_item['currency'], 'to_currency': rate['total_price_currency'], 'price': line_item['price']})['price']
+                    else:
+                        rate['total_price'] = line_item['price']
+                object['rate'] = rate
+
+                object['expiration_time'] = datetime.fromisoformat(object['created_at']) + timedelta(hours = 6)
+
+                object['completion_time'] = int(datetime.fromisoformat(object['completed_at']).timestamp()) - int(datetime.fromisoformat(object['created_at']).timestamp())
+
+                object['completed_at'] = str(datetime.fromisoformat(object['completed_at']))
+                if object['completion_time'] < (0.5 * 60 * 60):
+                    object['remark'] = 'Super Fast' 
+                if object['completion_time'] > (0.5 * 60 * 60) and object['completion_time'] <= (EXPECTED_TAT * 60 * 60):
+                    object['remark'] = 'On Time' 
+                if object['completion_time'] > (EXPECTED_TAT * 60 * 60):
+                    object['remark'] = 'Delayed' 
+
+                del object['completion_data']
             
-            if object['completion_time'] < (0.5 * 60 * 60):
-                object['remark'] = 'Super Fast' 
-            if object['completion_time'] > (0.5 * 60 * 60) and object['completion_time'] <= (EXPECTED_TAT * 60 * 60):
-                object['remark'] = 'On Time' 
-            if object['completion_time'] > (EXPECTED_TAT * 60 * 60):
-                object['remark'] = 'Delayed' 
-
-            del object['completion_data']
-        
-        object['service_provider_id'] = DEFAULT_SERVICE_PROVIDER_ID
-        object['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
-        object['procured_by_id'] = DEFAULT_PROCURED_BY_ID
-        object['existing_system_rate'] = {}
-        existing_system_rate = get_matching_rate(existing_system_rates,object)
-        if existing_system_rate:
-            object['existing_system_rate']['line_items'] = existing_system_rate['line_items']
-            object['existing_system_rate']['updated_at'] = existing_system_rate['updated_at']
-        new_data.append(object)
+            object['service_provider_id'] = DEFAULT_SERVICE_PROVIDER_ID
+            object['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
+            object['procured_by_id'] = DEFAULT_PROCURED_BY_ID
+            object['existing_system_rate'] = {}
+            existing_system_rate = get_matching_rate(existing_system_rates,object)
+            if existing_system_rate:
+                object['existing_system_rate']['line_items'] = existing_system_rate['line_items']
+                object['existing_system_rate']['updated_at'] = existing_system_rate['updated_at']
+            new_data.append(object)
     return new_data
 
 def get_matching_rate(existing_system_rates,object):
@@ -246,8 +243,8 @@ def get_stats(filters,stats_required):
         status = result.air_freight_task_status
         trade_type = result.air_freight_task_trade_type
         count = result.count_all
-        stats[status[trade_type]] += count
-        stats[status['total']] += count
+        stats[status][trade_type] += count
+        stats[status]['total'] += count
 
     return {
         'stats': stats

@@ -14,7 +14,7 @@ from configs.global_constants import *
 from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from configs.definitions import AIR_FREIGHT_CHARGES
 from air_freight_rate_params import WeightSlab
-import json
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from playhouse.shortcuts import model_to_dict
 
 class UnknownField(object):
@@ -104,13 +104,13 @@ class AirFreightRate(BaseModel):
         return super(AirFreightRate, self).save(*args, **kwargs)
     
     class Meta:
-        table_name = 'air_freight_rates_temp1_clone'
+        table_name = 'air_freight_rates_temp'
 
 
     def validate_validity_object(self,validity_start,validity_end):
         
         if not validity_start:
-            raise HTTPException(status_code=400,details='Validity Start is Invalid')
+            raise HTTPException(status_code=400,detail='Validity Start is Invalid')
         if not validity_end:
             raise HTTPException(status_code=400, detail="validity_end is Invalid")
         if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=120)):
@@ -122,27 +122,27 @@ class AirFreightRate(BaseModel):
 
     def validate_shipment_type(self):
         if self.shipment_type not in PACKING_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Shipment Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Shipment Type')
         
     def validate_stacking_type(self):
         if self.stacking_type not in HANDLING_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Stacking Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Stacking Type')
     
     def validate_commodity(self):
         if self.commodity not in COMMODITY:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity')
 
     def validate_commodity_type(self):
         if self.commodity_type not in COMMODITY_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity Type')
     
     def validate_commodity_sub_type(self):
         if self.commodity_sub_type not in COMMODITY_SUB_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity Sub Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity Sub Type')
     
     def validate_price_type(self):
         if self.price_type not in PRICE_TYPES:
-            raise HTTPException(status_code = 400,details = 'Invalid Price Type')
+            raise HTTPException(status_code = 400,detail = 'Invalid Price Type')
         
     def validate_before_save(self):
         self.validate_shipment_type()
@@ -152,14 +152,14 @@ class AirFreightRate(BaseModel):
         self.validate_price_type()
 
         if self.length < 0:
-            raise HTTPException(status_code = 400,details = 'Length Should Be Positive Value')
+            raise HTTPException(status_code = 400,detail = 'Length Should Be Positive Value')
         if self.breadth < 0:
-            raise HTTPException(status_code = 400,details = 'Bredth Should Be Positive Value')
+            raise HTTPException(status_code = 400,detail = 'Bredth Should Be Positive Value')
         if self.height < 0:
-            raise HTTPException(status_code = 400,details = 'Height Should Be Positive Value')
+            raise HTTPException(status_code = 400,detail = 'Height Should Be Positive Value')
         
         if self.rate_type not in RATE_TYPES:
-            raise HTTPException(status_code = 400,details = 'Invalid Rate Type')
+            raise HTTPException(status_code = 400,detail = 'Invalid Rate Type')
         
         self.validate_available_volume_and_gross_weight()
         self.validate_origin_destination_country()
@@ -172,10 +172,10 @@ class AirFreightRate(BaseModel):
         if self.commodity!='general':
             for validity in self.validities:
                 if validity['available_volume'] > validity['initial_volume']:
-                    raise HTTPException(status_code = 400,details='available volume can\'t be greater than initial volume')
+                    raise HTTPException(status_code = 400,detail='available volume can\'t be greater than initial volume')
                 
                 if validity['available_gross_weight'] > validity['initial_gross_weight']:
-                    raise HTTPException(status_code = 400,details='available gross weight can\'t be greater than initial gross weight')
+                    raise HTTPException(status_code = 400,detail='available gross weight can\'t be greater than initial gross weight')
                 
     def set_locations(self):
 
@@ -196,7 +196,7 @@ class AirFreightRate(BaseModel):
 
     def get_required_location_data(self, location):
         loc_data = {
-            "id": location["id"],
+          "id": location["id"],
           "type":location['type'],
           "name":location['name'],
           "display_name": location["display_name"],
@@ -223,25 +223,25 @@ class AirFreightRate(BaseModel):
 
     def validate_origin_destination_country(self):
         if self.origin_airport['country_code'] == self.destination_airport['country_code']:
-            raise HTTPException(status_code = 400, details = 'Destination Airport Cannot be in the Same Origin Country')
+            raise HTTPException(status_code = 400, detail = 'Destination Airport Cannot be in the Same Origin Country')
 
     def validate_service_provider_id(self):
         service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
            
     def validate_airline_id(self):
         airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Airline Id Is Not Valid')    
+        raise HTTPException(status_code = 400, detail = 'Airline Id Is Not Valid')    
 
     def validate_operation_type(self):
         if self.operation_type not in AIR_OPERATION_TYPES:
-            raise HTTPException(status_code = 400, details = 'Invalid Operation Type')
+            raise HTTPException(status_code = 400, detail = 'Invalid Operation Type')
 
     def update_foreign_references(self, price_type):
         self.update_local_references()
@@ -425,7 +425,7 @@ class AirFreightRate(BaseModel):
       result = common.get_money_exchange_for_fcl({"price":price, "from_currency":currency, "to_currency":'INR'})
       return result.get('price')
     
-    def set_validities(self,validity_start, validity_end, min_price, currency, weight_slabs, deleted, validity_id, density_category, density_ratio, initial_volume, initial_gross_weight, available_volume, available_gross_weight, rate_type):
+    def set_validities(self,validity_start, validity_end, min_price, currency, weight_slabs, deleted, validity_id, density_category, density_ratio, initial_volume, initial_gross_weight, available_volume, available_gross_weight, rate_type,predicted):
         new_validities = []
         min_density_weight = 0.01  
         max_density_weight = MAX_CARGO_LIMIT
@@ -439,7 +439,6 @@ class AirFreightRate(BaseModel):
             if density_ratio:
                 min_density_weight=float(density_ratio.replace(' ','').split(':')[-1])
                 max_density_weight=MAX_CARGO_LIMIT
-                
         for validity_object in self.validities:
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
@@ -468,9 +467,9 @@ class AirFreightRate(BaseModel):
                     min_price = validity_object.get("min_price")
 
                 if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end and validity_id != validity_object.get('id'):
-                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    validity_object['status'] = False
-                    new_validities.append(AirFreightRateValidity(**validity_object))
+                    # new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    # validity_object['status'] = False
+                    # new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
@@ -484,10 +483,12 @@ class AirFreightRate(BaseModel):
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
-                    new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
-                    # params = self.audits.where(validity_id: old_validity1.id, action_name: ['create', 'update']).order('air_freight_rate_audits.created_at desc').first.as_json
-                    # self.audits.create!(params.except('id', 'created_at', 'updated_at').merge!('validity_id' => old_validity2.id))
+                    old_validity1 = AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)})
+                    old_validity2 = AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)})
+                    new_validities.append(old_validity1)
+                    new_validities.append(old_validity2)
+                    params = self.get_air_freight_rate_audit({'validity_id':old_validity1.id, 'action_name':['create','update']})
+                    self.create_air_freight_rate_audit(params, old_validity2.id)
                     continue
             else:
                 new_validities.append(AirFreightRateValidity(**validity_object))
@@ -545,10 +546,9 @@ class AirFreightRate(BaseModel):
 
     def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs):
         final_old_weight_slabs = old_weight_slabs
-        new_weight_slabs_currency = ""
-        old_weight_slabs_currency = ""
-        #     if new_weight_slabs.pluck('currency').uniq.first != final_old_weight_slabs.pluck('currency').uniq.first
-        #   return new_weight_slabs
+        
+        if new_weight_slabs[0]['currency'] != final_old_weight_slabs[0]['currency']:
+            return new_weight_slabs
 
         for new_weight_slab in new_weight_slabs:
             final_old_weight_slabs = self.merge_slab(final_old_weight_slabs,new_weight_slab)
@@ -589,3 +589,26 @@ class AirFreightRate(BaseModel):
 
         
         return final_old_weight_slabs
+    
+    def get_air_freight_rate_audit(self, params):
+        query = (AirFreightRateAudit
+             .select()
+             .where(
+                (AirFreightRateAudit.validity_id == params['validity_id']) &
+                (AirFreightRateAudit.action_name.in_(params['action_name']))
+             )
+             .order_by(AirFreightRateAudit.created_at.desc())
+             .limit(1)).execute()
+        
+        if query:
+            data = model_to_dict(query[0])
+            return data
+
+        return None
+    
+    def create_air_freight_rate_audit(self, params, old_validity_id):
+        if params:
+            new_params = {key: value for key, value in params.items() if key not in ['id', 'created_at', 'updated_at']}
+            new_params['validity_id'] = old_validity_id
+            audit = AirFreightRateAudit.create(**new_params)
+            return audit

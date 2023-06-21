@@ -1,7 +1,8 @@
 import os
 import httpx
 from database.db_session import rd
-
+from datetime import datetime
+import dateutil.parser as parser
 client = httpx.Client()
 
 
@@ -100,3 +101,10 @@ def clean_rate_sheet_data(params):
     delete_errors_present(params)
     delete_last_line(params)
     delete_total_line(params)
+
+
+def convert_date_format(date):
+    if not date:
+        return date
+    parsed_date = parser.parse(date, dayfirst=True)
+    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')

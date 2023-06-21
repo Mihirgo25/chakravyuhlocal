@@ -8,7 +8,7 @@ from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
 from configs.air_freight_rate_constants import *
 from database.rails_db import get_organization,get_shipping_line
-from celery_worker import get_multiple_service_objects
+
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 

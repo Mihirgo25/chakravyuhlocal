@@ -11,8 +11,8 @@ from libs.get_applicable_filters import get_applicable_filters
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 from micro_services.client import spot_search
-possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 
+possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id']
 
 def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
@@ -144,33 +144,3 @@ def get_stats(filters, is_stats_required, performed_by_id):
     else:
         stats ={}
     return { 'stats': stats }
-
-
-# def get_total(query, performed_by_id):
-#     try:
-#         return {'get_total':query.count()}
-#     except:
-#         return {'get_total' : None}
-
-# def get_total_closed_by_user(query, performed_by_id):
-#     try:
-#         return {'get_total_closed_by_user':query.where(AirFreightRateRequest.status == 'inactive', AirFreightRateRequest.closed_by_id == performed_by_id).count() }
-#     except:
-#         return {'get_total_closed_by_user':None}
-
-
-# def get_total_opened_by_user(query, performed_by_id):
-#     try:
-#         return {'get_total_opened_by_user' : query.where(AirFreightRateRequest.status == 'active', AirFreightRateRequest.closed_by_id == performed_by_id).count() }
-#     except:
-#         return {'get_total_opened_by_user' : None}
-
-# def get_status_count(query, performed_by_id):
-#     try:
-#         query = query.select(AirFreightRateRequest.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(AirFreightRateRequest.status)
-#         result = {}
-#         for row in query.execute():
-#             result[row.status] = row.count_all
-#         return {'get_status_count' : result}
-#     except:
-#         return {'get_status_count' : None}

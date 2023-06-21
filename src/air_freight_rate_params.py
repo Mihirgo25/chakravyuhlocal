@@ -251,7 +251,7 @@ class UpdateAirFreightRateTask(BaseModel):
     closing_remarks: str = None
 
 
-class CreateAirFreightRateFeedbacks(BaseModel):
+class CreateAirFreightRateFeedback(BaseModel):
     source: str
     source_id: str 
     performed_by_id: str 
@@ -270,22 +270,19 @@ class CreateAirFreightRateFeedbacks(BaseModel):
     feedback_type: str
     booking_params: dict = {}
     trade_type: str = None
-    cogo_entity_id: str = None
-    origin_airport_id: str = None
-    origin_trade_id: str = None
-    origin_country_id: str = None
-    origin_continent_id: str = None
-    destination_airport_id: str = None
-    destination_continent_id: str = None
-    destination_trade_id: str = None
-    destination_country_id: str = None
-    commodity: str = None
-    service_provider_id: str = None
-    weight: float = None
-    volume: float = None
-    packages_count: int = None
-    operation_type: str = None
-
+    origin_airport_id:str=None
+    origin_country_id:str=None
+    origin_continent_id:str=None
+    origin_trade_id:str=None
+    destination_airport_id:str=None
+    destination_trade_id:str=None
+    destination_country_id:str=None
+    destination_continent_id:str=None
+    service_provider_id:str=None
+    cogo_entity_id:str=None
+    operation_type:str=None
+    airline_id:str=None
+    commodity:str=None
 
 class CreateAirFreightRateRequest(BaseModel):
     source: str
@@ -323,6 +320,7 @@ class CreateAirFreightRateRequest(BaseModel):
     origin_airport_id: str
     origin_trade_id: str = None
     packages: list[Item] = None
+    airline_id: str = None
 
 
 class WarehouseLineItems(BaseModel):
@@ -501,6 +499,6 @@ class UpdateAirFreightRateRequest(BaseModel):
 class DeleteAirFreightRateRequest(BaseModel):
     air_freight_rate_request_ids: list[str]
     closing_remarks: list[str] = None
-    rate_id: str
-    validity_id: str
-    performed_by_id: str
+    rate_id: str=None
+    validity_id: str=None
+    performed_by_id: str=None

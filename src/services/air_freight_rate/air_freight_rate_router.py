@@ -52,6 +52,8 @@ from services.air_freight_rate.interaction.list_air_freight_rates import list_ai
 from services.air_freight_rate.interaction.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
 from services.air_freight_rate.interaction.get_air_freight_local_rate_cards import get_air_freight_local_rate_cards
 from services.air_freight_rate.interaction.get_weight_slabs_for_airline import get_weight_slabs_for_airline
+from services.air_freight_rate.interaction.create_air_freight_rate_feedback import create_air_freight_rate_feeback
+from services.air_freight_rate.interaction.delete_air_freight_rate_request import delete_air_freight_rate_request
 
 air_freight_router = APIRouter()
 
@@ -457,6 +459,7 @@ def create_air_freight_rate_task_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = create_air_freight_rate_task(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -831,14 +834,8 @@ def get_air_freight_rate_suggestions_data(
             status_code=500, content={"success": False, "error": str(e)}
         )
 
-
-from services.air_freight_rate.interaction.create_air_freight_rate_feedback import (
-    create_air_freight_rate_feeback,
-)
-
-
 @air_freight_router.post("/create_air_freight_rate_feedback")
-def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedbacks, resp: dict = Depends(authorize_token)):
+def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedback, resp: dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
@@ -896,6 +893,8 @@ def delete_air_freight_rate_feedback_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         data = delete_air_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -1105,14 +1104,33 @@ def get_air_freight_local_rate_cards_data(
     volume:float,
     airline_id:str=None,
     additional_services: List[str] = [],
+    inco_term:str=None,
     resp:dict =Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     # try:
-    data=get_air_freight_local_rate_cards(airport_id=airport_id,trade_type=trade_type,commodity=commodity,commodity_type=commodity_type,packages_count=packages_count,weight=weight,volume=volume,airline_id=airline_id,additional_services=additional_services)
+    data=get_air_freight_local_rate_cards(airport_id=airport_id,trade_type=trade_type,commodity=commodity,commodity_type=commodity_type,packages_count=packages_count,weight=weight,volume=volume,airline_id=airline_id,additional_services=additional_services,inco_term=inco_term)
     return JSONResponse(status_code=200, content=data)
     # except HTTPException as e:
     #     raise
     # except Exception as e :
     #     print(e)
     #     return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
+
+@air_freight_router.post("/delete_air_freight_rate_request")
+def delete_air_freight_rate_request_data(request:DeleteAirFreightRateRequest , resp:dict = Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['statuse_code'],content=resp)
+    
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+
+    try:
+        data=delete_air_freight_rate_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+    
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={"success":False , "error":str(e)})

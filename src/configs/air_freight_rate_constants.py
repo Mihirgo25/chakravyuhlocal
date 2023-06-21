@@ -90,12 +90,12 @@ AIRLINE_IDS_WITH_CUSTOM_WEIGHT_SLABS = ["6e557d55-82df-43a1-b609-d613292bcbf7",
  "e997f000-26c4-42dc-a432-824f80a91998",
  "eb130aeb-e21b-47dd-a35f-7e24991f8de3"]
 
-CUSTOM_WEIGHT_SLABS = [{"lower_limit":"0", "upper_limit":"45"},
- {"lower_limit":"45.1", "upper_limit":"100"},
- {"lower_limit":"100.1", "upper_limit":"250"},
- {"lower_limit":"250.1", "upper_limit":"500"}]
+CUSTOM_WEIGHT_SLABS = [{"lower_limit":0, "upper_limit":45},
+ {"lower_limit":45.1, "upper_limit":100},
+ {"lower_limit":100.1, "upper_limit":250},
+ {"lower_limit":250.1, "upper_limit":500}]
 
-DEFAULT_WEIGHT_SLABS = [{"lower_limit":"0", "upper_limit":"45"},
- {"lower_limit":"45.1", "upper_limit":"100"},
- {"lower_limit":"100.1", "upper_limit":"250"},
- {"lower_limit":"250.1", "upper_limit":"500"}]
+DEFAULT_WEIGHT_SLABS = [{"lower_limit":0, "upper_limit":45},
+ {"lower_limit":45.1, "upper_limit":100},
+ {"lower_limit":100.1, "upper_limit":250},
+ {"lower_limit":250.1, "upper_limit":500}]
