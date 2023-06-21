@@ -61,8 +61,9 @@ def supply_agents_to_notify(request):
     supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data])) if supply_agents_user_data else None
 
     airport_ids = locations_data.get('airport_id')
+    route_data = []
     try:
-        route_data = maps.list_locations({'filters':{'id':airport_ids}})['list']
+        route_data = maps.list_locations({'filters':{'id':airport_ids}})['list']####################
     except Exception as e:
         print(e)
 

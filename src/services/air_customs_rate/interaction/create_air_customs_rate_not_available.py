@@ -4,7 +4,8 @@ from micro_services.client import organization
 def find_service_providers(request):
     data = {
         'airport_id': request.get('airport_id'),
-        'country_id': request.get('country_id')
+        'country_id': request.get('country_id'),
+        'trade_type': request.get('trade_type')
     }
     if request.get('commodity'):
         data['commodity'] = request.get('commodity')

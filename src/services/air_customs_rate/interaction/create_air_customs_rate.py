@@ -45,13 +45,11 @@ def create_air_customs_rate(request):
 
 def get_create_object_params(request):
     return {
-      'location_id':request.get('location_id'),
+      'airport_id':request.get('location_id'),
       'trade_type' : request.get('trade_type'),
-      'container_size' : request.get('container_size'),
-      'container_type' : request.get('container_type'),
       'service_provider_id': request.get('service_provider_id'),
       'commodity' : request.get('commodity'),
-      'importer_exporter_id' : request.get('importer_exporter_id')
+      'rate_type' : request.get('rate_type')
     }
 
 def create_audit(request, customs_rate_id):

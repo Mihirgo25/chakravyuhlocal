@@ -45,7 +45,7 @@ def get_air_customs_rate_data(request):
         air_customs_rate_data = AirCustomsRate.select().where(AirCustomsRate.id == request['rate_id']).first()
     else:
         air_customs_rate_data = AirCustomsRate.select().where(
-            AirCustomsRate.airport_id == request.get('location_id'),
+            AirCustomsRate.airport_id == request.get('airport_id'),
             AirCustomsRate.commodity == request.get('commodity'),
             AirCustomsRate.service_provider_id == request.get('service_provider_id'),
             ~AirCustomsRate.rate_not_available_entry).first()
