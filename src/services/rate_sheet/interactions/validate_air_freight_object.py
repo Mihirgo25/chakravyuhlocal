@@ -4,6 +4,7 @@ import uuid
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
 
 def validate_air_freight_object(module, object):
     response = {}
@@ -80,6 +81,22 @@ def get_local_object(object):
          validation['error'] += ' ' + str(e.detail)
 
     return validation
+
+def get_surcharge_object(object):
+    validation = {}
+    rate_object = {}
+    validation['error'] = ''
+    res = object
+    res['rate_not_available_entry'] = False
+    rate_object = AirFreightRateSurcharge(**res)
+
+    try:
+        rate_object.validate()
+    except HTTPException as e:
+         validation['error'] += ' ' + str(e.detail)
+
+    return validation
+
     
 def is_float(value):
     try:

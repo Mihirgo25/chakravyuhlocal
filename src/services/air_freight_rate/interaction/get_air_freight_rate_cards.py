@@ -87,12 +87,13 @@ def build_response_object(freight_rate,requirements,is_predicted):
         'cogo_entity_id': freight_rate['cogo_entity_id']
     }
     
-    add_freight_objects(freight_rate,response_object,requirements)
+    freight_object = add_freight_objects(freight_rate,response_object,requirements)
+    if not freight_object:
+        return 
     
-    
-
-    add_surcharge_object(freight_rate,response_object,requirements)
-
+    surcharge_object = add_surcharge_object(freight_rate,response_object,requirements)
+    if not surcharge_object:
+        return
     if not is_predicted:
         response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], get_chargeable_weight(requirements)) 
     
@@ -111,7 +112,7 @@ def add_surcharge_object(freight_rate,response_object,requirements):
     for line_item in line_items:
         line_item = build_surcharge_line_item_object(line_item,requirements)
         if not line_item:
-            return 
+            continue 
         response_object['surcharge']['line_items'].append(line_item)
     
     return True
@@ -166,15 +167,14 @@ def add_freight_objects(freight_query_result, response_object, requirements):
         if not freight_object:
             continue
         response_object['freights'].append(freight_object)
-    
-    return True
+    return len(response_object['freights'])>0
 
 def build_freight_object(freight_validity,required_weight,requirements):
     freight_validity['density_category'] = freight_validity['density_category'] if  freight_validity.get('density_category') else 'general'
     freight_validity['min_density_weight'] = freight_validity['min_density_weight'] if  freight_validity.get('min_density_weight') else 0.01
     freight_validity['max_density_weight'] = freight_validity['max_density_weight'] if  freight_validity.get('max_density_weight') else MAX_CARGO_LIMIT
     
-    if datetime.strptime(freight_validity['validity_start'], "%Y-%m-%dT%H:%M:%S.%fZ") > requirements.get('validity_end') or datetime.strptime(freight_validity['validity_start'], "%Y-%m-%dT%H:%M:%S.%fZ") < requirements.get('validity_start') or requirements.get('cargo_clearance_date') < datetime.strptime(freight_validity['validity_start'], "%Y-%m-%dT%H:%M:%S.%fZ").date() or requirements.get('cargo_clearance_date') >datetime.strptime(freight_validity['validity_end'], "%Y-%m-%dT%H:%M:%S.%fZ").date() or not freight_validity['status']:
+    if datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() > requirements.get('validity_end').date() or datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() or requirements.get('cargo_clearance_date') >datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date() or not freight_validity['status']:
         return
     
     freight_object = {
@@ -190,10 +190,10 @@ def build_freight_object(freight_validity,required_weight,requirements):
         }
     
    
-    if requirements.get('validity_start') > datetime.strptime(freight_validity['validity_start'], "%Y-%m-%dT%H:%M:%S.%fZ"):
+    if requirements.get('validity_start').date() > datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date():
         freight_object['validity_start'] = requirements['validity_start']
     
-    if requirements.get('validity_end') < datetime.strptime(freight_validity['validity_end'], "%Y-%m-%dT%H:%M:%S.%fZ"):
+    if requirements.get('validity_end').date() < datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date():
         freight_object['validity_end'] = requirements['validity_end'] 
 
     weight_slabs = freight_validity['weight_slabs']
@@ -203,7 +203,6 @@ def build_freight_object(freight_validity,required_weight,requirements):
             required_slab = weight_slab
             break
     
-   
     if not required_slab:
         return
     
@@ -240,7 +239,6 @@ def build_freight_object(freight_validity,required_weight,requirements):
     line_item['name'] = 'Basic Freight'
     line_item['source'] = 'system'
     freight_object['line_items'].append(line_item)
-    
     
     return freight_object
 
@@ -361,9 +359,8 @@ def get_air_freight_rate_cards(requirements):
     if len(freight_rates)==0:
         get_air_freight_rate_prediction(requirements)
         is_predicted = True
-        freight_rates = initialize_freight_query(requirements)
-        freight_rates = jsonable_encoder(list(freight_rates.dicts()),True)
-    
+        freight_rates = initialize_freight_query(requirements,True)
+        freight_rates = jsonable_encoder(list(freight_rates.dicts()))
     missing_surcharge = get_missing_surcharges(freight_rates)
     surcharges = get_surcharges(requirements,missing_surcharge)
     

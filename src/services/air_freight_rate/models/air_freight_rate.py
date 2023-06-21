@@ -425,7 +425,7 @@ class AirFreightRate(BaseModel):
       result = common.get_money_exchange_for_fcl({"price":price, "from_currency":currency, "to_currency":'INR'})
       return result.get('price')
     
-    def set_validities(self,validity_start, validity_end, min_price, currency, weight_slabs, deleted, validity_id, density_category, density_ratio, initial_volume, initial_gross_weight, available_volume, available_gross_weight, rate_type):
+    def set_validities(self,validity_start, validity_end, min_price, currency, weight_slabs, deleted, validity_id, density_category, density_ratio, initial_volume, initial_gross_weight, available_volume, available_gross_weight, rate_type,predicted):
         new_validities = []
         min_density_weight = 0.01  
         max_density_weight = MAX_CARGO_LIMIT
@@ -439,7 +439,6 @@ class AirFreightRate(BaseModel):
             if density_ratio:
                 min_density_weight=float(density_ratio.replace(' ','').split(':')[-1])
                 max_density_weight=MAX_CARGO_LIMIT
-                
         for validity_object in self.validities:
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
@@ -468,9 +467,9 @@ class AirFreightRate(BaseModel):
                     min_price = validity_object.get("min_price")
 
                 if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end and validity_id != validity_object.get('id'):
-                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    validity_object['status'] = False
-                    new_validities.append(AirFreightRateValidity(**validity_object))
+                    # new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    # validity_object['status'] = False
+                    # new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
@@ -545,8 +544,8 @@ class AirFreightRate(BaseModel):
 
     def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs):
         final_old_weight_slabs = old_weight_slabs
-        new_weight_slabs_currency = ""
-        old_weight_slabs_currency = ""
+        # new_weight_slabs_currency = ""
+        # old_weight_slabs_currency = ""
         #     if new_weight_slabs.pluck('currency').uniq.first != final_old_weight_slabs.pluck('currency').uniq.first
         #   return new_weight_slabs
 

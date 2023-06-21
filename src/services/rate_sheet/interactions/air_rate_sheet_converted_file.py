@@ -611,7 +611,6 @@ def process_air_freight_local(params, converted_file, update):
         return
 
 
-
 def write_air_freight_local_object(rows, csv, params, converted_file, last_row):
     object_validity = validate_air_freight_object(converted_file.get("module"), rows)
     if object_validity["valid"]:
@@ -632,7 +631,6 @@ def write_air_freight_local_object(rows, csv, params, converted_file, last_row):
     return object_validity
 
 
-
 def create_air_freight_local_rate(
     params,
     converted_file,
@@ -644,90 +642,294 @@ def create_air_freight_local_rate(
     last_row,
 ):
     from celery_worker import (
-        create_air_,
+        create_air_local_rate_delay,
     )
 
-    keys_to_extract = [
-        "commodity",
-        "operation_type",
-        "min_price",
-        "currency",
-        "validity_start",
-        "validity_end",
-        "commodity_type",
-        "commodity_sub_type",
-        "packing_type",
-        "handling_type",
-        "price_type",
-        "density_category",
-        "density_ratio",
-    ]
+    keys_to_extract = ["trade_type", "commodity", "commodity_type"]
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
-    object["commodity"] = object["commodity"].lower().strip()
-    object["commodity_type"] = object["commodity_type"].lower().strip()
-    object["commodity_sub_type"] = object["commodity_sub_type"].lower().strip()
-    object["currency"] = object["currency"].upper().strip()
-    object["price_type"] = object["price_type"].lower().strip()
-    object["density_category"] = object["density_category"].lower().strip()
-    object["density_ratio"] = "1:{}".format(object["density_ratio"].strip())
-
-    object["validity_start"] = convert_date_format(object.get("validity_start"))
-    object["validity_end"] = convert_date_format(object.get("validity_end"))
-
-    object["length"] = 300
-    object["bredth"] = 300
-    object["height"] = 300
-
-    object["rate_type"] = "general"
-    object["initial_volume"] = None
-    object["available_volume"] = None
-    object["initial_gross_weight"] = None
-    object["available_gross_weight"] = None
-    object["weight_slabs"] = []
-
-    object["origin_airport_id"] = get_airport_id(
-        rows[0]["origin_airport"].upper().strip(),
-        rows[0]["origin_country"].upper().strip(),
-    )
-    object["destination_airport_id"] = get_airport_id(
-        rows[0]["destination_airport"].upper().strip(),
-        rows[0]["destination_country"].upper().strip(),
+    object["airport_id"] = get_airport_id(
+        rows[0]["airport"].upper().strip(), rows[0]["country"].upper().strip()
     )
     object["airline_id"] = get_airline_id(rows[0]["airline"].strip())
-    object["shipment_type"] = object["packing_type"]
-    object["weight_slabs"] = []
+    object["trade_type"] = object["trade_type"].lower().strip()
+    object["commodity"] = object["commodity"].lower().strip()
+    object["commodity_type"] = object["commodity_type"].lower().strip()
 
+    object["line_item"] = []
+    object["rate_type"] = "general"
     for slab in rows:
-        weight_slab = {}
-        weight_slab["lower_limit"] = slab["lower_limit"].strip()
-        weight_slab["upper_limit"] = slab["upper_limit"].strip()
-        weight_slab["tariff_price"] = slab["tariff_price"].strip()
-        weight_slab["currency"] = object["currency"]
-        weight_slab["unit"] = object["unit"]
-        object["weight_slabs"].append(weight_slab)
+        if slab.get("code"):
+            keys_to_extract = ["code", "unit", "min_price", "currency"]
+            line_item = dict(
+                filter(lambda item: item[0] in keys_to_extract, slab.items())
+            )
+            line_item["currency"] = line_item["currency"].upper().strip()
+            line_item["unit"] = line_item["unit"].lower().strip()
+            line_item["code"] = line_item["code"].upper().strip()
+            line_item["price"] = slab["base_price"]
+            remarks = [slab["remark1"], slab["remark2"], slab["remark3"]]
+            line_item["remark"] = list(filter(lambda x: x is not None, remarks))
+            line_item["slabs"] = []
+            object["line_items"].append(line_item)
+        else:
+            keys_to_extract = ["lower_limit", "upper_limit", "price"]
+            weight_slab = dict(
+                filter(lambda item: item[0] in keys_to_extract, slab.items())
+            )
+            object["line_items"][-1]["slabs"].append(weight_slab)
+    for line_item in object["line_items"]:
+        if not line_item("slabs"):
+            continue
+        for slab in line_item("slabs"):
+            slab["currency"] = line_item["currency"]
 
-    # object["service_provider_id"] = params.get('service_provider_id')
-    # object["cogo_entity_id"] = params.get('cogo_entity_id')
-    object["source"] = "rate_sheet"
+    request_params = object
+    validation = write_air_freight_local_object(
+        request_params, csv_writer, params, converted_file, last_row
+    )
+    if validation.get("valid"):
+        object["rate_sheet_validation"] = True
+        create_air_local_rate_delay.apply_async(
+            kwargs={"request": object}, queue="air_freight_rate"
+        )
+    else:
+        print(validation.get("error"))
 
-    operation_types = object["operation_type"].lower().split(",")
-    packing_types = object["packing_types"].lower().split(",")
-    handling_types = object["handling_types"].lower().split(",")
 
-    for operation in operation_types:
-        object["operation_type"] = operation
-        for packing in packing_types:
-            object["packing_type"] = packing
-            for handling in handling_types:
-                object["handling_type"] = handling
-                request_params = object
-                validation = write_air_freight_freight_object(
-                    request_params, csv_writer, params, converted_file, last_row
-                )
-                if validation.get("valid"):
-                    object["rate_sheet_validation"] = True
-                    create_air_freight_rate_delay.apply_async(
-                        kwargs={"request": object}, queue="air_freight_rate"
-                    )
+def process_air_freight_surcharge(params, converted_file, update):
+    valid_headers = ["origin_airport", "origin_country", "destination_airport", "destination_country", "airline", "operation_type", "commodity", "commodity_type", "code", "unit", "price", "min_price", "currency", "remark1", "remark2", "remark3"]
+
+
+    total_lines = 0
+    original_path = get_original_file_path(converted_file)
+    rows = []
+    params["rate_sheet_id"] = params["id"]
+    rate_sheet = RateSheetAudit.get(
+        (RateSheetAudit.object_id == params["rate_sheet_id"])
+        & (RateSheetAudit.action_name == "update")
+    )
+    rate_sheet = jsonable_encoder(rate_sheet)["__data__"]
+    created_by_id = rate_sheet["performed_by_id"]
+    procured_by_id = rate_sheet["procured_by_id"]
+    sourced_by_id = rate_sheet["sourced_by_id"]
+    index = -1 if index < 0 else index
+    file_path = original_path
+    edit_file = open(get_file_path(converted_file), "w")
+    last_row = []
+    invalidated = False
+    with open(file_path, "rb") as f:
+        result = chardet.detect(f.read())
+        encoding = result["encoding"]
+
+    with open(original_path, mode="rt", encoding=encoding) as file:
+        # Read converted file for porcessing
+        csv_writer = csv.writer(edit_file)
+        input_file = csv.DictReader(file)
+        headers = input_file.fieldnames
+
+        if len(set(valid_headers) & set(headers)) != len(headers):
+            error_file = ["invalid header"]
+            csv_writer.writerow(error_file)
+            invalidated = True
+
+        for row in input_file:
+            total_lines += 1
+        # Set Initial Rate Sheets count
+        set_total_line(converted_file, total_lines)
+        set_processed_percent(0, converted_file)
+        csv_writer.writerow(headers)
+        file.seek(0)
+        next(file)
+        is_previous_rate_valid = True
+        for row in input_file:
+            if invalidated:
+                break
+            index += 1
+            if not "".join(list(row.values())).strip():
+                continue
+            for k, v in row.items():
+                if v == "":
+                    row[k] = None
+            present_field = ["origin_airport", "origin_country", "destination_airport", "destination_country", "airline", "operation_type", "commodity", "commodity_type", "code", "unit", "price", "min_price", "currency"]
+            blank_field = []
+            is_main_rate_row = False
+            if row["airport"]:
+                is_main_rate_row = True
+
+            if valid_hash(row, present_field, blank_field):
+                if rows:
+                    last_row = list(row.values())
+                    # Create previous rate if previous rate was valid
+                    if is_previous_rate_valid:
+                        create_air_freight_surcharge_rate(
+                            params,
+                            converted_file,
+                            rows,
+                            created_by_id,
+                            procured_by_id,
+                            sourced_by_id,
+                            csv_writer,
+                            last_row,
+                        )
+                    else:
+                        is_previous_rate_valid = True
+                    # Set Processing percent
+                    set_current_processing_line(index - 1, converted_file)
+                    percent = (
+                        get_current_processing_line(converted_file) / total_lines
+                    ) * 100
+                    set_processed_percent(percent, params)
                 else:
-                    print(validation.get("error"))
+                    list_opt = list(row.values())
+                    csv_writer.writerow(list_opt)
+                rows = [row]
+
+            elif rows and (
+                valid_hash(
+                    row,
+                    ["code", "unit", "price", "min_price", "currency"],
+                    ["origin_airport", "origin_country", "destination_airport", "destination_country", "airline", "operation_type", "commodity", "commodity_type"],
+                )
+            ):
+                rows.append(row)
+                list_opt = list(row.values())
+                csv_writer.writerow(list_opt)
+            else:
+                list_opt = []
+                if rows and is_previous_rate_valid and is_main_rate_row:
+                    last_row = list(row.values())
+                    create_air_freight_surcharge_rate(
+                        params,
+                        converted_file,
+                        rows,
+                        created_by_id,
+                        procured_by_id,
+                        sourced_by_id,
+                        csv_writer,
+                        last_row,
+                    )
+                    set_current_processing_line(index - 1, converted_file)
+                    percent = (
+                        get_current_processing_line(converted_file) / total_lines
+                    ) * 100
+                    set_processed_percent(percent, params)
+                else:
+                    list_opt = list(row.values())
+                list_opt.append("Invalid Row")
+                csv_writer.writerow(list_opt)
+                if is_previous_rate_valid:
+                    converted_file["rates_count"] += 1
+                is_previous_rate_valid = False
+                rows = []
+    if rows and is_previous_rate_valid and not invalidated:
+        create_air_freight_surcharge_rate(
+            params,
+            converted_file,
+            rows,
+            created_by_id,
+            procured_by_id,
+            sourced_by_id,
+            csv_writer,
+            "",
+        )
+    set_current_processing_line(total_lines, converted_file)
+    try:
+        valid = converted_file.get("valid_rates_count")
+        total = converted_file.get("rates_count")
+        percent_completed = (valid / total) * 100
+    except:
+        valid = 0
+        total = 0
+        percent_completed = 0
+    percent = (get_current_processing_line(converted_file) / total_lines) * 100
+    converted_file["percent"] = percent_completed
+    edit_file.flush()
+    converted_file["file_url"] = upload_media_file(get_file_path(converted_file))
+    edit_file.close()
+    if valid == total and total != 0:
+        update.status = "complete"
+        converted_file["status"] = "complete"
+    elif valid == 0:
+        update.status = "uploaded"
+        converted_file["status"] = "invalidated"
+    else:
+        update.status = "partially_complete"
+        converted_file["status"] = "partially_complete"
+
+    set_processed_percent(percent_completed, params)
+    try:
+        os.remove(get_original_file_path(converted_file))
+        os.remove(get_file_path(converted_file))
+    except:
+        return
+
+
+def write_air_freight_surcharge_object(rows, csv, params, converted_file, last_row):
+    object_validity = validate_air_freight_object(converted_file.get("module"), rows)
+    if object_validity["valid"]:
+        csv.writerow(last_row)
+        converted_file["valid_rates_count"] = (
+            int(converted_file["valid_rates_count"]) + 1
+        )
+    else:
+        try:
+            error = ["".join(str(object_validity.get("error")))]
+            list_opt = error
+            csv.writerow(list_opt)
+            csv.writerow([])
+            csv.writerow(last_row)
+        except:
+            print("no csv")
+    converted_file["rates_count"] = int(converted_file["rates_count"]) + 1
+    return object_validity
+
+
+def create_air_freight_surcharge_rate(
+    params,
+    converted_file,
+    rows,
+    created_by_id,
+    procured_by_id,
+    sourced_by_id,
+    csv_writer,
+    last_row,
+):
+    from celery_worker import (
+        create_air_freight_rate_surcharge,
+    )
+
+    keys_to_extract = ["commodity", "commodity_type", "operation_type"]
+    object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    
+    object["origin_airport_id"] = get_airport_id(rows[0]['origin_airport'].upper().strip(), rows[0]["origin_country"].upper().strip())
+    object["destination_airport_id"] = get_airport_id(rows[0]['destination_airport'].upper().strip(), rows[0]['destination_country'].upper().strip())
+    object["airline_id"] = get_airline_id(rows[0]["airline"].strip())
+    object["commodity"] = object["commodity"].lower().strip()
+    object["commodity_type"] = object["commodity_type"].lower().strip()
+    object["operation_type"] = object["operation_type"].lower().strip()
+
+    object["line_items"] = []
+    for slab in rows:
+        keys_to_extract = ["code", "unit", "price", "min_price", "currency"]
+        line_item = dict(filter(lambda item: item[0] in keys_to_extract, slab.items()))
+        line_item["currency"] = line_item["currency"].upper().strip()
+        line_item["unit"] = line_item["unit"].upper().strip()
+        line_item["code"] = line_item["code"].upper().strip()
+        remarks = [slab["remark1"], slab["remark2"], slab["remark3"]]
+        line_item["remark"] = list(filter(lambda x: x is not None, remarks))
+        object["line_items"].append(line_item)
+
+    operation_types = object['operation_type'].split(',') 
+    for operation in operation_types:
+        object['operation_type'] = operation
+        request_params = object
+        validation = write_air_freight_local_object(
+            request_params, csv_writer, params, converted_file, last_row
+        )
+        if validation.get("valid"):
+            object["rate_sheet_validation"] = True
+            create_air_freight_rate_surcharge.apply_async(
+                kwargs={"request": object}, queue="air_freight_rate"
+            )
+        else:
+            print(validation.get("error"))
