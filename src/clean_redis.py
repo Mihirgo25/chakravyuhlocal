@@ -4,6 +4,17 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import maps
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+# from celery_worker import delete_fcl_freight_rates_delay
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
+from configs.definitions import ROOT_DIR
+import os
+import pandas as pd
+from math import ceil
+from datetime import datetime
+from database.rails_db import get_ff_mlo
+from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
+from joblib import Parallel, delayed
 
 def clean_full_redis():
     redis_keys = rd.keys('*celery-task-meta*')
@@ -94,5 +105,184 @@ def update_transformation_objects():
     
 def delay_func(object):
     get_multiple_service_objects(object)
+
+def delete_rates():
+    delete = False
+    file_path = os.path.join(ROOT_DIR, 'delete_rates.xlsx')
+    a = pd.read_excel(file_path)['rate_id'].to_list()
+    for rate in a:
+        obj = {
+            "id": str(rate),
+            "validity_start": datetime.fromisoformat("2023-06-07"),
+            "validity_end": datetime.fromisoformat("2023-06-30"),
+            "performed_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "sourced_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "procured_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "performed_by_type": "agent",
+            "payment_term": "prepaid"
+        }
+        print(rate)
+        delete_fcl_freight_rate(obj)
+        # delete_fcl_freight_rates_delay.apply_async(kwargs={'result':obj},queue='low')
+        print('l')  
+
+def rate_extension():
+    from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+    eligible_sp = get_ff_mlo()
+    rates = FclFreightRate.select().where(
+        FclFreightRate.last_rate_available_date == '2023-06-30', 
+        FclFreightRate.origin_country_id == '541d1232-58ce-4d64-83d6-556a42209eb7', 
+        FclFreightRate.service_provider_id.in_(eligible_sp),
+        FclFreightRate.updated_at >= '2023-06-08',
+        FclFreightRate.updated_at <= '2023-06-09',
+        ~FclFreightRate.rate_not_available_entry, 
+        FclFreightRate.mode == 'manual',
+        FclFreightRate.tags.contains('machine_rate_extension')
+    )
+    limit_size = 256332
+    count = 0
+    # while True:
+    batch_rates = rates.limit(limit_size)
+    if not batch_rates.exists():
+        return
     
+    for rate in batch_rates.execute():
+        line_items = []
+        validities = rate.validities
+        is_change = False
+        for validity in validities:
+            if validity['validity_start'] >= '2023-05-01' and validity['validity_end'] <= '2023-05-31':
+                is_change = True
+                validity['validity_end'] = '2023-06-30'
+                validity['validity_start'] = '2023-06-01'
+                for item in validity['line_items']:
+                    if item['code'] == 'BAS':
+                        item['price'] = item['price']
+                line_items = validity['line_items']
+        count += 1
+        print(count)
+        if not is_change:
+            continue
+        rate.validities = validities               
+        rate.last_rate_available_date = '2023-06-30'
+        rate.rate_not_available_entry = False
+        rate.tags = ['machine_rate_extension']
+        rate.save()
+        rate.set_platform_prices()
+        data = {
+        'validity_end': '2023-06-30',
+        'validity_start': '2023-06-01',
+        'line_items': line_items,
+        'weight_limit': rate.weight_limit,
+        'origin_local': rate.origin_local,
+        'destination_local': rate.destination_local,
+        'source': 'machine_rate_extension',
+        }
+        id = FclFreightRateAudit.create(
+            action_name="create",
+            performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
+            data=data,
+            object_id=str(rate.id),
+            object_type="FclFreightRate",
+            source='rate_extension',
+        )
+            
+def correct_local():
+    rates = FclFreightRateLocal.select().where(FclFreightRateLocal.is_line_items_error_messages_present, ~FclFreightRateLocal.rate_not_available_entry, FclFreightRateLocal.updated_at >= '2023-04-26')
+    count = 0
+    for rate in rates.execute():
+        data = rate.data
+        line_items = data['line_items']
+        if line_items[0]['location_id'] == '74a37f17-b9d7-4cec-82c4-38a8eda8f914':
+            print(rate.id)
+            for item in line_items:
+                item['location_id'] = None
+            data['line_items'] = line_items
+            rate.data = data
+            rate.is_line_items_error_messages_present = False
+            rate.line_items_error_messages = None
+            if rate.main_port_id == '74a37f17-b9d7-4cec-82c4-38a8eda8f914':
+                rate.main_port_id = None
+                rate.main_port = None
+            rate.save()
+            count += 1
+            print(count)
+            
+def delete_fcl_locals():
+    file_path = os.path.join(ROOT_DIR, 'Wrong Locals.xlsx')
+    ids = pd.read_excel(file_path)['id'].to_list()
+    ids = list(set(ids))
+    for idx, id in enumerate(ids):
+        obj = {
+            "id": str(id),
+            "performed_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "sourced_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "procured_by_id": "15cd96ec-70e7-48f4-a4f9-57859c340ee7",
+            "performed_by_type": "agent"
+        }
+        delete_fcl_freight_rate_local(obj)
+        print(idx, id)
+        
+def extend_china_rates():
+    file_path = os.path.join(ROOT_DIR, 'price_change.xlsx')
+    df = pd.read_excel(file_path)
+    print(df.shape[0])
+    result = Parallel(n_jobs=2)(delayed(create_func)(idx, row) for idx, row in df.iterrows())
+    print(len(result))
+        
+        
+def create_func(idx, row):
+    from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+    from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+    id = str(row['rate_id'])
+    price = float(row['price'])
+    rate = FclFreightRate.select().where(FclFreightRate.id == id).first()
+    if not rate:
+        print('not_found')
+        return
+    create_rate = True
+    validities = rate.validities
+    if len(validities):
+        validity_end = validities[-1]['validity_end']
+        validity_start = validities[-1]['validity_start']
+        for validity in validities:
+            if validity['validity_start'] >= validity['validity_end']:
+                print('__|__')
+                create_rate = False
+                continue
+            for item in validity['line_items']:
+                if item['code'] == 'BAS':
+                    item['price'] = price
+                    validity['price'] = price
+                    validity['platform_price'] = price
+
+        if not create_rate:
+            return
+
+        rate.validities = validities
+        rate.save()
+        # rate.set_platform_prices()
+
+        data = {
+            'validity_end': validity_end,
+            'validity_start': validity_start,
+            'line_items': validities[-1]['line_items'],
+            'weight_limit': rate.weight_limit,
+            'origin_local': rate.origin_local,
+            'destination_local': rate.destination_local,
+            'source': 'gri'
+        }
+
+        id = FclFreightRateAudit.create(
+            action_name="create",
+            performed_by_id='15cd96ec-70e7-48f4-a4f9-57859c340ee7',
+            data=data,
+            object_id=id,
+            object_type="FclFreightRate",
+            source='gri',
+        )
+        print(idx)
+    
+        
+        
     
