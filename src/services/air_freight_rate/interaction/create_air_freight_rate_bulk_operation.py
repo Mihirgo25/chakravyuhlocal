@@ -3,7 +3,7 @@ from database.db_session import db
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation 
-from celery_worker import bulk_operation_perform_action_functions,update_multiple_service_objects
+from celery_worker import bulk_operation_perform_action_function_for_air,update_multiple_service_objects
 
 
 
@@ -18,9 +18,9 @@ def create_air_freight_rate_bulk_operation(request):
     
     update_multiple_service_objects.apply_async(kwargs={'object':bulk_operation},queue='low')
 
-    bulk_operation_perform_action_functions.apply_async(kwargs={'action_name':action_name,
-    'object':bulk_operation,'sourced_by_id':request.get("sourced_by_id"),
-    'procured_by_id':request.get('procured_by_id')},queue='low')
+    bulk_operation_perform_action_function_for_air.apply_async(kwargs={'action_name':action_name,
+    'object':bulk_operation},queue='low')
+
 
     return {
     'id': str(bulk_operation.id)

@@ -308,6 +308,15 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             pass
         else:
             raise self.retry(exc= exc)
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def bulk_operation_perform_action_function_for_air(self, action_name,object):
+    try:
+        eval(f"object.perform_{action_name}_action()")
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)

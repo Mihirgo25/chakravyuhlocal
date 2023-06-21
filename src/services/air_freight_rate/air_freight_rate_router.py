@@ -839,7 +839,8 @@ def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedback,
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
-       return JSONResponse(status_code=200,content=create_air_freight_rate_feeback(request.dict(exclude_none=False)))
+        data=create_air_freight_rate_feeback(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200,content=jsonable_encoder(data))
     except HTTPException as e:
         raise 
     except Exception as e:
@@ -867,7 +868,7 @@ def update_air_freight_rate_markup_data(
         )
 
 
-@air_freight_router.post("create_air_freight_rate_bulk_operations")
+@air_freight_router.post("/create_air_freight_rate_bulk_operation")
 def create_air_freight_rate_bulk_operation_data(
     request: CreateBulkOperation, resp: dict = Depends(authorize_token)
 ):

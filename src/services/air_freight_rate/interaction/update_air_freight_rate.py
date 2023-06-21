@@ -76,18 +76,7 @@ def execute(request):
     }
 
 def create_audit(request,object_id):
-    update_data={}
-    update_data['validity_start']=datetime.strftime(request.get('validity_start'),'%Y-%m-%d')
-    update_data['validity_end']=datetime.strftime(request.get('validity_end'),'%Y-%m-%d')
-    update_data['currency']=request.get("currency")
-    update_data['min_price']=request.get('min_price')
-    update_data['length']=request.get('length')
-    update_data['breadth']=request.get('breadth')
-    update_data['height']=request.get('height')
-    update_data['maximum_weight']=request.get('maximum_weight')
-    update_data['available_volume']=request.get('available_volume')
-    update_data['available_gross_weight']=request.get('available_gross_weight')
-    update_data['weight_slabs']=request.get('weight_slabs')
+    update_data={key:value for key,value in request.items() if key not in ['performed_by_id','id','bulk_operation_id','procured_by_id','sourced_by_id']}
 
     AirFreightRateAudit.create(
         bulk_operation_id=request.get('bulk_operation_id'),

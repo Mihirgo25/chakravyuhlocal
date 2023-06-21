@@ -295,12 +295,12 @@ class CreateAirFreightRateRequest(BaseModel):
     preferred_freight_rate_currency: str = None
     preferred_detention_free_days: int = None
     preferred_storage_free_days: int = None
-    cargo_readiness_date: datetime = None
+    cargo_readiness_date: date = None
     preferred_airline_ids: list[str] = []
     remarks: list[str] = []
     booking_params: dict = {}
-    weight: float = None
-    volume: float = None
+    weight: float 
+    volume: float 
     inco_term: str
     commodity: str = None
     commodity_type: str = None
@@ -371,8 +371,8 @@ class AddFreightRateMarkup(BaseModel):
 
 
 class DeleteFreightRate(BaseModel):
-    validity_id: str = None
-    air_freight_rate_id = str
+    validity_id: str 
+    air_freight_rate_id: str
 
 
 class UpdateFreightRate(BaseModel):
@@ -384,9 +384,9 @@ class UpdateFreightRate(BaseModel):
 
 class CreateBulkOperation(BaseModel):
     performed_by_id: str = None
-    delete_freight_rate: DeleteFreightRate = None
-    add_freight_rate_markup: AddFreightRateMarkup = None
-    update_freight_rate: UpdateFreightRate = None
+    delete_freight_rate: List[DeleteFreightRate] = None
+    add_freight_rate_markup: List[AddFreightRateMarkup] = None
+    update_freight_rate: List[UpdateFreightRate] = None
 
 
 class AirFreightRate(BaseModel):
@@ -434,8 +434,8 @@ class DeleteAirFreightRateFeedback(BaseModel):
     air_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
-    reverted_rate_id: str
-    reverted_validity_id: str
+    reverted_rate_id: str=None
+    reverted_validity_id: str=None
 
 
 class GetAirFreightRateLocal(BaseModel):

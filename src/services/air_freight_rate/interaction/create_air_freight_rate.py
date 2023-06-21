@@ -111,10 +111,8 @@ def create_air_freight_rate(request):
     if request.get('rate_sheet_id'):
         request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_start'), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
         request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_end'), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
-    predicted = False
-    if request.get('mode') == 'predicted':
-        predicted = True
-    validity_id = freight.set_validities(request.get("validity_start").date(),request.get("validity_end").date(),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"),predicted)
+
+    validity_id = freight.set_validities(request.get("validity_start").date(),request.get("validity_end").date(),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
     freight.set_last_rate_available_date()
     set_object_parameters(freight, request)
     freight.validate_before_save()

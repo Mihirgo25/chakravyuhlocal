@@ -21,7 +21,7 @@ from services.air_freight_rate.models.air_freight_rate_audit import  AirFreightR
 from services.air_freight_rate.interaction.update_air_freight_storage_rate import update_air_freight_storage_rate
 from configs.definitions import AIR_FREIGHT_CHARGES,AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
 from services.air_freight_rate.interaction.list_air_freight_storage_rates import list_air_freight_storage_rates
-ACTION_NAMES = ['update_freight_rate', 'delete_freight_rate', 'add_freight_rate_markup']
+ACTION_NAMES = ['update_freight_rate', 'delete_freight_rate', 'add_freight_rate_markup','delete_freight_rate_surcharge']
 
 class BaseModel(Model):
     class Meta:
@@ -166,7 +166,7 @@ class AirFreightRateBulkOperation(BaseModel):
             raise HTTPException(status_code=400, detail='slab currency is invalid')
 
 
-    def perform_delete_freight_rate_action(self, sourced_by_id, procured_by_id):
+    def perform_delete_freight_rate_action(self ):
         data = self.data
         total_count = len(data)
         count = 0
@@ -190,14 +190,14 @@ class AirFreightRateBulkOperation(BaseModel):
 
 
 
-    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id):
+    def perform_add_freight_rate_markup_action(self):
         data = self.data
         total_count = len(data)
         count = 0
         for freight in data:
             count += 1
             object = AirFreightRate.select().where(AirFreightRate.id == freight['air_freight_rate_id']).first()
-            if AirFreightRateAudit.select().where(AirFreightRateAudit.bulk_operation_id==self.id,AirFreightRateAudit.object_id==freight["id"]).first():
+            if AirFreightRateAudit.select().where(AirFreightRateAudit.bulk_operation_id==self.id,AirFreightRateAudit.object_id==freight["air_freight_rate_id"]).first():
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue
@@ -222,6 +222,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
                     update_air_freight_rate({
                     'id': freight['air_freight_rate_id'],
+                    'validity_id': freight['validity_id'],
                     'performed_by_id': self.performed_by_id,
                     'bulk_operation_id': self.id,
                     'min_price' : validity['min_price'],
@@ -234,7 +235,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
 
                     
-    def perform_add_min_price_markup_action(self, sourced_by_id, procured_by_id):
+    def perform_add_min_price_markup_action(self):
         data = self.data
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
 
@@ -281,7 +282,7 @@ class AirFreightRateBulkOperation(BaseModel):
             self.progress = ((count * 100.0) / int(total_count))
             self.save()
                 
-    def perform_add_local_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_add_local_rate_markup_action(self):
         data = self.data
         if cogo_entity_id == 'None':
             cogo_entity_id = None
@@ -362,10 +363,8 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
 
-    def perform_update_storage_free_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_update_storage_free_limit_action(self, ):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id })
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
@@ -383,27 +382,27 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
 
-            update_air_freight_storage_rate({
-                'id': storage["air_freight_rate_id"],
-                'performed_by_id': self.performed_by_id,
-                'procured_by_id': procured_by_id,
-                'sourced_by_id': sourced_by_id,
-                'bulk_operation_id': self.id,
-                'slabs': data['slabs'],
-                'free_limit': data['free_limit']
-            })
+            # update_air_freight_storage_rate({
+            #     'id': storage["air_freight_rate_id"],
+            #     'performed_by_id': self.performed_by_id,
+            #     'procured_by_id': procured_by_id,
+            #     'sourced_by_id': sourced_by_id,
+            #     'bulk_operation_id': self.id,
+            #     'slabs': data['slabs'],
+            #     'free_limit': data['free_limit']
+            # })
 
             self.progress = ((count * 100.0) / int(total_count))
             self.save()
     
-    def perform_update_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_update_freight_rate_action(self):
         data = self.data
         total_count = len(data)
         count = 0
         for freight in  data:
             count += 1
             
-            if  AirFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
+            if  AirFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["air_freight_rate_id"]):
                 self.progress = ((count * 100.0) / int(total_count))
                 self.save()
                 continue
@@ -413,8 +412,8 @@ class AirFreightRateBulkOperation(BaseModel):
                 'performed_by_id': self.performed_by_id,
                 'validity_id': freight['validity_id'],
                 'bulk_operation_id': self.id,
-                'validity_start' : freight['new_start_date'],
-                'validity_end': freight['new_end_date']
+                'validity_start' : datetime.strptime(freight['new_start_date'],"%Y-%m-%dT%H:%M:%S%z"),
+                'validity_end': datetime.strptime(freight['new_end_date'],"%Y-%m-%dT%H:%M:%S%z")
             })
 
             self.progress = ((count * 100.0) / int(total_count))

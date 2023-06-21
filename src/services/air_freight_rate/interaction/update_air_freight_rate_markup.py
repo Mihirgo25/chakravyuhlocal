@@ -31,7 +31,6 @@ def execute_transaction_code(request):
 
     for t in object.validities:
         if t.get("id") == request.get("validity_id"):
-            print("asdfghjkl",type(t['validity_start']))
             t["validity_start"] = str(request.get("validity_start").date())
             t["validity_end"] = str(request.get("validity_end").date())
             object.set_validities(
