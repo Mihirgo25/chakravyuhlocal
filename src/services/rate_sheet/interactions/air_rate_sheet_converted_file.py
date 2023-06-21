@@ -1,4 +1,4 @@
-import os, csv, json, math
+import os, csv
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from micro_services.client import *
 
@@ -10,7 +10,6 @@ from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_shipping_line
 from services.rate_sheet.helpers import *
 import chardet
-from libs.parse_numeric import parse_numeric
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import (
     set_processed_percent,
     valid_hash,
@@ -21,10 +20,10 @@ ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def get_airport_id(port_code, country_code):
-    input = {"filters": {"type": "seaport", "port_code": port_code, "status": "active"}}
+    input = {"filters": {"type": "airport", "port_code": port_code, "status": "active"}}
     locations_data = maps.list_locations(input)
     if "list" in locations_data and len(locations_data["list"]) > 0:
-        airport_ids = locations_data["list"][0]
+        airport_ids = locations_data["list"][0]['id']
     else:
         airport_ids = None
     return airport_ids
@@ -76,7 +75,7 @@ def process_air_freight_freight(params, converted_file, update):
     created_by_id = rate_sheet["performed_by_id"]
     procured_by_id = rate_sheet["procured_by_id"]
     sourced_by_id = rate_sheet["sourced_by_id"]
-    index = -1 if index < 0 else index
+    index = -1 
     file_path = original_path
     edit_file = open(get_file_path(converted_file), "w")
     last_row = []
@@ -337,7 +336,7 @@ def create_air_freight_freight_rate(
         weight_slab["upper_limit"] = slab["upper_limit"].strip()
         weight_slab["tariff_price"] = slab["tariff_price"].strip()
         weight_slab["currency"] = object["currency"]
-        weight_slab["unit"] = object["unit"]
+        weight_slab["unit"] = object.get("unit")
         object["weight_slabs"].append(weight_slab)
 
     # object["service_provider_id"] = params.get('service_provider_id')
@@ -345,8 +344,8 @@ def create_air_freight_freight_rate(
     object["source"] = "rate_sheet"
 
     operation_types = object["operation_type"].lower().split(",")
-    packing_types = object["packing_types"].lower().split(",")
-    handling_types = object["handling_types"].lower().split(",")
+    packing_types = object["packing_type"].lower().split(",")
+    handling_types = object["handling_type"].lower().split(",")
 
     for operation in operation_types:
         object["operation_type"] = operation
@@ -420,7 +419,7 @@ def process_air_freight_local(params, converted_file, update):
     created_by_id = rate_sheet["performed_by_id"]
     procured_by_id = rate_sheet["procured_by_id"]
     sourced_by_id = rate_sheet["sourced_by_id"]
-    index = -1 if index < 0 else index
+    index = -1
     file_path = original_path
     edit_file = open(get_file_path(converted_file), "w")
     last_row = []
@@ -712,7 +711,7 @@ def process_air_freight_surcharge(params, converted_file, update):
     created_by_id = rate_sheet["performed_by_id"]
     procured_by_id = rate_sheet["procured_by_id"]
     sourced_by_id = rate_sheet["sourced_by_id"]
-    index = -1 if index < 0 else index
+    index = -1
     file_path = original_path
     edit_file = open(get_file_path(converted_file), "w")
     last_row = []
