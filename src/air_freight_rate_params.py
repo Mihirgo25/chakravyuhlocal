@@ -499,6 +499,6 @@ class UpdateAirFreightRateRequest(BaseModel):
 class DeleteAirFreightRateRequest(BaseModel):
     air_freight_rate_request_ids: list[str]
     closing_remarks: list[str] = None
-    rate_id: str
-    validity_id: str
-    performed_by_id: str
+    rate_id: str=None
+    validity_id: str=None
+    performed_by_id: str=None

@@ -142,6 +142,8 @@ def get_data(query, spot_search_details_required, booking_details_required):
         object['airline'] = rate['airline']
         object['price'] = None
         object['currency'] = None
+        object['volume'] = object['booking_params'].get('volume')
+        object['weight'] = object['booking_params'].get('weight')
         for validity in rate['validities']:
             if validity['id'] == object['validity_id']:
                 object['price'] = validity['min_price']
@@ -152,6 +154,7 @@ def get_data(query, spot_search_details_required, booking_details_required):
         
         if object.get('reverted_rate_id'):
             reverted_rate = air_freight_rate_mappings[(object['reverted_rate_id'])]
+            object['reverted_rate_data']={}
             object['reverted_rate_data']['commodity'] = reverted_rate['commodity']
             object['reverted_rate_data']['commodity_type'] = reverted_rate['commodity_type']
             object['reverted_rate_data']['commodity_sub_type'] = reverted_rate['commodity_sub_type']
@@ -166,9 +169,10 @@ def get_data(query, spot_search_details_required, booking_details_required):
                     break
             object['reverted_rate_data']['min_price'] = reverted_validity_data.get('min_price') 
             object['reverted_rate_data']['weight_slabs'] = reverted_validity_data.get('weight_slabs')
+            print(object['weight'])
             object['chargeable_weight'] = get_chargeable_weight(object['weight'], object['volume'])
             for  weight_slab in reverted_validity_data['weight_slabs']:
-                if weight_slab['lower_limt']<=object['chargeable_weight'] and weight_slab['upper_limit']<=object['chargeable_weight']:
+                if weight_slab['lower_limit']<=object['chargeable_weight'] and weight_slab['upper_limit']<=object['chargeable_weight']:
                     object['price']=weight_slab['tariff_price']
                     break
             object['reverted_rate_data']['currency'] = reverted_validity_data.get('currency')

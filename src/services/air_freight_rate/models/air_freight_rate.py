@@ -110,7 +110,7 @@ class AirFreightRate(BaseModel):
     def validate_validity_object(self,validity_start,validity_end):
         
         if not validity_start:
-            raise HTTPException(status_code=400,details='Validity Start is Invalid')
+            raise HTTPException(status_code=400,detail='Validity Start is Invalid')
         if not validity_end:
             raise HTTPException(status_code=400, detail="validity_end is Invalid")
         if validity_end.date() > (datetime.datetime.now().date() + datetime.timedelta(days=120)):
@@ -122,27 +122,27 @@ class AirFreightRate(BaseModel):
 
     def validate_shipment_type(self):
         if self.shipment_type not in PACKING_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Shipment Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Shipment Type')
         
     def validate_stacking_type(self):
         if self.stacking_type not in HANDLING_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Stacking Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Stacking Type')
     
     def validate_commodity(self):
         if self.commodity not in COMMODITY:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity')
 
     def validate_commodity_type(self):
         if self.commodity_type not in COMMODITY_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity Type')
     
     def validate_commodity_sub_type(self):
         if self.commodity_sub_type not in COMMODITY_SUB_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity Sub Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity Sub Type')
     
     def validate_price_type(self):
         if self.price_type not in PRICE_TYPES:
-            raise HTTPException(status_code = 400,details = 'Invalid Price Type')
+            raise HTTPException(status_code = 400,detail = 'Invalid Price Type')
         
     def validate_before_save(self):
         self.validate_shipment_type()
@@ -152,14 +152,14 @@ class AirFreightRate(BaseModel):
         self.validate_price_type()
 
         if self.length < 0:
-            raise HTTPException(status_code = 400,details = 'Length Should Be Positive Value')
+            raise HTTPException(status_code = 400,detail = 'Length Should Be Positive Value')
         if self.breadth < 0:
-            raise HTTPException(status_code = 400,details = 'Bredth Should Be Positive Value')
+            raise HTTPException(status_code = 400,detail = 'Bredth Should Be Positive Value')
         if self.height < 0:
-            raise HTTPException(status_code = 400,details = 'Height Should Be Positive Value')
+            raise HTTPException(status_code = 400,detail = 'Height Should Be Positive Value')
         
         if self.rate_type not in RATE_TYPES:
-            raise HTTPException(status_code = 400,details = 'Invalid Rate Type')
+            raise HTTPException(status_code = 400,detail = 'Invalid Rate Type')
         
         self.validate_available_volume_and_gross_weight()
         self.validate_origin_destination_country()
@@ -172,10 +172,10 @@ class AirFreightRate(BaseModel):
         if self.commodity!='general':
             for validity in self.validities:
                 if validity['available_volume'] > validity['initial_volume']:
-                    raise HTTPException(status_code = 400,details='available volume can\'t be greater than initial volume')
+                    raise HTTPException(status_code = 400,detail='available volume can\'t be greater than initial volume')
                 
                 if validity['available_gross_weight'] > validity['initial_gross_weight']:
-                    raise HTTPException(status_code = 400,details='available gross weight can\'t be greater than initial gross weight')
+                    raise HTTPException(status_code = 400,detail='available gross weight can\'t be greater than initial gross weight')
                 
     def set_locations(self):
 
@@ -223,25 +223,25 @@ class AirFreightRate(BaseModel):
 
     def validate_origin_destination_country(self):
         if self.origin_airport['country_code'] == self.destination_airport['country_code']:
-            raise HTTPException(status_code = 400, details = 'Destination Airport Cannot be in the Same Origin Country')
+            raise HTTPException(status_code = 400, detail = 'Destination Airport Cannot be in the Same Origin Country')
 
     def validate_service_provider_id(self):
         service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
            
     def validate_airline_id(self):
         airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Airline Id Is Not Valid')    
+        raise HTTPException(status_code = 400, detail = 'Airline Id Is Not Valid')    
 
     def validate_operation_type(self):
         if self.operation_type not in AIR_OPERATION_TYPES:
-            raise HTTPException(status_code = 400, details = 'Invalid Operation Type')
+            raise HTTPException(status_code = 400, detail = 'Invalid Operation Type')
 
     def update_foreign_references(self, price_type):
         self.update_local_references()
