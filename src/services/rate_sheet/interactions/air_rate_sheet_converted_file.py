@@ -7,7 +7,6 @@ from services.rate_sheet.interactions.validate_air_freight_object import (
     validate_air_freight_object,
 )
 from fastapi.encoders import jsonable_encoder
-from database.rails_db import get_airline_ids
 from services.rate_sheet.helpers import *
 import chardet
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import (
