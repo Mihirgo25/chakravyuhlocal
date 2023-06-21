@@ -166,10 +166,11 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
     if trade_type == 'import' and rate['destination_main_port_id']:
         main_port_id = rate['destination_main_port_id']
     for local_rate in local_rates:
-        old_line_items=local_rate['data']['line_items']
-        new_line_items=get_filtered_line_items(rate,old_line_items)
-        local_rate['data']['line_items']=new_line_items
-        local_rate['line_items']=new_line_items
+        old_line_items=local_rate.get('data').get('line_items')
+        if  len(old_line_items)>0:
+            new_line_items=get_filtered_line_items(rate,old_line_items)
+            local_rate['data']['line_items']=new_line_items
+            local_rate['line_items']=new_line_items
         if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
             if shipping_line_id == local_rate['shipping_line_id']:
                 matching_locals[local_rate["service_provider_id"]] = local_rate
