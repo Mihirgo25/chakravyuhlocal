@@ -44,7 +44,7 @@ class TaskLineItem(BaseModel):
     unit: str
     price: float
     currency: str
-    market_price: float = None
+    min_price: float = None
     remarks: list[str] = None
     slabs: list[Slab] = None
 
@@ -66,7 +66,7 @@ class LocalData(BaseModel):
 class DeleteAirFreightRate(BaseModel):
     id: str
     validity_id: str
-    performed_by_id: str = None
+    performed_by_id: str 
     performed_by_type: str = None
     bulk_operation_id: str = None
     sourced_by_id: str = None
@@ -75,23 +75,23 @@ class DeleteAirFreightRate(BaseModel):
 
 class UpdateAirFreightRate(BaseModel):
     id: str
-    validity_id: str = None
+    validity_id: str 
     validity_start: date = None
     validity_end: date = None
     currency: str = None
-    min_price: float = None
-    performed_by_id: str = None
+    min_price: float
+    performed_by_id: str 
     performed_by_type: str = None
     bulk_operation_id: str = None
-    weight_slabs: list[WeightSlab] = None
-    length: float = None
-    breadth: float = None
-    height: float = None
-    maximum_weight: float = None
-    procured_by_id: str = None
-    sourced_by_id: str = None
-    available_volume: float = None
-    available_gross_weight: float = None
+    weight_slabs: list[WeightSlab] 
+    length: float 
+    breadth: float 
+    height: float 
+    maximum_weight: float 
+    procured_by_id: str 
+    sourced_by_id: str 
+    available_volume: float 
+    available_gross_weight: float 
 
 
 class GetAirFreightRate(BaseModel):
@@ -179,7 +179,7 @@ class CreateAirFreightRateLocal(BaseModel):
     commodity: str
     commodity_type: str
     service_provider_id: str
-    performed_by_id: str=None
+    performed_by_id: str
     procured_by_id: str
     sourced_by_id: str
     bulk_operation_id: str = None
@@ -208,7 +208,7 @@ class LineItemsLocal(BaseModel):
 
 class UpdateFrieghtRateLocal(BaseModel):
     id: str
-    performed_by_id: str = None
+    performed_by_id: str 
     sourced_by_id: str = None
     procured_by_id: str = None
     bulk_operation_id: str = None
@@ -227,17 +227,17 @@ class CreateAirFrieghtRateNotAvailable(BaseModel):
 
 
 class CreateAirFreightRateTask(BaseModel):
-    service: str = None
-    airport_id: str = None
-    commodity: str = None
-    commodity_type: str = None
-    trade_type: str = None
-    airline_id: str = None
-    logistics_service_type: str = None
-    source: str = None
-    task_type: str = None
+    service: str 
+    airport_id: str 
+    commodity: str
+    commodity_type: str
+    trade_type: str
+    airline_id: str 
+    logistics_service_type: str 
+    source: str 
+    task_type: str
     shipment_id: str = None
-    performed_by_id: str = None
+    performed_by_id: str 
     performed_by_type: str = None
     rate: LocalData = None
 
@@ -253,10 +253,10 @@ class UpdateAirFreightRateTask(BaseModel):
 
 class CreateAirFreightRateFeedbacks(BaseModel):
     source: str
-    source_id: str = None
-    performed_by_id: str = None
-    performed_by_org_id: str = None
-    performed_by_type: str = None
+    source_id: str 
+    performed_by_id: str 
+    performed_by_org_id: str 
+    performed_by_type: str 
     rate_id: str
     validity_id: str
     likes_count: int
@@ -348,7 +348,7 @@ class CreateAirFreightWarehouseRates(BaseModel):
 
 
 class UpdateAirFreightStorageRates(BaseModel):
-    id: str = None
+    id: str 
     performed_by_id: str
     bulk_operation_id: str = None
     free_limit: int = None
@@ -407,10 +407,10 @@ class AirFreightRate(BaseModel):
     density_ratio: str = None
     bulk_operation_id: str = None
     rate_sheet_id: str = None
-    performed_by_id: str = None
+    performed_by_id: str=None 
     performed_by_type: str = None
-    procured_by_id: str = None
-    sourced_by_id: str = None
+    procured_by_id: str 
+    sourced_by_id: str 
     cogo_entity_id: str = None
     length: int = 300
     breadth: int = 300
@@ -493,8 +493,8 @@ class UpdateAirFreightWarehouseRate(BaseModel):
 class UpdateAirFreightRateRequest(BaseModel):
     air_freight_rate_request_id: str
     closing_remarks: list[str] = None
-    status: str = None
-    remarks: str = None
+    status: str 
+    remarks: str 
     performed_by_id: str = None
 
 
