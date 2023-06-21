@@ -358,6 +358,7 @@ def create_air_freight_freight_rate(
             object["shipment_type"] = packing
             for handling in handling_types:
                 object["stacking_type"] = handling
+                object['rate_sheet_id'] = params['id']
                 request_params = object
                 validation = write_air_freight_freight_object(
                     request_params, csv_writer, params, converted_file, last_row
