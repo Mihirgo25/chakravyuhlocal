@@ -1,7 +1,7 @@
 from micro_services.client import maps
 from services.ftl_freight_rate.rate_estimators.ftl_freight_rate_estimator import FtlFreightEstimator
 from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
-from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING,PREDICTION_TRUCK_TYPES, EU_ZONE
+from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING,PREDICTION_TRUCK_TYPES, EU_ZONE, TON_TO_POUND
 from fastapi import HTTPException
 
 def get_ftl_freight_rate(
@@ -105,6 +105,6 @@ def get_truck_weight_according_to_country(country_code,weight):
     if country_code == 'IN':
         return weight
     if country_code == 'US':
-        return weight * 2000
+        return weight * TON_TO_POUND
     if country_code == 'EU':
         return weight
