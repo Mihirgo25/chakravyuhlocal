@@ -89,7 +89,7 @@ def get_surcharge_object(object):
     res = object
     res['rate_not_available_entry'] = False
     rate_object = AirFreightRateSurcharge(**res)
-
+    rate_object.set_locations()
     try:
         rate_object.validate()
     except HTTPException as e:
