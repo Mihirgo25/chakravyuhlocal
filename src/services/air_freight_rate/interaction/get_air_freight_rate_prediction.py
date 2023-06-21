@@ -24,8 +24,8 @@ def get_air_freight_rate_prediction(request):
         except Exception as e:
             pass
     change_factor = SLAB_WISE_CHANGE_FACTOR
-    for result in results:
-        create_air_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':results}, queue = 'low')
+    # for result in results:
+    #     create_air_freight_rate_feedback_for_prediction.apply_async(kwargs={'result':results}, queue = 'low')
         
     input_for_eligible_service = {
             'service': 'air_freight',
@@ -35,12 +35,13 @@ def get_air_freight_rate_prediction(request):
             }
         }
         
-    current_datetime = request.get('cargo_clearance_date')
+    current_datetime = datetime.combine(request.get('cargo_clearance_date'), datetime.min.time())
     validity_start = current_datetime
     next_day_datetime = current_datetime + timedelta(days=3)
     validity_end = next_day_datetime
-    
+    # need to expose
     service_provider_id_eligible = organization.get_eligible_service_organizations(input_for_eligible_service)
+    service_provider_id_eligible = None
     if service_provider_id_eligible is None:
         service_provider_id_eligible = DEFAULT_SERVICE_PROVIDER_ID
     

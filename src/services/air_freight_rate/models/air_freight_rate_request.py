@@ -79,7 +79,7 @@ class AirFreightRateRequest(BaseModel):
     weight = DoubleField(null=True)
 
     class Meta:
-        table_name = 'air_freight_rate_requests'
+        table_name = "air_freight_rate_requests"
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
@@ -193,3 +193,24 @@ class AirFreightRateRequest(BaseModel):
             },
         }
         common.create_communication(data)
+
+    def set_locations(self):
+        ids = [str(self.origin_airport_id), str(self.destination_airport_id)]
+        obj = {"filters": {"id": ids, "type": "airport"}}
+        locations_response = maps.list_locations(obj)["list"]
+
+        for location in locations_response:
+            if str(self.origin_airport_id) == str(location["id"]):
+                self.origin_airport = self.get_required_location_data(location)
+            if str(self.destination_airport_id) == str(location["id"]):
+                self.destination_airport = self.get_required_location_data(location)
+
+    def get_required_location_data(self, location):
+        loc_data = {
+            "id": location["id"],
+            "name": location["name"],
+            "port_code": location["port_code"],
+            "name": location["name"],
+            "display_name": location["display_name"],
+        }
+        return loc_data

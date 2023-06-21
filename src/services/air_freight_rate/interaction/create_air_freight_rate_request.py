@@ -58,7 +58,8 @@ def execute_transaction_code(request):
 
     for attr, value in create_params.items():
         setattr(request_object, attr, value)
-
+    
+    request_object.set_locations()
     request_object.validate()
     if not request_object.save():
         raise HTTPException(status_code = 500, detail = 'Error while saving')
