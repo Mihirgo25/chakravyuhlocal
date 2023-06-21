@@ -25,7 +25,6 @@ class USFtlFreightRateEstimator:
                     basic_freight_charges += (float(data['process_value'])*(total_path_distance))
         if self.truck_and_commodity_data['commodity'] in HAZ_CLASSES or self.truck_and_commodity_data['truck_body_type'] == 'reefer':
             basic_freight_charges += ADDITIONAL_CHARGE*basic_freight_charges
-
         weight = self.truck_and_commodity_data['weight']
         basic_freight_charges += weight*LOADING_UNLOADING_CHARGES_US
 
