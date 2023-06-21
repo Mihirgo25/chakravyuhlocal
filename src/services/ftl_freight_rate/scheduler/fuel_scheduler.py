@@ -105,34 +105,46 @@ def get_scrapped_data_for_usa():
     with httpx.Client() as client:
         response = client.get(url,headers=headers)
     html = response.content
-    scrapper = BeautifulSoup(html, "html.parser")
-    table_body = scrapper.find("tbody")
-    table_list = table_body.findAll("td")
-    fuel_data_for_usa = []
-    start = 0
-    while start < (len(table_list))-5:
-        region_name = table_list[start].a.text
-        region_name = region_name.replace("\n", "").replace(" ", "")
-        fuel_data = {}
-        fuel_data["location_name"] = region_name
-        fuel_data["currency"] = "USD"
-        fuel_data["fuel_unit"] = "gallon"
-        fuel_data["location_type"] = "region"
-        for fuel_type in ["petrol", "diesel"]:
-            if fuel_type == "petrol":
-                fuel_data["fuel_type"] = fuel_type
-                fuel_data["fuel_price"] = (
-                    table_list[start + 1].text.strip().replace("$", "")
-                )
-            else:
-                fuel_data["fuel_type"] = fuel_type
-                fuel_data["fuel_price"] = (
-                    table_list[start + 4].text.strip().replace("$", "")
-                )
+    soup = BeautifulSoup(html, 'html.parser')
 
-            fuel_data_for_usa.append(copy.deepcopy(fuel_data))
-        start += 5
-    return fuel_data_for_usa
+    t_body = soup.find("tbody")
+
+    td_list=t_body.findAll('td')
+
+    data=[]
+
+    i=0
+
+    while i < (len(td_list)):
+
+        name=td_list[i].a.text
+        name=name.replace('\n','')
+        name=name.replace(' ','')
+
+        dictt={"location_name":"", "fuel_type":"", "fuel_price":"", "currency":"", "fuel_unit":"", "location_type":""}
+
+        dictt["location_name"]=name
+        dictt["fuel_type"]="petrol"
+        temp_price = td_list[i+1].text.replace(" ", "")
+        dictt["fuel_price"] = temp_price[1:]
+
+        dictt["currency"]="dollar"
+        dictt["fuel_unit"]="gallon"
+        dictt["location_type"]="region"
+
+        copied_dictt = copy.deepcopy(dictt)
+        data.append(copied_dictt)
+
+        dictt["fuel_type"]="diesel"
+        temp_price = td_list[i+4].text.replace(" ", "")
+        dictt["fuel_price"] = temp_price[1:]
+
+        copied_dictt = copy.deepcopy(dictt)
+        data.append(copied_dictt)
+
+        i+=5
+
+    return data
 
 def get_scrapped_data_for_europe():
     url = EUROPE_FUEL_DATA_LINK
