@@ -25,7 +25,6 @@ from services.chakravyuh.interaction.get_air_invoice_estimation_prediction impor
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from database.rails_db import get_past_cost_booking_data
-from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 
 # Rate Producers
@@ -36,7 +35,7 @@ from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as Air
 # Dynamic Pricing
 
 from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreightVyuhSetter
-from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhinvoiceSetters
+from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
 
 CELERY_CONFIG = {
@@ -120,7 +119,7 @@ def fcl_cost_booking_estimation(self):
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def adjust_cost_booking_dynamic_pricing(self, new_rate,affected_transformation,new):
     try:
-        fcl_freight_vyuh = FclBookingVyuhinvoiceSetters(new_rate=new_rate)
+        fcl_freight_vyuh = FclBookingVyuhSetters(new_rate=new_rate)
         fcl_freight_vyuh.adjust_price_for_tranformation(affected_transformation=affected_transformation, new=new)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
