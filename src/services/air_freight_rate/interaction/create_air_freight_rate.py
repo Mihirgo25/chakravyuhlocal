@@ -8,20 +8,19 @@ from configs.air_freight_rate_constants import DEFAULT_RATE_TYPE
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 
-def create_audit(request, freight_id):
+def create_audit(request, freight_id,validity_id):
 
     rate_type = request.get('rate_type')
-
+    print('here')
     audit_data = {}
-    audit_data["validity_start"] = request["validity_start"].isoformat()
-    audit_data["validity_end"] = request["validity_end"].isoformat()
-    audit_data["line_items"] = request.get("line_items")
-    audit_data["weight_limit"] = request.get("weight_limit")
-    audit_data["origin_local"] = request.get("origin_local")
-    audit_data["destination_local"] = request.get("destination_local")
-    audit_data["is_extended"] = request.get("is_extended")
-    audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
-    audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
+    audit_data["validity_start"] = request.get("validity_start").isoformat()
+    audit_data["validity_end"] = request.get("validity_end").isoformat()
+    audit_data["performed_by_id"] = request.get("performed_by_id")
+    audit_data["procured_by_id"] = request.get("procured_by_id")
+    audit_data["sourced_by_id"] = request.get("sourced_by_id")
+    audit_data["currency"] = request.get("currency")
+    audit_data["price_type"] = request.get("price_type")
+    audit_data["air_freight_rate_request_id"] = request.get("air_freight_rate_request_id")
 
     id = AirFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
@@ -30,8 +29,9 @@ def create_audit(request, freight_id):
         performed_by_id=request["performed_by_id"],
         data=audit_data,
         object_id=freight_id,
-        object_type="FclFreightRate",
+        object_type="AirFreightRate",
         source=request.get("source"),
+        validity_id=validity_id
     )
     return id
 
@@ -42,6 +42,7 @@ def create_air_freight_rate_data(request):
     
 def create_air_freight_rate(request):
     from celery_worker import delay_air_functions, update_air_freight_rate_request_in_delay
+    print('here1', request)
 
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
@@ -109,8 +110,8 @@ def create_air_freight_rate(request):
     freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
     
     if request.get('rate_sheet_id'):
-        request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_start'), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
-        request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.strptime(request.get('validity_end'), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
+        request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.datetime.strptime(str(request.get('validity_start')), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
+        request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.datetime.strptime(str(request.get('validity_end')), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
 
     validity_id = freight.set_validities(request.get("validity_start").date(),request.get("validity_end").date(),request.get("min_price"),request.get("currency"),request.get("weight_slabs"),False,None,request.get("density_category"),request.get("density_ratio"),request.get("initial_volume"),request.get("initial_gross_weight"),request.get("available_volume"),request.get("available_gross_weight"),request.get("rate_type"))
     freight.set_last_rate_available_date()
@@ -124,7 +125,7 @@ def create_air_freight_rate(request):
     except Exception as e:
         raise HTTPException(status_code=400, detail="rate did not save")
     
-    create_audit(request, freight.id)
+    create_audit(request, freight.id,validity_id)
 
     delay_air_functions.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
     freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])

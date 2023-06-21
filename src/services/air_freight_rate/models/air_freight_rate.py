@@ -14,7 +14,7 @@ from configs.global_constants import *
 from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from configs.definitions import AIR_FREIGHT_CHARGES
 from air_freight_rate_params import WeightSlab
-import json
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from playhouse.shortcuts import model_to_dict
 
 class UnknownField(object):
@@ -483,10 +483,12 @@ class AirFreightRate(BaseModel):
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
-                    new_validities.append(AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
-                    # params = self.audits.where(validity_id: old_validity1.id, action_name: ['create', 'update']).order('air_freight_rate_audits.created_at desc').first.as_json
-                    # self.audits.create!(params.except('id', 'created_at', 'updated_at').merge!('validity_id' => old_validity2.id))
+                    old_validity1 = AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)})
+                    old_validity2 = AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)})
+                    new_validities.append(old_validity1)
+                    new_validities.append(old_validity2)
+                    params = self.get_air_freight_rate_audit({'validity_id':old_validity1.id, 'action_name':['create','update']})
+                    self.create_air_freight_rate_audit(params, old_validity2.id)
                     continue
             else:
                 new_validities.append(AirFreightRateValidity(**validity_object))
@@ -544,10 +546,9 @@ class AirFreightRate(BaseModel):
 
     def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs):
         final_old_weight_slabs = old_weight_slabs
-        # new_weight_slabs_currency = ""
-        # old_weight_slabs_currency = ""
-        #     if new_weight_slabs.pluck('currency').uniq.first != final_old_weight_slabs.pluck('currency').uniq.first
-        #   return new_weight_slabs
+        
+        if new_weight_slabs[0]['currency'] != final_old_weight_slabs[0]['currency']:
+            return new_weight_slabs
 
         for new_weight_slab in new_weight_slabs:
             final_old_weight_slabs = self.merge_slab(final_old_weight_slabs,new_weight_slab)
@@ -588,3 +589,26 @@ class AirFreightRate(BaseModel):
 
         
         return final_old_weight_slabs
+    
+    def get_air_freight_rate_audit(self, params):
+        query = (AirFreightRateAudit
+             .select()
+             .where(
+                (AirFreightRateAudit.validity_id == params['validity_id']) &
+                (AirFreightRateAudit.action_name.in_(params['action_name']))
+             )
+             .order_by(AirFreightRateAudit.created_at.desc())
+             .limit(1)).execute()
+        
+        if query:
+            data = model_to_dict(query[0])
+            return data
+
+        return None
+    
+    def create_air_freight_rate_audit(self, params, old_validity_id):
+        if params:
+            new_params = {key: value for key, value in params.items() if key not in ['id', 'created_at', 'updated_at']}
+            new_params['validity_id'] = old_validity_id
+            audit = AirFreightRateAudit.create(**new_params)
+            return audit

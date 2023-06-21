@@ -57,10 +57,10 @@ def get_freight_object(object):
             weight_slab["tariff_price"] = float(weight_slab['tariff_price'])
     
     # final_weight_slabs = object['weight_slabs']
-    try:
-        rate_object.set_validities(object["validity_start"], object["validity_end"], object["min_price"], object["currency"], object["weight_slabs"], object["deleted"], object["validity_id"], object["density_category"], object["density_ratio"], object["initial_volume"], object["initial_gross_weight"], object["available_volume"], object["available_gross_weight"], object["rate_type"])
-    except HTTPException as e:
-         validation['error'] += ' ' + str(e.detail)
+    # try:
+    #     rate_object.set_validities(object["validity_start"], object["validity_end"], object["min_price"], object["currency"], object["weight_slabs"], object["deleted"], object["validity_id"], object["density_category"], object["density_ratio"], object["initial_volume"], object["initial_gross_weight"], object["available_volume"], object["available_gross_weight"], object["rate_type"])
+    # except HTTPException as e:
+    #      validation['error'] += ' ' + str(e.detail)
     # try:
     #     rate_object.validate_before_save()
     # except HTTPException as e:
@@ -89,7 +89,7 @@ def get_surcharge_object(object):
     res = object
     res['rate_not_available_entry'] = False
     rate_object = AirFreightRateSurcharge(**res)
-
+    rate_object.set_locations()
     try:
         rate_object.validate()
     except HTTPException as e:
