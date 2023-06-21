@@ -7,7 +7,7 @@ from services.rate_sheet.interactions.validate_air_freight_object import (
     validate_air_freight_object,
 )
 from fastapi.encoders import jsonable_encoder
-from database.rails_db import get_shipping_line
+from database.rails_db import get_airline_ids
 from services.rate_sheet.helpers import *
 import chardet
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import (
@@ -30,9 +30,11 @@ def get_airport_id(port_code, country_code):
 
 
 def get_airline_id(airline_name):
+    print(airline_name, "airline_name")
+    airline_name = airline_name.lower()
     try:
-        airline_id = get_shipping_line(
-            short_name=airline_name, operator_type="airline"
+        airline_id = get_airline_ids(
+            short_name=airline_name
         )[0]["id"]
     except:
         airline_id = None
@@ -277,8 +279,10 @@ def create_air_freight_freight_rate(
     last_row,
 ):
     from celery_worker import (
-        create_air_freight_rate_delay,
+        create_air_freight_rate_delays,
     )
+    
+    from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate
 
     keys_to_extract = [
         "commodity",
@@ -308,7 +312,7 @@ def create_air_freight_freight_rate(
     object["validity_end"] = convert_date_format(object.get("validity_end"))
 
     object["length"] = 300
-    object["bredth"] = 300
+    object["breadth"] = 300
     object["height"] = 300
 
     object["rate_type"] = "general"
@@ -339,7 +343,8 @@ def create_air_freight_freight_rate(
         weight_slab["unit"] = object.get("unit")
         object["weight_slabs"].append(weight_slab)
 
-    # object["service_provider_id"] = params.get('service_provider_id')
+    object["service_provider_id"] = params.get('service_provider_id')
+    object["performed_by_id"] = params.get('performed_by_id')
     # object["cogo_entity_id"] = params.get('cogo_entity_id')
     object["source"] = "rate_sheet"
 
@@ -350,16 +355,17 @@ def create_air_freight_freight_rate(
     for operation in operation_types:
         object["operation_type"] = operation
         for packing in packing_types:
-            object["packing_type"] = packing
+            object["shipment_type"] = packing
             for handling in handling_types:
-                object["handling_type"] = handling
+                object["stacking_type"] = handling
                 request_params = object
                 validation = write_air_freight_freight_object(
                     request_params, csv_writer, params, converted_file, last_row
                 )
                 if validation.get("valid"):
                     object["rate_sheet_validation"] = True
-                    create_air_freight_rate_delay.apply_async(
+                    # create_air_freight_rate(object)
+                    create_air_freight_rate_delays.apply_async(
                         kwargs={"request": object}, queue="air_freight_rate"
                     )
                 else:

@@ -31,9 +31,7 @@ def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
                         id = tuple(id)
                     sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.id in %s'
                     cur.execute(sql, (id,))
-
                 result = cur.fetchall()
-
                 for res in result:
                     all_result.append(
                         {
@@ -51,6 +49,37 @@ def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+    
+
+
+def get_airline_ids(short_name=None):
+    all_result = []
+    try:
+        newconnection = get_connection()  
+        with newconnection:
+            with newconnection.cursor() as cur:
+                if short_name:
+                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.short_name ilike %s and operators.status = %s and operators.operator_type = %s'
+                    cur.execute(sql, (short_name,'active','airline',))
+                    result = cur.fetchall()
+                    for res in result:
+                        all_result.append(
+                            {
+                                "id": str(res[0]),
+                                "business_name": res[1],
+                                "short_name": res[2],
+                                "logo_url": res[3],
+                                "operator_type": res[4],
+                                "status": res[5]
+                            }
+                        )
+                cur.close()
+        newconnection.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
+    
 
 def get_organization(id=None, short_name=None,account_type = 'importer_exporter'):
     all_result = []
