@@ -16,11 +16,11 @@ from services.ftl_freight_rate.interactions.create_ftl_freight_rate_rule_set imp
 from services.ftl_freight_rate.interactions.update_ftl_freight_rate_rule_set import (
     update_ftl_rule_set_data,
 )
-from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
-from services.ftl_freight_rate.interaction.create_truck import create_truck_data
-from services.ftl_freight_rate.interaction.update_truck import update_truck_data
+from services.ftl_freight_rate.interactions.list_trucks import list_trucks_data
+from services.ftl_freight_rate.interactions.create_truck import create_truck_data
+from services.ftl_freight_rate.interactions.update_truck import update_truck_data
 from services.ftl_freight_rate.ftl_params import *
-from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
+from services.ftl_freight_rate.interactions.create_fuel_data import create_fuel_data
 
 ftl_freight_router = APIRouter()
 
@@ -142,10 +142,7 @@ def list_trucks(
     sort_by: str = 'created_at',
     sort_type: str = 'asc',
     pagination_data_required: bool = True,
-    resp: dict = Depends(authorize_token)
 ):
-        if resp["status_code"] != 200:
-            return JSONResponse(status_code=resp["status_code"], content=resp)
         try:
             data = list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
             return JSONResponse(status_code=200, content=data)
