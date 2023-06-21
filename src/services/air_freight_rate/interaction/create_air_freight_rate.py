@@ -8,20 +8,19 @@ from configs.air_freight_rate_constants import DEFAULT_RATE_TYPE
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 
-def create_audit(request, freight_id):
+def create_audit(request, freight_id,validity_id):
 
     rate_type = request.get('rate_type')
 
     audit_data = {}
-    audit_data["validity_start"] = request["validity_start"].isoformat()
-    audit_data["validity_end"] = request["validity_end"].isoformat()
-    audit_data["line_items"] = request.get("line_items")
-    audit_data["weight_limit"] = request.get("weight_limit")
-    audit_data["origin_local"] = request.get("origin_local")
-    audit_data["destination_local"] = request.get("destination_local")
-    audit_data["is_extended"] = request.get("is_extended")
-    audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
-    audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
+    audit_data["validity_start"] = request.get("validity_start").isoformat()
+    audit_data["validity_end"] = request.get("validity_end").isoformat()
+    audit_data["performed_by_id"] = request.get("performed_by_id")
+    audit_data["procured_by_id"] = request.get("procured_by_id")
+    audit_data["sourced_by_id"] = request.get("sourced_by_id")
+    audit_data["currency"] = request.get("currency")
+    audit_data["price_type"] = request.get("price_type")
+    audit_data["air_freight_rate_request_id"] = request.get("air_freight_rate_request_id")
 
     id = AirFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
@@ -30,8 +29,9 @@ def create_audit(request, freight_id):
         performed_by_id=request["performed_by_id"],
         data=audit_data,
         object_id=freight_id,
-        object_type="FclFreightRate",
+        object_type="AirFreightRate",
         source=request.get("source"),
+        validity_id=validity_id
     )
     return id
 
@@ -126,7 +126,7 @@ def create_air_freight_rate(request):
     except Exception as e:
         raise HTTPException(status_code=400, detail="rate did not save")
     
-    create_audit(request, freight.id)
+    create_audit(request, freight.id,validity_id)
 
     delay_air_functions.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
     freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
