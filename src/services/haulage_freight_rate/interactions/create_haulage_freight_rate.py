@@ -6,6 +6,10 @@ from micro_services.client import organization
 from celery_worker import update_haulage_freight_rate_request_in_delay
 def create_haulage_freight_rate(request):
 
+    transport_modes = request.get('transport_modes',[])
+    transport_modes = set(transport_modes)
+    transport_modes = list(transport_modes)
+    transport_modes.sort()
     params = get_haulage_unique_params(request)
     haulage_freight_rate = HaulageFreightRate.select().where(
         HaulageFreightRate.origin_location_id == request.get('location_id'),
@@ -21,7 +25,7 @@ def create_haulage_freight_rate(request):
         HaulageFreightRate.trip_type == request.get('trip_type'),
         HaulageFreightRate.importer_exporter_id == request.get('importer_exporter_id'),
         HaulageFreightRate.shipping_line_id == request.get('shipping_line_id'),
-        HaulageFreightRate.transport_modes_keyword == '_'.join(set(request.get('transport_modes_keyword')).sort())).first()
+        HaulageFreightRate.transport_modes_keyword == '_'.join(transport_modes))
     
     if not haulage_freight_rate:
         haulage_freight_rate = HaulageFreightRate(**params)
@@ -31,7 +35,8 @@ def create_haulage_freight_rate(request):
     haulage_freight_rate.validity_start = request.get('validity_start')
     haulage_freight_rate.validity_end = request.get('validity_end')
 
-
+    possible_charge_codes = haulage_freight_rate.possible_charge_codes()
+    mandatory_charge_codes = haulage_freight_rate.mandatory_charge_codes(possible_charge_codes)
     haulage_freight_rate.validate_validity_object(haulage_freight_rate.validity_start,haulage_freight_rate.validity_end)
     haulage_freight_rate.set_platform_price(haulage_freight_rate.mandatory_charge_codes(haulage_freight_rate.possible_charge_codes()),currency = 'INR')
     haulage_freight_rate.update_line_item_messages(haulage_freight_rate.possible_charge_codes())
@@ -51,6 +56,10 @@ def create_haulage_freight_rate(request):
     if request.get('fcl_freight_rate_request_id'):
         update_haulage_freight_rate_request_in_delay({'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
 
+    try:
+        haulage_freight_rate.save()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="rate did not save")
     return {"id": haulage_freight_rate.id}
 
     
@@ -74,6 +83,10 @@ def get_audit_params(request):
     }
 
 def get_haulage_unique_params(request):
+    transport_modes = request.get('transport_modes',[])
+    transport_modes = set(transport_modes)
+    transport_modes = list(transport_modes)
+    transport_modes.sort()
     params = {
         'origin_location_id' : request.get('origin_location_id'),
         'destination_location_id': request.get('destination_location_id'),
@@ -89,7 +102,7 @@ def get_haulage_unique_params(request):
         'commodity': request.get('commodity'),
         'importer_exporter_id': request.get('importer_exporter_id'),
         'shipping_line_id': request.get('shipping_line_id'),
-        'transport_modes_keyword': '_'.join(set(request.get('transport_modes_keyword')).sort())
+        'transport_modes_keyword': '_'.join(transport_modes)
     }
 
     return params

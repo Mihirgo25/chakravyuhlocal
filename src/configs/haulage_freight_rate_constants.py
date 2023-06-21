@@ -213,3 +213,12 @@ HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS = {
     'ss_normal_tank':  COMMODITY,
     'ms_normal_tank':  COMMODITY
   }
+
+
+FEEDBACK_SOURCES = ['spot_search', 'checkout']
+
+POSSIBLE_FEEDBACKS = ['unsatisfactory_rate']
+
+FEEDBACK_TYPES = ['liked', 'disliked']
+
+REQUEST_SOURCES = ['spot_search']

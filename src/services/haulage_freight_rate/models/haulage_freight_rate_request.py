@@ -5,6 +5,7 @@ from fastapi import HTTPException
 import datetime
 from micro_services.client import *
 from database.rails_db import *
+from configs.haulage_freight_rate_constants import REQUEST_SOURCES
 
 class BaseModel(Model):
     # db.execute_sql('create sequence fcl_freight_rate_requests_serial_id_seq')
@@ -65,9 +66,9 @@ class HaulageFreightRateRequest(BaseModel):
         table_name = 'haulage_freight_rate_requests'
 
 
-    # def validate_source(self):
-    #     if self.source and self.source not in REQUEST_SOURCES:
-    #         raise HTTPException(status_code=400, detail="Invalid source")
+    def validate_source(self):
+        if self.source and self.source not in REQUEST_SOURCES:
+            raise HTTPException(status_code=400, detail="Invalid source")
 
 
     def validate_source_id(self):
@@ -88,3 +89,41 @@ class HaulageFreightRateRequest(BaseModel):
         performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
         if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
             raise HTTPException(status_code=400, detail='Invalid Account Type')
+        
+
+    def validate(self):
+        self.validate_source()
+        self.validate_source_id()
+        self.validate_performed_by_id()
+        self.validate_performed_by_org_id()
+        return True
+    
+    
+    def send_closed_notifications_to_sales_agent(self):
+        location_pair = HaulageFreightRateRequest.select(HaulageFreightRateRequest.origin_location_id, HaulageFreightRateRequest.destination_location_id).where(HaulageFreightRateRequest.source_id == self.source_id).limit(1).dicts().get()
+        location_pair_data = maps.list_locations({ 'filters': {'id': [str(location_pair['origin_location_id']), str(location_pair['destination_location_id'])] }})['list']
+        location_pair_name = {data['id']:data['display_name'] for data in location_pair_data}
+
+        importer_exporter_id = spot_search.get_spot_search({'id': str(self.source_id)})['detail']['importer_exporter_id']
+
+        origin_location = location_pair_name[str(location_pair['origin_port_id'])]
+        destination_location = location_pair_name[str(location_pair['destination_port_id'])]
+
+        data = {
+            'user_id': self.performed_by_id,
+            'type': 'platform_notification',
+            'service': 'haulage_freight_rate',
+            'service_id': self.id,
+            'template_name': 'freight_rate_request_completed_notification' if 'rate_added' in self.closing_remarks else 'freight_rate_request_closed_notification',
+            'variables': {
+                'service_type': 'haulage freight',
+                'origin_location': origin_location,
+                'destination_location': destination_location,
+                'remarks': None if 'rate_added' in self.closing_remarks else "Reason: {}.".format(self.closing_remarks[0].lower().replace('_', ' ')),
+                'request_serial_id': str(self.serial_id),
+                'spot_search_id': str(self.source_id),
+                'importer_exporter_id': importer_exporter_id 
+            }
+        }
+
+        common.create_communication(data)

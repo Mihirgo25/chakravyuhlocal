@@ -25,6 +25,7 @@ from services.chakravyuh.interaction.get_air_invoice_estimation_prediction impor
 from services.extensions.interactions.create_freight_look_rates import create_air_freight_rate_api
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
+from services.haulage_freight_rate.interactions.update_haulage_freight_rate_request import update_haulage_freight_rate_request
 
 # Rate Producers
 
@@ -489,6 +490,15 @@ def adjust_air_freight_dynamic_pricing(self):
 def process_freight_look_rates(self, rate, locations):
     try:
         return create_air_freight_rate_api(rate=rate, locations=locations)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+def update_haulage_freight_rate_request_in_delay(self, request):
+    try:
+        update_haulage_freight_rate_request(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

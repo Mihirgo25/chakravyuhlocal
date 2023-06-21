@@ -1,12 +1,12 @@
 IHE:
   name: "Inland Haulage Export"
   units: ['per_container']
-  condition: (origin_location[:is_icd] && (transport_modes & ['rail']).count > 0)
+  condition: (origin_location['is_icd'] and len(transport_modes and ['rail']) > 0)
   tags: [ 'mandatory', 'slab_cargo_weight_per_container', 'haulage', 'rail' ]
 IHI:
   name: "Inland Haulage Import"
   units: ['per_container']
-  condition: (destination_location[:is_icd] && (transport_modes & ['rail']).count > 0)
+  condition: (destination_location['is_icd'] and len(transport_modes and ['rail']) > 0)
   tags: [ 'mandatory', 'slab_cargo_weight_per_container', 'haulage', 'rail' ]
 CTC:
   name: "Container Tracking Charges"
@@ -61,7 +61,7 @@ VDC:
 RTC:
   name: "Trip Charge"
   units: ['per_container']
-  condition: (transport_modes & ['trailer', 'barge']).count > 0
+  condition: len(transport_modes and ['trailer', 'barge']) > 0
   tags: ['trailer', 'slab_cargo_weight_per_container','barge']
 TI:
   name: "Transit insurance"

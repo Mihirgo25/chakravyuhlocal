@@ -18,7 +18,7 @@ class BaseModel(Model):
     class Meta:
         database = db
 class HaulageFreightRate(BaseModel):
-    id = BigAutoField(primary_key=True)
+    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_location_id = UUIDField(null=True)
     origin_cluster_id = UUIDField(null=True)
     origin_city_id = UUIDField(null=True)
@@ -302,8 +302,13 @@ class HaulageFreightRate(BaseModel):
         is_line_items_info_messages_present = False
 
         grouped_charge_codes = {}
+
         for line_item in self.line_items:
-            grouped_charge_codes[line_item['code']] = [grouped_charge_codes[line_item['code']]] + [line_item]
+            if grouped_charge_codes.get(line_item.get('code')):
+                item = grouped_charge_codes[line_item.get('code')]
+            else:
+                item = []
+            grouped_charge_codes[line_item.get('code')] = item + [line_item]
 
         for code,line_items in grouped_charge_codes.items():
             code_config = HAULAGE_FREIGHT_CHARGES[code]
@@ -313,11 +318,13 @@ class HaulageFreightRate(BaseModel):
                 is_line_items_error_messages_present = True
                 continue
 
-            if len(set(map(lambda item: item.unit, line_items)) - set(code_config['units'])) > 0:
+            if len(set(map(lambda item: item.get('unit'), line_items)) - set(code_config['units'])) > 0:
                 line_items_error_messages[code] = ["can only be having units " + ", ".join(code_config['units'])]
                 is_line_items_error_messages_present = True
                 continue
 
+            transport_modes = self.transport_modes
+            container_type = self.container_type
             if not eval(str(code_config.get('condition'))):
                 line_items_error_messages[code] = ['is invalid']
                 is_line_items_error_messages_present = True
@@ -372,7 +379,7 @@ class HaulageFreightRate(BaseModel):
         if not self.origin_location_id or self.origin_location:
             return
         
-        self.origin_location = maps.list_locations({ 'filters': { 'id': self.origin_location_id}})['list'][0]
+        self.origin_location = maps.list_locations({'filters': { 'id': self.origin_location_id}})['list'][0]
 
     def set_destination_location(self):
         if not self.destination_location_id or self.destination_location:
@@ -394,17 +401,21 @@ class HaulageFreightRate(BaseModel):
 
         haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
         charge_codes = {}
+        origin_location = self.origin_location
+        destination_location = self.destination_location
+        transport_modes = self.transport_modes
+        container_type = self.container_type
 
         for code,config in haulage_freight_charges_dict.items():
-            if config.get('condition') is not None and eval(str(config['condition'])) and bool([set(self.transport_modes)] & set([config['tags']])):
-                charge_codes[code] = config
+            if config.get('condition') is not None and eval(str(config['condition'])):
+                if bool(set(self.transport_modes) & set(config['tags'])):
+                    charge_codes[code] = config
 
         return charge_codes
 
     def mandatory_charge_codes(self,possible_charge_codes):
-
         charge_codes = {}
-        for code,config in possible_charge_codes:
+        for code,config in possible_charge_codes.items():
             if 'mandatory' in config['tags']:
                 charge_codes[code.upper()] = config
 
