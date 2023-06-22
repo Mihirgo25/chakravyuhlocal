@@ -15,8 +15,6 @@ from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import (
 )
 from micro_services.client import maps
 
-ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
-
 
 def get_airport_id(port_code, country_code):
     input = {"filters": {"type": "airport", "port_code": port_code, "status": "active"}}
@@ -29,7 +27,6 @@ def get_airport_id(port_code, country_code):
 
 
 def get_airline_id(airline_name):
-    print(airline_name, "airline_name")
     airline_name = airline_name.lower()
     try:
         airline_id = maps.list_operators(
@@ -342,7 +339,6 @@ def create_air_freight_freight_rate(
 
     object["service_provider_id"] = params.get("service_provider_id")
     object["performed_by_id"] = params.get("performed_by_id")
-    # object["cogo_entity_id"] = params.get('cogo_entity_id')
     object["source"] = "rate_sheet"
 
     operation_types = object["operation_type"].lower().split(",")
