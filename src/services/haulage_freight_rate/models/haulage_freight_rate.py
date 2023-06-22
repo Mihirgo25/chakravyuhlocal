@@ -88,34 +88,28 @@ class HaulageFreightRate(BaseModel):
         self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_cluster_id)),uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
 
     def validate_container_size(self):
-      if self.container_size and self.container_size in CONTAINER_SIZES:
-        return True
-      return False
+      if self.container_size and self.container_size not in CONTAINER_SIZES:
+          raise HTTPException(status_code=400, detail="container size is invalid")
 
     def validate_container_type(self):
-      if self.container_type and self.container_type in CONTAINER_TYPES:
-        return True
-      return False
+      if self.container_type and self.container_type not in CONTAINER_TYPES:
+        raise HTTPException(status_code=400, detail="container type  is invalid")
 
     def validate_haulage_type(self):
-        if self.haulage_type in HAULAGE_FREIGHT_TYPES:
-            return True
-        return False
+        if self.haulage_type not in HAULAGE_FREIGHT_TYPES:
+            raise HTTPException(status_code=400, detail="haulage type is invalid")
     
     def validate_transport_modes(self):
-        if (self.transport_modes.issubset(TRANSPORT_MODES)):
-            return True
-        return False
+        if not (self.transport_modes.issubset(TRANSPORT_MODES)):
+            raise HTTPException(status_code=400, detail="transport modes are invalid")
     
     def validate_transit_time(self):
         if self.transport_modes[0] == 'trailer' and self.transit_time < 0:
-            return False
-        return True
+            raise HTTPException(status_code=400, detail="transit time is invalid")
     
     def validate_detention_free_time(self):
         if self.transport_modes[0] == 'trailer' and self.detention_free_time < 0:
-            return False
-        return True
+            raise HTTPException(status_code=400, detail="detention free time is invalid")
     
 
     def validate_shipping_line_id(self):
@@ -144,8 +138,7 @@ class HaulageFreightRate(BaseModel):
 
     def validate_trip_type(self):
         if self.transport_modes[0] == 'trailer' and self.trip_type not in TRIP_TYPES:
-            return False
-        return True
+            raise HTTPException(status_code=400, detail="Invalid trip type")
     
     def validate_line_items(self, line_items):
       if(not line_items or len(line_items)==0):
@@ -183,7 +176,6 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.transport_modes_keyword == self.transport_modes_keyword,
             HaulageFreightRate.transit_time == self.transit_time,
             HaulageFreightRate.detention_free_time == self.detention_free_time,
-            # HaulageFreightRate.trailer_type == self.trailer_type,
             HaulageFreightRate.trip_type == self.trip_type,
         ).count()
 
@@ -224,6 +216,23 @@ class HaulageFreightRate(BaseModel):
 
         if validity_end < validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
+        
+    def validate_before_save(self):
+        self.validate_container_size()
+        self.validate_container_type()
+        self.validate_haulage_type()
+        self.validate_transport_modes()
+        self.validate_transit_time()
+        self.validate_detention_free_time()
+        self.validate_shipping_line_id()
+        self.validate_service_provider_id()
+        self.validate_importer_exporter_id()
+        self.validate_trip_type()
+        self.validate_line_items()
+        self.validate_origin_location()
+        self.validate_destination_location()
+        self.validate_commodity()
+        return True
       
     def get_mandatory_line_items(self,mandatory_charge_codes):
         mandatory_line_items = [line_item for line_item in self.line_items if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
@@ -248,7 +257,6 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.transit_time == self.transit_time,
             HaulageFreightRate.detention_free_time == self.detention_free_time,
             HaulageFreightRate.trip_type == self.trip_type,
-            # HaulageFreightRate.trailer_type == self.trailer_type,
             HaulageFreightRate.is_line_items_error_messages_present == False,
             HaulageFreightRate.service_provider_id != self.service_provider_id
         ).where(HaulageFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
@@ -438,7 +446,6 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.transit_time == self.transit_time,
             HaulageFreightRate.detention_free_time == self.detention_free_time,
             HaulageFreightRate.trip_type == self.trip_type,
-            # HaulageFreightRate.trailer_type == self.trailer_type,
             HaulageFreightRate.rate_not_available_entry == True
         ).execute()
 

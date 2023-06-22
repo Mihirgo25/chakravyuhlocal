@@ -1,6 +1,4 @@
 
-from configs.global_constants import *
-
 DEFAULT_PERMISSIBLE_CARRYING_CAPACITY = 54.90
 
 DESTINATION_TERMINAL_CHARGES_INDIA = 15

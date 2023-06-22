@@ -873,7 +873,7 @@ class HaulageLineItem(BaseModel):
   remarks: list[str] = None
   slabs: list[Slab] = None
 
-class PostHaulageFreightRate(BaseModel):
+class CreateHaulageFreightRate(BaseModel):
   rate_sheet_id: str = None
   origin_location_id: str 
   destination_location_id: str
