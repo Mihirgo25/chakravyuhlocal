@@ -17,6 +17,7 @@ from services.air_customs_rate.interaction.get_air_customs_rate import get_air_c
 from services.air_customs_rate.interaction.list_air_customs_rates import list_air_customs_rates
 from services.air_customs_rate.interaction.list_air_customs_rate_requests import list_air_customs_rate_requests
 from services.air_customs_rate.interaction.list_air_customs_rate_feedbacks import list_air_customs_rate_feedbacks
+from services.air_customs_rate.interaction.list_air_customs_charge_codes import list_air_customs_charge_codes
 from services.air_customs_rate.interaction.update_air_customs_rate import update_air_customs_rate
 from services.air_customs_rate.interaction.delete_air_customs_rate import delete_air_customs_rate
 from services.air_customs_rate.interaction.delete_air_customs_rate_feedback import delete_air_customs_rate_feedback
@@ -240,13 +241,14 @@ def list_air_customs_rates_data(
     page: int = 1,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
+    return_query: bool = False,
     pagination_data_required: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_air_customs_rates(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
+        data = list_air_customs_rates(filters, page_limit, page, sort_by, sort_type,return_query, pagination_data_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
@@ -254,6 +256,26 @@ def list_air_customs_rates_data(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
+@air_customs_router.get("/list_air_customs_charge_codes")
+def list_air_customs_charge_codes_data(
+    service_type: str,
+    trade_type: str,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'service_type': service_type,
+        'trade_type': trade_type
+    }
+    try:
+        data = list_air_customs_charge_codes(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.get("/get_air_customs_rate_cards")
 def get_air_cutsoms_rate_cards_data(

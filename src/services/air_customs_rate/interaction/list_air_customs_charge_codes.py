@@ -3,7 +3,7 @@ import json
 from fastapi import HTTPException
 
 def list_air_customs_charge_codes(request):
-    request = json.loads(request)
+    # request = json.loads(request)
     validate_service_type(request)
     charges = get_charge_codes(request)
     if not charges:
@@ -21,7 +21,7 @@ def get_charge_codes(request):
         if 'deleted' in value.get('tags'):
             continue
 
-        response['list'].append({ 'code': code, 'name': value['name'], 'units': value['units'], 'condition': value['condition'], 'tags': value['tags'], 'trade_types': value['trade_types'], 'sac_code': value['sac_code'] })
+        response['list'].append({ 'code': code, 'name': value['name'], 'units': value['units'], 'condition': value['condition'], 'tags': value['tags'], 'trade_types': value['trade_types'], 'sac_code': value.get('sac_code') })
     return response
 
 def validate_service_type(request):
