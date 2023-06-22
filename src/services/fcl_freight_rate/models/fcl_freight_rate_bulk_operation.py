@@ -345,10 +345,14 @@ class FclFreightRateBulkOperation(BaseModel):
             del filters['service_provider_id']
 
         rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
-        
         rate_ids = get_relevant_rate_ids_from_audits(rate_sheet_id,data['apply_to_extended_rates'],filters.get('id'))
+        
         if rate_ids:
-            filters = filters |  {'id': rate_ids}  
+            if isinstance(filters.get('id'), list):
+                rate_ids += filters['id']
+            elif filters.get('id'):
+                rate_ids += [filters['id']]
+            filters['id'] = rate_ids
                   
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
         fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
@@ -430,11 +434,16 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id']:
             del filters['service_provider_id']
 
-        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_id'))
-
+        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
         rate_ids = get_relevant_rate_ids_from_audits(rate_sheet_id,data['apply_to_extended_rates'],filters.get('id'))
+        
         if rate_ids:
-            filters = filters |  {'id': rate_ids}
+            if isinstance(filters.get('id'), list):
+                rate_ids += filters['id']
+            elif filters.get('id'):
+                rate_ids += [filters['id']]
+            filters['id'] = rate_ids
+
             
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 

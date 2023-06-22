@@ -478,7 +478,7 @@ class FclFreightRate(BaseModel):
                 market_price = float(sum(common.get_money_exchange_for_fcl({"price": item['market_price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             else:
                 price = float(sum(item["price"] for item in line_items))   
-                market_price = float(sum(item["price"] for item in line_items))   
+                market_price = float(sum(item["market_price"] for item in line_items))   
                      
             id = str(uuid.uuid4())
             new_validity_object = {

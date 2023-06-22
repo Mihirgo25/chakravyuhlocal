@@ -178,7 +178,7 @@ def get_importer_exporter_id(importer_exporter_name):
 
 
 def process_fcl_freight_local(params, converted_file, update):
-    valid_headers = ["trade_type", "port", "main_port", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency", "remark1", "remark2", "remark3"]
+    valid_headers = ["trade_type", "port", "main_port", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency","market_price", "remark1", "remark2", "remark3"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
 
@@ -250,12 +250,12 @@ def process_fcl_freight_local(params, converted_file, update):
                         (valid_hash(
                             row,
                             ["code", "unit", "price", "currency"],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit']
+                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit', 'market_price']
                         )
                         or valid_hash(
                             row,
                             ['lower_limit', 'upper_limit', 'price', 'currency'],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit']
+                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit','market_price']
                         )
                     )):
                 rows.append(row)
@@ -330,6 +330,7 @@ def create_fcl_freight_local_rate(
             'code': t.get('code'),
             'unit': t.get('unit'),
             'price': parse_numeric(t.get('price')),
+            'market_price': parse_numeric(t.get('market_price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
@@ -877,7 +878,7 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_ro
     return object_validity
 
 def process_fcl_freight_freight(params, converted_file, update):
-    valid_headers = ["origin_port", "origin_main_port", "destination_port", "destination_main_port", "container_size", "container_type", "commodity", "shipping_line", "validity_start", "validity_end", "code", "unit", "price", "currency", "extend_rates", "weight_free_limit", "weight_lower_limit", "weight_upper_limit", "weight_limit_price", "weight_limit_currency", "destination_detention_free_limit", "destination_detention_lower_limit", "destination_detention_upper_limit", "destination_detention_price", "destination_detention_currency", "schedule_type", "remark1", "remark2", "remark3", "payment_term", "rate_type"]
+    valid_headers = ["origin_port", "origin_main_port", "destination_port", "destination_main_port", "container_size", "container_type", "commodity", "shipping_line", "validity_start", "validity_end", "code", "unit", "price", "currency", "market_price", "extend_rates", "weight_free_limit", "weight_lower_limit", "weight_upper_limit", "weight_limit_price", "weight_limit_currency", "destination_detention_free_limit", "destination_detention_lower_limit", "destination_detention_upper_limit", "destination_detention_price", "destination_detention_currency", "schedule_type", "remark1", "remark2", "remark3", "payment_term", "rate_type"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -978,7 +979,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1010,7 +1012,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1044,7 +1047,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1078,7 +1082,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1110,7 +1115,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1144,7 +1150,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "weight_limit_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1178,7 +1185,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_free_limit",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
             ):
@@ -1243,7 +1251,7 @@ def create_fcl_freight_freight_rate(
     params, converted_file,  rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row
 ):
     from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
-    keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term', 'rate_type']
+    keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term', 'rate_type', "market_price"]
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     print(object, '4')
     object['validity_start'] = convert_date_format(object.get('validity_start'))
@@ -1265,6 +1273,7 @@ def create_fcl_freight_freight_rate(
             'code': t.get('code'),
             'unit': t.get('unit'),
             'price': parse_numeric(t.get('price')),
+            'market_price': parse_numeric(t.get('market_price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []

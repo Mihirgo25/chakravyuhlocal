@@ -121,14 +121,14 @@ def create_fcl_freight_rate(request):
 
     if request.get("origin_local") and "line_items" in request["origin_local"]:
         freight.origin_local = {
-            "line_items": request["origin_local"]["line_items"]
+            "line_items": get_normalized_line_items(request["origin_local"]["line_items"])
         }
     else:
         freight.origin_local = { "line_items": [] }
 
     if request.get("destination_local") and "line_items" in request["destination_local"]:
         freight.destination_local = {
-            "line_items": request["destination_local"]["line_items"]
+            "line_items": get_normalized_line_items(request["destination_local"]["line_items"])
         }
     else:
         freight.destination_local = { "line_items": [] }
