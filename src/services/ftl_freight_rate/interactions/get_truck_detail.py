@@ -29,8 +29,10 @@ def find_truck_detail(truck_search_params):
     for key in truck_search_params:
         query = query.where(attrgetter(key)(Truck) == truck_search_params[key])
     
-    object = query.first()
-    truck_data_object = jsonable_encoder(model_to_dict(object))
+    truck_object = query.first()
+    if not truck_object:
+        return False
+    truck_data_object = jsonable_encoder(model_to_dict(truck_object))
     truck_detail = {}
     for key in SELECTED_TRUCK_FIELDS:
         truck_detail[key] = truck_data_object[key]
