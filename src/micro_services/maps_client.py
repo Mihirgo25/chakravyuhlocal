@@ -46,7 +46,7 @@ class MapsApiClient:
     def get_distance_matrix_valhalla(self, data= {}):
         data['is_authorization_required'] = False
         return self.client.request('GET','get_distance_matrix_valhalla',{}, data)
- 
+
     def get_land_route_from_valhalla(self,data = {}):
         data['is_authorization_required'] = False
         data = json.dumps(data)
@@ -63,6 +63,6 @@ class MapsApiClient:
                     data[key] = json.dumps(data[key])
             return self.client.request('GET', 'list_operators', {}, data)
         return self.client.request('GET', 'list_operators', data, {})
-    
+
     def get_is_land_service_possible(self,data = {}):
         return self.client.request('GET','is_land_service_possible',data)
