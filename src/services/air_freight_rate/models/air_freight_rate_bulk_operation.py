@@ -29,7 +29,7 @@ from services.air_freight_rate.interaction.update_air_freight_storage_rate impor
 from configs.definitions import AIR_FREIGHT_CHARGES,AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
 from services.air_freight_rate.interaction.list_air_freight_storage_rates import list_air_freight_storage_rates
 from services.air_freight_rate.interaction.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
-
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 ACTION_NAMES = [
     "update_freight_rate",
     "delete_freight_rate",
@@ -559,14 +559,16 @@ class AirFreightRateBulkOperation(BaseModel):
         data = self.data
 
         count = 0
-        total_count = data.count
+        total_count = len(data)
 
         for freight in data:
             count += 1
 
             object = (
-                AirFreightRateSurcharge.select()
-                .where(AirFreightRateSurcharge.id == freight["air_freight_rate_id"])
+                AirServiceAudit.select()
+                .where(AirServiceAudit.object_id == freight["air_freight_rate_surcharge_id"],
+                       AirServiceAudit.bulk_operation_id == self.id
+                )
                 .first()
             )
             if object:
@@ -576,7 +578,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
             delete_air_freight_rate_surcharge(
                 {
-                    "id": freight["air_freight_rate_id"],
+                    "id": freight["air_freight_rate_surcharge_id"],
                     "performed_by_id": self.performed_by_id,
                     "bulk_operation_id": self.id,
                 }
@@ -585,18 +587,19 @@ class AirFreightRateBulkOperation(BaseModel):
             self.save()
 
     def perform_delete_freight_rate_local_action(self):
+        print("hello")
         data = self.data
-
         count = 0
-        total_count = data.count
+        total_count = len(data)
 
         for freight in data:
             count += 1
 
             object = (
-                AirFreightRateLocal.select()
+                AirServiceAudit.select()
                 .where(
-                    AirFreightRateSurcharge.id == freight["air_freight_rate_local_id"]
+                    AirServiceAudit.object_id == freight["air_freight_rate_local_id"],
+                    AirServiceAudit.bulk_operation_id == self.id
                 )
                 .first()
             )

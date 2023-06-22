@@ -382,12 +382,19 @@ class UpdateFreightRate(BaseModel):
     new_end_date: datetime
 
 
+class DeleteAirFreightRateLocal(BaseModel):
+    air_freight_rate_local_id:str
+
+class DeleteAirFreightRateSurcharge(BaseModel):
+    air_freight_rate_surcharge_id:str
+
 class CreateBulkOperation(BaseModel):
     performed_by_id: str = None
     delete_freight_rate: List[DeleteFreightRate] = None
     add_freight_rate_markup: List[AddFreightRateMarkup] = None
     update_freight_rate: List[UpdateFreightRate] = None
-
+    delete_freight_rate_local: List[DeleteAirFreightRateLocal]=None
+    delete_freight_rate_surcharge:List[DeleteAirFreightRateSurcharge]=None
 
 class AirFreightRate(BaseModel):
     origin_airport_id: str
@@ -503,12 +510,3 @@ class DeleteAirFreightRateRequest(BaseModel):
     validity_id: str=None
     performed_by_id: str=None
 
-class DeleteAirFreightRateSurcharge(BaseModel):
-    id:str
-    performed_by_id:str=None
-    bulk_operation_id:str
-
-class DeleteAirFreightRateLocal(BaseModel):
-    id:str
-    performed_by_id:str=None
-    bulk_operation_id:str
