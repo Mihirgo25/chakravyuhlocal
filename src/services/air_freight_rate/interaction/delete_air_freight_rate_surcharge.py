@@ -35,8 +35,8 @@ def update_air_freight_rate_surcharge(request):
 def create_audit(request, id):
     AirServiceAudit.create(
         action_name="delete",
-        performed_by_id=request["performed_by_id"],
-        bulk_operation_id=request["bulk_operation_id"],
+        performed_by_id=request.get("performed_by_id"),
+        bulk_operation_id=request.get("bulk_operation_id"),
         object_id=id,
         object_type="AirFreightRateSurcharge",
     )
