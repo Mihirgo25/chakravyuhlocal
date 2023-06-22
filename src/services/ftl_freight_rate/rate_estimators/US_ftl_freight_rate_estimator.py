@@ -20,7 +20,7 @@ class USFtlFreightRateEstimator:
             if data['process_type'] in BASIC_CHARGE_LIST:
                 process_unit = data['process_unit']
                 if data['process_type'] == 'driver':
-                    basic_freight_charges += (float(data['process_value'])*self.get_driver_charges_factor(total_path_distance))
+                    basic_freight_charges += (float(data['process_value'])*total_path_distance)
                 else:
                     basic_freight_charges += (float(data['process_value'])*(total_path_distance))
         if self.truck_and_commodity_data['commodity'] in HAZ_CLASSES or self.truck_and_commodity_data['truck_body_type'] == 'reefer':
@@ -37,8 +37,6 @@ class USFtlFreightRateEstimator:
         result["distance"] = total_path_distance
         return result
 
-    def get_driver_charges_factor(self,total_distance):
-        return total_distance
 
     def get_applicable_rule_set(self):
         truck_type = self.truck_and_commodity_data["truck_type"]
