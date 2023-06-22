@@ -16,6 +16,7 @@ import sentry_sdk
 from fastapi import HTTPException
 
 from services.air_freight_rate.interaction.get_air_freight_storage_rate import get_air_freight_storage_rate
+from services.air_freight_rate.interaction.delete_air_freight_rate_local import delete_air_freight_rate_local
 from services.air_freight_rate.interaction.delete_air_freight_rate_feedback import delete_air_freight_rate_feedback
 from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
 from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
@@ -54,6 +55,7 @@ from services.air_freight_rate.interaction.get_air_freight_local_rate_cards impo
 from services.air_freight_rate.interaction.get_weight_slabs_for_airline import get_weight_slabs_for_airline
 from services.air_freight_rate.interaction.create_air_freight_rate_feedback import create_air_freight_rate_feeback
 from services.air_freight_rate.interaction.delete_air_freight_rate_request import delete_air_freight_rate_request
+from services.air_freight_rate.interaction.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
 
 air_freight_router = APIRouter()
 
@@ -1135,3 +1137,33 @@ def delete_air_freight_rate_request_data(request:DeleteAirFreightRateRequest , r
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"success":False , "error":str(e)})
+    
+@air_freight_router.post("/delete_air_freight_rate_surcharge")
+def delete_air_freight_rate_surcharge_data(request:DeleteAirFreightRateSurcharge, resp:dict = Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['status_code'],content=resp)
+    if resp['isAuthorizzed']:
+        request.performed_by_id=resp["setters"]["performed_by_id"]
+    try:
+        data=delete_air_freight_rate_surcharge(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise 
+    except Exception as e :
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500 , content={"success":False, "error":str(e)})
+
+@air_freight_router.post("/delete_air_freight_rate_local")
+def delete_air_freight_rate_local_data(request:DeleteAirFreightRateLocal, resp:dict = Depends(authorize_token)):
+    if resp['status_code']!=200:
+        return JSONResponse(status_code=resp['status_code'],content=resp)
+    if resp['isAuthorizzed']:
+        request.performed_by_id=resp["setters"]["performed_by_id"]
+    try:
+        data=delete_air_freight_rate_local(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise 
+    except Exception as e :
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500 , content={"success":False, "error":str(e)})

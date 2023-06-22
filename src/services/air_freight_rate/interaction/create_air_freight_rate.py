@@ -11,7 +11,6 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 def create_audit(request, freight_id,validity_id):
 
     rate_type = request.get('rate_type')
-    print('here')
     audit_data = {}
     audit_data["validity_start"] = request.get("validity_start").isoformat()
     audit_data["validity_end"] = request.get("validity_end").isoformat()
@@ -42,7 +41,6 @@ def create_air_freight_rate_data(request):
     
 def create_air_freight_rate(request):
     from celery_worker import delay_air_functions, update_air_freight_rate_request_in_delay
-    print('here1', request)
 
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
