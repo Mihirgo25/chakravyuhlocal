@@ -21,6 +21,7 @@ from services.ftl_freight_rate.interactions.create_truck import create_truck_dat
 from services.ftl_freight_rate.interactions.update_truck import update_truck_data
 from services.ftl_freight_rate.ftl_params import *
 from services.ftl_freight_rate.interactions.create_fuel_data import create_fuel_data
+from services.ftl_freight_rate.interactions.get_truck_detail import get_truck_detail
 
 ftl_freight_router = APIRouter()
 
@@ -182,3 +183,26 @@ def update_truck(request: UpdateTruck, resp: dict = Depends(authorize_token)):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@ftl_freight_router.get("/get_truck_detail")
+def get_truck_data(
+    truck_id: str = None,
+    truck_name : str = None,
+    resp: dict = Depends(authorize_token),
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        request = {
+            'id':truck_id,
+            'truck_name':truck_name
+        }
+        data = get_truck_detail(request)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
