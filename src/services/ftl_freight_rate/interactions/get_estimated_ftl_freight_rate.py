@@ -1,7 +1,7 @@
 from micro_services.client import maps
 from services.ftl_freight_rate.rate_estimators.ftl_freight_rate_estimator import FtlFreightEstimator
-from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
-from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING,PREDICTION_TRUCK_TYPES, EU_ZONE, TON_TO_POUND
+from services.ftl_freight_rate.interactions.list_trucks import list_trucks_data
+from configs.ftl_freight_rate_constants import TRUCK_TYPES_MAPPING, PREDICTION_TRUCK_TYPES
 from fastapi import HTTPException
 
 def get_ftl_freight_rate(
