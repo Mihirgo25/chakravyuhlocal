@@ -574,7 +574,7 @@ def add_freight_objects(freight_query_result, response_object, request):
             if slab['upper_limit'] < request['cargo_weight_per_container']:
                 continue
             
-            additional_weight_rate = slab['price']
+            additional_weight_rate = slab['price'] or 0
             additional_weight_rate_currency = slab['currency']
             break
 
