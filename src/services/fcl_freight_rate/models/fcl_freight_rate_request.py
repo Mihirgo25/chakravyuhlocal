@@ -175,4 +175,5 @@ class FclFreightRateRequest(BaseModel):
 
         common.create_communication(push_notification_data)
         common.create_communication(data)
+        
      
