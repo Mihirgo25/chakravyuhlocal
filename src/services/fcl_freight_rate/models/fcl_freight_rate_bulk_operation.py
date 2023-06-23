@@ -290,9 +290,10 @@ class FclFreightRateBulkOperation(BaseModel):
                 continue
 
             if data.get('markup'):
-                line_item = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']][0]
+                line_items = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']]
 
-                if line_item:
+                if line_items:
+                    line_item = line_items[0]
                     validity_object['line_items'].remove(line_item)
                     
                     if data['markup_type'].lower() == 'percent':
