@@ -1,5 +1,5 @@
 from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
-from configs.ftl_freight_rate_constants import EU_BASIC_CHARGE_LIST, DEFAULT_TOLL_PRICE_EU, ROUND_TRIP_CHARGE, HAZ_CLASSES, EUROPE_HAZARDOUS_RATE, EUROPE_REEFER_RATE
+from configs.ftl_freight_rate_constants import EU_BASIC_CHARGE_LIST, DEFAULT_TOLL_PRICE_EU, ROUND_TRIP_CHARGE, HAZ_CLASSES, EUROPE_HAZARDOUS_RATE, EUROPE_REEFER_RATE, AVERAGE_SPEEDS
 
 class EUFtlFreightRateEstimator:
     def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data):
@@ -13,7 +13,8 @@ class EUFtlFreightRateEstimator:
     def estimate(self):
         currency = 'EUR'
         total_path_distance = self.path_data['distance']
-        trip_duration = total_path_distance/75  #approx 75kmph
+        truck_type = self.truck_and_commodity_data["truck_type"]
+        trip_duration = total_path_distance/AVERAGE_SPEEDS[truck_type]
         truck_mileage = self.truck_and_commodity_data['mileage']
         truck_weight = self.truck_and_commodity_data['weight']
         basic_freight_charges = 0
