@@ -39,7 +39,7 @@ SQL = pw.SQL
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
-    migrator.add_index(SQL("CREATE INDEX index_truck_name ON trucks (truck_name);"))
+    migrator.sql("CREATE INDEX index_truck_name ON trucks (truck_name);")
     migrator.sql("ALTER TABLE trucks ADD CONSTRAINT constraintname UNIQUE (truck_name);")
 
 
