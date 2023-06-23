@@ -60,15 +60,11 @@ class FclFreightRateBulkOperation(BaseModel):
         if data.get('markup') and data.get('markup_type') and data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
-        if data['validity_end'] < data['source_date']:
-            raise HTTPException(status_code=400, detail='validity_end cannot be less than source date')
-        
         if data['validity_end'].date() < datetime.now().date():
             raise HTTPException(status_code=400, detail='validity_end cannot be less than current date')
         
         if data['validity_end'].date() > (datetime.now() +timedelta(days=60)).date():
             raise HTTPException(status_code=400, detail='validity_end cannot be greater than 60 days')
-        data['source_date'] = data['source_date'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
 
     def validate_delete_freight_rate_data(self):
@@ -276,7 +272,7 @@ class FclFreightRateBulkOperation(BaseModel):
  
             validity_object = None
             for t in freight["validities"]:
-                if datetime.strptime(t['validity_start'], '%Y-%m-%d') <= datetime.strptime(data['source_date'], '%Y-%m-%d') and datetime.strptime(t['validity_end'], '%Y-%m-%d') >= datetime.strptime(data['source_date'],'%Y-%m-%d') and datetime.strptime(t['validity_end'],'%Y-%m-%d') < datetime.strptime(data['validity_end'],'%Y-%m-%d'):
+                if datetime.strptime(t['validity_end'],'%Y-%m-%d') < datetime.strptime(data['validity_end'],'%Y-%m-%d'):
                     validity_object = t
 
             if not validity_object:

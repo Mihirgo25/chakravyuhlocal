@@ -756,7 +756,6 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
 
 class ExtendValidty(BaseModel):
   filters:dict={}
-  source_date:datetime
   validity_end:datetime
   sourced_by_ids:dict=None
   procured_by_ids:dict=None
