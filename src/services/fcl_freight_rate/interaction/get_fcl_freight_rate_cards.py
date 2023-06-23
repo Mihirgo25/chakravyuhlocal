@@ -171,7 +171,6 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
                 matching_locals[local_rate["service_provider_id"]] = local_rate
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
                 default_shipping_line_locals[local_rate["service_provider_id"]] = local_rate
-                
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
     if default_lsp in default_shipping_line_locals:
