@@ -91,7 +91,6 @@ def startup():
         db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
-    check_duplicate_truck_name()
     # insert_france_germany_rates()
     # create_rail_haulage_rates()
     # insert()

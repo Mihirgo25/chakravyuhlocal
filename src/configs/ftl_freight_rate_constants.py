@@ -368,3 +368,9 @@ EUROPE_HAZARDOUS_RATE = 1.05
 EUROPE_REEFER_RATE = 1.15
 
 TON_TO_POUND = 2000
+
+AVERAGE_SPEEDS = {
+    'small':90,
+    'medium':80,
+    'heavy':75
+}

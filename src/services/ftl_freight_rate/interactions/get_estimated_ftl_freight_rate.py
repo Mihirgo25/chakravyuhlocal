@@ -100,7 +100,7 @@ def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight
     return truck_and_commodity_data
 
 def get_truck_weight_according_to_country(country_code,weight):
-    if weight is None:
+    if not weight:
         return 0
     if country_code == 'IN':
         return weight
