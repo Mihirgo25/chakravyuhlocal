@@ -560,7 +560,7 @@ def delay_air_functions(self,air_object,request):
             raise self.retry(exc= exc)
         
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_air_local_rate_delay(self, request):
+def create_air_freight_rate_local_delay(self, request):
     try:
         return create_air_freight_rate_local(request)
     except Exception as exc:
@@ -580,7 +580,7 @@ def create_air_freight_rate_delays(self, request):
             raise self.retry(exc= exc)
     
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_air_surcharge_rate_delay(self, request):
+def create_air_freight_rate_surcharge_delay(self, request):
     try:
         return create_air_freight_rate_surcharge(request)
     except Exception as exc:

@@ -640,7 +640,7 @@ def create_air_freight_local_rate(
     last_row,
 ):
     from celery_worker import (
-        create_air_local_rate_delay,
+        create_air_freight_rate_local_delay,
     )
 
     keys_to_extract = [
@@ -696,7 +696,7 @@ def create_air_freight_local_rate(
     if validation.get("valid"):
         object["rate_sheet_validation"] = True
         object["rate_sheet_id"] = params["rate_sheet_id"]
-        create_air_local_rate_delay.apply_async(kwargs={"request": object}, queue="low")
+        create_air_freight_rate_local_delay.apply_async(kwargs={"request": object}, queue="low")
     else:
         print(validation.get("error"))
 
@@ -939,7 +939,7 @@ def create_air_freight_surcharge_rate(
     last_row,
 ):
     from celery_worker import (
-        create_air_surcharge_rate_delay,
+        create_air_freight_rate_surcharge_delay,
     )
 
     keys_to_extract = ["commodity", "commodity_type", "operation_type"]
@@ -980,7 +980,7 @@ def create_air_freight_surcharge_rate(
         )
         if validation.get("valid"):
             object["rate_sheet_validation"] = True
-            create_air_surcharge_rate_delay.apply_async(
+            create_air_freight_rate_surcharge_delay.apply_async(
                 kwargs={"request": object}, queue="low"
             )
         else:
