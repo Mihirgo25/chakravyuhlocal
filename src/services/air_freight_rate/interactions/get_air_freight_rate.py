@@ -2,15 +2,15 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from playhouse.postgres_ext import *
 from datetime import *
-from configs.air_freight_rate_constants import (
+from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,
 )
-from configs.air_freight_rate_constants import AIR_TRADE_IMPORT_TYPE
-from configs.air_freight_rate_constants import AIR_IMPORTS_HIGH_DENSITY_RATIO
-from configs.air_freight_rate_constants import AIR_IMPORTS_LOW_DENSITY_RATIO
-from configs.air_freight_rate_constants import AIR_EXPORTS_HIGH_DENSITY_RATIO
-from configs.air_freight_rate_constants import AIR_EXPORTS_LOW_DENSITY_RATIO
-from configs.air_freight_rate_constants import MAX_CARGO_LIMIT
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_TRADE_IMPORT_TYPE
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_IMPORTS_HIGH_DENSITY_RATIO
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_IMPORTS_LOW_DENSITY_RATIO
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_EXPORTS_HIGH_DENSITY_RATIO
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_EXPORTS_LOW_DENSITY_RATIO
+from services.air_freight_rate.constants.air_freight_rate_constants import MAX_CARGO_LIMIT
 from configs.definitions import AIR_FREIGHT_CHARGES
 
 

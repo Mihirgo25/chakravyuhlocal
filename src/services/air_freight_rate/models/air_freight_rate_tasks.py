@@ -3,7 +3,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from configs.air_freight_rate_constants import COMMODITY , COMMODITY_TYPE
+from services.air_freight_rate.constants.air_freight_rate_constants import COMMODITY , COMMODITY_TYPE
 from micro_services.client import * 
 from database.rails_db import *
 

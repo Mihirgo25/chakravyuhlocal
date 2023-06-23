@@ -2,7 +2,7 @@ from peewee import *
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import *
-from configs.air_freight_rate_constants import LOCAL_COMMODITIES
+from services.air_freight_rate.constants.air_freight_rate_constants import LOCAL_COMMODITIES
 from fastapi import HTTPException
 from configs.global_constants import TRADE_TYPES
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal

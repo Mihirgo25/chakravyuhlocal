@@ -186,3 +186,11 @@ RATE_FEEDBACK_RELEVANT_ROLE_ID = {
 CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
 
 INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
+
+DEFAULT_RATE_TYPE = 'market_place'
+
+RATE_ENTITY_MAPPING = {
+  "6fd98605-9d5d-479d-9fac-cf905d292b88": ['6fd98605-9d5d-479d-9fac-cf905d292b88', 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'],
+  "b67d40b1-616c-4471-b77b-de52b4c9f2ff": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88'],
+  "default": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88']
+}

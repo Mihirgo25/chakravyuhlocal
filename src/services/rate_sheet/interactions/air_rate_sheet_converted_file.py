@@ -275,7 +275,7 @@ def create_air_freight_freight_rate(
     last_row,
 ):
     from celery_worker import (
-        create_air_freight_rate_delays,
+        create_air_freight_rate_delay,
     )
 
     keys_to_extract = [
@@ -358,7 +358,7 @@ def create_air_freight_freight_rate(
                 )
                 if validation.get("valid"):
                     object["rate_sheet_validation"] = True
-                    create_air_freight_rate_delays.apply_async(
+                    create_air_freight_rate_delay.apply_async(
                         kwargs={"request": object}, queue="low"
                     )
                 else:

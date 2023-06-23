@@ -1,6 +1,6 @@
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from configs.air_freight_rate_constants import RATE_ENTITY_MAPPING,AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+from services.air_freight_rate.constants.air_freight_rate_constants import RATE_ENTITY_MAPPING,AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from playhouse.shortcuts import model_to_dict
 from libs.get_filters import get_filters
 from typing import Optional
