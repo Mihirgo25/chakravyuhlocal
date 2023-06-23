@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
-from services.fcl_freight_rate.helpers.common_helpers import get_normalized_line_items
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 
 
 def create_audit(request, fcl_freight_local_id):

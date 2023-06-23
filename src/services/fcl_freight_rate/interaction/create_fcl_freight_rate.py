@@ -7,7 +7,7 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
-from services.fcl_freight_rate.helpers.common_helpers import get_normalized_line_items
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 
 def add_rate_properties(request,freight_id):

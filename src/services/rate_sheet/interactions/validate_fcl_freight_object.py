@@ -10,7 +10,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRa
 from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, RATE_TYPES
 from libs.common_validations import validate_shipping_line
 from database.rails_db import get_shipping_line, get_organization
-from services.fcl_freight_rate.helpers.common_helpers import get_normalized_line_items
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 
 # validate_validity_object
 def validate_fcl_freight_object(module, object):
