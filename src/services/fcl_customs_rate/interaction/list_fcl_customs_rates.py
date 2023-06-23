@@ -51,7 +51,10 @@ def get_pagination_data(query, page, page_limit):
 def get_data(query):
     data = list(query.dicts())
     for object in data:
-        object['total_price_currency'] = 'INR'
+        if object['customs_line_items']:
+            object['total_price_currency'] = object['customs_line_items'][0].get('currency')
+        else:
+            object['total_price_currency'] = 'INR'
         object['total_price'] = get_total_price(object.get('customs_line_items'), object['total_price_currency'])
 
     return data
@@ -81,7 +84,8 @@ def apply_is_rate_available_filter(query, filters):
 
 def get_total_price(line_items, total_price_currency):
     total_price = 0
-    for line_item in line_items:
-        total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": total_price_currency})['price']
+    if line_items:
+        for line_item in line_items:
+            total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": total_price_currency})['price']
     
     return total_price

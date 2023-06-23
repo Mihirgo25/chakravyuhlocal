@@ -17,11 +17,6 @@ def execute_transaction_code(request):
     for attr, value in update_params.items():
         setattr(rate_object, attr, value)
     
-    # rate_object.customs_line_items = request.get('customs_line_items')
-    # rate_object.cfs_line_items = request.get('cfs_line_items')
-    # rate_object.procured_by_id = request.get('procured_by_id')
-    # rate_object.sourced_by_id = request.get('sourced_by_id')
-    
     rate_object.set_platform_price()
     rate_object.set_is_best_price()
 
