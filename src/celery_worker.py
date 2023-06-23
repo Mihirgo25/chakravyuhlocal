@@ -29,7 +29,7 @@ from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
-from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_envision_feedback
+from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
 from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
@@ -539,7 +539,7 @@ def process_freight_look_rates(self, rate, locations):
 @celery.task(bind = True, retry_backoff = True,max_retries=1)
 def air_freight_rate_envision_feedback_delay(self, result):
     try:
-        create_air_freight_rate_envision_feedback(result)
+        create_air_freight_rate_feedback(result)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
