@@ -4,7 +4,7 @@ from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from micro_services.client import maps
-from air_freight_rate_params import WeightSlab
+from services.air_freight_rate.air_freight_rate_params import WeightSlab
 
 class BaseModel(Model):
     class Meta:

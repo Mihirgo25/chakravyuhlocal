@@ -13,7 +13,7 @@ from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreig
 from configs.global_constants import *
 from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from configs.definitions import AIR_FREIGHT_CHARGES
-from air_freight_rate_params import WeightSlab
+from services.air_freight_rate.air_freight_rate_params import WeightSlab
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from playhouse.shortcuts import model_to_dict
 

@@ -3,13 +3,13 @@ from rms_utils.auth import authorize_token
 from fastapi.responses import JSONResponse
 import json
 from fastapi.encoders import jsonable_encoder
-from air_freight_rate_params import *
+from services.air_freight_rate.air_freight_rate_params import *
 import sentry_sdk
 from fastapi.responses import JSONResponse
 from typing import Union, List
 import json
 from fastapi.encoders import jsonable_encoder
-from air_freight_rate_params import *
+from services.air_freight_rate.air_freight_rate_params import *
 from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
 import sentry_sdk

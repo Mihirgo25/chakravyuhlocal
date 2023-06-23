@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from air_freight_rate_params import LineItem
+from services.air_freight_rate.air_freight_rate_params import LineItem
 from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
