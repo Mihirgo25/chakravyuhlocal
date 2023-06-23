@@ -3,7 +3,7 @@ from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRa
 from fastapi import HTTPException
 from micro_services.client import *
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
-from services.air_freight_rate.interaction.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
+from services.air_freight_rate.interactions.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
 from celery_worker import update_multiple_service_objects
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 

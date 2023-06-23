@@ -3,32 +3,22 @@ from peewee import *
 from playhouse.postgres_ext import *
 from micro_services.client import *
 from fastapi import HTTPException
-from fastapi.encoders import jsonable_encoder
 from datetime import datetime, timedelta
-from configs.definitions import AIR_FREIGHT_CHARGES
-from configs.global_constants import (
-    FREE_DAYS_TYPES,
-    ALL_COMMODITIES,
-    CONTAINER_SIZES,
-    CONTAINER_TYPES,
-    MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT,
-)
-from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
-from services.air_freight_rate.interaction.delete_air_freight_rate_local import delete_air_freight_rate_local
-from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
-from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
-from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
-from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
+from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+from services.air_freight_rate.interactions.delete_air_freight_rate import delete_air_freight_rate
+from services.air_freight_rate.interactions.delete_air_freight_rate_local import delete_air_freight_rate_local
+from services.air_freight_rate.interactions.update_air_freight_rate_local import update_air_freight_rate_local
+from services.air_freight_rate.interactions.update_air_freight_rate_markup import update_air_freight_rate_markup
+from services.air_freight_rate.interactions.update_air_freight_rate import update_air_freight_rate
+from services.air_freight_rate.interactions.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.interaction.list_air_freight_rate_locals import list_air_freight_rate_locals
-from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
+from services.air_freight_rate.interactions.list_air_freight_rate_locals import list_air_freight_rate_locals
+from services.air_freight_rate.interactions.list_air_freight_rates import list_air_freight_rates
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
-from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
-from services.air_freight_rate.interaction.update_air_freight_storage_rate import update_air_freight_storage_rate
-from configs.definitions import AIR_FREIGHT_CHARGES,AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
-from services.air_freight_rate.interaction.list_air_freight_storage_rates import list_air_freight_storage_rates
-from services.air_freight_rate.interaction.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
+from services.air_freight_rate.interactions.update_air_freight_storage_rate import update_air_freight_storage_rate
+from configs.definitions import AIR_FREIGHT_CURRENCIES,AIR_FREIGHT_LOCAL_CHARGES
+from services.air_freight_rate.interactions.list_air_freight_storage_rates import list_air_freight_storage_rates
+from services.air_freight_rate.interactions.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 ACTION_NAMES = [
     "update_freight_rate",
@@ -309,7 +299,7 @@ class AirFreightRateBulkOperation(BaseModel):
                     self.progress = (count * 100.0) / int(total_count)
                     self.save()
 
-    def perform_add_min_price_markup_action(self):
+    def perform_add_min_price_markup_action(self,procured_by_id,sourced_by_id):
         data = self.data
         filters = (data["filters"] or {}) | (
             {"service_provider_id": self.service_provider_id}
@@ -371,7 +361,7 @@ class AirFreightRateBulkOperation(BaseModel):
             self.progress = (count * 100.0) / int(total_count)
             self.save()
 
-    def perform_add_local_rate_markup_action(self):
+    def perform_add_local_rate_markup_action(self,sourced_by_id,procured_by_id):
         data = self.data
         if cogo_entity_id == "None":
             cogo_entity_id = None
@@ -485,9 +475,7 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
 
-    def perform_update_storage_free_limit_action(
-        self,
-    ):
+    def perform_update_storage_free_limit_action(self,sourced_by_id,procured_by_id):
         data = self.data
         filters = data["filters"] | ({"service_provider_id": self.service_provider_id})
 
@@ -510,15 +498,15 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.save()
                 continue
 
-            # update_air_freight_storage_rate({
-            #     'id': storage["air_freight_rate_id"],
-            #     'performed_by_id': self.performed_by_id,
-            #     'procured_by_id': procured_by_id,
-            #     'sourced_by_id': sourced_by_id,
-            #     'bulk_operation_id': self.id,
-            #     'slabs': data['slabs'],
-            #     'free_limit': data['free_limit']
-            # })
+            update_air_freight_storage_rate({
+                'id': storage["air_freight_rate_id"],
+                'performed_by_id': self.performed_by_id,
+                'procured_by_id': procured_by_id,
+                'sourced_by_id': sourced_by_id,
+                'bulk_operation_id': self.id,
+                'slabs': data['slabs'],
+                'free_limit': data['free_limit']
+            })
 
             self.progress = (count * 100.0) / int(total_count)
             self.save()

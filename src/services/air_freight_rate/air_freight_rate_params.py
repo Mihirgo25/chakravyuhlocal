@@ -367,12 +367,11 @@ class DeleteAirFreightRateSurchargeParams(BaseModel):
     air_freight_rate_surcharge_id: str
 
 
-class CreateBulkOperation(BaseModel):
+class CreateBulkOperationParams(BaseModel):
     performed_by_id: str = None
     delete_freight_rate: DeleteFreightRateParams = None
     add_freight_rate_markup: AddFreightRateMarkupParams = None
     update_freight_rate: UpdateFreightRateParams = None
-
     delete_freight_rate: List[DeleteFreightRateParams] = None
     add_freight_rate_markup: List[AddFreightRateMarkupParams] = None
     update_freight_rate: List[UpdateFreightRateParams] = None

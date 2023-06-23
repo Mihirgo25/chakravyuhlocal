@@ -5,7 +5,7 @@ from celery_worker import update_multiple_service_objects
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from configs.air_freight_rate_constants import * 
-from services.air_freight_rate.interaction.create_air_freight_rate_local import create_air_freight_rate_local
+from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
 from micro_services.client import *
 
 def create_audit(request):

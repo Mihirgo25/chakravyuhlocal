@@ -9,7 +9,7 @@ from database.rails_db import get_shipping_line
 import pdb
 from database.rails_db import get_eligible_orgs
 from configs.definitions import AIR_FREIGHT_SURCHARGES
-from services.air_freight_rate.interaction.get_air_freight_rate_prediction import get_air_freight_rate_prediction
+from services.air_freight_rate.interactions.get_air_freight_rate_prediction import get_air_freight_rate_prediction
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_density_wise_rate_card
 
 def initialize_freight_query(requirements,prediction_required=False):

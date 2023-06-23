@@ -1,16 +1,14 @@
 from fastapi import APIRouter, Query, Depends, HTTPException
 from rms_utils.auth import authorize_token
 from fastapi.responses import JSONResponse
-import json
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.air_freight_rate_params import *
 import sentry_sdk
 from fastapi.responses import JSONResponse
-from typing import Union, List
-import json
+from typing import  List
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.air_freight_rate_params import *
-from datetime import datetime, timedelta
+from datetime import datetime
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
@@ -20,47 +18,47 @@ from services.air_freight_rate.interactions.create_draft_air_freight_rate import
 
 extension_router = APIRouter()
 
-from services.air_freight_rate.interaction.get_air_freight_storage_rate import get_air_freight_storage_rate
-from services.air_freight_rate.interaction.delete_air_freight_rate_local import delete_air_freight_rate_local
-from services.air_freight_rate.interaction.delete_air_freight_rate_feedback import delete_air_freight_rate_feedback
-from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
-from services.air_freight_rate.interaction.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
-from services.air_freight_rate.interaction.delete_air_freight_rate import delete_air_freight_rate
-from services.air_freight_rate.interaction.update_air_freight_rate import update_air_freight_rate
-from services.air_freight_rate.interaction.get_air_freight_rate import get_air_freight_rate
-from services.air_freight_rate.interaction.list_air_freight_rate_surcharges import list_air_freight_rate_surcharges
-from services.air_freight_rate.interaction.get_air_freight_rate_surcharge import get_air_freight_rate_surcharge
-from services.air_freight_rate.interaction.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
-from services.air_freight_rate.interaction.create_air_freight_rate_local import create_air_freight_rate_local
-from services.air_freight_rate.interaction.update_air_freight_rate_surcharge import update_air_freight_rate_surcharge
-from services.air_freight_rate.interaction.create_air_freight_rate_task import create_air_freight_rate_task
-from services.air_freight_rate.interaction.get_air_freight_rate_local import get_air_freight_rate_local
-from services.air_freight_rate.interaction.get_air_freight_rate_cards import get_air_freight_rate_cards
-from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
-from services.air_freight_rate.interaction.list_air_freight_rate_locals import list_air_freight_rate_locals
-from services.air_freight_rate.interaction.update_air_freight_rate_task import update_air_freight_rate_task_data
-from services.air_freight_rate.interaction.update_air_freight_rate_local import update_air_freight_rate_local
-from services.air_freight_rate.interaction.create_air_freight_rate_request import create_air_freight_rate_request
-from services.air_freight_rate.interaction.get_air_freight_rate_stats import get_air_freight_rate_stats
-from services.air_freight_rate.interaction.create_air_freight_rate_not_available import create_air_freight_rate_not_available
-from services.air_freight_rate.interaction.create_air_freight_storage_rate import create_air_freight_storage_rate
-from services.air_freight_rate.interaction.get_air_freight_rate_visibility import get_air_freight_rate_visibility
-from services.air_freight_rate.interaction.get_air_freight_rate_addition_frequency import get_air_freight_rate_addition_frequency 
-from services.air_freight_rate.interaction.get_air_freight_warehouse_rate import get_air_freight_wareohouse_data
-from services.air_freight_rate.interaction.create_air_freight_warehouse_rate import create_air_freight_warehouse_rate
-from services.air_freight_rate.interaction.update_air_freight_warehouse_rate import update_air_freight_warehouse_rate
-from services.air_freight_rate.interaction.list_air_freight_rate_feedbacks import list_air_freight_rate_feedbacks
-from services.air_freight_rate.interaction.list_air_freight_rate_requests import list_air_freight_rate_requests
-from services.air_freight_rate.interaction.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
-from services.air_freight_rate.interaction.list_air_freight_charge_codes import list_air_freight_charge_codes
-from services.air_freight_rate.interaction.update_air_freight_rate_markup import update_air_freight_rate_markup
-from services.air_freight_rate.interaction.list_air_freight_rates import list_air_freight_rates
-from services.air_freight_rate.interaction.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
-from services.air_freight_rate.interaction.get_air_freight_local_rate_cards import get_air_freight_local_rate_cards
-from services.air_freight_rate.interaction.get_weight_slabs_for_airline import get_weight_slabs_for_airline
-from services.air_freight_rate.interaction.create_air_freight_rate_feedback import create_air_freight_rate_feeback
-from services.air_freight_rate.interaction.delete_air_freight_rate_request import delete_air_freight_rate_request
-from services.air_freight_rate.interaction.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
+from services.air_freight_rate.interactions.get_air_freight_storage_rate import get_air_freight_storage_rate
+from services.air_freight_rate.interactions.delete_air_freight_rate_local import delete_air_freight_rate_local
+from services.air_freight_rate.interactions.delete_air_freight_rate_feedback import delete_air_freight_rate_feedback
+from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate_data
+from services.air_freight_rate.interactions.list_air_freight_warehouse_rates import list_air_freight_warehouse_rates
+from services.air_freight_rate.interactions.delete_air_freight_rate import delete_air_freight_rate
+from services.air_freight_rate.interactions.update_air_freight_rate import update_air_freight_rate
+from services.air_freight_rate.interactions.get_air_freight_rate import get_air_freight_rate
+from services.air_freight_rate.interactions.list_air_freight_rate_surcharges import list_air_freight_rate_surcharges
+from services.air_freight_rate.interactions.get_air_freight_rate_surcharge import get_air_freight_rate_surcharge
+from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
+from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
+from services.air_freight_rate.interactions.update_air_freight_rate_surcharge import update_air_freight_rate_surcharge
+from services.air_freight_rate.interactions.create_air_freight_rate_task import create_air_freight_rate_task
+from services.air_freight_rate.interactions.get_air_freight_rate_local import get_air_freight_rate_local
+from services.air_freight_rate.interactions.get_air_freight_rate_cards import get_air_freight_rate_cards
+from services.air_freight_rate.interactions.update_air_freight_rate_local import update_air_freight_rate_local
+from services.air_freight_rate.interactions.list_air_freight_rate_locals import list_air_freight_rate_locals
+from services.air_freight_rate.interactions.update_air_freight_rate_task import update_air_freight_rate_task_data
+from services.air_freight_rate.interactions.update_air_freight_rate_local import update_air_freight_rate_local
+from services.air_freight_rate.interactions.create_air_freight_rate_request import create_air_freight_rate_request
+from services.air_freight_rate.interactions.get_air_freight_rate_stats import get_air_freight_rate_stats
+from services.air_freight_rate.interactions.create_air_freight_rate_not_available import create_air_freight_rate_not_available
+from services.air_freight_rate.interactions.create_air_freight_storage_rate import create_air_freight_storage_rate
+from services.air_freight_rate.interactions.get_air_freight_rate_visibility import get_air_freight_rate_visibility
+from services.air_freight_rate.interactions.get_air_freight_rate_addition_frequency import get_air_freight_rate_addition_frequency 
+from services.air_freight_rate.interactions.get_air_freight_warehouse_rate import get_air_freight_wareohouse_data
+from services.air_freight_rate.interactions.create_air_freight_warehouse_rate import create_air_freight_warehouse_rate
+from services.air_freight_rate.interactions.update_air_freight_warehouse_rate import update_air_freight_warehouse_rate
+from services.air_freight_rate.interactions.list_air_freight_rate_feedbacks import list_air_freight_rate_feedbacks
+from services.air_freight_rate.interactions.list_air_freight_rate_requests import list_air_freight_rate_requests
+from services.air_freight_rate.interactions.list_air_freight_rate_dislikes import list_air_freight_rate_dislikes
+from services.air_freight_rate.interactions.list_air_freight_charge_codes import list_air_freight_charge_codes
+from services.air_freight_rate.interactions.update_air_freight_rate_markup import update_air_freight_rate_markup
+from services.air_freight_rate.interactions.list_air_freight_rates import list_air_freight_rates
+from services.air_freight_rate.interactions.create_air_freight_rate_bulk_operation import create_air_freight_rate_bulk_operation
+from services.air_freight_rate.interactions.get_air_freight_local_rate_cards import get_air_freight_local_rate_cards
+from services.air_freight_rate.interactions.get_weight_slabs_for_airline import get_weight_slabs_for_airline
+from services.air_freight_rate.interactions.create_air_freight_rate_feedback import create_air_freight_rate_feeback
+from services.air_freight_rate.interactions.delete_air_freight_rate_request import delete_air_freight_rate_request
+from services.air_freight_rate.interactions.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
 
 air_freight_router = APIRouter()
 
@@ -783,7 +781,7 @@ def list_air_freight_warehouse_rates_data(
         )
 
 
-from services.air_freight_rate.interaction.update_air_freight_storage_rate import (
+from services.air_freight_rate.interactions.update_air_freight_storage_rate import (
     update_air_freight_storage_rate,
 )
 
@@ -808,7 +806,7 @@ def update_air_freight_storage_rates_data(
         )
 
 
-from services.air_freight_rate.interaction.get_air_freight_rate_suggestions import (
+from services.air_freight_rate.interactions.get_air_freight_rate_suggestions import (
     get_air_freight_rate_suggestions,
 )
 
@@ -1011,7 +1009,7 @@ def update_air_freight_warehouse_rate_data(
         )
 
 
-from services.air_freight_rate.interaction.get_air_freight_rate_audit import (
+from services.air_freight_rate.interactions.get_air_freight_rate_audit import (
     get_air_freight_rate_audit,
 )
 
@@ -1030,7 +1028,7 @@ def get_air_freight_rate_audit_data(id: str, resp: dict = Depends(authorize_toke
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"sucess": False, "error": str(e)})
 
-from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
+from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
 @air_freight_router.post("/update_air_freight_rate_request")
 def update_air_freight_rate_request_data(request:UpdateAirFreightRateRequestParams, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
@@ -1080,7 +1078,7 @@ def get_weight_slabs_for_airlines(airline_id:str,chargeable_weight: float = 0,re
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-from services.air_freight_rate.interaction.list_air_freight_rate_tasks import list_air_freight_rate_tasks
+from services.air_freight_rate.interactions.list_air_freight_rate_tasks import list_air_freight_rate_tasks
 @air_freight_router.get("/list_air_freight_rate_tasks")
 def list_air_freight_rate_tasks_data(
     filters:str=None,
@@ -1144,7 +1142,7 @@ def delete_air_freight_rate_request_data(request:DeleteAirFreightRateRequestPara
         return JSONResponse(status_code=500, content={"success":False , "error":str(e)})    
 
 @air_freight_router.post("/delete_air_freight_rate_surcharge")
-def delete_air_freight_rate_surcharge_data(request:DeleteAirFreightRateSurcharge, resp:dict = Depends(authorize_token)):
+def delete_air_freight_rate_surcharge_data(request:DeleteAirFreightRateSurchargeParams, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp['isAuthorized']:
@@ -1159,7 +1157,7 @@ def delete_air_freight_rate_surcharge_data(request:DeleteAirFreightRateSurcharge
         return JSONResponse(status_code=500 , content={"success":False, "error":str(e)})
 
 @air_freight_router.post("/delete_air_freight_rate_local")
-def delete_air_freight_rate_local_data(request:DeleteAirFreightRateLocal, resp:dict = Depends(authorize_token)):
+def delete_air_freight_rate_local_data(request:DeleteAirFreightRateLocalParams, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp['isAuthorized']:
@@ -1172,6 +1170,7 @@ def delete_air_freight_rate_local_data(request:DeleteAirFreightRateLocal, resp:d
     except Exception as e :
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500 , content={"success":False, "error":str(e)})
+    
 @extension_router.post("/create_draft_air_freight_rate")
 def create_draft_air_freight_rate_api(request: CreateDraftAirFreightRateParams, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:

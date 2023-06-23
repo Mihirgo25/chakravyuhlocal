@@ -28,11 +28,11 @@ from services.air_freight_rate.interactions.create_draft_air_freight_rate import
 from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
-from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
+from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
 from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
-from services.air_freight_rate.interaction.create_air_freight_rate_local import create_air_freight_rate_local
-from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate
-from services.air_freight_rate.interaction.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
+from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
+from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
+from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -323,9 +323,10 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
         else:
             raise self.retry(exc= exc)
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def bulk_operation_perform_action_function_for_air(self, action_name,object):
+
+def bulk_operation_perform_action_function_for_air(self, action_name,object,sourced_by_id,procured_by_id):
     try:
-        eval(f"object.perform_{action_name}_action()")
+        eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

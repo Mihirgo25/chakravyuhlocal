@@ -3,7 +3,7 @@ from datetime import datetime,timedelta
 from services.envision.interaction.get_air_freight_predicted_rate import predict_air_freight_rate
 from configs.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,AIR_EXPORTS_HIGH_DENSITY_RATIO,AIR_EXPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_HIGH_DENSITY_RATIO,DEFAULT_AIRLINE_IDS,COGOLENS_URL,SLAB_WISE_CHANGE_FACTOR,DEFAULT_SERVICE_PROVIDER_ID,COGO_ENVISION_ID
 from celery_worker import create_air_freight_rate_feedback_for_prediction
-from services.air_freight_rate.interaction.create_air_freight_rate import create_air_freight_rate_data
+from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate_data
 def get_air_freight_rate_prediction(request):
     currency = 'INR'
     weight_slabs = [{ 'unit': 'per_kg', 'currency': currency, 'lower_limit': 0.0, 'upper_limit': 45.0, 'tariff_price': 20 },
