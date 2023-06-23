@@ -6,7 +6,6 @@ from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_da
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
 from configs.definitions import FCL_FREIGHT_CHARGES, FCL_FREIGHT_LOCAL_CHARGES
 from datetime import datetime, timedelta
-from libs.get_conditional_line_items import get_filtered_line_items
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
@@ -172,7 +171,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
                 matching_locals[local_rate["service_provider_id"]] = local_rate
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
                 default_shipping_line_locals[local_rate["service_provider_id"]] = local_rate
-                
+
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
     if default_lsp in default_shipping_line_locals:
