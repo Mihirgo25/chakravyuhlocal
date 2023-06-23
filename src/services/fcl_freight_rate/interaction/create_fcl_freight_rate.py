@@ -63,7 +63,7 @@ def create_fcl_freight_rate_data(request):
       return create_fcl_freight_rate(request)
 
 def create_fcl_freight_rate(request):
-    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay
+    from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
     request = { key: value for key, value in request.items() if value }
     row = {
         'origin_port_id': request.get('origin_port_id'),
@@ -131,15 +131,15 @@ def create_fcl_freight_rate(request):
     else:
         freight.destination_local = { "line_items": [] }
 
-    if 'rate_sheet_validation' not in request and row['rate_type'] != "cogo_assured":
-        freight.validate_validity_object(request["validity_start"], request["validity_end"])
-        freight.validate_line_items(request.get("line_items"))
-
     source = request.get("source")
     line_items = request.get("line_items")
 
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
+
+    if 'rate_sheet_validation' not in request and row['rate_type'] != "cogo_assured":
+        freight.validate_validity_object(request["validity_start"], request["validity_end"])
+        freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request['validities'])
@@ -195,6 +195,9 @@ def create_fcl_freight_rate(request):
 
     if request.get('fcl_freight_rate_request_id'):
         update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+
+    if request.get('fcl_freight_rate_feedback_id'):
+        update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
 
     return {"id": freight.id}
 
