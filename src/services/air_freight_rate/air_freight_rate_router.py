@@ -59,7 +59,7 @@ air_freight_router = APIRouter()
 
 
 @air_freight_router.post("/create_air_freight_rate")
-def create_air_freight_rate(request: AirFreightRate, resp: dict = Depends(authorize_token)):
+def create_air_freight_rate(request: CreateAirFreightRateParams, resp: dict = Depends(authorize_token)):
     if resp["status_code"]!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp["isAuthorized"]:
@@ -75,7 +75,7 @@ def create_air_freight_rate(request: AirFreightRate, resp: dict = Depends(author
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/delete_air_freight_rate")
-def delete_air_freight_rates(request: DeleteAirFreightRate, resp: dict = Depends(authorize_token)):
+def delete_air_freight_rates(request: DeleteAirFreightRateParams, resp: dict = Depends(authorize_token)):
     if resp["status_code"]!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     if resp["isAuthorized"]:
@@ -93,7 +93,7 @@ def delete_air_freight_rates(request: DeleteAirFreightRate, resp: dict = Depends
 
 @air_freight_router.post("/delete_air_freight_rate")
 def delete_air_freight_rates(
-    request: DeleteAirFreightRate, resp: dict = Depends(authorize_token)
+    request: DeleteAirFreightRateParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -114,7 +114,7 @@ def delete_air_freight_rates(
 
 @air_freight_router.post("/update_air_freight_rate")
 def update_air_freight_rates(
-    request: UpdateAirFreightRate, resp: dict = Depends(authorize_token)
+    request: UpdateAirFreightRateParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -286,7 +286,7 @@ def get_air_freight_rate_addition_frequency_data(
 
 @air_freight_router.post("/update_air_freight_rate_local")
 def update_air_freight_rates_locals(
-    request: UpdateFrieghtRateLocal, resp: dict = Depends(authorize_token)
+    request: UpdateAirFrieghtRateLocalParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -305,7 +305,7 @@ def update_air_freight_rates_locals(
 
 @air_freight_router.post("/create_air_freight_rate_not_available")
 def create_air_freight_rate_not_available_data(
-    request: CreateAirFrieghtRateNotAvailable, resp: dict = Depends(authorize_token)
+    request: CreateAirFrieghtRateNotAvailableParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -322,7 +322,7 @@ def create_air_freight_rate_not_available_data(
 
 @air_freight_router.post("/create_air_freight_rate_local")
 def create_air_freight_rate_local_data(
-    request: CreateAirFreightRateLocal, resp: dict = Depends(authorize_token)
+    request: CreateAirFreightRateLocalParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -343,7 +343,7 @@ def create_air_freight_rate_local_data(
 
 @air_freight_router.post("/create_air_freight_rate_surcharge")
 def create_air_freight_rate_surcharge_data(
-    request: CreateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)
+    request: CreateAirFreightRateSurchargeParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -398,7 +398,7 @@ def list_air_freight_rate_locals_data(
 
 @air_freight_router.post("/update_air_freight_rate_surcharge")
 def update_air_freight_rate_surcharge_data(
-    request: UpdateAirFreightRateSurcharge, resp: dict = Depends(authorize_token)
+    request: UpdateAirFreightRateSurchargeParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -453,7 +453,7 @@ def get_air_freight_rate_surcharge_data(
 
 @air_freight_router.post("/create_air_freight_rate_tasks")
 def create_air_freight_rate_task_data(
-    request: CreateAirFreightRateTask, resp: dict = Depends(authorize_token)
+    request: CreateAirFreightRateTaskParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -496,7 +496,7 @@ def list_air_freight_rate_surcharges_data(
 
 @air_freight_router.post("/update_air_freight_rate_task")
 def update_air_freight_rate_task(
-    request: UpdateAirFreightRateTask, resp: dict = Depends(authorize_token)
+    request: UpdateAirFreightRateTaskParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -579,7 +579,7 @@ def get_air_freight_rate_cards_data(
 
 @air_freight_router.post("/create_air_freight_rate_request")
 def create_air_freight_rate_request_data(
-    request: CreateAirFreightRateRequest, resp: dict = Depends(authorize_token)
+    request: CreateAirFreightRateRequestParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -626,7 +626,7 @@ def get_air_freight_rate_stats_data(
 
 @air_freight_router.post("/create_air_freight_warehouse_rate")
 def create_air_freight_warehouse_data(
-    request: CreateAirFreightWarehouseRates, resp: dict = Depends(authorize_token)
+    request: CreateAirFreightWarehouseRatesParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -783,7 +783,7 @@ from services.air_freight_rate.interaction.update_air_freight_storage_rate impor
 
 @air_freight_router.post("/update_air_freight_storage_rates")
 def update_air_freight_storage_rates_data(
-    request: UpdateAirFreightStorageRates, resp: dict = Depends(authorize_token)
+    request: UpdateAirFreightStorageRatesParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -835,7 +835,7 @@ def get_air_freight_rate_suggestions_data(
         )
 
 @air_freight_router.post("/create_air_freight_rate_feedback")
-def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedback, resp: dict = Depends(authorize_token)):
+def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedbackParams, resp: dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
@@ -849,7 +849,7 @@ def create_air_freight_rate_feedback_data(request: CreateAirFreightRateFeedback,
 
 @air_freight_router.post("/update_air_freight_rate_markup")
 def update_air_freight_rate_markup_data(
-    request: UpdateAirFreightRateMarkUp, resp: dict = Depends(authorize_token)
+    request: UpdateAirFreightRateMarkUpParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -869,7 +869,7 @@ def update_air_freight_rate_markup_data(
 
 @air_freight_router.post("create_air_freight_rate_bulk_operations")
 def create_air_freight_rate_bulk_operation_data(
-    request: CreateBulkOperation, resp: dict = Depends(authorize_token)
+    request: CreateBulkOperationParams, resp: dict = Depends(authorize_token)
 ):
     # if resp["status_code"] != 200:
     #     return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -889,7 +889,7 @@ def create_air_freight_rate_bulk_operation_data(
 
 @air_freight_router.post("/delete_air_freight_rate_feedback")
 def delete_air_freight_rate_feedback_data(
-    request: DeleteAirFreightRateFeedback, resp: dict = Depends(authorize_token)
+    request: DeleteAirFreightRateFeedbackParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -909,7 +909,7 @@ def delete_air_freight_rate_feedback_data(
 
 @air_freight_router.post("/create_air_freight_storage_rate")
 def create_air_freight_storage_rate_data(
-    request: CreateAirFreightStorageRate, resp: dict = Depends(authorize_token)
+    request: CreateAirFreightStorageRateParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -987,7 +987,7 @@ def get_air_freight_warehouse_rate_date(
 
 @air_freight_router.post("/update_air_freight_warehouse_rate")
 def update_air_freight_warehouse_rate_data(
-    request: UpdateAirFreightWarehouseRate, resp: dict = Depends(authorize_token)
+    request: UpdateAirFreightWarehouseRateParams, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -1024,7 +1024,7 @@ def get_air_freight_rate_audit_data(id: str, resp: dict = Depends(authorize_toke
 
 from services.air_freight_rate.interaction.update_air_freight_rate_request import update_air_freight_rate_request
 @air_freight_router.post("/update_air_freight_rate_request")
-def update_air_freight_rate_request_data(request:UpdateAirFreightRateRequest, resp:dict = Depends(authorize_token)):
+def update_air_freight_rate_request_data(request:UpdateAirFreightRateRequestParams, resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
@@ -1118,7 +1118,7 @@ def get_air_freight_local_rate_cards_data(
     #     return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
 
 @air_freight_router.post("/delete_air_freight_rate_request")
-def delete_air_freight_rate_request_data(request:DeleteAirFreightRateRequest , resp:dict = Depends(authorize_token)):
+def delete_air_freight_rate_request_data(request:DeleteAirFreightRateRequestParams , resp:dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['statuse_code'],content=resp)
     
