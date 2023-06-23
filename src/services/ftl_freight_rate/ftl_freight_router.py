@@ -16,11 +16,12 @@ from services.ftl_freight_rate.interactions.create_ftl_freight_rate_rule_set imp
 from services.ftl_freight_rate.interactions.update_ftl_freight_rate_rule_set import (
     update_ftl_rule_set_data,
 )
-from services.ftl_freight_rate.interaction.list_trucks import list_trucks_data
-from services.ftl_freight_rate.interaction.create_truck import create_truck_data
-from services.ftl_freight_rate.interaction.update_truck import update_truck_data
+from services.ftl_freight_rate.interactions.list_trucks import list_trucks_data
+from services.ftl_freight_rate.interactions.create_truck import create_truck_data
+from services.ftl_freight_rate.interactions.update_truck import update_truck_data
 from services.ftl_freight_rate.ftl_params import *
-from services.ftl_freight_rate.interaction.create_fuel_data import create_fuel_data
+from services.ftl_freight_rate.interactions.create_fuel_data import create_fuel_data
+from services.ftl_freight_rate.interactions.get_truck_detail import get_truck_detail
 
 ftl_freight_router = APIRouter()
 
@@ -36,12 +37,12 @@ def get_ftl_freight_rates(
     truck_body_type: str = None,
     resp: dict = Depends(authorize_token),
 ):
-    if resp['status_code'] != 200:
+    if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     if weight:
         weight = float(weight)
-        
+
     data = get_ftl_freight_rate(
         origin_location_id,
         destination_location_id,
@@ -54,8 +55,9 @@ def get_ftl_freight_rates(
     data = jsonable_encoder(data)
     return JSONResponse(status_code=200, content=data)
 
+
 @ftl_freight_router.post("/create_fuel_data")
-def create_fuel_datas(request: CreateFuelData,resp: dict = Depends(authorize_token)):
+def create_fuel_datas(request: CreateFuelData, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
@@ -65,7 +67,10 @@ def create_fuel_datas(request: CreateFuelData,resp: dict = Depends(authorize_tok
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
 
 @ftl_freight_router.get("/list_ftl_freight_rate_rule_sets")
 def list_ftl_rule_set(
@@ -134,26 +139,29 @@ def update_ftl_rule_set(
             status_code=500, content={"success": False, "error": str(e)}
         )
 
+
 @ftl_freight_router.get("/list_trucks")
 def list_trucks(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    sort_by: str = 'created_at',
-    sort_type: str = 'asc',
+    sort_by: str = "created_at",
+    sort_type: str = "asc",
     pagination_data_required: bool = True,
-    resp: dict = Depends(authorize_token)
 ):
-        if resp["status_code"] != 200:
-            return JSONResponse(status_code=resp["status_code"], content=resp)
-        try:
-            data = list_trucks_data(filters, page_limit, page, sort_by, sort_type, pagination_data_required)
-            return JSONResponse(status_code=200, content=data)
-        except HTTPException as e:
-            raise
-        except Exception as e:
-            sentry_sdk.capture_exception(e)
-            return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = list_trucks_data(
+            filters, page_limit, page, sort_by, sort_type, pagination_data_required
+        )
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
 
 @ftl_freight_router.post("/create_truck")
 def create_truck(request: CreateTruck, resp: dict = Depends(authorize_token)):
@@ -168,7 +176,10 @@ def create_truck(request: CreateTruck, resp: dict = Depends(authorize_token)):
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
 
 @ftl_freight_router.post("/update_truck")
 def update_truck(request: UpdateTruck, resp: dict = Depends(authorize_token)):
@@ -184,4 +195,27 @@ def update_truck(request: UpdateTruck, resp: dict = Depends(authorize_token)):
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@ftl_freight_router.get("/get_truck_detail")
+def get_truck_data(
+    truck_id: str = None,
+    truck_name: str = None,
+    resp: dict = Depends(authorize_token),
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        request = {"id": truck_id, "truck_name": truck_name}
+        data = get_truck_detail(request)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
