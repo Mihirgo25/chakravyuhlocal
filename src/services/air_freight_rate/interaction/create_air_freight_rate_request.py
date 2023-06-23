@@ -25,6 +25,7 @@ def create_air_freight_rate_request(request):
 
 
 def execute_transaction_code(request):
+
     existing_missing_request = AirFreightRateRequest.update(status="inactive").where(
         AirFreightRateRequest.source == "shipment",
         AirFreightRateRequest.source_id == request.get("source_id"),
@@ -57,7 +58,14 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
 
     for attr, value in create_params.items():
-        setattr(request_object, attr, value)
+        if attr =='preferred_airline_ids' and value:
+            ids=[]
+            for val in value:
+                ids.append(uuid.UUID(str(val)))
+            print(";",ids)
+            setattr(request_object,attr,ids)
+        else:
+            setattr(request_object, attr, value)
     
     request_object.set_locations()
     request_object.validate()

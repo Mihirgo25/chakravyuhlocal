@@ -52,6 +52,7 @@ class AirFreightRateLocal(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     rate_type=CharField(null=True)
+    is_active=BooleanField(null=True,default=True)
 
     class Meta:
         table_name = 'air_freight_rate_locals'

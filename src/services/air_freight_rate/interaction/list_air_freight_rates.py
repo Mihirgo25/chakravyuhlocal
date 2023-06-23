@@ -36,11 +36,13 @@ def get_query(all_rates_for_cogo_assured,sort_by, sort_type, page, page_limit,ol
     if all_rates_for_cogo_assured:
        query=AirFreightRate.select(AirFreightRate.id, AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id, AirFreightRate.commodity, AirFreightRate.operation_type, AirFreightRate.stacking_type).where(AirFreightRate.updated_at > datetime.now()-timedelta(days=1) , AirFreightRate.validities != [] , AirFreightRate.rate_not_available_entry ==False)
        return query
-    query = (
-        AirFreightRate
-        .select(AirFreightRate, fn.jsonb_array_elements(AirFreightRate.validities).alias('validity'))
-        .where(AirFreightRate.rate_not_available_entry == False))
-    
+    query = (AirFreightRate
+         .select(AirFreightRate, SQL('validity.value').alias('validity'))
+         .from_(
+             AirFreightRate,
+             fn.jsonb_array_elements(AirFreightRate.validities).alias('validity')
+         ))
+
     # here
     if older_rates_required:
        query = query.where(
@@ -51,8 +53,9 @@ def get_query(all_rates_for_cogo_assured,sort_by, sort_type, page, page_limit,ol
     return query
 def apply_indirect_filters(query, filters):
   for key in filters:
-    apply_filter_function = f'apply_{key}_filter'
-    query = eval(f'{apply_filter_function}(query, filters)')
+    if filters[key]:
+      apply_filter_function = f'apply_{key}_filter'
+      query = eval(f'{apply_filter_function}(query, filters)')
   return query
 
    
@@ -123,30 +126,33 @@ def apply_available_volume_range_filter(query,filters):
    if filters.get('rate_type') == 'general':
       return query
    query = query.where(
-        (query.c.validity['available_volume'].cast('numeric') >= filters['available_volume_range']['min']),
-        (query.c.validity['available_volume'].cast('numeric') <= filters['available_volume_range']['max'])
+        ((SQL("CAST(validity->>'available_volume' as numeric)")) >= filters['available_volume_range']['min']),
+        ((SQL("CAST(validity->>'available_volume' as numeric)")) <= filters['available_volume_range']['max'])
     
    )
 
    return query
 
 def apply_available_gross_weight_range_filter(query,filters):
+   print(1234)
    if filters.get('rate_type') == 'general':
       return query
    query = query.where(
-        (query.c.validity['available_gross_weight'].cast('numeric') >= filters['available_gross_weight']['min']),
-        (query.c.validity['available_gross_weight'].cast('numeric') <= filters['available_gross_weight']['max'])
+        ((SQL("CAST(validity->>'available_gross_weight' as numeric)")) >= filters['available_gross_weight_range']['min']),
+        ((SQL("CAST(validity->>'available_gross_weight' as numeric)")) <= filters['available_gross_weight_range']['max'])
     
    )
+   print(query)
 
    return query
 
 def apply_achieved_volume_percentage_filter(query,filters):
+
    if filters.get('rate_type') == 'general':
       return query
    query = query.where(
-        ((query.c.validity['available_volume'].cast('numeric') / query.c.validity['initial_volume'].cast('numeric')) >= filters['achieved_volume_percentage']['min']),
-        ((query.c.validity['available_volume'].cast('numeric') / query.c.validity['initial_volume'].cast('numeric')) <= filters['achieved_volume_percentage']['max'])
+        (((SQL("CAST(validity->>'available_volume' as numeric)")) / (SQL("CAST(validity->>'initial_volume' as numeric)"))) >= filters['achieved_volume_percentage']['min']),
+        (((SQL("CAST(validity->>'available_volume' as numeric)")) / (SQL("CAST(validity->>'initial_volume' as numeric)"))) <= filters['achieved_volume_percentage']['max'])
     
    )
 
@@ -156,9 +162,8 @@ def apply_achieved_gross_weight_percentage_filter(query,filters):
    if filters.get('rate_type') == 'general':
       return query
    query = query.where(
-        ((query.c.validity['available_gross_weight'].cast('numeric') / query.c.validity['initial_gross_weight'].cast('numeric')) >= filters['achieved_gross_weight_percentage']['min']),
-        ((query.c.validity['available_gross_weight'].cast('numeric') / query.c.validity['initial_gross_weight'].cast('numeric')) <= filters['achieved_gross_weight_percentage']['max'])
-    
+        (((SQL("CAST(validity->>'available_gross_weight' as numeric)")) / (SQL("CAST(validity->>'available_gross_weight' as numeric)"))) >= filters['achieved_gross_weight_percentage']['min']),
+        (((SQL("CAST(validity->>'available_gross_weight' as numeric)")) / (SQL("CAST(validity->>'available_gross_weight' as numeric)"))) <= filters['achieved_gross_weight_percentage']['max'])  
    )
 
    return query
@@ -208,13 +213,3 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
       'page_limit': page_limit
     }
     return params
-
-
-
-    
-    
-    
-
-
-
-

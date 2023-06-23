@@ -29,7 +29,7 @@ def create_air_freight_rate_feeback(request):
         return execute_transaction_code(request)
      
 def execute_transaction_code(request):
-    start = time.time()
+
     rate=AirFreightRate.select().where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
         raise HTTPException (status_code=500, detail='Rate Id is invalid')
@@ -60,7 +60,7 @@ def execute_transaction_code(request):
     create_params =get_create_params(request,rate)
 
     for attr,value in create_params.items():
-        if attr =='preffered_airline_ids' and value:
+        if attr =='preferred_airline_ids' and value:
             ids=[]
             for val in value:
                 ids.append(uuid.UUID(str(val)))

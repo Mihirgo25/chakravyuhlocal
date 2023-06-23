@@ -6,7 +6,6 @@ import pdb
 def list_air_freight_charge_codes(request):
     validate(request)
     charges = get_charge_codes(request)
-    print(charges)
     if not charges:
         return {}
     return charges
@@ -75,7 +74,6 @@ def get_possible_charge_codes(request):
 
 def validate(request):
     if (request.get('service_type')  not in ['air_freight', 'air_freight_surcharges', 'air_freight_local']):
-        print(request.get('service_type'))
         raise HTTPException(status_code=400, detail="service type should be either air_freight or air_freight_surcharges or air_freight_local")
 
 
