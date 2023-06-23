@@ -1,6 +1,6 @@
 
 # Welcome to Dynamic Pricing Engine
-![ChakraVyuh Image](https://cogoport-production.sgp1.digitaloceanspaces.com/ab0a84128768d02bb0a317f23a791c46/Screenshot%202023-06-17%20at%208.28.59%20PM.png)
+![ChakraVyuh Image](https://cogoport-production.sgp1.digitaloceanspaces.com/cf149142fb2b3b0a5c94b59cfe2a6513/chakravyuh-min.png)
 
 
 
