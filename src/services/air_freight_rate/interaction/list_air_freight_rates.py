@@ -213,13 +213,3 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
       'page_limit': page_limit
     }
     return params
-
-
-
-    
-    
-    
-
-
-
-
