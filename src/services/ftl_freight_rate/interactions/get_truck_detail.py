@@ -2,6 +2,7 @@ from services.ftl_freight_rate.models.truck import Truck
 from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
 from operator import attrgetter
+from fastapi.exceptions import HTTPException
 
 SELECTED_TRUCK_FIELDS = [
     "id",
@@ -29,8 +30,9 @@ def get_truck_detail(request):
         truck_detail = find_truck_detail(truck_search_params)
         if truck_detail:
             return {"truck_detail": truck_detail}
-
-    return {"truck_detail": "No truck found"}
+        
+    error_message = "send either truck_id or truck_name for truck detail" if not truck_search_params else "Truck detail not found"
+    raise HTTPException(status_code=400, detail=error_message)
 
 
 def get_search_params(request):
