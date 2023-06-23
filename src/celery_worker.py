@@ -29,7 +29,7 @@ from database.rails_db import get_past_cost_booking_data
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
-from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
+from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_envision_feedback
 from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
@@ -324,7 +324,7 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             raise self.retry(exc= exc)
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 
-def bulk_operation_perform_action_function_for_air(self, action_name,object,sourced_by_id,procured_by_id):
+def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
     except Exception as exc:
@@ -485,7 +485,7 @@ def process_fuel_data_delay(self):
         else:
             raise self.retry(exc= exc)
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
-def update_air_freight_rate_request_in_delay(self, request):
+def air_freight_rate_request_update_delay(self, request):
     try:
         update_air_freight_rate_request(request)
     except Exception as exc:
@@ -537,9 +537,9 @@ def process_freight_look_rates(self, rate, locations):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff = True,max_retries=1)
-def create_air_freight_rate_feedback_for_prediction(self, result):
+def air_freight_rate_envision_feedback_delay(self, result):
     try:
-        create_air_freight_rate_feedback(result)
+        create_air_freight_rate_envision_feedback(result)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -571,7 +571,7 @@ def create_air_freight_rate_local_delay(self, request):
             raise self.retry(exc= exc)
         
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def create_air_freight_rate_delays(self, request):
+def create_air_freight_rate_delay(self, request):
     try:
         return create_air_freight_rate(request)
     except Exception as exc:

@@ -395,7 +395,7 @@ class CreateAirFreightRateParams(BaseModel):
     density_ratio: str = None
     bulk_operation_id: str = None
     rate_sheet_id: str = None
-    performed_by_id: str = None
+    performed_by_id: str
     performed_by_type: str = None
     procured_by_id: str
     sourced_by_id: str
@@ -406,7 +406,7 @@ class CreateAirFreightRateParams(BaseModel):
     maximum_weight: int = 1000
     shipment_type: str = "box"
     stacking_type: str = "stackable"
-    rate_type: str = "general"
+    rate_type: str = "market_price"
     initial_volume: float = None
     initial_gross_weight: float = None
     available_volume: float = None
