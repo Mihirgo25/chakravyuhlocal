@@ -152,24 +152,24 @@ class FclFreightRateRequest(BaseModel):
 
         if 'rate_added' in self.closing_remarks:
             subject = 'Freight Rate Request Completed'
-            body = f"Rate has been added for Request No: {self.serial_id}, fcl freight from {origin_location} to {destination_location}."
+            body = f"Rate has been added for Request No: {str(self.serial_id)}, fcl freight from {origin_location} to {destination_location}."
         else:
             subject = 'Freight Rate Request Closed'
             remarks = f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}."
-            body = f"Your rate request has been closed for Request No: {self.serial_id}, fcl freight from {origin_location} to {destination_location}. {remarks}"
+            body = f"Your rate request has been closed for Request No: {str(self.serial_id)}, fcl freight from {origin_location} to {destination_location}. {remarks}"
 
         push_notification_data = {
         'type': 'push_notification',
         'service': 'fcl_freight_rate',
-        'service_id': self.id,
+        'service_id': str(self.id),
         'provider_name': 'firebase',
         'template_name': 'push_notification',
-        'user_id': self.performed_by_id,
+        'user_id': str(self.performed_by_id),
         'variables': {
             'subject': subject,
             'body': body,
             'notification_source': 'spot_search',
-            'notification_source_id': self.source_id
+            'notification_source_id': str(self.source_id)
             }
         }
 
