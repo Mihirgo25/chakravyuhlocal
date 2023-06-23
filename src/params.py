@@ -760,7 +760,10 @@ class ExtendValidty(BaseModel):
   validity_end:datetime
   sourced_by_ids:dict=None
   procured_by_ids:dict=None
-
+  markup:float=None
+  line_item_code:str='BAS'
+  markup_type:str=None
+  markup_currency:str="USD"
 class DeleteFreightRate(BaseModel):
   filters:dict={}
   validity_start: datetime
