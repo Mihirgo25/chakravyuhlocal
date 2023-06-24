@@ -289,11 +289,11 @@ def apply_service_provider_type_filter(query, filters):
     category_types = filters['service_provider_type']
     if not isinstance(category_types, list):
       category_types = [category_types]
-    query = query.where(FclFreightRate.service_provider['category_types'].contains(category_types))
+    query = query.where(FclFreightRate.service_provider['category_types'].contains_any(category_types))
     return query
 
 def apply_exclude_service_provider_types_filter(query, filters):
-    query = query.where(~FclFreightRate.service_provider['category_types'].contains(filters['exclude_service_provider_types']))
+    query = query.where(~FclFreightRate.service_provider['category_types'].contains_any(filters['exclude_service_provider_types']))
     return query
 
 def apply_exclude_rate_types_filter(query, filters):
