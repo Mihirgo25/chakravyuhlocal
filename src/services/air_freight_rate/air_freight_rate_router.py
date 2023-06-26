@@ -59,6 +59,11 @@ from services.air_freight_rate.interactions.get_weight_slabs_for_airline import 
 from services.air_freight_rate.interactions.create_air_freight_rate_feedback import create_air_freight_rate_feeback
 from services.air_freight_rate.interactions.delete_air_freight_rate_request import delete_air_freight_rate_request
 from services.air_freight_rate.interactions.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
+from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
+from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
+from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
+from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
+from params import CreateRateSheet, UpdateRateSheet
 
 air_freight_router = APIRouter()
 
@@ -1187,3 +1192,88 @@ def create_draft_air_freight_rate_api(request: CreateDraftAirFreightRateParams, 
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+@air_freight_router.post("/create_air_freight_rate_sheet")
+def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+
+@air_freight_router.post("/update_air_freight_rate_sheet")
+def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    try:
+        rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+@air_freight_router.get("/list_air_freight_rate_sheets")
+def list_rates_sheets(
+    filters: str = None,
+    stats_required: bool = True,
+    page: int = 1,
+    page_limit: int = 10,
+    sort_by: str = 'created_at',
+    sort_type: str = 'desc',
+    pagination_data_required:  bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheets(
+            filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+
+@air_freight_router.get("/list_air_freight_rate_sheet_stats")
+def list_rates_sheet_stat(
+    filters: str = None,
+    service_provider_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheet_stats(
+            filters, service_provider_id
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    

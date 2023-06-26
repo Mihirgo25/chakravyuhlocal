@@ -1,10 +1,10 @@
-from fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from micro_services.client import organization
 from micro_services.client import common
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from configs.global_constants import DEFAULT_RATE_TYPE
 
 def create_saas_air_schedule_airport_pair(air_object,request):
+    from fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
     service_provider_id=request.get("service_provider_id")
     origin_airport_id=request.get("origin_airport_id")
     destination_airport_id=request.get("destination_airport_id")
