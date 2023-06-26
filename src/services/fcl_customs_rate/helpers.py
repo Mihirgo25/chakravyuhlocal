@@ -18,12 +18,3 @@ def update_organization_fcl_customs(request):
             "freight_rates_added" : True
         }
         organization.update_organization(params)
-
-processed_percent_hash = "process_percent_customs_bulk_operation"
-
-def processed_percent_key(id):
-    return f"fcl_customs_rate_bulk_operation_{id}"
-
-def set_processed_percent_customs_bulk_operation(processed_percent, id):
-    if rd:
-        rd.hset(processed_percent_hash, processed_percent_key(id), processed_percent)

@@ -12,7 +12,6 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.definitions import FCL_CFS_CHARGES,FCL_FREIGHT_CURRENCIES
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate import update_fcl_cfs_rate
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
-from services.fcl_cfs_rate.helpers import set_processed_percent_cfs_bulk_operation
 ACTION_NAMES = ['delete_rate']
 
 
@@ -37,7 +36,15 @@ class FclCfsRateBulkOperation(Model):
 
     class Meta:
         table_name = 'fcl_cfs_rate_bulk_operations'
-        
+
+    def processed_percent_key(self, id):
+        return f"fcl_cfs_rate_bulk_operation_{id}"
+
+    def set_processed_percent_cfs_bulk_operation(self, processed_percent, id):
+        processed_percent_hash = "process_percent_cfs_bulk_operation"
+        if rd:
+            rd.hset(processed_percent_hash, self.processed_percent_key(id), processed_percent)
+    
     def perform_delete_rate_action(self, sourced_by_id, procured_by_id):
         data = self.data
         
@@ -54,7 +61,7 @@ class FclCfsRateBulkOperation(Model):
 
             if FclCfsRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
                 self.progress = int((count * 100.0) / total_count)
-                set_processed_percent_cfs_bulk_operation(self.progress, self.id)
+                self.set_processed_percent_cfs_bulk_operation(self.progress, self.id)
                 continue
 
             delete_fcl_cfs_rate({
@@ -67,7 +74,7 @@ class FclCfsRateBulkOperation(Model):
             })
 
             self.progress = int((count * 100.0) / total_count)
-            set_processed_percent_cfs_bulk_operation(self.progress, self.id)
+            self.set_processed_percent_cfs_bulk_operation(self.progress, self.id)
         self.save()
 
     def validate_delete_rate_data(self):
@@ -115,14 +122,14 @@ class FclCfsRateBulkOperation(Model):
             
             if FclCfsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = cfs['id']):
                 self.progress = int((count * 100.0) / total_count)
-                set_processed_percent_cfs_bulk_operation(self.progress, self.id)
+                self.set_processed_percent_cfs_bulk_operation(self.progress, self.id)
                 continue
 
             line_items = [t for t in cfs['line_items'] if t['code'] == data['line_item_code']]
 
             if not line_items:
                 self.progress = int((count * 100.0) / total_count)
-                set_processed_percent_cfs_bulk_operation(self.progress, self.id)
+                self.set_processed_percent_cfs_bulk_operation(self.progress, self.id)
                 continue
             
             cfs['line_items'] = [t for t in cfs['line_items'] if t not in line_items]
@@ -153,5 +160,5 @@ class FclCfsRateBulkOperation(Model):
             })
 
             self.progress = int((count * 100.0) / total_count)
-            set_processed_percent_cfs_bulk_operation(self.progress, self.id)
+            self.set_processed_percent_cfs_bulk_operation(self.progress, self.id)
         self.save()
