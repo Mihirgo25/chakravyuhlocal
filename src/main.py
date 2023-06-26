@@ -100,7 +100,7 @@ def startup():
     # create_rail_haulage_rates()
     # insert()
     # insert_china()
-    #run_migration()
+    # run_migration()
     # create_table()
     # fcl_freight_migration()
     # create_partition_table()
