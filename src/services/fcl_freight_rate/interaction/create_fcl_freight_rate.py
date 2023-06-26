@@ -131,15 +131,15 @@ def create_fcl_freight_rate(request):
     else:
         freight.destination_local = { "line_items": [] }
 
-    if 'rate_sheet_validation' not in request and row['rate_type'] != "cogo_assured":
-        freight.validate_validity_object(request["validity_start"], request["validity_end"])
-        freight.validate_line_items(request.get("line_items"))
-
     source = request.get("source")
     line_items = request.get("line_items")
 
     if source == "flash_booking":
         line_items = get_flash_booking_rate_line_items(request)
+
+    if 'rate_sheet_validation' not in request and row['rate_type'] != "cogo_assured":
+        freight.validate_validity_object(request["validity_start"], request["validity_end"])
+        freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request['validities'])
