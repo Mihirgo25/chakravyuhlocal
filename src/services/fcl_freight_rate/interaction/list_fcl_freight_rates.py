@@ -36,7 +36,6 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
     return {'list': query} 
 
   data = get_data(query,expired_rates_required)
-  
   return { 'list': data } 
 
 def get_query(all_rates_for_cogo_assured, sort_by, sort_type,includes):
@@ -248,21 +247,21 @@ def apply_importer_exporter_present_filter(query, filters):
 
 
 def apply_last_rate_available_date_greater_than_filter(query, filters):
-  query = query.where(FclFreightRate.last_rate_available_date >= datetime.fromisoformat(filters['last_rate_available_date_greater_than']).date())
+  query = query.where(FclFreightRate.last_rate_available_date.cast('date') >= datetime.fromisoformat(filters['last_rate_available_date_greater_than']).date())
   return query
 
 def apply_last_rate_available_date_less_than_filter(query, filters):
-  query = query.where(FclFreightRate.last_rate_available_date <= datetime.fromisoformat(filters['last_rate_available_date_less_than']).date())
+  query = query.where(FclFreightRate.last_rate_available_date.cast('date') <= datetime.fromisoformat(filters['last_rate_available_date_less_than']).date())
   return query
 
 
 def apply_validity_start_greater_than_filter(query, filters):
-  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+  query = query.where(FclFreightRate.last_rate_available_date.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
   return query
 
 
 def apply_validity_end_less_than_filter(query,filters):
-  query = query.where(FclFreightRate.created_at.cast('date') >= datetime.fromisoformat(filters['validity_end_less_than']).date())
+  query = query.where(FclFreightRate.last_rate_available_date.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
   return query
 
 def apply_updated_at_greater_than_filter(query, filters):

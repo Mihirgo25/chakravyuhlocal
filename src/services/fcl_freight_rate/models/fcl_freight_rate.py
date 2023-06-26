@@ -89,7 +89,7 @@ class FclFreightRate(BaseModel):
     validities = BinaryJSONField(default = [], null=True)
     weight_limit = BinaryJSONField(null=True)
     weight_limit_id = UUIDField(index=True, null=True)
-    mode = CharField(default = 'manual', null = True)
+    mode = CharField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
     cogo_entity_id = UUIDField(index=True, null=True)
     sourced_by_id = UUIDField(null=True, index=True)
