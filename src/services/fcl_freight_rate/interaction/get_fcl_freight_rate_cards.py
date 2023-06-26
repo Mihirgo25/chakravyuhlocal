@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID, VN_ENTITY_ID
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
@@ -62,11 +62,6 @@ def initialize_freight_query(requirements, prediction_required = False):
         freight_query = freight_query.where(((FclFreightRate.cogo_entity_id << allow_entity_ids) | (FclFreightRate.cogo_entity_id.is_null(True))))
 
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
-
-    if not prediction_required:
-        freight_query  = freight_query.where(((FclFreightRate.mode != 'predicted') | (FclFreightRate.mode.is_null(True))))
-    else:
-        freight_query  = freight_query.where(FclFreightRate.mode == 'predicted')
 
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
@@ -176,7 +171,6 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
                 matching_locals[local_rate["service_provider_id"]] = local_rate
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
                 default_shipping_line_locals[local_rate["service_provider_id"]] = local_rate
-                
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
     if default_lsp in default_shipping_line_locals:
@@ -580,7 +574,7 @@ def add_freight_objects(freight_query_result, response_object, request):
             if slab['upper_limit'] < request['cargo_weight_per_container']:
                 continue
             
-            additional_weight_rate = slab['price']
+            additional_weight_rate = slab['price'] or 0
             additional_weight_rate_currency = slab['currency']
             break
 
@@ -835,13 +829,28 @@ def get_fcl_freight_rate_cards(requirements):
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
             is_predicted = True
         else:
-            cogofreight_freight_rates_length = 0
+            predicted_rates_length = 0
             for val in freight_rates:
-                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
-                    cogofreight_freight_rates_length += 1
-
-            if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != freight_rates_length:
-                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+                if val['mode'] == 'predicted':
+                    predicted_rates_length = predicted_rates_length + 1
+            
+            if predicted_rates_length != freight_rates_length:
+                freight_rates = list(filter(lambda item: item['mode'] != 'predicted', freight_rates))
+                new_freight_rates_length = len(freight_rates)
+                cogofreight_freight_rates_length = 0
+                for val in freight_rates:
+                    if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                        cogofreight_freight_rates_length += 1
+                
+                if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != new_freight_rates_length:
+                    freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+            else:
+                is_predicted = True
+        
+        if is_predicted and requirements['cogo_entity_id'] == VN_ENTITY_ID:
+            return {
+                "list": []
+            }
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
