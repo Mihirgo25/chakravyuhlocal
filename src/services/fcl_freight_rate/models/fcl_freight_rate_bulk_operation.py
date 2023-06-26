@@ -8,8 +8,8 @@ from datetime import datetime,timedelta
 from configs.definitions import FCL_FREIGHT_CHARGES
 from configs.global_constants import FREE_DAYS_TYPES, ALL_COMMODITIES, CONTAINER_SIZES, CONTAINER_TYPES, MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
-from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate import delete_fcl_freight_rate
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_local import update_fcl_freight_rate_local
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate import update_fcl_freight_rate_data
@@ -19,8 +19,17 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
-ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id
+from celery_worker import create_fcl_freight_rate_delay
+from fastapi.encoders import jsonable_encoder
+from database.db_session import rd
+from libs.parse_numeric import parse_numeric
 
+
+
+ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
+MARKUP_TYPES = ['net','percent','absolute']
+BATCH_SIZE = 1000
 
 class BaseModel(Model):
     class Meta:
@@ -46,6 +55,25 @@ class FclFreightRateBulkOperation(BaseModel):
     class Meta:
         table_name = 'fcl_freight_rate_bulk_operations'
 
+    progress_percent_hash = "bulk_operation_progress"
+
+    def progress_percent_key(self):
+        return f"bulk_operations_{self.id}"
+
+    def set_progress_percent(self,progress_percent):
+        if rd:
+            rd.hset(self.progress_percent_hash, self.progress_percent_key(), progress_percent)
+
+
+    def get_progress_percent(self):
+        if(self.progress == 100):
+                return 100
+        if rd:
+            try:
+                cached_response = rd.hget(self.progress_percent_hash, self.progress_percent_key())
+                return parse_numeric(cached_response)
+            except:
+                return 0
     
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
@@ -53,21 +81,26 @@ class FclFreightRateBulkOperation(BaseModel):
     
     def validate_extend_validity_data(self):
         data = self.data
-        if data['validity_end'] < data['source_date']:
-            raise HTTPException(status_code=400, detail='validity_end cannot be less than source date')
+        
+        if data.get('markup') and data.get('markup_type') and data['markup_type'] not in MARKUP_TYPES:
+            raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         if data['validity_end'].date() < datetime.now().date():
             raise HTTPException(status_code=400, detail='validity_end cannot be less than current date')
         
         if data['validity_end'].date() > (datetime.now() +timedelta(days=60)).date():
             raise HTTPException(status_code=400, detail='validity_end cannot be greater than 60 days')
-        data['source_date'] = data['source_date'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
 
     def validate_delete_freight_rate_data(self):
         data = self.data
         if data['validity_end'] < data['validity_start']:
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
+        
+        if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
+            raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
+        
+        
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
 
@@ -80,10 +113,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if float(data['markup']) == 0:
             raise HTTPException(status_code=400, detail='markup cannot be 0')
-    
-        markup_types = ['net', 'percent']
 
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         if data['validity_end'].date() < datetime.now().date():
@@ -91,6 +122,9 @@ class FclFreightRateBulkOperation(BaseModel):
         
         if data['validity_end'].date() < data['validity_start'].date():
             raise HTTPException(status_code=400, detail='validity_end cannot be less than validity start')
+        
+        if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
+            raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
@@ -111,10 +145,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if float(data['markup']) == 0:
             raise HTTPException(status_code=400, detail='markup cannot be 0')
-        
-        markup_types = ['net', 'percent']
 
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
@@ -214,18 +246,14 @@ class FclFreightRateBulkOperation(BaseModel):
         if  [x for x in data['container_types'] if x not in CONTAINER_TYPES]!=[]:
             raise HTTPException(status_code=400, detail='container_types is invalid')
         
-        markup_types = ['net', 'percent']
-
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
 
         
     def validate_extend_freight_rate_to_icds_data(self):
         data = self.data
 
-        markup_types = ['net', 'percent']
-
-        if data['markup_type'] not in markup_types:
+        if data['markup_type'] not in MARKUP_TYPES:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
     
         
@@ -248,24 +276,13 @@ class FclFreightRateBulkOperation(BaseModel):
             # if [t for t in self.data['destination_port_ids']if t not in  destination_icd_location] != None:
             #     raise HTTPException(status_code=400, detail='destination_icd_port_id is invalid')
             
-
-
-    def perform_extend_validity_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
-        data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+    def perform_batch_extend_validity_action(self, batch_query,  count , total_count, sourced_by_id, procured_by_id):
+        data = self.data 
         sourced_by_ids = data.get('sourced_by_ids')
         procured_by_ids = data.get('procured_by_ids')
-
-        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
-
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-
-        fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
-        fcl_freight_rates = list(fcl_freight_rates.dicts())
-
-        total_count = len(fcl_freight_rates)
-        count = 0
+        
+        fcl_freight_rates = jsonable_encoder(list(batch_query.dicts()))
+        
         for freight in fcl_freight_rates:
             count += 1
             try:
@@ -280,21 +297,48 @@ class FclFreightRateBulkOperation(BaseModel):
  
             validity_object = None
             for t in freight["validities"]:
-                if datetime.strptime(t['validity_start'], '%Y-%m-%d') <= datetime.strptime(data['source_date'], '%Y-%m-%d') and datetime.strptime(t['validity_end'], '%Y-%m-%d') >= datetime.strptime(data['source_date'],'%Y-%m-%d') and datetime.strptime(t['validity_end'],'%Y-%m-%d') < datetime.strptime(data['validity_end'],'%Y-%m-%d'):
+                if datetime.strptime(t['validity_end'],'%Y-%m-%d') < datetime.strptime(data['validity_end'],'%Y-%m-%d'):
                     validity_object = t
 
             if not validity_object:
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
             
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight['id']):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
-            validity_start = max(validity_object["validity_start"], datetime.now())
-            validity_end = min(data['validity_end'], (datetime.now() + timedelta(days=60)))
+            if data.get('markup'):
+                line_items = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']]
+
+                if line_items:
+                    line_item = line_items[0]
+                    validity_object['line_items'].remove(line_item)
+                    
+                    if data['markup_type'].lower() == 'percent':
+                        markup = float(data['markup'] * line_item['price']) / 100 
+                    else:
+                        markup = data['markup']
+                    
+                    if data['markup_type'].lower() == 'net':
+                        markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+
+                    if data['markup_type'].lower() == 'absolute':
+                        line_item['price'] = markup
+                    else:
+                        line_item['price'] = line_item['price'] + markup
+
+                    if line_item['price'] < 0:
+                        line_item['price'] = 0 
+                    
+                    validity_object['line_items'].append(line_item)
+
+
+            validity_start = max(datetime.strptime(validity_object['validity_start'], '%Y-%m-%d'), datetime.now())
+            validity_end = min(datetime.strptime(data['validity_end'], '%Y-%m-%d'), (datetime.now() + timedelta(days=45)))
+            
 
             if actual_sourced_by_id:
                 sourced_by_id_data = actual_sourced_by_id 
@@ -305,49 +349,90 @@ class FclFreightRateBulkOperation(BaseModel):
                 procured_by_id_data = actual_procured_by_id
             else:
                 procured_by_id_data = procured_by_id
-            id = create_fcl_freight_rate_data({
-                        'origin_port_id': str(freight["origin_port_id"]),
-                        'origin_main_port_id': str(freight["origin_main_port_id"]) if freight['origin_main_port_id'] else None,
-                        'destination_port_id': str(freight["destination_port_id"]),
-                        'destination_main_port_id': str(freight["destination_main_port_id"]) if freight['destination_main_port_id'] else None,
+                
+            
+            freight_rate_object = {
+                        'origin_port_id': freight["origin_port_id"],
+                        'origin_main_port_id': freight['origin_main_port_id'],
+                        'destination_port_id': freight["destination_port_id"],
+                        'destination_main_port_id': freight['destination_main_port_id'],
                         'container_size': freight["container_size"],
                         'container_type': freight["container_type"],
                         'commodity': freight["commodity"],
-                        'shipping_line_id': str(freight["shipping_line_id"]),
-                        'importer_exporter_id': str(freight["importer_exporter_id"]) if freight['importer_exporter_id'] else None,
-                        'service_provider_id': str(freight["service_provider_id"]),
-                        'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
+                        'shipping_line_id': freight["shipping_line_id"],
+                        'importer_exporter_id': freight["importer_exporter_id"] if freight['importer_exporter_id'] else None,
+                        'service_provider_id': freight["service_provider_id"] if freight['service_provider_id'] else None,
+                        'cogo_entity_id': freight["cogo_entity_id"] if freight['cogo_entity_id'] else None,
                         'bulk_operation_id': self.id,
                         'performed_by_id': self.performed_by_id,
-                        'sourced_by_id': sourced_by_id ,
-                        'procured_by_id': procured_by_id,
+                        'sourced_by_id': sourced_by_id_data ,
+                        'procured_by_id': procured_by_id_data,
                         'validity_start':validity_start,
                         'validity_end': validity_end,
                         'line_items': validity_object['line_items'],
-                        'source': 'rms_upload'
-                    })
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
-
-    def perform_delete_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+                        'rate_type': freight['rate_type'],
+                        'source': 'bulk_operation',
+                        'mode': freight['mode'],
+                        'rate_sheet_validation': True,
+                    }
+            create_fcl_freight_rate_data(freight_rate_object)
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+            
+        return count
+        
+    def perform_extend_validity_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-        fcl_freight_rates = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = page_limit)['list']
-        fcl_freight_rates = list(fcl_freight_rates.dicts())
+        
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
+        includes = { 
+                    'id': True,
+                    'validities': True,
+                    'origin_port_id': True,
+                    'origin_main_port_id': True,
+                    'destination_port_id': True,
+                    'destination_main_port_id': True,
+                    'container_size': True,
+                    'container_type': True,
+                    'commodity': True,
+                    'shipping_line_id': True,
+                    'importer_exporter_id': True,
+                    'service_provider_id': True,
+                    'cogo_entity_id': True,
+                    'rate_type': True,
+                    'mode': True,
+                }
+       
+        query = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = None, includes = includes, sort_by=None)['list']
 
-        total_count = len(fcl_freight_rates)
+        total_count = query.count()
         count = 0
-  
+        
+        while True:
+            batch_query = query.limit(BATCH_SIZE)
+            if not batch_query.exists():
+                break 
+            count = self.perform_batch_extend_validity_action(batch_query, count , total_count, sourced_by_id, procured_by_id)
+        self.save()    
+            
+            
+    def perform_batch_delete_freight_rate_action(self, batch_query,  count , total_count, sourced_by_id, procured_by_id):
+        data = self.data
+        fcl_freight_rates = list(batch_query.dicts())
+        
         for freight in fcl_freight_rates:
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             delete_fcl_freight_rate({
@@ -359,18 +444,69 @@ class FclFreightRateBulkOperation(BaseModel):
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id,
                 'payment_term': data.get('payment_term'),
-                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
+                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE),
+                'rates_greater_than_price':data.get('rates_greater_than_price'),
+                'rates_less_than_price':data.get('rates_less_than_price'),
+                'comparison_charge_code':data.get('comparison_charge_code'),
+                'comparison_currency':data.get('comparison_currency')
             })
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        return count
 
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
+    def perform_delete_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        data = self.data
+
+        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+
+        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+        rate_ids = []
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        
+        object_ids = rate_sheet_id if rate_sheet_id else filters.get('id') 
+        rate_ids += get_relevant_rate_ids_for_extended_from_object(data['apply_to_extended_rates'],object_ids)
+        
+        if rate_ids:
+            if isinstance(filters.get('id'), list):
+                rate_ids += filters['id']
+            elif filters.get('id'):
+                rate_ids += [filters['id']]
+            filters['id'] = rate_ids
+                      
+                  
+        includes = {'id': True}
+        
+        query = list_fcl_freight_rates(filters = filters, return_query = True, page_limit = None, includes=includes, sort_by="id")['list']
+
+        total_count = query.count()
+        count = 0
+        offset = 0
+        
+        while(offset < total_count):
+            batch_query = query.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            count = self.perform_batch_delete_freight_rate_action(batch_query,  count , total_count, sourced_by_id, procured_by_id)
+
+        self.save()
+
 
 
     def perform_delete_local_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+        
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
+
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
@@ -382,8 +518,8 @@ class FclFreightRateBulkOperation(BaseModel):
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             delete_fcl_freight_rate_local({
@@ -394,32 +530,22 @@ class FclFreightRateBulkOperation(BaseModel):
                 'procured_by_id': procured_by_id
             })
 
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        self.save()
 
-    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+
+
+    def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, sourced_by_id, procured_by_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
-
-        data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
-        data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
-        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
-
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-
-        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
-        fcl_freight_rates = list(fcl_freight_rates.dicts())
-
-        total_count = len(fcl_freight_rates)
-        count = 0
-
+        fcl_freight_rates = list(batch_query.dicts())
+        
         for freight in fcl_freight_rates:
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             new_validities = []
@@ -440,15 +566,22 @@ class FclFreightRateBulkOperation(BaseModel):
 
                 validity_object['line_items'].remove(line_item)
 
+               
+                if not is_price_in_range(data.get('rate_price_greater_than'),data.get('rate_price_less_than'), line_item['price'],data['markup_currency'],line_item['currency']):
+                    continue
+                
                 if data['markup_type'].lower() == 'percent':
                     markup = float(data['markup'] * line_item['price']) / 100 
                 else:
                     markup = data['markup']
                 
                 if data['markup_type'].lower() == 'net':
-                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+                    markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup}).get('price')
 
-                line_item['price'] = line_item['price'] + markup
+                if data['markup_type'].lower() == 'absolute':
+                    line_item['price'] = markup
+                else:
+                    line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0 
@@ -460,7 +593,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 new_validities.append(validity_object)
 
             for validity_object in new_validities:
-                id = create_fcl_freight_rate_data({
+                freight_rate_object ={
                     'origin_port_id': str(freight["origin_port_id"]),
                     'origin_main_port_id': str(freight["origin_main_port_id"]) if freight['origin_main_port_id'] else None,
                     'destination_port_id': str(freight["destination_port_id"]),
@@ -470,7 +603,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     'commodity': freight["commodity"],
                     'shipping_line_id': str(freight["shipping_line_id"]),
                     'importer_exporter_id': str(freight["importer_exporter_id"]) if freight['importer_exporter_id'] else None,
-                    'service_provider_id': str(freight["service_provider_id"]),
+                    'service_provider_id': str(freight["service_provider_id"]) if freight['service_provider_id'] else None,
                     'cogo_entity_id': str(freight["cogo_entity_id"]) if freight['cogo_entity_id'] else None,
                     'bulk_operation_id': self.id,
                     'performed_by_id': self.performed_by_id,
@@ -479,18 +612,90 @@ class FclFreightRateBulkOperation(BaseModel):
                     'validity_start': validity_object['validity_start'],
                     'validity_end': validity_object['validity_end'],
                     'line_items': validity_object['line_items'],
-                    'source': 'rms_upload'
-                })
+                    'source': 'bulk_operation',
+                    'mode':freight['mode'],
+                    'rate_type': freight['rate_type'],
+                    'tag': data.get('tag'),
+                    'rate_sheet_validation': True,
+                }
+                create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+
            
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        return count
+        
+        
+        
+    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        data = self.data
+                    
+        data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
+        data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
+        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+        
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+
+        rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+        rate_ids = []
+        rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
+        
+        object_ids = rate_sheet_id if rate_sheet_id else filters.get('id') 
+        rate_ids += get_relevant_rate_ids_for_extended_from_object(data['apply_to_extended_rates'],object_ids)
+        
+        
+        if rate_ids:
+            if isinstance(filters.get('id'), list):
+                rate_ids += filters['id']
+            elif filters.get('id'):
+                rate_ids += [filters['id']]
+            filters['id'] = rate_ids
+            
+        includes = { 
+                    'id': True,
+                    'validities': True,
+                    'origin_port_id': True,
+                    'origin_main_port_id': True,
+                    'destination_port_id': True,
+                    'destination_main_port_id': True,
+                    'container_size': True,
+                    'container_type': True,
+                    'commodity': True,
+                    'shipping_line_id': True,
+                    'importer_exporter_id': True,
+                    'service_provider_id': True,
+                    'cogo_entity_id': True,
+                    'rate_type': True,
+                    'mode': True,
+                }
+
+        query = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None, includes=includes, sort_by="id")['list']
+        total_count = query.count()
+        count = 0
+        offset = 0
+        
+        while(offset < total_count):
+            batch_query = query.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            count = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, sourced_by_id, procured_by_id)
+        self.save()
+
 
     def perform_add_local_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
 
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -501,14 +706,14 @@ class FclFreightRateBulkOperation(BaseModel):
             count += 1
 
             if FclFreightRateAudit.get_or_none('bulk_operation_id' == self.id,object_id = local['id']):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             line_items = [t for t in local['data']['line_items'] if t['code'] == data['line_item_code']]
             if not line_items:
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
 
             local['data']['line_items'] = local['data']['line_items'] - line_items
 
@@ -520,8 +725,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
                 if data['markup_type'].lower() == 'net':
                     markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
-
-                line_item['price'] = line_item['price'] + markup
+                
+                if data['markup_type'].lower() == 'absolute':
+                    line_item['price'] = markup
+                else:
+                    line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0 
@@ -550,18 +758,25 @@ class FclFreightRateBulkOperation(BaseModel):
                     'data': local['data']
                 })
 
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        self.save()
+        
 
     def perform_update_free_days_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+
         if data['slabs']:
             data['slabs'] = sorted(data.get('slabs', []), key=lambda slab: slab.get('lower_limit', 0))
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False })
 
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         free_days = list_fcl_freight_rate_free_days(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -573,7 +788,8 @@ class FclFreightRateBulkOperation(BaseModel):
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=free_day['id']):
-                self.progress = int((count * 100.0) / total_count)
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             update_fcl_freight_rate_free_day({
@@ -586,17 +802,40 @@ class FclFreightRateBulkOperation(BaseModel):
                 'bulk_operation_id': self.id
             })
 
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        self.save()
 
     def perform_add_freight_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
-        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
-        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
+        
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
+        includes = { 
+                    'id': True,
+                    'validities': True,
+                    'origin_port_id': True,
+                    'origin_main_port_id': True,
+                    'destination_port_id': True,
+                    'destination_main_port_id': True,
+                    'container_size': True,
+                    'container_type': True,
+                    'commodity': True,
+                    'shipping_line_id': True,
+                    'importer_exporter_id': True,
+                    'service_provider_id': True,
+                    'cogo_entity_id': True,
+                    'rate_type': True,
+                    'mode': True,
+                }
+
+        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None,includes=includes)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
@@ -609,8 +848,8 @@ class FclFreightRateBulkOperation(BaseModel):
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id=freight['id']):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             new_validities = []
@@ -639,7 +878,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 new_validities.append(validity_object)
 
                 for validity_object in new_validities:
-                    create_fcl_freight_rate_data({
+                    freight_rate_object = {
                         'origin_port_id': freight["origin_port_id"],
                         'origin_main_port_id': freight["origin_main_port_id"],
                         'destination_port_id': freight["destination_port_id"],
@@ -658,17 +897,28 @@ class FclFreightRateBulkOperation(BaseModel):
                         'validity_start': validity_object['validity_start'],
                         'validity_end': validity_object['validity_end'],
                         'line_items': validity_object['line_items'],
-                        'source': 'rms_upload'
-                    })
+                        'rate_type': freight['rate_type'],
+                        'source': 'bulk_operation',
+                        'mode': freight['mode']
+                    }
+                    
+                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
 
-            self.progress = int((count * 100.0) / total_count)
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        self.save()
 
     def perform_update_free_days_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id })
 
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -680,8 +930,8 @@ class FclFreightRateBulkOperation(BaseModel):
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id = self.id,object_id=local["id"]):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             update_fcl_freight_rate_local({
@@ -693,18 +943,23 @@ class FclFreightRateBulkOperation(BaseModel):
                 'data': { data['free_days_type']: {key: value for key, value in data.items() if key in ['free_limit', 'slabs']}}
             })
 
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        self.save()
 
     def perform_update_commodity_surcharge_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+        
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-
-        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
+        includes = {'id' : True}
+        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None, includes=includes)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
@@ -714,7 +969,8 @@ class FclFreightRateBulkOperation(BaseModel):
             count += 1
 
             if FclFreightRateAudit.select().where('bulk_operation_id' == self.id).limit(1).dicts().get():
-                self.progress = int((count * 100.0) / total_count)
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             update_fcl_freight_rate_data({
@@ -727,17 +983,24 @@ class FclFreightRateBulkOperation(BaseModel):
                 'commodity_surcharge_currency': data['currency']
             })
 
-            self.progress = int((count * 100.0) / total_count)
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        self.save()
+
 
     def perform_update_weight_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+        
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-
-        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
+        includes = {'id': True}
+        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= None, includes=includes)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         weight_limit = {key: value for key, value in data.items() if key in ['free_limit', 'slabs']}
@@ -748,8 +1011,8 @@ class FclFreightRateBulkOperation(BaseModel):
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
             update_fcl_freight_rate_data({
@@ -761,39 +1024,62 @@ class FclFreightRateBulkOperation(BaseModel):
                 'weight_limit': weight_limit
             })
 
-            self.progress = int((count * 100.0) / total_count)
-            self.save()
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+        self.save()
+            
 
     def perform_extend_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+        
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
+        includes = {
+            'id': True,
+            'validities': True,
+            'origin_port_id':True,
+            'origin_main_port_id':True,
+            'destination_port_id':True,
+            'destination_main_port_id':True,
+            'container_size':True,
+            'container_type':True,
+            'commodity':True,
+            'shipping_line_id':True,
+            'service_provider_id':True,
+            'cogo_entity_id': True,
+            'rate_type': True,
+        }
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
-        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
+        fcl_freight_rates = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit, includes=includes)['list']
         fcl_freight_rates = list(fcl_freight_rates.dicts())
 
         total_count = len(fcl_freight_rates)
         count = 0
-
+        
         for freight in fcl_freight_rates:
             count += 1
 
             if FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight['id']):
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
                 
             validities = [k for k in freight['validities'] if datetime.strptime(k['validity_end'], '%Y-%m-%d').date() >= datetime.now().date()]
 
             if not validities:
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
                 continue
 
-            create_params = {key: value for key, value in freight.items() if key in ['origin_port_id', 'origin_main_port_id', 'destination_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'cogo_entity_id']}
+            create_params = {key: value for key, value in freight.items() if key in ['origin_port_id', 'origin_main_port_id', 'destination_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'cogo_entity_id', 'rate_type', 'mode']}
 
             create_params['performed_by_id'] = self.performed_by_id
             create_params['sourced_by_id'] = sourced_by_id
@@ -819,7 +1105,10 @@ class FclFreightRateBulkOperation(BaseModel):
                 if data['markup_type'].lower() == 'net':
                     markup = common.get_money_exchange_for_fcl({'from_currency':data['markup_currency'], 'to_currency':line_item['currency'], 'price':markup})['price']
 
-                line_item['price'] = line_item['price'] + markup
+                if data['markup_type'].lower() == 'absolute':
+                    line_item['price'] = markup
+                else:
+                    line_item['price'] = line_item['price'] + markup
 
                 if line_item['price'] < 0:
                     line_item['price'] = 0
@@ -829,26 +1118,38 @@ class FclFreightRateBulkOperation(BaseModel):
                 create_params['validity_start'] = max(datetime.strptime(validity_object["validity_start"], '%Y-%m-%d'), datetime.now())
                 create_params['validity_end'] = datetime.strptime(validity_object["validity_end"], '%Y-%m-%d')
                 for commodity in data['commodities']:
-                    create_fcl_freight_rate_data(create_params | ({ 'commodity': commodity, 'source': 'rms_upload' }))
+                    freight_rate_object = create_params | ({ 'commodity': commodity, 'source': 'bulk_operation' })
+                    
+                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
 
                 for container_size in data['container_sizes']:
-                    create_fcl_freight_rate_data(create_params | ({ 'container_size': container_size, 'source': 'rms_upload' }))
+                    freight_rate_object = create_params | ({ 'container_size': container_size, 'source': 'bulk_operation' })
+                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
 
                 for container_type in data['container_types']:
-                    create_fcl_freight_rate_data(create_params | ({ 'container_type': container_type, 'source': 'rms_upload' }))
+                    freight_rate_object = create_params | ({ 'container_type': container_type, 'source': 'bulk_operation' })
+                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
 
                 create_audit(self.id)
 
-                self.progress = int((count * 100.0) / total_count)
-                self.save()
+            progress = int((count * 100.0) / total_count)
+            self.set_progress_percent(progress)
+       
+        self.save()
+
 
 
     def perform_extend_freight_rate_to_icds_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
-        if cogo_entity_id == 'None':
-            cogo_entity_id = None
+        
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id' : cogo_entity_id })
 
+        if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
+            del filters['service_provider_id']
+        
+        if not filters['partner_id'] or filters['partner_id'] == 'None':
+            del filters['partner_id']
+        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         fcl_freight_rate = list_fcl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -877,7 +1178,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_count = len(origin_port_ids) * len(destination_port_ids) * len(validities)
         count = 0
 
-        create_params = {key: value for key, value in fcl_freight_rate.items() if key in ['container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'cogo_entity_id']}
+        create_params = {key: value for key, value in fcl_freight_rate.items() if key in ['container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'cogo_entity_id', 'rate_type']}
         create_params['performed_by_id'] = self.performed_by_id
         create_params['sourced_by_id'] = sourced_by_id
         create_params['procured_by_id'] = procured_by_id
@@ -895,7 +1196,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
             if not line_item:
                 count += (len(origin_port_ids) * len(destination_port_ids))
-                self.progress = int((count * 100.0) / total_count)
+                progress = int((count * 100.0) / total_count)
+                self.set_progress_percent(progress)
 
             validity_object['line_items'].remove(line_item)
 
@@ -907,7 +1209,10 @@ class FclFreightRateBulkOperation(BaseModel):
             if data['markup_type'].lower() == 'net':
                 markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
-            line_item['price'] = line_item['price'] + markup
+            if data['markup_type'].lower() == 'absolute':
+                line_item['price'] = markup
+            else:  
+                line_item['price'] = line_item['price'] + markup
             
             if line_item['price'] < 0:
                 line_item['price'] = 0
@@ -917,7 +1222,8 @@ class FclFreightRateBulkOperation(BaseModel):
             for origin_port_id in origin_port_ids:
                 for destination_port_id in destination_port_ids:
                     count += 1
-                    self.progress = int((count * 100.0) / total_count)
+                    progress = int((count * 100.0) / total_count)
+                    self.set_progress_percent(progress)
 
                     if (origin_port_id == fcl_freight_rate["origin_port_id"]) and (destination_port_id == fcl_freight_rate["destination_port_id"]):
                         continue
@@ -929,8 +1235,12 @@ class FclFreightRateBulkOperation(BaseModel):
                     create_params['destination_port_id'] = destination_port_id
                     if destination_port_id != fcl_freight_rate["destination_port_id"]:
                         create_params['destination_main_port_id'] = fcl_freight_rate["destination_port_id"]
-                    create_params['source'] = 'rms_upload'
-                    create_fcl_freight_rate_data(create_params)
+                    create_params['source'] = 'bulk_operation'
+                    
+                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':create_params }, queue='fcl_freight_rate')
+        self.save()
+
+
 def create_audit(id):
     FclFreightRateAudit.create(
         bulk_operation_id = id
