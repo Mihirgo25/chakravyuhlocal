@@ -222,3 +222,5 @@ POSSIBLE_FEEDBACKS = ['unsatisfactory_rate']
 FEEDBACK_TYPES = ['liked', 'disliked']
 
 REQUEST_SOURCES = ['spot_search']
+
+SOUTH_AMERICA_INFLATION_FACTOR = 0.89

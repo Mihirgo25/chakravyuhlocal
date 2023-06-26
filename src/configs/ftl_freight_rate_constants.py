@@ -231,12 +231,77 @@ DISTANCE_FACTOR = {
     'km':1,
     'mi':0.621371
 }
+# distance factor for rate limiting basis on ranges of distances.
+DISTANCE_RATE_FACTOR = {
+    0:[{'lower_limit':0,'upper_limit':50,'rate_factor':3.5},{'lower_limit':50,'upper_limit':500,'rate_factor':1.2,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.94}],
+    1:[{'lower_limit':0,'upper_limit':50,'rate_factor':1.5},{'lower_limit':50,'upper_limit':500,'rate_factor':1.1,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.95}]
+}
+
+# overall rate factor basis on capacity of the truck
+TRUCK_CAPACITY_RATE_FACTOR = {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 0.972972972972973,
+    "6": 1,
+    "7": 1.0810810810810811,
+    "8": 1.1891891891891893,
+    "9": 1.2702702702702702,
+    "10": 1.3513513513513513,
+    "11": 1.4324324324324325,
+    "12": 1.4864864864864864,
+    "13": 1.5405405405405406,
+    "14": 1.5675675675675675,
+    "15": 1.2553191489361701,
+    "16": 1.2765957446808511,
+    "17": 1.2893617021276595,
+    "18": 1.297872340425532,
+    "19": 1.3191489361702127,
+    "20": 1.3829787234042554,
+    "21": 1.446808510638298,
+    "22": 1.4893617021276595,
+    "23": 1.553191489361702,
+    "24": 1.6170212765957446,
+    "25": 1.6595744680851063,
+    "26": 1.702127659574468,
+    "27": 1.7872340425531914,
+    "28": 1.8297872340425532,
+    "29": 1.872340425531915,
+    "30": 1.9148936170212767,
+    "31": 1.9574468085106382,
+    "32": 1.9787234042553192,
+    "33": 2,
+    "34": 2.021276595744681,
+    "35": 2.0425531914893615,
+    "36": 2.0638297872340425,
+    "37": 2.0638297872340425,
+    "38": 2.0851063829787235,
+    "39": 2.106382978723404,
+    "55": 2.3404255319148937
+}
 
 # lower and upper limit are Capacity of Vehicle
 TRUCK_TYPES_MAPPING = {
-    'small' : {'lower_limit':0,'upper_limit':2.3},
-    'medium' : {'lower_limit':2.3,'upper_limit':10.1},
-    'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    'IN':
+    {
+        'small' : {'lower_limit':0,'upper_limit':2.3},
+        'medium' : {'lower_limit':2.3,'upper_limit':10.1},
+        'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    },
+    'US':
+    {
+        'small' : {'lower_limit':0,'upper_limit':9999},
+        'medium' : {'lower_limit':9999,'upper_limit':28000},
+        'heavy': {'lower_limit':28000,'upper_limit':120000}
+    },
+    'EU':
+    {
+        'small' : {'lower_limit':0,'upper_limit':3.5},
+        'medium' : {'lower_limit':3.5,'upper_limit':9},
+        'heavy': {'lower_limit':9,'upper_limit':154.3}
+    }
 }
 
 # 40% addtional basic freight for round trip
@@ -244,15 +309,25 @@ ROUND_TRIP_CHARGE = 0.4
 
 # Loading charges 150/tonn same for unloading so 300
 LOADING_UNLOADING_CHARGES = 300
-
+LOADING_UNLOADING_CHARGES_US = 0.04
 # HAZ commodity or reefer truck body type 20% extra basic freight charge.
 ADDITIONAL_CHARGE = 0.2
 
-
+# closed body charges for 7.5 Ton truck
+CLOSED_BODY_CHARGES_FOR_7 = 1.3
+# closed body charges for greater than 14 Ton truck
+CLOSED_BODY_CHARGES_FOR_14 = 1.25
 # Minimum charges for driver if distance is less than 300
 MINIMUM_APPLICABLE_CHARGE = 400
+
+#kilometres to miles
+KILOMETRE_TO_MILE = 0.621371
+
 USA_FUEL_DATA_LINK = "https://gasprices.aaa.com/state-gas-price-averages/"
 
+EUROPE_FUEL_DATA_LINK = "https://www.cargopedia.net/europe-fuel-prices/"
+
+CHINA_FUEL_DATA_LINKS = "https://www.globalpetrolprices.com/China/diesel_prices/"
 INDIA_FUEL_DATA_LINKS = {
     "https://www.ndtv.com/fuel-prices/petrol-price-in-india": [
         "tbl-container b_rad4 tbl-scrolling",
@@ -274,4 +349,28 @@ INDIA_FUEL_DATA_LINKS = {
         "diesel",
         "region",
     ],
+}
+
+# EUROPE
+
+EU_BASIC_CHARGE_LIST = {'distance_factor','time_factor','capacity_factor','loading_charge'}
+
+EUROPE_CONTINENT_ID = '72abc4ba-6368-4501-9a86-8065f5c191f8'
+
+MEDITERRANEAN_ID = 'f5aefa8e-9a81-4b6d-889c-81678605458a'
+
+EU_ZONE = (EUROPE_CONTINENT_ID, MEDITERRANEAN_ID)
+
+DEFAULT_TOLL_PRICE_EU = 0.253
+
+EUROPE_HAZARDOUS_RATE = 1.05
+
+EUROPE_REEFER_RATE = 1.15
+
+TON_TO_POUND = 2000
+
+AVERAGE_SPEEDS = {
+    'small':90,
+    'medium':80,
+    'heavy':75
 }
