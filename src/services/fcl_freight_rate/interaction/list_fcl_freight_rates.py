@@ -48,7 +48,10 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type,includes):
   required_fields = list(includes.keys()) if includes else [c for c in all_fields if c not in NOT_REQUIRED_FIELDS] 
   fields = [getattr(FclFreightRate, key) for key in required_fields]
   
-  query = FclFreightRate.select(*fields).order_by(eval('FclFreightRate.{}.{}()'.format(sort_by,sort_type)))
+  query = FclFreightRate.select(*fields)
+  
+  if sort_by:
+    query = query.order_by(eval('FclFreightRate.{}.{}()'.format(sort_by,sort_type)))
 
   return query
 
@@ -114,7 +117,7 @@ def apply_importer_exporter_relevant_rate_filter(query, filters):
 def apply_partner_id_filter(query, filters):
   cogo_entity_id = filters['partner_id']
   if cogo_entity_id:
-    query = query.where(FclFreightRate.cogo_entity_id.in_([cogo_entity_id,None]))
+    query = query.where(FclFreightRate.cogo_entity_id.in_([cogo_entity_id]))
   else:
     query = query.where(FclFreightRate.cogo_entity_id == None)
   return query

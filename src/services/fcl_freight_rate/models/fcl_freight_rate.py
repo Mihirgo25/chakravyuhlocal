@@ -433,6 +433,7 @@ class FclFreightRate(BaseModel):
         self.last_rate_available_date = self.validities[-1]['validity_end']
       else:
         self.last_rate_available_date = None
+        self.rate_not_available_entry = True
 
     def set_validities_for_cogo_assured_rates(self,validities):
       new_validities = []
