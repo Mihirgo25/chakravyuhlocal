@@ -19,7 +19,14 @@ def execute_transaction_code(request):
         validity_end = object.validities[-1]['validity_end']
         request['validity_start'] = datetime.strptime(validity_start , '%Y-%m-%d')
         request['validity_end'] = datetime.strptime(validity_end , '%Y-%m-%d')
-    object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
+
+    other_params={
+        'comparison_charge_code':request['comparison_charge_code'],
+        'rates_greater_than_price':request['rates_greater_than_price'],
+        'rates_less_than_price':request['rates_less_than_price'],
+        'comparision_currency':request['comparison_currency']
+    }
+    object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'],None,other_params)
     object.set_platform_prices(object.rate_type)
     object.set_is_best_price()
     object.set_last_rate_available_date()
