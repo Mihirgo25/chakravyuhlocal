@@ -20,7 +20,7 @@ def get_estimated_trailer_freight_rate(request):
 
     input = {"filters":{"id":[origin_location_id, destination_location_id]}}
     data = maps.list_locations(input)
-    if data:
+    if data and 'list' in data:
         data = data["list"]
     for d in data:
         if d["id"] == origin_location_id:
