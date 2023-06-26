@@ -43,20 +43,3 @@ def get_customs_object(object):
         validation['error']+=' ' + str(e.detail)
 
     return validation
-
-def get_location_id(query):
-    filters =  {"type": "seaport", "port_code": query, "status": "active"}
-    port_id = maps.list_locations({'filters': filters})['list']
-    if not port_id:
-        filters =  {"type": "country", "country_code": query, "status": "active"}
-        port_id =  maps.list_locations({'filters': filters})['list']
-    if not port_id:
-        filters =  {"type": "seaport", "port_code": query, "status": "active"}
-        port_id =  maps.list_locations({'filters': filters})['list']
-    if not port_id:
-        filters =  {"name": query}
-        port_id =  maps.list_locations({'filters': filters})['list']
-    if port_id:
-        return port_id[0]['id']
-    else:
-        return None

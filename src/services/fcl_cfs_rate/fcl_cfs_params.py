@@ -47,7 +47,7 @@ class CreateFclCfsRateRequest(BaseModel):
     performed_by_id : str
     performed_by_org_id: str
     performed_by_type: str
-    preferred_rate: str= None
+    preferred_rate: float = None
     preferred_rate_currency: str= None
     cargo_readiness_date: datetime = None
     remarks:list[str] =[]

@@ -194,10 +194,10 @@ class FclCfsRate(BaseModel):
         for rate in rates:
             rate_min_price=0
             currency = self.line_items[0].get('currency')
+
             for line_item in rate.get('line_items'):
                 rate_min_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": currency })['price']
             
-
             if rate_min_price is not None and result > rate_min_price:
                 result = rate_min_price
 
