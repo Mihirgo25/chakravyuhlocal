@@ -162,7 +162,7 @@ def list_haulage_freight_rate_requests_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @haulage_freight_router.post("/create_haulage_freight_rate_request")
-def create_haualge_freight_rate_request_data(request: PostHaulageFreightRateRequest, resp: dict = Depends(authorize_token)):
+def create_haualge_freight_rate_request_data(request: CreateHaulageFreightRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:

@@ -81,7 +81,7 @@ class CreateHaulageFreightRate(BaseModel):
   line_items: list[HaulageLineItem]
   haulage_freight_rate_request_id: str = None
 
-class PostHaulageFreightRateRequest(BaseModel):
+class CreateHaulageFreightRateRequest(BaseModel):
   source: str
   source_id: str
   performed_by_id: str = None
