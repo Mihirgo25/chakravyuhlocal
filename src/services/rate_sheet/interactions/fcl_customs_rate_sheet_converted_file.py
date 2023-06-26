@@ -35,7 +35,7 @@ def process_fcl_customs_customs(params, converted_file, update):
                     row[k] = None
             row = row
             last_line = get_current_processing_line(converted_file)
-            present_field = ['location', 'trade_type', 'container_size', 'container_type', 'line_item_type', 'code', 'unit', 'price', 'currency', 'rate_type'] # , 'line_item_type'
+            present_field = ['location', 'trade_type', 'container_size', 'container_type', 'line_item_type', 'code', 'unit', 'price', 'currency', 'rate_type']
             if valid_hash(row, present_field, None):
                 if rows:
                     create_fcl_customs_rate(
@@ -43,7 +43,7 @@ def process_fcl_customs_customs(params, converted_file, update):
                     )
                     set_current_processing_line(index, converted_file)
                 rows = [row]
-            elif rows and valid_hash(row, ['line_item_type', 'code', 'unit', 'price', 'currency'], ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'rate_type']): # 'line_item_type', 
+            elif rows and valid_hash(row, ['line_item_type', 'code', 'unit', 'price', 'currency'], ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'rate_type']):
                 rows.append(row)
             if not rows:
                 return
