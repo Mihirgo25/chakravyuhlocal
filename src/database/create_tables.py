@@ -5,10 +5,11 @@ from services.air_freight_rate.models.air_freight_location_cluster_factor import
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest
+from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
 def create_table():
     # db.connect()
     try:
-        db.create_tables([HaulageFreightRateRequest])
+        db.create_tables([HaulageFreightRateAudit])
         db.close()
         print("created table")
     except:

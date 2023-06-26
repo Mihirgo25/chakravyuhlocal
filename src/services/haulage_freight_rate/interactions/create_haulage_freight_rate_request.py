@@ -7,7 +7,6 @@ from database.db_session import db
 
 
 
-
 def create_haulage_freight_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)
@@ -55,6 +54,9 @@ def execute_transaction_code(request):
         }
 
 def get_create_params(request):
+    if request.get('cargo_readiness_date'):
+        request['cargo_readiness_date'] = request.get('cargo_readiness_date').isoformat()
+        
     return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id','origin_location_id', 'destination_location_id']} | ({'status': 'active'})
 
 def create_audit(request, request_object_id):
@@ -85,7 +87,7 @@ def supply_agents_to_notify(request):
         supply_agents_user_ids=[]
 
     try:
-        route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_port_id']),str(locations_data['destination_port_id'])]}})['list']
+        route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}})['list']
     except Exception as e:
         print(e)
     
