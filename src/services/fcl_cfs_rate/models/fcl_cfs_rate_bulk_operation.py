@@ -15,6 +15,11 @@ from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 ACTION_NAMES = ['delete_rate']
 
 
+class BaseModel(Model):
+     class Meta:
+         database = db
+         only_save_dirty = True
+
 class FclCfsRateBulkOperation(Model):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True, index=True)
     service_provider_id = UUIDField(null = True)
@@ -30,7 +35,6 @@ class FclCfsRateBulkOperation(Model):
         return super(FclCfsRateBulkOperation, self).save(*args, **kwargs)
 
     class Meta:
-        database = db
         table_name = 'fcl_cfs_rate_bulk_operations'
         
     def perform_delete_rate_action(self, sourced_by_id, procured_by_id):
@@ -74,14 +78,14 @@ class FclCfsRateBulkOperation(Model):
     def validate_add_markup_data(self):
         data = self.data
         markup_types = ['net', 'percent']
-        if data['markup_type'] not in markup_types:
+        if data.get('markup_type') not in markup_types:
             raise HTTPException(status_code=400,detail='Invalid Markup Type')
         
         fcl_cfs_charges_dict = FCL_CFS_CHARGES
 
         charge_codes = fcl_cfs_charges_dict.keys()
 
-        if data['line_item_code'] not in charge_codes:
+        if data.get('line_item_code') not in charge_codes:
             raise HTTPException(status_code=400, detail='line_item_code is invalid')
         
         if str(data['markup_type']).lower() == 'percent':
@@ -89,7 +93,7 @@ class FclCfsRateBulkOperation(Model):
         
         currencies = FCL_FREIGHT_CURRENCIES
 
-        if data['markup_currency'] not in currencies:
+        if data.get('markup_currency') not in currencies:
             raise HTTPException(status_code=400, detail='markup currency is invalid')
         
     def perform_add_markup_action(self, sourced_by_id, procured_by_id):

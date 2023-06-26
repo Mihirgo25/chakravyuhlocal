@@ -7,7 +7,7 @@ def get_bulk_operation_params(request, action_name, data):
         'action_name':action_name, 
         'data':data, 
         'performed_by_id':request.get('performed_by_id'), 
-        'service_provider_id':request['service_provider_id'],
+        'service_provider_id':request.get('service_provider_id'),
         "sourced_by_id":request.get('sourced_by_id'),
         "procured_by_id":request.get('procured_by_id')
     }

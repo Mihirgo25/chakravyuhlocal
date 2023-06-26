@@ -43,7 +43,7 @@ def get_path_data(origin_location_id, destination_location_id, location_data):
     transit_time = get_transit_time(distance)
     location_details = []
     for location_ids  in [origin_location_id,destination_location_id]:
-        for location_key in ['id','city_id','pincode_id','region_id','district_id']:
+        for location_key in ['id','city_id','pincode_id','region_id','district_id','country_id']:
             if location_data[location_ids].get(location_key):
                 location_details.append(location_data[location_ids][location_key])
     return {
