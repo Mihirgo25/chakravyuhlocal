@@ -17,7 +17,8 @@ from typing import List,Union
 
 haulage_freight_router = APIRouter()
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
-from params import CreateHaulageFreightRate
+from services.haulage_freight_rate.interactions.update_haulage_freight_rate import update_haulage_freight_rate
+from services.haulage_freight_rate.haulage_params import CreateHaulageFreightRate, UpdateHaulageFreightRate
 
 @haulage_freight_router.get("/get_estimated_haulage_freight_rate")
 def get_haulage_freight_rate(
@@ -100,7 +101,8 @@ def get_haulage_freight_rate(
 def create_haulage_freight_rate_func(request: CreateHaulageFreightRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]: request.performed_by_id = resp["setters"]["performed_by_id"]
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
         # request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_haulage_freight_rate(request.dict(exclude_none=True))
@@ -108,6 +110,23 @@ def create_haulage_freight_rate_func(request: CreateHaulageFreightRate, resp: di
     except HTTPException as e:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+
+@haulage_freight_router.post("/update_haulage_freight_rate")
+def update_haulage_freight_rate_func(request: UpdateHaulageFreightRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        # request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate = update_haulage_freight_rate(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
         raise
-        # sentry_sdk.capture_exception(e)
-        # return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
