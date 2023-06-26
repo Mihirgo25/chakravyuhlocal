@@ -107,6 +107,79 @@ def create_air_customs_rate_not_available_data(request: CreateAirCustomsRateNotA
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
+@air_customs_router.get("/get_air_customs_rate_addition_frequency")
+def get_air_customs_rate_addition_frequency_data(
+    group_by: str,
+    filters: str = None,
+    sort_type: str = 'desc',
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = get_air_customs_rate_addition_frequency(group_by, filters, sort_type)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@air_customs_router.get("/get_air_customs_rate_visibility")
+def get_air_customs_rate_visibility_data(
+    service_provider_id: str,
+    location_id: str = None,
+    rate_id: str = None,
+    commodity: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'service_provider_id' : service_provider_id,
+        'location_id': location_id,
+        'rate_id': rate_id,
+        'commodity': commodity
+    }
+    try:
+        data = get_air_customs_rate_visibility(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@air_customs_router.get("/get_air_customs_rate")
+def get_air_customs_rate_data(
+    airport_id: str = None,
+    commodity: str = None,
+    service_provider_id: str = None,
+    importer_exporter_id: str = None,
+    trade_type: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'airport_id':airport_id,
+        'commodity' : commodity,
+        'service_provider_id': service_provider_id,
+        'importer_exporter_id': importer_exporter_id,
+        'trade_type': trade_type,
+    }
+
+    try:
+        data = get_air_customs_rate(request)
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
 
 @air_customs_router.get("/list_air_customs_rate_feedbacks")
 def list_air_customs_rate_feedbacks_data(
