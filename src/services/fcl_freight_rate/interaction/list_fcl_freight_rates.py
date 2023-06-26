@@ -42,7 +42,7 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
 def get_query(all_rates_for_cogo_assured, sort_by, sort_type,includes):
   if all_rates_for_cogo_assured:
     query = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
-            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40'])
+            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40'])
     return query
   
   all_fields = list(FclFreightRate._meta.fields.keys())

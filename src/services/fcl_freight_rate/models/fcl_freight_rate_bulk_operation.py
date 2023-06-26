@@ -386,11 +386,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
         total_count = query.count()
         count = 0
-        offset = 0
         
-        while(offset < total_count):
-            batch_query = query.offset(offset).limit(BATCH_SIZE)
-            offset += BATCH_SIZE
+        while True:
+            batch_query = query.limit(BATCH_SIZE)
+            if not batch_query.exists():
+                return 
             self.perform_batch_extend_validity_action(batch_query, count , total_count, sourced_by_id, procured_by_id)
             
             
@@ -448,6 +448,8 @@ class FclFreightRateBulkOperation(BaseModel):
             elif filters.get('id'):
                 rate_ids += [filters['id']]
             filters['id'] = rate_ids
+        
+        filters['rate_not_available_entry'] = False
                   
                   
         includes = {'id': True}
@@ -456,11 +458,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
         total_count = query.count()
         count = 0
-        offset = 0
-        
-        while(offset < total_count):
-            batch_query = query.offset(offset).limit(BATCH_SIZE)
-            offset += BATCH_SIZE
+  
+        while True:
+            batch_query = query.limit(BATCH_SIZE)
+            if not batch_query.exists():
+                return 
             self.perform_batch_delete_freight_rate_action(batch_query,  count , total_count, sourced_by_id, procured_by_id)
 
 
