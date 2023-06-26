@@ -227,7 +227,7 @@ def get_partner_users(ids, status = 'active', role_ids = None):
                 ids = tuple(ids)
                 sql = 'select partner_users.user_id, partner_users.id from partner_users where status = %s and id IN %s'
                 if role_ids:
-                    sql += 'and partner_users.role_ids && %s'
+                    sql += ' and partner_users.role_ids && %s'
                     cur.execute(sql, ( status, ids, role_ids))
                 else:
                     cur.execute(sql, ( status, ids,))

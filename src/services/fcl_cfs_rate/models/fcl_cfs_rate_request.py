@@ -6,6 +6,7 @@ from database.rails_db import *
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 import datetime
 from fastapi import HTTPException
+from configs.fcl_freight_rate_constants import RATE_FEEDBACK_RELEVANT_ROLE_ID
 
 
 class BaseModel(Model):
@@ -90,15 +91,22 @@ class FclCfsRateRequest(BaseModel):
             self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
 
     def send_notifications_to_supply_agents(self):
-        
-        port = maps.list_locations({'filters':{'id': self.port_id}})['list'][0]['display_name']
+        port = maps.list_locations({'filters':{'id': self.port_id}})['list']
         filters = {
             'service_type': 'fcl_cfs',
             'status': 'active',
             'location_id': [self.port_id, self.country_id] if self.country_id else [self.port_id]
         }
-        supply_agents_list = partner.list_partner_user_expertises({'filters': filters, 'pagination_data_required':False, 'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
-        supply_agents_user_ids = partner.list_partner_users({'filters': {'id': supply_agents_list}, 'pagination_data_required':False, 'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT})['list']
+
+        supply_agents_data = get_partner_users_by_expertise(service = filters['service_type'],location_ids = filters['location_id'], trade_type = self.trade_type)
+        supply_agents_list = list(set([item['partner_user_id'] for item in supply_agents_data]))
+        supply_agents_user_data = get_partner_users(ids = supply_agents_list, role_ids = list(RATE_FEEDBACK_RELEVANT_ROLE_ID.values()))
+
+        if supply_agents_user_data:
+            supply_agents_user_ids = list(set([str(data['user_id']) for data in supply_agents_user_data]))
+        else:
+            supply_agents_user_ids = []
+
         data = {
             'type': 'platform_notification',
             'service': 'spot_search',
@@ -106,7 +114,7 @@ class FclCfsRateRequest(BaseModel):
             'template_name': 'missing_customs_rate_request_notification',
             'variables': {
                 'service_type': 'Fcl cfs',
-                'location': port
+                'location': port[0]['display_name']
             }
         }
         for user_id in supply_agents_user_ids:
