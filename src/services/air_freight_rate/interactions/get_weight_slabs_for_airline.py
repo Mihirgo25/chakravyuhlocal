@@ -1,4 +1,4 @@
-from configs.air_freight_rate_constants import AIRLINE_IDS_WITH_CUSTOM_WEIGHT_SLABS,CUSTOM_WEIGHT_SLABS,DEFAULT_WEIGHT_SLABS
+from services.air_freight_rate.constants.air_freight_rate_constants import AIRLINE_IDS_WITH_CUSTOM_WEIGHT_SLABS,CUSTOM_WEIGHT_SLABS,DEFAULT_WEIGHT_SLABS
 
 def get_weight_slabs_for_airline(airline_id,chargeable_weight):
     custom_airlines = AIRLINE_IDS_WITH_CUSTOM_WEIGHT_SLABS

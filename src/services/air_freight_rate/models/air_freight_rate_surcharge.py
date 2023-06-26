@@ -6,7 +6,7 @@ from services.air_freight_rate.air_freight_rate_params import LineItem
 from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
-from configs.air_freight_rate_constants import *
+from services.air_freight_rate.constants.air_freight_rate_constants import *
 from database.rails_db import get_organization,get_shipping_line
 
 class UnknownField(object):

@@ -123,7 +123,7 @@ def apply_partner_id_filter(query, filters):
   return query
 
 def apply_available_volume_range_filter(query,filters):
-   if filters.get('rate_type') == 'general':
+   if filters.get('rate_type') == 'market_place':
       return query
    query = query.where(
         ((SQL("CAST(validity->>'available_volume' as numeric)")) >= filters['available_volume_range']['min']),
@@ -135,7 +135,7 @@ def apply_available_volume_range_filter(query,filters):
 
 def apply_available_gross_weight_range_filter(query,filters):
    print(1234)
-   if filters.get('rate_type') == 'general':
+   if filters.get('rate_type') == 'market_place':
       return query
    query = query.where(
         ((SQL("CAST(validity->>'available_gross_weight' as numeric)")) >= filters['available_gross_weight_range']['min']),
@@ -148,7 +148,7 @@ def apply_available_gross_weight_range_filter(query,filters):
 
 def apply_achieved_volume_percentage_filter(query,filters):
 
-   if filters.get('rate_type') == 'general':
+   if filters.get('rate_type') == 'market_place':
       return query
    query = query.where(
         (((SQL("CAST(validity->>'available_volume' as numeric)")) / (SQL("CAST(validity->>'initial_volume' as numeric)"))) >= filters['achieved_volume_percentage']['min']),
@@ -159,7 +159,7 @@ def apply_achieved_volume_percentage_filter(query,filters):
    return query
 
 def apply_achieved_gross_weight_percentage_filter(query,filters):
-   if filters.get('rate_type') == 'general':
+   if filters.get('rate_type') == 'market_place':
       return query
    query = query.where(
         (((SQL("CAST(validity->>'available_gross_weight' as numeric)")) / (SQL("CAST(validity->>'available_gross_weight' as numeric)"))) >= filters['achieved_gross_weight_percentage']['min']),

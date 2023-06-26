@@ -5,7 +5,7 @@ from micro_services.client import common,shipment
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from libs.get_filters import get_filters
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
-from configs.air_freight_rate_constants import EXPECTED_TAT,DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_PROCURED_BY_ID,DEFAULT_SOURCED_BY_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import EXPECTED_TAT,DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_PROCURED_BY_ID,DEFAULT_SOURCED_BY_ID
 from peewee import *
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal

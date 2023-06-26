@@ -2,7 +2,7 @@ from peewee import *
 import datetime
 from database.db_session import db
 from fastapi import HTTPException
-from configs.air_freight_rate_constants import *
+from services.air_freight_rate.constants.air_freight_rate_constants import *
 from playhouse.postgres_ext import *
 from micro_services.client import *
 from database.rails_db import *
@@ -93,7 +93,7 @@ class AirFreightRate(BaseModel):
     procured_by_id = UUIDField(null=True, index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
-    init_key = TextField(index=True, null=True)
+    init_key = TextField(index=True, null=True,unique=True)
     # is_surcharge_line_items_error_messages_present = BooleanField(null=True)
     # is_surcharge_line_items_info_messages_present = BooleanField(null=True)
     # surcharge_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)

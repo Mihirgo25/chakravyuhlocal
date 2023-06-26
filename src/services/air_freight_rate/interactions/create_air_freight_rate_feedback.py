@@ -1,5 +1,4 @@
 from datetime import datetime
-import time 
 from database.db_session import db 
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
@@ -30,9 +29,9 @@ def create_air_freight_rate_feeback(request):
      
 def execute_transaction_code(request):
 
-    rate=AirFreightRate.select().where(AirFreightRate.id==request['rate_id']).first()
+    rate=AirFreightRate.select(AirFreightRate.id).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
-        raise HTTPException (status_code=500, detail='Rate Id is invalid')
+        raise HTTPException (status_code=500, detail='Rate is invalid')
     
     row={
       'air_freight_rate_id': request['rate_id'],
