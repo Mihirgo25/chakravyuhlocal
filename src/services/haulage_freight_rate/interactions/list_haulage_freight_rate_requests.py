@@ -80,7 +80,7 @@ def apply_relevant_supply_agent_filter(query, filters):
     return query
 
 def apply_shipping_line_id_filter(query, filters):
-    query = query.where(HaulageFreightRateRequest.shipping_line_id == filters['shipping_line_id'])
+    query = query.where(HaulageFreightRateRequest.preferred_shipping_line_ids.contains(filters['shipping_line_id']))
     return query
 
 def get_pagination_data(query, page, page_limit):
