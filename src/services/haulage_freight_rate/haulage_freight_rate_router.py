@@ -13,6 +13,9 @@ from services.haulage_freight_rate.interactions.get_estimated_haulage_freight_ra
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate import (
     get_haulage_freight_rate,
 )
+from services.haulage_freight_rate.interactions.list_haulage_freight_rate_requests import (
+    list_haulage_freight_rate_requests,
+)
 from typing import List,Union
 
 haulage_freight_router = APIRouter()
@@ -111,3 +114,23 @@ def create_haulage_freight_rate_func(request: CreateHaulageFreightRate, resp: di
         raise
         # sentry_sdk.capture_exception(e)
         # return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+
+@haulage_freight_router.get("/list_haulage_freight_rate_requests")
+def list_haulage_freight_rate_requests_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_haulage_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

@@ -8,7 +8,7 @@ from database.rails_db import *
 from configs.haulage_freight_rate_constants import REQUEST_SOURCES
 
 class BaseModel(Model):
-    # db.execute_sql('create sequence fcl_freight_rate_requests_serial_id_seq')
+    # db.execute_sql('create sequence haulage_freight_rate_request_serial_id_seq')
     class Meta:
         database = db
         only_save_dirty = True
