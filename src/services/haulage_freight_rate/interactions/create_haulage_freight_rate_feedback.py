@@ -10,14 +10,14 @@ def create_haulage_freight_rate_feedback(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):    
-    rate = HaulageFreightRate.select().where(HaulageFreightRate.id == request['rate_id']).first()
+    rate = HaulageFreightRate.select().where(HaulageFreightRate.id == request['haulage_freight_rate_id']).first()
 
     if not rate:
-        raise HTTPException(status_code=400, detail='{} is invalid'.format(request['rate_id']))
+        raise HTTPException(status_code=400, detail='{} is invalid'.format(request['haulage_freight_rate_id']))
     
     row  = {
         'status': 'active',
-        'haulage_freight_rate_id': request['rate_id'],
+        'haulage_freight_rate_id': request['haulage_freight_rate_id'],
         'source': request['source'],
         'source_id': request['source_id'],
         'performed_by_id': request['performed_by_id'],
@@ -27,7 +27,7 @@ def execute_transaction_code(request):
 
     feedback = HaulageFreightRateFeedback.select().where(
         HaulageFreightRateFeedback.status == 'active',
-        HaulageFreightRateFeedback.haulage_freight_rate_id == request['rate_id'],
+        HaulageFreightRateFeedback.haulage_freight_rate_id == request['haulage_freight_rate_id'],
         HaulageFreightRateFeedback.source == request['source'],
         HaulageFreightRateFeedback.source_id == request['source_id'],
         HaulageFreightRateFeedback.performed_by_id == request['performed_by_id'],
@@ -50,7 +50,7 @@ def execute_transaction_code(request):
 
     create_audit(request)
 
-    return {'id': request['rate_id']}
+    return {'id': request['haulage_freight_rate_id']}
 
 
 def get_create_params(request):
