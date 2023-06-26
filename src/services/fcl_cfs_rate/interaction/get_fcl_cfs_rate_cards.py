@@ -12,8 +12,8 @@ def get_fcl_cfs_rate_cards(request):
         query_results = jsonable_encoder(list(query.dicts()))
         
         if len(query_results) > 0:
-            result_list = ignore_non_eligible_service_providers(result_list)
-            result_list = build_response_list(query_results, request)
+            result_list = ignore_non_eligible_service_providers(query_results)
+            result_list = build_response_list(result_list, request)
 
             return {
             "list": result_list

@@ -68,7 +68,7 @@ class FclCfsRateBulkOperation(Model):
 
             self.progress = int((count * 100.0) / total_count)
             set_processed_percent_cfs_bulk_operation(self.progress, self.id)
-
+        self.save()
 
     def validate_delete_rate_data(self):
         pass
@@ -154,3 +154,4 @@ class FclCfsRateBulkOperation(Model):
 
             self.progress = int((count * 100.0) / total_count)
             set_processed_percent_cfs_bulk_operation(self.progress, self.id)
+        self.save()
