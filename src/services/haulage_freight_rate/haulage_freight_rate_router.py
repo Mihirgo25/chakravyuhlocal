@@ -186,7 +186,7 @@ def create_haualge_freight_rate_feedback_data(request: CreateHaulageFreightRateF
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @haulage_freight_router.post("/delete_haulage_freight_rate_feedback")
-def delete_fcl_freight_rates_feedback(request: DeleteHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)):
+def delete_haulage_freight_rates_feedback(request: DeleteHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -261,7 +261,7 @@ def create_haualge_freight_rate_request_data(request: CreateHaulageFreightRateRe
 
     
 @haulage_freight_router.post("/delete_haulage_freight_rate_request")
-def delete_fcl_freight_rates_request(request: DeleteHaulageFreightRateRequest, resp: dict = Depends(authorize_token)):
+def delete_haulage_freight_rates_request(request: DeleteHaulageFreightRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
