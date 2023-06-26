@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from datetime import datetime
 from peewee import *
 from typing import List
-from datetime import datetime
 
 class Slab(BaseModel):
   lower_limit: float

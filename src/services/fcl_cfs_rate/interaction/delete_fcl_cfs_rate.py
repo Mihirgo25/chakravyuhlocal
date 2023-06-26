@@ -8,7 +8,7 @@ def delete_fcl_cfs_rate(request):
             return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    object = find_object(request['id'])
+    object = find_object(request.get('id'))
 
     if not object:
         raise HTTPException(status_code=400, detail="Rate not found")
