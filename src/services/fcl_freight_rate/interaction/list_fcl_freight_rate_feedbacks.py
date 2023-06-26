@@ -52,17 +52,7 @@ def apply_indirect_filters(query, filters):
     return query
 
 def apply_relevant_supply_agent_filter(query, filters):
-    expertises = get_partner_user_experties('fcl_freight', filters['relevant_supply_agent'])
-    origin_port_id = [t['origin_location_id'] for t in expertises]
-    destination_port_id = [t['destination_location_id'] for t in expertises]
-    query = query.where((FclFreightRateFeedback.origin_port_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_country_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_continent_id << origin_port_id) |
-                    (FclFreightRateFeedback.origin_trade_id << origin_port_id))
-    query = query.where((FclFreightRateFeedback.destination_port_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_country_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_continent_id << destination_port_id) |
-                    (FclFreightRateFeedback.destination_trade_id << destination_port_id))
+    query = query.where(FclFreightRateFeedback.relevant_supply_agent_ids.contains(filters['relevant_supply_agent']))
     return query
 
 def apply_relevant_service_provider_id_filter(query, filters):

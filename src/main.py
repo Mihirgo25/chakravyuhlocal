@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 # from database.create_tables import create_table
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
-# from db_migration import run_migration
+# from database.db_migration import run_migration
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
@@ -40,18 +40,16 @@ docs_url = None if APP_ENV == "production" else "/docs"
 app = FastAPI(docs_url=docs_url, debug=True)
 
 
-app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router)
-app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router)
-
-app.include_router(prefix="/fcl_freight_rate", router=envision_router)
-app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router)
-app.include_router(prefix="/fcl_freight_rate", router=trailer_router)
-app.include_router(prefix="/fcl_freight_rate", router=nandi_router)
-app.include_router(prefix="/fcl_freight_rate", router=ftl_freight_router)
-app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router)
+app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'])
+app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['FTL Freight Rate'])
+app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Predictions'])
+app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'])
+app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'])
+app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
+app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_customs_router)
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_cfs_router)
-app.include_router(prefix = "/fcl_freight_rate", router=extension_router)
+app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
 app.include_router(prefix = "/air_customs_rate", router=air_customs_router)
 
 
@@ -127,5 +125,6 @@ def read_root():
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
 
-
-###Remove this later
+@app.get("/fcl_freight_rate/health_check")
+def get_health_check():
+    return JSONResponse(status_code=200, content={ "status": 'ok' })

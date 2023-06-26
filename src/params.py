@@ -19,6 +19,7 @@ class UpdateLineItem(BaseModel):
   currency: str
   remarks: list[str] = None
   slabs: list[Slab] = []
+  conditions: dict={}
 
 
 class FreeDay(BaseModel):
@@ -35,6 +36,7 @@ class LineItem(BaseModel):
   market_price: float = None 
   remarks: list[str] = None
   slabs: list[Slab] = None
+  conditions: dict={}
 
 class LocalData(BaseModel):
   line_items: list[LineItem]=None
@@ -43,7 +45,7 @@ class LocalData(BaseModel):
   plugin: FreeDay = None
 
 
-  
+
 class PostFclFreightRate(BaseModel):
   origin_main_port_id: str = None
   origin_port_id: str
@@ -83,7 +85,7 @@ class PostFclFreightRate(BaseModel):
   value_props: List[dict] = []
   t_n_c: list = []
   validities:List[dict] = None
-
+  fcl_freight_rate_feedback_id: str = None
 
 class CreateFclFreightRateCommoditySurcharge(BaseModel):
   rate_sheet_id: str = None

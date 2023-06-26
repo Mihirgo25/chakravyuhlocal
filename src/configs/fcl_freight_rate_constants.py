@@ -208,6 +208,8 @@ RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 
 DEFAULT_RATE_TYPE = 'market_place'
 
+VN_ENTITY_ID = 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'
+
 CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
 
 CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
