@@ -38,7 +38,7 @@ class AirCustomsRate(BaseModel):
     procured_by = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
     airport = BinaryJSONField(null=True)
-    perform_by = BinaryJSONField(null=True)
+
 
     class Meta:
         table_name = 'air_customs_rates'
@@ -46,3 +46,14 @@ class AirCustomsRate(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(AirCustomsRate, self).save(*args, **kwargs)
+    
+    def detail(self):
+        return {
+            'air_customs':{
+            'line_items':self.line_items,
+            'line_items_info_messages':self.line_items_info_messages,
+            'is_line_items_info_messages_present':self.is_line_items_info_messages_present,
+            'line_items_error_messages':self.line_items_error_messages,
+            'is_line_items_error_messages_present':self.is_line_items_error_messages_present,
+            }
+        }

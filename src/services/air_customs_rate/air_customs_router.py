@@ -131,8 +131,8 @@ def get_air_customs_rate_visibility_data(
     service_provider_id: str,
     location_id: str = None,
     rate_id: str = None,
-    container_size: str = None,
-    container_type: str = None,
+    # container_size: str = None,
+    # container_type: str = None,
     commodity: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -142,8 +142,8 @@ def get_air_customs_rate_visibility_data(
         'service_provider_id' : service_provider_id,
         'location_id': location_id,
         'rate_id': rate_id,
-        'container_size': container_size,
-        'container_type': container_type,
+        # 'container_size': container_size,
+        # 'container_type': container_type,
         'commodity': commodity
     }
     try:
@@ -157,10 +157,7 @@ def get_air_customs_rate_visibility_data(
     
 @air_customs_router.get("/get_air_customs_rate")
 def get_air_customs_rate_data(
-    id: str = None,
-    location_id: str = None,
-    container_size: str = None,
-    container_type: str = None,
+    airport_id: str = None,
     commodity: str = None,
     service_provider_id: str = None,
     importer_exporter_id: str = None,
@@ -170,10 +167,7 @@ def get_air_customs_rate_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     request = {
-        'id':id,
-        'location_id':location_id,
-        'container_size' : container_size,
-        'container_type' : container_type,
+        'airport_id':airport_id,
         'commodity' : commodity,
         'service_provider_id': service_provider_id,
         'importer_exporter_id': importer_exporter_id,
