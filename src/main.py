@@ -42,7 +42,7 @@ app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Pr
 app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'])
 app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'])
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
-app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
+app.include_router(prefix = "/haulage_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
 
 
