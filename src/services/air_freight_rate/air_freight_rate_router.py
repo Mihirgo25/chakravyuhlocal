@@ -506,10 +506,7 @@ def update_air_freight_rate_task_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+        
 
 
 @air_freight_router.get("/get_air_freight_rate_cards")
