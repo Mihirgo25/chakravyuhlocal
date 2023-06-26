@@ -96,12 +96,12 @@ class HaulageFreightRateFeedback(BaseModel):
 
     def validate_preferred_freight_rate_currency(self):
         if not self.preferred_freight_rate_currency:
-            return True
+            return False
+        return  True
         
     def validate_feedback_types(self):
-        for feedback in self.feedback_type:
-            if feedback not in FEEDBACK_TYPES:
-                return False
+        if self.feedback_type not in FEEDBACK_TYPES:
+            return False
         return True
     
     def validate_before_save(self):
