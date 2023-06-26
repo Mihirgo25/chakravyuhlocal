@@ -131,8 +131,6 @@ def get_air_customs_rate_visibility_data(
     service_provider_id: str,
     location_id: str = None,
     rate_id: str = None,
-    # container_size: str = None,
-    # container_type: str = None,
     commodity: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -142,8 +140,6 @@ def get_air_customs_rate_visibility_data(
         'service_provider_id' : service_provider_id,
         'location_id': location_id,
         'rate_id': rate_id,
-        # 'container_size': container_size,
-        # 'container_type': container_type,
         'commodity': commodity
     }
     try:
