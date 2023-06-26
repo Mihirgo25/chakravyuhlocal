@@ -79,7 +79,7 @@ def process_fcl_customs_customs(params, converted_file, update):
     return
 
 def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procured_by_id, sourced_by_id, csv_writer, last_row):
-    from celery_worker import celery_create_fcl_customs_rate
+    from celery_worker import create_fcl_customs_rate_delay
     keys_to_extract = ['trade_type', 'container_size', 'container_type', 'commodity','rate_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['location_id'] = get_port_id(rows[0]['location'])
@@ -110,7 +110,7 @@ def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procure
 
     if validation.get('valid'):
         object['rate_sheet_validation'] = True
-        celery_create_fcl_customs_rate.apply_async(kwargs={'request':request_params},queue='fcl_freight_rate')
+        create_fcl_customs_rate_delay.apply_async(kwargs={'request':request_params},queue='fcl_freight_rate')
     else:
         print(validation.get('error'))
     return validation

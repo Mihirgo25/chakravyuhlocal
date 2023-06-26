@@ -8,7 +8,7 @@ from fastapi import HTTPException
 import json
 from params import CreateRateSheet, UpdateRateSheet
 
-from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_bulk_operation import create_fcl_customs_rate_bulk_operation
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_feedback import create_fcl_customs_rate_feedback
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate_request import create_fcl_customs_rate_request
@@ -33,7 +33,7 @@ from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_she
 fcl_customs_router = APIRouter()
 
 @fcl_customs_router.post("/create_fcl_customs_rate")
-def create_fcl_customs_rate_func(request: CreateFclCustomsRate, resp: dict = Depends(authorize_token)):
+def create_fcl_customs_rate_api(request: CreateFclCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -41,7 +41,7 @@ def create_fcl_customs_rate_func(request: CreateFclCustomsRate, resp: dict = Dep
         request.performed_by_type = resp["setters"]["performed_by_type"]
 
     try:
-        rate = create_fcl_customs_rate_data(request.dict(exclude_none=True))
+        rate = create_fcl_customs_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
     except HTTPException as e:
         raise
@@ -50,7 +50,7 @@ def create_fcl_customs_rate_func(request: CreateFclCustomsRate, resp: dict = Dep
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
 @fcl_customs_router.post("/create_fcl_customs_rate_bulk_operation")
-def create_fcl_customs_rate_bulk_operation_data(request: CreateFclCustomsRateBulkOperation, resp: dict = Depends(authorize_token)):
+def create_fcl_customs_rate_bulk_operation_api(request: CreateFclCustomsRateBulkOperation, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -66,7 +66,7 @@ def create_fcl_customs_rate_bulk_operation_data(request: CreateFclCustomsRateBul
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_customs_router.post("/create_fcl_customs_rate_feedback")
-def create_fcl_customs_rate_feedback_data(request: CreateFclCustomsRateFeedback, resp: dict = Depends(authorize_token)):
+def create_fcl_customs_rate_feedback_api(request: CreateFclCustomsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -82,7 +82,7 @@ def create_fcl_customs_rate_feedback_data(request: CreateFclCustomsRateFeedback,
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_customs_router.post("/create_fcl_customs_rate_request")
-def create_fcl_customs_rate_request_data(request: CreateFclCustomsRateRequest, resp: dict = Depends(authorize_token)):
+def create_fcl_customs_rate_request_api(request: CreateFclCustomsRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -98,7 +98,7 @@ def create_fcl_customs_rate_request_data(request: CreateFclCustomsRateRequest, r
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_customs_router.post("/create_fcl_customs_rate_not_available")
-def create_fcl_customs_rate_not_available_data(request: CreateFclCustomsRateNotAvailable, resp: dict = Depends(authorize_token)):
+def create_fcl_customs_rate_not_available_api(request: CreateFclCustomsRateNotAvailable, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -114,7 +114,7 @@ def create_fcl_customs_rate_not_available_data(request: CreateFclCustomsRateNotA
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_customs_router.get("/get_fcl_customs_rate_addition_frequency")
-def get_fcl_customs_rate_addition_frequency_data(
+def get_fcl_customs_rate_addition_frequency_api(
     group_by: str,
     filters: str = None,
     sort_type: str = 'desc',
@@ -133,7 +133,7 @@ def get_fcl_customs_rate_addition_frequency_data(
     
 
 @fcl_customs_router.get("/get_fcl_customs_rate_visibility")
-def get_fcl_customs_rate_visibility_data(
+def get_fcl_customs_rate_visibility_api(
     service_provider_id: str,
     location_id: str = None,
     rate_id: str = None,
@@ -162,7 +162,7 @@ def get_fcl_customs_rate_visibility_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_customs_router.get("/get_fcl_customs_rate")
-def get_fcl_customs_rate_data(
+def get_fcl_customs_rate_api(
     id: str = None,
     location_id: str = None,
     container_size: str = None,
@@ -200,7 +200,7 @@ def get_fcl_customs_rate_data(
     
 
 @fcl_customs_router.get("/list_fcl_customs_rate_feedbacks")
-def list_fcl_customs_rate_feedbacks_data(
+def list_fcl_customs_rate_feedbacks_api(
     filters: str = None,
     spot_search_details_required: bool = False,
     page_limit: int = 10,
@@ -222,7 +222,7 @@ def list_fcl_customs_rate_feedbacks_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_customs_router.get("/list_fcl_customs_rate_requests")
-def list_fcl_customs_rate_requests_data(
+def list_fcl_customs_rate_requests_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
@@ -242,7 +242,7 @@ def list_fcl_customs_rate_requests_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_customs_router.get("/list_fcl_customs_rates")
-def list_fcl_customs_rates_data(
+def list_fcl_customs_rates_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
@@ -265,7 +265,7 @@ def list_fcl_customs_rates_data(
     
 
 @fcl_customs_router.get("/get_fcl_customs_rate_cards")
-def get_fcl_cutsoms_rate_cards_data(
+def get_fcl_customs_rate_cards_api(
     port_id: str,
     country_id: str,
     container_size: str,
@@ -314,7 +314,7 @@ def get_fcl_cutsoms_rate_cards_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @fcl_customs_router.post("/update_fcl_customs_rate")
-def update_fcl_customs_rate_data(request: UpdateFclCustomsRate, resp: dict = Depends(authorize_token)):
+def update_fcl_customs_rate_api(request: UpdateFclCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -331,7 +331,7 @@ def update_fcl_customs_rate_data(request: UpdateFclCustomsRate, resp: dict = Dep
 
 
 @fcl_customs_router.post("/delete_fcl_customs_rate")
-def delete_fcl_customs_rate_data(request: DeleteFclCustomsRate, resp: dict = Depends(authorize_token)):
+def delete_fcl_customs_rate_api(request: DeleteFclCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -347,7 +347,7 @@ def delete_fcl_customs_rate_data(request: DeleteFclCustomsRate, resp: dict = Dep
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_customs_router.post("/delete_fcl_customs_rate_feedback")
-def delete_fcl_customs_rate_feedback_data(request: DeleteFclCustomsRateFeedback, resp: dict = Depends(authorize_token)):
+def delete_fcl_customs_rate_feedback_api(request: DeleteFclCustomsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -363,7 +363,7 @@ def delete_fcl_customs_rate_feedback_data(request: DeleteFclCustomsRateFeedback,
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_customs_router.post("/delete_fcl_customs_rate_request")
-def delete_fcl_customs_rate_request_data(request: DeleteFclCustomsRateRequest, resp: dict = Depends(authorize_token)):
+def delete_fcl_customs_rate_request_api(request: DeleteFclCustomsRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -380,7 +380,7 @@ def delete_fcl_customs_rate_request_data(request: DeleteFclCustomsRateRequest, r
     
     
 @fcl_customs_router.post("/update_fcl_customs_rate_platform_prices")
-def update_fcl_customs_rate_platform_prices_data(request: UpdateFclCustomsRatePlatformPrices, resp: dict = Depends(authorize_token)):
+def update_fcl_customs_rate_platform_prices_api(request: UpdateFclCustomsRatePlatformPrices, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:

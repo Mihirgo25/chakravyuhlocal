@@ -30,7 +30,9 @@ from services.extensions.interactions.create_freight_look_rates import create_ai
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from database.rails_db import get_past_cost_booking_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
-from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate_data
+from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
+from services.fcl_customs_rate.helpers import update_organization_fcl_customs
+from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
 
 # Rate Producers
 
@@ -517,9 +519,9 @@ def process_freight_look_rates(self, rate, locations):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
-def celery_create_fcl_customs_rate(self, request):
+def create_fcl_customs_rate_delay(self, request):
     try:
-        return create_fcl_customs_rate_data(request)
+        return create_fcl_customs_rate(request)
     except Exception as e:
         if type(e).__name__ == 'HTTPException':
             pass
@@ -527,7 +529,7 @@ def celery_create_fcl_customs_rate(self, request):
             raise self.retry(exc= e)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def update_customs_rate_platform_prices(self, request):
+def update_fcl_customs_rate_platform_prices_delay(self, request):
     try:
         update_fcl_customs_rate_platform_prices(request)
     except Exception as exc:
@@ -537,7 +539,7 @@ def update_customs_rate_platform_prices(self, request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def update_cfs_rate_platform_prices(self, request):
+def update_fcl_cfs_rate_platform_prices_delay(self, request):
     try:
         update_fcl_cfs_rate_platform_prices(request)
     except Exception as exc:
@@ -547,10 +549,9 @@ def update_cfs_rate_platform_prices(self, request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_fcl_customs_functions(self,fcl_customs_object,request):
+def fcl_customs_functions_delay(self,fcl_customs_object,request):
     try:
-        if not FclCustomsRate.select(FclCustomsRate.id).where(FclCustomsRate.service_provider_id==request["service_provider_id"], FclCustomsRate.rate_not_available_entry==False, FclCustomsRate.rate_type == DEFAULT_RATE_TYPE).exists():
-            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+        update_organization_fcl_customs(request)
         get_multiple_service_objects(fcl_customs_object)
 
     except Exception as exc:
@@ -560,10 +561,9 @@ def delay_fcl_customs_functions(self,fcl_customs_object,request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_fcl_cfs_functions(self,fcl_cfs_object,request):
+def fcl_cfs_functions_delay(self,fcl_cfs_object,request):
     try:
-        if not FclCfsRate.select(FclCfsRate.id).where(FclCfsRate.service_provider_id==request["service_provider_id"], FclCfsRate.rate_not_available_entry==False, FclCfsRate.rate_type == DEFAULT_RATE_TYPE).exists():
-            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+        update_organization_fcl_cfs(request)
         get_multiple_service_objects(fcl_cfs_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
@@ -572,7 +572,7 @@ def delay_fcl_cfs_functions(self,fcl_cfs_object,request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def bulk_operation_perform_action_functions_customs_cfs(self, action_name, object, sourced_by_id, procured_by_id):
+def bulk_operation_perform_action_functions_fcl_customs_cfs_delay(self, action_name, object, sourced_by_id, procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
     except Exception as exc:
@@ -582,7 +582,7 @@ def bulk_operation_perform_action_functions_customs_cfs(self, action_name, objec
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def send_notifications_to_supply_agents_cfs_request(self, object):
+def send_notifications_to_supply_agents_cfs_request_delay(self, object):
     try:
         object.send_notifications_to_supply_agents()
     except Exception as exc:

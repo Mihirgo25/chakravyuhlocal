@@ -1,7 +1,7 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
-from celery_worker import delay_fcl_cfs_functions
+from celery_worker import fcl_cfs_functions_delay
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
@@ -26,6 +26,7 @@ def create_fcl_cfs_rate(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
+    request = {key: value for key, value in request.items() if value is not None}
     params = {
         "location_id": request.get("location_id"),
         "trade_type": request.get("trade_type"),
@@ -53,7 +54,6 @@ def execute_transaction_code(request):
 
     if not cfs_object:
         cfs_object = FclCfsRate(**params)
-        cfs_object.set_location()
 
     cfs_object.line_items = request.get('line_items')
     cfs_object.free_days = request.get('free_days')
@@ -65,7 +65,7 @@ def execute_transaction_code(request):
     cfs_object.sourced_by_id = request.get("sourced_by_id")
     cfs_object.procured_by_id = request.get("procured_by_id")
 
-    if not request["importer_exporter_id"]:
+    if not request.get("importer_exporter_id"):
         cfs_object.delete_rate_not_available_entry()
 
     cfs_object.update_line_item_messages()
@@ -74,12 +74,12 @@ def execute_transaction_code(request):
     try:
         cfs_object.save()
     except Exception as e:
-      raise HTTPException(status_code=500, detail='Customs Rate did not save')
+      raise HTTPException(status_code=500, detail='CFS Rate did not save')
 
     create_audit_for_cfs_rate(request, cfs_object.id)
     
     cfs_object.update_platform_prices_for_other_service_providers()
-    delay_fcl_cfs_functions.apply_async(kwargs={'fcl_cfs_object':cfs_object,'request':request},queue='low')
+    fcl_cfs_functions_delay.apply_async(kwargs={'fcl_cfs_object':cfs_object,'request':request},queue='low')
     
     return {
       "id": cfs_object.id

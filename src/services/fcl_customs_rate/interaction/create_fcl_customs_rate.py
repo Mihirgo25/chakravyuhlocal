@@ -4,13 +4,13 @@ from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
-def create_fcl_customs_rate_data(request):
-    with db.atomic():
-      return create_fcl_customs_rate(request)
-
 def create_fcl_customs_rate(request):
-  from celery_worker import delay_fcl_customs_functions
+    with db.atomic():
+      return execute_transaction_code(request)
 
+def execute_transaction_code(request):
+  from celery_worker import fcl_customs_functions_delay
+  request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
   customs_rate = FclCustomsRate.select().where(
         FclCustomsRate.location_id == request.get('location_id'),
@@ -24,8 +24,6 @@ def create_fcl_customs_rate(request):
       
   if not customs_rate:
     customs_rate = FclCustomsRate(**params)
-    customs_rate.set_location()
-    customs_rate.set_location_ids()
 
   customs_rate.sourced_by_id = request.get("sourced_by_id")
   customs_rate.procured_by_id = request.get("procured_by_id")
@@ -36,7 +34,9 @@ def create_fcl_customs_rate(request):
   customs_rate.set_is_best_price()
 
   customs_rate.update_customs_line_item_messages()
+  customs_rate.set_location_ids()
   customs_rate.validate_before_save()
+  
   try:
      customs_rate.save()
   except Exception as e:
@@ -48,7 +48,7 @@ def create_fcl_customs_rate(request):
   create_audit(request, customs_rate.id)
 
   customs_rate.update_platform_prices_for_other_service_providers()
-  delay_fcl_customs_functions.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
+  fcl_customs_functions_delay.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
 
   return {'id': customs_rate.id}
 

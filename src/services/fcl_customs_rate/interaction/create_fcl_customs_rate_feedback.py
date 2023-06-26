@@ -40,7 +40,7 @@ def execute_transaction_code(request):
         setattr(customs_feedback, attr, value)
     
     customs_feedback.set_location()
-    customs_feedback.validate_source_id()
+    customs_feedback.set_spot_search()
 
     try:
         customs_feedback.save()

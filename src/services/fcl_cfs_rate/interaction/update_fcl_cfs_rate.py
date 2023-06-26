@@ -26,7 +26,7 @@ def execute_transaction_code(request):
     cfs_object = find_cfs_object(request)
 
     if not cfs_object:
-        raise HTTPException(status_code=500, detail='Rate Not Found')
+        raise HTTPException(status_code=400, detail='Rate Not Found')
     
     update_params =  {
         'procured_by_id':request.get('procured_by_id'),

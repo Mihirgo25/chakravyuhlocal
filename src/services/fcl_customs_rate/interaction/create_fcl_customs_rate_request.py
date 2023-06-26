@@ -34,7 +34,7 @@ def execute_transaction_code(request):
         setattr(customs_request, attr, value)
 
     customs_request.set_port()
-    customs_request.validate_source_id()
+    customs_request.set_spot_search()
     
     try:
         customs_request.save()

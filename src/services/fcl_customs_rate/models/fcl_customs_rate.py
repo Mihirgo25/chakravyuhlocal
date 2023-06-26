@@ -207,7 +207,9 @@ class FclCustomsRate(BaseModel):
         
         result = self.get_line_items_total_price(line_items)
 
-        rates = FclCustomsRate.select().where(
+        rates = FclCustomsRate.select(
+            FclCustomsRate.customs_line_items
+        ).where(
             FclCustomsRate.location_id == self.location_id,
             FclCustomsRate.trade_type == self.trade_type,
             FclCustomsRate.container_size == self.container_size,
@@ -241,7 +243,7 @@ class FclCustomsRate(BaseModel):
         self.is_best_price = (total_price <= self.platform_price)
 
     def update_platform_prices_for_other_service_providers(self):
-        from celery_worker import update_customs_rate_platform_prices
+        from celery_worker import update_fcl_customs_rate_platform_prices_delay
         request = {
             'location_id': self.location_id,
             'trade_type': self.trade_type,
@@ -250,7 +252,7 @@ class FclCustomsRate(BaseModel):
             'commodity': self.commodity,
             'importer_exporter_id': self.importer_exporter_id
         }
-        update_customs_rate_platform_prices.apply_async(kwargs = {'request':request}, queue = 'low')
+        update_fcl_customs_rate_platform_prices_delay.apply_async(kwargs = {'request':request}, queue = 'low')
 
     def detail(self):
         fcl_customs = {

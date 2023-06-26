@@ -3,7 +3,7 @@ from database.db_session import db
 from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
-from celery_worker import send_notifications_to_supply_agents_cfs_request, update_multiple_service_objects
+from celery_worker import send_notifications_to_supply_agents_cfs_request_delay, update_multiple_service_objects
 
 
 def create_fcl_cfs_rate_request(request):
@@ -33,7 +33,7 @@ def execute_transaction_code(request):
     for attr, value in create_params.items():
         setattr(cfs_request, attr, value)
     cfs_request.set_port()
-    cfs_request.validate_source_id()
+    cfs_request.set_spot_search()
 
     try:
         cfs_request.save()
@@ -43,7 +43,7 @@ def execute_transaction_code(request):
 
     create_audit_for_cfs_request(request, cfs_request.id)
     update_multiple_service_objects.apply_async(kwargs={'object':cfs_request},queue = 'low')
-    send_notifications_to_supply_agents_cfs_request.apply_async(kwargs={'object':cfs_request}, queue = 'low')
+    send_notifications_to_supply_agents_cfs_request_delay.apply_async(kwargs={'object':cfs_request}, queue = 'low')
 
     return {'id': cfs_request.id}
 

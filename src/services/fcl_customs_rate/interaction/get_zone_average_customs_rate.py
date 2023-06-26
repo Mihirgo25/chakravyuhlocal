@@ -4,7 +4,7 @@ from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from configs.env import DEFAULT_USER_ID
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
-from celery_worker import celery_create_fcl_customs_rate
+from celery_worker import create_fcl_customs_rate_delay
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def get_zone_wise_rate_query(request):
@@ -72,7 +72,7 @@ def get_zone_average_customs_rate(request):
         predicted_customs_rate['location_id'] = request.get('port_id')
         create_params = get_create_params(request, predicted_customs_rate['customs_line_items'])
 
-        celery_create_fcl_customs_rate.apply_async(kwargs = {'request':create_params}, queue = 'low')
+        create_fcl_customs_rate_delay.apply_async(kwargs = {'request':create_params}, queue = 'low')
         return [predicted_customs_rate]
     else:
         return []

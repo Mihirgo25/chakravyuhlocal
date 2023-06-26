@@ -138,7 +138,6 @@ class FclCfsRate(BaseModel):
             self.location_ids = [self.location_id,self.country_id,self.trade_id,self.continent_id]
 
     def validate_before_save(self):
-        self.set_location()
         self.validate_duplicate_line_items()
         self.validate_invalid_line_items()
         self.validate_trade_type()
@@ -177,7 +176,9 @@ class FclCfsRate(BaseModel):
 
         result = self.get_cfs_line_items_total_price()
 
-        rates_query = FclCfsRate.select().where(
+        rates_query = FclCfsRate.select(
+                    FclCfsRate.line_items
+            ).where(
             (FclCfsRate.location_id == self.location_id),
             (FclCfsRate.trade_type == self.trade_type),
             (FclCfsRate.container_size == self.container_size),
@@ -212,7 +213,7 @@ class FclCfsRate(BaseModel):
         self.is_best_price = (total_price <= self.platform_price)
     
     def update_platform_prices_for_other_service_providers(self):
-        from celery_worker import update_cfs_rate_platform_prices
+        from celery_worker import update_fcl_cfs_rate_platform_prices_delay
         request = {
             'location_id': self.location_id,
             'trade_type': self.trade_type,
@@ -222,7 +223,7 @@ class FclCfsRate(BaseModel):
             'importer_exporter_id': self.importer_exporter_id,
             'cargo_handling_type': self.cargo_handling_type
         }
-        update_cfs_rate_platform_prices.apply_async(kwargs = {'request':request}, queue = 'low')
+        update_fcl_cfs_rate_platform_prices_delay.apply_async(kwargs = {'request':request}, queue = 'low')
         
     
     def update_line_item_messages(self):

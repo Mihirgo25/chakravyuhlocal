@@ -30,7 +30,30 @@ def list_fcl_cfs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updat
     return {'list': data}
 
 def get_query(sort_by, sort_type, page, page_limit):
-    query = FclCfsRate.select().order_by(eval(f"FclCfsRate.{sort_by}.{sort_type}()")).paginate(page, page_limit)
+    query = FclCfsRate.select(
+        FclCfsRate.id, 
+        FclCfsRate.location_id,
+        FclCfsRate.service_provider_id,
+        FclCfsRate.trade_type,
+        FclCfsRate.importer_exporter_id,
+        FclCfsRate.commodity,
+        FclCfsRate.container_type,
+        FclCfsRate.container_size,
+        FclCfsRate.line_items,
+        FclCfsRate.free_days,
+        FclCfsRate.is_line_items_error_messages_present,
+        FclCfsRate.is_line_items_info_messages_present,
+        FclCfsRate.line_items_error_messages,
+        FclCfsRate.line_items_info_messages,
+        FclCfsRate.cargo_handling_type,
+        FclCfsRate.sourced_by_id,
+        FclCfsRate.procured_by_id,
+        FclCfsRate.importer_exporter,
+        FclCfsRate.service_provider,
+        FclCfsRate.location,
+        FclCfsRate.procured_by,
+        FclCfsRate.sourced_by
+    ).order_by(eval(f"FclCfsRate.{sort_by}.{sort_type}()")).paginate(page, page_limit)
     return query
 
 def apply_indirect_filters(query, filters):
@@ -56,31 +79,15 @@ def apply_is_rate_available_filter(query, filters):
     return query
 
 def get_data(query):
-    query_result = query.select(
-        FclCfsRate.id,
-        FclCfsRate.location_id,
-        FclCfsRate.service_provider_id,
-        FclCfsRate.trade_type,
-        FclCfsRate.importer_exporter_id,
-        FclCfsRate.commodity,
-        FclCfsRate.container_type,
-        FclCfsRate.container_size,
-        FclCfsRate.line_items,
-        FclCfsRate.is_line_items_error_messages_present,
-        FclCfsRate.is_line_items_info_messages_present,
-        FclCfsRate.line_items_error_messages,
-        FclCfsRate.line_items_info_messages,
-        FclCfsRate.location,
-        FclCfsRate.procured_by_id,
-        FclCfsRate.sourced_by_id,
-        FclCfsRate.sourced_by,
-        FclCfsRate.procured_by,
-        FclCfsRate.cargo_handling_type).dicts()
+    query_result = query.dicts()
 
     data = list(query_result)
     for object in data:
-        object['total_price_currency'] = 'INR'
-        object['total_price'] = get_total_price(object['line_items'], object['total_price_currency'])
+        if object['line_items']:
+            object['total_price_currency'] = object['line_items'][0].get('currency')
+        else:
+            object['total_price_currency'] = 'INR'
+        object['total_price'] = get_total_price(object.get('line_items'), object['total_price_currency'])
 
     return data
         
@@ -93,7 +100,8 @@ def apply_importer_exporter_present_filter(query, filters):
 
 def get_total_price(line_items, total_price_currency):
     total_price = 0
-    for line_item in line_items:
-        total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": total_price_currency})['price']
+    if line_items:
+        for line_item in line_items:
+            total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": total_price_currency})['price']
     
     return total_price
