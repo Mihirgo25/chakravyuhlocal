@@ -333,12 +333,6 @@ class FclFreightRateBulkOperation(BaseModel):
                         line_item['price'] = line_item['price'] + markup
                         line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
                         
-
-                    if line_item['price'] < 0:
-                        line_item['price'] = 0 
-                        
-                    if line_item['market_price'] < 0:
-                        line_item['market_price'] = 0
                     
                     validity_object['line_items'].append(line_item)
 
@@ -593,12 +587,6 @@ class FclFreightRateBulkOperation(BaseModel):
                     line_item['price'] = line_item['price'] + markup
                     line_item['market_price'] = line_item['price'] if not line_item.get('market_price') else line_item['market_price'] + markup
                     
-
-                if line_item['price'] < 0:
-                    line_item['price'] = 0 
-                    
-                if line_item['market_price'] < 0:
-                    line_item['market_price'] = 0
                 
                 validity_object['line_items'].append(line_item)
 
@@ -744,9 +732,6 @@ class FclFreightRateBulkOperation(BaseModel):
                     line_item['price'] = markup
                 else:
                     line_item['price'] = line_item['price'] + markup
-
-                if line_item['price'] < 0:
-                    line_item['price'] = 0 
 
                 for slab in line_item['slabs']:
                     if data['markup_type'].lower() == 'percent':
@@ -1124,9 +1109,6 @@ class FclFreightRateBulkOperation(BaseModel):
                 else:
                     line_item['price'] = line_item['price'] + markup
 
-                if line_item['price'] < 0:
-                    line_item['price'] = 0
-
                 validity_object['line_items'].append(line_item)
 
                 create_params['validity_start'] = max(datetime.strptime(validity_object["validity_start"], '%Y-%m-%d'), datetime.now())
@@ -1227,9 +1209,6 @@ class FclFreightRateBulkOperation(BaseModel):
                 line_item['price'] = markup
             else:  
                 line_item['price'] = line_item['price'] + markup
-            
-            if line_item['price'] < 0:
-                line_item['price'] = 0
             
             validity_object['line_items'].append(line_item)
 
