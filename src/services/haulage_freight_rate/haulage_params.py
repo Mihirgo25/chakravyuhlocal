@@ -115,7 +115,7 @@ class DeleteHaulageFreightRateRequest(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
 
-class PostHaulageFreightRateFeedback(BaseModel):
+class CreateHaulageFreightRateFeedback(BaseModel):
   source: str
   source_id: str
   feedbacks: list[str]=None
