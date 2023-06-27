@@ -268,18 +268,14 @@ def list_air_customs_charge_codes_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.get("/get_air_customs_rate_cards")
-def get_air_cutsoms_rate_cards_api(
-    port_id: str,
-    country_id: str,
-    container_size: str,
-    container_type: str,
-    containers_count: int,
-    cargo_handling_type: str,
-    trade_type: str = None,
-    include_confirmed_inventory_rates: bool = True,
-    importer_exporter_id: str = None,
-    bls_count: int = 1,
+def get_air_cutsoms_rate_cards_data(
+    airport_id: str,
+    trade_type: str,
+    weight : float,
+    volume: float,
+    packages_count : int,
     commodity: str = None,
+    importer_exporter_id: str = None,
     additional_services: str = None,
     resp: dict = Depends(authorize_token)
 ):
@@ -293,18 +289,14 @@ def get_air_cutsoms_rate_cards_api(
     if not importer_exporter_id:
         importer_exporter_id = None
     request = {
-        'port_id' : port_id,
-        'country_id' : country_id,
-        'container_size' : container_size,
-        'container_type' : container_type,
-        'containers_count' : containers_count,
-        'bls_count' : bls_count,
+        'airport_id' : airport_id,
+        'packages_count' : packages_count,
         'commodity' : commodity,
         'importer_exporter_id' : importer_exporter_id,
         'trade_type' : trade_type,
-        'cargo_handling_type' : cargo_handling_type,
+        'weight' : weight,
+        'volume': volume,
         'additional_services':additional_services,
-        'include_confirmed_inventory_rates':include_confirmed_inventory_rates,
     }
 
     try:

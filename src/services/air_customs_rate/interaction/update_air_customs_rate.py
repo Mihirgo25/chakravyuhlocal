@@ -13,7 +13,7 @@ def execute_transaction_code(request):
     if not rate_object:
         raise HTTPException(status_code=500, detail='Rate Not Found')
     
-    rate_object.line_items = request.get('customs_line_items')
+    rate_object.line_items = request.get('line_items')
     rate_object.procured_by_id = request.get('procured_by_id')
     rate_object.sourced_by_id = request.get('sourced_by_id')
 
