@@ -22,6 +22,7 @@ class AddMarkup(BaseModel):
   
 class CreateAirCustomsRateBulkOperation(BaseModel):
   performed_by_id: str
+  performed_by_type: str
   service_provider_id: str
   procured_by_id: str
   sourced_by_id: str
