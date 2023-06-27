@@ -29,6 +29,9 @@ from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_requ
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate_feedback import (
     create_haulage_freight_rate_feedback,
 )
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_frequency_addition import (
+    get_haulage_freight_rate_addition_frequency,
+)
 
 from typing import List,Union
 
@@ -270,6 +273,25 @@ def delete_haulage_freight_rates_request(request: DeleteHaulageFreightRateReques
     try:
         delete_rate = delete_haulage_freight_rate_request(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+
+@haulage_freight_router.get("/get_haulage_freight_rate_addition_frequency")
+def get_haulage_freight_rate_addition_frequency_data(
+    group_by: str,
+    filters: str = None,
+    sort_type: str = 'desc',
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = get_haulage_freight_rate_addition_frequency( group_by, filters, sort_type)
+        return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
     except Exception as e:
