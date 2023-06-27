@@ -895,7 +895,6 @@ def process_fcl_freight_freight(params, converted_file, update):
             if valid_hash(row, present_field, blank_field):
                 if rows:
                     last_row = list(row.values())
-                    print(is_previous_rate_valid, '1', params)
                     # Create previous rate if previous rate was valid
                     if is_previous_rate_valid:
                         create_fcl_freight_freight_rate(
@@ -1147,7 +1146,6 @@ def process_fcl_freight_freight(params, converted_file, update):
                 csv_writer.writerow(list_opt)
             else:
                 list_opt = []
-                print(is_previous_rate_valid, '2', params)
                 if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_freight_rate(
@@ -1190,7 +1188,6 @@ def process_fcl_freight_freight(params, converted_file, update):
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     
-    print(update.status,converted_file, '3')
 
     set_processed_percent(percent_completed, params)
     try:
@@ -1205,7 +1202,6 @@ def create_fcl_freight_freight_rate(
     from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term', 'rate_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
-    print(object, '4')
     object['validity_start'] = convert_date_format(object.get('validity_start'))
     object['validity_end'] = convert_date_format(object.get('validity_end'))
     for port in [
