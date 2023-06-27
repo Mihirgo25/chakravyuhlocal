@@ -5,8 +5,6 @@ from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import *
 from database.db_session import db
 
-
-
 def create_haulage_freight_rate_request(request):
     with db.atomic():
         return execute_transaction_code(request)

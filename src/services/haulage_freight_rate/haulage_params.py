@@ -121,3 +121,20 @@ class UpdateHaulageFreightRatePlatformPrices(BaseModel):
   is_line_items_error_messages_present: bool = False
   performed_by_id: str = None
   performed_by_type: str = None
+
+
+class CreateHaulageFreightRateNotAvailable(BaseModel):
+  origin_location_id: str
+  origin_country_id: str = None
+  destination_location_id: str
+  destination_country_id: str = None
+  container_size: str
+  container_type: str
+  commodity: str = None
+  haulage_type: str
+  shipping_line_id: str = None
+  transport_modes: list[str]=None
+
+
+
+  
