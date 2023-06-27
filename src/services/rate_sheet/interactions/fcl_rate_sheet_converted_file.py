@@ -25,25 +25,6 @@ csv_options = {
     ),
 }
 
-processed_percent_hash = "process_percent"
-
-def processed_percent_key(params):
-    return f"rate_sheet_converted_file_processed_percent_{params['id']}"
-
-def set_processed_percent(processed_percent, params):
-    if rd:
-        rd.hset(processed_percent_hash, processed_percent_key(params), processed_percent)
-
-
-def get_processed_percent(params):
-    if rd:
-        try:
-            cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
-            return parse_numeric(cached_response)
-        except:
-            return 0
-
-
 def valid_hash(hash, present_fields=None, blank_fields=None):
     if present_fields:
         for field in present_fields:
@@ -70,16 +51,6 @@ def get_port_id(port_code):
     except:
         port_id = None
     return port_id
-
-
-def get_airport_id(port_code, country_code):
-    try:
-        port_code = port_code.strip()
-    except:
-        port_code = port_code
-    filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
-    airport_id = maps.list_locations({'filters': str(filters)})['list'][0]["id"]
-    return airport_id
 
 
 def get_shipping_line_id(shipping_line_name):
@@ -191,7 +162,7 @@ def process_fcl_freight_local(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -417,7 +388,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -891,7 +862,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers) & set(headers)) != len(headers):
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True

@@ -548,7 +548,6 @@ def air_freight_rate_envision_feedback_delay(self, result):
             raise self.retry(exc= exc)
         
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-
 def create_saas_air_schedule_airport_pair_delay (self,air_object,request):
     try:
         create_saas_air_schedule_airport_pair(air_object,request)
@@ -558,8 +557,7 @@ def create_saas_air_schedule_airport_pair_delay (self,air_object,request):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-
+@celery.task(bind = True, retry_backoff = True, max_retries=5)
 def create_air_freight_rate_local_delay(self, request):
     try:
         return create_air_freight_rate_local(request)
@@ -569,9 +567,8 @@ def create_air_freight_rate_local_delay(self, request):
         else:
             raise self.retry(exc= exc)
         
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-
-def create_air_freight_rate_delay(self, request):
+@celery.task(bind = True,retry_backoff = True, max_retries=5)
+def create_air_freight_rate_freight_delay(self, request):
     try:
         return create_air_freight_rate(request)
     except Exception as exc:
@@ -580,7 +577,7 @@ def create_air_freight_rate_delay(self, request):
         else:
             raise self.retry(exc= exc)
     
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, retry_backoff = True, max_retries=5)
 def create_air_freight_rate_surcharge_delay(self, request):
     try:
         return create_air_freight_rate_surcharge(request)

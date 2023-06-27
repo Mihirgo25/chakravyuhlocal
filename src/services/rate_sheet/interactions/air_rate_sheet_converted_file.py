@@ -88,7 +88,7 @@ def process_air_freight_freight(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers) & set(headers)) != len(headers):
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
             error_file = ["invalid header"]
             csv_writer.writerow(error_file)
             invalidated = True
@@ -275,7 +275,7 @@ def create_air_freight_freight_rate(
     last_row,
 ):
     from celery_worker import (
-        create_air_freight_rate_delay,
+        create_air_freight_rate_freight_delay,
     )
 
     keys_to_extract = [
@@ -352,13 +352,18 @@ def create_air_freight_freight_rate(
             for handling in handling_types:
                 object["stacking_type"] = handling
                 object["rate_sheet_id"] = params["id"]
+                object["performed_by_id"] = created_by_id
+                object["service_provider_id"] = params.get("service_provider_id")
+                object["procured_by_id"] = procured_by_id
+                object["sourced_by_id"] = sourced_by_id
+                object["cogo_entity_id"] = params.get("cogo_entity_id")
                 request_params = object
                 validation = write_air_freight_freight_object(
                     request_params, csv_writer, params, converted_file, last_row
                 )
                 if validation.get("valid"):
                     object["rate_sheet_validation"] = True
-                    create_air_freight_rate_delay.apply_async(
+                    create_air_freight_rate_freight_delay.apply_async(
                         kwargs={"request": object}, queue="low"
                     )
                 else:
@@ -433,7 +438,7 @@ def process_air_freight_local(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers) & set(headers)) != len(headers):
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
             error_file = ["invalid header"]
             csv_writer.writerow(error_file)
             invalidated = True
@@ -695,7 +700,12 @@ def create_air_freight_local_rate(
     )
     if validation.get("valid"):
         object["rate_sheet_validation"] = True
-        object["rate_sheet_id"] = params["rate_sheet_id"]
+        object["rate_sheet_id"] = params.get("rate_sheet_id")
+        object["performed_by_id"] = created_by_id
+        object["service_provider_id"] = params.get("service_provider_id")
+        object["procured_by_id"] = procured_by_id
+        object["sourced_by_id"] = sourced_by_id
+
         create_air_freight_rate_local_delay.apply_async(
             kwargs={"request": object}, queue="low"
         )
@@ -750,7 +760,7 @@ def process_air_freight_surcharge(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers) & set(headers)) != len(headers):
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
             error_file = ["invalid header"]
             csv_writer.writerow(error_file)
             invalidated = True
@@ -982,6 +992,11 @@ def create_air_freight_surcharge_rate(
         )
         if validation.get("valid"):
             object["rate_sheet_validation"] = True
+            object["rate_sheet_id"] = params.get('id')
+            object["performed_by_id"] = created_by_id
+            object["service_provider_id"] = params.get('service_provider_id')
+            object["procured_by_id"] = procured_by_id
+            object["sourced_by_id"] = sourced_by_id
             create_air_freight_rate_surcharge_delay.apply_async(
                 kwargs={"request": object}, queue="low"
             )
