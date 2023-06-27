@@ -24,6 +24,8 @@ def execute_transaction_code(request):
       
   if not customs_rate:
     customs_rate = FclCustomsRate(**params)
+    customs_rate.set_location()
+    customs_rate.set_location_ids()
 
   customs_rate.sourced_by_id = request.get("sourced_by_id")
   customs_rate.procured_by_id = request.get("procured_by_id")
@@ -34,7 +36,6 @@ def execute_transaction_code(request):
   customs_rate.set_is_best_price()
 
   customs_rate.update_customs_line_item_messages()
-  customs_rate.set_location_ids()
   customs_rate.validate_before_save()
   
   try:

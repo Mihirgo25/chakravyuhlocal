@@ -304,7 +304,8 @@ class FclCustomsRate(BaseModel):
         ).execute() 
 
     def update_customs_line_item_messages(self):
-        self.set_location()
+        if not self.location:
+            self.set_location()
         location_ids = list(set([item.get('location_id') for item in self.customs_line_items if item.get('location_id')]))
         locations = []
 
