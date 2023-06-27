@@ -39,7 +39,7 @@ def create_air_freight_rate_data(request):
 
     
 def create_air_freight_rate(request):
-    from celery_worker import create_saas_air_schedule_airport_pair, update_air_freight_rate_details_delay
+    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay
 
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
@@ -145,7 +145,7 @@ def create_air_freight_rate(request):
     
     create_audit(request, freight.id,validity_id)
 
-    create_saas_air_schedule_airport_pair.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
+    create_saas_air_schedule_airport_pair_delay.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
 
     freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
 
