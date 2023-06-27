@@ -43,7 +43,7 @@ def process_fcl_customs_customs(params, converted_file, update):
                     )
                     set_current_processing_line(index, converted_file)
                 rows = [row]
-            elif rows and valid_hash(row, ['line_item_type', 'code', 'unit', 'price', 'currency'], ['location', 'trade_type', 'container_size', 'container_type', 'commodity']):
+            elif rows and valid_hash(row, ['line_item_type', 'code', 'unit', 'price', 'currency'], ['location', 'trade_type', 'container_size', 'container_type', 'commodity', 'rate_type']):
                 rows.append(row)
             if not rows:
                 return
