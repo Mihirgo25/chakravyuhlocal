@@ -23,8 +23,7 @@ def create_fcl_cfs_rate_bulk_operation(request):
         data = request[action_name]
 
         params = get_bulk_operation_params(request, action_name, data)
-        bulk_operation = FclCfsRateBulkOperation.create(**params)
-
+        bulk_operation = FclCfsRateBulkOperation(**params)
         eval(f"bulk_operation.validate_{action_name}_data()")
 
         bulk_operation.save()
