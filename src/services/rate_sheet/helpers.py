@@ -3,6 +3,7 @@ import httpx
 from database.db_session import rd
 from datetime import datetime
 import dateutil.parser as parser
+from libs.parse_numeric import parse_numeric
 client = httpx.Client()
 
 
@@ -108,3 +109,35 @@ def convert_date_format(date):
         return date
     parsed_date = parser.parse(date, dayfirst=True)
     return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
+
+
+def processed_percent_key(params):
+    return f"rate_sheet_converted_file_processed_percent_{params['id']}"
+
+def set_processed_percent(processed_percent, params):
+    if rd:
+        rd.hset(processed_percent_hash, processed_percent_key(params), processed_percent)
+
+
+def get_processed_percent(params):
+    if rd:
+        try:
+            cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
+            return parse_numeric(cached_response)
+        except:
+            return 0
+
+def valid_hash(hash, present_fields=None, blank_fields=None):
+    if present_fields:
+        for field in present_fields:
+            if field not in hash:
+                return False
+            if not hash[field]:
+                return False
+    if blank_fields:
+        all_blank = True
+        for field in blank_fields:
+            if field in hash and hash[field]:
+                all_blank = False
+        return all_blank
+    return True
