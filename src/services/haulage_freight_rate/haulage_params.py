@@ -104,8 +104,20 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   updated_at: datetime = None
 
 class DeleteHaulageFreightRateFeedback(BaseModel):
-    haulage_freight_rate_feedback_ids: list[str]
-    closing_remarks: list[str] = []
-    performed_by_id: str = None
-    performed_by_type: str = None
+  haulage_freight_rate_feedback_ids: list[str]
+  closing_remarks: list[str] = []
+  performed_by_id: str = None
+  performed_by_type: str = None
     
+class UpdateHaulageFreightRatePlatformPrices(BaseModel):
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  container_type: str
+  commodity: str = None
+  haulage_type: str  
+  shipping_line_id: str = None
+  importer_exporter_id: str = None
+  is_line_items_error_messages_present: bool = False
+  performed_by_id: str = None
+  performed_by_type: str = None

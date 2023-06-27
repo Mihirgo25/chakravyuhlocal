@@ -32,6 +32,9 @@ from services.haulage_freight_rate.interactions.create_haulage_freight_rate_feed
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_frequency_addition import (
     get_haulage_freight_rate_addition_frequency,
 )
+from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import (
+    update_haulage_freight_rate_platform_prices,
+)
 
 from typing import List,Union
 
@@ -298,3 +301,18 @@ def get_haulage_freight_rate_addition_frequency_data(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
+@haulage_freight_router.post("/update_haulage_freight_rate_platform_prices")
+def update_haulage_freight_rate_platform_prices_data(request: UpdateHaulageFreightRatePlatformPrices, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = update_haulage_freight_rate_platform_prices(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

@@ -6,7 +6,7 @@ from playhouse.postgres_ext import BinaryJSONField, ArrayField
 from fastapi import HTTPException
 from micro_services.client import *
 from params import LineItem
-from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_rate_platform_prices
+from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from configs.global_constants import *
 from configs.haulage_freight_rate_constants import *
@@ -239,9 +239,11 @@ class HaulageFreightRate(BaseModel):
         return mandatory_line_items
     
 
-    def set_platform_price(self,mandatory_charge_codes,currency):
+    def set_platform_price(self):
+        possible_charge_codes=self.possible_charge_codes()
+        mandatory_charge_codes=self.mandatory_charge_codes(possible_charge_codes)
         line_items = self.get_mandatory_line_items(mandatory_charge_codes)
-
+        currency=self.line_items[0].get('currency')
         if not line_items:
             return
         result = self.get_line_items_total_price(line_items)
@@ -297,7 +299,7 @@ class HaulageFreightRate(BaseModel):
         "haulage_type": self.haulage_type
         }
 
-        update_haulage_rate_platform_prices(data)
+        update_haulage_freight_rate_platform_prices(data)
 
     def update_line_item_messages(self,possible_charge_codes):
         self.set_origin_location()
