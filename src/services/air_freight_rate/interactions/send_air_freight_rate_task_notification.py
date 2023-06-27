@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from micro_services.client import partner
-from configs.air_freight_rate_constants import ROLE_IDS_FOR_NOTIFICATIONS
+from services.air_freight_rate.constants.air_freight_rate_constants import ROLE_IDS_FOR_NOTIFICATIONS
 
 
 def send_air_freight_rate_task_notification(task_id):

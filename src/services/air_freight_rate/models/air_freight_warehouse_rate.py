@@ -2,11 +2,11 @@ from peewee import *
 from datetime import datetime
 from database.db_session import db
 from fastapi import HTTPException
-from configs.air_freight_rate_constants import MAX_CARGO_LIMIT
+from services.air_freight_rate.constants.air_freight_rate_constants import MAX_CARGO_LIMIT
 from playhouse.postgres_ext import *
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from configs.definitions import AIR_FREIGHT_WAREHOUSE_CHARGES
-from configs.air_freight_rate_constants import LOCAL_COMMODITIES
+from services.air_freight_rate.constants.air_freight_rate_constants import LOCAL_COMMODITIES
 from micro_services.client import *
 from database.rails_db import get_organization,get_shipping_line
 

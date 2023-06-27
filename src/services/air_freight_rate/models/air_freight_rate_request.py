@@ -1,6 +1,6 @@
 from peewee import *
 from database.db_session import db
-from configs.air_freight_rate_constants import REQUEST_SOURCES
+from services.air_freight_rate.constants.air_freight_rate_constants import REQUEST_SOURCES
 from fastapi import HTTPException
 from micro_services.client import *
 from database.rails_db import *

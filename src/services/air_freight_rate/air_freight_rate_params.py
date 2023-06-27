@@ -162,7 +162,7 @@ class CreateAirFreightRateLocalParams(BaseModel):
     sourced_by_id: str
     bulk_operation_id: str = None
     rate_sheet_id: str = None
-    rate_type: str = "general"
+    rate_type: str = "market_place"
     line_items: list[LineItemLocal]
 
 
@@ -265,7 +265,7 @@ class CreateAirFreightRateRequestParams(BaseModel):
     source: str
     source_id: str
     cogo_entity_id: str
-    performed_by_id: str = None
+    performed_by_id: str
     performed_by_org_id: str
     performed_by_type: str = None
     preferred_freight_rate: float = None
@@ -406,7 +406,7 @@ class CreateAirFreightRateParams(BaseModel):
     maximum_weight: int = 1000
     shipment_type: str = "box"
     stacking_type: str = "stackable"
-    rate_type: str = "market_price"
+    rate_type: str = "market_place"
     initial_volume: float = None
     initial_gross_weight: float = None
     available_volume: float = None
@@ -452,9 +452,9 @@ class UpdateAirFreightWarehouseRateParams(BaseModel):
 class UpdateAirFreightRateRequestParams(BaseModel):
     air_freight_rate_request_id: str
     closing_remarks: list[str] = None
-    status: str
-    remarks: str
-    performed_by_id: str = None
+    status: str=None
+    remarks: str=None
+    performed_by_id: str
 
 
 class DeleteAirFreightRateRequestParams(BaseModel):

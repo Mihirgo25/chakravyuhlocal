@@ -6,7 +6,7 @@ from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from fastapi import HTTPException
 from micro_services.client import *
 from database.rails_db import *
-from configs.air_freight_rate_constants import *
+from services.air_freight_rate.constants.air_freight_rate_constants import *
 from configs.global_constants import *
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -76,6 +76,9 @@ class AirFreightRateLocal(BaseModel):
     def possible_charge_codes(self):
         commodity = self.commodity
         commodity_type = self.commodity_type
+        commodity_sub_type = None
+        
+
         air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
         charge_codes={}
         for code,config in air_freight_local_charges_dict.items():

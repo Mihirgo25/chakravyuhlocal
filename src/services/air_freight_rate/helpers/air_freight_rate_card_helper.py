@@ -1,4 +1,4 @@
-from configs.air_freight_rate_constants import (
+from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,
     AIR_IMPORTS_LOW_DENSITY_RATIO,
     AIR_IMPORTS_HIGH_DENSITY_RATIO,

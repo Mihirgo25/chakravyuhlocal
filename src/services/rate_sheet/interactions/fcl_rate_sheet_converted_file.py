@@ -25,39 +25,6 @@ csv_options = {
     ),
 }
 
-processed_percent_hash = "process_percent"
-
-def processed_percent_key(params):
-    return f"rate_sheet_converted_file_processed_percent_{params['id']}"
-
-def set_processed_percent(processed_percent, params):
-    if rd:
-        rd.hset(processed_percent_hash, processed_percent_key(params), processed_percent)
-
-
-def get_processed_percent(params):
-    if rd:
-        try:
-            cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
-            return parse_numeric(cached_response)
-        except:
-            return 0
-
-
-def valid_hash(hash, present_fields=None, blank_fields=None):
-    if present_fields:
-        for field in present_fields:
-            if field not in hash:
-                return False
-            if not hash[field]:
-                return False
-    if blank_fields:
-        all_blank = True
-        for field in blank_fields:
-            if field in hash and hash[field]:
-                all_blank = False
-        return all_blank
-    return True
 
 def get_port_id(port_code):
     try:
@@ -70,16 +37,6 @@ def get_port_id(port_code):
     except:
         port_id = None
     return port_id
-
-
-def get_airport_id(port_code, country_code):
-    try:
-        port_code = port_code.strip()
-    except:
-        port_code = port_code
-    filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
-    airport_id = maps.list_locations({'filters': str(filters)})['list'][0]["id"]
-    return airport_id
 
 
 def get_shipping_line_id(shipping_line_name):
@@ -191,7 +148,7 @@ def process_fcl_freight_local(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -417,7 +374,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -891,7 +848,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers) & set(headers)) != len(headers):
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -924,7 +881,6 @@ def process_fcl_freight_freight(params, converted_file, update):
             if valid_hash(row, present_field, blank_field):
                 if rows:
                     last_row = list(row.values())
-                    print(is_previous_rate_valid, '1', params)
                     # Create previous rate if previous rate was valid
                     if is_previous_rate_valid:
                         create_fcl_freight_freight_rate(
@@ -1176,7 +1132,6 @@ def process_fcl_freight_freight(params, converted_file, update):
                 csv_writer.writerow(list_opt)
             else:
                 list_opt = []
-                print(is_previous_rate_valid, '2', params)
                 if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_freight_rate(
@@ -1219,7 +1174,6 @@ def process_fcl_freight_freight(params, converted_file, update):
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     
-    print(update.status,converted_file, '3')
 
     set_processed_percent(percent_completed, params)
     try:
@@ -1234,7 +1188,6 @@ def create_fcl_freight_freight_rate(
     from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term', 'rate_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
-    print(object, '4')
     object['validity_start'] = convert_date_format(object.get('validity_start'))
     object['validity_end'] = convert_date_format(object.get('validity_end'))
     for port in [

@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
-from configs.air_freight_rate_constants import *
+from services.air_freight_rate.constants.air_freight_rate_constants import *
 from micro_services.client import *
 from database.rails_db import *
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
