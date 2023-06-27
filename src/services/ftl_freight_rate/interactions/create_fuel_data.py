@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from database.db_session import db
+import datetime
 
 
 def create_fuel_data(request):
@@ -46,7 +47,7 @@ def find_fuel_data(fuel_data_search_params):
 
 
 def assign_attribute(fuel_data_id, request):
-    update_params = {}
+    update_params = {'updated_at': datetime.datetime.now()}
     for key in ["fuel_price", "fuel_unit", "currency"]:
         update_params[key] = request[key]
     FuelData.update(update_params).where(FuelData.id == str(fuel_data_id)).execute()
