@@ -76,6 +76,9 @@ class AirFreightRateLocal(BaseModel):
     def possible_charge_codes(self):
         commodity = self.commodity
         commodity_type = self.commodity_type
+        commodity_sub_type = None
+        
+
         air_freight_local_charges_dict = AIR_FREIGHT_LOCAL_CHARGES
         charge_codes={}
         for code,config in air_freight_local_charges_dict.items():

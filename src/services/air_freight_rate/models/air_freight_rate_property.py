@@ -17,8 +17,8 @@ class AirFreightRateProperty(BaseModel):
     priority_score_updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     spot_searches_count = IntegerField(null=True)
     spot_searches_importer_exporters_count = IntegerField(null=True)
-    created_at = DateField(deafult=datetime.datetime.now())
-    updated_at = DateField(deafult=datetime.datetime.now())
+    created_at = DateField(default=datetime.datetime.now())
+    updated_at = DateField(default=datetime.datetime.now())
     air_freight_rate_id = ForeignKeyField(AirFreightRate, backref='air_freight_rate_property', null=True)
 
     class Meta:
