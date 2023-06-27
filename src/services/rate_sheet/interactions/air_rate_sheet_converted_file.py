@@ -9,10 +9,6 @@ from services.rate_sheet.interactions.validate_air_freight_object import (
 from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.helpers import *
 import chardet
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import (
-    set_processed_percent,
-    valid_hash,
-)
 from micro_services.client import maps
 
 

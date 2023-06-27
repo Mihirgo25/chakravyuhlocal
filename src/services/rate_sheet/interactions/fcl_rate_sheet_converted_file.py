@@ -25,20 +25,6 @@ csv_options = {
     ),
 }
 
-def valid_hash(hash, present_fields=None, blank_fields=None):
-    if present_fields:
-        for field in present_fields:
-            if field not in hash:
-                return False
-            if not hash[field]:
-                return False
-    if blank_fields:
-        all_blank = True
-        for field in blank_fields:
-            if field in hash and hash[field]:
-                all_blank = False
-        return all_blank
-    return True
 
 def get_port_id(port_code):
     try:
