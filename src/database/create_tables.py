@@ -13,14 +13,14 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 # from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 # from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 # from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
 
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([AirFreightRateAudit])
+        db.create_tables([AirFreightRateFeedback])
         db.close()
         print("created table")
     except:

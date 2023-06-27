@@ -23,6 +23,8 @@ from services.haulage_freight_rate.haulage_freight_rate_router import haulage_fr
 from services.extensions.extension_router import extension_router
 from services.air_freight_rate.air_freight_rate_router import air_freight_router
 from micro_services.client import *
+from libs.air_migration import run_migration
+
 
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -97,8 +99,9 @@ def startup():
     # create_rail_haulage_rates()
     # insert()
     # insert_china()
-    #run_migration()
     # create_table()
+    run_migration()
+    
     # fcl_freight_migration()
     # create_partition_table()
     # fcl_local_
