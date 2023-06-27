@@ -202,7 +202,7 @@ def process_fcl_freight_local(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -429,7 +429,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -903,7 +903,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers) & set(headers)) != len(headers):
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
