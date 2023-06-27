@@ -61,9 +61,6 @@ class AirCustomsRateFeedback(BaseModel):
         if location_data:
             self.location = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
-    def validate_source_id(self):
-        if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
-            if len(spot_search_data) == 0:
-                raise HTTPException(status_code=400, detail="Invalid Source")
-            self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
+    def set_spot_search(self):
+        spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+        self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}

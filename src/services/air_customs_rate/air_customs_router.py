@@ -27,7 +27,7 @@ from services.air_customs_rate.interaction.delete_air_customs_rate_request impor
 air_customs_router = APIRouter()
 
 @air_customs_router.post("/create_air_customs_rate")
-def create_air_customs_rate_func(request: CreateAirCustomsRate, resp: dict = Depends(authorize_token)):
+def create_air_customs_rate_api(request: CreateAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -44,7 +44,7 @@ def create_air_customs_rate_func(request: CreateAirCustomsRate, resp: dict = Dep
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
 @air_customs_router.post("/create_air_customs_rate_bulk_operation")
-def create_air_customs_rate_bulk_operation_data(request: CreateAirCustomsRateBulkOperation, resp: dict = Depends(authorize_token)):
+def create_air_customs_rate_bulk_operation_api(request: CreateAirCustomsRateBulkOperation, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -60,7 +60,7 @@ def create_air_customs_rate_bulk_operation_data(request: CreateAirCustomsRateBul
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.post("/create_air_customs_rate_feedback")
-def create_air_customs_rate_feedback_data(request: CreateAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
+def create_air_customs_rate_feedback_api(request: CreateAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -76,7 +76,7 @@ def create_air_customs_rate_feedback_data(request: CreateAirCustomsRateFeedback,
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.post("/create_air_customs_rate_request")
-def create_air_customs_rate_request_data(request: CreateAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
+def create_air_customs_rate_request_api(request: CreateAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -92,7 +92,7 @@ def create_air_customs_rate_request_data(request: CreateAirCustomsRateRequest, r
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.post("/create_air_customs_rate_not_available")
-def create_air_customs_rate_not_available_data(request: CreateAirCustomsRateNotAvailable, resp: dict = Depends(authorize_token)):
+def create_air_customs_rate_not_available_api(request: CreateAirCustomsRateNotAvailable, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -108,7 +108,7 @@ def create_air_customs_rate_not_available_data(request: CreateAirCustomsRateNotA
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.get("/get_air_customs_rate_addition_frequency")
-def get_air_customs_rate_addition_frequency_data(
+def get_air_customs_rate_addition_frequency_api(
     group_by: str,
     filters: str = None,
     sort_type: str = 'desc',
@@ -127,7 +127,7 @@ def get_air_customs_rate_addition_frequency_data(
     
 
 @air_customs_router.get("/get_air_customs_rate_visibility")
-def get_air_customs_rate_visibility_data(
+def get_air_customs_rate_visibility_api(
     service_provider_id: str,
     location_id: str = None,
     rate_id: str = None,
@@ -152,7 +152,7 @@ def get_air_customs_rate_visibility_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.get("/get_air_customs_rate")
-def get_air_customs_rate_data(
+def get_air_customs_rate_api(
     airport_id: str = None,
     commodity: str = None,
     service_provider_id: str = None,
@@ -182,7 +182,7 @@ def get_air_customs_rate_data(
     
 
 @air_customs_router.get("/list_air_customs_rate_feedbacks")
-def list_air_customs_rate_feedbacks_data(
+def list_air_customs_rate_feedbacks_api(
     filters: str = None,
     spot_search_details_required: bool = False,
     customer_details_required: bool = False,
@@ -205,7 +205,7 @@ def list_air_customs_rate_feedbacks_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.get("/list_air_customs_rate_requests")
-def list_air_customs_rate_requests_data(
+def list_air_customs_rate_requests_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
@@ -225,7 +225,7 @@ def list_air_customs_rate_requests_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.get("/list_air_customs_rates")
-def list_air_customs_rates_data(
+def list_air_customs_rates_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
@@ -247,7 +247,7 @@ def list_air_customs_rates_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.get("/list_air_customs_charge_codes")
-def list_air_customs_charge_codes_data(
+def list_air_customs_charge_codes_api(
     service_type: str,
     trade_type: str,
     resp: dict = Depends(authorize_token)
@@ -268,7 +268,7 @@ def list_air_customs_charge_codes_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.get("/get_air_customs_rate_cards")
-def get_air_cutsoms_rate_cards_data(
+def get_air_cutsoms_rate_cards_api(
     port_id: str,
     country_id: str,
     container_size: str,
@@ -317,7 +317,7 @@ def get_air_cutsoms_rate_cards_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.post("/update_air_customs_rate")
-def update_air_customs_rate_data(request: UpdateAirCustomsRate, resp: dict = Depends(authorize_token)):
+def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -334,7 +334,7 @@ def update_air_customs_rate_data(request: UpdateAirCustomsRate, resp: dict = Dep
 
 
 @air_customs_router.post("/delete_air_customs_rate")
-def delete_air_customs_rate_data(request: DeleteAirCustomsRate, resp: dict = Depends(authorize_token)):
+def delete_air_customs_rate_api(request: DeleteAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -350,7 +350,7 @@ def delete_air_customs_rate_data(request: DeleteAirCustomsRate, resp: dict = Dep
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.post("/delete_air_customs_rate_feedback")
-def delete_air_customs_rate_feedbackdata(request: DeleteAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
+def delete_air_customs_rate_feedback_api(request: DeleteAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -366,7 +366,7 @@ def delete_air_customs_rate_feedbackdata(request: DeleteAirCustomsRateFeedback, 
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.post("/delete_air_customs_rate_request")
-def delete_air_customs_rate_request_data(request: DeleteAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
+def delete_air_customs_rate_request_api(request: DeleteAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -382,7 +382,7 @@ def delete_air_customs_rate_request_data(request: DeleteAirCustomsRateRequest, r
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.post("/delete_air_customs_rate_feedback")
-def delete_air_customs_rates_feedback(request: DeleteAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
+def delete_air_customs_rate_feedback_api(request: DeleteAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -398,7 +398,7 @@ def delete_air_customs_rates_feedback(request: DeleteAirCustomsRateFeedback, res
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.post("/delete_air_customs_rate_request")
-def delete_air_customs_rates_request(request: DeleteAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
+def delete_air_customs_rate_request_api(request: DeleteAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -414,7 +414,7 @@ def delete_air_customs_rates_request(request: DeleteAirCustomsRateRequest, resp:
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
 @air_customs_router.post("/delete_air_customs_rate")
-def delete_air_customs_rates(request: DeleteAirCustomsRate, resp: dict = Depends(authorize_token)):
+def delete_air_customs_rate_api(request: DeleteAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -431,7 +431,7 @@ def delete_air_customs_rates(request: DeleteAirCustomsRate, resp: dict = Depends
 
     
 @air_customs_router.post("/update_air_customs_rate")
-def update_air_customs_rate_data(request: UpdateAirCustomsRate, resp: dict = Depends(authorize_token)):
+def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
