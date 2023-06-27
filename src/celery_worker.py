@@ -538,7 +538,7 @@ def process_freight_look_rates(self, rate, locations):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff = True,max_retries=1)
-def air_freight_rate_envision_feedback_delay(self, result):
+def air_freight_rate_prediction_feedback_delay(self, result):
     try:
         create_air_freight_rate_feedback(result)
     except Exception as exc:
