@@ -5,6 +5,7 @@ from configs.global_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_R
 from fastapi.encoders import jsonable_encoder
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from micro_services.client import organization
+from database.rails_db import get_eligible_orgs
 
 def get_air_freight_local_rate_cards(request):
     local_query = initialize_local_query(request)
@@ -78,7 +79,7 @@ def build_local_line_item_object(request,line_item):
     if code_config.get('tags') and 'weight_slabs_required' in code_config.get('tags'):
         required_slab = None
         for slab in line_item['slabs']:
-            if slab['lower_limit'] <= chargeable_weight and  t['upper_limit'] >= chargeable_weight:
+            if slab['lower_limit'] <= chargeable_weight and slab['upper_limit'] >= chargeable_weight:
                 required_slab = slab
                 break
         if not required_slab:
@@ -114,8 +115,5 @@ def get_chargeable_weight(request):
     return chargeable_weight
 
 def ignore_non_eligible_service_providers(locals):
-    ids = organization.get_eligible_service_organizations({'service':'air_freight'})['ids']
-
-    locals = [freight for freight in locals if freight['service_provider_id'] in ids]
-
-    return locals
+    ids = get_eligible_orgs('air_freight')
+    return ids
