@@ -69,14 +69,14 @@ def apply_validity_end_less_than_filter(query, filters):
 def apply_similar_id_filter(query,filters):
     rate_request_obj = HaulageFreightRateRequest.select().where(HaulageFreightRateRequest.id == filters['similar_id']).dicts().get()
     query = query.where(HaulageFreightRateRequest.id != filters['similar_id'])
-    return query.where(HaulageFreightRateRequest.origin_location_id == rate_request_obj['origin_location_id'], HaulageFreightRateRequest.destination_location_id == rate_request_obj['destination_location_id'], HaulageFreightRateRequest.container_size == rate_request_obj['container_size'], HaulageFreightRateRequest.container_type == rate_request_obj['container_type'], HaulageFreightRateRequest.commodity == rate_request_obj['commodity'], HaulageFreightRateRequest.inco_term == rate_request_obj['inco_term'])
+    return query.where(HaulageFreightRateRequest.origin_location_id == rate_request_obj['origin_location_id'], HaulageFreightRateRequest.destination_location_id == rate_request_obj['destination_location_id'], HaulageFreightRateRequest.container_size == rate_request_obj['container_size'], HaulageFreightRateRequest.container_type == rate_request_obj['container_type'], HaulageFreightRateRequest.commodity == rate_request_obj['commodity'])
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('haulage_freight', filters['relevant_supply_agent'])
     origin_port_id = [t['origin_location_id'] for t in expertises]
     destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((HaulageFreightRateRequest.origin_location_id << origin_port_id) | (HaulageFreightRateRequest.origin_country_id << origin_port_id) | (HaulageFreightRateRequest.origin_continent_id << origin_port_id) | (HaulageFreightRateRequest.origin_trade_id << origin_port_id))
-    query = query.where((HaulageFreightRateRequest.destination_location_id << destination_port_id) | (HaulageFreightRateRequest.destination_country_id << destination_port_id) | (HaulageFreightRateRequest.destination_continent_id << destination_port_id) | (HaulageFreightRateRequest.destination_trade_id << destination_port_id))
+    query = query.where((HaulageFreightRateRequest.origin_location_id << origin_port_id) | (HaulageFreightRateRequest.origin_country_id << origin_port_id))
+    query = query.where((HaulageFreightRateRequest.destination_location_id << destination_port_id) | (HaulageFreightRateRequest.destination_country_id << destination_port_id) )
     return query
 
 def apply_shipping_line_id_filter(query, filters):
