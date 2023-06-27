@@ -42,7 +42,7 @@ def create_audit(request, freight_rate_request_id):
     HaulageFreightRateAudit.create(
     action_name = 'delete',
     performed_by_id = request['performed_by_id'],
-    data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},    #######already performed_by_id column is present do we need to also save it in data?
+    data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},
     object_id = freight_rate_request_id,
     object_type = 'HaulageFreightRateRequest'
     )
