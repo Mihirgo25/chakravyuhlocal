@@ -235,7 +235,7 @@ DISTANCE_FACTOR = {
 DISTANCE_RATE_FACTOR = {
     0:[{'lower_limit':0,'upper_limit':50,'rate_factor':3.5},{'lower_limit':50,'upper_limit':500,'rate_factor':1.2,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.94}],
     1:[{'lower_limit':0,'upper_limit':50,'rate_factor':1.5},{'lower_limit':50,'upper_limit':500,'rate_factor':1.1,'linear_decreasing':True},{'lower_limit':500,'upper_limit':1100,'rate_factor':1},{'lower_limit':1100,'upper_limit':3000,'rate_factor':0.95}]
-} 
+}
 
 # overall rate factor basis on capacity of the truck
 TRUCK_CAPACITY_RATE_FACTOR = {
@@ -284,9 +284,24 @@ TRUCK_CAPACITY_RATE_FACTOR = {
 
 # lower and upper limit are Capacity of Vehicle
 TRUCK_TYPES_MAPPING = {
-    'small' : {'lower_limit':0,'upper_limit':2.3},
-    'medium' : {'lower_limit':2.3,'upper_limit':10.1},
-    'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    'IN':
+    {
+        'small' : {'lower_limit':0,'upper_limit':2.3},
+        'medium' : {'lower_limit':2.3,'upper_limit':10.1},
+        'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    },
+    'US':
+    {
+        'small' : {'lower_limit':0,'upper_limit':9999},
+        'medium' : {'lower_limit':9999,'upper_limit':28000},
+        'heavy': {'lower_limit':28000,'upper_limit':120000}
+    },
+    'EU':
+    {
+        'small' : {'lower_limit':0,'upper_limit':3.5},
+        'medium' : {'lower_limit':3.5,'upper_limit':9},
+        'heavy': {'lower_limit':9,'upper_limit':154.3}
+    }
 }
 
 # 40% addtional basic freight for round trip
@@ -294,7 +309,7 @@ ROUND_TRIP_CHARGE = 0.4
 
 # Loading charges 150/tonn same for unloading so 300
 LOADING_UNLOADING_CHARGES = 300
-
+LOADING_UNLOADING_CHARGES_US = 0.04
 # HAZ commodity or reefer truck body type 20% extra basic freight charge.
 ADDITIONAL_CHARGE = 0.2
 
@@ -304,8 +319,15 @@ CLOSED_BODY_CHARGES_FOR_7 = 1.3
 CLOSED_BODY_CHARGES_FOR_14 = 1.25
 # Minimum charges for driver if distance is less than 300
 MINIMUM_APPLICABLE_CHARGE = 400
+
+#kilometres to miles
+KILOMETRE_TO_MILE = 0.621371
+
 USA_FUEL_DATA_LINK = "https://gasprices.aaa.com/state-gas-price-averages/"
 
+EUROPE_FUEL_DATA_LINK = "https://www.cargopedia.net/europe-fuel-prices/"
+
+CHINA_FUEL_DATA_LINKS = "https://www.globalpetrolprices.com/China/diesel_prices/"
 INDIA_FUEL_DATA_LINKS = {
     "https://www.ndtv.com/fuel-prices/petrol-price-in-india": [
         "tbl-container b_rad4 tbl-scrolling",
@@ -327,4 +349,28 @@ INDIA_FUEL_DATA_LINKS = {
         "diesel",
         "region",
     ],
+}
+
+# EUROPE
+
+EU_BASIC_CHARGE_LIST = {'distance_factor','time_factor','capacity_factor','loading_charge'}
+
+EUROPE_CONTINENT_ID = '72abc4ba-6368-4501-9a86-8065f5c191f8'
+
+MEDITERRANEAN_ID = 'f5aefa8e-9a81-4b6d-889c-81678605458a'
+
+EU_ZONE = (EUROPE_CONTINENT_ID, MEDITERRANEAN_ID)
+
+DEFAULT_TOLL_PRICE_EU = 0.253
+
+EUROPE_HAZARDOUS_RATE = 1.05
+
+EUROPE_REEFER_RATE = 1.15
+
+TON_TO_POUND = 2000
+
+AVERAGE_SPEEDS = {
+    'small':90,
+    'medium':80,
+    'heavy':75
 }

@@ -6,6 +6,7 @@ __pycache__
 *.egg-info
 .env
 .env.prod
+dump.rdb
 src/dump.rdb
 
 # CDK asset staging directory
