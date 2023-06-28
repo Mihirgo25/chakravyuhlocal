@@ -508,7 +508,7 @@ def run_migration():
     procured_by_sourced_by('air_freight_storage_rate')
     # all_locations_data()
     print('Procured by Sourced by Data done')
-    air_freight_rate_feedback_migration()
+    # air_freight_rate_feedback_migration()
     # air_freight_rate_audits_migration()
     # air_freight_rate_requests_migration()
     # air_freight_storage_rates_migration()
