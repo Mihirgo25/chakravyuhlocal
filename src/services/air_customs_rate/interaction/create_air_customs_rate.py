@@ -3,12 +3,12 @@ from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 
-def create_air_customs_rate_data(request):
-    with db.atomic():
-      return create_air_customs_rate(request)
-
 def create_air_customs_rate(request):
-  from celery_worker import delay_air_customs_functions
+    with db.atomic():
+      return execute_transaction_code(request)
+
+def execute_transaction_code(request):
+  from celery_worker import air_customs_functions_delay
 
   params = get_create_object_params(request)
   air_customs_rate = AirCustomsRate.select().where(
@@ -21,14 +21,15 @@ def create_air_customs_rate(request):
       
   if not air_customs_rate:
     air_customs_rate = AirCustomsRate(**params)
-    air_customs_rate.set_location()
+    air_customs_rate.set_airport()
     air_customs_rate.set_location_ids()
 
   air_customs_rate.sourced_by_id = request.get("sourced_by_id")
   air_customs_rate.procured_by_id = request.get("procured_by_id")
   air_customs_rate.line_items = request.get('line_items')
+  air_customs_rate.rate_not_available_entry = False
 
-  air_customs_rate.update_customs_line_item_messages()
+  air_customs_rate.update_line_item_messages()
   air_customs_rate.validate_before_save()
 
   try:
@@ -38,14 +39,13 @@ def create_air_customs_rate(request):
 
   create_audit(request, air_customs_rate.id)
 
-  air_customs_rate.update_platform_prices_for_other_service_providers()
-  delay_air_customs_functions.apply_async(kwargs={'air_customs_object':air_customs_rate, 'request':request,},queue = 'low')
+  air_customs_functions_delay.apply_async(kwargs={'air_customs_object':air_customs_rate, 'request':request},queue = 'low')
 
   return {'id': air_customs_rate.id}
 
 def get_create_object_params(request):
     return {
-      'airport_id':request.get('location_id'),
+      'airport_id':request.get('airport_id'),
       'trade_type' : request.get('trade_type'),
       'service_provider_id': request.get('service_provider_id'),
       'commodity' : request.get('commodity'),
@@ -54,7 +54,7 @@ def get_create_object_params(request):
 
 def create_audit(request, customs_rate_id):
   audit_data = {
-      'customs_line_items': request.get('customs_line_items')
+      'line_items': request.get('line_items')
   }
 
   AirCustomsRateAudit.create(

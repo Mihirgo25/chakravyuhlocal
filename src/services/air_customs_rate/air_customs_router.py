@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 import sentry_sdk, traceback
 from fastapi import HTTPException
 import json
-from services.air_customs_rate.interaction.create_air_customs_rate import create_air_customs_rate_data
+from services.air_customs_rate.interaction.create_air_customs_rate import create_air_customs_rate
 from services.air_customs_rate.interaction.create_air_customs_rate_bulk_operation import create_air_customs_rate_bulk_operation
 from services.air_customs_rate.interaction.create_air_customs_rate_feedback import create_air_customs_rate_feedback
 from services.air_customs_rate.interaction.create_air_customs_rate_request import create_air_customs_rate_request
@@ -35,7 +35,7 @@ def create_air_customs_rate_api(request: CreateAirCustomsRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
 
     try:
-        rate = create_air_customs_rate_data(request.dict(exclude_none=True))
+        rate = create_air_customs_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
     except HTTPException as e:
         raise
@@ -268,7 +268,7 @@ def list_air_customs_charge_codes_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.get("/get_air_customs_rate_cards")
-def get_air_cutsoms_rate_cards_data(
+def get_air_cutsoms_rate_cards_api(
     airport_id: str,
     trade_type: str,
     weight : float,

@@ -33,6 +33,7 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback impo
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
 from services.fcl_customs_rate.helpers import update_organization_fcl_customs
 from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
+from services.air_customs_rate.helpers import update_organization_air_customs
 
 # Rate Producers
 
@@ -612,3 +613,14 @@ def update_fcl_freight_rate_feedback_in_delay(self, request):
         else:
             raise self.retry(exc= exc)
             
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def air_customs_functions_delay(self,air_customs_object,request):
+    try:
+        update_organization_air_customs(request)
+        get_multiple_service_objects(air_customs_object)
+
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
