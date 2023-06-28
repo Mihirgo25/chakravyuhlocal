@@ -425,7 +425,7 @@ class FclFreightRateBulkOperation(BaseModel):
         total_count = query.count()
         count = 0
         
-        while True:
+        while count < total_count:
             batch_query = query.limit(BATCH_SIZE)
             if not batch_query.exists():
                 break 
