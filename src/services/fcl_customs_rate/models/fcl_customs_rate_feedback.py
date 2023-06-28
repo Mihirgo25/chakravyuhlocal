@@ -20,27 +20,24 @@ class FclCustomsRateFeedback(BaseModel):
     performed_by_type = CharField(index=True, null=True)
     preferred_customs_rate = DoubleField(null=True)
     preferred_customs_rate_currency = CharField(null=True)
-    feedbacks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
-    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    feedbacks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     fcl_customs_rate_id = UUIDField(null=True,index=True)
-    # validity_id = UUIDField(null=True)
-    # outcome = CharField(null=True)
-    # outcome_object_id = UUIDField(null=True)
     booking_params = BinaryJSONField(null=True)
     feedback_type = CharField(index=True, null=True)
     status = CharField(index=True, null=True)
-    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     closed_by_id = UUIDField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_customs_rate_feedback_serial_id_seq'::regclass)")])
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     performed_by = BinaryJSONField(null=True)
-    location = BinaryJSONField(null=True)
+    port = BinaryJSONField(null=True)
     closed_by = BinaryJSONField(null=True)
     organization = BinaryJSONField(null=True)
     spot_search = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
-    location_id = UUIDField(null=True)
+    port_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     trade_id = UUIDField(null=True)
@@ -59,9 +56,6 @@ class FclCustomsRateFeedback(BaseModel):
         if location_data:
             self.location = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
-    def validate_source_id(self):
-        if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
-            if len(spot_search_data) == 0:
-                raise HTTPException(status_code=400, detail="Invalid Source")
-            self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
+    def set_spot_search(self):
+        spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+        self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}

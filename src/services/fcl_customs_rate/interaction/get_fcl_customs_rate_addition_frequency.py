@@ -25,7 +25,7 @@ def get_fcl_customs_rate_addition_frequency(group_by, filters = {}, sort_type = 
 
 
 def get_query():
-    query = FclCustomsRate.select().where(FclCustomsRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
+    query = FclCustomsRate.select(FclCustomsRate.id).where(FclCustomsRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
     return query
 
 def apply_indirect_filters(query, filters):

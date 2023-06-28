@@ -1,5 +1,5 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import update_multiple_service_objects

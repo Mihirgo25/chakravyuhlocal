@@ -1,23 +1,24 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
-from configs.global_constants import CONFIRMED_INVENTORY, PREDICTED_RATES_SERVICE_PROVIDER_IDS
+from configs.global_constants import CONFIRMED_INVENTORY
 from configs.fcl_customs_rate_constants import LOCATION_HIERARCHY
 from configs.definitions import FCL_CUSTOMS_CHARGES
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_eligible_orgs
 import sentry_sdk, traceback
+from services.fcl_customs_rate.interaction.get_zone_average_customs_rate import get_zone_average_customs_rate
 
 def get_fcl_customs_rate_cards(request):
     try:
         query = initialize_customs_query(request)
         customs_rates = jsonable_encoder(list(query.dicts()))
 
-        if len(customs_rates) > 0:
-            customs_rates = discard_noneligible_lsps(request)
-            rate_cards = build_response_list(request, customs_rates)
+        if len(customs_rates) == 0 and request.get('port_id'):
+            customs_rates = get_zone_average_customs_rate(request)
 
-            return {'list':rate_cards}
+        customs_rates = discard_noneligible_lsps(customs_rates)
+        rate_cards = build_response_list(request, customs_rates)
 
-        return {'list':[]} 
+        return {'list':rate_cards}
        
     except Exception as e:
         traceback.print_exc()
@@ -26,7 +27,7 @@ def get_fcl_customs_rate_cards(request):
         return {
             "list": []
         }
-
+ 
 def initialize_customs_query(request):
     location_ids = list(filter(None, [request.get('port_id'), request.get('country_id')]))
     query = FclCustomsRate.select(
@@ -34,7 +35,9 @@ def initialize_customs_query(request):
         FclCustomsRate.service_provider_id,
         FclCustomsRate.importer_exporter_id,
         FclCustomsRate.location_type,
-        FclCustomsRate.location_id
+        FclCustomsRate.location_id,
+        FclCustomsRate.mode,
+        FclCustomsRate.rate_type
     ).where(
       FclCustomsRate.container_size == request.get('container_size'),
       FclCustomsRate.container_type == request.get('container_type'),
@@ -54,8 +57,8 @@ def initialize_customs_query(request):
 
 def discard_noneligible_lsps(custom_rates):
     ids = get_eligible_orgs('fcl_customs')
-
     custom_rates = [rate for rate in custom_rates if rate.get("service_provider_id") in ids]
+
     return custom_rates
 
 def build_response_list(request, customs_rates):
@@ -79,12 +82,18 @@ def build_response_list(request, customs_rates):
 
     
 def build_response_object(result, request):
+    source = 'spot_rates'
+    if result.get('mode') == 'predicted':
+        source = 'predicted'
+    elif result.get('rate_type') != 'market_place':
+        source = result.get('rate_type')
+
     response_object = {
       'service_provider_id': result.get('service_provider_id'),
       'importer_exporter_id': result.get('importer_exporter_id'),
       'location_id': result.get('location_id'),
       'line_items': [],
-      'source': 'predicted' if result.get('service_provider_id') in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates',
+      'source': source,
       'tags': []
     }
 

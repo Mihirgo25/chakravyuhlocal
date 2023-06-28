@@ -1,4 +1,5 @@
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 from database.db_session import db
 
 def update_fcl_customs_rate_platform_prices(request):
@@ -14,7 +15,8 @@ def execute_transaction_code(request):
         ((FclCustomsRate.commodity == request.get('commodity')) | (FclCustomsRate.commodity.is_null(True))),
         ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True))),
         FclCustomsRate.is_customs_line_items_error_messages_present == request.get('is_customs_line_items_error_messages_present'),
-        FclCustomsRate.is_cfs_line_items_error_messages_present == request.get('is_cfs_line_items_error_messages_present')
+        FclCustomsRate.is_cfs_line_items_error_messages_present == request.get('is_cfs_line_items_error_messages_present'),
+        FclCustomsRate.rate_type == DEFAULT_RATE_TYPE
     ).execute()
 
     for result in query_result:

@@ -1,13 +1,14 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
-from celery_worker import delay_fcl_cfs_functions
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
+from celery_worker import fcl_cfs_functions_delay
 from database.db_session import db
 from fastapi import HTTPException
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {
-        "line_items": request.get("cfs_line_items"),
+        "line_items": request.get("line_items"),
         "free_days": request.get("free_days")
     }
     
@@ -20,11 +21,12 @@ def create_audit_for_cfs_rate(request, cfs_object_id):
         data = audit_data        
     )    
 
-def create_fcl_cfs_rates(request):
+def create_fcl_cfs_rate(request):
     with db.atomic():
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
+    request = {key: value for key, value in request.items() if value is not None}
     params = {
         "location_id": request.get("location_id"),
         "trade_type": request.get("trade_type"),
@@ -33,7 +35,10 @@ def execute_transaction_code(request):
         "commodity": request.get("commodity"),
         "service_provider_id": request.get("service_provider_id"),
         "cargo_handling_type": request.get("cargo_handling_type"),
-        "importer_exporter_id": request.get("importer_exporter_id")
+        "importer_exporter_id": request.get("importer_exporter_id"),
+        "accuracy": request.get('accuracy', 100),
+        "mode" : request.get('mode','manual'),
+        "rate_type" : request.get('rate_type', DEFAULT_RATE_TYPE)
     }
 
     cfs_object = FclCfsRate.select().where(
@@ -44,11 +49,11 @@ def execute_transaction_code(request):
         FclCfsRate.commodity == request.get("commodity"), 
         FclCfsRate.service_provider_id == request.get("service_provider_id"), 
         FclCfsRate.cargo_handling_type == request.get("cargo_handling_type"),
-        FclCfsRate.importer_exporter_id == request.get("importer_exporter_id")).first()
+        FclCfsRate.importer_exporter_id == request.get("importer_exporter_id"),
+        FclCfsRate.rate_type == request.get('rate_type')).first()
 
     if not cfs_object:
         cfs_object = FclCfsRate(**params)
-        cfs_object.set_location()
 
     cfs_object.line_items = request.get('line_items')
     cfs_object.free_days = request.get('free_days')
@@ -60,20 +65,21 @@ def execute_transaction_code(request):
     cfs_object.sourced_by_id = request.get("sourced_by_id")
     cfs_object.procured_by_id = request.get("procured_by_id")
 
-    if not request["importer_exporter_id"]:
+    if not request.get("importer_exporter_id"):
         cfs_object.delete_rate_not_available_entry()
 
     cfs_object.update_line_item_messages()
+    cfs_object.validate_before_save()
 
     try:
         cfs_object.save()
     except Exception as e:
-      raise HTTPException(status_code=500, detail='Customs Rate did not save')
+      raise HTTPException(status_code=500, detail='CFS Rate did not save')
 
     create_audit_for_cfs_rate(request, cfs_object.id)
     
     cfs_object.update_platform_prices_for_other_service_providers()
-    delay_fcl_cfs_functions.apply_async(kwargs={'fcl_cfs_object':cfs_object,'request':request},queue='low')
+    fcl_cfs_functions_delay.apply_async(kwargs={'fcl_cfs_object':cfs_object,'request':request},queue='low')
     
     return {
       "id": cfs_object.id

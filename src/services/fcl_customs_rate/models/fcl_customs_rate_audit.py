@@ -9,7 +9,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class FclCustomsRateAudit(BaseModel):
-    id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
+    id = BigAutoField(primary_key=True)
     bulk_operation_id = UUIDField(index=True, null=True)
     rate_sheet_id = UUIDField(index=True, null=True)
     object_type = CharField(null=True)

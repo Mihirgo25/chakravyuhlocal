@@ -758,24 +758,37 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
 
 class ExtendValidty(BaseModel):
   filters:dict={}
-  source_date:datetime
   validity_end:datetime
   sourced_by_ids:dict=None
   procured_by_ids:dict=None
-
+  markup:float=None
+  line_item_code:str='BAS'
+  markup_type:str=None
+  markup_currency:str="USD"
 class DeleteFreightRate(BaseModel):
   filters:dict={}
   validity_start: datetime
   validity_end: datetime
+  rate_sheet_serial_id: int= 0
+  apply_to_extended_rates: bool = False
+  comparison_currency:str='USD'
+  comparison_charge_code:str='BAS'
+  rates_greater_than_price: float = None
+  rates_less_than_price: float = None
 
 class AddFreightRateMarkup(BaseModel):
   filters:dict={}
   markup:float
   markup_type:str
-  markup_currency:str=None
+  markup_currency:str='USD'
   line_item_code:str='BAS'
   validity_start:datetime
   validity_end:datetime
+  rate_sheet_serial_id: int = 0
+  apply_to_extended_rates: bool = False
+  rates_greater_than_price: float = None
+  rates_less_than_price: float = None
+  tag: str = None
 
 class AddLocalRateMarkup(BaseModel):
   filters:dict={}
@@ -802,10 +815,12 @@ class ExtendFreightRate(BaseModel):
   markup : float
   markup_currency : str = None
   line_item_code : str = 'BAS '
+
 class UpdateWeightLimit(BaseModel):
   filters: dict={}
   free_limit : int
   slabs : List[Slab] = None
+
 class UpdateFreeDays(BaseModel):
   filters: dict={}
   free_days_type:str
@@ -820,6 +835,7 @@ class AddFreightLineItem(BaseModel):
   currency : str
   validity_start : datetime
   validity_end : datetime
+
 class UpdateFreeDaysLimit(BaseModel):
   filters: dict={}
   free_limit : int
@@ -831,7 +847,7 @@ class DeleteLocalRate(BaseModel):
 class CreateBulkOperation(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
-  service_provider_id:str
+  service_provider_id:str=None
   procured_by_id:str
   sourced_by_id:str
   cogo_entity_id:str=None
@@ -864,33 +880,3 @@ class UpdateRateProperties(BaseModel):
   volume_count: int = 0
   value_props: List[dict] = []
   t_n_c: List[str] = []
-
-class StandardLineItem(BaseModel):
-  code: str
-  unit: str
-  price: float
-  currency: str
-  remarks: list[str] = []
-  slabs: list[Slab] = []
-
-class FreeDaysType(BaseModel):
-  free_days_type:str
-  free_limit:int
-  slabs: list[Slab]
-
-
-class CreateFclCfsRate(BaseModel):
-  rate_sheet_id:str = None
-  location_id: str
-  trade_type: str
-  container_size: str
-  container_type: str
-  commodity: str = None
-  service_provider_id: str
-  performed_by_id: str
-  sourced_by_id: str
-  procured_by_id: str
-  cargo_handling_type: str
-  importer_exporter_id: str = None
-  line_items: list[StandardLineItem]
-  free_days: list[FreeDaysType]

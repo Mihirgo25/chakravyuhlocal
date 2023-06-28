@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from datetime import datetime
 from peewee import *
 from typing import List
-from datetime import date
 
 class Slab(BaseModel):
   lower_limit: float
@@ -31,24 +30,26 @@ class CreateFclCfsRate(BaseModel):
   container_type: str
   commodity: str = None
   service_provider_id: str
-  performed_by_id: str
   sourced_by_id: str
   procured_by_id: str
   cargo_handling_type: str
   importer_exporter_id: str = None
   line_items: list[StandardLineItem]
   free_days: list[FreeDaysType]
+  performed_by_id: str = None
+  performed_by_type: str = None
+  rate_type: str = 'market_place'
+  mode: str = None
 
-class FclCfsRateRequest(BaseModel):
+class CreateFclCfsRateRequest(BaseModel):
     source: str 
     source_id:str 
     performed_by_id : str
     performed_by_org_id: str
     performed_by_type: str
-    preferred_rate: str= None
+    preferred_rate: float = None
     preferred_rate_currency: str= None
-    # preferred_detention_free_days: int= None
-    cargo_readiness_date: date = None
+    cargo_readiness_date: datetime = None
     remarks:list[str] =[]
     booking_params : dict = {}
     container_size: str = None
@@ -64,6 +65,7 @@ class DeleteFclCfsRate(BaseModel):
     bulk_operation_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
+    rate_type: str = 'market_place'
 
 class DeleteFclCfsRateRequest(BaseModel):
   fcl_cfs_rate_request_ids: List[str]
@@ -84,12 +86,14 @@ class CreateFclCfsRateNotAvailable(BaseModel):
 
 class UpdateFclCfsRate(BaseModel):
     id: str 
-    performed_by_id: str 
+    performed_by_id: str = None
     sourced_by_id: str 
     procured_by_id: str 
     bulk_operation_id: str = None
     line_items: list[StandardLineItem] = []
     free_limit: int = None
+    performed_by_type: str = None
+    rate_type: str = 'market_place'
     
 class Filters(BaseModel):
   filters: dict = {}
@@ -103,7 +107,7 @@ class AddMarkUp(BaseModel):
 
   
 class CreateFclCfsRateBulkOperation(BaseModel):
-  performed_by_id: str 
+  performed_by_id: str = None
   service_provider_id: str 
   sourced_by_id: str 
   procured_by_id: str 

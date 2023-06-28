@@ -28,7 +28,6 @@ class FclCustomsRate(BaseModel):
     service_provider_id = UUIDField(index=True)
     importer_exporter_id = UUIDField(null=True)
     containers_count = IntegerField(null=True)
-    importer_exporters_count = IntegerField(null=True)
     customs_line_items = BinaryJSONField(null=True)
     cfs_line_items = BinaryJSONField(null=True)
     platform_price = IntegerField(null=True)
@@ -53,6 +52,11 @@ class FclCustomsRate(BaseModel):
     service_provider = BinaryJSONField(null=True)
     location = BinaryJSONField(null=True)
     importer_exporter = BinaryJSONField(null=True)
+    zone_id = UUIDField(index=True,null=True)
+    mode = CharField(default = 'manual', null = True)
+    tags = BinaryJSONField(null=True)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
+    accuracy = FloatField(default = 100, null = True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
@@ -69,8 +73,8 @@ class FclCustomsRate(BaseModel):
         
     def set_location_type(self):
         self.location_type = self.location.get('type')
+        self.zone_id = self.location.get('zone_id')
  
-
     def get_line_items_total_price(self):
       line_items = self.customs_line_items
       currency = self.customs_line_items[0].get('currency')
@@ -82,8 +86,21 @@ class FclCustomsRate(BaseModel):
     def set_location(self):
         if self.location or (not self.location_id):
             return
-
-        location = maps.list_locations({'filters':{'id': self.location_id}})['list']
+        
+        required_params = {
+            "id": True,
+            "name": True,
+            "is_icd": True,
+            "port_code": True,
+            "country_id": True,
+            "continent_id": True,
+            "trade_id": True,
+            "country_code": True,
+            "zone_id":True,
+            "type":True
+        }
+        
+        location = maps.list_locations({'filters':{'id': self.location_id},'includes':required_params})['list']
         if location:
             self.location = location[0]
         else:
@@ -95,7 +112,7 @@ class FclCustomsRate(BaseModel):
         raise HTTPException(status_code=400, detail="Invalid trade type")
 
     def valid_uniqueness(self):
-        uniqueness = FclCustomsRate.select().where(
+        uniqueness = FclCustomsRate.select(FclCustomsRate.id).where(
             FclCustomsRate.location_id == self.location_id,
             FclCustomsRate.trade_type == self.trade_type,
             FclCustomsRate.container_size == self.container_size,
@@ -152,7 +169,7 @@ class FclCustomsRate(BaseModel):
     def validate_duplicate_line_items(self):
         unique_items = set()
         for customs_line_item in self.customs_line_items:
-            unique_items.add(str(customs_line_item['code']).upper() + str(customs_line_item['location_id']))
+            unique_items.add(str(customs_line_item['code']).upper() + str(customs_line_item.get('location_id') or ''))
 
         if len(self.customs_line_items) != len(unique_items):
             raise HTTPException(status_code=400, detail="Contains Duplicates")
@@ -179,7 +196,6 @@ class FclCustomsRate(BaseModel):
         return result
     
     def get_mandatory_line_items(self):
-        print(self.mandatory_charge_codes(),'line')
         selected_line_items = [line_item for line_item in self.customs_line_items if line_item.get('code').upper() in self.mandatory_charge_codes()]
         return selected_line_items
     
@@ -191,7 +207,9 @@ class FclCustomsRate(BaseModel):
         
         result = self.get_line_items_total_price(line_items)
 
-        rates = FclCustomsRate.select().where(
+        rates = FclCustomsRate.select(
+            FclCustomsRate.customs_line_items
+        ).where(
             FclCustomsRate.location_id == self.location_id,
             FclCustomsRate.trade_type == self.trade_type,
             FclCustomsRate.container_size == self.container_size,
@@ -199,6 +217,7 @@ class FclCustomsRate(BaseModel):
             FclCustomsRate.commodity == self.commodity,
             ((FclCustomsRate.importer_exporter_id == self.importer_exporter_id) | (FclCustomsRate.importer_exporter_id.is_null(True))),
             FclCustomsRate.is_customs_line_items_error_messages_present == False,
+            FclCustomsRate.rate_type == self.rate_type,
             ~FclCustomsRate.service_provider_id == self.service_provider_id
         ).execute()
 
@@ -224,7 +243,7 @@ class FclCustomsRate(BaseModel):
         self.is_best_price = (total_price <= self.platform_price)
 
     def update_platform_prices_for_other_service_providers(self):
-        from celery_worker import update_customs_rate_platform_prices
+        from celery_worker import update_fcl_customs_rate_platform_prices_delay
         request = {
             'location_id': self.location_id,
             'trade_type': self.trade_type,
@@ -233,7 +252,7 @@ class FclCustomsRate(BaseModel):
             'commodity': self.commodity,
             'importer_exporter_id': self.importer_exporter_id
         }
-        update_customs_rate_platform_prices.apply_async(kwargs = {'request':request}, queue = 'low')
+        update_fcl_customs_rate_platform_prices_delay.apply_async(kwargs = {'request':request}, queue = 'low')
 
     def detail(self):
         fcl_customs = {
@@ -285,7 +304,8 @@ class FclCustomsRate(BaseModel):
         ).execute() 
 
     def update_customs_line_item_messages(self):
-        self.set_location()
+        if not self.location:
+            self.set_location()
         location_ids = list(set([item.get('location_id') for item in self.customs_line_items if item.get('location_id')]))
         locations = []
 
@@ -301,12 +321,11 @@ class FclCustomsRate(BaseModel):
 
         for line_item in self.customs_line_items:
             grouped_charge_codes[line_item.get('code')] = line_item
-
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CUSTOMS_CHARGES.get(code)
 
-            code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in line_items.get('tags', [])}
-
+            code_config = {key:value for key,value in code_config.items() if 'customs_clearance' in code_config.get('tags', [])}
+            location = self.location
             if not code_config:
                 self.customs_line_items_error_messages[code] = ['is invalid']
                 self.is_customs_line_items_error_messages_present = True

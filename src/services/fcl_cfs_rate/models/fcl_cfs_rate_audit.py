@@ -9,7 +9,7 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class FclCfsRateAudit(BaseModel):
-    id = UUIDField(primary_key=True, default=uuid.uuid4, index=True)
+    id = BigAutoField(primary_key=True)
     performed_by_id	= UUIDField(null=True)
     bulk_operation_id = UUIDField(null=True, index=True)
     rate_sheet_id = UUIDField(null=True,index=True)

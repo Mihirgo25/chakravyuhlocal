@@ -1,5 +1,5 @@
 from services.fcl_cfs_rate.models.fcl_cfs_rate import *
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from datetime import datetime
 
@@ -8,7 +8,7 @@ def delete_fcl_cfs_rate(request):
             return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    object = find_object(request['id'])
+    object = find_object(request.get('id'))
 
     if not object:
         raise HTTPException(status_code=400, detail="Rate not found")
@@ -30,7 +30,7 @@ def execute_transaction_code(request):
 
 def find_object(id):
     try:
-        object = FclCfsRate.get_or_none(id=id)
+        object = FclCfsRate.select().where(FclCfsRate.id == id).first()
     except:
         object = None
     return object
@@ -55,6 +55,7 @@ def create_audit_for_cfs_delete(request, object):
     data = get_delete_params_for_cfs(request)
     FclCfsRateAudit.create(
         action_name = 'delete',
+        bulk_operation_id = request.get('bulk_operation_id'),
         object_id = object.id,
         performed_by_id = request.get('performed_by_id'),
         data = data,

@@ -1,4 +1,4 @@
-from configs.global_constants import TRADE_TYPES,HAZ_CLASSES,STANDARD_COMMODITIES
+from configs.global_constants import HAZ_CLASSES,STANDARD_COMMODITIES
 REQUEST_SOURCES = ['spot_search']
 
 TRADE_TYPES =  ['import', 'export', 'domestic']
@@ -30,3 +30,18 @@ FREE_DAYS_TYPES = [
             'tags': []
         }
         ]
+
+EXPORT_CARGO_HANDLING_TYPES = ['stuffing_at_factory', 'stuffing_at_dock']
+
+IMPORT_CARGO_HANDLING_TYPES = [
+    'direct_port_delivery', 
+    'delivery_from_dock', 
+    'destuffing_at_dock', 
+    'dpd_without_cfs', 
+    'dpd_cfs_dock_destuffing', 
+    'dpd_cfs_factory_destuffing', 
+    'enpanelled_cfs_dock_destuffing', 
+    'enpanelled_cfs_factory_destuffing', 
+    'non_enpanelled_cfs_dock_destuffing', 
+    'non_enpanelled_cfs_factory_destuffing'
+    ]

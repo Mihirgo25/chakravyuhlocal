@@ -1,7 +1,7 @@
 from services.fcl_customs_rate.models.fcl_customs_rate_bulk_operation import FclCustomsRateBulkOperation
 
 def create_fcl_customs_rate_bulk_operation(request):
-    from celery_worker import bulk_operation_perform_action_functions_customs_cfs
+    from celery_worker import bulk_operation_perform_action_functions_fcl_customs_cfs_delay
 
     action_name = [key for key in request if key not in ['performed_by_id', 'service_provider_id', 'procured_by_id', 'sourced_by_id', 'performed_by_type']]
     if action_name:
@@ -15,9 +15,13 @@ def create_fcl_customs_rate_bulk_operation(request):
 
         bulk_operation_customs.save()
 
-        bulk_operation_perform_action_functions_customs_cfs.apply_async(kwargs={'action_name':action_name,
-        'object':bulk_operation_customs,'sourced_by_id':request.get("sourced_by_id"),
-        'procured_by_id':request.get('procured_by_id')},queue='low')
+        bulk_operation_perform_action_functions_fcl_customs_cfs_delay.apply_async(
+            kwargs={
+                'action_name':action_name,
+                'object':bulk_operation_customs,
+                'sourced_by_id':request.get("sourced_by_id"),
+                'procured_by_id':request.get('procured_by_id')
+            },queue='low')
         
         return {
         'id': bulk_operation_customs.id

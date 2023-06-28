@@ -6,11 +6,12 @@ from database.rails_db import *
 from fastapi import HTTPException
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import common
-from configs.definitions import FCL_CUSTOMS_CHARGES, FCL_CUSTOMS_CURRENCIES
+from configs.definitions import FCL_CUSTOMS_CHARGES, FCL_FREIGHT_CURRENCIES
 from services.fcl_customs_rate.interaction.list_fcl_customs_rates import list_fcl_customs_rates
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from services.fcl_customs_rate.interaction.delete_fcl_customs_rate import delete_fcl_customs_rate
 from services.fcl_customs_rate.interaction.update_fcl_customs_rate import update_fcl_customs_rate
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
 
@@ -35,6 +36,14 @@ class FclCustomsRateBulkOperation(BaseModel):
 
     class Meta:
         table_name = 'fcl_customs_rate_bulk_operations'
+
+    def processed_percent_key(self, id):
+        return f"fcl_customs_rate_bulk_operation_{id}"
+
+    def set_processed_percent_customs_bulk_operation(self, processed_percent, id):
+        processed_percent_hash = "process_percent_customs_bulk_operation"
+        if rd:
+            rd.hset(processed_percent_hash, self.processed_percent_key(id), processed_percent)   
         
     def validate_delete_rate_data(self):
         return
@@ -56,7 +65,7 @@ class FclCustomsRateBulkOperation(BaseModel):
         if str(data['markup_type']).lower() == 'percent':
             return
         
-        currencies = FCL_CUSTOMS_CURRENCIES
+        currencies = FCL_FREIGHT_CURRENCIES
 
         if data['markup_currency'] not in currencies:
             raise HTTPException(status_code=400, detail='markup currency is invalid')
@@ -72,13 +81,12 @@ class FclCustomsRateBulkOperation(BaseModel):
 
         total_count = len(fcl_customs_rates)
         count = 0
-
         for customs in fcl_customs_rates:
             count += 1
 
             if FclCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = customs.get('id')):
                 self.progress = int((count * 100.0) / total_count)
-                self.save()
+                self.set_processed_percent_customs_bulk_operation(self.progress, self.id)
                 continue
 
             delete_fcl_customs_rate({
@@ -86,11 +94,13 @@ class FclCustomsRateBulkOperation(BaseModel):
                 'performed_by_id': self.performed_by_id,
                 'bulk_operation_id': self.id,
                 'procured_by_id': procured_by_id,
-                'sourced_by_id': sourced_by_id
+                'sourced_by_id': sourced_by_id,
+                'rate_type': data.get('rate_type', DEFAULT_RATE_TYPE)
             })
 
             self.progress = int((count * 100.0) / total_count)
-            self.save()
+            self.set_processed_percent_customs_bulk_operation(self.progress, self.id)
+        self.save()
 
     def perform_add_markup_action(self, sourced_by_id, procured_by_id):
         data = self.data
@@ -109,14 +119,14 @@ class FclCustomsRateBulkOperation(BaseModel):
             
             if FclCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = customs['id']):
                 self.progress = int((count * 100.0) / total_count)
-                self.save()
+                self.set_processed_percent_customs_bulk_operation(self.progress, self.id)
                 continue
 
             line_items = [t for t in customs['customs_line_items'] if t['code'] == data['line_item_code']]
 
             if not line_items:
                 self.progress = int((count * 100.0) / total_count)
-                self.save()
+                self.set_processed_percent_customs_bulk_operation(self.progress, self.id)
                 continue
             
             customs['customs_line_items'] = [t for t in customs['customs_line_items'] if t not in line_items]
@@ -148,4 +158,5 @@ class FclCustomsRateBulkOperation(BaseModel):
             })
 
             self.progress = int((count * 100.0) / total_count)
-            self.save()
+            self.set_processed_percent_customs_bulk_operation(self.progress, self.id)
+        self.save()

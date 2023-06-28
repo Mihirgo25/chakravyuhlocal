@@ -92,7 +92,7 @@ OPEN_TOP_COMMODITIES = ["in_gauge_cargo"]
 
 OPEN_SIDE_COMMODITIES = []
 
-FLAT_RACK_COMMODITIES = ['in_gauge_cargo']
+FLAT_RACK_COMMODITIES = ["in_gauge_cargo"]
 
 TRADE_TYPES = ["import", "export", "domestic"]
 
@@ -159,20 +159,38 @@ RATE_FEEDBACK_RELEVANT_ROLE_ID = {
     'supply_owner_vietnam' : UUID('e0aa356c-2e4c-4cfd-b279-a6d3cdfa4edb'),
     'coe_head_vietnam' : UUID('0e68d129-6f07-4324-95ee-88731b35c0c4')
 }
-CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
-
-INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
-
-EXPORT_CARGO_HANDLING_TYPES = ['stuffing_at_factory', 'stuffing_at_dock']
-
-IMPORT_CARGO_HANDLING_TYPES = ['direct_port_delivery', 'delivery_from_dock', 'destuffing_at_dock', 'dpd_without_cfs', 'dpd_cfs_dock_destuffing', 'dpd_cfs_factory_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
 
 PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
 
-ISO_TANK_COMMODITIES = ['non_haz_solids', 'non_haz_liquids', 'non_haz_gases']
+ISO_TANK_COMMODITIES = ["non_haz_solids", "non_haz_liquids", "non_haz_gases"]
 
-CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
+CONTAINER_SIZES = ["20", "40", "40HC", "45HC"]
 
-CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
+CONTAINER_TYPES = [
+     "standard",
+     "refer",
+     "open_top",
+     "open_side",
+     "flat_rack",
+     "iso_tank",
+ ]
+
+ALL_COMMODITIES = list(
+     set(
+         (
+             STANDARD_COMMODITIES
+             + REFER_COMMODITIES
+             + OPEN_TOP_COMMODITIES
+             + OPEN_SIDE_COMMODITIES
+             + FLAT_RACK_COMMODITIES
+             + ISO_TANK_COMMODITIES
+             + HAZ_CLASSES
+         )
+     )
+ )
+
+CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
+
+INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
 
 ALL_COMMODITIES = STANDARD_COMMODITIES + REFER_COMMODITIES + OPEN_TOP_COMMODITIES + OPEN_SIDE_COMMODITIES + FLAT_RACK_COMMODITIES + ISO_TANK_COMMODITIES + HAZ_CLASSES

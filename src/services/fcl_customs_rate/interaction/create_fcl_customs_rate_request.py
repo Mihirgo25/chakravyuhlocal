@@ -34,7 +34,7 @@ def execute_transaction_code(request):
         setattr(customs_request, attr, value)
 
     customs_request.set_port()
-    customs_request.validate_source_id()
+    customs_request.set_spot_search()
     
     try:
         customs_request.save()
@@ -59,8 +59,8 @@ def supply_agents_to_notify(request):
 
     supply_agents_user_data = get_partner_users(supply_agents_list)
     supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data])) if supply_agents_user_data else None
-
-    port_ids = locations_data.get('port_id')
+    route_data = []
+    port_ids = str(locations_data.get('port_id') or '')
     try:
         route_data = maps.list_locations({'filters':{'id':port_ids}})['list']
     except Exception as e:
@@ -108,9 +108,7 @@ def get_create_params(request):
       'booking_params': request.get('booking_params'),
       'preferred_customs_rate': request.get('preferred_customs_rate'),
       'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
-      'preferred_detention_free_days': request.get('preferred_detention_free_days'),
       'cargo_readiness_date': request.get('cargo_readiness_date'),
-      'preferred_storage_free_days': request.get('preferred_storage_free_days'),
       'containers_count': request.get('containers_count'),
       'container_size': request.get('container_size'),
       'commodity': request.get('commodity'),

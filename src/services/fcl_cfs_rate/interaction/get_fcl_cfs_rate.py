@@ -14,10 +14,9 @@ def get_fcl_cfs_rate(request):
             detail = {}
 
         response = {
-            'detail': detail,
             'fcl_cfs_charge_codes': fcl_cfs_rate.possible_cfs_charge_codes(),
             'fcl_cfs_free_days': FREE_DAYS_TYPES
-        }
+        } | detail
     else:
         response = {}
 
@@ -26,7 +25,6 @@ def get_fcl_cfs_rate(request):
 def get_cfs_object(request):
   query = FclCfsRate.select()
   for key in request:
-    query = query.where(attrgetter(key)(FclCfsRate) == request[key])
+    query = query.where(attrgetter(key)(FclCfsRate) == request.get(key))
   object = query.first()
-  
   return object

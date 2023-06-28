@@ -12,7 +12,7 @@ possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_th
 
 possible_direct_filters = ['port_id', 'performed_by_id', 'status', 'closed_by_id', 'trade_type', 'country_id']
 
-def list_fcl_cfs_rate_request(filters, page_limit=10, page=1, is_stats_required=True, performed_by_id=None):
+def list_fcl_cfs_rate_requests(filters, page_limit=10, page=1, is_stats_required=True, performed_by_id=None):
     query = FclCfsRateRequest.select()
     if filters:
         if type(filters) != dict:
@@ -42,10 +42,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclCfsRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+    return query.where(FclCfsRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than'].split('T')[0]).date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclCfsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_start_less_than']).date())
+    return query.where(FclCfsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'].split('T')[0]).date())
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_cfs', filters['relevant_supply_agent'])
@@ -62,7 +62,12 @@ def apply_supply_agent_id_filter(query, filters):
 def apply_similar_id_filter(query,filters):
     rate_request_obj = FclCfsRateRequest.select().where(FclCfsRateRequest.id == filters['similar_id']).dicts().get()
     query = query.where(FclCfsRateRequest.id != filters['similar_id'])
-    return query.where(FclCfsRateRequest.port_id == rate_request_obj.get('port_id'), FclCfsRateRequest.container_size == rate_request_obj.get('container_size'), FclCfsRateRequest.container_type == rate_request_obj.get('container_type'), FclCfsRateRequest.commodity == rate_request_obj.get('commodity'))
+    query = query.where(
+        FclCfsRateRequest.port_id == rate_request_obj.get('port_id'), 
+        FclCfsRateRequest.container_size == rate_request_obj.get('container_size'), 
+        FclCfsRateRequest.container_type == rate_request_obj.get('container_type'), 
+        FclCfsRateRequest.commodity == rate_request_obj.get('commodity'))
+    return query
 
 def get_pagination_data(query, page, page_limit):
     total_count = query.count()
@@ -78,7 +83,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
 
-    query = FclCfsRateRequest.select()
+    query = FclCfsRateRequest.select(FclCfsRateRequest.id)
 
     if filters:
         if 'status' in filters:

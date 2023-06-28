@@ -21,14 +21,11 @@ class FclCustomsRateRequest(BaseModel):
     performed_by_type = CharField(null=True)
     preferred_customs_rate = DoubleField(null=True)
     preferred_customs_rate_currency = CharField(null=True)
-    # preferred_detention_free_days = IntegerField(null=True)
-    # preferred_storage_free_days = IntegerField(null=True)
     cargo_readiness_date = DateTimeField(null=True)
-    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     booking_params = BinaryJSONField(null=True)
-    request_type = CharField(null=True)
     status = CharField(index=True, null=True)
-    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     closed_by_id = UUIDField(index=True, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_customs_rate_request_serial_id_seq'::regclass)")])
     created_at = DateTimeField(index=True, default = datetime.datetime.now)
@@ -53,12 +50,9 @@ class FclCustomsRateRequest(BaseModel):
         self.updated_at = datetime.datetime.now()
         return super(FclCustomsRateRequest, self).save(*args, **kwargs)
 
-    def validate_source_id(self):
-        if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
-            if len(spot_search_data) == 0:
-                raise HTTPException(status_code=400, detail="Invalid Source ID")
-            self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
+    def set_spot_search(self):
+        spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
+        self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
     
     def set_port(self):
         port_data = maps.list_locations({'filters':{'id':self.port_id}})['list']

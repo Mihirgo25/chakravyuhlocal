@@ -13,10 +13,9 @@ def execute_transaction_code(request):
     if not rate_object:
         raise HTTPException(status_code=500, detail='Rate Not Found')
     
-    rate_object.customs_line_items = request.get('customs_line_items')
-    rate_object.cfs_line_items = request.get('cfs_line_items')
-    rate_object.procured_by_id = request.get('procured_by_id')
-    rate_object.sourced_by_id = request.get('sourced_by_id')
+    update_params = get_update_params(request)
+    for attr, value in update_params.items():
+        setattr(rate_object, attr, value)
     
     rate_object.set_platform_price()
     rate_object.set_is_best_price()
@@ -38,7 +37,7 @@ def execute_transaction_code(request):
 
 def find_rate_object(request):
     try:
-        rate_object = FclCustomsRate.get_by_id(request['id'])
+        rate_object = FclCustomsRate.select().where(FclCustomsRate.id == request['id']).first()
     except:
         rate_object = None
     return rate_object
@@ -54,3 +53,12 @@ def create_audit_for_updating_rate(request, rate_object):
       object_type = 'FclCustomsRate',
       data = data
     )
+
+def get_update_params(request):
+      return {
+          'customs_line_items':request.get('customs_line_items'),
+          'cfs_line_items':request.get('cfs_line_items'),
+          'procured_by_id':request.get('procured_by_id'),
+          'sourced_by_id':request.get('sourced_by_id'),
+          'rate_type':request.get('rate_type')
+      }

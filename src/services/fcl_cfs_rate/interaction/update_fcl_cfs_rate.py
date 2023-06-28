@@ -1,12 +1,12 @@
 from peewee import *
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
-from services.fcl_cfs_rate.models.fcl_cfs_audit import FclCfsRateAudit
+from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
 
 def create_audit_for_updating_cfs(request, cfs_object_id):
     audit_data = {
-        "cfs_line_items": request.get('cfs_line_items')
+        "line_items": request.get('line_items')
     }
 
     FclCfsRateAudit.create(
@@ -26,13 +26,14 @@ def execute_transaction_code(request):
     cfs_object = find_cfs_object(request)
 
     if not cfs_object:
-        raise HTTPException(status_code=500, detail='Rate Not Found')
+        raise HTTPException(status_code=400, detail='Rate Not Found')
     
     update_params =  {
         'procured_by_id':request.get('procured_by_id'),
         'sourced_by_id':request.get('sourced_by_id'),
         'line_items':request.get('line_items'),
-        'free_limit':request.get('free_limit')
+        'free_limit':request.get('free_limit'),
+        'rate_type':request.get('rate_type')
     }
 
     for key in list(update_params.keys()):

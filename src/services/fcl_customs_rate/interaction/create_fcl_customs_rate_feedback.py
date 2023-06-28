@@ -10,10 +10,10 @@ def create_fcl_customs_rate_feedback(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    rate = FclCustomsRate.select().where(FclCustomsRate.id == request.get('rate_id')).first()
+    rate = FclCustomsRate.select(FclCustomsRate.id).where(FclCustomsRate.id == request.get('rate_id')).first()
 
     if not rate:
-        raise HTTPException(status_code=400, detail='Rate is invalid')
+        raise HTTPException(status_code=400, detail='Rate not found')
 
     params = {
         'fcl_customs_rate_id': request.get('rate_id'),
@@ -40,7 +40,7 @@ def execute_transaction_code(request):
         setattr(customs_feedback, attr, value)
     
     customs_feedback.set_location()
-    customs_feedback.validate_source_id()
+    customs_feedback.set_spot_search()
 
     try:
         customs_feedback.save()

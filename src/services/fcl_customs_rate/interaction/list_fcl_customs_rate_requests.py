@@ -3,7 +3,6 @@ import json
 from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
-from micro_services.client import spot_search
 from datetime import datetime
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from math import ceil
@@ -44,10 +43,10 @@ def apply_indirect_filters(query, filters):
   return query
 
 def apply_validity_start_greater_than_filter(query, filters):
-    return query.where(FclCustomsRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
+    return query.where(FclCustomsRateRequest.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than'].split('T')[0]).date())
 
 def apply_validity_end_less_than_filter(query, filters):
-    return query.where(FclCustomsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
+    return query.where(FclCustomsRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than'].split('T')[0]).date())
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('fcl_customs', filters['relevant_supply_agent'])
@@ -62,9 +61,25 @@ def apply_supply_agent_id_filter(query, filters):
     return query
 
 def apply_similar_id_filter(query,filters):
-    rate_request_obj = FclCustomsRateRequest.select(FclCustomsRateRequest.port_id, FclCustomsRateRequest.trade_type, FclCustomsRateRequest.container_size, FclCustomsRateRequest.container_type, FclCustomsRateRequest.cargo_handling_type).where(FclCustomsRateRequest.id == filters['similar_id']).dicts().get()
+    rate_request_obj = FclCustomsRateRequest.select(
+            FclCustomsRateRequest.port_id, 
+            FclCustomsRateRequest.trade_type, 
+            FclCustomsRateRequest.container_size, 
+            FclCustomsRateRequest.container_type, 
+            FclCustomsRateRequest.cargo_handling_type
+        ).where(
+            FclCustomsRateRequest.id == filters['similar_id']
+        ).dicts().get()
     query = query.where(FclCustomsRateRequest.id != filters['similar_id'])
-    return query.where(FclCustomsRateRequest.port_id == rate_request_obj['port_id'], FclCustomsRateRequest.trade_type == rate_request_obj['trade_type'], FclCustomsRateRequest.container_size == rate_request_obj['container_size'], FclCustomsRateRequest.container_type == rate_request_obj['container_type'], FclCustomsRateRequest.cargo_handling_type == rate_request_obj['cargo_handling_type'])
+    query = query.where(
+        FclCustomsRateRequest.port_id == rate_request_obj['port_id'], 
+        FclCustomsRateRequest.trade_type == rate_request_obj['trade_type'], 
+        FclCustomsRateRequest.container_size == rate_request_obj['container_size'], 
+        FclCustomsRateRequest.container_type == rate_request_obj['container_type'], 
+        FclCustomsRateRequest.cargo_handling_type == rate_request_obj['cargo_handling_type']
+        )
+
+    return query
 
 def get_pagination_data(query, page, page_limit):
     total_count = query.count()
@@ -80,7 +95,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
         return {} 
 
-    query = FclCustomsRateRequest.select()
+    query = FclCustomsRateRequest.select(FclCustomsRateRequest.id)
 
     if filters:
         if 'status' in filters:
