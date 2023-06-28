@@ -298,7 +298,7 @@ def get_ff_mlo():
         sentry_sdk.capture_exception(e)
         return result
 
-def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval, interval_type = 'months', offset=0, limit=50):
+def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval=1, interval_type = 'months', offset=0, limit=50):
         all_results =[]
         try:
             conn = get_connection()
@@ -320,19 +320,21 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                             shipment_collection_parties.invoice_date AS invoice_date,
                             shipment_collection_parties.line_items,
                             shipment_air_freight_services.airline_id AS airline_id,
-                            shipment_air_freight_services.chargeable_weight AS chargeable_weight
+                            shipment_air_freight_services.chargeable_weight AS chargeable_weight,
+                            line_item->> 'price' as price
                         FROM
                             shipment_collection_parties
                             INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
+                            cross join jsonb_array_elements(shipment_collection_parties.line_items) as line_item
                         WHERE
-                            shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '%s months')::DATE
-                            AND shipment_air_freight_services.origin_{}_id = %s
-                            AND shipment_air_freight_services.destination_{}_id = %s
+                            shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '{} months')::DATE
+                            AND shipment_air_freight_services.origin_{}_id = 'aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19'
+                            AND shipment_air_freight_services.destination_{}_id ='c298f645-7d0a-44cb-845f-da7d85ac0e16'
                             AND shipment_collection_parties.status IN ('locked', 'coe_approved', 'finance_rejected')
                             AND shipment_air_freight_services.operation_type ='passenger'
                             AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
-                        OFFSET %s LIMIT %s;   
-                        """.format(location_type,location_type)
+                        OFFSET {} LIMIT {};   
+                        """.format(interval,location_type,location_type,offset,limit)
                     cur.execute(sql_query,(interval, origin_location_id,destination_location_id, offset, limit))
                     result = cur.fetchall()
                     cur.close()
@@ -351,7 +353,8 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                         "invoice_date":res[10],
                         "line_items":res[11],
                         "airline_id":str(res[12]),
-                        "chargeable_weight": res[13]
+                        "chargeable_weight": res[13],
+                        "price":res[14]
                     }
 
                     all_results.append(new_obj)

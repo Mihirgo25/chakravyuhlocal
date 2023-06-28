@@ -46,7 +46,7 @@ app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
 
-app.include_router(prefix = "/air_freight_rate",router = air_freight_router)
+app.include_router(prefix = "/air_freight_rate",router = air_freight_router,tags=['Air Freight Rate'])
 
 
 app.add_middleware(
@@ -124,3 +124,8 @@ def get_health_check():
 @app.get("/fcl_freight_rate/health_check")
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
+
+from services.air_freight_rate.helpers.air_freight_rate_airline_factors import create_air_freight_rate_airline_factors
+@app.get("/test")
+def test():
+    return create_air_freight_rate_airline_factors()
