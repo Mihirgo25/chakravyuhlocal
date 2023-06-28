@@ -4,6 +4,8 @@ from database.db_session import rd
 from datetime import datetime
 import dateutil.parser as parser
 from libs.parse_numeric import parse_numeric
+from micro_services.client import maps
+
 client = httpx.Client()
 
 
@@ -141,3 +143,16 @@ def valid_hash(hash, present_fields=None, blank_fields=None):
                 all_blank = False
         return all_blank
     return True
+
+
+def get_port_id(port_code):
+    try:
+        port_code = port_code.strip()
+    except:
+        port_code = port_code
+    filters =  {"filters":{"type": "seaport", "port_code": port_code, "status": "active"}}
+    try:
+        port_id =  maps.list_locations(filters)['list'][0]["id"]
+    except:
+        port_id = None
+    return port_id
