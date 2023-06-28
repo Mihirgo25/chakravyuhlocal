@@ -721,12 +721,13 @@ def list_fcl_freight_rates_data(
     return_query: bool = False,
     expired_rates_required: bool = False,
     all_rates_for_cogo_assured: bool = False,
+    return_count: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
+        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured, return_count)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise

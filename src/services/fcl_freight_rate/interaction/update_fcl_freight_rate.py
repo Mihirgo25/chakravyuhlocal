@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from database.db_session import db
 from datetime import datetime
 def create_audit(request, freight_id):
@@ -43,6 +44,8 @@ def execute_transaction_code(request):
   from celery_worker import update_multiple_service_objects
 
   validate_freight_params(request)
+  
+  request['line_items'] = get_normalized_line_items(request['line_items'])
 
   freight_object = FclFreightRate.select().where(FclFreightRate.id == request["id"]).first()
 
@@ -64,13 +67,13 @@ def execute_transaction_code(request):
 
   if request.get("origin_local") and "line_items" in request["origin_local"]:
     freight_object.origin_local = {
-        "line_items": request["origin_local"]["line_items"]
+        "line_items": get_normalized_line_items(request["origin_local"]["line_items"])
     }
   else:
     freight_object.origin_local = { "line_items": [] }
   if request.get("destination_local") and "line_items" in request["destination_local"]:
     freight_object.destination_local = {
-        "line_items": request["destination_local"]["line_items"]
+        "line_items": get_normalized_line_items(request["destination_local"]["line_items"])
     }
   else:
     freight_object.destination_local = { "line_items": [] }
