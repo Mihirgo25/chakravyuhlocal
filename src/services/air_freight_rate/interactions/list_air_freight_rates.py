@@ -97,10 +97,11 @@ def apply_density_category_filter(query,filters):
     density_category = filters['density_category']
     if density_category == 'general':
         query=query.where(
-           ((query.c.validty['density_category'] == density_category) |(query.c.validty['density_category'].is_null(True)))
+           (((SQL("validity->>'density_category'")) == density_category) |((SQL("validity->>'density_category'")).is_null(True)))
         )
     else:
-        ((query.c.validty['density_category'] == density_category) |(query.c.validty['density_category'].is_null(False)))
+        query=query.where(((SQL("validity->>'density_category'")) == density_category))
+    return query
 
 def apply_is_rate_not_available_entry_filter(query,filters):
    query=query.where(AirFreightRate.rate_not_available_entry==False)

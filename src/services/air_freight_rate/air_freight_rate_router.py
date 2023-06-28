@@ -317,16 +317,16 @@ def create_air_freight_rate_local_api(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
 
-    try:
-        data = create_air_freight_rate_local(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+    # try:
+    data = create_air_freight_rate_local(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(
+    #         status_code=500, content={"success": False, "error": str(e)}
+        # )
 
 
 @air_freight_router.post("/create_air_freight_rate_surcharge")
@@ -1024,14 +1024,14 @@ def list_air_freight_rates_api(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    try:
-        data = list_air_freight_rates(filters= filters, page_limit =page_limit,page= page, return_query=return_query,older_rates_required= older_rates_required,all_rates_for_cogo_assured= all_rates_for_cogo_assured,sort_by=sort_by,sort_type=sort_type)
-        return JSONResponse(status_code=200, content=data)
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    # try:
+    data = list_air_freight_rates(filters= filters, page_limit =page_limit,page= page, return_query=return_query,older_rates_required= older_rates_required,all_rates_for_cogo_assured= all_rates_for_cogo_assured,sort_by=sort_by,sort_type=sort_type)
+    return JSONResponse(status_code=200, content=data)
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.get('/get_weight_slabs_for_airline')
 def get_weight_slabs_for_airline_api(airline_id:str,chargeable_weight: float = 0,resp: dict = Depends(authorize_token)):

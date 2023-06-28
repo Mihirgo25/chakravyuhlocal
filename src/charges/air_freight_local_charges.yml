@@ -142,7 +142,7 @@ DGA:
   name: "DGR/Live animal acceptance fee"
   units: ['per_shipment']
   trade_types: ['export']
-  condition: commodity == "live_animals" || commodity_type == "dangerous" || commodity_sub_type == "others"
+  condition: commodity == "live_animals" or commodity_type == "dangerous" or commodity_sub_type == "others"
   tags: ['additional_service']
   sac_code: ''
 DGP:
@@ -333,14 +333,14 @@ HAZ:
   name: "Code not in use"
   units: ['per_kg','per_shipment']
   trade_types: [ 'export', 'import' ]
-  condition: GlobalConstants::HAZ_CLASSES.include?(commodity) || commodity_type == "dangerous"
+  condition: commodity in HAZ_CLASSES or commodity_type == "dangerous"
   tags: ['additional_service', 'deleted']
   sac_code: '996799'
 APPF:
   name: "Active Pharma processing fees"
   units: ['per_kg','per_shipment']
   trade_types: [ 'export', 'import' ]
-  condition: commodity == 'active_pharma' || commodity == 'perishables' || commodity_sub_type == 'active_pharma' || commodity_sub_type == 'perishables'
+  condition: commodity == 'active_pharma' or commodity == 'perishables' or commodity_sub_type == 'active_pharma' or commodity_sub_type == 'perishables'
   tags: ['additional_service']
   sac_code: '996799'
 ACUS:
@@ -431,7 +431,7 @@ TEMP:
   name: "Temperature Variation Charge"
   units: [ 'per_shipment', 'per_kg','per_awb' ]
   trade_types: [ 'export', 'import' ]
-  condition: commodity == 'perishables' || commodity_sub_type == 'perishables'
+  condition: commodity == 'perishables' or commodity_sub_type == 'perishables'
   tags: ['additional_service']
   sac_code: '996799'
 STL:
