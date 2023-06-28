@@ -214,6 +214,7 @@ HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS = {
     'ms_normal_tank':  COMMODITY
   }
 
+RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 
 FEEDBACK_SOURCES = ['spot_search', 'checkout']
 
