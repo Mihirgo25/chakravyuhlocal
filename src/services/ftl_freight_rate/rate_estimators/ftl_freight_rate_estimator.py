@@ -1,6 +1,7 @@
 from services.ftl_freight_rate.rate_estimators.IN_ftl_freight_rate_estimator import INFtlFreightRateEstimator
 from services.ftl_freight_rate.rate_estimators.EU_ftl_freight_rate_estimator import EUFtlFreightRateEstimator
 from services.ftl_freight_rate.rate_estimators.US_ftl_freight_rate_estimator import USFtlFreightRateEstimator
+from services.ftl_freight_rate.rate_estimators.SG_ftl_freight_rate_estimator import SGFtlFreightRateEstimator
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_path_data
 
@@ -45,6 +46,19 @@ class FtlFreightEstimator:
         elif self.country_category == 'US':
             average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','USD')
             estimator = USFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
+            price = estimator.estimate()
+            return {'list' : [
+                {
+                    'is_price_estimated': bool(price),
+                    'base_price': price['base_rate'],
+                    'distance':price['distance'],
+                    'currency':price['currency'],
+                    'truck_type': self.truck_and_commodity_data['truck_name']
+                }]}
+
+        elif self.country_category == 'SG':
+            average_fuel_price = self.get_average_fuel_price(is_location_data_from_valhala,location_data,'diesel','USD')
+            estimator = SGFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data)
             price = estimator.estimate()
             return {'list' : [
                 {

@@ -301,6 +301,12 @@ TRUCK_TYPES_MAPPING = {
         'small' : {'lower_limit':0,'upper_limit':3.5},
         'medium' : {'lower_limit':3.5,'upper_limit':9},
         'heavy': {'lower_limit':9,'upper_limit':154.3}
+    },
+    'SG':
+    {
+        'small' : {'lower_limit':0,'upper_limit':3.5},
+        'medium' : {'lower_limit':3.5,'upper_limit':16},
+        'heavy': {'lower_limit':16,'upper_limit':154.3}
     }
 }
 
@@ -374,3 +380,11 @@ AVERAGE_SPEEDS = {
     'medium':80,
     'heavy':75
 }
+
+# SINGAPORE
+
+SG_BASIC_CHARGE_LIST = {'distance_factor','driver','capacity_factor','loading_charge'}
+
+SINGAPORE_HAZARDOUS_RATE = 1.05
+
+SINGAPORE_REEFER_RATE = 1.15
