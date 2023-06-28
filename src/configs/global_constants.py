@@ -106,8 +106,6 @@ PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb'
 
 TRADE_TYPES = ['import', 'export', 'domestic']
 
-ALLOWED_RATE_PRODUCER_METHODS = ['minimum', 'maximum', 'latest']
-
 DEAFULT_RATE_PRODUCER_METHOD = 'latest'
 
 AIR_STANDARD_COMMODITIES = ['general', 'perishable', 'live_animals', 'pharma']
@@ -125,8 +123,9 @@ SEARCH_START_DATE_OFFSET = 2
 
 MAX_VALUE = 1000000000000000
 
+ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 
-COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US"}
+COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
 
 DEFAULT_WEIGHT_SLABS=[
     {
@@ -183,6 +182,36 @@ RATE_FEEDBACK_RELEVANT_ROLE_ID = {
     'supply_owner_vietnam' : UUID('e0aa356c-2e4c-4cfd-b279-a6d3cdfa4edb'),
     'coe_head_vietnam' : UUID('0e68d129-6f07-4324-95ee-88731b35c0c4')
 }
+
+PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
+
+ISO_TANK_COMMODITIES = ["non_haz_solids", "non_haz_liquids", "non_haz_gases"]
+
+CONTAINER_SIZES = ["20", "40", "40HC", "45HC"]
+
+CONTAINER_TYPES = [
+     "standard",
+     "refer",
+     "open_top",
+     "open_side",
+     "flat_rack",
+     "iso_tank",
+ ]
+
+ALL_COMMODITIES = list(
+     set(
+         (
+             STANDARD_COMMODITIES
+             + REFER_COMMODITIES
+             + OPEN_TOP_COMMODITIES
+             + OPEN_SIDE_COMMODITIES
+             + FLAT_RACK_COMMODITIES
+             + ISO_TANK_COMMODITIES
+             + HAZ_CLASSES
+         )
+     )
+ )
+
 CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
 
 INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'

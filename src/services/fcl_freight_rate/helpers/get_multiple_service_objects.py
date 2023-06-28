@@ -60,7 +60,10 @@ def get_multiple_service_objects(freight_object):
             if hasattr(freight_object,'importer_exporter_id') and organization['id']==str(freight_object.importer_exporter_id):
                 freight_object.importer_exporter= organization
             if hasattr(freight_object,'performed_by_org_id') and organization['id']==str(freight_object.performed_by_org_id):
-                freight_object.performed_by_org = organization
+                try:
+                    freight_object.organization = organization
+                except:
+                    freight_object.performed_by_org = organization
 
     # if hasattr(freight_object,'rate_sheet_id'):
     #     rate_sheet_data = RateSheet.select(RateSheet.serial_id,RateSheet.file_name,RateSheet.created_at,RateSheet.updated_at).dicts().get()

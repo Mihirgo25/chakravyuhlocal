@@ -21,7 +21,7 @@ class INFtlFreightRateEstimator:
                 additional_charges += (float(data['process_value']))
         truck_capacity = self.truck_and_commodity_data['weight']
         rate_factor_for_distance = 1
-        MAX_LIMIT = 55
+        MAX_LIMIT = '55'
         for truck_capacity_limit,rate_factor in TRUCK_CAPACITY_RATE_FACTOR.items():
             if truck_capacity > 39:
                 rate_factor_for_distance = TRUCK_CAPACITY_RATE_FACTOR[MAX_LIMIT]
