@@ -1,4 +1,5 @@
 from air_customs_params import *
+from params import CreateRateSheet, UpdateRateSheet
 from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
@@ -23,6 +24,11 @@ from services.air_customs_rate.interaction.delete_air_customs_rate import delete
 from services.air_customs_rate.interaction.delete_air_customs_rate_feedback import delete_air_customs_rate_feedback
 from services.air_customs_rate.interaction.delete_air_customs_rate_request import delete_air_customs_rate_request
 # from services.air_customs_rate.interaction.get_air_customs_rate_cards import get_air_customs_rate_cards
+
+from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
+from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
+from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
+from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 
 air_customs_router = APIRouter()
 
@@ -432,6 +438,84 @@ def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depe
     try:
         data = update_air_customs_rate(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@air_customs_router.post("/create_air_customs_rate_sheet")
+def create_rate_sheet_api(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@air_customs_router.post("/update_air_customs_rate_sheet")
+def update_rate_sheet_api(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
+    # if resp["status_code"] != 200:
+    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    # if resp["isAuthorized"]:
+    #     request.performed_by_id = resp["setters"]["performed_by_id"]
+    #     request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    # try:
+        rate_sheet = update_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@air_customs_router.get("/list_air_customs_rate_sheets")
+def list_rate_sheets_api(
+    filters: str = None,
+    stats_required: bool = True,
+    page: int = 1,
+    page_limit: int = 10,
+    sort_by: str = 'created_at',
+    sort_type: str = 'desc',
+    pagination_data_required:  bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheets(
+            filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@air_customs_router.get("/list_air_customs_rate_sheet_stats")
+def list_rates_sheet_stats_api(
+    filters: str = None,
+    service_provider_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheet_stats(
+            filters, service_provider_id
+        )
+        return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
     except Exception as e:
