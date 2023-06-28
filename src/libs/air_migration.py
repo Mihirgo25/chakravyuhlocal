@@ -477,7 +477,7 @@ def set_location_data(obj,loc_dict):
 def run_migration():
     procured_by_sourced_by('air_freight_rate_locals')
     print('Procured by Sourced by Data done')
-    # air_freight_rate_locals_migration()
+    air_freight_rate_locals_migration()
     # air_freight_rate_feedback_migration()
     # fcl_cfs_rate_requests_migration()
     # fcl_cfs_rate_audits_migration()

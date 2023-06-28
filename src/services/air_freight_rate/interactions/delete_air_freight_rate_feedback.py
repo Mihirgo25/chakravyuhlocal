@@ -4,6 +4,7 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+
 def delete_air_freight_rate_feedback(request):
     with db.atomic():
         return execute_transaction_code(request)

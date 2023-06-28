@@ -6,6 +6,7 @@ from playhouse.postgres_ext import *
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+
 def update_air_freight_rate(request):
       with db.atomic():
         return execute(request)

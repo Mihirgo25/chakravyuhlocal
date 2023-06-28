@@ -4,11 +4,11 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 from playhouse.postgres_ext import *
 from database.db_session import db
 
-def execute(request):
-    with db.atomic():
-        return delete_air_freight_rate(request)
-
 def delete_air_freight_rate(request):
+    with db.atomic():
+        return delete_air_freight_rate_data(request)
+
+def delete_air_freight_rate_data(request):
     air_freight_rate=find_object(request)
 
     if not air_freight_rate:

@@ -33,12 +33,12 @@ def create_audit(request, freight_id,validity_id):
     )
     return id
 
-def create_air_freight_rate_data(request):
+def create_air_freight_rate(request):
     with db.atomic():
-        return create_air_freight_rate(request)
+        return create_air_freight_rate_data(request)
 
     
-def create_air_freight_rate(request):
+def create_air_freight_rate_data(request):
     from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay
 
     if request['commodity']=='general':

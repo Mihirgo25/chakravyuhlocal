@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from services.air_freight_rate.models.air_freight_warehouse_rate import AirFreightWarehouseRates
 
-def get_air_freight_wareohouse_data(request):
+def get_air_freight_warehouse_rate(request):
     details={}
 
     if all_fields_present(request):

@@ -20,7 +20,7 @@ def create_audit(request):
     )
 
 
-def update_air_freight_rate_task_data(request):
+def update_air_freight_rate_task(request):
     if not validate_closing_remarks(request):
         raise HTTPException(status_code=400,detail=f"{request['closing_remarks']} is invalid")
     
