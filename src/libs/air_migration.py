@@ -7,6 +7,9 @@ from joblib import delayed, Parallel, cpu_count
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
 from libs.migration import delayed_func
 
 import time
@@ -166,10 +169,6 @@ def delay_updation_request(row,columns):
 #         return all_result
 
 def air_freight_rate_migration():
-    from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-    procured_ids_path = "procured_by_sourced_by_rate.json"
-    with open(procured_ids_path, 'r') as file:
-        procured_sourced_rates_dict = json.load(file)
     all_result=[]
     conn = get_connection()
     with conn:
@@ -179,18 +178,22 @@ def air_freight_rate_migration():
             """
             cur.execute(sql_query,)
             result = cur
-            columns = [col[0] for col in result.description]    
-            p.parallel_function(result.fetchall(), columns, procured_sourced_rates_dict, func_in_parallel)  
+            columns = [col[0] for col in result.description]
+            result = Parallel(n_jobs=4)(delayed(delay_updation_rate)(row, columns) for row in result.fetchall())  
             cur.close()
     conn.close()
     print('Air Freight Rate Done')
     return all_result
 
+def delay_updation_rate(row,columns):
+    param = dict(zip(columns, row))
+    obj = AirFreightRate(**param)
+    set_locations(obj)
+    get_multiple_service_objects(obj)
+    obj.save(force_insert = True)
+    return
+
 def air_freight_rate_locals_migration():
-    from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
-    procured_ids_path="procured_by_sourced_by_rate_locals.json"
-    with open(procured_ids_path, 'r') as file:
-        procured_sourced_locals_dict = json.load(file)
     all_result=[]
     conn = get_connection()
     with conn:
@@ -200,13 +203,23 @@ def air_freight_rate_locals_migration():
             """
             cur.execute(sql_query,)
             result = cur
-            columns = [col[0] for col in result.description] 
-            p.parallel_function(result.fetchall(), columns, procured_sourced_locals_dict, func_in_parallel)
+            columns = [col[0] for col in result.description]
+            result = Parallel(n_jobs=4)(delayed(delay_updation_rate_locals)(row, columns) for row in result.fetchall())  
+
             cur.close()
     conn.close()
     print('Air Freight Rate Locals Done')
     return all_result
 
+def delay_updation_rate_locals(row, columns):
+    param = dict(zip(columns, row))
+    obj = AirFreightRateLocal(**param)
+    
+    set_locations(obj)
+    get_multiple_service_objects(obj)
+    set_procured_sourced(obj,procured_sourced_dict)
+    obj.save(force_insert = True)
+    return
 
 
 
@@ -421,7 +434,7 @@ def func_in_parallel(row, columns, procured_sourced_dict, model_name):
     obj.save(force_insert = True)
 
 
-def set_procured_sourced(obj, procured_sourced_dict):
+def set_procured_sourced(obj):
     obj.procured_by_id = (procured_sourced_dict.get(str(obj.id)) or {}).get('procured_by_id')
     obj.sourced_by_id = (procured_sourced_dict.get(str(obj.id)) or {}).get('sourced_by_id')
 
@@ -505,7 +518,7 @@ def all_locations_data():
     
     
 def run_migration():
-    procured_by_sourced_by('air_freight_storage_rate')
+    procured_by_sourced_by('air_freight_rate_locals')
     # all_locations_data()
     print('Procured by Sourced by Data done')
     # air_freight_rate_feedback_migration()

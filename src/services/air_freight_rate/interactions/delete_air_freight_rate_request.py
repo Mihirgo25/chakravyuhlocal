@@ -11,6 +11,7 @@ from micro_services.client import *
 from celery_worker import send_closed_notifications_to_sales_agent_function
 
 BAS_CHARGE_CODES = ["BAS", "BASNO"]
+
 def delete_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
     query = "create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(

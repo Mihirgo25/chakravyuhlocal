@@ -46,7 +46,7 @@ class AirFreightRate(BaseModel):
     destination_storage_id = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     discount_type = CharField(null=True)
-    external_rate_id=UUIDField(null=True)
+    external_rate_id=TextField(null=True)
     flight_uuid = UUIDField(null=True)
     height = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
