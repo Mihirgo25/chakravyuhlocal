@@ -5,7 +5,6 @@ from peewee import *
 from params import Slab
 
 class HaulageLineItem(BaseModel):
-  location_id: str = None
   code: str
   unit: str
   price: float
@@ -23,7 +22,7 @@ class CreateHaulageFreightRate(BaseModel):
   service_provider_id: str
   shipping_line_id: str = None
   haulage_type: str 
-  performed_by_id: str = None
+  performed_by_id: str
   procured_by_id: str 
   sourced_by_id: str 
   importer_exporter_id: str = None

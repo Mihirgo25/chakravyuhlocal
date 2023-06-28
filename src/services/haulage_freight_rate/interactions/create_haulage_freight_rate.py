@@ -37,7 +37,7 @@ def create_haulage_freight_rate(request):
     possible_charge_codes = haulage_freight_rate.possible_charge_codes()
     mandatory_charge_codes = haulage_freight_rate.mandatory_charge_codes(possible_charge_codes)
     haulage_freight_rate.validate_validity_object(haulage_freight_rate.validity_start,haulage_freight_rate.validity_end)
-    haulage_freight_rate.set_platform_price(haulage_freight_rate.mandatory_charge_codes(haulage_freight_rate.possible_charge_codes()),currency = 'INR')
+    haulage_freight_rate.set_platform_price()
     haulage_freight_rate.update_line_item_messages(haulage_freight_rate.possible_charge_codes())
 
     if not haulage_freight_rate.importer_exporter_id:

@@ -1,17 +1,14 @@
-from peewee import *
+import uuid, datetime
+from peewee import DateTimeField, UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField
 from database.db_session import db
-import uuid
-import datetime
 from playhouse.postgres_ext import BinaryJSONField, ArrayField
 from fastapi import HTTPException
-from micro_services.client import *
-from params import LineItem
+from micro_services.client  import maps, common
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
-from configs.global_constants import *
-from configs.haulage_freight_rate_constants import *
-from database.rails_db import *
-
+from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
+from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS
+from database.rails_db import get_shipping_line,  get_organization
 
 
 class BaseModel(Model):
@@ -25,13 +22,13 @@ class HaulageFreightRate(BaseModel):
     destination_location_id = UUIDField(null=True)
     destination_cluster_id = UUIDField(null=True)
     destination_city_id = UUIDField(null=True)
-    container_size = CharField(index=True, null=True)
-    commodity_type = CharField(index=True, null=True)
-    commodity = CharField(index=True, null=True)
+    container_size = TextField(index=True, null=True)
+    commodity_type = TextField(index=True, null=True)
+    commodity = TextField(index=True, null=True)
     importer_exporter_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
     containers_count =  IntegerField(index=True, null=True)
-    container_type = CharField(index=True, null=True)
+    container_type = TextField(index=True, null=True)
     weight_slabs = BinaryJSONField(index=True, null=True)
     line_items = BinaryJSONField(index=True, null=True)
     is_line_items_error_messages_present = BooleanField(index=True, null=True)
@@ -39,21 +36,21 @@ class HaulageFreightRate(BaseModel):
     line_items_error_messages = BinaryJSONField(index=True, null=True)
     line_items_info_messages = BinaryJSONField(index=True, null=True)
     rate_not_available_entry = BooleanField(index=True, null=True)
-    trip_type = CharField(index=True, null=True)
+    trip_type = TextField(index=True, null=True)
     validity_start = DateTimeField(default=datetime.datetime.now, null=True)
     validity_end = DateTimeField(default = datetime.datetime.now() - datetime.timedelta(30), null=True)
     detention_free_time = IntegerField(index=True, null=True)
     transit_time = IntegerField(index=True, null=True)
-    haulage_type = CharField(index=True, null=True, default='merchant')
-    transport_modes =ArrayField(CharField, null=True)
+    haulage_type = TextField(index=True, null=True, default='merchant')
+    transport_modes =ArrayField(TextField, null=True)
     destination_country_id = UUIDField(null=True)
-    transport_modes_keyword = CharField(index=True, null=True)
+    transport_modes_keyword = TextField(index=True, null=True)
     distance = FloatField(null=True, index=True)
     origin_country_id = UUIDField(null=True)
     shipping_line_id = UUIDField(null=True)
-    origin_destination_location_type = CharField(index=True, null=True)
-    destination_location_type = CharField(index=True, null=True)
-    origin_location_type = CharField(index=True, null=True)
+    origin_destination_location_type = TextField(index=True, null=True)
+    destination_location_type = TextField(index=True, null=True)
+    origin_location_type = TextField(index=True, null=True)
     origin_location_ids = ArrayField(UUIDField, null=True)
     destination_location_ids = ArrayField(UUIDField, null=True)
     importer_exporter = BinaryJSONField(index=True, null=True)
@@ -62,6 +59,7 @@ class HaulageFreightRate(BaseModel):
     destination_location = BinaryJSONField(index=True, null=True)
     shipping_line = BinaryJSONField(index=True, null=True)
     validities = BinaryJSONField(default = [], null=True)
+    # trailer_type = TextField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
 
@@ -100,7 +98,9 @@ class HaulageFreightRate(BaseModel):
             raise HTTPException(status_code=400, detail="haulage type is invalid")
     
     def validate_transport_modes(self):
-        if not (self.transport_modes.issubset(TRANSPORT_MODES)):
+        # if not (self.transport_modes(TRANSPORT_MODES)):
+        #     raise HTTPException(status_code=400, detail="transport modes are invalid")
+        if not all(element in TRANSPORT_MODES for element in self.transport_modes):
             raise HTTPException(status_code=400, detail="transport modes are invalid")
     
     def validate_transit_time(self):
@@ -122,7 +122,7 @@ class HaulageFreightRate(BaseModel):
 
     def validate_service_provider_id(self):
         if not self.service_provider_id:
-            return
+            raise HTTPException(status_code=400, detail="service provider not found")   
 
         service_provider_data = get_organization(id=self.service_provider_id)
         if len(service_provider_data) == 0:
@@ -140,27 +140,26 @@ class HaulageFreightRate(BaseModel):
         if self.transport_modes[0] == 'trailer' and self.trip_type not in TRIP_TYPES:
             raise HTTPException(status_code=400, detail="Invalid trip type")
     
-    def validate_line_items(self, line_items):
-      if(not line_items or len(line_items)==0):
+    def validate_line_items(self):
+      if not self.line_items:
         raise HTTPException(status_code=400, detail="line_items required")
     
-
     def validate_origin_location(self):
         if not self.origin_location_id:
-            return
+            raise HTTPException(status_code=400, detail="Invalid Origin location id")
 
         location_data = maps.list_locations({'filters':{'id':self.origin_location_id}})['list']
         if len(location_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid Origin location ID")
+            raise HTTPException(status_code=400, detail="Invalid Origin location id")
 
 
     def validate_destination_location(self):
         if not self.destination_location_id:
-            return
+            raise HTTPException(status_code=400, detail="Invalid location id")
 
         location_data = maps.list_locations({'filters':{'id':self.destination_location_id}})['list']
         if len(location_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid location ID")
+            raise HTTPException(status_code=400, detail="Invalid location id")
         
     def validate_uniqueness(self):
         haulage_cnt = HaulageFreightRate.select().where(
@@ -225,12 +224,12 @@ class HaulageFreightRate(BaseModel):
         self.validate_transit_time()
         self.validate_detention_free_time()
         self.validate_shipping_line_id()
-        self.validate_service_provider_id()
+        # self.validate_service_provider_id()
         self.validate_importer_exporter_id()
         self.validate_trip_type()
         self.validate_line_items()
-        self.validate_origin_location()
-        self.validate_destination_location()
+        # self.validate_origin_location()
+        # self.validate_destination_location()
         self.validate_commodity()
         return True
       
@@ -450,26 +449,3 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.trip_type == self.trip_type,
             HaulageFreightRate.rate_not_available_entry == True
         ).execute()
-
-            
-
-
-
-       
-
-
-        
-
-class FclFreightRateValidity(BaseModel):
-    validity_start: datetime.date
-    validity_end: datetime.date
-    remarks: list[str] = []
-    line_items: list[LineItem] = []
-    price: float
-    platform_price: float = None
-    currency: str
-    schedule_type: str = None
-    payment_term: str = None
-    id: str
-    likes_count: int = None
-    dislikes_count: int = None

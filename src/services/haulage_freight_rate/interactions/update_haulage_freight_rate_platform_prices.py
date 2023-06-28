@@ -11,7 +11,7 @@ def update_haulage_freight_rate_platform_prices(request):
     HaulageFreightRate.haulage_type == request['haulage_type'],
     HaulageFreightRate.shipping_line_id == request['shipping_line_id'] ,
     HaulageFreightRate.importer_exporter_id == request['importer_exporter_id'],
-    HaulageFreightRate.is_line_items_error_messages_present == request['is_line_items_error_messages_present']
+    HaulageFreightRate.is_line_items_error_messages_present == request.get('is_line_items_error_messages_present')
     )
     
     if 'origin_location_id' in request:

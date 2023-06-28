@@ -6,7 +6,6 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
 from playhouse.shortcuts import model_to_dict
 
-
 import services.haulage_freight_rate.interactions.list_haulage_freight_rates as list_haulage_freight_rate
 
 from libs.get_applicable_filters import get_applicable_filters
@@ -32,7 +31,6 @@ POSSIBLE_DIRECT_FILTERS = [
 POSSIBLE_INDIRECT_FILTERS = ["origin_location_ids", "destination_location_ids", "transport_modes", "is_rate_available", "procured_by_id"]
 
 
-
 def is_valid_uuid(val):
     try:
         uuid.UUID(str(val))
@@ -49,10 +47,9 @@ def apply_direct_filters(query, filters):
 def apply_indirect_filters(query, filters):
     for key, val in filters.items():
         query = getattr(list_haulage_freight_rate, "apply_{}_filter".format(key))(
-            query, val
+            query, val, filters
         )
     return query
-
 
 
 def apply_pagination(query, page, page_limit):
@@ -87,8 +84,8 @@ def list_haulage_freight_rates(
     return
 
 def get_query():
-    query = HaulageFreightRate.order_by(SQL('updated_at DESC')).page()
-    return 
+    query = HaulageFreightRate.select()
+    return query
 
 def get_data(query):
     data = []
@@ -104,8 +101,19 @@ def get_data(query):
         result['procured_by_id'] = rate_audit['procured_by_id']
 
     add_service_objects(raw_data)
+    return raw_data
 
 
 def add_service_objects(data):
     return
+
+def apply_is_rate_available_filter(query, val, filters):
+    query = query.where(HaulageFreightRate.rate_not_available_entry != 'true')
+    return query
+
+def apply_transport_modes_filter(query, val, filters):
+    transport_modes = filters['transport_modes']
+    query = query.where(HaulageFreightRate.transport_modes.contains(transport_modes))
+    # query.where('haulage_freight_rates.transport_modes && ?', "{#{transport_modes.join(',')}}")
+    return query
 
