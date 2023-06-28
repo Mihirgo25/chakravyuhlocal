@@ -85,16 +85,16 @@ class CreateAirCustomsRate(BaseModel):
   rate_sheet_id: str = None
   airport_id: str
   trade_type: str
-  container_size: str
-  container_type: str
-  commodity: str = None
+  commodity: str = 'all_commodities'
   service_provider_id: str
-  performed_by_id: str
+  performed_by_id: str = None
   sourced_by_id: str
   procured_by_id: str
   importer_exporter_id: str = None
-  customs_line_items: List[AirCustomsLineItems] = None
+  line_items: List[AirCustomsLineItems] = None
   performed_by_type: str = None
+  bulk_operation_id: str = None
+  rate_type: str = 'general'
 
 
 class UpdateAirCustomsRatePlatformPrices(BaseModel):
