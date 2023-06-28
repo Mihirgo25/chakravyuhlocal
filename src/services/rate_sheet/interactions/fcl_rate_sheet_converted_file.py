@@ -26,19 +26,6 @@ csv_options = {
 }
 
 
-def get_port_id(port_code):
-    try:
-        port_code = port_code.strip()
-    except:
-        port_code = port_code
-    filters =  {"filters":{"type": "seaport", "port_code": port_code, "status": "active"}}
-    try:
-        port_id =  maps.list_locations(filters)['list'][0]["id"]
-    except:
-        port_id = None
-    return port_id
-
-
 def get_shipping_line_id(shipping_line_name):
     try:
         shipping_line_name = shipping_line_name.strip()
