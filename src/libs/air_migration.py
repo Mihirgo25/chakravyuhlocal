@@ -6,6 +6,7 @@ from database.rails_db import get_connection
 from joblib import delayed, Parallel, cpu_count
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 
 
 import time
@@ -163,6 +164,52 @@ def air_freight_rate_requests_migration():
 #         return all_result
 #     except Exception as e:
 #         return all_result
+
+def air_freight_rate_migration():
+    from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+    procured_ids_path = "procured_by_sourced_by_rate.json"
+    with open(procured_ids_path, 'r') as file:
+        procured_sourced_rates_dict = json.load(file)
+    all_result=[]
+    conn = get_connection()
+    with conn:
+        with conn.cursor() as cur:
+            sql_query = """
+            SELECT * FROM air_freight_rates limit 100
+            """
+            cur.execute(sql_query,)
+            result = cur
+            columns = [col[0] for col in result.description]    
+            p.parallel_function(result.fetchall(), columns, procured_sourced_rates_dict, func_in_parallel)  
+            cur.close()
+    conn.close()
+    print('Air Freight Rate Done')
+    return all_result
+
+def air_freight_rate_locals_migration():
+    from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+    procured_ids_path="procured_by_sourced_by_rate_locals.json"
+    with open(procured_ids_path, 'r') as file:
+        procured_sourced_locals_dict = json.load(file)
+    all_result=[]
+    conn = get_connection()
+    with conn:
+        with conn.cursor() as cur:
+            sql_query = """
+            SELECT * FROM air_freight_rate_locals limit 500
+            """
+            cur.execute(sql_query,)
+            result = cur
+            columns = [col[0] for col in result.description] 
+            p.parallel_function(result.fetchall(), columns, procured_sourced_locals_dict, func_in_parallel)
+            cur.close()
+    conn.close()
+    print('Air Freight Rate Locals Done')
+    return all_result
+
+
+
+
     
 def air_freight_rate_audits_migration():
     from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
@@ -334,19 +381,10 @@ def get_required_spot_search_data(search):
         'service_details' :search.get('service_details')
     }
 
-def func_in_parallel(row, columns, zone_data, procured_sourced_dict, loc_dict, model_name):
+def func_in_parallel(row, columns, procured_sourced_dict, model_name):
     param = dict(zip(columns, row))
-    extra_columns =  {
-        "mode": 'manual',
-        "rate_type": 'market_place',
-        "accuracy": 100}
     
-    final_params = param | extra_columns
-    if model_name == 'fcl_customs':
-        obj = FclCustomsRate(**final_params)
-    else:
-        obj = FclCfsRate(**final_params)
-
+    obj = AirFreightRate(**final_params)
     set_procured_sourced(obj,procured_sourced_dict)
     set_location_data(obj,loc_dict)
     get_multiple_service_objects(obj)
@@ -362,8 +400,8 @@ def procured_by_sourced_by(model):
         conn = get_connection()
         with conn:
             with conn.cursor() as cur:
-                if model == 'air_freight_rate_storage_rate':
-                    sql_query = "select object_id, procured_by_id, sourced_by_id from air_freight_rate_audits where object_type = 'AirFreightStorageRate'"
+                if model == 'air_freight_rate_locals':
+                    sql_query = "select object_id, procured_by_id, sourced_by_id from air_freight_rate_audits where object_type = 'AirFreightRate'"
                 else:
                     sql_query = "select object_id, procured_by_id, sourced_by_id from fcl_cfs_rate_audits where object_type = 'FclCfsRate'"
                 cur.execute(sql_query,)
@@ -376,8 +414,8 @@ def procured_by_sourced_by(model):
                     }
                 cur.close()
         conn.close()
-        if model == 'air_freight_rate_feedback':
-            file_path = "procured_by_sourced_by_feebacks.json"
+        if model == 'air_freight_rate_locals':
+            file_path = "procured_by_sourced_by_rate_locals.json"
         else:
             file_path = "procured_by_sourced_by_cfs.json"
         with open(file_path, 'w') as file:
@@ -437,8 +475,9 @@ def set_location_data(obj,loc_dict):
 
     
 def run_migration():
-    procured_by_sourced_by('air_freight_storage_rate')
+    procured_by_sourced_by('air_freight_rate_locals')
     print('Procured by Sourced by Data done')
+    # air_freight_rate_locals_migration()
     # air_freight_rate_feedback_migration()
     # fcl_cfs_rate_requests_migration()
     # fcl_cfs_rate_audits_migration()
@@ -446,8 +485,8 @@ def run_migration():
     # get_zone_id()
     # procured_by_sourced_by('fcl_customs')
     # print('Procured by Sourced by Data done')
-    # fcl_customs_rates_migration()
-    air_freight_rate_audits_migration()
+    # air_freight_rate_migration()
+    # air_freight_rate_audits_migration()
     # air_freight_rate_requests_migration()
     # fcl_customs_rate_bulk_operation_migration()
     # air_freight_storage_rates_migration()
