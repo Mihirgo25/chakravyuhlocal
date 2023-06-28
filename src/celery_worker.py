@@ -333,7 +333,7 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
 
 def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
     try:
-        eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
+        eval(f"object.perform_{action_name}_action()")
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
