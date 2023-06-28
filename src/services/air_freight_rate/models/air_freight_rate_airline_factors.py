@@ -8,7 +8,7 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class AirFreightLocationClusters(BaseModel):
+class AirFreightAirlineFactors(BaseModel):
     id = BigAutoField(primary_key=True)
     base_airline_id = UUIDField(index=True)
     derive_airline_id = UUIDField(index=True)
@@ -20,4 +20,4 @@ class AirFreightLocationClusters(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     class Meta:
-        table_name = 'air_freight_location_clusters'
+        table_name = 'air_freight_airline_factors'
