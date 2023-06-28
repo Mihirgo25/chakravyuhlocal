@@ -41,6 +41,9 @@ from services.haulage_freight_rate.interactions.create_haulage_freight_rate_not_
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_visibility import (
     get_haulage_freight_rate_visibility
 )
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_visibility import (
+    get_haulage_freight_rate_visibility,
+)
 
 from typing import List,Union
 
@@ -316,6 +319,37 @@ def update_haulage_freight_rate_platform_prices_data(request: UpdateHaulageFreig
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_haulage_freight_rate_platform_prices(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@haulage_freight_router.get("/get_haulage_freight_rate_visibility")
+def get_haulage_freight_rate_visibility_data(
+    service_provider_id: str,
+    origin_location_id: str = None,
+    destination_location_id: str = None,
+    rate_id: str = None,
+    container_size: str = None,
+    container_type: str = None,
+    commodity: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'service_provider_id' : service_provider_id,
+        'origin_location_id': origin_location_id,
+        'destination_location_id': destination_location_id,
+        'rate_id': rate_id,
+        'container_size': container_size,
+        'container_type': container_type,
+        'commodity': commodity
+    }
+    try:
+        data = get_haulage_freight_rate_visibility(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
