@@ -26,6 +26,7 @@ from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
 from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from services.air_freight_rate.air_freight_rate_router import air_freight_router
 from micro_services.client import *
+from libs.air_migration import run_migration
 
 
 sentry_sdk.init(
@@ -103,7 +104,7 @@ def startup():
     # create_rail_haulage_rates()
     # insert()
     # insert_china()
-    # run_migration()
+    run_migration()
     # create_table()
     # fcl_freight_migration()
     # create_partition_table()
