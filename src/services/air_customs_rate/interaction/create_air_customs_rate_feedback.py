@@ -10,7 +10,7 @@ def create_air_customs_rate_feedback(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    rate = AirCustomsRate.select().where(AirCustomsRate.id == request.get('rate_id')).first()
+    rate = AirCustomsRate.select(AirCustomsRate.id).where(AirCustomsRate.id == request.get('rate_id')).first()
 
     if not rate:
         raise HTTPException(status_code=400, detail='Rate is invalid')
@@ -47,7 +47,7 @@ def execute_transaction_code(request):
     except:
         raise HTTPException(status_code=500, detail='Feedback did not Save')
 
-    create_audit(request, air_customs_feedback)
+    create_audit(request, air_customs_feedback.id)
     update_multiple_service_objects.apply_async(kwargs={'object':air_customs_feedback},queue='low')
 
     return {
@@ -71,10 +71,10 @@ def get_create_params(request):
         'service_provider_id': request.get('service_provider_id')
     }
 
-def create_audit(request, customs_feedback):
+def create_audit(request, air_customs_feedback_id):
     AirCustomsRateAudit.create(
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
-        object_id = customs_feedback.id,
+        object_id = air_customs_feedback_id,
         object_type = 'AirCustomsRateFeedback',
         action_name = 'create',
         performed_by_id = request.get('performed_by_id')

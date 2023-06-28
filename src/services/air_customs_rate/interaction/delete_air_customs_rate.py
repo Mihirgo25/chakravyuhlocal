@@ -17,15 +17,10 @@ def execute_transaction_code(request):
     for key in list(delete_params.keys()):
         setattr(rate_object, key, delete_params[key])
 
-    rate_object.procured_by_id = request.get('procured_by_id')
-    rate_object.sourced_by_id = request.get('sourced_by_id')
-
     try:
         rate_object.save()
     except Exception as e:
          print("Exception in deleting rate", e)
-
-    rate_object.update_platform_prices_for_other_service_providers()
 
     create_audit_for_delete_rates(request, rate_object, delete_params)
 
@@ -54,8 +49,6 @@ def get_params_for_deletion():
     return {
       'line_items': [],
       'rate_not_available_entry': True,
-      'platform_price': None,
-      'is_best_price': None,
       'is_line_items_error_messages_present': None,
       'is_line_items_info_messages_present': None,
       'line_items_error_messages': None,

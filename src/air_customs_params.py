@@ -11,23 +11,21 @@ class AirCustomsLineItems(BaseModel):
     remarks: list[str] = None
 
 class DeleteRate(BaseModel):
-  filters: dict = {} 
+  air_customs_rate_id: str
 
 class AddMarkup(BaseModel):
-  filters: dict = {}
+  air_customs_rate_id: str
   markup: float
-  line_item_code: str = 'CCO'
   markup_type: str    
   markup_currency: str = None
   
 class CreateAirCustomsRateBulkOperation(BaseModel):
   performed_by_id: str
   performed_by_type: str
-  service_provider_id: str
-  procured_by_id: str
-  sourced_by_id: str
-  delete_rate: DeleteRate = None
-  add_markup: AddMarkup = None
+  procured_by_id: str = None
+  sourced_by_id: str = None
+  delete_rate: List[DeleteRate] = None
+  add_markup: List[AddMarkup] = None
 
 class CreateAirCustomsRateFeedback(BaseModel):
   source: str
@@ -143,8 +141,6 @@ class DeleteAirCustomsRate(BaseModel):
   performed_by_id: str
   performed_by_type: str = None
   bulk_operation_id: str = None
-  sourced_by_id: str
-  procured_by_id: str
 
 class DeleteAirCustomsRateRequest(BaseModel):
   air_customs_rate_request_ids: list[str] 
