@@ -7,8 +7,12 @@ def all_fields_present(requirements):
         return True
 
 def find_object(requirement):
-    object = HaulageFreightRate.select().where(attrgetter(get_object_params(requirement))(HaulageFreightRate))
-    return object
+    query = HaulageFreightRate.select()
+    object_params= get_object_params(requirement)
+    for key in object_params:
+      if object_params[key]:
+        query = query.where(attrgetter(key)(HaulageFreightRate) == object_params[key])
+    return query
 
 def get_object_params(requirement):
     return {
@@ -32,14 +36,16 @@ def get_haulage_freight_rate(requirement):
     """
     Get the haulage freight rate for a given requirement.
     """
-
     if not all_fields_present(requirement):
         return {}
     
     object = find_object(requirement)
-    get_data = list(object.dicts())[0]
-    if get_data.get('detail'):
-        detail = get_data['detail']
+    get_data = list(object.dicts())
+    if get_data and get_data[0].get('detail'):
+        detail = get_data[0]['detail']
     else:
         detail = {}
+    object_params= get_object_params(requirement)
+    object_params['transport_modes'] = requirement['transport_modes']
+    detail['haulage_freight_charge_codes'] = HaulageFreightRate(**object_params).possible_charge_codes()
     return detail

@@ -1,4 +1,4 @@
-import uuid, datetime
+import uuid, datetime, json
 from peewee import DateTimeField, UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField
 from database.db_session import db
 from playhouse.postgres_ext import BinaryJSONField, ArrayField
@@ -407,19 +407,19 @@ class HaulageFreightRate(BaseModel):
         self.set_origin_location()
         self.set_destination_location()
         self.set_shipping_line()
-
         haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
         charge_codes = {}
         origin_location = self.origin_location
         destination_location = self.destination_location
         transport_modes = self.transport_modes
         container_type = self.container_type
-
+        if not isinstance(self.transport_modes, list):
+            self.transport_modes = json.loads(self.transport_modes[0])
+        else:
+            self.transport_modes = self.transport_modes
         for code,config in haulage_freight_charges_dict.items():
-            if config.get('condition') is not None and eval(str(config['condition'])):
-                if bool(set(self.transport_modes) & set(config['tags'])):
+            if eval(str(config['condition'])) and bool(set(self.transport_modes) & set(config['tags'])):
                     charge_codes[code] = config
-
         return charge_codes
 
     def mandatory_charge_codes(self,possible_charge_codes):

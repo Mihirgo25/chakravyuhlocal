@@ -24,7 +24,7 @@ def create_haulage_freight_rate(request):
         HaulageFreightRate.trip_type == request.get('trip_type'),
         HaulageFreightRate.importer_exporter_id == request.get('importer_exporter_id'),
         HaulageFreightRate.shipping_line_id == request.get('shipping_line_id'),
-        HaulageFreightRate.transport_modes_keyword == '_'.join(transport_modes))
+        HaulageFreightRate.transport_modes_keyword == '_'.join(transport_modes)).first()
     
     if not haulage_freight_rate:
         haulage_freight_rate = HaulageFreightRate(**params)
