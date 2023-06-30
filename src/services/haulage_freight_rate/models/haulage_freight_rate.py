@@ -1,5 +1,5 @@
 import uuid, datetime, json
-from peewee import DateTimeField, UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField
+from peewee import DateTimeField, UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, CharField
 from database.db_session import db
 from playhouse.postgres_ext import BinaryJSONField, ArrayField
 from fastapi import HTTPException
@@ -9,6 +9,7 @@ from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS
 from database.rails_db import get_shipping_line,  get_organization
+from configs.haulage_freight_rate_constants import RATE_TYPES
 
 
 class BaseModel(Model):
@@ -53,18 +54,28 @@ class HaulageFreightRate(BaseModel):
     origin_location_type = TextField(index=True, null=True)
     origin_location_ids = ArrayField(UUIDField, null=True)
     destination_location_ids = ArrayField(UUIDField, null=True)
-    importer_exporter = BinaryJSONField(index=True, null=True)
-    service_provider = BinaryJSONField(index=True, null=True)
+    importer_exporter = BinaryJSONField(null=True)
+    service_provider = BinaryJSONField(null=True)
     origin_location = BinaryJSONField(index=True, null=True)
     destination_location = BinaryJSONField(index=True, null=True)
-    shipping_line = BinaryJSONField(index=True, null=True)
+    shipping_line = BinaryJSONField(null=True)
     validities = BinaryJSONField(default = [], null=True)
-    # trailer_type = TextField(index=True, null=True)
+    trailer_type = TextField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    mode = CharField(default = 'manual',index=True, null = True)
+    accuracy = FloatField(default = 100, null = True)
+    cogo_entity_id = UUIDField(index=True, null=True)
+    sourced_by_id = UUIDField(null=True, index=True)
+    procured_by_id = UUIDField(null=True, index=True)
+    sourced_by = BinaryJSONField(null=True)
+    procured_by = BinaryJSONField(null=True)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
+    tags = BinaryJSONField(null=True)
+    init_key = TextField(index=True, null=True)
 
     class Meta:
-        table_name = 'haulage_freight_rates'
+        table_name = 'haulage_freight_rates_temp'
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
