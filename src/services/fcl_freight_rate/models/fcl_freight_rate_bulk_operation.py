@@ -100,6 +100,10 @@ class FclFreightRateBulkOperation(BaseModel):
         if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
             raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
         
+        if data.get('rate_sheet_serial_id'):
+            rate_sheet_id = get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+            if not rate_sheet_id:
+                raise HTTPException(status_code=400, detail='Invalid Rate sheet serial id') 
         
         data['validity_start'] = data['validity_start'].strftime('%Y-%m-%d')
         data['validity_end'] = data['validity_end'].strftime('%Y-%m-%d')
@@ -126,6 +130,11 @@ class FclFreightRateBulkOperation(BaseModel):
         if data.get('rates_greater_than_price')!=None and data.get('rates_greater_than_price')!=None and data['rates_greater_than_price'] > data['rates_less_than_price']:
             raise HTTPException(status_code=400, detail='Greater than price cannot be greater than Less than price')
         
+        if data.get('rate_sheet_serial_id'):
+            rate_sheet_id = get_rate_sheet_id(data.get('rate_sheet_serial_id'))
+            if not rate_sheet_id:
+                raise HTTPException(status_code=400, detail='Invalid Rate sheet serial id') 
+            
         fcl_freight_charges_dict = FCL_FREIGHT_CHARGES
 
         charge_codes = fcl_freight_charges_dict.keys()
@@ -416,11 +425,12 @@ class FclFreightRateBulkOperation(BaseModel):
         total_count = query.count()
         count = 0
         
-        while True:
+        while count < total_count:
             batch_query = query.limit(BATCH_SIZE)
             if not batch_query.exists():
                 break 
             count = self.perform_batch_extend_validity_action(batch_query, count , total_count, sourced_by_id, procured_by_id)
+        self.progress = self.get_progress_percent()
         self.save()    
             
             
@@ -494,6 +504,7 @@ class FclFreightRateBulkOperation(BaseModel):
             offset += BATCH_SIZE
             count = self.perform_batch_delete_freight_rate_action(batch_query,  count , total_count, sourced_by_id, procured_by_id)
 
+        self.progress = self.get_progress_percent()
         self.save()
 
 
@@ -533,6 +544,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        self.progress = self.get_progress_percent()
         self.save()
 
 
@@ -684,6 +696,7 @@ class FclFreightRateBulkOperation(BaseModel):
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             offset += BATCH_SIZE
             count = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, sourced_by_id, procured_by_id)
+        self.progress = self.get_progress_percent()
         self.save()
 
 
@@ -759,6 +772,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        self.progress = self.get_progress_percent()
         self.save()
         
 
@@ -803,6 +817,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        self.progress = self.get_progress_percent()
         self.save()
 
     def perform_add_freight_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
@@ -905,6 +920,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        self.progress = self.get_progress_percent()
         self.save()
 
     def perform_update_free_days_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
@@ -944,6 +960,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        self.progress = self.get_progress_percent()
         self.save()
 
     def perform_update_commodity_surcharge_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
@@ -984,6 +1001,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        self.progress = self.get_progress_percent()
         self.save()
 
 
@@ -1025,6 +1043,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
+        self.progress = self.get_progress_percent()
         self.save()
             
 
@@ -1131,6 +1150,7 @@ class FclFreightRateBulkOperation(BaseModel):
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
        
+        self.progress = self.get_progress_percent()
         self.save()
 
 
@@ -1231,6 +1251,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     create_params['source'] = 'bulk_operation'
                     
                     create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':create_params }, queue='fcl_freight_rate')
+        self.progress = self.get_progress_percent()
         self.save()
 
 
