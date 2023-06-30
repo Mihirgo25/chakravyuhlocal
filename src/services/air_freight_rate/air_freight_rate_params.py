@@ -104,18 +104,18 @@ class UpdateAirFreightRateParams(BaseModel):
     validity_end: date = None
     currency: str = None
     min_price: float
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     bulk_operation_id: str = None
     weight_slabs: list[WeightSlab]
-    length: float
-    breadth: float
-    height: float
-    maximum_weight: float
-    procured_by_id: str
-    sourced_by_id: str
-    available_volume: float
-    available_gross_weight: float
+    length: float = None
+    breadth: float = None
+    height: float = None
+    maximum_weight: float = None
+    procured_by_id: str = None
+    sourced_by_id: str = None
+    available_volume: float = None
+    available_gross_weight: float = None
 
 
 class CreateAirFreightRateSurchargeParams(BaseModel):

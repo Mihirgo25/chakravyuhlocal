@@ -369,11 +369,6 @@ def get_air_freight_rate_cards(requirements):
         'list':freight_rates
     }
 
-   
-            
-
-
-
 # NOT USED
 
 #   def add_storage_objects(freight_query_result, response_object)

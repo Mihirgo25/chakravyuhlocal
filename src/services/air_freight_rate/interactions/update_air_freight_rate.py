@@ -4,6 +4,7 @@ from peewee import *
 import json
 from playhouse.postgres_ext import *
 from database.db_session import db
+from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 
@@ -82,7 +83,7 @@ def create_audit(request,object_id):
     AirFreightRateAudit.create(
         bulk_operation_id=request.get('bulk_operation_id'),
         action_name='update',
-        data=update_data,
+        data=jsonable_encoder(update_data),
         object_id=object_id,
         object_type='AirFreightRate',
         performed_by_id=request.get('performed_by_id'),
