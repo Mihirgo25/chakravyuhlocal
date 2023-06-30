@@ -12,7 +12,7 @@ from database.rails_db import get_partner_user_experties, get_organization_servi
 from datetime import datetime
 from micro_services.client import spot_search
 
-possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
+possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id','source']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id']
 
 def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):
