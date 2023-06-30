@@ -28,7 +28,13 @@ POSSIBLE_DIRECT_FILTERS = [
     "transport_modes_keyword",
 ]
 
-POSSIBLE_INDIRECT_FILTERS = ["origin_location_ids", "destination_location_ids", "transport_modes", "is_rate_available", "procured_by_id"]
+POSSIBLE_INDIRECT_FILTERS = [
+    "origin_location_ids",
+    "destination_location_ids",
+    "transport_modes",
+    "is_rate_available",
+    "procured_by_id",
+]
 
 
 def is_valid_uuid(val):
@@ -55,65 +61,66 @@ def apply_indirect_filters(query, filters):
 def apply_pagination(query, page, page_limit):
     offset = (page - 1) * page_limit
     total_count = query.count()
-    query =query.order_by(SQL("updated_at desc"))
+    query = query.order_by(SQL("updated_at desc"))
     query = query.offset(offset).limit(page_limit)
     return query, total_count
 
 
 def list_haulage_freight_rates(
-    filters = {}, page_limit = 10, page = 1, return_query = False, pagination_data_required = True
+    filters={}, page_limit=10, page=1, return_query=True, pagination_data_required=True
 ):
     query = get_query()
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
 
-        direct_filters, indirect_filters = get_applicable_filters(filters, POSSIBLE_DIRECT_FILTERS, POSSIBLE_INDIRECT_FILTERS)
-
+        direct_filters, indirect_filters = get_applicable_filters(
+            filters, POSSIBLE_DIRECT_FILTERS, POSSIBLE_INDIRECT_FILTERS
+        )
         query = apply_direct_filters(query, direct_filters)
 
         query = apply_indirect_filters(query, indirect_filters)
-
     if return_query:
         return {"list": query}
-    
+
     data = get_data(query)
 
+    return data
 
-
-    return
 
 def get_query():
-    query = HaulageFreightRate.select()
+    query = HaulageFreightRate.select(
+    )
     return query
 
+
 def get_data(query):
-    data = []
-
     raw_data = jsonable_encoder(list(query.dicts()))
-    ids = [id['id'] for id in raw_data]
-    rate_audits = HaulageFreightRateAudit.select().where(HaulageFreightRateAudit.object_id << ids, HaulageFreightRateAudit.object_type == 'HaulageFreightRate')
-
+    ids = [id["id"] for id in raw_data]
+    rate_audits = HaulageFreightRateAudit.select().where(
+        HaulageFreightRateAudit.object_id << ids,
+        HaulageFreightRateAudit.object_type == "HaulageFreightRate",
+    )
     for result in raw_data:
-        rate_audit = rate_audits.where(HaulageFreightRateAudit.object_id == result['id']).order_by(HaulageFreightRateAudit.created_at).first()
-        rate_audit = model_to_dict(rate_audit)
-        result['sourced_by_id'] = rate_audit['sourced_by_id']
-        result['procured_by_id'] = rate_audit['procured_by_id']
+        rate_audit = (
+            rate_audits.where(HaulageFreightRateAudit.object_id == result["id"])
+            .order_by(SQL("updated_at desc"))
+        )
+        rate_audit = list(rate_audit.dicts())[0]
+        result["sourced_by_id"] = rate_audit["sourced_by_id"]
+        result["procured_by_id"] = rate_audit["procured_by_id"]
 
-    add_service_objects(raw_data)
     return raw_data
 
 
-def add_service_objects(data):
-    return
 
 def apply_is_rate_available_filter(query, val, filters):
-    query = query.where(HaulageFreightRate.rate_not_available_entry != 'true')
+    query = query.where(HaulageFreightRate.rate_not_available_entry != True)
     return query
 
+
 def apply_transport_modes_filter(query, val, filters):
-    transport_modes = filters['transport_modes']
+    transport_modes = filters["transport_modes"]
     query = query.where(HaulageFreightRate.transport_modes.contains(transport_modes))
     # query.where('haulage_freight_rates.transport_modes && ?', "{#{transport_modes.join(',')}}")
     return query
-
