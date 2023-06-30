@@ -11,10 +11,13 @@ from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSP
 from database.rails_db import get_shipping_line,  get_organization
 from configs.haulage_freight_rate_constants import RATE_TYPES
 
-
+class UnknownField(object):
+    def __init__(self, *_, **__): pass
+    
 class BaseModel(Model):
     class Meta:
         database = db
+
 class HaulageFreightRate(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_location_id = UUIDField(null=True)
