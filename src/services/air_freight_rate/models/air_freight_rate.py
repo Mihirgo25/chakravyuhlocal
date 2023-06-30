@@ -98,6 +98,7 @@ class AirFreightRate(BaseModel):
     # is_surcharge_line_items_info_messages_present = BooleanField(null=True)
     # surcharge_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     # surcharge_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    source = CharField(null =True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
