@@ -25,10 +25,9 @@ def create_haulage_freight_rate(request):
         HaulageFreightRate.importer_exporter_id == request.get('importer_exporter_id'),
         HaulageFreightRate.shipping_line_id == request.get('shipping_line_id'),
         HaulageFreightRate.transport_modes_keyword == '_'.join(transport_modes)).first()
-    
+    request['object_id'] = haulage_freight_rate
     if not haulage_freight_rate:
         haulage_freight_rate = HaulageFreightRate(**params)
-
     haulage_freight_rate.line_items = request.get('line_items')
     haulage_freight_rate.transport_modes = request.get('transport_modes')
     haulage_freight_rate.validity_start = request.get('validity_start')
@@ -42,13 +41,13 @@ def create_haulage_freight_rate(request):
 
     if not haulage_freight_rate.importer_exporter_id:
         haulage_freight_rate.delete_rate_not_available_entry()
-
+    
     audit_params = get_audit_params(request)
-
     audit_entry = HaulageFreightRateAudit(**audit_params)
+    audit_entry.save()
     if not HaulageFreightRate.select().where(HaulageFreightRate.service_provider_id==request["service_provider_id"], HaulageFreightRate.rate_not_available_entry==False).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-
+    
 
     haulage_freight_rate.update_platform_prices_for_other_service_providers()
     
@@ -70,13 +69,20 @@ def get_audit_params(request):
     audit_data = {
         'line_items' : request.get('line_items')
     }
-    
+    if request.get('transport_modes')[0] == 'trailer':
+        request['object_type'] = 'TrailerFreightRate'
+    elif request.get('transport_modes')[0] == 'rail':
+        request['object_type'] = 'HaulageFreightRate'
+
+         
     return {
       'action_name': 'create',
       'performed_by_id': request.get('performed_by_id'),
       'rate_sheet_id': request.get('rate_sheet_id'),
       'procured_by_id': request.get('procured_by_id'),
       'sourced_by_id': request.get('sourced_by_id'),
+      'object_id': request.get('object_id'),
+      'object_type': request.get('object_type'),
       'data': audit_data
     }
 

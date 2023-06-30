@@ -134,6 +134,22 @@ class CreateHaulageFreightRateNotAvailable(BaseModel):
   shipping_line_id: str = None
   transport_modes: list[str]=None
 
+class DeleteRate(BaseModel):
+  filters: dict = None
+
+class AddMarkup(BaseModel):
+  filters: dict = None
+  markup: float
+  markup_type: str
+  markup_currency: str = None
+
+class CreateHaulageFreightRateBulkOperation(BaseModel):
+  performed_by_id: str
+  service_provider_id: str = None
+  procured_by_id: str
+  sourced_by_id: str = None
+  delete_rate: DeleteRate = None
+  add_markup: AddMarkup = None
 
 
   
