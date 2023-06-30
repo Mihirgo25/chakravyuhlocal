@@ -104,7 +104,7 @@ class UpdateAirFreightRateParams(BaseModel):
     validity_end: date = None
     currency: str = None
     min_price: float
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     bulk_operation_id: str = None
     weight_slabs: list[WeightSlab]
