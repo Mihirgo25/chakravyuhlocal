@@ -1,6 +1,7 @@
 from micro_services.client import maps
 from database.rails_db import get_shipping_line
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
+
 def validate_air_freight_object(request):
     rate_object = eval("get_{}_object".format(request.get('module')))
     return

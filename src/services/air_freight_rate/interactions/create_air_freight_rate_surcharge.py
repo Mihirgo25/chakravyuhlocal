@@ -10,7 +10,6 @@ def create_audit(request,surcharge_id):
         action_name = 'create',
         rate_sheet_id = request.get('rate_sheet_id'),
         performed_by_id = request.get('performed_by_id'),
-        procured_by_id = request.get('procured_by_id'),
         bulk_operation_id=request.get('bulk_operation_id'),
         data = audit_data,
         object_id = surcharge_id,

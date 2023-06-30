@@ -56,6 +56,7 @@ class AirFreightRateRequest(BaseModel):
     airline_id = BinaryJSONField(null=True)
     price_type = CharField(null=True)
     operation_type = CharField(null=True)
+    preferred_airlines = ArrayField(field_class=CharField, null=True)
     preferred_airline_ids = ArrayField(
         constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True
     )

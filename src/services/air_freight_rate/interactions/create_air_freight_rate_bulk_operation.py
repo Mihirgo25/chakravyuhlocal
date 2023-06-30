@@ -5,7 +5,6 @@ from services.air_freight_rate.models.air_freight_rate_bulk_operation import Air
 from celery_worker import air_freight_bulk_operation_delay,update_multiple_service_objects
 
 
-
 def create_air_freight_rate_bulk_operation(request):
     sourced_by_id=request.get("sourced_by_id")
     procured_by_id=request.get("procured_by_id")

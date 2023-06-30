@@ -152,10 +152,9 @@ def create_audit(request, request_object_id):
     )
 
 
-def send_notification_for_rates_not_found(
-    request, request_object, air_freight_rate_request, airports
-):
+def send_notification_for_rates_not_found(request, request_object, air_freight_rate_request, airports):
     commodity = air_freight_rate_request.commodity
+    
     notification_data = {
         "type": "platform_notification",
         "user_id": request.get("performed_by_id"),
@@ -169,22 +168,17 @@ def send_notification_for_rates_not_found(
             "weight": air_freight_rate_request.weight,
         },
     }
-    create_communication_background.apply_async(
-        kwargs={"data": notification_data}, queue="communication"
-    )
+    create_communication_background.apply_async(kwargs={"data": notification_data}, queue="communication")
 
 
-def send_notification_to_supply_agents(
-    request, request_object, air_freight_rate_request, airports
-):
-    supply_agents_data = get_partner_users_by_expertise(
-        "air_freight", airports[0], airports[1]
-    )
-    supply_agents_list = list(
-        set([item["partner_user_id"] for item in supply_agents_data])
-    )
+def send_notification_to_supply_agents(request, request_object, air_freight_rate_request, airports):
+
+    supply_agents_data = get_partner_users_by_expertise("air_freight", airports[0], airports[1])
+
+    supply_agents_list = list(set([item["partner_user_id"] for item in supply_agents_data]))
 
     supply_agents_user_data = get_partner_users(supply_agents_list)
+
     if supply_agents_user_data:
         supply_agents_user_ids = list(
             set([str(data["user_id"]) for data in supply_agents_user_data])
@@ -192,14 +186,11 @@ def send_notification_to_supply_agents(
     else:
         supply_agents_user_ids = []
     for supply_agents_user_id in supply_agents_user_ids:
-        send_notification_for_new_search_made_for_rates(
-            request_object, air_freight_rate_request, airports, supply_agents_user_id
-        )
+        send_notification_for_new_search_made_for_rates(request_object, air_freight_rate_request, airports, supply_agents_user_id)
 
 
-def send_notification_for_new_search_made_for_rates(
-    request_object, air_freight_rate_request, airports, supply_agents_user_id
-):
+def send_notification_for_new_search_made_for_rates(request_object, air_freight_rate_request, airports, supply_agents_user_id):
+
     commodity = air_freight_rate_request["commodity"]
     notification_data = {
         "type": "platform_notification",
@@ -213,6 +204,4 @@ def send_notification_for_new_search_made_for_rates(
             "commodity": commodity,
         },
     }
-    create_communication_background.apply_async(
-        kwargs={"data": notification_data}, queue="communication"
-    )
+    create_communication_background.apply_async(kwargs={"data": notification_data}, queue="communication")

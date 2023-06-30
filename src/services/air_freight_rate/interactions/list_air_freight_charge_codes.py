@@ -3,6 +3,7 @@ from configs.definitions import AIR_FREIGHT_SURCHARGES
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from fastapi import HTTPException
 import pdb
+
 def list_air_freight_charge_codes(request):
     validate(request)
     charges = get_charge_codes(request)

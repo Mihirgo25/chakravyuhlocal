@@ -104,18 +104,18 @@ class UpdateAirFreightRateParams(BaseModel):
     validity_end: date = None
     currency: str = None
     min_price: float
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     bulk_operation_id: str = None
     weight_slabs: list[WeightSlab]
-    length: float
-    breadth: float
-    height: float
-    maximum_weight: float
-    procured_by_id: str
-    sourced_by_id: str
-    available_volume: float
-    available_gross_weight: float
+    length: float = None
+    breadth: float = None
+    height: float = None
+    maximum_weight: float = None
+    procured_by_id: str = None
+    sourced_by_id: str = None
+    available_volume: float = None
+    available_gross_weight: float = None
 
 
 class CreateAirFreightRateSurchargeParams(BaseModel):
@@ -157,7 +157,7 @@ class CreateAirFreightRateLocalParams(BaseModel):
     commodity: str
     commodity_type: str
     service_provider_id: str
-    performed_by_id: str
+    performed_by_id: str = None
     procured_by_id: str
     sourced_by_id: str
     bulk_operation_id: str = None
@@ -369,6 +369,7 @@ class DeleteAirFreightRateSurchargeParams(BaseModel):
 
 class CreateBulkOperationParams(BaseModel):
     performed_by_id: str = None
+    performed_by_type: str = None
     delete_freight_rate: DeleteFreightRateParams = None
     add_freight_rate_markup: AddFreightRateMarkupParams = None
     update_freight_rate: UpdateFreightRateParams = None
@@ -395,7 +396,7 @@ class CreateAirFreightRateParams(BaseModel):
     density_ratio: str = None
     bulk_operation_id: str = None
     rate_sheet_id: str = None
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     procured_by_id: str
     sourced_by_id: str

@@ -21,8 +21,12 @@ from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
+
+from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
+from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from services.air_freight_rate.air_freight_rate_router import air_freight_router
 from micro_services.client import *
+
 
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -45,6 +49,8 @@ app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Tra
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
+app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
+app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
 
 app.include_router(prefix = "/air_freight_rate",router = air_freight_router,tags=['Air Freight Rate'])
 
@@ -97,7 +103,7 @@ def startup():
     # create_rail_haulage_rates()
     # insert()
     # insert_china()
-    #run_migration()
+    # run_migration()
     # create_table()
     # fcl_freight_migration()
     # create_partition_table()

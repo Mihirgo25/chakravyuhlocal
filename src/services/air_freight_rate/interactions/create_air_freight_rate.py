@@ -33,13 +33,13 @@ def create_audit(request, freight_id,validity_id):
     )
     return id
 
-def create_air_freight_rate_data(request):
+def create_air_freight_rate(request):
     with db.atomic():
-        return create_air_freight_rate(request)
+        return create_air_freight_rate_data(request)
 
     
-def create_air_freight_rate(request):
-    from celery_worker import create_saas_air_schedule_airport_pair, update_air_freight_rate_details_delay
+def create_air_freight_rate_data(request):
+    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay
 
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
@@ -48,9 +48,9 @@ def create_air_freight_rate(request):
     if request['commodity'] == 'special_consideration' and not request.get('commodity_subtype'):
         raise HTTPException(status_code=400, detail="Commodity Sub Type is required for Special Consideration")
     if request.get('density_ratio') and request['density_ratio'].split(':')[0]!= '1':
-        raise HTTPException(status_code='400',detail='Ratio should be in the form of 1:x')
+        raise HTTPException(status_code=400,detail='Ratio should be in the form of 1:x')
     if len(set(slab['currency'] for slab in request['weight_slabs']))!=1 or request['weight_slabs'][0]['currency'] != request['currency']:
-        raise HTTPException(status_code='400', detail='The Currency Entered in the weight Slabs doesnt match with Rate Currency')
+        raise HTTPException(status_code=400, detail='The Currency Entered in the weight Slabs doesnt match with Rate Currency')
     
     
     request['weight_slabs'] = sorted(request.get('weight_slabs'), key=lambda x: x['lower_limit'])
@@ -70,7 +70,6 @@ def create_air_freight_rate(request):
         "commodity_sub_type":request.get("commodity_sub_type"),
         "airline_id": request.get("airline_id"),
         "service_provider_id": request.get("service_provider_id"),
-        "importer_exporter_id": request.get("importer_exporter_id"),
         "rate_not_available_entry": request.get("rate_not_available_entry", False),
         "stacking_type":request.get("stacking_type"),
         "shipment_type":request.get("shipment_type"),
@@ -82,7 +81,7 @@ def create_air_freight_rate(request):
         "price_type":price_type
     }
 
-    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}'
+    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}'
     
     freight = (
         AirFreightRate.select()
@@ -145,7 +144,7 @@ def create_air_freight_rate(request):
     
     create_audit(request, freight.id,validity_id)
 
-    create_saas_air_schedule_airport_pair.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
+    create_saas_air_schedule_airport_pair_delay.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
 
     freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
 

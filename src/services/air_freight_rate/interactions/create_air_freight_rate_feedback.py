@@ -20,7 +20,7 @@ def create_audit(request,feedback_id):
         performed_by_id=request['performed_by_id']
         )
 
-def create_air_freight_rate_feeback(request):
+def create_air_freight_rate_feedback(request):
     object_type='Air_Freight_Rate_Feedbacks'
     query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
     db.execute_sql(query)
@@ -29,7 +29,7 @@ def create_air_freight_rate_feeback(request):
      
 def execute_transaction_code(request):
 
-    rate=AirFreightRate.select(AirFreightRate.id).where(AirFreightRate.id==request['rate_id']).first()
+    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
         raise HTTPException (status_code=500, detail='Rate is invalid')
     

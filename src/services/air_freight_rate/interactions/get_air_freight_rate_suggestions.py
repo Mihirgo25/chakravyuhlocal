@@ -5,6 +5,7 @@ from micro_services.client import *
 from itertools import groupby
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from fastapi.encoders import jsonable_encoder
+
 def get_air_freight_rate_suggestions(validity_start,validity_end,searched_origin_airport_id,searched_destination_airport_id,filters={}):
     validity_start = datetime.strptime(validity_start, '%Y-%m-%d')
     validity_end = datetime.strptime(validity_end, '%Y-%m-%d')

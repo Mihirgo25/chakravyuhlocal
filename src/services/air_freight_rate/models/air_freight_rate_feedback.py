@@ -26,12 +26,12 @@ class AirFreightRateFeedback(BaseModel):
     closed_by_id = UUIDField(null=True)
     closing_remarks = ArrayField(
         constraints=[SQL("DEFAULT '{}'::character varying[]")],
-        field_class=CharField,
+        field_class=TextField,
         null=True,
     )
     created_at = DateTimeField(default=datetime.datetime.now)
     feedback_type = CharField(null=True)
-    feedbacks = ArrayField(field_class=CharField, null=True)
+    feedbacks = ArrayField(field_class=TextField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     performed_by_id = UUIDField(null=True)
     performed_by = BinaryJSONField(null=True)
@@ -43,7 +43,7 @@ class AirFreightRateFeedback(BaseModel):
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
-    remarks = ArrayField(field_class=CharField, null=True)
+    remarks = ArrayField(field_class=TextField, null=True)
     serial_id = BigIntegerField(
         constraints=[
             SQL("DEFAULT nextval('air_freight_rate_feedback_serial_id_seq'::regclass)")

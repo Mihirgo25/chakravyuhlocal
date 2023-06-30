@@ -19,6 +19,7 @@ class UpdateLineItem(BaseModel):
   currency: str
   remarks: list[str] = None
   slabs: list[Slab] = []
+  conditions: dict={}
 
 
 class FreeDay(BaseModel):
@@ -35,6 +36,7 @@ class LineItem(BaseModel):
   market_price: float = None 
   remarks: list[str] = None
   slabs: list[Slab] = None
+  conditions: dict={}
 
 class LocalData(BaseModel):
   line_items: list[LineItem]=None
@@ -43,7 +45,6 @@ class LocalData(BaseModel):
   plugin: FreeDay = None
 
 
-  
 class PostFclFreightRate(BaseModel):
   origin_main_port_id: str = None
   origin_port_id: str
@@ -756,24 +757,37 @@ class CreateFclFreightSeasonalSurcharge(BaseModel):
 
 class ExtendValidty(BaseModel):
   filters:dict={}
-  source_date:datetime
   validity_end:datetime
   sourced_by_ids:dict=None
   procured_by_ids:dict=None
-
+  markup:float=None
+  line_item_code:str='BAS'
+  markup_type:str=None
+  markup_currency:str="USD"
 class DeleteFreightRate(BaseModel):
   filters:dict={}
   validity_start: datetime
   validity_end: datetime
+  rate_sheet_serial_id: int= 0
+  apply_to_extended_rates: bool = False
+  comparison_currency:str='USD'
+  comparison_charge_code:str='BAS'
+  rates_greater_than_price: float = None
+  rates_less_than_price: float = None
 
 class AddFreightRateMarkup(BaseModel):
   filters:dict={}
   markup:float
   markup_type:str
-  markup_currency:str=None
+  markup_currency:str='USD'
   line_item_code:str='BAS'
   validity_start:datetime
   validity_end:datetime
+  rate_sheet_serial_id: int = 0
+  apply_to_extended_rates: bool = False
+  rates_greater_than_price: float = None
+  rates_less_than_price: float = None
+  tag: str = None
 
 class AddLocalRateMarkup(BaseModel):
   filters:dict={}
@@ -800,10 +814,12 @@ class ExtendFreightRate(BaseModel):
   markup : float
   markup_currency : str = None
   line_item_code : str = 'BAS '
+
 class UpdateWeightLimit(BaseModel):
   filters: dict={}
   free_limit : int
   slabs : List[Slab] = None
+
 class UpdateFreeDays(BaseModel):
   filters: dict={}
   free_days_type:str
@@ -818,6 +834,7 @@ class AddFreightLineItem(BaseModel):
   currency : str
   validity_start : datetime
   validity_end : datetime
+
 class UpdateFreeDaysLimit(BaseModel):
   filters: dict={}
   free_limit : int
@@ -829,7 +846,7 @@ class DeleteLocalRate(BaseModel):
 class CreateBulkOperation(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
-  service_provider_id:str
+  service_provider_id:str=None
   procured_by_id:str
   sourced_by_id:str
   cogo_entity_id:str=None

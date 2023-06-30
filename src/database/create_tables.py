@@ -17,19 +17,7 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 def create_table():
     # db.connect()
     try:
-        db.create_tables([AirFreightRate,
-                          AirFreightRateAudit,
-                          AirFreightRateBulkOperation,
-                          AirFreightRateFeedback,
-                          AirFreightRateLocal,
-                          AirFreightRateProperty,
-                          AirFreightRateRequest,
-                          AirFreightRateSurcharge,
-                          AirFreightRateTasks,
-                          AirFreightRateValidity,
-                          AirFreightStorageRates,
-                          AirFreightWarehouseRates,
-                          AirServiceAudit])
+        db.create_tables([AirFreightRateFeedback])
         db.close()
         print("created table")
     except:

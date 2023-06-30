@@ -89,7 +89,7 @@ def get_chargable_weight(request):
     volumetric_weight = (
         request.get("volume") * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
     )
-    chargeable_weight = max(volumetric_weight, request.get("weight"))
+    chargeable_weight = max(volumetric_weight, request.get("weight"),request.get('chargeable_weight'))
     return chargeable_weight
 
 

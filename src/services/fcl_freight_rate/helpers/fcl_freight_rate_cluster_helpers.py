@@ -267,5 +267,7 @@ def get_fcl_freight_cluster_objects(request):
     for object in fcl_freight_cluster_objects:
         if (object['origin_port_id'] == request['origin_port_id'] and object['destination_port_id'] == request['destination_port_id'] and object['commodity'] == request['commodity'] and object['container_type'] == request['container_type'] and object['container_size'] == request['container_size']):
             fcl_freight_cluster_objects.remove(object)
+        if(request.get('rate_sheet_id')):
+            object['rate_sheet_id']= request['rate_sheet_id']
 
     return fcl_freight_cluster_objects
