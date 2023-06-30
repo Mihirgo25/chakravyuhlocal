@@ -10,7 +10,7 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
-from services.air_freight_rate.models.air_service_audit import AirServiceAudit
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from libs.migration import delayed_func
 
 import time
@@ -273,22 +273,23 @@ def air_freight_rate_audits_migration():
             """
             cur.execute(sql_query,)
             result = cur
-            columns = [col[0] for col in result.description]    
-            result = Parallel(n_jobs=4)(delayed(delay_updation_audits)(row, columns) for row in result.fetchall())
+            columns = [col[0] for col in result.description]   
+            result = Parallel(n_jobs=4)(delayed(delay_updation_audits)(row, columns,row[3]) for row in result.fetchall())
             cur.close()
     conn.close()
     print('Air Freight Rate audits Done')
     return all_result
 
 
-def delay_updation_audits(row,columns,model):
+def delay_updation_audits(row,columns,object_type):
     param = dict(zip(columns, row))
-    if(model=='air_freight_rate'):
+    if(object_type=='AirFreightRate'):
         obj = AirFreightRateAudit(**param)
         obj.save(force_insert = True)
     else:
         obj = AirServiceAudit(**param)
-    
+        obj.save(force_insert = True)
+
     return
 
 # def air_freight_storage_rates_migration():
@@ -562,7 +563,7 @@ def run_migration():
     # all_locations_data()
     print('Procured by Sourced by Data done')
     # air_freight_rate_feedback_migration()
-    # air_freight_rate_audits_migration()
+    air_freight_rate_audits_migration()
     # air_freight_rate_bulk_operations_migration()
     # air_freight_rate_requests_migration()
     # air_freight_storage_rates_migration()
