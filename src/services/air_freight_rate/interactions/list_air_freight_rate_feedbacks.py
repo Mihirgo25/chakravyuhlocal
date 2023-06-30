@@ -116,8 +116,21 @@ def get_data(query, spot_search_details_required, booking_details_required):
             air_freight_rate_ids.append((rate['air_freight_rate_id']))
         if rate['reverted_rate_id']:
             air_freight_rate_ids.append((rate['reverted_rate_id']))
-    air_freight_rates = AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport,AirFreightRate.destination_airport,AirFreightRate.commodity,
-                                                   AirFreightRate.commodity_type,AirFreightRate.commodity_sub_type,AirFreightRate.stacking_type,AirFreightRate.shipment_type,AirFreightRate.price_type,AirFreightRate.airline,AirFreightRate.operation_type,AirFreightRate.service_provider).where(AirFreightRate.id.in_(air_freight_rate_ids))
+    air_freight_rates = AirFreightRate.select(AirFreightRate.id,
+                                            AirFreightRate.validities,
+                                            AirFreightRate.origin_airport,
+                                            AirFreightRate.destination_airport,
+                                            AirFreightRate.commodity,
+                                            AirFreightRate.commodity_type,
+                                            AirFreightRate.commodity_sub_type,
+                                            AirFreightRate.stacking_type,
+                                            AirFreightRate.shipment_type,
+                                            AirFreightRate.price_type,
+                                            AirFreightRate.airline,
+                                            AirFreightRate.operation_type,
+                                            AirFreightRate.service_provider
+            ).where(AirFreightRate.id.in_(air_freight_rate_ids))
+    
     air_freight_rates = jsonable_encoder(list(air_freight_rates.dicts()))
     air_freight_rate_mappings = {k['id']: k for k in air_freight_rates}
     spot_search_hash = {}
