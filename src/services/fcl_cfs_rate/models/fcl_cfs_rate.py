@@ -105,7 +105,7 @@ class FclCfsRate(BaseModel):
             if (
                 self.trade_type in config['trade_types']
                 and self.cargo_handling_type in config['tags']
-                and eval(config['condition'])
+                and eval(str(config['condition']))
             ):
                 filtered_charge_codes[code] = config
 
