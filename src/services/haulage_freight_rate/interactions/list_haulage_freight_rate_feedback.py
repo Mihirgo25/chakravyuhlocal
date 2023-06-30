@@ -55,16 +55,10 @@ def apply_service_provider_id_filter(query, filters):
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('haulage_freight', filters['relevant_supply_agent'])
-    origin_port_id = [t['origin_location_id'] for t in expertises]
-    destination_port_id = [t['destination_location_id'] for t in expertises]
-    query = query.where((HaulageFreightRateFeedback.origin_port_id << origin_port_id) |
-                    (HaulageFreightRateFeedback.origin_country_id << origin_port_id) |
-                    (HaulageFreightRateFeedback.origin_continent_id << origin_port_id) |
-                    (HaulageFreightRateFeedback.origin_trade_id << origin_port_id))
-    query = query.where((HaulageFreightRateFeedback.destination_port_id << destination_port_id) |
-                    (HaulageFreightRateFeedback.destination_country_id << destination_port_id) |
-                    (HaulageFreightRateFeedback.destination_continent_id << destination_port_id) |
-                    (HaulageFreightRateFeedback.destination_trade_id << destination_port_id))
+    origin_location_id = [t['origin_location_id'] for t in expertises]
+    destination_location_id = [t['destination_location_id'] for t in expertises]
+    query = query.where((HaulageFreightRateFeedback.origin_location_id << origin_location_id))
+    query = query.where((HaulageFreightRateFeedback.destination_location_id << destination_location_id))
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
@@ -92,18 +86,12 @@ def apply_destination_country_id_filter(query, filters):
     return query
 
 def apply_similar_id_filter(query, filters):
-    feedback_data = (HaulageFreightRateFeedback.select(HaulageFreightRateFeedback.origin_port_id, HaulageFreightRateFeedback.destination_port_id, HaulageFreightRateFeedback.container_size, HaulageFreightRateFeedback.container_type, HaulageFreightRateFeedback.commodity).where(HaulageFreightRateFeedback.id==filters['similar_id'])).first()
+    feedback_data = (HaulageFreightRateFeedback.select(HaulageFreightRateFeedback.origin_location_id, HaulageFreightRateFeedback.destination_location_id, HaulageFreightRateFeedback.container_size, HaulageFreightRateFeedback.container_type, HaulageFreightRateFeedback.commodity).where(HaulageFreightRateFeedback.id==filters['similar_id'])).first()
     if feedback_data:
         query = query.where(HaulageFreightRateFeedback.id != filters.get('similar_id'))
-        query = query.where(HaulageFreightRateFeedback.origin_port_id == feedback_data.origin_port_id, HaulageFreightRateFeedback.destination_port_id == feedback_data.destination_port_id, HaulageFreightRateFeedback.container_size == feedback_data.container_size, HaulageFreightRateFeedback.container_type == feedback_data.container_type, HaulageFreightRateFeedback.commodity == feedback_data.commodity)
+        query = query.where(HaulageFreightRateFeedback.origin_location_id == feedback_data.origin_location_id, HaulageFreightRateFeedback.destination_location_id == feedback_data.destination_location_id, HaulageFreightRateFeedback.container_size == feedback_data.container_size, HaulageFreightRateFeedback.container_type == feedback_data.container_type, HaulageFreightRateFeedback.commodity == feedback_data.commodity)
     return query
 
-# def get_data(query):
-#     data = json_encoder(list(query.dicts()))
-#     add_service_objects(data)
-
-# def add_service_objects(data):
-#     return
 def get_data(query, spot_search_details_required, booking_details_required):
     if not booking_details_required:
         query = query.select(

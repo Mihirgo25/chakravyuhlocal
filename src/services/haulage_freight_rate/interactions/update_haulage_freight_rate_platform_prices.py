@@ -3,7 +3,7 @@ from datetime import date
 def update_haulage_freight_rate_platform_prices(request):
     from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
     freight_objects = HaulageFreightRate.select().where(
-    HaulageFreightRate.origin_location_id == request.get('origin_location_id'),
+    HaulageFreightRate.origin_location_id == request.get['origin_location_id'],
     HaulageFreightRate.destination_location_id == request.get['destination_location_id'],
     HaulageFreightRate.container_size == request.get['container_size'],
     HaulageFreightRate.container_type == request.get['container_type'],
