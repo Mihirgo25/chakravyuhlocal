@@ -140,6 +140,7 @@ def get_air_freight_rate_api(
     cogo_entity_id: str = None,
     trade_type: str = None,
     volume: float = None,
+    chargeable_weight:float =None,
     predicted_rates_required: bool = False,
     resp: dict = Depends(authorize_token),
 ):
@@ -165,7 +166,8 @@ def get_air_freight_rate_api(
         "price_type": price_type,
         "trade_type": trade_type,
         "volume": volume,
-        "predicted_rates_required": predicted_rates_required,
+        "chargeable_weight":chargeable_weight,
+        "predicted_rates_required": predicted_rates_required
     }
 
     try:
@@ -865,20 +867,21 @@ def create_air_freight_rate_bulk_operation_api(
 def delete_air_freight_rate_feedback_api(
     request: DeleteAirFreightRateFeedbackParams, resp: dict = Depends(authorize_token)
 ):
+    
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
-    try:
-        data = delete_air_freight_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+    # try:
+    data = delete_air_freight_rate_feedback(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(
+    #         status_code=500, content={"success": False, "error": str(e)}
+        # )
 
 
 @air_freight_router.post("/create_air_freight_storage_rate")
@@ -1080,16 +1083,32 @@ def get_air_freight_local_rate_cards_api(
     additional_services: List[str] = [],
     inco_term:str=None,
     resp:dict =Depends(authorize_token)):
+
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
-    try:
-        data=get_air_freight_local_rate_cards(airport_id=airport_id,trade_type=trade_type,commodity=commodity,commodity_type=commodity_type,packages_count=packages_count,weight=weight,volume=volume,airline_id=airline_id,additional_services=additional_services,inco_term=inco_term)
-        return JSONResponse(status_code=200, content=data)
-    except HTTPException as e:
-        raise
-    except Exception as e :
-        print(e)
-        return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
+    
+        
+    request ={
+    "airport_id":airport_id,
+    "trade_type": trade_type,
+    "commodity": commodity,
+    "commodity_type":commodity_type,
+    "packages_count":packages_count,
+    "weight":weight,
+    "volume":volume,
+    "airline_id":airline_id,
+    "additional_services":additional_services,
+    "inco_term":inco_term
+    }
+    
+    # try:
+    data=get_air_freight_local_rate_cards(request)
+    return JSONResponse(status_code=200, content=data)
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e :
+    #     print(e)
+    #     return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
 
 @air_freight_router.post("/delete_air_freight_rate_request")
 def delete_air_freight_rate_request_api(request:DeleteAirFreightRateRequestParams , resp:dict = Depends(authorize_token)):
