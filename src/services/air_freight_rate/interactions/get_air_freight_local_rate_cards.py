@@ -10,8 +10,10 @@ from database.rails_db import get_eligible_orgs
 def get_air_freight_local_rate_cards(request):
     local_query = initialize_local_query(request)
     local_query_results = jsonable_encoder(list(local_query.dicts()))
-    list = build_response_list(request,local_query_results)
-    list = ignore_non_eligible_service_providers(list)
+    local_freight_rates = build_response_list(request,local_query_results)
+    local_freight_rates = ignore_non_eligible_service_providers(local_freight_rates)
+
+    return {'list':local_freight_rates}
 
 
 def initialize_local_query(request):    
@@ -119,4 +121,8 @@ def get_chargeable_weight(request):
 
 def ignore_non_eligible_service_providers(locals):
     ids = get_eligible_orgs('air_freight')
-    return ids
+    final_locals = []
+    for local in locals:
+        if local['service_provider_id'] in ids:
+            final_locals.append(local)
+    return final_locals

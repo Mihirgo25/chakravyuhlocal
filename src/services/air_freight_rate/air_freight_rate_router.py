@@ -140,6 +140,7 @@ def get_air_freight_rate_api(
     cogo_entity_id: str = None,
     trade_type: str = None,
     volume: float = None,
+    chargeable_weight:float =None,
     predicted_rates_required: bool = False,
     resp: dict = Depends(authorize_token),
 ):
@@ -165,7 +166,8 @@ def get_air_freight_rate_api(
         "price_type": price_type,
         "trade_type": trade_type,
         "volume": volume,
-        "predicted_rates_required": predicted_rates_required,
+        "chargeable_weight":chargeable_weight,
+        "predicted_rates_required": predicted_rates_required
     }
 
     try:
@@ -1082,8 +1084,23 @@ def get_air_freight_local_rate_cards_api(
     resp:dict =Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
+    
+        
+    request ={
+    "airport_id":airport_id,
+    "trade_type": trade_type,
+    "commodity": commodity,
+    "commodity_type":commodity_type,
+    "packages_count":packages_count,
+    "weight":weight,
+    "volume":volume,
+    "airline_id":airline_id,
+    "additional_services":additional_services,
+    "inco_term":inco_term
+    }
+    
     try:
-        data=get_air_freight_local_rate_cards(airport_id=airport_id,trade_type=trade_type,commodity=commodity,commodity_type=commodity_type,packages_count=packages_count,weight=weight,volume=volume,airline_id=airline_id,additional_services=additional_services,inco_term=inco_term)
+        data=get_air_freight_local_rate_cards(request)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise

@@ -70,7 +70,6 @@ def create_air_freight_rate_data(request):
         "commodity_sub_type":request.get("commodity_sub_type"),
         "airline_id": request.get("airline_id"),
         "service_provider_id": request.get("service_provider_id"),
-        "importer_exporter_id": request.get("importer_exporter_id"),
         "rate_not_available_entry": request.get("rate_not_available_entry", False),
         "stacking_type":request.get("stacking_type"),
         "shipment_type":request.get("shipment_type"),
@@ -82,7 +81,7 @@ def create_air_freight_rate_data(request):
         "price_type":price_type
     }
 
-    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["importer_exporter_id"] or "")}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}'
+    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}'
     
     freight = (
         AirFreightRate.select()
