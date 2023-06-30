@@ -1,6 +1,6 @@
 from datetime import datetime
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi.encoders import jsonable_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters

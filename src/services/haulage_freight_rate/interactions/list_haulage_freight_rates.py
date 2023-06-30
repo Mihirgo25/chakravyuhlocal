@@ -3,7 +3,7 @@ import json, uuid, math
 from libs.get_filters import get_filters
 
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from playhouse.shortcuts import model_to_dict
 
 import services.haulage_freight_rate.interactions.list_haulage_freight_rates as list_haulage_freight_rate
