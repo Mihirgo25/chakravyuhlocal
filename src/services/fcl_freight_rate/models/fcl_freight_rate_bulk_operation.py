@@ -1175,19 +1175,24 @@ class FclFreightRateBulkOperation(BaseModel):
                 for commodity in data['commodities']:
                     freight_rate_object = create_params | ({ 'commodity': commodity, 'source': 'bulk_operation' })
                     
-                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
-
+                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    total_affected_rates += str(id) != str(freight.id)
+                    
                 for container_size in data['container_sizes']:
                     freight_rate_object = create_params | ({ 'container_size': container_size, 'source': 'bulk_operation' })
-                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
-
+                    
+                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    total_affected_rates += str(id) != str(freight.id)
+                    
                 for container_type in data['container_types']:
                     freight_rate_object = create_params | ({ 'container_type': container_type, 'source': 'bulk_operation' })
-                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
-
+                    
+                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    total_affected_rates += str(id) != str(freight.id)
+                    
                 create_audit(self.id)
 
-            total_affected_rates += 1
+            
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
        
