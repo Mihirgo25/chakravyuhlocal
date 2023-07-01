@@ -1,4 +1,4 @@
-import uuid, datetime, json
+import uuid, datetime, json, re
 from peewee import DateTimeField, UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, CharField
 from database.db_session import db
 from playhouse.postgres_ext import BinaryJSONField, ArrayField
@@ -122,7 +122,10 @@ class HaulageFreightRate(BaseModel):
         self.origin_cluster_id = self.origin_location.get('cluster_id')
         self.origin_city_id = self.origin_location.get('city_id')
         self.origin_country_id = self.origin_location.get('country_id')
-        self.origin_location_ids = [uuid.UUID(str(self.origin_location_id)), uuid.UUID(str(self.origin_cluster_id)),uuid.UUID(str(self.origin_city_id)),uuid.UUID(str(self.origin_country_id))]
+        if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', str(self.origin_cluster_id)):
+            self.origin_location_ids = [uuid.UUID(str(self.origin_location_id)), uuid.UUID(str(self.origin_cluster_id)),uuid.UUID(str(self.origin_city_id)),uuid.UUID(str(self.origin_country_id))]
+        else:
+            self.origin_location_ids = [uuid.UUID(str(self.origin_location_id)),uuid.UUID(str(self.origin_city_id)),uuid.UUID(str(self.origin_country_id))]
 
     def set_origin_location_type(self):
         self.origin_location_type = self.origin_location.get('type')
@@ -131,8 +134,11 @@ class HaulageFreightRate(BaseModel):
         self.destination_cluster_id = self.destination_location.get('cluster_id')
         self.destination_city_id = self.destination_location.get('city_id')
         self.destination_country_id = self.destination_location.get('country_id')
-        self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_cluster_id)),uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
-
+        if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', str(self.destination_cluster_id)):
+            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_cluster_id)),uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
+        else:
+            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
+        
     def set_destination_location_type(self):
         self.destination_location_type = self.destination_location.get('type')
 
@@ -295,17 +301,19 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.is_line_items_error_messages_present == False,
             HaulageFreightRate.service_provider_id != self.service_provider_id
         ).where(HaulageFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
-
+        
+        rates = list(rates)
         sum = 0
-        mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
+        if rates:
+            mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
 
-        for prices in mandatory_line_items:
-                sum = sum + int(common.get_money_exchange_for_fcl({'price': prices["price"], 'from_currency': prices['currency'], 'to_currency':currency})['price'])
+            for prices in mandatory_line_items:
+                    sum = sum + int(common.get_money_exchange_for_fcl({'price': prices["price"], 'from_currency': prices['currency'], 'to_currency':currency})['price'])
 
-        if sum and result > sum:
-            result = sum
+            if sum and result > sum:
+                result = sum
 
-        self.platform_price = result
+            self.platform_price = result
 
     def set_is_best_price(self):
         if not self.platform_price:
@@ -321,7 +329,7 @@ class HaulageFreightRate(BaseModel):
 
 
     def get_line_items_total_price(self,line_items):
-        currency = line_items[0].currency
+        currency = line_items[0].get('currency')
         result = 0
 
         for line_item in line_items:
