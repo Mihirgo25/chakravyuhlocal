@@ -56,6 +56,8 @@ DEFAULT_HAULAGE_TYPE = "merchant"
 
 DEFAULT_TRIP_TYPE = "one_way"
 
+DEFAULT_RATE_TYPE = 'market_place'
+
 CONTAINER_SIZE_FACTORS = {"20": 1, "40": 1.1, "40HC": 1.15, "45HC": 1.2}
 
 WEIGHT_LIMIT_CONSTANTS = {

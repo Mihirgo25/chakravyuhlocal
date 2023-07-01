@@ -17,8 +17,6 @@ class HaulageFreightRateAudit(BaseModel):
     action_name = CharField(null=True)
     performed_by_id = UUIDField(index=True, null =True)
     data = BinaryJSONField(null=True)
-    sourced_by_id = UUIDField(null=True)
-    procured_by_id = UUIDField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
 

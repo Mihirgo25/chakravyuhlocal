@@ -8,7 +8,7 @@ from datetime import datetime,timedelta
 from database.rails_db import *
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
 

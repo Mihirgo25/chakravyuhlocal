@@ -632,4 +632,17 @@ def update_fcl_freight_rate_feedback_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
-            
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def delay_haulage_functions(self,haulage_object,request):
+    from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
+    try:
+        if not HaulageFreightRate.select().where(HaulageFreightRate.service_provider_id==request["service_provider_id"], HaulageFreightRate.rate_not_available_entry==False).exists():
+            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+
+        get_multiple_service_objects(haulage_object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

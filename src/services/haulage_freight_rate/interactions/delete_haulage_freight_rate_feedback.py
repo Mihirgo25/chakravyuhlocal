@@ -1,5 +1,5 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_feedback import HaulageFreightRateFeedback
-from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback

@@ -1,5 +1,5 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest
-from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
 
