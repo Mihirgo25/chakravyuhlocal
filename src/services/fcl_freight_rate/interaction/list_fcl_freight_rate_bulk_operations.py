@@ -49,7 +49,7 @@ def apply_indirect_filters(query, filters):
 def get_details(data):
     for d in data: 
         progress = parse_numeric(d.get('progress')) or 0
-        d['progress'] = 100 if progress == 100 else get_progress_percent(str(d['id']), progress)
+        d['progress'] = 100 if progress == 100 else min(get_progress_percent(str(d['id']), progress), 100)
     return data
 
 def get_query(sort_by, sort_type):
