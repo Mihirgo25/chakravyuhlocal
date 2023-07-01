@@ -333,7 +333,7 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                             AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
                         OFFSET {} LIMIT {};   
                         """.format(interval,location_type,location_type,offset,limit)
-                    cur.execute(sql_query,(interval, origin_location_id,destination_location_id, offset, limit))
+                    cur.execute(sql_query,(origin_location_id,destination_location_id))
                     result = cur.fetchall()
                     cur.close()
                 for res in result:

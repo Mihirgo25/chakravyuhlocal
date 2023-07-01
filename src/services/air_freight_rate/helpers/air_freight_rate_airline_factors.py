@@ -27,11 +27,7 @@ def create_air_freight_rate_airline_factors():
             cluster_wise_locs[loc["cluster_id"]] = [loc["location_id"]]
     for origin_cluster in data_list:
         for destination_cluster in data_list:
-            if (
-                origin_cluster[1] == "aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19"
-                and destination_cluster[1] == "c298f645-7d0a-44cb-845f-da7d85ac0e16"
-            ):
-            # if origin_cluster != destination_cluster:
+            if origin_cluster != destination_cluster:
                 origin_locations = [origin_cluster[1]]
                 destination_locations = [destination_cluster[1]]
                 air_freight_rates = AirFreightRate.select(
@@ -42,6 +38,7 @@ def create_air_freight_rate_airline_factors():
                 ).where(
                     AirFreightRate.origin_airport_id << origin_locations,
                     AirFreightRate.destination_airport_id << destination_locations,
+                    AirFreightRate.commodity=='general',
                     AirFreightRate.updated_at
                     >= SQL(
                         "date_trunc('MONTH', CURRENT_DATE - INTERVAL '1 months')::DATE"
@@ -52,11 +49,11 @@ def create_air_freight_rate_airline_factors():
                     origin_location_id=origin_locations,
                     destination_location_id=destination_locations,
                     location_type="airport",
-                    interval=1,
+                    interval=2,
                 )
                 if invoice_rates or air_freight_rates:
-                    dict = create_airline_dictionary(invoice_rates, air_freight_rates)
-                    get_ratios(dict, origin_cluster[0], destination_cluster[0])
+                    prime_airline_id,dict = create_airline_dictionary(invoice_rates, air_freight_rates)
+                    get_ratios(prime_airline_id,dict, origin_cluster[0], destination_cluster[0])
 
 
 def get_bas_price_currency(invoice_rate):
@@ -108,6 +105,8 @@ def create_airline_dictionary(invoice_rates, air_freight_rates):
             else:
                 airline_dictionary[airline_id] = {slab: [price]}
 
+    prime_air_line_id = max(airline_dictionary, key=lambda airline_id: len(airline_dictionary[airline_id]))
+
     for air_freight_rate in air_freight_rates:
         weight_slabs=air_freight_rate['weight_slabs']
         for weight_slab in weight_slabs:
@@ -121,12 +120,10 @@ def create_airline_dictionary(invoice_rates, air_freight_rates):
                     airline_dictionary[airline_id][slab] = airline_dictionary[airline_id].get(slab, []) + [price]
                 else:
                     airline_dictionary[airline_id] = {slab: [price]}
-    return airline_dictionary
+    return prime_air_line_id, airline_dictionary
 
 
-def get_ratios(airline_dictionary, orgin, destination):
-
-    prime_airline_id = max(airline_dictionary,key=lambda airline_id: sum(len(values) for values in airline_dictionary[airline_id].values()))
+def get_ratios(prime_airline_id,airline_dictionary, orgin, destination):
     max_slab = max(airline_dictionary[prime_airline_id],key=lambda slab: len(airline_dictionary[prime_airline_id][slab]))
 
     prime_airline_values = airline_dictionary[prime_airline_id][max_slab]
@@ -136,11 +133,11 @@ def get_ratios(airline_dictionary, orgin, destination):
             values = slab_values.get(max_slab, [])
             if values:
                 average = sum(values) / len(values)
-                ratio = prime_average / average
-        AirFreightAirlineFactors.create(
-                    base_airline_id=prime_airline_id,
-                    derive_airline_id=airline_id,
-                    origin_cluster_id=orgin,
-                    destination_cluster_id=destination,
-                    rate_factor=ratio
-                )
+                ratio = average / prime_average
+            AirFreightAirlineFactors.create(
+                        base_airline_id=prime_airline_id,
+                        derive_airline_id=airline_id,
+                        origin_cluster_id=orgin,
+                        destination_cluster_id=destination,
+                        rate_factor=ratio
+                    )
