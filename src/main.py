@@ -22,7 +22,6 @@ from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
 from micro_services.client import *
-from rms_utils.auth import auth
 from database.database_support import get_db
 
 sentry_sdk.init(
