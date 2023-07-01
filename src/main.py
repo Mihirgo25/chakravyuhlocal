@@ -22,7 +22,7 @@ from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
 from micro_services.client import *
-from database.database_support import get_db
+from database.db_support import get_db
 
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
