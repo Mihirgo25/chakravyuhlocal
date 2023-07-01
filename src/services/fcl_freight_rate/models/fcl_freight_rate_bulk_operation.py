@@ -19,7 +19,7 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_locals import l
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days import list_fcl_freight_rate_free_days
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
-from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id, get_progress_percent
 from celery_worker import create_fcl_freight_rate_delay
 from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
@@ -64,17 +64,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if rd:
             rd.hset(self.progress_percent_hash, self.progress_percent_key(), progress_percent)
 
-
-    def get_progress_percent(self):
-        if(self.progress == 100):
-                return 100
-        if rd:
-            try:
-                cached_response = rd.hget(self.progress_percent_hash, self.progress_percent_key())
-                return parse_numeric(cached_response)
-            except:
-                return 0
-    
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
             raise HTTPException(status_code=400,detail='Invalid action Name')
@@ -285,7 +274,7 @@ class FclFreightRateBulkOperation(BaseModel):
             # if [t for t in self.data['destination_port_ids']if t not in  destination_icd_location] != None:
             #     raise HTTPException(status_code=400, detail='destination_icd_port_id is invalid')
             
-    def perform_batch_extend_validity_action(self, batch_query,  count , total_count, sourced_by_id, procured_by_id):
+    def perform_batch_extend_validity_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data 
         sourced_by_ids = data.get('sourced_by_ids')
         procured_by_ids = data.get('procured_by_ids')
@@ -386,13 +375,15 @@ class FclFreightRateBulkOperation(BaseModel):
                         'rate_sheet_validation': True,
                     }
             create_fcl_freight_rate_data(freight_rate_object)
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
             
-        return count
+        return count, total_affected_rates
         
     def perform_extend_validity_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
+        total_affected_rates = 0
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
         
@@ -429,12 +420,15 @@ class FclFreightRateBulkOperation(BaseModel):
             batch_query = query.limit(BATCH_SIZE)
             if not batch_query.exists():
                 break 
-            count = self.perform_batch_extend_validity_action(batch_query, count , total_count, sourced_by_id, procured_by_id)
-        self.progress = self.get_progress_percent()
+            count, total_affected_rates = self.perform_batch_extend_validity_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
+        
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
         self.save()    
             
             
-    def perform_batch_delete_freight_rate_action(self, batch_query,  count , total_count, sourced_by_id, procured_by_id):
+    def perform_batch_delete_freight_rate_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
         
@@ -462,11 +456,13 @@ class FclFreightRateBulkOperation(BaseModel):
                 'comparison_currency':data.get('comparison_currency')
             })
             progress = int((count * 100.0) / total_count)
+            total_affected_rates += 1
             self.set_progress_percent(progress)
-        return count
+        return count, total_affected_rates
 
     def perform_delete_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
+        total_affected_rates = 0
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
 
@@ -480,8 +476,12 @@ class FclFreightRateBulkOperation(BaseModel):
         rate_ids = []
         rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
         
-        object_ids = rate_sheet_id if rate_sheet_id else filters.get('id') 
-        rate_ids += get_relevant_rate_ids_for_extended_from_object(data['apply_to_extended_rates'],object_ids)
+        if filters.get('id'):
+            object_ids = rate_ids + (filters['id'] if isinstance(filters['id'], list) else [filters.get('id')])
+        else:
+            object_ids = rate_ids
+            
+        rate_ids += get_relevant_rate_ids_for_extended_from_object(data['apply_to_extended_rates'], object_ids)
         
         if rate_ids:
             if isinstance(filters.get('id'), list):
@@ -502,15 +502,18 @@ class FclFreightRateBulkOperation(BaseModel):
         while(offset < total_count):
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             offset += BATCH_SIZE
-            count = self.perform_batch_delete_freight_rate_action(batch_query,  count , total_count, sourced_by_id, procured_by_id)
+            count, total_affected_rates = self.perform_batch_delete_freight_rate_action(batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
 
-        self.progress = self.get_progress_percent()
-        self.save()
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()  
 
 
 
     def perform_delete_local_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
+        total_affected_rates = 0
         
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
 
@@ -541,17 +544,23 @@ class FclFreightRateBulkOperation(BaseModel):
                 'sourced_by_id': sourced_by_id,
                 'procured_by_id': procured_by_id
             })
-
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = self.get_progress_percent()
-        self.save()
+            
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()    
 
 
 
-    def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, sourced_by_id, procured_by_id):
+    def perform_batch_add_freight_rate_markup_action(self, batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
         fcl_freight_rates = list(batch_query.dicts())
+        
+        validity_start = datetime.strptime(data['validity_start'], '%Y-%m-%d')
+        validity_end = datetime.strptime(data['validity_end'], '%Y-%m-%d') 
         
         for freight in fcl_freight_rates:
             count += 1
@@ -568,10 +577,10 @@ class FclFreightRateBulkOperation(BaseModel):
                 validity_object['validity_start'] = datetime.strptime(validity_object['validity_start'], '%Y-%m-%d')
                 validity_object['validity_end'] = datetime.strptime(validity_object['validity_end'], '%Y-%m-%d')
 
-                if validity_object['validity_start'] > data['validity_end']  or validity_object['validity_end'] < data['validity_start']:
+                if validity_object['validity_start'] > validity_end  or validity_object['validity_end'] < validity_start:
                     continue
-                validity_object['validity_start'] = max(validity_object['validity_start'], data['validity_start'])
-                validity_object['validity_end'] = min(validity_object['validity_end'], data['validity_end'])
+                validity_object['validity_start'] = max(validity_object['validity_start'], validity_start)
+                validity_object['validity_end'] = min(validity_object['validity_end'], validity_end)
 
                 line_item = [t for t in validity_object['line_items'] if t['code'] == data['line_item_code']][0]
                 if not line_item:
@@ -634,18 +643,17 @@ class FclFreightRateBulkOperation(BaseModel):
                 }
                 create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
 
-           
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        return count
+        return count, total_affected_rates
         
         
         
     def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        total_affected_rates = 0
         data = self.data
-                    
-        data['validity_start'] = datetime.strptime(data['validity_start'], '%Y-%m-%d')
-        data['validity_end'] = datetime.strptime(data['validity_end'], '%Y-%m-%d')
+                        
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
         
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
@@ -655,10 +663,14 @@ class FclFreightRateBulkOperation(BaseModel):
             del filters['partner_id']
 
         rate_sheet_id=get_rate_sheet_id(data.get('rate_sheet_serial_id'))
-        rate_ids = []
+        rate_ids = [] 
         rate_ids += get_relevant_rate_ids_from_audits_for_rate_sheet(rate_sheet_id)
         
-        object_ids = rate_sheet_id if rate_sheet_id else filters.get('id') 
+        if filters.get('id'):
+            object_ids = rate_ids + (filters['id'] if isinstance(filters['id'], list) else [filters.get('id')])
+        else:
+            object_ids = rate_ids
+
         rate_ids += get_relevant_rate_ids_for_extended_from_object(data['apply_to_extended_rates'],object_ids)
         
         
@@ -695,13 +707,17 @@ class FclFreightRateBulkOperation(BaseModel):
         while(offset < total_count):
             batch_query = query.offset(offset).limit(BATCH_SIZE)
             offset += BATCH_SIZE
-            count = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, sourced_by_id, procured_by_id)
-        self.progress = self.get_progress_percent()
-        self.save()
+            count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
+        
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()  
 
 
     def perform_add_local_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
+        total_affected_rates = 0
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
 
@@ -769,14 +785,18 @@ class FclFreightRateBulkOperation(BaseModel):
                     'bulk_operation_id': self.id,
                     'data': local['data']
                 })
-
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = self.get_progress_percent()
+            
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
         self.save()
         
 
     def perform_update_free_days_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        total_affected_rates = 0
         data = self.data
 
         if data['slabs']:
@@ -814,13 +834,17 @@ class FclFreightRateBulkOperation(BaseModel):
                 'slabs': data['slabs'],
                 'bulk_operation_id': self.id
             })
-
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = self.get_progress_percent()
-        self.save()
+            
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()  
 
     def perform_add_freight_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        total_affected_rates = 0
         data = self.data
 
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -918,13 +942,19 @@ class FclFreightRateBulkOperation(BaseModel):
                     
                     create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
 
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = self.get_progress_percent()
-        self.save()
+        
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()  
+
 
     def perform_update_free_days_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
         data = self.data
+        total_affected_rates = 0
 
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id })
 
@@ -958,9 +988,13 @@ class FclFreightRateBulkOperation(BaseModel):
                 'data': { data['free_days_type']: {key: value for key, value in data.items() if key in ['free_limit', 'slabs']}}
             })
 
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = self.get_progress_percent()
+            
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
         self.save()
 
     def perform_update_commodity_surcharge_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
@@ -1001,11 +1035,12 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = self.get_progress_percent()
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.save()
 
 
     def perform_update_weight_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        total_affected_rates = 0
         data = self.data
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -1041,13 +1076,18 @@ class FclFreightRateBulkOperation(BaseModel):
                 'weight_limit': weight_limit
             })
 
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = self.get_progress_percent()
-        self.save()
+       
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()  
             
 
     def perform_extend_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        total_affected_rates = 0
         data = self.data
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -1147,15 +1187,19 @@ class FclFreightRateBulkOperation(BaseModel):
 
                 create_audit(self.id)
 
+            total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
        
-        self.progress = self.get_progress_percent()
-        self.save()
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()  
 
 
 
     def perform_extend_freight_rate_to_icds_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+        total_affected_rates = 0
         data = self.data
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id' : cogo_entity_id })
@@ -1178,7 +1222,9 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if not validities or FclFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=fcl_freight_rate['id']):
             self.progress = 100
-            self.save()
+            data['total_affected_rates'] = total_affected_rates
+            self.data = data
+            self.save()  
             return
 
         if data['origin_port_ids']:
@@ -1251,8 +1297,12 @@ class FclFreightRateBulkOperation(BaseModel):
                     create_params['source'] = 'bulk_operation'
                     
                     create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':create_params }, queue='fcl_freight_rate')
-        self.progress = self.get_progress_percent()
-        self.save()
+                    total_affected_rates+= 1
+                    
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()  
 
 
 def create_audit(id):

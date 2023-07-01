@@ -3,14 +3,16 @@ from services.fcl_freight_rate.models.fcl_freight_rate_bulk_operation import Fcl
 from math import ceil 
 from fastapi.encoders import jsonable_encoder
 from libs.get_filters import get_filters
+from libs.parse_numeric import parse_numeric
 from libs.get_applicable_filters import get_applicable_filters
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_progress_percent
 import json
 
-possible_direct_filters = ['action_name', 'service_provider_id']
+possible_direct_filters = ['action_name', 'service_provider_id', 'performed_by_id', ]
 possible_indirect_filters = []
 
-def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 1):
-    query = FclFreightRateBulkOperation.select().order_by(FclFreightRateBulkOperation.updated_at.desc())
+def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc',):
+    query = get_query(sort_by, sort_type)
 
     if filters:
         if type(filters) != dict:
@@ -23,6 +25,7 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
     pagination_data = get_pagination_data(query, page, page_limit)
     query = query.paginate(page, page_limit)
     data = jsonable_encoder(list(query.dicts()))
+    data = get_details(data)
 
     return {'list': data } | (pagination_data)
 
@@ -42,3 +45,17 @@ def apply_indirect_filters(query, filters):
             apply_filter_function = f'apply_{key}_filter'
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
+
+def get_details(data):
+    for d in data: 
+        progress = parse_numeric(d.get('progress')) or 0
+        d['progress'] = 100 if progress == 100 else get_progress_percent(str(d['id']), progress)
+    return data
+
+def get_query(sort_by, sort_type):
+    query = FclFreightRateBulkOperation.select()
+    if(sort_by):
+        query = query.order_by(eval('FclFreightRateBulkOperation.{}.{}()'.format(sort_by,sort_type)))
+        
+    return query
+    
