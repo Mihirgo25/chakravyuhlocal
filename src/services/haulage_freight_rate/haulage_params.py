@@ -23,6 +23,7 @@ class CreateHaulageFreightRate(BaseModel):
   shipping_line_id: str = None
   haulage_type: str 
   performed_by_id: str
+  performed_by_type: str = None
   procured_by_id: str 
   sourced_by_id: str 
   importer_exporter_id: str = None

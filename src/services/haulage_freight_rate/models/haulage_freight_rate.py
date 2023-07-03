@@ -27,7 +27,6 @@ class HaulageFreightRate(BaseModel):
     destination_cluster_id = UUIDField(null=True)
     destination_city_id = UUIDField(null=True)
     container_size = TextField(index=True, null=True)
-    commodity_type = TextField(index=True, null=True)
     commodity = TextField(index=True, null=True)
     importer_exporter_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
@@ -40,7 +39,7 @@ class HaulageFreightRate(BaseModel):
     is_line_items_info_messages_present = BooleanField(index=True, null=True)
     line_items_error_messages = BinaryJSONField(index=True, null=True)
     line_items_info_messages = BinaryJSONField(index=True, null=True)
-    rate_not_available_entry = BooleanField(index=True, null=True)
+    rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True, index=True)
     trip_type = TextField(index=True, null=True)
     validity_start = DateTimeField(default=datetime.datetime.now, null=True)
     validity_end = DateTimeField(default = datetime.datetime.now() - datetime.timedelta(30), null=True)
@@ -50,27 +49,24 @@ class HaulageFreightRate(BaseModel):
     transport_modes =ArrayField(TextField, null=True)
     destination_country_id = UUIDField(null=True)
     transport_modes_keyword = TextField(index=True, null=True)
-    distance = FloatField(null=True, index=True)
     origin_country_id = UUIDField(null=True)
     shipping_line_id = UUIDField(null=True)
     origin_destination_location_type = TextField(index=True, null=True)
     destination_location_type = TextField(index=True, null=True)
     origin_location_type = TextField(index=True, null=True)
-    origin_location_ids = ArrayField(UUIDField, null=True)
-    destination_location_ids = ArrayField(UUIDField, null=True)
+    origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
+    destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
     importer_exporter = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
     origin_location = BinaryJSONField(index=True, null=True)
     destination_location = BinaryJSONField(index=True, null=True)
     shipping_line = BinaryJSONField(null=True)
-    validities = BinaryJSONField(default = [], null=True)
     trailer_type = TextField(index=True, null=True)
     platform_price = FloatField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     mode = CharField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
-    cogo_entity_id = UUIDField(index=True, null=True)
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
     sourced_by = BinaryJSONField(null=True)
@@ -175,18 +171,18 @@ class HaulageFreightRate(BaseModel):
             raise HTTPException(status_code=400, detail="trailer type is invalid")
     
     def validate_transport_modes(self):
-        # if not (self.transport_modes(TRANSPORT_MODES)):
-        #     raise HTTPException(status_code=400, detail="transport modes are invalid")
         if not all(element in TRANSPORT_MODES for element in self.transport_modes):
             raise HTTPException(status_code=400, detail="transport modes are invalid")
     
     def validate_transit_time(self):
-        if self.transport_modes[0] == 'trailer' and self.transit_time < 0:
-            raise HTTPException(status_code=400, detail="transit time is invalid")
+        if self.transit_time is not None:
+            if self.transport_modes[0] == 'trailer' and self.transit_time < 0:
+                raise HTTPException(status_code=400, detail="transit time is invalid")
     
     def validate_detention_free_time(self):
-        if self.transport_modes[0] == 'trailer' and self.detention_free_time < 0:
-            raise HTTPException(status_code=400, detail="detention free time is invalid")
+        if self.detention_free_time is not None:
+            if self.transport_modes[0] == 'trailer' and self.detention_free_time < 0:
+                raise HTTPException(status_code=400, detail="detention free time is invalid")
 
     def validate_shipping_line_id(self):
         if not self.shipping_line_id and self.haulage_type == 'carrier':
@@ -357,10 +353,10 @@ class HaulageFreightRate(BaseModel):
 
     def update_line_item_messages(self,possible_charge_codes):
 
-        line_items_error_messages = {}
-        line_items_info_messages = {}
-        is_line_items_error_messages_present = False
-        is_line_items_info_messages_present = False
+        self.line_items_error_messages = {}
+        self.line_items_info_messages = {}
+        self.is_line_items_error_messages_present = False
+        self.is_line_items_info_messages_present = False
 
         grouped_charge_codes = {}
 
@@ -375,13 +371,13 @@ class HaulageFreightRate(BaseModel):
             code_config = HAULAGE_FREIGHT_CHARGES[code]
 
             if not code_config:
-                line_items_error_messages[code] = ['is invalid']
-                is_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
                 continue
 
             if len(set(map(lambda item: item.get('unit'), line_items)) - set(code_config['units'])) > 0:
-                line_items_error_messages[code] = ["can only be having units " + ", ".join(code_config['units'])]
-                is_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ["can only be having units " + ", ".join(code_config['units'])]
+                self.is_line_items_error_messages_present = True
                 continue
 
             transport_modes = self.transport_modes
@@ -389,8 +385,8 @@ class HaulageFreightRate(BaseModel):
             origin_location = self.origin_location
             destination_location = self.destination_location
             if not eval(str(code_config.get('condition'))):
-                line_items_error_messages[code] = ['is invalid']
-                is_line_items_error_messages_present = True
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
                 continue
             flag = False
             for slab in line_items:
@@ -398,27 +394,27 @@ class HaulageFreightRate(BaseModel):
                     flag = True
                     break
             if 'slab_cargo_weight_per_container' in code_config['tags'] and flag:
-                line_items_info_messages[code] = ['can contain slab basis rates for higher conversion']
-                is_line_items_info_messages_present = True
+                self.line_items_info_messages[code] = ['can contain slab basis rates for higher conversion']
+                self.is_line_items_info_messages_present = True
                 continue
 
         for code, config in possible_charge_codes.items():
             if 'mandatory' in config.get('tags', []):
                 if code not in grouped_charge_codes:
-                    line_items_error_messages[code] = ['is not present']
-                    is_line_items_error_messages_present = True
+                    self.line_items_error_messages[code] = ['is not present']
+                    self.is_line_items_error_messages_present = True
 
         for code, config in possible_charge_codes.items():
             if 'additional_service' in config.get('tags', []) or 'shipment_execution_service' in config.get('tags', []):
                 if code not in grouped_charge_codes:
-                    line_items_info_messages[code] = ['can be added for more conversion']
-                    is_line_items_info_messages_present = True
+                    self.line_items_info_messages[code] = ['can be added for more conversion']
+                    self.is_line_items_info_messages_present = True
 
         return {
-        'line_items_error_messages': line_items_error_messages,
-        'is_line_items_error_messages_present': is_line_items_error_messages_present,
-        'line_items_info_messages': line_items_info_messages,
-        'is_line_items_info_messages_present': is_line_items_info_messages_present
+        'line_items_error_messages': self.line_items_error_messages,
+        'is_line_items_error_messages_present': self.is_line_items_error_messages_present,
+        'line_items_info_messages': self.line_items_info_messages,
+        'is_line_items_info_messages_present': self.is_line_items_info_messages_present
         }
 
     def detail(self):
