@@ -84,6 +84,7 @@ def create_air_customs_rate(params, converted_file, rows, created_by_id, procure
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
     object['airport_id'] = get_airport_id(rows[0]['airport'], rows[0]['country'])
     object['line_items'] = []
+    object['accuracy'] = 100
     for t in rows:
         line_item = {
             'code': t.get('code'),
