@@ -10,6 +10,8 @@ from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from database.rails_db import get_organization, get_user, get_eligible_orgs
 from micro_services.client import common, maps
+from itertools import groupby
+
 
 
 def initialize_query(requirements, query):
@@ -198,37 +200,37 @@ def build_response_object(result, requirements):
 
 
 def build_response_list(requirements, query_results):
-    # pending for now
-    # from itertools import groupby
+    data = []
+    grouped_query_results = {}
 
-    # list = []
-    # if not requirements.get("origin_location_id"):
-    #     grouped_query_results = []
-    #     query_results.sort(key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
+    if not requirements.get("origin_location_id"):
+        sorted_rates = sorted(query_results, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
 
-    #     for key, group in groupby(query_results, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
-    #         grouped_query_results.append(list(group))
+        for (origin_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword), group in groupby(sorted_rates, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
+            grouped_query_results[(origin_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword)] = list(group)
 
-    # elif not requirements.get("destination_location_id"):
-    #     grouped_query_results = query_results
-    # else:
-    #     grouped_query_results = query_results
+    elif not requirements.get("destination_location_id"):
+        sorted_rates = sorted(query_results, key=lambda t: (t['destination_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
 
-    # for key, results in grouped_query_results.items():
-    #     results = sorted(
-    #         results,
-    #         key=lambda t: LOCATION_PAIR_HIERARCHY[
-    #             t["origin_destination_location_type"]
-    #         ],
-    #     )
-    #     result = results[0].get("importer_exporter_id")
-    #     if not result:
-    #         result = results[0]
-    #     response_object = build_response_object(result, requirements)
-    #     if response_object:
-    #         list.append(response_object)
+        for (destination_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword), group in groupby(sorted_rates, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
+            grouped_query_results[(destination_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword)] = list(group)
 
-    return list
+    else:
+        sorted_rates = sorted(query_results, key=lambda t: ( t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
+
+        for (service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword), group in groupby(sorted_rates, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
+            grouped_query_results[(service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword)] = list(group)
+
+    for key, results in grouped_query_results.items():
+        results = sorted(results, key=lambda t: LOCATION_PAIR_HIERARCHY[t['origin_destination_location_type']])
+        result = next((t for t in results if t.get('importer_exporter_id')), None)
+        if not result:
+            return results[0]
+        response_object = build_response_object(result)
+        if response_object:
+            data.append(response_object)
+
+    return data
 
 
 # inclomplete
