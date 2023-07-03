@@ -4,6 +4,8 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import (
     HaulageFreightRateAudit,
 )
+from services.haulage_freight_rate.interactions.get_trailer_freight_rate_estimations import get_trailer_freight_rate_estimation
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation import get_haulage_freight_rate_estimation
 from datetime import datetime, timedelta
 from configs.haulage_freight_rate_constants import LOCATION_PAIR_HIERARCHY
 from configs.global_constants import CONFIRMED_INVENTORY
@@ -258,9 +260,10 @@ def ignore_non_eligible_service_providers(requirements, data):
         }
         response = None
         if requirements.get("transport_modes") == "trailer":
-            response = response
+            response = get_trailer_freight_rate_estimation(estimation_params)
+
         elif requirements.get("transport_modes") == "haulage":
-            response = response
+            response = get_haulage_freight_rate_estimation(estimation_params)
 
         if response:
             requirements["predicted_rate"] = False

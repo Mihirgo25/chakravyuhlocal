@@ -63,22 +63,6 @@ from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_feed
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation import get_haulage_freight_rate_estimation
 
 
-@haulage_freight_router.post("/get_estimated_haulage_freight_rate")
-def get_haulage_freight_rates(request: HaulageFreightRateEstimation ,resp: dict = Depends(authorize_token),
-):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    try:
-        request = jsonable_encoder(request)
-        data = get_haulage_freight_rate_estimation(request)
-        data = jsonable_encoder(data)
-        return JSONResponse(status_code=200, content=data)
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
-
 
 @haulage_freight_router.get("/get_haulage_freight_rate")
 def get_haulage_freight_rate_data(
