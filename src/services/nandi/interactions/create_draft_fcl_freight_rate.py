@@ -40,4 +40,4 @@ def create_audit(request, draft_fcl_id):
         object_type = 'DraftFclFreightRate'
       )
     except:
-      raise HTTPException(status_code=500, detail='draft fcl freight audit did not save')
+      raise
