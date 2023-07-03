@@ -105,7 +105,7 @@ class RelateAirline:
                         airline_dictionary[airline_id] = {slab: [price]}
         return prime_air_line_id, airline_dictionary
 
-    def get_ratios(self, prime_airline_id, airline_dictionary, orgin, destination):
+    def get_ratios(self, prime_airline_id, airline_dictionary, origin, destination):
         max_slab = max(airline_dictionary[prime_airline_id],key=lambda slab: len(airline_dictionary[prime_airline_id][slab]),)
 
         prime_airline_values = airline_dictionary[prime_airline_id][max_slab]
@@ -116,13 +116,24 @@ class RelateAirline:
                 if values:
                     average = sum(values) / len(values)
                     ratio = average / prime_average
-                AirFreightAirlineFactors.create(
-                    base_airline_id=prime_airline_id,
-                    derive_airline_id=airline_id,
-                    origin_cluster_id=orgin,
-                    destination_cluster_id=destination,
-                    rate_factor=ratio,
+                row = {
+                    "base_airline_id":prime_airline_id,
+                    "derive_airline_id":airline_id,
+                    "origin_cluster_id":origin,
+                    "destination_cluster_id":destination,
+                    "rate_factor":ratio
+                }
+                object=AirFreightAirlineFactors.select().where(
+                    AirFreightAirlineFactors.base_airline_id==prime_airline_id,
+                    AirFreightAirlineFactors.derive_airline_id==airline_id,
+                    AirFreightAirlineFactors.origin_cluster_id==origin,
+                    AirFreightAirlineFactors.destination_cluster_id==destination
                 )
+                if object:
+                    for attr,value in row.items():
+                        setattr(object,attr,value)
+                else:
+                    AirFreightAirlineFactors(**row)
 
     def relate_airlines(self):
         cluster_data = AirFreightLocationClusters.select(
