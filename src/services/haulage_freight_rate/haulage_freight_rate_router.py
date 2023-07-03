@@ -47,6 +47,9 @@ from services.haulage_freight_rate.interactions.get_haulage_freight_rate_visibil
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_cards import (
     get_haulage_freight_rate_cards
 )
+from services.haulage_freight_rate.interactions.delete_haulage_freight_rate import (
+    delete_haulage_freight_rate
+)
 
 from typing import List,Union
 
@@ -442,3 +445,19 @@ def get_haulage_freight_rate_cards_data(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
+@haulage_freight_router.post("/delete_haulage_freight_rate")
+def delete_haulage_freight_rate_api(request: DeleteHaulageFreightRate, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = delete_haulage_freight_rate(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, "error": str(e) })
+   
