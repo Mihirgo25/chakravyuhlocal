@@ -119,15 +119,19 @@ def get_user(id):
         sentry_sdk.capture_exception(e)
         return all_result
 
-def get_eligible_orgs(service):
+def get_eligible_orgs(service, id = None):
     all_result = []
     try:
         conn = get_connection()
         with conn:
             with conn.cursor() as cur:
                 cur = conn.cursor()
-                sql = 'select organization_services.organization_id from organization_services where status = %s and service = %s'
-                cur.execute(sql, ('active', service,))
+                if id:
+                    sql = 'select organization_services.service from organization_services where status = %s and organization_id = %s'
+                    cur.execute(sql, ('active',id))
+                else:
+                    sql = 'select organization_services.organization_id from organization_services where status = %s and service = %s'
+                    cur.execute(sql, ('active', service,))
                 result = cur.fetchall()
                 for res in result:
                     all_result.append(str(res[0]))

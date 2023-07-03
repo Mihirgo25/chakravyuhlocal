@@ -19,13 +19,11 @@ def get_air_customs_rate_addition_frequency(group_by, filters = {}, sort_type = 
   
       query = get_filters(direct_filters, query, AirCustomsRate)
       query = apply_indirect_filters(query, indirect_filters)
-
     data = get_data(query, sort_type, group_by)
     return data
 
-
 def get_query():
-    query = AirCustomsRate.select().where(AirCustomsRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))    
+    query = AirCustomsRate.select(AirCustomsRate.id).where(AirCustomsRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
     return query
 
 def apply_indirect_filters(query, filters):
@@ -44,4 +42,4 @@ def get_data(query, sort_type, group_by):
 def apply_location_ids_filter(query, filters):
     location_ids = filters.get('location_ids')
     query = query.where(AirCustomsRate.location_ids.contains(location_ids))
-    return query 
+    return query

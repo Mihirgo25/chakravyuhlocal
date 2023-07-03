@@ -1,5 +1,5 @@
 
-from database.rails_db import get_organization
+from database.rails_db import get_organization, get_eligible_orgs
 from micro_services.client import organization
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 
@@ -9,12 +9,7 @@ def get_air_customs_rate_visibility(request):
     org_details = get_organization(id=request.get('service_provider_id'))
     if org_details:
         org_details = org_details[0]
-        org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details.get('id')), 'status' : 'active'}})
-        if org_services_data:
-            org_services_data = org_services_data['list']
-        else:
-            org_services_data = []
-        org_services = [service['service'] for service in org_services_data]
+        org_services = get_eligible_orgs(None, str(org_details.get('id') or ''))
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
     if kyc_and_service_status:
@@ -45,7 +40,7 @@ def get_air_customs_rate_data(request):
     if request.get('rate_id'):
         air_customs_rate_data = AirCustomsRate.select().where(AirCustomsRate.id == request['rate_id']).first()
     else:
-        air_customs_rate_data = AirCustomsRate.select().where(
+        air_customs_rate_data = AirCustomsRate.select(AirCustomsRate.id).where(
             AirCustomsRate.airport_id == request.get('location_id'),
             AirCustomsRate.commodity == request.get('commodity'),
             AirCustomsRate.service_provider_id == request.get('service_provider_id'),

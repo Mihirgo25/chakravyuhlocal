@@ -92,7 +92,7 @@ class CreateAirCustomsRate(BaseModel):
   line_items: List[AirCustomsLineItems] = None
   performed_by_type: str = None
   bulk_operation_id: str = None
-  rate_type: str = 'general'
+  rate_type: str = 'market_place'
 
 
 class UpdateAirCustomsRatePlatformPrices(BaseModel):
