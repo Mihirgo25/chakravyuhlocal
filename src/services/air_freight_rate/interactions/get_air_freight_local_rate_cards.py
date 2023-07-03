@@ -40,7 +40,7 @@ def build_response_list(request,local_query_results):
     for result in local_query_results:
         response_object = build_response_object(request,result)
         if response_object:
-            response_list.append(response_list)
+            response_list.append(response_object)
     
     return response_list
 
@@ -64,7 +64,7 @@ def build_local_line_items(request,query_result, response_object):
        response_object['line_items'].append(line_item)
     
     additional_services = request.get('additional_services')
-    if len(additional_services - set([t['code'] for t in response_object['line_items']])) > 0:
+    if additional_services and len(additional_services) - len(list(set([t['code'] for t in response_object['line_items']]))) > 0:
         return False
     
     if response_object['line_items']:
@@ -92,8 +92,7 @@ def build_local_line_item_object(request,line_item):
     is_additional_service = False
     if 'additional_service' in code_config.get('tags'):
         is_additional_service = True
-    
-    if is_additional_service and line_item['code'] not in request.get('additional_service'):
+    if is_additional_service and line_item['code'] not in request.get('additional_services'):
         return
     
     line_item = {key:value for key,value in line_item.items() if key in ['code','unti','price','currency','min_price','remarks']}

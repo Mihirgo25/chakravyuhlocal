@@ -79,8 +79,7 @@ def create_air_freight_rate_task (request):
        
     create_audit(request,task.id)
 
-    # update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-    get_multiple_service_objects(task)
+    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
 
     # send_air_freight_rate_task_notification.apply_async(kwargs={'task_id':task.id},queue='low')
     

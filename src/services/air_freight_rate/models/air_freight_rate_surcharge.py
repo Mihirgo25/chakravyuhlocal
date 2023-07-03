@@ -51,6 +51,10 @@ class AirFreightRateSurcharge(BaseModel):
     updated_at=DateTimeField(default=datetime.datetime.now,index=True)
     created_at=DateTimeField(default=datetime.datetime.now,index=True)
 
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRateSurcharge, self).save(*args, **kwargs)
+    
     class Meta:
         table_name = 'air_freight_rate_surcharges'
 

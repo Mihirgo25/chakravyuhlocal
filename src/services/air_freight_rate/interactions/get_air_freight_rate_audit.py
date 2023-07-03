@@ -11,7 +11,7 @@ def get_air_freight_rate_audit(request):
         AirFreightRate.updated_at
     ).where(AirFreightRate.id==request['id']).first()
 
-    # audit=AirFreightRateAudit.select(AirFreightRateAudit.performed_by_id).where(AirFreightRateAudit.object_id==request['id'],AirFreightRateAudit.action_name=='create').order_by(AirFreightRateAudit.updated_at.desc()).first()
+    audit=AirFreightRateAudit.select(AirFreightRateAudit.performed_by_id).where(AirFreightRateAudit.object_id==request['id'],AirFreightRateAudit.action_name=='create').order_by(AirFreightRateAudit.updated_at.desc()).first()
     if object :
         return{
             "procured_by":object.procured_by,
@@ -19,7 +19,7 @@ def get_air_freight_rate_audit(request):
             "sourced_by":object.sourced_by,
             "sourced_by_id":object.sourced_by_id,
             "updated_at":object.updated_at,
-            # "performed_by_id":audit.performed_by_id,
+            "performed_by_id":audit.performed_by_id,
             # "performed_by":""
         }
     else:

@@ -12,7 +12,6 @@ def get_air_freight_rate_visibility(request):
         org_details=[]
 
     org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})
-    
     if 'list' in org_services_data:
             org_services_data = org_services_data['list']
     else:

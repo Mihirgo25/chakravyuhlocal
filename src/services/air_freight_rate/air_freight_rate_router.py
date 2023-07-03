@@ -13,7 +13,7 @@ from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
 from services.air_freight_rate.air_freight_rate_params import CreateDraftAirFreightRateParams
-
+import json
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 
 extension_router = APIRouter()
@@ -27,7 +27,6 @@ from services.air_freight_rate.interactions.delete_air_freight_rate import delet
 from services.air_freight_rate.interactions.update_air_freight_rate import update_air_freight_rate
 from services.air_freight_rate.interactions.get_air_freight_rate import get_air_freight_rate
 from services.air_freight_rate.interactions.list_air_freight_rate_surcharges import list_air_freight_rate_surcharges
-from services.air_freight_rate.interactions.get_air_freight_rate_surcharge import get_air_freight_rate_surcharge
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
 from services.air_freight_rate.interactions.update_air_freight_rate_surcharge import update_air_freight_rate_surcharge
@@ -59,11 +58,15 @@ from services.air_freight_rate.interactions.get_weight_slabs_for_airline import 
 from services.air_freight_rate.interactions.create_air_freight_rate_feedback import create_air_freight_rate_feedback
 from services.air_freight_rate.interactions.delete_air_freight_rate_request import delete_air_freight_rate_request
 from services.air_freight_rate.interactions.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
+from services.air_freight_rate.interactions.get_air_freight_rate_surcharge import get_air_freight_rate_surcharge
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from params import CreateRateSheet, UpdateRateSheet
+from services.air_freight_rate.interactions.get_air_freight_rate_suggestions import (
+    get_air_freight_rate_suggestions,
+)
 
 air_freight_router = APIRouter()
 
@@ -132,10 +135,10 @@ def get_air_freight_rate_api(
     service_provider_id: str = None,
     shipment_type: str = "box",
     stacking_type: str = "stackable",
-    validity_start: datetime = datetime.now(),
-    validity_end: datetime = datetime.now(),
+    validity_start: datetime = None,
+    validity_end: datetime = None,
     weight: float = None,
-    cargo_readiness_date: datetime = datetime.now(),
+    cargo_readiness_date: date = None,
     price_type: str = None,
     cogo_entity_id: str = None,
     trade_type: str = None,
@@ -147,7 +150,6 @@ def get_air_freight_rate_api(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     request = {
-        "id": id,
         "origin_airport_id": origin_airport_id,
         "destination_airport_id": destination_airport_id,
         "commodity": commodity,
@@ -220,8 +222,8 @@ def get_air_freight_rate_visibility_api(
     service_provider_id: str,
     origin_location_id: str = None,
     destination_location_id: str = None,
-    from_date: datetime = datetime.now(),
-    to_date: datetime = datetime.now(),
+    from_date: date = None,
+    to_date: date = None,
     commodity: str = None,
     rate_id: str = None,
     airline_id: str = None,
@@ -256,13 +258,12 @@ def get_air_freight_rate_visibility_api(
 
 @air_freight_router.get("/get_air_freight_rate_addition_frequency")
 def get_air_freight_rate_addition_frequency_api(
-    group_by: str,filters={}, sort_type: str = "desc", resp: dict = Depends(authorize_token)
+    group_by: str = 'week',filters: str = None, sort_type: str = "desc", resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-
     try:
-        data = get_air_freight_rate_addition_frequency(group_by,filters,sort_type)
+        data = get_air_freight_rate_addition_frequency(group_by= group_by,filters = filters,sort_type = sort_type)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
@@ -319,16 +320,16 @@ def create_air_freight_rate_local_api(
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
 
-    # try:
-    data = create_air_freight_rate_local(request.dict(exclude_none=True))
-    return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(
-    #         status_code=500, content={"success": False, "error": str(e)}
-        # )
+    try:
+        data = create_air_freight_rate_local(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
 
 
 @air_freight_router.post("/create_air_freight_rate_surcharge")
@@ -514,7 +515,7 @@ def get_air_freight_rate_cards_api(
     handling_type: str = "stackable",
     price_type: str = None,
     cogo_entity_id: str = None,
-    additional_services: List[str] = [],
+    additional_services: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -542,6 +543,8 @@ def get_air_freight_rate_cards_api(
     }
 
     try:
+        if additional_services:
+            request['additional_services'] = json.loads(additional_services)
         data = get_air_freight_rate_cards(request)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=data)
@@ -576,7 +579,7 @@ def create_air_freight_rate_request_api(
 def get_air_freight_rate_stats_api(
     validity_start: datetime,
     validity_end: datetime,
-    stats_types: str = None,
+    stats_types: str,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -585,7 +588,7 @@ def get_air_freight_rate_stats_api(
     request = {
         "validity_start": validity_start,
         "validity_end": validity_end,
-        "stats_types": stats_types,
+        'stats_types':json.loads(stats_types),
     }
     try:
         data = get_air_freight_rate_stats(request)
@@ -776,15 +779,11 @@ def update_air_freight_storage_rate_api(
         )
 
 
-from services.air_freight_rate.interactions.get_air_freight_rate_suggestions import (
-    get_air_freight_rate_suggestions,
-)
-
 
 @air_freight_router.get("/get_air_freight_rate_suggestions")
 def get_air_freight_rate_suggestions_api(
-    validity_start: str,
-    validity_end: str,
+    validity_start: datetime,
+    validity_end: datetime,
     searched_origin_airport_id: str = None,
     searched_destination_airport_id: str = None,
     filters: str = None,
@@ -813,14 +812,14 @@ def get_air_freight_rate_suggestions_api(
 def create_air_freight_rate_feedback_api(request: CreateAirFreightRateFeedbackParams, resp: dict = Depends(authorize_token)):
     if resp['status_code']!=200:
         return JSONResponse(status_code=resp['status_code'],content=resp)
-    # try:
-    data=create_air_freight_rate_feedback(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200,content=jsonable_encoder(data))
-    # except HTTPException as e:
-    #     raise 
-    # except Exception as e:
-    #     print(e)
-    #     return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
+    try:
+        data=create_air_freight_rate_feedback(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise 
+    except Exception as e:
+        print(e)
+        return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
     
 
 @air_freight_router.post("/update_air_freight_rate_markup")
@@ -1026,14 +1025,14 @@ def list_air_freight_rates_api(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    data = list_air_freight_rates(filters= filters, page_limit =page_limit,page= page, return_query=return_query,older_rates_required= older_rates_required,all_rates_for_cogo_assured= all_rates_for_cogo_assured,sort_by=sort_by,sort_type=sort_type)
-    return JSONResponse(status_code=200, content=data)
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = list_air_freight_rates(filters= filters, page_limit =page_limit,page= page, return_query=return_query,older_rates_required= older_rates_required,all_rates_for_cogo_assured= all_rates_for_cogo_assured,sort_by=sort_by,sort_type=sort_type)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.get('/get_weight_slabs_for_airline')
 def get_weight_slabs_for_airline_api(airline_id:str,chargeable_weight: float = 0,resp: dict = Depends(authorize_token)):
@@ -1079,7 +1078,7 @@ def get_air_freight_local_rate_cards_api(
     weight :float,
     volume:float,
     airline_id:str=None,
-    additional_services: List[str] = [],
+    additional_services: str = None,
     inco_term:str=None,
     resp:dict =Depends(authorize_token)):
     if resp['status_code']!=200:
@@ -1100,6 +1099,8 @@ def get_air_freight_local_rate_cards_api(
     }
     
     try:
+        if additional_services:
+            request['additional_services'] = json.loads(additional_services)
         data=get_air_freight_local_rate_cards(request)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
