@@ -62,7 +62,6 @@ def execute_transaction_code(request):
             ids=[]
             for val in value:
                 ids.append(uuid.UUID(str(val)))
-            print(";",ids)
             setattr(request_object,attr,ids)
         else:
             setattr(request_object, attr, value)

@@ -66,6 +66,7 @@ def execute(request):
             object.validities= jsonable_encoder(validities)
 
             break
+    object.validate_before_save()
     try:
         object.save()
     except Exception as e:
@@ -115,8 +116,3 @@ def find_object(request):
     except:
         object=None
     return object
-
-
-        
-          
-    

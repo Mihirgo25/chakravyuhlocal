@@ -136,7 +136,6 @@ def apply_available_volume_range_filter(query,filters):
    return query
 
 def apply_available_gross_weight_range_filter(query,filters):
-   print(1234)
    if filters.get('rate_type') == 'market_place':
       return query
    query = query.where(
@@ -144,8 +143,6 @@ def apply_available_gross_weight_range_filter(query,filters):
         ((SQL("CAST(validity->>'available_gross_weight' as numeric)")) <= filters['available_gross_weight_range']['max'])
     
    )
-   print(query)
-
    return query
 
 def apply_achieved_volume_percentage_filter(query,filters):

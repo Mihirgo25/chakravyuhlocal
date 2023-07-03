@@ -64,19 +64,15 @@ def create_air_freight_rate_task (request):
             sid = shipment.get_shipment({'id':request['shipment_id']})['summary']['serial_id']
             task.shipment_serial_ids.append(sid)
             task.shipment_serial_ids = list(set(task.shipment_serial_ids))
-            print(task.shipment_serial_ids)
         except:
             raise HTTPException(status_code = 400, detail = "SID doesn't Exist")
 
     task.validate()
-
     try:
         task.save()
     except:
         raise HTTPException(status_code =500,detail='unable to create task')
-
-    print('12')
-       
+    
     create_audit(request,task.id)
 
     update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')

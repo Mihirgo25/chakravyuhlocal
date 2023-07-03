@@ -16,7 +16,7 @@ def create_audit(request):
         performed_by_id = request['performed_by_id'],
         data = data,
         object_id = request['id'],
-        object_type = 'FclFreightRateTask'
+        object_type = 'AirFreightRateTask'
     )
 
 
@@ -48,7 +48,9 @@ def execute_transaction_code(request):
     for attr, value in update_params.items():
         setattr(task, attr, value)
 
-    if not task.save():
+    try :
+        task.save()
+    except :
         raise HTTPException(status_code = 500, detail = 'Error in update params')
     
     create_audit(request)
@@ -122,12 +124,3 @@ def get_update_params(request):
     else:
         update_params['status'] = 'completed'
     return update_params
-
-
-
-
-
-
-
-
-

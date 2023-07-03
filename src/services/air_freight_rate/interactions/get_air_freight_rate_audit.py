@@ -20,7 +20,6 @@ def get_air_freight_rate_audit(request):
             "sourced_by_id":object.sourced_by_id,
             "updated_at":object.updated_at,
             "performed_by_id":audit.performed_by_id,
-            # "performed_by":""
         }
     else:
         return {}
