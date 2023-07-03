@@ -131,7 +131,7 @@ def get_health_check():
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
 
-from services.air_freight_rate.helpers.air_freight_rate_airline_factors import create_air_freight_rate_airline_factors
+from services.air_freight_rate.estimators.relate_airlines import RelateAirline
 @app.get("/test")
 def test():
-    return create_air_freight_rate_airline_factors()
+    return RelateAirline()

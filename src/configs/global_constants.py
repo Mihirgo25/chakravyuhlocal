@@ -130,13 +130,13 @@ COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
 DEFAULT_WEIGHT_SLABS=[
     {
         'lower_limit':0.0,
-        'upper_limit':50,
+        'upper_limit':45,
         'tariff_price':0,
         'currency':'INR',
         'unit':'per_kg'
     },
     {
-        'lower_limit':50.1,
+        'lower_limit':45.1,
         'upper_limit':100.0,
         'currency':'INR',
         'tariff_price':0,
@@ -160,18 +160,11 @@ DEFAULT_WEIGHT_SLABS=[
 
     },{
         'lower_limit':500.1,
-        'upper_limit':1000.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-    },{
-        'lower_limit':1000.1,
-        'upper_limit':10000,
+        'upper_limit':5000.0,
         'currency':'INR',
         'tariff_price':0,
         'unit':'per_kg'
     }
-
 ]
 DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
 
