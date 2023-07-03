@@ -63,7 +63,7 @@ def get_create_params(request):
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',
-        'location_id':request.get('location_id'),
+        'port_id':request.get('port_id'),
         'country_id':request.get('country_id'),
         'trade_type':request.get('trade_type'),
         'trade_id':request.get('trade_id'),

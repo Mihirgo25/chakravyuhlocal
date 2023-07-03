@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, date
 from peewee import *
 from typing import List
 
@@ -49,7 +49,7 @@ class CreateFclCfsRateRequest(BaseModel):
     performed_by_type: str
     preferred_rate: float = None
     preferred_rate_currency: str= None
-    cargo_readiness_date: datetime = None
+    cargo_readiness_date: date = None
     remarks:list[str] =[]
     booking_params : dict = {}
     container_size: str = None
