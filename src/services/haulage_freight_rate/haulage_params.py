@@ -157,6 +157,6 @@ class HaulageFreightRateEstimation(BaseModel):
   destination_location_id: str
   container_size: str
   containers_count: int = None
-  container_type: int = None
+  container_type: str = None
   commodity: str = None
   cargo_weight_per_container: int = None

@@ -10,6 +10,7 @@ from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS, TRAILER_TYPES
 from database.rails_db import get_shipping_line,  get_organization
 from configs.haulage_freight_rate_constants import RATE_TYPES
+from params import HaulageLineItem
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -191,9 +192,20 @@ class HaulageFreightRate(BaseModel):
     def validate_service_provider_id(self):
         if not self.service_provider_id:
             raise HTTPException(status_code=400, detail="service provider not found")
+        service_provider_data = get_organization(id=self.service_provider_id)
+        if len(service_provider_data) == 0:
+            raise HTTPException(status_code=400, detail="Invalid service provider ID")
+
+    def validate_importer_exporter_id(self):
+        if not self.importer_exporter_id:
+            return
+
+        importer_exporter_data = get_organization(id=self.importer_exporter_id)
+        if len(importer_exporter_data) == 0:
+            raise HTTPException(status_code=400, detail="Invalid importer exporter ID")
 
     def validate_trip_type(self):
-        if self.transport_modes[0] == 'trailer' and self.trip_type not in TRIP_TYPES:
+        if self.transport_modes[0] == 'trailer' and self.trip_type and  self.trip_type not in TRIP_TYPES:
             raise HTTPException(status_code=400, detail="Invalid trip type")
     
     def validate_line_items(self):
@@ -267,6 +279,20 @@ class HaulageFreightRate(BaseModel):
         self.validate_line_items()
         self.validate_commodity()
         return True
+
+    def validate_validity_object(self, validity_start, validity_end):
+        if self.transport_modes[0] != 'trailer':
+            return
+        
+        if not validity_start:
+            raise HTTPException(status_code=400, detail="validity_start is invalid")
+        
+        if not validity_end:
+            raise HTTPException(status_code=400, detail="validity_end is invalid")
+
+        if validity_end < validity_start:
+            raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
+        
       
     def get_mandatory_line_items(self,mandatory_charge_codes):
         mandatory_line_items = [line_item for line_item in self.line_items if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
@@ -477,3 +503,41 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.trailer_type == self.trailer_type,
             HaulageFreightRate.rate_not_available_entry == True
         ).execute()
+
+            
+    def validate_before_save(self):
+        self.validate_container_size()
+        self.validate_container_type()
+        self.validate_haulage_type()
+        self.validate_transport_modes()
+        self.validate_transit_time()
+        self.validate_detention_free_time()
+        self.validate_shipping_line_id()
+        self.validate_service_provider_id()
+        self.validate_importer_exporter_id()
+        self.validate_trip_type()
+        self.validate_line_items()
+        self.validate_origin_location()
+        self.validate_destination_location()
+        self.validate_commodity()
+        return True
+
+
+       
+
+
+        
+
+class FclFreightRateValidity(BaseModel):
+    validity_start: datetime.date
+    validity_end: datetime.date
+    remarks: list[str] = []
+    line_items: list[HaulageLineItem] = []
+    price: float
+    platform_price: float = None
+    currency: str
+    schedule_type: str = None
+    payment_term: str = None
+    id: str
+    likes_count: int = None
+    dislikes_count: int = None

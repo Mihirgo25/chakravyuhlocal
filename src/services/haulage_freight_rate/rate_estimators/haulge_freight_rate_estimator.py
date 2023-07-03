@@ -63,9 +63,9 @@ class HaulageFreightRateEstimator:
 
     def estimate(self):
         input = {"origin_location_id": self.origin_location_id, "destination_location_id": self.destination_location_id}
-        data = maps.get_is_land_service_possible(input)
-        if not data["route_status"]:
-            raise HTTPException(status_code=400, detail="route not possible")
+        # data = maps.get_is_land_service_possible(input)
+        # if not data["route_status"]:
+        #     raise HTTPException(status_code=400, detail="route not possible")
         locations_data, location_category, country_code = self.get_location_data_and_category()
         self.convert_general_params_to_estimation_params(location_category)
 
