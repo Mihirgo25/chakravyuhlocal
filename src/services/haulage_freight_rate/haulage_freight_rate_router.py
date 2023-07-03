@@ -399,7 +399,6 @@ def get_haulage_freight_rate_visibility_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
    
-
 @haulage_freight_router.get("/get_haulage_freight_rate_cards")
 def get_haulage_freight_rate_cards_data(
     container_size: str,
