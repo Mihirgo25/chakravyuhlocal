@@ -55,8 +55,10 @@ class FtlFreightRate(BaseModel):
     procured_by = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    
-
+    mode = CharField(default = 'manual', index=True, null = True)
+    accuracy = FloatField(default = 100, null = True)
+    init_key = TextField(index=True, null=True)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FtlFreightRate, self).save(*args, **kwargs)

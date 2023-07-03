@@ -374,3 +374,5 @@ AVERAGE_SPEEDS = {
     'medium':80,
     'heavy':75
 }
+
+DEFAULT_RATE_TYPE = 'market_place'  
