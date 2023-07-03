@@ -151,5 +151,11 @@ class CreateHaulageFreightRateBulkOperation(BaseModel):
   delete_rate: DeleteRate = None
   add_markup: AddMarkup = None
 
-
-  
+class HaulageFreightRateEstimation(BaseModel):
+  origin_location_id: str
+  destination_location_id: str
+  container_size: str
+  containers_count: int = None
+  container_type: int = None
+  commodity: str = None
+  cargo_weight_per_container: int = None
