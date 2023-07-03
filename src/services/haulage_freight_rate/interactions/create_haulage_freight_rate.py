@@ -45,17 +45,14 @@ def create_haulage_freight_rate(request):
         'trip_type': request.get('trip_type'),
         'commodity': request.get('commodity'),
         'importer_exporter_id': request.get('importer_exporter_id'),
-        'cogo_entity_id': request.get('cogo_entity_id'),
         'shipping_line_id': request.get('shipping_line_id'),
         'transport_modes_keyword': '_'.join(transport_modes),
-        'sourced_by_id': request.get('sourced_by_id'),
-        'procured_by_id': request.get('procured_by_id'),
         'mode': request.get('mode', "manual"),
         'accuracy': request.get('accuracy', 100),
         'rate_type': request.get("rate_type", DEFAULT_RATE_TYPE)
     }
 
-    init_key = f'{str(params.get("origin_location_id"))}:{str(params.get("destination_location_id"))}:{str(params.get("container_size"))}:{str(params.get("container_type"))}:{str(params.get("commodity", ""))}:{str(params.get("service_provider_id"))}:{str(params.get("shipping_line_id", ""))}:{str(params.get("haulage_type"))}:{str(params.get("transit_time", ""))}:{str(params.get("detention_free_time", ""))}:{str(params.get("trailer_type", ""))}:{str(params.get("trip_type", ""))}:{str(params.get("importer_exporter_id", ""))}:{str(params.get("cogo_entity_id", ""))}'
+    init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["shipping_line_id"] or "")}:{str(params["haulage_type"])}:{str(params["trailer_type"] or "")}:{str(params["trip_type"] or "")}:{str(params["importer_exporter_id"] or "")}'
     haulage_freight_rate = (
         HaulageFreightRate.select().where(
         HaulageFreightRate.init_key == init_key,
@@ -75,20 +72,22 @@ def create_haulage_freight_rate(request):
     haulage_freight_rate.transport_modes = request.get('transport_modes')
     haulage_freight_rate.validity_start = request.get('validity_start')
     haulage_freight_rate.validity_end = request.get('validity_end')
-
+    haulage_freight_rate.procured_by_id = request.get('procured_by_id')
+    haulage_freight_rate.sourced_by_id = request.get('sourced_by_id')
+    
     haulage_freight_rate.validate_validity_object(haulage_freight_rate.validity_start,haulage_freight_rate.validity_end)
 
     haulage_freight_rate.set_platform_price()
     haulage_freight_rate.set_is_best_price()
+    haulage_freight_rate.rate_not_available_entry = False
 
     haulage_freight_rate.validate_before_save()
-    
+    haulage_freight_rate.update_line_item_messages(haulage_freight_rate.possible_charge_codes())
+
     try:
         haulage_freight_rate.save()
     except Exception as e:
         raise HTTPException(status_code=400, detail="rate not saved")
-
-    haulage_freight_rate.update_line_item_messages(haulage_freight_rate.possible_charge_codes())
 
     if not haulage_freight_rate.importer_exporter_id:
         haulage_freight_rate.delete_rate_not_available_entry()
