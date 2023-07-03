@@ -51,4 +51,4 @@ def create_audit(request, draft_fcl_local_id):
       )
     except Exception as e:
       print('errr audit errr', e)
-      raise HTTPException(status_code=500, detail='draft fcl freight local audit did not save')
+      raise
