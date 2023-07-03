@@ -635,3 +635,13 @@ def air_customs_functions_delay(self,air_customs_object,request):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def bulk_operation_perform_action_functions_air_customs_delay(self, action_name, object):
+    try:
+        eval(f"object.perform_{action_name}_action()")
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

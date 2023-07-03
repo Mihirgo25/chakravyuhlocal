@@ -3,7 +3,7 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.json_encoder import json_encoder
 import json
 from services.air_customs_rate.models.air_customs_rate_feedback import AirCustomsRateFeedback
-from database.rails_db import get_partner_user_experties, get_organization_service_experties
+from database.rails_db import get_partner_user_experties
 from datetime import datetime
 from math import ceil
 from peewee import fn

@@ -26,9 +26,6 @@ def get_air_customs_rate_cards(request):
             "list": []
         }
 
-
-
-
 def initialize_air_customs_rate_query(request):
     query = AirCustomsRate.select(
         AirCustomsRate.line_items,
