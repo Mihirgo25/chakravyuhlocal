@@ -92,7 +92,6 @@ from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
-from services.fcl_freight_rate.interaction.list_fcl_freight_rate_deviations import list_fcl_freight_rate_deviations
 
 fcl_freight_router = APIRouter()
 
@@ -877,7 +876,7 @@ def list_fcl_freight_rate_feedbacks_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_fcl_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required, booking_details_required)
+        data = list_fcl_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required,booking_details_required)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
