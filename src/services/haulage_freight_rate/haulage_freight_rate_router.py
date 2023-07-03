@@ -55,13 +55,44 @@ from typing import List,Union
 
 haulage_freight_router = APIRouter()
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
-from services.haulage_freight_rate.interactions.create_haulage_freight_rate_feedback import create_haulage_freight_rate_feedback
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate import update_haulage_freight_rate
 from services.haulage_freight_rate.haulage_params import *
 from services.haulage_freight_rate.interactions.list_haulage_freight_rate_feedback import list_haulage_freight_rate_feedbacks
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_feedback import delete_haulage_freight_rate_feedback
-from services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation import get_haulage_freight_rate_estimation
 
+
+@haulage_freight_router.get("/get_estimated_haulage_freight_rate")
+def get_haulage_freight_rates(
+    origin_location_id: str,
+    destination_location_id: str,
+    commodity: str = None,
+    containers_count: int = None,
+    container_type: str = None,
+    container_size: str = None,
+    cargo_weight_per_container: float = None,
+    resp: dict = Depends(authorize_token),
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = haulage_rate_calculator(
+            origin_location_id,
+            destination_location_id,
+            commodity,
+            containers_count,
+            container_type,
+            container_size,
+            cargo_weight_per_container,
+        )
+        data = jsonable_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
 
 
 @haulage_freight_router.get("/get_haulage_freight_rate")
@@ -117,8 +148,8 @@ def create_haulage_freight_rate_func(request: CreateHaulageFreightRate, resp: di
     try:
         rate = create_haulage_freight_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    # except HTTPException as e:
-    #     raise
+    except HTTPException as e:
+        raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
