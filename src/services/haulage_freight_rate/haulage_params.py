@@ -160,3 +160,10 @@ class HaulageFreightRateEstimation(BaseModel):
   container_type: str = None
   commodity: str = None
   cargo_weight_per_container: int = None
+
+class DeleteHaulageFreightRate(BaseModel):
+  id: str
+  performed_by_id: str = None
+  bulk_operation_id: str = None
+  sourced_by_id: str = None
+  procured_by_id: str = None
