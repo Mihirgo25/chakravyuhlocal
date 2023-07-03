@@ -34,9 +34,9 @@ def get_customs_object(object):
         validation['error']+=  ' ' + f"{object['rate_type']} is invalid, valid rate types are {RATE_TYPES}"
 
     custom.line_items = object.get('line_items')
-    # try:
-    #     custom.validate_invalid_line_items()
-    # except HTTPException as e:
-    #     validation['error']+=' ' + str(e.detail)
+    try:
+        custom.validate_before_save()
+    except HTTPException as e:
+        validation['error']+=' ' + str(e.detail)
 
     return validation
