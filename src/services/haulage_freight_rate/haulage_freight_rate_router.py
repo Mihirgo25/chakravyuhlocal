@@ -44,24 +44,29 @@ from services.haulage_freight_rate.interactions.get_haulage_freight_rate_visibil
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_visibility import (
     get_haulage_freight_rate_visibility,
 )
-from services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation import get_haulage_freight_rate_estimation
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_cards import (
+    get_haulage_freight_rate_cards
+)
 
 from typing import List,Union
 
 haulage_freight_router = APIRouter()
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
+from services.haulage_freight_rate.interactions.create_haulage_freight_rate_feedback import create_haulage_freight_rate_feedback
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate import update_haulage_freight_rate
 from services.haulage_freight_rate.haulage_params import *
 from services.haulage_freight_rate.interactions.list_haulage_freight_rate_feedback import list_haulage_freight_rate_feedbacks
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_feedback import delete_haulage_freight_rate_feedback
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_estimation import get_haulage_freight_rate_estimation
 
 
-@haulage_freight_router.get("/get_estimated_haulage_freight_rate")
+@haulage_freight_router.post("/get_estimated_haulage_freight_rate")
 def get_haulage_freight_rates(request: HaulageFreightRateEstimation ,resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
+        request = jsonable_encoder(request)
         data = get_haulage_freight_rate_estimation(request)
         data = jsonable_encoder(data)
         return JSONResponse(status_code=200, content=data)
@@ -69,9 +74,7 @@ def get_haulage_freight_rates(request: HaulageFreightRateEstimation ,resp: dict 
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
 
 @haulage_freight_router.get("/get_haulage_freight_rate")
@@ -127,8 +130,8 @@ def create_haulage_freight_rate_func(request: CreateHaulageFreightRate, resp: di
     try:
         rate = create_haulage_freight_rate(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    except HTTPException as e:
-        raise
+    # except HTTPException as e:
+    #     raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
@@ -381,4 +384,61 @@ def get_haulage_freight_rate_visibility_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     
    
+@haulage_freight_router.get("/get_haulage_freight_rate_cards")
+def get_haulage_freight_rate_cards_data(
+    container_size: str,
+    container_type: str,
+    containers_count: int,
+    origin_location_id: str = None,
+    destination_location_id: str = None,
+    origin_city_id: str = None,
+    destination_city_id: str = None,
+    origin_country_id: str = None,
+    destination_country_id: str = None,
+    commodity: str = None,
+    shipping_line_id: str = None,
+    haulage_type: str = None,
+    transport_mode: str = None,
+    importer_exporter_id: str = None,
+    cargo_weight_per_container: int = None,
+    additional_services: Union[List[str],None]= Query(None),
+    include_confirmed_inventory_rates: bool = False,
+    include_additional_response_data: bool = False,
+    trip_type: str = None,
+    predicted_rate: bool = False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'container_size' : container_size,
+        'container_type': container_type,
+        'containers_count': containers_count,
+        'origin_location_id': origin_location_id,
+        'destination_location_id': destination_location_id,
+        'origin_city_id': origin_city_id,
+        'destination_city_id': destination_city_id,
+        'origin_country_id': origin_country_id,
+        'destination_country_id': destination_country_id,
+        'commodity': commodity,
+        'shipping_line_id': shipping_line_id,
+        'haulage_type': haulage_type,
+        'transport_mode': transport_mode,
+        'importer_exporter_id': importer_exporter_id,
+        'cargo_weight_per_container': cargo_weight_per_container,
+        'additional_services': additional_services,
+        'include_confirmed_inventory_rates': include_confirmed_inventory_rates,
+        'include_additional_response_data': include_additional_response_data,
+        'trip_type': trip_type,
+        'predicted_rate': predicted_rate
+
+    }
+    try:
+        data = get_haulage_freight_rate_cards(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
     

@@ -1,10 +1,17 @@
 import sentry_sdk
 import traceback
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import (
+    HaulageFreightRateAudit,
+)
 from datetime import datetime, timedelta
 from configs.haulage_freight_rate_constants import LOCATION_PAIR_HIERARCHY
 from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
+from database.rails_db import get_organization, get_user, get_eligible_orgs
+from micro_services.client import common, maps
+from itertools import groupby
+
 
 
 def initialize_query(requirements, query):
@@ -13,11 +20,13 @@ def initialize_query(requirements, query):
         requirements.get("origin_city_id"),
         requirements.get("origin_country_id"),
     ]
+    origin_location_ids = list(filter(lambda x: x is not None, origin_location_ids))
     destination_location_ids = [
         requirements.get("destination_location_id"),
         requirements.get("destination_city_id"),
         requirements.get("destination_country_id"),
     ]
+    destination_location_ids = list(filter(lambda x: x is not None, destination_location_ids))
     if requirements.get("trip_type") == "round":
         requirements["trip_type"] = "round_trip"
 
@@ -133,8 +142,9 @@ def build_line_item_object(line_item, requirements):
     )
     line_item["total_price"] = line_item["quantity"] * line_item["price"]
     line_item["name"] = code_config["name"]
+    line_item["source"] = "system"
 
-    return
+    return line_item
 
 
 def build_response_object(result, requirements):
@@ -170,49 +180,179 @@ def build_response_object(result, requirements):
             for required_line_item in line_item:
                 if required_line_item["code"] != "BAS":
                     continue
-                line_item["total_price"] = build_line_item_object()
+                line_item["total_price"] = (
+                    float(build_line_item_object(required_line_item)["total_price"])
+                    * float(line_item["price"])
+                ) / 100
+                line_item["quantity"] = requirements["containers_count"]
+                line_item["unit"] = "per_trailer"
+                line_item["price"] = line_item["total_price"] / line_item["quantity"]
+                code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
+                line_item["name"] = code_config["name"]
+        else:
+            line_item = build_line_item_object(line_item)
+
+        if not line_item:
+            continue
+        response_object["line_items"] = line_item
+
+    return response_object
 
 
 def build_response_list(requirements, query_results):
-    list = []
-    if not requirements.get("origin_location_id"):
-        grouped_query_results = {}
+    data = []
+    grouped_query_results = {}
 
-        for result in query_results:
-            key = tuple(
-                result[key]
-                for key in [
-                    "origin_location_id",
-                    "service_provider_id",
-                    "shipping_line_id",
-                    "haulage_type",
-                    "transport_modes_keyword",
-                ]
-            )
-            if key not in grouped_query_results:
-                grouped_query_results[key] = []
-            grouped_query_results[key].append(result)
-        grouped_query_results = query_results
+    if not requirements.get("origin_location_id"):
+        sorted_rates = sorted(query_results, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
+
+        for (origin_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword), group in groupby(sorted_rates, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
+            grouped_query_results[(origin_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword)] = list(group)
+
     elif not requirements.get("destination_location_id"):
-        grouped_query_results = query_results
+        sorted_rates = sorted(query_results, key=lambda t: (t['destination_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
+
+        for (destination_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword), group in groupby(sorted_rates, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
+            grouped_query_results[(destination_location_id, service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword)] = list(group)
+
     else:
-        grouped_query_results = query_results
+        sorted_rates = sorted(query_results, key=lambda t: ( t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
+
+        for (service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword), group in groupby(sorted_rates, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
+            grouped_query_results[(service_provider_id, shipping_line_id, haulage_type, transport_modes_keyword)] = list(group)
 
     for key, results in grouped_query_results.items():
-        results = sorted(
-            results,
-            key=lambda t: LOCATION_PAIR_HIERARCHY[
-                t["origin_destination_location_type"]
-            ],
-        )
-        result = results[0].get("importer_exporter_id")
+        results = sorted(results, key=lambda t: LOCATION_PAIR_HIERARCHY[t['origin_destination_location_type']])
+        result = next((t for t in results if t.get('importer_exporter_id')), None)
         if not result:
-            result = results[0]
-        response_object = build_response_object(result, requirements)
+            return results[0]
+        response_object = build_response_object(result)
         if response_object:
-            list.append(response_object)
+            data.append(response_object)
 
-    return list
+    return data
+
+
+# inclomplete
+def ignore_non_eligible_service_providers(requirements, data):
+    ids = get_eligible_orgs("haulage_freight")
+    data = [rate for rate in data if rate["service_provider_id"] in ids]
+    if (
+        not data
+        and requirements.get("predicted_rate")
+        and requirements.get("origin_location_id")
+        and requirements.get("destination_location_id")
+    ):
+        keys_to_slice = [
+            "origin_location_id",
+            "destination_location_id",
+            "container_size",
+            "containers_count",
+            "container_type",
+            "commodity",
+            "cargo_weight_per_container",
+            "trip_type",
+        ]
+        estimation_params = {
+            key: requirements[key] for key in keys_to_slice if key in requirements
+        }
+        response = None
+        if requirements.get("transport_modes") == "trailer":
+            response = response
+        elif requirements.get("transport_modes") == "haulage":
+            response = response
+
+        if response:
+            requirements["predicted_rate"] = False
+            data = get_haulage_freight_rate_cards(requirements)["list"]
+
+    return data
+
+
+def ignore_non_active_shipping_lines(data):
+    shipping_line_ids = list(set(map(lambda ids: ids["shipping_line_id"], data)))
+    shipping_line_ids = [id for id in shipping_line_ids if id is not None]
+    if not shipping_line_ids:
+        return data
+    shipping_line = maps.list_operators(
+        {
+            "filters": {
+                "id": shipping_line_ids,
+                "operator_type": "shipping_line",
+                "status": "active",
+            }
+        }
+    )["list"]
+    shipping_line_ids = list(map(lambda x: x["id"], shipping_line))
+    final_data = [
+        addon_data
+        for addon_data in data
+        if not addon_data["shipping_line_id"]
+        or addon_data["shipping_line_id"] in shipping_line_ids
+    ]
+
+    return final_data
+
+
+# incomplete
+def additional_response_data(data):
+    names = list(
+        map(
+            lambda service_provider_id: service_provider_id["service_provider_id"], data
+        )
+    )
+    names = [user["name"] for user in users]
+
+    service_provider_ids = list(
+        set(
+            map(
+                lambda service_provider_id: service_provider_id["service_provider_id"],
+                data,
+            )
+        )
+    )
+    service_providers = get_organization(id=service_provider_ids)
+    audit_ids = list(map(lambda ids: ids["id"], data))
+    audits = list(HaulageFreightRateAudit.select().where(object_id=audit_ids).dicts())
+    # org_users = get_user()
+    # will have to look into this
+    sourced_by_ids = list(
+        map(lambda sourced_by_id: sourced_by_id["sourced_by_id"], audits)
+    )
+    users = get_user(id=sourced_by_ids)
+
+    for addon_data in data:
+        service_providers = [
+            service_provider
+            for service_provider in service_providers
+            if service_provider["id"] == data["service_provider_id"]
+        ][0]["short_name"]
+        addon_data["service_provider_name"] = service_providers
+        audits_object = next(
+            filter(lambda t: t["object_id"] == addon_data["id"], audits), None
+        )
+        user = next(
+            filter(lambda t: t["id"] == audits_object["sourced_by_id"], users), None
+        )
+        # if not here then org user
+        addon_data["user_name"] = user["name"]
+        addon_data["user_contact"] = user["mobile_number"]
+        addon_data["last_updated_at"] = audits_object["updated_at"]
+        addon_data["buy_rate_currency"] = "INR"
+        addon_data["buy_rate"] = addon_data["line_items"]
+        total_price = 0
+        for line_item in addon_data["line_item"]:
+            total_price += int(
+                common.get_money_exchange_for_fcl(
+                    {
+                        "price": line_item["price"],
+                        "from_currency": line_item["currency"],
+                        "to_currency": addon_data["buy_rate_currency"],
+                    }
+                )["price"]
+            )
+        addon_data["buy_rate"] = total_price
+    return data
 
 
 def get_haulage_freight_rate_cards(requirements):
@@ -244,10 +384,15 @@ def get_haulage_freight_rate_cards(requirements):
     }]
     """
     try:
-        query = select_fields(requirements)
+        query = select_fields()
         query = initialize_query(requirements, query)
         query_results = get_query_results(query)
         list = build_response_list(requirements, query_results)
+        list = ignore_non_eligible_service_providers(requirements, list)
+        list = ignore_non_active_shipping_lines(list)
+        if requirements.get("include_additional_response_data"):
+            list = additional_response_data(list)
+        return {"list": list}
 
     except Exception as e:
         traceback.print_exc()
