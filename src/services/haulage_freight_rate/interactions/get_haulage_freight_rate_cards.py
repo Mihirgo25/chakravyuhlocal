@@ -18,11 +18,13 @@ def initialize_query(requirements, query):
         requirements.get("origin_city_id"),
         requirements.get("origin_country_id"),
     ]
+    origin_location_ids = list(filter(lambda x: x is not None, origin_location_ids))
     destination_location_ids = [
         requirements.get("destination_location_id"),
         requirements.get("destination_city_id"),
         requirements.get("destination_country_id"),
     ]
+    destination_location_ids = list(filter(lambda x: x is not None, destination_location_ids))
     if requirements.get("trip_type") == "round":
         requirements["trip_type"] = "round_trip"
 
@@ -196,43 +198,35 @@ def build_response_object(result, requirements):
 
 
 def build_response_list(requirements, query_results):
-    list = []
-    if not requirements.get("origin_location_id"):
-        grouped_query_results = {}
+    # pending for now
+    # from itertools import groupby
 
-        for result in query_results:
-            key = tuple(
-                result[key]
-                for key in [
-                    "origin_location_id",
-                    "service_provider_id",
-                    "shipping_line_id",
-                    "haulage_type",
-                    "transport_modes_keyword",
-                ]
-            )
-            if key not in grouped_query_results:
-                grouped_query_results[key] = []
-            grouped_query_results[key].append(result)
-        grouped_query_results = query_results
-    elif not requirements.get("destination_location_id"):
-        grouped_query_results = query_results
-    else:
-        grouped_query_results = query_results
+    # list = []
+    # if not requirements.get("origin_location_id"):
+    #     grouped_query_results = []
+    #     query_results.sort(key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword']))
 
-    for key, results in grouped_query_results.items():
-        results = sorted(
-            results,
-            key=lambda t: LOCATION_PAIR_HIERARCHY[
-                t["origin_destination_location_type"]
-            ],
-        )
-        result = results[0].get("importer_exporter_id")
-        if not result:
-            result = results[0]
-        response_object = build_response_object(result, requirements)
-        if response_object:
-            list.append(response_object)
+    #     for key, group in groupby(query_results, key=lambda t: (t['origin_location_id'], t['service_provider_id'], t['shipping_line_id'], t['haulage_type'], t['transport_modes_keyword'])):
+    #         grouped_query_results.append(list(group))
+
+    # elif not requirements.get("destination_location_id"):
+    #     grouped_query_results = query_results
+    # else:
+    #     grouped_query_results = query_results
+
+    # for key, results in grouped_query_results.items():
+    #     results = sorted(
+    #         results,
+    #         key=lambda t: LOCATION_PAIR_HIERARCHY[
+    #             t["origin_destination_location_type"]
+    #         ],
+    #     )
+    #     result = results[0].get("importer_exporter_id")
+    #     if not result:
+    #         result = results[0]
+    #     response_object = build_response_object(result, requirements)
+    #     if response_object:
+    #         list.append(response_object)
 
     return list
 
@@ -388,7 +382,7 @@ def get_haulage_freight_rate_cards(requirements):
     }]
     """
     try:
-        query = select_fields(requirements)
+        query = select_fields()
         query = initialize_query(requirements, query)
         query_results = get_query_results(query)
         list = build_response_list(requirements, query_results)
