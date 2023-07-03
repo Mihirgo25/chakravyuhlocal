@@ -18,7 +18,7 @@ def execute_transaction_code(request):
         AirCustomsRate.commodity == request.get('commodity'),
         AirCustomsRate.rate_type == request.get('rate_type'),
     ).first()
-      
+
   if not air_customs_rate:
     air_customs_rate = AirCustomsRate(**params)
     air_customs_rate.set_airport()
