@@ -9,6 +9,9 @@ from database.rails_db import *
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
+from services.haulage_freight_rate.interactions.list_haulage_freight_rates import list_haulage_freight_rates
+from services.haulage_freight_rate.interactions.delete_haulage_freight_rate import delete_haulage_freight_rate
+from services.haulage_freight_rate.interactions.update_haulage_freight_rate import update_haulage_freight_rate
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
 
