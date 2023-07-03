@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 from database.db_session import db
@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 # from database.create_tables import create_table
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
-# from db_migration import run_migration
+# from database.db_migration import run_migration
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
@@ -21,7 +21,11 @@ from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.trailer_freight_rates.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
+
+from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
+from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from micro_services.client import *
+from database.db_support import get_db
 
 sentry_sdk.init(
     dsn=SENTRY_DSN if APP_ENV == "production" else None,
@@ -33,7 +37,7 @@ sentry_sdk.init(
 
 docs_url = None if APP_ENV == "production" else "/docs"
 
-app = FastAPI(docs_url=docs_url, debug=True)
+app = FastAPI(docs_url=docs_url, debug=True,dependencies=[Depends(get_db)])
 
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'])
@@ -44,6 +48,8 @@ app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Tra
 app.include_router(prefix="/fcl_freight_rate", router=nandi_router, tags=['Error Detection (Nandi)'])
 app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, tags=['Haulage Freight Rate'])
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
+app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
+app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
 
 
 

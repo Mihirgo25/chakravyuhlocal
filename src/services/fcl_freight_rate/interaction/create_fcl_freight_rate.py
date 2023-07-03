@@ -7,6 +7,7 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 
 def add_rate_properties(request,freight_id):
@@ -52,6 +53,7 @@ def create_audit(request, freight_id):
         object_id=freight_id,
         object_type="FclFreightRate",
         source=request.get("source"),
+        extended_from_object_id=request.get('extended_from_object_id')
     )
     return id
 
@@ -119,27 +121,26 @@ def create_fcl_freight_rate(request):
 
     if request.get("origin_local") and "line_items" in request["origin_local"]:
         freight.origin_local = {
-            "line_items": request["origin_local"]["line_items"]
+            "line_items": get_normalized_line_items(request["origin_local"]["line_items"])
         }
     else:
         freight.origin_local = { "line_items": [] }
 
     if request.get("destination_local") and "line_items" in request["destination_local"]:
         freight.destination_local = {
-            "line_items": request["destination_local"]["line_items"]
+            "line_items": get_normalized_line_items(request["destination_local"]["line_items"])
         }
     else:
         freight.destination_local = { "line_items": [] }
 
+    source = request.get("source")
+    line_items = get_flash_booking_rate_line_items(request) if source == "flash_booking" else request.get("line_items") 
+
+    line_items = get_normalized_line_items(line_items)
+
     if 'rate_sheet_validation' not in request and row['rate_type'] != "cogo_assured":
         freight.validate_validity_object(request["validity_start"], request["validity_end"])
-        freight.validate_line_items(request.get("line_items"))
-
-    source = request.get("source")
-    line_items = request.get("line_items")
-
-    if source == "flash_booking":
-        line_items = get_flash_booking_rate_line_items(request)
+        freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request['validities'])
@@ -151,6 +152,7 @@ def create_fcl_freight_rate(request):
             request.get("schedule_type"),
             False,
             request.get("payment_term"),
+            request.get('tag')
         )
 
     freight.set_platform_prices(row["rate_type"])
@@ -195,6 +197,9 @@ def create_fcl_freight_rate(request):
 
     if request.get('fcl_freight_rate_request_id'):
         update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+
+    if request.get('fcl_freight_rate_feedback_id'):
+        update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
 
     return {"id": freight.id}
 
@@ -284,6 +289,7 @@ def validate_value_props(v_props):
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
+
 
 
     

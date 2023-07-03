@@ -720,12 +720,13 @@ def list_fcl_freight_rates_data(
     return_query: bool = False,
     expired_rates_required: bool = False,
     all_rates_for_cogo_assured: bool = False,
+    return_count: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured)
+        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured, return_count)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -1846,5 +1847,24 @@ def get_suggested_cogo_assured_fcl_freight_rates_data(
         raise
     except Exception as e:
         # raise
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.get("/list_fcl_freight_rate_deviations")
+def list_fcl_freight_rate_deviation(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_fcl_freight_rate_deviations(filters, page_limit, page)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
