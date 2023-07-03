@@ -1,0 +1,174 @@
+CTGC:
+  name: "Carting Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+LCC:
+  name: "Lashing & Choking Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+WRSC:
+  name: "Wrapping & Strapping Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+DSI:
+  name: "Document Stamp Tax Import"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+QDF:
+  name: "Quarantine And Disinfection Fee"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+FC:
+  name: "Fumigation"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+CFSCLO:
+  name: "CFS Lift On/Off Charges"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+PTC:
+  name: "Palletization"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+PLI:
+  name: "Paper Lining Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+ICDS:
+  name: "ICD Stuffing"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: location['is_icd']
+  tags: ['mandatory']
+ICDDS:
+  name: "ICD Destuffing"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: location['is_icd']
+  tags: ['destuffing_at_dock']
+WRC:
+  name: "Warai Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+LBC:
+  name: "Labour Charges"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['dpd_cfs_dock_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+CFSTHC:
+  name: "CFS Transportation & Handling Charges"
+  units: ['per_container']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['stuffing_at_dock']
+CFS:
+  name: "Container Freight Station Charge"
+  units: ['per_container']
+  trade_types: ['import', 'export']
+  condition: true
+  tags: ['mandatory', 'stuffing_at_dock', 'dpd_cfs_factory_destuffing', 'dpd_cfs_dock_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing', 'slab_cargo_weight_per_container']
+LOLO:
+  name: "Lift on/Lift off charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['dpd_cfs_dock_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+ADCRC:
+  name: "AD Code Registration Charges"
+  trade_types: ['export']
+  units: ['per_shipment']
+  condition: true
+  tags: ["additional_service", "stuffing_at_dock", "stuffing_at_factory"]
+SYC:
+  name: "Survey Charges"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ["stuffing_at_dock"]
+GR:
+  name: "Ground Rent"
+  units: ["per_container"]
+  trade_types: ['export']
+  condition: true
+  tags: ["stuffing_at_dock", "shipment_execution_service"]
+LC:
+  name: "Loading Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ["stuffing_at_dock"]
+ULC:
+  name: "Unloading Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ["dock_destuffing"]
+SC:
+  name: "Stuffing Charge"
+  units: ['per_container']
+  trade_types: ['export']
+  condition: true
+  tags: ["stuffing_at_dock", "stuffing_at_factory", 'slab_cargo_weight_per_container']
+DSC:
+  name: "Destuffing Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ["mandatory", "dpd_cfs_dock_destuffing", 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing', 'slab_cargo_weight_per_container']
+EFC:
+  name: "Excise Filing Charge"
+  units: ['cargo_value_percentage']
+  trade_types: ['export']
+  condition: true
+  tags: ["stuffing_at_factory", "additional_service"]
+PDPDC:
+  name: "Port DPD Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ["mandatory", "dpd_without_cfs"]
+SLC:
+  name: "Shipping Line Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ["mandatory", 'dpd_cfs_factory_destuffing', 'dpd_cfs_dock_destuffing', 'dpd_without_cfs', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing']
+ECDOC:
+  name: "Empty Container Drop Off Charge"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ["dpd_cfs_dock_destuffing", 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+RENC:
+  name: "Renomination Charges"
+  units: ['per_container']
+  trade_types: ['import']
+  condition: true
+  tags: ['mandatory', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']
+CEC:
+  name: "Customs Examination Charge"
+  units: ['per_container']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service', 'stuffing_at_dock', 'dpd_cfs_factory_destuffing', 'dpd_cfs_dock_destuffing', 'enpanelled_cfs_dock_destuffing', 'enpanelled_cfs_factory_destuffing', 'non_enpanelled_cfs_dock_destuffing', 'non_enpanelled_cfs_factory_destuffing']

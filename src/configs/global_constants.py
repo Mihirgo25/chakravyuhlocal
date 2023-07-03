@@ -1,3 +1,6 @@
+from uuid import UUID
+
+
 HAZ_CLASSES = [
     "gases-2.1",
     "gases-2.2",
@@ -91,35 +94,6 @@ OPEN_SIDE_COMMODITIES = []
 
 FLAT_RACK_COMMODITIES = ["in_gauge_cargo"]
 
-ISO_TANK_COMMODITIES = ["non_haz_solids", "non_haz_liquids", "non_haz_gases"]
-
-ALL_COMMODITIES = list(
-    set(
-        (
-            STANDARD_COMMODITIES
-            + REFER_COMMODITIES
-            + OPEN_TOP_COMMODITIES
-            + OPEN_SIDE_COMMODITIES
-            + FLAT_RACK_COMMODITIES
-            + ISO_TANK_COMMODITIES
-            + HAZ_CLASSES
-        )
-    )
-)
-
-CONTAINER_SIZES = ["20", "40", "40HC", "45HC"]
-
-CONTAINER_TYPES = [
-    "standard",
-    "refer",
-    "open_top",
-    "open_side",
-    "flat_rack",
-    "iso_tank",
-]
-
-PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ["dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb"]
-
 TRADE_TYPES = ["import", "export", "domestic"]
 
 ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
@@ -127,7 +101,8 @@ ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 
-COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US"}
+
+COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
 
 DEFAULT_WEIGHT_SLABS=[
     {
@@ -178,6 +153,41 @@ DEFAULT_WEIGHT_SLABS=[
 DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
 
 DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+
+RATE_FEEDBACK_RELEVANT_ROLE_ID = {
+    'supplier_relations_manager' : UUID('568c5939-3721-4444-a0ff-4c0298bc948d'),
+    'supply_owner_vietnam' : UUID('e0aa356c-2e4c-4cfd-b279-a6d3cdfa4edb'),
+    'coe_head_vietnam' : UUID('0e68d129-6f07-4324-95ee-88731b35c0c4')
+}
+
+PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
+
+ISO_TANK_COMMODITIES = ["non_haz_solids", "non_haz_liquids", "non_haz_gases"]
+
+CONTAINER_SIZES = ["20", "40", "40HC", "45HC"]
+
+CONTAINER_TYPES = [
+     "standard",
+     "refer",
+     "open_top",
+     "open_side",
+     "flat_rack",
+     "iso_tank",
+ ]
+
+ALL_COMMODITIES = list(
+     set(
+         (
+             STANDARD_COMMODITIES
+             + REFER_COMMODITIES
+             + OPEN_TOP_COMMODITIES
+             + OPEN_SIDE_COMMODITIES
+             + FLAT_RACK_COMMODITIES
+             + ISO_TANK_COMMODITIES
+             + HAZ_CLASSES
+         )
+     )
+ )
 
 CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
 

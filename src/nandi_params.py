@@ -14,6 +14,7 @@ class CreateDraftFclFreightRate(BaseModel):
   invoice_url : str = None
   invoice_date : datetime = None
   shipment_serial_id : str = None
+  rate_type: str = 'market_place'
 
 class CreateFclFreightDraft(BaseModel):
   performed_by_id: str = None

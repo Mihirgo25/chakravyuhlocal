@@ -2,7 +2,6 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 from fastapi import HTTPException
-from configs.fcl_freight_rate_constants import REQUEST_SOURCES
 import datetime
 from micro_services.client import *
 from database.rails_db import *
@@ -20,7 +19,7 @@ class FclFreightRateRequest(BaseModel):
     cogo_entity_id = UUIDField(index=True, null = True)
     closed_by_id = UUIDField(index=True, null=True)
     closed_by = BinaryJSONField(null=True)
-    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     commodity = CharField(index=True, null=True)
     container_size = CharField(index=True, null=True)
     container_type = CharField(index=True, null=True)
@@ -48,18 +47,20 @@ class FclFreightRateRequest(BaseModel):
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     preferred_shipping_lines = BinaryJSONField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
-    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     request_type = CharField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_request_serial_id_seq'::regclass)")])
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)
     updated_at = DateTimeField(default = datetime.datetime.now)
-    attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
-    commodity_description = CharField(null=True)
+    attachment_file_urls=ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    commodity_description = TextField(null=True)
     reverted_rates_count = IntegerField(null=True)
     reverted_by_user_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     expiration_time = DateTimeField(null = True)
+    relevant_supply_agent_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
+
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -148,4 +149,29 @@ class FclFreightRateRequest(BaseModel):
                 'importer_exporter_id': importer_exporter_id 
             }
         }
-        common.create_communication(data)
+
+        if 'rate_added' in self.closing_remarks:
+            subject = 'Freight Rate Request Completed'
+            body = f"Rate has been added for Request No: {str(self.serial_id)}, fcl freight from {origin_location} to {destination_location}."
+        else:
+            subject = 'Freight Rate Request Closed'
+            remarks = f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}."
+            body = f"Your rate request has been closed for Request No: {str(self.serial_id)}, fcl freight from {origin_location} to {destination_location}. {remarks}"
+
+        push_notification_data = {
+        'type': 'push_notification',
+        'service': 'fcl_freight_rate',
+        'service_id': str(self.id),
+        'provider_name': 'firebase',
+        'template_name': 'push_notification',
+        'user_id': str(self.performed_by_id),
+        'variables': {
+            'subject': subject,
+            'body': body,
+            'notification_source': 'spot_search',
+            'notification_source_id': str(self.source_id)
+            }
+        }
+
+        common.create_communication(push_notification_data)
+        common.create_communication(data) 
