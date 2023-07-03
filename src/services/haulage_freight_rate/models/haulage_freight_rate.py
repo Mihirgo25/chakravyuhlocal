@@ -10,7 +10,6 @@ from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS, TRAILER_TYPES
 from database.rails_db import get_shipping_line,  get_organization
 from configs.haulage_freight_rate_constants import RATE_TYPES
-from params import HaulageLineItem
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -84,7 +83,6 @@ class HaulageFreightRate(BaseModel):
         return super(HaulageFreightRate, self).save(*args, **kwargs)
     
     def set_locations(self):
-
         ids = [str(self.origin_location_id), str(self.destination_location_id)]
         locations_response = maps.list_locations({'filters':{"id": ids}})
         locations = []
@@ -95,7 +93,6 @@ class HaulageFreightRate(BaseModel):
                 self.origin_location = self.get_required_location_data(location)
             elif str(location['id']) == str(self.destination_location_id):
                 self.destination_location = self.get_required_location_data(location)
-
         self.set_origin_location_ids()
         self.set_origin_location_type()
         self.set_destination_location_ids()
@@ -114,7 +111,7 @@ class HaulageFreightRate(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
-    
+
     def set_origin_location_ids(self):
         self.origin_cluster_id = self.origin_location.get('cluster_id')
         self.origin_city_id = self.origin_location.get('city_id')
@@ -134,14 +131,14 @@ class HaulageFreightRate(BaseModel):
         if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', str(self.destination_cluster_id)):
             self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_cluster_id)),uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
         else:
-            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
-        
+            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]        
+    
     def set_destination_location_type(self):
         self.destination_location_type = self.destination_location.get('type')
-
+    
     def set_origin_destination_location_type(self):
         self.origin_destination_location_type = ':'.join([str(self.origin_location_type),str(self.destination_location_type)])
-
+    
     def validate_validity_object(self, validity_start, validity_end):
         if self.transport_modes[0] != 'trailer':
             return
@@ -151,18 +148,17 @@ class HaulageFreightRate(BaseModel):
         
         if not validity_end:
             raise HTTPException(status_code=400, detail="validity_end is invalid")
-
         if validity_end < validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
-
+    
     def validate_container_size(self):
       if self.container_size and self.container_size not in CONTAINER_SIZES:
           raise HTTPException(status_code=400, detail="container size is invalid")
-
+    
     def validate_container_type(self):
       if self.container_type and self.container_type not in CONTAINER_TYPES:
         raise HTTPException(status_code=400, detail="container type  is invalid")
-
+    
     def validate_haulage_type(self):
         if self.haulage_type not in HAULAGE_FREIGHT_TYPES:
             raise HTTPException(status_code=400, detail="haulage type is invalid")
@@ -189,21 +185,6 @@ class HaulageFreightRate(BaseModel):
         if not self.shipping_line_id and self.haulage_type == 'carrier':
             raise HTTPException(status_code=400, detail="shipping line id is required for carrier")
 
-    def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            raise HTTPException(status_code=400, detail="service provider not found")
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
-
-    def validate_importer_exporter_id(self):
-        if not self.importer_exporter_id:
-            return
-
-        importer_exporter_data = get_organization(id=self.importer_exporter_id)
-        if len(importer_exporter_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid importer exporter ID")
-
     def validate_trip_type(self):
         if self.transport_modes[0] == 'trailer' and self.trip_type and  self.trip_type not in TRIP_TYPES:
             raise HTTPException(status_code=400, detail="Invalid trip type")
@@ -211,43 +192,6 @@ class HaulageFreightRate(BaseModel):
     def validate_line_items(self):
       if not self.line_items:
         raise HTTPException(status_code=400, detail="line_items required")
-    
-    def validate_origin_location(self):
-        if not self.origin_location_id:
-            raise HTTPException(status_code=400, detail="Invalid Origin location id")
-
-        location_data = maps.list_locations({'filters':{'id':self.origin_location_id}})['list']
-        if len(location_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid Origin location id")
-
-
-    def validate_destination_location(self):
-        if not self.destination_location_id:
-            raise HTTPException(status_code=400, detail="Invalid location id")
-
-        location_data = maps.list_locations({'filters':{'id':self.destination_location_id}})['list']
-        if len(location_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid location id")
-        
-    def validate_uniqueness(self):
-        haulage_cnt = HaulageFreightRate.select().where(
-            HaulageFreightRate.origin_location_id == self.origin_location_id,
-            HaulageFreightRate.destination_location_id == self.destination_location_id,
-            HaulageFreightRate.container_size== self.container_size,
-            HaulageFreightRate.container_type == self.container_type,
-            HaulageFreightRate.commodity == self.commodity,
-            HaulageFreightRate.haulage_type == self.haulage_type,
-            HaulageFreightRate.shipping_line_id == self.shipping_line_id,
-            HaulageFreightRate.service_provider_id == self.service_provider_id,
-            HaulageFreightRate.importer_exporter_id == self.importer_exporter_id,
-            HaulageFreightRate.transport_modes_keyword == self.transport_modes_keyword,
-            HaulageFreightRate.transit_time == self.transit_time,
-            HaulageFreightRate.detention_free_time == self.detention_free_time,
-            HaulageFreightRate.trip_type == self.trip_type,
-        ).count()
-
-        if haulage_cnt != 0:
-            raise HTTPException(status_code=400, detail="Rate already Exists")
         
     def validate_commodity(self):
       if self.container_type and self.commodity in HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS[f"{self.container_type}"]:
@@ -274,10 +218,11 @@ class HaulageFreightRate(BaseModel):
         self.validate_transit_time()
         self.validate_detention_free_time()
         self.validate_shipping_line_id()
-        self.validate_service_provider_id()
         self.validate_trip_type()
         self.validate_line_items()
         self.validate_commodity()
+        self.validate_duplicate_line_items()
+        self.validate_invalid_line_items(self.possible_charge_codes())
         return True
 
     def validate_validity_object(self, validity_start, validity_end):
@@ -503,41 +448,3 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.trailer_type == self.trailer_type,
             HaulageFreightRate.rate_not_available_entry == True
         ).execute()
-
-            
-    def validate_before_save(self):
-        self.validate_container_size()
-        self.validate_container_type()
-        self.validate_haulage_type()
-        self.validate_transport_modes()
-        self.validate_transit_time()
-        self.validate_detention_free_time()
-        self.validate_shipping_line_id()
-        self.validate_service_provider_id()
-        self.validate_importer_exporter_id()
-        self.validate_trip_type()
-        self.validate_line_items()
-        self.validate_origin_location()
-        self.validate_destination_location()
-        self.validate_commodity()
-        return True
-
-
-       
-
-
-        
-
-class FclFreightRateValidity(BaseModel):
-    validity_start: datetime.date
-    validity_end: datetime.date
-    remarks: list[str] = []
-    line_items: list[HaulageLineItem] = []
-    price: float
-    platform_price: float = None
-    currency: str
-    schedule_type: str = None
-    payment_term: str = None
-    id: str
-    likes_count: int = None
-    dislikes_count: int = None
