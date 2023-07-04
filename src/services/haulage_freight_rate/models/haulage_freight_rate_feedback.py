@@ -7,7 +7,7 @@ from micro_services.client import *
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from database.rails_db import get_organization, get_user
 from fastapi import HTTPException
-
+import uuid
 
 class BaseModel(Model):
     class Meta:
@@ -19,8 +19,8 @@ class HaulageFreightRateFeedback(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     source = CharField(index=True, null=True)
     source_id = UUIDField(index=True, null=True)
-    feedbacks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
-    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    feedbacks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
+    remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     haulage_freight_rate_id = UUIDField(null=True,index=True)
     performed_by_id = UUIDField(index=True, null=True)
     performed_by = BinaryJSONField(null=True)
@@ -34,7 +34,7 @@ class HaulageFreightRateFeedback(BaseModel):
     booking_params = BinaryJSONField(null=True)
     feedback_type = CharField(index=True, null=True)
     status = CharField(index=True, null=True)
-    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::character varying[]")], field_class=TextField, null=True)
+    closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     closed_by = BinaryJSONField(null=True)
     closed_by_id = UUIDField(index=True, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('haulage_freight_rate_feedback_serial_id_seq'::regclass)")])
@@ -78,8 +78,8 @@ class HaulageFreightRateFeedback(BaseModel):
         return False
     
     def validate_haulage_freight_rate_id(self):
-        fcl_freight_rate_data = HaulageFreightRate.get(**{'id' : self.haulage_freight_rate_id})
-        if fcl_freight_rate_data:
+        haulage_freight_rate_data = HaulageFreightRate.get(**{'id' : self.haulage_freight_rate_id})
+        if haulage_freight_rate_data:
             return True
         return False
     
@@ -122,7 +122,7 @@ class HaulageFreightRateFeedback(BaseModel):
             raise HTTPException(status_code=400, detail="incorrect source id")
 
         if not self.validate_haulage_freight_rate_id():
-            raise HTTPException(status_code=400, detail="incorrect fcl freight rate id")
+            raise HTTPException(status_code=400, detail="incorrect haulage freight rate id")
 
         if not self.validate_performed_by_org_id():
             raise HTTPException(status_code=400, detail="incorrect performed by org id")
