@@ -2,7 +2,12 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta, date
 from peewee import *
 
-from params import Slab
+class HaulageFreightRateWeightSlab(BaseModel):
+  lower_limit: float
+  upper_limit: float
+  price: float
+  currency: str
+  remarks: list[str] = None
 
 class HaulageLineItem(BaseModel):
   code: str
@@ -10,7 +15,7 @@ class HaulageLineItem(BaseModel):
   price: float
   currency: str
   remarks: list[str] = None
-  slabs: list[Slab] = None
+  slabs: list[HaulageFreightRateWeightSlab] = None
 
 class CreateHaulageFreightRate(BaseModel):
   rate_sheet_id: str = None
@@ -164,6 +169,7 @@ class HaulageFreightRateEstimation(BaseModel):
 class DeleteHaulageFreightRate(BaseModel):
   id: str
   performed_by_id: str = None
+  performed_by_type: str = None
   bulk_operation_id: str = None
   sourced_by_id: str = None
   procured_by_id: str = None

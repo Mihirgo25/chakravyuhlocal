@@ -52,9 +52,9 @@ class FclCustomsRateFeedback(BaseModel):
         table_name = 'fcl_customs_rate_feedbacks'
 
     def set_location(self):
-        location_data = maps.list_locations({'filters':{'id':self.location_id}})['list']
+        location_data = maps.list_locations({'filters':{'id':self.port_id}})['list']
         if location_data:
-            self.location = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+            self.port = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def set_spot_search(self):
         spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']

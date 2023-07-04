@@ -4,6 +4,8 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from fastapi.encoders import jsonable_encoder
+
 
 def create_haulage_freight_rate_feedback(request):
     with db.atomic():
@@ -65,10 +67,13 @@ def get_create_params(request):
     return params
     
 def create_audit(request):
+    request = jsonable_encoder(request)
+    audit_data = {key:value for key,value in request.items() if key != 'performed_by_id'}
+
     HaulageFreightRateAudit.create(
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
-        data = {key:value for key,value in request.items() if key != 'performed_by_id'},
+        data = audit_data,
     )
 
 

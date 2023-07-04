@@ -223,6 +223,7 @@ class HaulageFreightRate(BaseModel):
         self.validate_commodity()
         self.validate_duplicate_line_items()
         self.validate_invalid_line_items(self.possible_charge_codes())
+        self.validate_slabs()
         return True
 
     def validate_validity_object(self, validity_start, validity_end):
@@ -448,3 +449,10 @@ class HaulageFreightRate(BaseModel):
             HaulageFreightRate.trailer_type == self.trailer_type,
             HaulageFreightRate.rate_not_available_entry == True
         ).execute()
+
+    def validate_slabs(self):
+        slabs = self.line_items['slabs'] or []
+        for index, slab in enumerate(slabs):
+            if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index!=0 and float(slab['lower_limit'])<= float(slabs[index-1]['upper_limit'])):
+                raise HTTPException(status_code=400, detail=f"{slabs} are not valid {slab['code']} in line item")
+
