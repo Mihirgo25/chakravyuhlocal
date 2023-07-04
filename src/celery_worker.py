@@ -326,8 +326,9 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             pass
         else:
             raise self.retry(exc= exc)
-        
-def bulk_operation_perform_action_functions_haulage(self, action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)    
+def bulk_operation_perform_action_functions_haulage(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
     except Exception as exc:

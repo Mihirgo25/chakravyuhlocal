@@ -1,12 +1,11 @@
 from database.db_session import db
 from peewee import * 
-import json
-from playhouse.postgres_ext import BinaryJSONField, ArrayField
+from playhouse.postgres_ext import BinaryJSONField
 from micro_services.client import *
 from fastapi import HTTPException
-from datetime import datetime,timedelta
+from datetime import datetime
 from database.rails_db import *
-from configs.definitions import HAULAGE_FREIGHT_CHARGES
+from configs.definitions import HAULAGE_FREIGHT_CHARGES, FCL_FREIGHT_CURRENCIES
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from services.haulage_freight_rate.interactions.list_haulage_freight_rates import list_haulage_freight_rates
@@ -39,22 +38,6 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
     class Meta:
         table_name = 'haulage_freight_rate_bulk_operations'
-
-
-    def validate_service_provider_id(self):
-        if not self.service_provider_id:
-            return
-
-        service_provider_data = get_organization(id=self.service_provider_id)
-        if len(service_provider_data) == 0:
-            raise HTTPException(status_code=400, detail="Invalid service provider ID")
-        
-    def validate_performed_by_id(self):
-        data =  get_user(self.performed_by_id)
-        if data:
-            return True
-        else:
-            return False
         
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
@@ -62,6 +45,14 @@ class HaulageFreightRateBulkOperation(BaseModel):
     
     def validate_delete_rate_data(self):
         return True
+    
+    def processed_percent_key(self, id):
+        return f"haulage_rate_bulk_operation_{id}"
+
+    def set_processed_percent_haulage_operation(self, processed_percent, id):
+        processed_percent_hash = "process_percent_haulage_operation"
+        if rd:
+            rd.hset(processed_percent_hash, self.processed_percent_key(id), processed_percent)
     
     def validate_add_markup_data(self):
         data = self.data
@@ -71,18 +62,23 @@ class HaulageFreightRateBulkOperation(BaseModel):
         
         markup_types = ['net', 'percent']
 
-        if data['markup_type'] not in markup_types:
+        if data.get('markup_type') not in markup_types:
             raise HTTPException(status_code=400, detail='markup_type is invalid')
         
         haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
 
         charge_codes = haulage_freight_charges_dict.keys()
 
-        if data['line_item_code'] not in charge_codes:
+        if data.get('line_item_code') not in charge_codes:
             raise HTTPException(status_code=400, detail='line_item_code is invalid')
         
         if str(data['markup_type']).lower() == 'percent':
             return
+        
+        currencies = FCL_FREIGHT_CURRENCIES
+
+        if data.get('markup_currency') not in currencies:
+            raise HTTPException(status_code=400, detail='markup_currency is invalid')
         
     def perform_delete_rate_action(self,sourced_by_id,procured_by_id):
         data = self.data
@@ -92,7 +88,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
         haulage_freight_rates = list_haulage_freight_rates(filters = filters, return_query = True, page_limit = page_limit, pagination_data_required = False)['list']
         haulage_freight_rates = list(haulage_freight_rates.dicts())
-
+        print(haulage_freight_rates)
         total_count = len(haulage_freight_rates)
         count = 0
 
@@ -101,7 +97,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
             if HaulageFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
                 self.progress = int((count * 100.0) / total_count)
-                self.save()
+                self.set_processed_percent_haulage_operation(self.progress, self.id)
                 continue
 
             delete_haulage_freight_rate({
@@ -113,7 +109,8 @@ class HaulageFreightRateBulkOperation(BaseModel):
             })
 
             self.progress = int((count * 100.0) / total_count)
-            self.save()
+            self.set_processed_percent_haulage_operation(self.progress, self.id)
+        self.save()
 
     
     def perform_add_markup_action(self, sourced_by_id, procured_by_id):
@@ -133,16 +130,17 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
             if HaulageFreightRateAudit.get_or_none(bulk_operation_id=self.id):
                 self.progress = int((count * 100.0) / total_count)
-                self.save()
+                self.set_processed_percent_haulage_operation(self.progress, self.id)
                 continue
 
             line_items = [t for t in freight['line_items'] if t['code'] == data['line_item_code']]
 
             if not line_items:
                 self.progress = int((count * 100.0) / total_count)
-                self.save()
+                self.set_processed_percent_haulage_operation(self.progress, self.id)
+                continue
 
-            freight['line_items'] = freight['line_items'] - line_items
+            freight['line_items'] = [t for t in freight['line_items'] if t not in line_items]
 
             for line_item in line_items:
                 if data['markup_type'].lower() == 'percent':
@@ -158,24 +156,25 @@ class HaulageFreightRateBulkOperation(BaseModel):
                 if line_item['price'] < 0:
                     line_item['price'] = 0 
 
-                for slab in line_item['slabs']:
-                    if data['markup_type'].lower() == 'percent':
-                        markup = float(data['markup'] * slab['price']) / 100 
-                    else:
-                        markup = data['markup']
-                    
-                    if data['markup_type'].lower() == 'net':
-                        markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
+                if line_item['slabs']:
+                    for slab in line_item['slabs']:
+                        if data['markup_type'].lower() == 'percent':
+                            markup = float(data['markup'] * slab['price']) / 100 
+                        else:
+                            markup = data['markup']
+                        
+                        if data['markup_type'].lower() == 'net':
+                            markup = common.get_money_exchange_for_fcl({'from_currency': data['markup_currency'], 'to_currency': line_item['currency'], 'price': markup})['price']
 
-                    slab['price'] = slab['price'] + markup
-                    if slab['price'] < 0:
-                        slab['price'] = 0 
+                        slab['price'] = slab['price'] + markup
+                        if slab['price'] < 0:
+                            slab['price'] = 0 
 
                 freight['line_items'].append(line_item)
 
             
             update_haulage_freight_rate({
-                    'id': freight['id'],
+                    'id': str(freight['id']),
                     'performed_by_id': self.performed_by_id,
                     'sourced_by_id': sourced_by_id,
                     'procured_by_id': procured_by_id,
@@ -184,7 +183,8 @@ class HaulageFreightRateBulkOperation(BaseModel):
                 })
             
             self.progress = int((count * 100.0) / total_count)
-            self.save()
+            self.set_processed_percent_haulage_operation(self.progress, self.id)
+        self.save()
 
     
     def delete_rate_detail(self):
@@ -192,11 +192,3 @@ class HaulageFreightRateBulkOperation(BaseModel):
     
     def add_markup_detail(self):
         return self
-
-
-    # def validate_action_data(self):
-
-    #     if self.action_name == 'delete_rate':
-    #         validate_delete_rate_data()
-    #     if self.action_name == 'add_markup':
-    #         validate_add_markup_data()

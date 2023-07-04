@@ -66,6 +66,7 @@ from services.haulage_freight_rate.interactions.list_haulage_freight_rate_feedba
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_feedback import (
     delete_haulage_freight_rate_feedback,
 )
+from services.haulage_freight_rate.interactions.create_haulage_freight_rate_bulk_operation import create_haulage_freight_rate_bulk_operation
 
 
 @haulage_freight_router.get("/get_estimated_haulage_freight_rate")
@@ -217,6 +218,7 @@ def list_haulage_freight_rate_feedbacks_data(
     try:
         data = list_haulage_freight_rate_feedbacks(
             filters,
+            spot_search_details_required,
             page_limit,
             page,
             performed_by_id,
@@ -341,6 +343,7 @@ def create_haualge_freight_rate_request_data(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
+
 
 @haulage_freight_router.post("/delete_haulage_freight_rate_request")
 def delete_haulage_freight_rates_request(
@@ -578,4 +581,22 @@ def delete_haulage_freight_rate_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
-        )
+        ) 
+
+@haulage_freight_router.post("/create_haulage_freight_rate_bulk_operation")
+def create_haulage_freight_rate_bulk_operation_api(request: CreateHaulageFreightRateBulkOperation, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data = create_haulage_freight_rate_bulk_operation(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        print(e)
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, "error": str(e) })
+   
