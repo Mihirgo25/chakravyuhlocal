@@ -8,7 +8,6 @@ from services.haulage_freight_rate.interactions.update_haulage_freight_rate_plat
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS, TRAILER_TYPES
-from database.rails_db import get_shipping_line,  get_organization
 from configs.haulage_freight_rate_constants import RATE_TYPES
 
 class UnknownField(object):
