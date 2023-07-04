@@ -53,15 +53,14 @@ class UpdateHaulageFreightRate(BaseModel):
 
 
 class CreateHaulageFreightRateRequest(BaseModel):
-  source: str
+  source: str = "spot_search"
   source_id: str
-  performed_by_id: str = None
+  performed_by_id: str 
   performed_by_org_id: str
-  performed_by_type: str = None
+  performed_by_type: str = "user"
   preferred_freight_rate: float = None
   preferred_freight_rate_currency: str = None
   preferred_detention_free_days: int = None
-  preferred_storage_free_days: int = None
   cargo_readiness_date: date = None
   preferred_shipping_line_ids: list[str] = []
   remarks: list[str] = []
@@ -70,15 +69,16 @@ class CreateHaulageFreightRateRequest(BaseModel):
   container_size: str
   commodity: str = None
   cargo_weight_per_container: int
-  destination_continent_id: str = None
+  destination_city_id: str = None
   destination_country_id: str = None
+  destination_cluster_id: str = None
   destination_location_id: str
-  destination_trade_id: str = None
-  origin_continent_id: str = None
+  origin_city_id: str = None
   origin_country_id: str = None
+  origin_cluster_id: str = None
   origin_location_id: str
-  origin_trade_id: str = None
   container_type: str = None
+  trade_type: str = None
 
 class DeleteHaulageFreightRateRequest(BaseModel):
   haulage_freight_rate_request_ids: list[str]
@@ -111,8 +111,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
 class DeleteHaulageFreightRateFeedback(BaseModel):
   haulage_freight_rate_feedback_ids: list[str]
   closing_remarks: list[str] = []
-  performed_by_id: str = None
-  performed_by_type: str = None
+  performed_by_id: str
     
 class UpdateHaulageFreightRatePlatformPrices(BaseModel):
   origin_location_id: str

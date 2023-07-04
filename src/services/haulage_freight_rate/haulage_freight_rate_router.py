@@ -204,7 +204,7 @@ def create_haualge_freight_rate_feedback_data(request: CreateHaulageFreightRateF
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
     
 @haulage_freight_router.post("/delete_haulage_freight_rate_feedback")
 def delete_haulage_freight_rates_feedback(request: DeleteHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)):
@@ -212,7 +212,7 @@ def delete_haulage_freight_rates_feedback(request: DeleteHaulageFreightRateFeedb
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
+        # request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_haulage_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
@@ -278,7 +278,7 @@ def create_haualge_freight_rate_request_data(request: CreateHaulageFreightRateRe
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e), 'traceback': traceback.print_exc() })
 
     
 @haulage_freight_router.post("/delete_haulage_freight_rate_request")
