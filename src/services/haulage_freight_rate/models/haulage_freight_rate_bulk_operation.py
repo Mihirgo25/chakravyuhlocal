@@ -88,7 +88,6 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
         haulage_freight_rates = list_haulage_freight_rates(filters = filters, return_query = True, page_limit = page_limit, pagination_data_required = False)['list']
         haulage_freight_rates = list(haulage_freight_rates.dicts())
-        print(haulage_freight_rates)
         total_count = len(haulage_freight_rates)
         count = 0
 

@@ -149,7 +149,7 @@ class AddMarkup(BaseModel):
   markup_currency: str = None
 
 class CreateHaulageFreightRateBulkOperation(BaseModel):
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None
   service_provider_id: str = None
   procured_by_id: str
