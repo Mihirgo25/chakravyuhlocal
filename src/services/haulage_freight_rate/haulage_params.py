@@ -169,6 +169,7 @@ class HaulageFreightRateEstimation(BaseModel):
 class DeleteHaulageFreightRate(BaseModel):
   id: str
   performed_by_id: str = None
+  performed_by_type: str = None
   bulk_operation_id: str = None
   sourced_by_id: str = None
   procured_by_id: str = None
