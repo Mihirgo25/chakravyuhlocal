@@ -24,8 +24,8 @@ def get_trailer_freight_rate_estimation(request):
         "commodity" : commodity,
         "containers_count" : containers_count,
         "container_type" : container_type,
-        "container_size" : request.get('container_size'),
-        "cargo_weight_per_container" : request.get('cargo_weight_per_container'),
+        "container_size" : container_size,
+        "cargo_weight_per_container" : cargo_weight_per_container,
         "trip_type" : trip_type
         }
     

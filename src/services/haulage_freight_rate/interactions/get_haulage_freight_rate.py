@@ -47,5 +47,9 @@ def get_haulage_freight_rate(requirement):
         detail = {}
     object_params= get_object_params(requirement)
     object_params['transport_modes'] = requirement['transport_modes']
-    detail['haulage_freight_charge_codes'] = HaulageFreightRate(**object_params).possible_charge_codes()
+    object = HaulageFreightRate(**object_params)
+    object.set_origin_location_ids
+    object.set_destination_location_ids
+    object.possible_charge_codes
+    detail['haulage_freight_charge_codes'] = object.__data__
     return detail
