@@ -217,6 +217,7 @@ def list_haulage_freight_rate_feedbacks_data(
     try:
         data = list_haulage_freight_rate_feedbacks(
             filters,
+            spot_search_details_required,
             page_limit,
             page,
             performed_by_id,
