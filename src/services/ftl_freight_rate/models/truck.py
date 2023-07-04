@@ -58,4 +58,4 @@ class Truck(BaseModel):
       return super(Truck, self).save(*args, **kwargs)
 
     class Meta:
-        table_name = 'trucks'
+        table_name = 'trucks2'
