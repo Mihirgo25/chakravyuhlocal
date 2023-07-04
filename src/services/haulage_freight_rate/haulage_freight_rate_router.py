@@ -172,6 +172,7 @@ def update_haulage_freight_rate_func(request: UpdateHaulageFreightRate, resp: di
 @haulage_freight_router.get("/list_haulage_freight_rate_feedbacks")
 def list_haulage_freight_rate_feedbacks_data(
     filters: str = None,
+    spot_search_details_required: bool = False,
     page_limit: int = 10,
     page: int = 1,
     performed_by_id: str = None,
