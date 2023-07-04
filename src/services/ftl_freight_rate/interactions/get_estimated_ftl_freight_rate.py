@@ -83,6 +83,10 @@ def get_country_code(location_data_mapping,origin_location_id,destination_locati
         return 'EU'
     elif origin_country_code == 'US' and destination_country_code == 'US':
         return 'US'
+    elif origin_country_code == 'CN' and destination_country_code == 'CN':
+        return 'CN'
+    elif origin_country_code == 'VN' and destination_country_code == 'VN':
+        return 'VN'
     return 'not_found'
 
 def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type,closest_truck_type):
@@ -95,7 +99,9 @@ def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight
         'commodity':commodity,
         'trip_type':trip_type,
         'fuel_type':truck_details['fuel_type'],
-        'truck_name' : closest_truck_type
+        'truck_name' : closest_truck_type,
+        'vehicle_weight' : truck_details["vehicle_weight"],
+        'no_of_wheels' : truck_details["no_of_wheels"]
     }
     return truck_and_commodity_data
 
@@ -107,4 +113,8 @@ def get_truck_weight_according_to_country(country_code,weight):
     if country_code == 'US':
         return weight * TON_TO_POUND
     if country_code == 'EU':
+        return weight
+    if country_code == 'CN':
+        return weight
+    if country_code == 'VN':
         return weight

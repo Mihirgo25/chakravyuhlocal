@@ -1,5 +1,5 @@
 
-from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS, EUROPE_FUEL_DATA_LINK, CHINA_FUEL_DATA_LINKS
+from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS, EUROPE_FUEL_DATA_LINK, CHINA_FUEL_DATA_LINKS, VIETNAM_FUEL_DATA_LINKS
 import time
 import copy
 from bs4 import BeautifulSoup
@@ -12,7 +12,7 @@ import httpx
 
 
 def fuel_scheduler():
-    list_of_countries = ["europe","india", "usa", "china"]
+    list_of_countries = ["europe","india", "usa", "china", "vietnam"]
 
     for country in list_of_countries:
         list_fuel_data = getattr(
@@ -192,3 +192,24 @@ def get_scrapped_data_for_china():
     fuel_data["fuel_price"] = diesel_price
     fuel_data_for_china.append(fuel_data)
     return fuel_data_for_china
+
+def get_scrapped_data_for_vietnam():
+    url = VIETNAM_FUEL_DATA_LINKS
+    with httpx.Client() as client:
+        response = client.get(url)
+    scrapper = BeautifulSoup(response.text, 'html.parser')
+    table_body = scrapper.find('tbody')
+    table_header = table_body.find('td').text
+    table_header = table_header.replace(',','')
+    diesel_price=float(table_header)
+
+    fuel_data_for_vietnam = []
+    fuel_data = {}
+    fuel_data["location_name"] = 'vietnam'
+    fuel_data["currency"] = "VND"
+    fuel_data["fuel_unit"] = "Lt"
+    fuel_data["location_type"] = "country"
+    fuel_data["fuel_type"] = 'diesel'
+    fuel_data["fuel_price"] = diesel_price
+    fuel_data_for_vietnam.append(fuel_data)
+    return fuel_data_for_vietnam

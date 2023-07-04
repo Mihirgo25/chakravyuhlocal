@@ -207,7 +207,7 @@ PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"  # kshitij sharma
 
 INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
 
-BASIC_CHARGE_LIST = ['toll','tyre', 'maintenance', 'driver', 'insurance']
+BASIC_CHARGE_LIST = ['toll','tyre', 'maintenance', 'driver', 'insurance', 'emi', 'expense']
 
 HAZ_CLASSES = [
     "hazardous",
@@ -301,6 +301,19 @@ TRUCK_TYPES_MAPPING = {
         'small' : {'lower_limit':0,'upper_limit':3.5},
         'medium' : {'lower_limit':3.5,'upper_limit':9},
         'heavy': {'lower_limit':9,'upper_limit':154.3}
+    },
+    'CN':
+    {
+        'small' : {'lower_limit':0,'upper_limit':2.3},
+        'medium' : {'lower_limit':2.3,'upper_limit':10.1},
+        'heavy': {'lower_limit':10.1,'upper_limit':154.3}
+    },
+    'VN':
+    {
+        'light' : {'lower_limit':0,'upper_limit':4},
+        'small' : {'lower_limit':4,'upper_limit':9},
+        'medium' : {'lower_limit':9,'upper_limit':19},
+        'heavy': {'lower_limit':19,'upper_limit':100}
     }
 }
 
@@ -310,6 +323,7 @@ ROUND_TRIP_CHARGE = 0.4
 # Loading charges 150/tonn same for unloading so 300
 LOADING_UNLOADING_CHARGES = 300
 LOADING_UNLOADING_CHARGES_US = 0.04
+LOADING_UNLOADING_CHARGES_CN = 60
 # HAZ commodity or reefer truck body type 20% extra basic freight charge.
 ADDITIONAL_CHARGE = 0.2
 
@@ -319,6 +333,7 @@ CLOSED_BODY_CHARGES_FOR_7 = 1.3
 CLOSED_BODY_CHARGES_FOR_14 = 1.25
 # Minimum charges for driver if distance is less than 300
 MINIMUM_APPLICABLE_CHARGE = 400
+MINIMUM_APPLICABLE_CHARGE_CN = 250
 
 #kilometres to miles
 KILOMETRE_TO_MILE = 0.621371
@@ -328,6 +343,9 @@ USA_FUEL_DATA_LINK = "https://gasprices.aaa.com/state-gas-price-averages/"
 EUROPE_FUEL_DATA_LINK = "https://www.cargopedia.net/europe-fuel-prices/"
 
 CHINA_FUEL_DATA_LINKS = "https://www.globalpetrolprices.com/China/diesel_prices/"
+
+VIETNAM_FUEL_DATA_LINKS = "https://www.globalpetrolprices.com/Vietnam/diesel_prices/"
+
 INDIA_FUEL_DATA_LINKS = {
     "https://www.ndtv.com/fuel-prices/petrol-price-in-india": [
         "tbl-container b_rad4 tbl-scrolling",
