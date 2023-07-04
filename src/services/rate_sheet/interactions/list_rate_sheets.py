@@ -189,15 +189,6 @@ def get_final_data(query):
     final_data = jsonable_encoder(final_data)
     return final_data
 
-def add_pagination_data(
-    response, page, total_count, page_limit
-):
-    response["page"] = page
-    response["total"] = math.ceil(total_count / page_limit)
-    response["total_count"] = total_count
-    response["page_limit"] = page_limit
-    
-
 
 def list_rate_sheets(filters, stats_required= None, page=1, page_limit=10, sort_by=None, sort_type=None, pagination_data_required=True):
     response = {"success": False, "status_code": 200}
@@ -224,9 +215,10 @@ def list_rate_sheets(filters, stats_required= None, page=1, page_limit=10, sort_
     response["list"] = final_data
     
     if pagination_data_required:
-        response = add_pagination_data(
-            response, page, total_count, page_limit, final_data, pagination_data_required
-        )
+        response["page"] = page
+        response["total"] = math.ceil(total_count / page_limit)
+        response["total_count"] = total_count
+        response["page_limit"] = page_limit
 
     return response
 
