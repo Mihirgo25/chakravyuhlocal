@@ -383,7 +383,7 @@ AVERAGE_SPEEDS = {
 
 # SINGAPORE
 
-SG_BASIC_CHARGE_LIST = {'distance_factor','driver','capacity_factor','loading_charge'}
+SG_BASIC_CHARGE_LIST = ['distance_factor','driver','capacity_factor','loading_charge']
 
 SINGAPORE_HAZARDOUS_RATE = 1.05
 
