@@ -140,16 +140,17 @@ class CreateHaulageFreightRateNotAvailable(BaseModel):
   transport_modes: list[str]=None
 
 class DeleteRate(BaseModel):
-  filters: dict = None
+  filters: dict = {}
 
 class AddMarkup(BaseModel):
-  filters: dict = None
+  filters: dict = {}
   markup: float
   markup_type: str
   markup_currency: str = None
 
 class CreateHaulageFreightRateBulkOperation(BaseModel):
   performed_by_id: str
+  performed_by_type: str = None
   service_provider_id: str = None
   procured_by_id: str
   sourced_by_id: str = None
