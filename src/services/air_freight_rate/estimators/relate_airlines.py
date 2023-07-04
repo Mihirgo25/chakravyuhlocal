@@ -31,7 +31,7 @@ class RelateAirline:
 
     def get_bas_price_currency(self, invoice_rate):
         for line_item in invoice_rate["line_items"]:
-            if line_item["code"] == "BAS" and line_item["name"] == "Basic Air Freight":
+            if line_item["code"] == "BAS" and line_item["name"] == "Basic Air Freight" and line_item['unit']=='per_kg':
                 return line_item["price"], line_item["currency"]
             return None, None
 
@@ -89,7 +89,7 @@ class RelateAirline:
             for weight_slab in weight_slabs:
                 slab = self.get_matching_slab(weight_slab["lower_limit"], weight_slab["upper_limit"])
                 price = weight_slab["tariff_price"]
-                if price:
+                if price and price <1000:
                     if not weight_slab["currency"] == "INR":
                         price = common.get_money_exchange_for_fcl(
                             {
