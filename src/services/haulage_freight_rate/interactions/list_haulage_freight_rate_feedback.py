@@ -57,8 +57,13 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('haulage_freight', filters['relevant_supply_agent'])
     origin_location_id = [t['origin_location_id'] for t in expertises]
     destination_location_id = [t['destination_location_id'] for t in expertises]
-    query = query.where((HaulageFreightRateFeedback.origin_location_id << origin_location_id))
-    query = query.where((HaulageFreightRateFeedback.destination_location_id << destination_location_id))
+    query = query.where((HaulageFreightRateFeedback.origin_location_id << origin_location_id) | 
+                        (HaulageFreightRateFeedback.origin_city_id << origin_location_id) | 
+                        (HaulageFreightRateFeedback.origin_country_id << origin_location_id))
+    
+    query = query.where((HaulageFreightRateFeedback.destination_location_id <<destination_location_id) | 
+                        (HaulageFreightRateFeedback.destination_city_id << destination_location_id) | 
+                        (HaulageFreightRateFeedback.origin_country_id << destination_location_id))
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
@@ -118,6 +123,16 @@ def get_data(query, spot_search_details_required, booking_details_required):
             HaulageFreightRateFeedback.source_id,
             HaulageFreightRateFeedback.status,
             HaulageFreightRateFeedback.updated_at,
+            HaulageFreightRateFeedback.origin_location_id,
+            HaulageFreightRateFeedback.origin_city_id,
+            HaulageFreightRateFeedback.origin_country_id,
+            HaulageFreightRateFeedback.destination_location_id,
+            HaulageFreightRateFeedback.destination_city_id,
+            HaulageFreightRateFeedback.destination_country_id,
+            HaulageFreightRateFeedback.commodity,
+            HaulageFreightRateFeedback.container_size,
+            HaulageFreightRateFeedback.container_type,
+            HaulageFreightRateFeedback.service_provider_id
         )
     data = list(query.dicts())
     service_provider_ids = []
