@@ -60,9 +60,9 @@ def create_air_freight_rate_task (request):
     if request.get('shipment_id'):
         try:
             sid = shipment.get_shipment({'id':request['shipment_id']})['summary']['serial_id']
-            task.shipment_serial_ids.append(sid)
+            task.shipment_serial_ids.append(str(sid))
             task.shipment_serial_ids = list(set(task.shipment_serial_ids))
-        except:
+        except Exception as e:
             raise HTTPException(status_code = 400, detail = "SID doesn't Exist")
 
     task.validate()

@@ -76,18 +76,20 @@ def get_existing_system_rates(airport_ids,commodities,trade_types,airline_ids,co
     return jsonable_encoder(list(existing_system_rates.dicts()))
 
 def get_shipment_and_sell_quotations(all_shipment_serial_ids):
-    shipments = shipment.list_shipments({'filters': { 'serial_id': all_shipment_serial_ids},'page_limit':1000})
+    shipments = shipment.list_shipments({'filters': { 'serial_id': all_shipment_serial_ids},'page_limit':1000})['list']
     shipment_ids = []
     shipment_dict = {}
     for shipment_data in shipments:
         if shipment_data['serial_id'] in shipment_data.keys():
-            shipment_dict[shipment_data['serial_id'] ] = shipment_dict[shipment_data['serial_id']] + [shipment_data]
+            shipment_dict[str(shipment_data['serial_id']) ] = shipment_dict[str(shipment_data['serial_id'])] + [shipment_data]
         else:
-            shipment_dict[shipment_data['serial_id'] ] = [shipment_data]
+            shipment_dict[str(shipment_data['serial_id']) ] = [shipment_data]
         shipment_ids.append(shipment_data['id'])
     
     shipment_sell_quotation_dict = {}
-    quotations = shipment.list_shipment_sell_quotations({'filters':{'shipment_id':shipment_ids,'service_type': 'air_freight_local_service', 'is_deleted': False, 'source': 'billed_at_actuals'},'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT })
+
+    quotations = shipment.list_shipment_sell_quotations({'filters':{'shipment_id':shipment_ids,'service_type': 'air_freight_local_service', 'is_deleted': False, 'source': 'billed_at_actuals'},'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT })['list']
+
     for quotation in quotations:
         if quotation['shipment_id'] in shipment_sell_quotation_dict:
             shipment_sell_quotation_dict[quotation['shipment_id']] = shipment_sell_quotation_dict[quotation['shipment_id']] + [quotation]
@@ -158,7 +160,7 @@ def get_data(query,filters):
                                 serial_ids.append(serial_id)
                                 break
                             for quotation in shipment_quotation_dict[shipment['id']]:
-                                if quotation['line_item']:
+                                if quotation['line_items']:
                                     serial_ids.append(serial_id)
                                     break
                     

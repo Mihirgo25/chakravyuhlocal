@@ -36,7 +36,6 @@ from services.air_freight_rate.interactions.get_air_freight_rate_cards import ge
 from services.air_freight_rate.interactions.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interactions.list_air_freight_rate_locals import list_air_freight_rate_locals
 from services.air_freight_rate.interactions.update_air_freight_rate_task import update_air_freight_rate_task
-from services.air_freight_rate.interactions.update_air_freight_rate_local import update_air_freight_rate_local
 from services.air_freight_rate.interactions.create_air_freight_rate_request import create_air_freight_rate_request
 from services.air_freight_rate.interactions.get_air_freight_rate_stats import get_air_freight_rate_stats
 from services.air_freight_rate.interactions.create_air_freight_rate_not_available import create_air_freight_rate_not_available
@@ -281,6 +280,8 @@ def update_air_freight_rate_local_api(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
 
     try:
         data = update_air_freight_rate_local(request.dict(exclude_none=True))
@@ -436,6 +437,7 @@ def create_air_freight_rate_task_api(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+    
     try:
         data = create_air_freight_rate_task(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
@@ -479,6 +481,8 @@ def update_air_freight_rate_task_api(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp['isAuthorized']:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         return JSONResponse(
             status_code=200,
@@ -843,9 +847,7 @@ def update_air_freight_rate_markup_api(
 
 
 @air_freight_router.post("/create_air_freight_rate_bulk_operation")
-def create_air_freight_rate_bulk_operation_api(
-    request: CreateBulkOperationParams, resp: dict = Depends(authorize_token)
-):
+def create_air_freight_rate_bulk_operation_api(request: CreateBulkOperationParams, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -1034,7 +1036,7 @@ def list_air_freight_rates_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.get('/get_weight_slabs_for_airline')
-def get_weight_slabs_for_airline_api(airline_id:str,chargeable_weight: float = 0,resp: dict = Depends(authorize_token)):
+def get_weight_slabs_for_airline_api(airline_id:str,chargeable_weight: float = 0,get_weight_slabs_for_airline:float =0.0,resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
@@ -1256,4 +1258,3 @@ def list_rates_sheet_stat(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    

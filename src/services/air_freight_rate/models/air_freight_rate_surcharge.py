@@ -119,8 +119,6 @@ class AirFreightRateSurcharge(BaseModel):
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
         
-    
-    # check
     def update_freight_objects(self):
         from services.air_freight_rate.models.air_freight_rate import AirFreightRate
         surcharge = {
@@ -247,30 +245,3 @@ class AirFreightRateSurcharge(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
-    
-
-
-
-
-
-
-
-
-    
-
-
-      
-
-
-
-
-
-
-
-        
-    
-
-
-    
-
-

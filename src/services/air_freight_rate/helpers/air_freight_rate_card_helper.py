@@ -6,6 +6,8 @@ from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_EXPORTS_HIGH_DENSITY_RATIO,
 )
 from configs.global_constants import MAX_VALUE
+from micro_services.client import spot_search 
+from datetime import datetime, timedelta
 
 
 def get_density_wise_rate_card(
@@ -80,3 +82,15 @@ def get_density_wise_rate_card(
     response_object["freights"] = freights
 
     return response_object
+
+def get_rate_from_cargo_ai(air_freight_rate, feedback, performed_by_id):
+    params_for_cargoai = {}
+    spot_search_detail=spot_search.get_spot_search({"id": str(feedback.source_id)})['detail']
+
+    if not spot_search_detail:
+        return 
+    
+    cargo_clearance_date = spot_search_detail['cargo_clearance_date']
+    cargo_clearance_date = datetime.strptime(cargo_clearance_date, '%Y-%m-%d').date()
+    cargo_clearance_date = cargo_clearance_date + timedelta(days=1)
+    params_for_cargoai['departue_date']=cargo_clearance_date

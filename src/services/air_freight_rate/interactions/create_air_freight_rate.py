@@ -5,7 +5,6 @@ from database.db_session import db
 import datetime
 import pytz
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
-from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 
 def create_audit(request, freight_id,validity_id):
@@ -39,7 +38,7 @@ def create_air_freight_rate(request):
 
     
 def create_air_freight_rate_data(request):
-    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay
+    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
 
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
@@ -129,6 +128,9 @@ def create_air_freight_rate_data(request):
         request.get("available_gross_weight"),
         request.get("rate_type")
     )
+    if request.get("source")=='cargo_ai':
+        freight.add_flight_and_external_uuid(validity_id,request.get("flight_uuid"),request.get("external_rate_id"))
+
     freight.set_last_rate_available_date()
 
     set_object_parameters(freight, request)
@@ -146,6 +148,8 @@ def create_air_freight_rate_data(request):
 
     create_saas_air_schedule_airport_pair_delay.apply_async(kwargs={'air_object':freight,'request':request},queue='low')
 
+    update_multiple_service_objects.apply_async(kwargs={'object':freight},queue='low')
+
     freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
 
     if request.get('air_freight_rate_request_id'):
@@ -156,7 +160,6 @@ def create_air_freight_rate_data(request):
         "validity_id":validity_id
     }
     
-
 def set_object_parameters(freight, request):
     freight.maximum_weight = request.get('maximum_weight')
     freight.length = request.get('length')
@@ -164,6 +167,4 @@ def set_object_parameters(freight, request):
     freight.height = request.get('height')
     freight.weight_slabs = request.get('weight_slabs')
     freight.rate_not_available_entry = False
-    freight.flight_uuid = request.get('flight_uuid')
-    freight.external_rate_id = request.get('external_rate_id')
     freight.currency = request.get('currency')

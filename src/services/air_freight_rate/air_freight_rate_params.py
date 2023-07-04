@@ -185,7 +185,7 @@ class LineItemsLocalParams(BaseModel):
 
 class UpdateAirFrieghtRateLocalParams(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
     bulk_operation_id: str = None
@@ -348,10 +348,9 @@ class AddFreightRateMarkupParams(BaseModel):
 
 
 class DeleteFreightRateParams(BaseModel):
+    air_freight_rate_id: str
     validity_id: str = None
-    air_freight_rate_id = str
-
-
+    
 class UpdateFreightRateParams(BaseModel):
     validity_id: str = None
     air_freight_rate_id: str
@@ -370,9 +369,7 @@ class DeleteAirFreightRateSurchargeParams(BaseModel):
 class CreateBulkOperationParams(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
-    delete_freight_rate: DeleteFreightRateParams = None
-    add_freight_rate_markup: AddFreightRateMarkupParams = None
-    update_freight_rate: UpdateFreightRateParams = None
+    add_freight_rate_markup: List[AddFreightRateMarkupParams] = None
     delete_freight_rate: List[DeleteFreightRateParams] = None
     add_freight_rate_markup: List[AddFreightRateMarkupParams] = None
     update_freight_rate: List[UpdateFreightRateParams] = None

@@ -39,7 +39,7 @@ def get_tech_ops_dashboard_stats(request):
 
     for stat in stats:
         try:
-            stat['performed_by'] = users[stat['performed_by_id']]
+            stat['performed_by'] = users[str(stat['performed_by_id'])]
         except:
             stat['performed_by'] = None
         average_tat=0.0

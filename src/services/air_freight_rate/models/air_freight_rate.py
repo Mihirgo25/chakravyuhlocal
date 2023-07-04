@@ -372,8 +372,14 @@ class AirFreightRate(BaseModel):
                 new_validities.append(validity)
         if new_validities:
             self.last_rate_available_date = new_validities[-1]['validity_end']
-    
 
+    def add_flight_and_external_uuid(self,selected_validity_id, flight_uuid, external_rate_id):
+        for validity in self.validities:
+            if validity['id']==selected_validity_id:
+                validity['flight_uuid']=flight_uuid
+                validity['external_rate_id']=external_rate_id
+                break
+            
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
         return
         if self.last_rate_available_date is None:
