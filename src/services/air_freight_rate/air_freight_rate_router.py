@@ -951,7 +951,6 @@ def get_air_freight_warehouse_rate_api(
     }
     try:
         data = get_air_freight_warehouse_rate(request)
-        print("in ", data)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise

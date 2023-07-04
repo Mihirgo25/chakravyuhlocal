@@ -575,7 +575,6 @@ class AirFreightRateBulkOperation(BaseModel):
             self.save()
 
     def perform_delete_freight_rate_local_action(self):
-        print("hello")
         data = self.data
         count = 0
         total_count = len(data)
