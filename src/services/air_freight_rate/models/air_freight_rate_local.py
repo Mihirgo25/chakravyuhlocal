@@ -148,16 +148,23 @@ class AirFreightRateLocal(BaseModel):
 
     def update_freight_objects(self):
         from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-
         location_key = 'origin' if self.trade_type == 'export' else 'destination'
-
+        local = {
+         'id': str(self.id),
+            'line_items_info_messages': self.line_items_info_messages,
+            'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
+            'line_items_error_messages': self.line_items_error_messages,
+            'is_line_items_error_messages_present': self.is_line_items_error_messages_present
+        }
         if location_key == 'origin':
             kwargs = {
-                'origin_local_id':self.id
+                'origin_local_id':self.id,
+                'origin_local': local
             }
         else:
             kwargs = {
-                'destination_local_id':self.id
+                'destination_local_id':self.id,
+                'destination_local': local
             }
         
         t=AirFreightRate.update(**kwargs).where(
@@ -252,9 +259,3 @@ class AirFreightRateLocal(BaseModel):
 
     def update_foreign_references(self):
         return
-
-
-
-
-
-        

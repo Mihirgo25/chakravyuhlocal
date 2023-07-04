@@ -66,12 +66,3 @@ def find_object(request):
     except :
         air_freight_rate=None
     return air_freight_rate
-
-
-
-
-    
-        
-
-    
-    

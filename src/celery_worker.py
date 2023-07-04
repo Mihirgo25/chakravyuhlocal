@@ -40,6 +40,8 @@ from services.air_freight_rate.interactions.create_air_freight_rate_local import
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 from services.air_freight_rate.helpers.create_saas_air_schedule_helper import create_saas_air_schedule_airport_pair
+from services.air_freight_rate.interactions.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
+
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -683,6 +685,16 @@ def extend_air_freight_rates(self, rate, source = 'rate_extension'):
 def update_fcl_freight_rate_feedback_in_delay(self, request):
     try:
         update_fcl_freight_rate_feedback(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_air_freight_rate_task_notification_in_delay(self,task_id):
+    try:
+        send_air_freight_rate_task_notification(task_id)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

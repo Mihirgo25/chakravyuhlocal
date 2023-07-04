@@ -51,6 +51,10 @@ class AirFreightRateSurcharge(BaseModel):
     updated_at=DateTimeField(default=datetime.datetime.now,index=True)
     created_at=DateTimeField(default=datetime.datetime.now,index=True)
 
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRateSurcharge, self).save(*args, **kwargs)
+    
     class Meta:
         table_name = 'air_freight_rate_surcharges'
 
@@ -115,8 +119,6 @@ class AirFreightRateSurcharge(BaseModel):
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
         
-    
-    # check
     def update_freight_objects(self):
         from services.air_freight_rate.models.air_freight_rate import AirFreightRate
         surcharge = {
@@ -243,30 +245,3 @@ class AirFreightRateSurcharge(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
-    
-
-
-
-
-
-
-
-
-    
-
-
-      
-
-
-
-
-
-
-
-        
-    
-
-
-    
-
-

@@ -41,8 +41,8 @@ class AirFreightRate(BaseModel):
     destination_local = BinaryJSONField(null=True)
     destination_local_id = UUIDField(null=True)
     destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    destination_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    destination_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # destination_local_line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
+    # destination_local_line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     destination_storage_id = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     discount_type = CharField(null=True)
@@ -372,8 +372,14 @@ class AirFreightRate(BaseModel):
                 new_validities.append(validity)
         if new_validities:
             self.last_rate_available_date = new_validities[-1]['validity_end']
-    
 
+    def add_flight_and_external_uuid(self,selected_validity_id, flight_uuid, external_rate_id):
+        for validity in self.validities:
+            if validity['id']==selected_validity_id:
+                validity['flight_uuid']=flight_uuid
+                validity['external_rate_id']=external_rate_id
+                break
+            
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
         return
         if self.last_rate_available_date is None:

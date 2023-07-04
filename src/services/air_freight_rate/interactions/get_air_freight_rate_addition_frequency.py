@@ -4,16 +4,16 @@ from datetime import datetime, timedelta
 from libs.get_filters import get_filters
 from fastapi.encoders import jsonable_encoder
 from peewee import fn, SQL
+import json
 
 possible_direct_filters = ['origin_airport_id', 'destination_airport_id']
 possible_indirect_filters = ['procured_by_id']
 
-
-
 def get_air_freight_rate_addition_frequency(group_by, filters = {}, sort_type = 'desc'):
     query = get_query()
-
     if filters:
+        if type(filters) != dict:
+            filters = json.loads(filters)        
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
         query = apply_indirect_filters(query,indirect_filters)
         query = get_filters(direct_filters, query, AirFreightRate)

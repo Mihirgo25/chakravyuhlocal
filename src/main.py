@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 from database.db_session import db
@@ -26,6 +26,7 @@ from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
 from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from services.air_freight_rate.air_freight_rate_router import air_freight_router
 from micro_services.client import *
+from database.db_support import get_db
 
 
 sentry_sdk.init(
@@ -38,7 +39,7 @@ sentry_sdk.init(
 
 docs_url = None if APP_ENV == "production" else "/docs"
 
-app = FastAPI(docs_url=docs_url, debug=True)
+app = FastAPI(docs_url=docs_url, debug=True,dependencies=[Depends(get_db)])
 
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'])

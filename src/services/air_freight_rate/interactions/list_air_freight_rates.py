@@ -13,7 +13,7 @@ POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'orig
 POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at']
 
 
-def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = False):
+def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = True):
 
   query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit,older_rates_required)
   if filters:
@@ -49,7 +49,8 @@ def get_query(all_rates_for_cogo_assured,sort_by, sort_type, page, page_limit,ol
          ((query.c.validity['status']==True) | (query.c.validty['status'].is_null(True))),
 
        )
-    query = query.order_by(eval('AirFreightRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
+
+    query = query.order_by(eval('AirFreightRate.{}.{}()'.format(sort_by,sort_type)))
     return query
 def apply_indirect_filters(query, filters):
   for key in filters:
@@ -135,7 +136,6 @@ def apply_available_volume_range_filter(query,filters):
    return query
 
 def apply_available_gross_weight_range_filter(query,filters):
-   print(1234)
    if filters.get('rate_type') == 'market_place':
       return query
    query = query.where(
@@ -143,8 +143,6 @@ def apply_available_gross_weight_range_filter(query,filters):
         ((SQL("CAST(validity->>'available_gross_weight' as numeric)")) <= filters['available_gross_weight_range']['max'])
     
    )
-   print(query)
-
    return query
 
 def apply_achieved_volume_percentage_filter(query,filters):

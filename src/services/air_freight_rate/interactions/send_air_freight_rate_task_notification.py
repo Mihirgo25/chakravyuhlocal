@@ -6,14 +6,13 @@ from services.air_freight_rate.constants.air_freight_rate_constants import ROLE_
 
 def send_air_freight_rate_task_notification(task_id):
     task=AirFreightRateTasks.select().where(AirFreightRateTasks.id==task_id).first()
-
-    send_communication(task.airline_id,task.airport_id)
+    send_communication(task.airline_id,task.airport_id,task_id)
     return {}
 
 def send_communication(airline_id,airport_id,task_id):
     from celery_worker import create_communication_background
     partners_list = partner.list_partner_users({'filters':{'role_ids': ','.join(ROLE_IDS_FOR_NOTIFICATIONS), 'status' : 'active'}})
-    if partners_list:
+    if 'list' in partners_list:
         partners_list = partners_list['list']
     else:
         partners_list = []

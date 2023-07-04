@@ -7,10 +7,11 @@ from database.rails_db import get_user
 
 def get_air_freight_rate_stats(request):
     response={}
-    for stats_type in eval(request['stats_types']):
+    for stats_type in request['stats_types']:
         try:
-            response[request['stats_types']]=eval(f"get_{stats_type}_stats(request)")
-        except:
+            response[stats_type]=eval(f"get_{stats_type}_stats(request)")
+        except Exception as e:
+            print(e)
             response[stats_type]=None
     return response
 
@@ -22,7 +23,6 @@ def get_tech_ops_dashboard_stats(request):
         'created_at',AirFreightRateTasks.created_at,
         'completed_at',AirFreightRateTasks.completed_at
             )).alias("tats")).where(AirFreightRateTasks.status=='completed').where(AirFreightRateTasks.completed_at>=request['validity_start'].date(),AirFreightRateTasks.completed_at<=(request['validity_end'].date()+timedelta(days=1))).group_by(AirFreightRateTasks.completed_by_id)
-    print(tasks)
     stats=list(tasks.dicts())
 
     if not stats:
@@ -39,7 +39,7 @@ def get_tech_ops_dashboard_stats(request):
 
     for stat in stats:
         try:
-            stat['performed_by'] = users[stat['performed_by_id']]
+            stat['performed_by'] = users[str(stat['performed_by_id'])]
         except:
             stat['performed_by'] = None
         average_tat=0.0
@@ -60,5 +60,4 @@ def get_tech_ops_dashboard_stats(request):
                 stat['>6'] += 1 
         stat['average_tat']=int((average_tat / stat['rates_count']))
     stats=sorted(stats,key =lambda x:x['rates_count'])
-
     return stats

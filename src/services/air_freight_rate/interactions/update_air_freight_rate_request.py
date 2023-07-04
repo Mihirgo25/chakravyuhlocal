@@ -33,7 +33,7 @@ def execute_transaction_code(request):
             if object.closing_remarks is not None
             else [request.get("closing_remarks")]
         )
-
+    object.validate()
     try :
         object.save()
         

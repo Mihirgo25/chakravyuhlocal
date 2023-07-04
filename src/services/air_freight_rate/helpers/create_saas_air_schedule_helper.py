@@ -13,4 +13,3 @@ def create_saas_air_schedule_airport_pair(air_object,request):
                                                           AirFreightRate.rate_not_available_entry==False,
                                                           AirFreightRate.rate_type==DEFAULT_RATE_TYPE).exists():
         common.create_saas_air_schedule_airport_pair({"origin_airport_id":origin_airport_id, "destination_airport_id":destination_airport_id})
-        get_multiple_service_objects(air_object)

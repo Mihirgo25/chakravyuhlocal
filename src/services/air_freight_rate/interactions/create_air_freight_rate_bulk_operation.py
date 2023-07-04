@@ -20,7 +20,6 @@ def create_air_freight_rate_bulk_operation(request):
 
     air_freight_bulk_operation_delay.apply_async(kwargs={'action_name':action_name,'object':bulk_operation,'sourced_by_id':sourced_by_id,'procured_by_id':procured_by_id},queue='low')
 
-
     return {
     'id': str(bulk_operation.id)
     }

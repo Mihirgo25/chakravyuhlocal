@@ -31,13 +31,11 @@ class ShipmentApiClient:
         return self.client.request('GET','list_shipments',data)
     
     def list_shipment_sell_quotations(self,data={}):
-        return self.client.request('GET','list_shipment_sell_quotation_for_chakravyuh',data)
+        return self.client.request('GET','list_shipment_sell_quotations',data)
     
     def get_previous_shipment_airlines(self,data={}):
         return self.client.request('GET','get_previous_shipment_airlines',data)
         
-
-    
     def get_shipment_sell_and_buy_quotation(self,data={}):
         return self.client.request('GET','get_shipment_sell_and_buy_quotation',data)
     
