@@ -133,7 +133,7 @@ class RelateAirline:
                     for attr,value in row.items():
                         setattr(object,attr,value)
                 else:
-                    AirFreightAirlineFactors(**row)
+                    AirFreightAirlineFactors.create(**row)
 
     def relate_airlines(self):
         cluster_data = AirFreightLocationClusters.select(
@@ -154,4 +154,4 @@ class RelateAirline:
                     )
                     if invoice_rates or air_freight_rates:
                         prime_airline_id, dict = self.create_airline_dictionary(invoice_rates, air_freight_rates)
-                        self.get_ratios(prime_airline_id,dict,origin_cluster[0],destination_cluster[0])
+                        self.get_ratios(prime_airline_id,dict,origin_cluster['id'],destination_cluster['id'])
