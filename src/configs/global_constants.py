@@ -223,3 +223,5 @@ RATE_ENTITY_MAPPING = {
   "b67d40b1-616c-4471-b77b-de52b4c9f2ff": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88'],
   "default": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88']
 }
+
+SERVICE_PROVIDER_FF='36cee6fb-eeaf-4643-9db5-397544339635'

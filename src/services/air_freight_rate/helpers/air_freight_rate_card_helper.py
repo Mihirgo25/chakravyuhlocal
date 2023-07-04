@@ -6,7 +6,7 @@ from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_EXPORTS_HIGH_DENSITY_RATIO,
 )
 from configs.global_constants import MAX_VALUE
-from micro_services.client import spot_search 
+from micro_services.client import spot_search,maps
 from datetime import datetime, timedelta
 
 
@@ -94,3 +94,35 @@ def get_rate_from_cargo_ai(air_freight_rate, feedback, performed_by_id):
     cargo_clearance_date = datetime.strptime(cargo_clearance_date, '%Y-%m-%d').date()
     cargo_clearance_date = cargo_clearance_date + timedelta(days=1)
     params_for_cargoai['departue_date']=cargo_clearance_date
+    params_for_cargoai['origin_airport_id'] = spot_search_detail['origin_airport_id']
+    params_for_cargoai['destination_airport_id'] = spot_search_detail['destination_airport_id']
+
+    airport_locs=maps.list_locations({"filters":{"id":[params_for_cargoai['origin_airport_id'],params_for_cargoai['destination_airport_id']],"type":"airport","status":"active"}})['list']
+    params_for_cargoai['origin']=airport_locs[params_for_cargoai['origin_airport_id']]
+    params_for_cargoai['destination']=airport_locs[params_for_cargoai['destination_airport_id']]
+    params_for_cargoai['commodity'] = spot_search_detail['commodity']
+    params_for_cargoai['volume'] = spot_search_detail['volume']
+    params_for_cargoai['packages_count'] = spot_search_detail.get('package_count', 1)
+    params_for_cargoai['weight'] = spot_search_detail['weight']
+    params_for_cargoai['commodity_details'] = spot_search_detail['commodity_details']
+    params_for_cargoai['time'] = 25
+    # try:
+    #     all_rates = api(params_for_cargoai)
+    # except Exception as e:
+    #     raise
+
+    # if not all_rates:
+    #     return 
+    all_rates=[]
+    rates_for_airlines = make_entry_in_rates(all_rates, params_for_cargoai)
+    if rates_for_airlines:
+        importer_exporter_id=spot_search_detail['importer_exporter_id']
+        variables = { 'origin': airport_locs[params_for_cargoai['origin_airport_id']], 'destination': airport_locs[params_for_cargoai['destination_airport_id']], 'spot_search_id': feedback.source_id, importer_exporter_id: importer_exporter_id, 'airlines': rates_for_airlines }
+        notification_to_sales_agent_for_rate_added(air_freight_rate, performed_by_id, variables)
+
+# def make_entry_in_rates(all_rates, params_for_cargoai):
+
+
+    
+
+
