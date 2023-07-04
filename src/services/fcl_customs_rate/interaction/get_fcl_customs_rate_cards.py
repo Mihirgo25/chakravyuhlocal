@@ -6,13 +6,14 @@ from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_eligible_orgs
 import sentry_sdk, traceback
 from services.fcl_customs_rate.interaction.get_zone_average_customs_rate import get_zone_average_customs_rate
+from configs.global_constants import INDIA_COUNTRY_ID
 
 def get_fcl_customs_rate_cards(request):
     try:
         query = initialize_customs_query(request)
         customs_rates = jsonable_encoder(list(query.dicts()))
 
-        if len(customs_rates) == 0 and request.get('port_id'):
+        if len(customs_rates) == 0 and request.get('port_id') and request.get('country_id') == INDIA_COUNTRY_ID:
             customs_rates = get_zone_average_customs_rate(request)
 
         customs_rates = discard_noneligible_lsps(customs_rates)

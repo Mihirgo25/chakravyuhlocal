@@ -85,6 +85,7 @@ def create_fcl_customs_rate(params, converted_file, rows, created_by_id, procure
     object['location_id'] = get_port_id(rows[0]['location'])
     object['customs_line_items'] = []
     object['cfs_line_items'] = []
+    object['accuracy'] = 100
     for t in rows:
         line_item = {
             'code': t.get('code'),
