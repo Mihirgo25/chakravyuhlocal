@@ -6,6 +6,7 @@ from services.fcl_cfs_rate.fcl_cfs_params import *
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException
+from params import CreateRateSheet, UpdateRateSheet
 
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate import create_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.get_fcl_cfs_rate import get_fcl_cfs_rate
@@ -19,6 +20,10 @@ from services.fcl_cfs_rate.interaction.delete_fcl_cfs_rate_request import delete
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate import update_fcl_cfs_rate
 from services.fcl_cfs_rate.interaction.create_fcl_cfs_rate_bulk_operation import create_fcl_cfs_rate_bulk_operation
 from services.fcl_cfs_rate.interaction.update_fcl_cfs_rate_platform_prices import update_fcl_cfs_rate_platform_prices
+from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
+from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
+from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
+from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 fcl_cfs_router = APIRouter()
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate')
@@ -72,7 +77,7 @@ def create_fcl_cfs_rate_not_available_api(request: CreateFclCfsRateNotAvailable,
 
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate_bulk_operation')
-def create_fcl_customs_rate_bulk_operation_api(request: CreateFclCfsRateBulkOperation, resp: dict = Depends(authorize_token)):
+def create_fcl_cfs_rate_bulk_operation_api(request: CreateFclCfsRateBulkOperation, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -270,6 +275,84 @@ def update_fcl_cfs_rate_api(request: UpdateFclCfsRate, resp: dict = Depends(auth
     try:
         data = update_fcl_cfs_rate(request.dict(exclude_none=False))
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_cfs_router.post("/create_fcl_cfs_rate_sheet")
+def create_rate_sheet_api(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_cfs_router.post("/update_fcl_cfs_rate_sheet")
+def update_rate_sheet_api(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+
+    try:
+        rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_cfs_router.get("/list_fcl_cfs_rate_sheets")
+def list_rate_sheets_api(
+    filters: str = None,
+    stats_required: bool = True,
+    page: int = 1,
+    page_limit: int = 10,
+    sort_by: str = 'created_at',
+    sort_type: str = 'desc',
+    pagination_data_required:  bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheets(
+            filters, stats_required, page, page_limit,sort_by, sort_type, pagination_data_required
+        )
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_cfs_router.get("/list_fcl_cfs_rate_sheet_stats")
+def list_rates_sheet_stats_api(
+    filters: str = None,
+    service_provider_id: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        response = list_rate_sheet_stats(
+            filters, service_provider_id
+        )
+        return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
     except Exception as e:
