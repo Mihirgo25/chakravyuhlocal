@@ -89,24 +89,22 @@ class DeleteHaulageFreightRateRequest(BaseModel):
 class CreateHaulageFreightRateFeedback(BaseModel):
   source: str
   source_id: str
-  feedbacks: list[str]=None
-  remarks: list[str] = []
-  haulage_freight_rate_id: str = None
   performed_by_id: str = None
   performed_by_org_id: str
   performed_by_type: str = None
+  rate_id: str
+  likes_count: int
+  dislikes_count: int
+  feedbacks: list[str]= []
+  remarks: list[str] = []
   preferred_freight_rate: float = None
   preferred_freight_rate_currency: str = None
-  outcome: str = None
-  outcome_object_id: str = None
-  booking_params: dict = {}
   feedback_type: str
+  booking_params: dict = {}
   status: str = None
   closing_remarks: list[str] = None
   closed_by_id: str = None
   serial_id: int = None
-  created_at: datetime = None
-  updated_at: datetime = None
 
 class DeleteHaulageFreightRateFeedback(BaseModel):
   haulage_freight_rate_feedback_ids: list[str]
