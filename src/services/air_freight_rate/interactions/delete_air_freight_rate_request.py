@@ -50,6 +50,7 @@ def execute_transaction_code(request):
             )
             if not air_freight_rate:
                 update_new_sell_data(request_object)
+                continue
 
             air_freight_rate_validity = None
             for validity in air_freight_rate.validities:
@@ -96,7 +97,7 @@ def collection_parties_present(request_object):
     }
     req_collection_party = shipment.list_shipment_collection_party(params)["list"]
 
-    if req_collection_party[0]["collection_parties"]:
+    if req_collection_party and req_collection_party[0]["collection_parties"]:
         return False
     return True
 
@@ -108,7 +109,9 @@ def update_buy_line_items(air_freight_rate_validity, obj):
     }
     shipment_quotations = shipment.get_shipment_services_quotation(params)["service_charges"]
     if shipment_quotations:
-        air_freight_service_quotation = [ shipment_quotation for shipment_quotation in shipment_quotations if shipment_quotation["service_type"] == "air_freight_service"][0]
+        air_freight_service_quotation = [ shipment_quotation for shipment_quotation in shipment_quotations if shipment_quotation["service_type"] == "air_freight_service"]
+        if air_freight_service_quotation:
+            air_freight_service_quotation = air_freight_service_quotation[0]
         buy_line_items = air_freight_service_quotation["line_items"]
         for line_item in buy_line_items:
             if line_item["code"] in BAS_CHARGE_CODES:
@@ -118,7 +121,8 @@ def update_buy_line_items(air_freight_rate_validity, obj):
         air_freight_service_detail = air_freight_service_quotation["service_detail"][0]
         chargeable_weight = air_freight_service_detail["chargeable_weight"]
         cargo_handed_over_date = air_freight_service_detail["cargo_handed_over_at_origin_at"]
-        if not cargo_handed_over_date or ~( datetime.strptime(air_freight_rate_validity["validity_start"], "%Y-%m-%d")<= cargo_handed_over_date + timedelta(days=1)and cargo_handed_over_date + timedelta(days=1)<= datetime.strptime(air_freight_rate_validity["validity_end"]), "%Y-%m-%d",):
+        cargo_handed_over_date = datetime.strptime(cargo_handed_over_date, "%Y-%m-%dT%H:%M:%S.%fz")
+        if not cargo_handed_over_date or ~( datetime.strptime(air_freight_rate_validity["validity_start"], "%Y-%m-%d")<= (cargo_handed_over_date + timedelta(days=1))and (cargo_handed_over_date + timedelta(days=1))<= datetime.strptime(air_freight_rate_validity["validity_end"], "%Y-%m-%d")):
             update_new_sell_data(obj)
             return
         if bas_buy_line_item['quantity'] > 1 and air_freight_service_detail['is_minimum_price_shipment']:
