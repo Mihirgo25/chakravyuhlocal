@@ -6,8 +6,6 @@ from configs.global_constants import *
 MAX_CARGO_LIMIT = 10000000.0
 REQUEST_SOURCES = ["spot_search", "shipment"]
 
-AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
-
 AIR_TRADE_IMPORT_TYPE = "import"
 
 AIR_TRADE_EXPORT_TYPE = "export"
@@ -132,3 +130,5 @@ DEFAULT_WEIGHT_SLABS = [
      "upper_limit": 500
     },
 ]
+
+DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'

@@ -77,11 +77,6 @@ def get_air_freight_rate_prediction(request):
 
     return True
         
-        
-        
-    
-    
-
 def get_density_category(gross_weight,gross_volume,trade_type):
     ratio = round((gross_volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO / float(gross_weight)),4)
     chargeable_weight = get_chargeable_weight(gross_weight,gross_volume)

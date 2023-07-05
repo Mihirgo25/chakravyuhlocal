@@ -6,6 +6,7 @@ import datetime
 import pytz
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
 
 def create_audit(request, freight_id,validity_id):
     request = { key: value for key, value in request.items() if value }
@@ -38,7 +39,6 @@ def create_air_freight_rate(request):
 
     
 def create_air_freight_rate_data(request):
-    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
 
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
@@ -85,8 +85,7 @@ def create_air_freight_rate_data(request):
     freight = (
         AirFreightRate.select()
         .where(
-            AirFreightRate.init_key == init_key,
-            AirFreightRate.rate_type == row['rate_type']
+            AirFreightRate.init_key == init_key
         )
         .first()
     )
@@ -106,10 +105,6 @@ def create_air_freight_rate_data(request):
     freight.procured_by_id = request.get("procured_by_id")
 
     freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
-    
-    if request.get('rate_sheet_id'):
-        request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.datetime.strptime(str(request.get('validity_start')), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
-        request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.datetime.strptime(str(request.get('validity_end')), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
 
     validity_id = freight.set_validities(
 
