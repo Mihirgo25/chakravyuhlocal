@@ -58,10 +58,17 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def progress_percent_key(self):
         return f"bulk_operations_{self.id}"
+    
+    def total_affected_rates_key(self):
+        return f"bulk_operations_affected_{self.id}"
 
     def set_progress_percent(self,progress_percent):
         if rd:
             rd.hset(self.progress_percent_hash, self.progress_percent_key(), progress_percent)
+    
+    def set_total_affected_rates(self,total_affected_rates):
+        if rd:
+            rd.hset(self.progress_percent_hash, self.total_affected_rates_key(), total_affected_rates)
 
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
@@ -376,6 +383,7 @@ class FclFreightRateBulkOperation(BaseModel):
             create_fcl_freight_rate_data(freight_rate_object)
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
+            self.set_total_affected_rates(total_affected_rates)
             self.set_progress_percent(progress)
             
         return count, total_affected_rates
@@ -456,6 +464,7 @@ class FclFreightRateBulkOperation(BaseModel):
             })
             progress = int((count * 100.0) / total_count)
             total_affected_rates += 1
+            self.set_total_affected_rates(total_affected_rates)
             self.set_progress_percent(progress)
         return count, total_affected_rates
 
@@ -644,6 +653,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
+            self.set_total_affected_rates(total_affected_rates)
             self.set_progress_percent(progress)
         return count, total_affected_rates
         
