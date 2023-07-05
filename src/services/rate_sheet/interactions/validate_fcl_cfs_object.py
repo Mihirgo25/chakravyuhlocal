@@ -41,6 +41,7 @@ def get_cfs_object(object):
 
     try:
         custom.validate_before_save()
+        custom.validate_mandatory_free_days()
     except HTTPException as e:
         validation['error']+=' ' + str(e.detail)
 

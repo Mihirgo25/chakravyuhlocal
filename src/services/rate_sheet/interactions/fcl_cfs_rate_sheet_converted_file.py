@@ -1,5 +1,6 @@
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import *
 from services.rate_sheet.interactions.validate_fcl_cfs_object import validate_fcl_cfs_object
+from configs.fcl_cfs_rate_constants import FREE_DAYS_TYPES
 
 def process_fcl_cfs_cfs(params, converted_file, update):
     total_lines = 0
@@ -193,8 +194,8 @@ def create_fcl_cfs_rate(params, converted_file, rows, created_by_id, procured_by
                 'slabs': []
             }
             object['line_items'].append(line_item)
-        elif t.get('weight_slab_lower_limit'):
-            if not object['line_items'][-1].get('weight_slabs'): #check once
+        if t.get('weight_slab_lower_limit'):
+            if not object['line_items'][-1].get('weight_slabs'):
                 object['line_items'][-1]['weight_slabs'] = []
             weight_slab = {
                 'lower_limit': t.get('weight_slab_lower_limit'),
@@ -203,14 +204,18 @@ def create_fcl_cfs_rate(params, converted_file, rows, created_by_id, procured_by
                 'currency': t.get('weight_slab_currency')
             }
             object['line_items'][-1]['weight_slabs'].append(weight_slab)
-        elif t.get('free_days_type'):
+        if t.get('free_days_type'):
+            free_days_type = ''
+            for free_day in FREE_DAYS_TYPES:
+                if free_day['name'].lower() == t.get('free_days_type').lower():
+                    free_days_type = free_day['type']
             free_day = {
-                'free_days_type': t.get('free_days_type'),
+                'free_days_type': free_days_type,
                 'free_limit': t.get('free_days_limit')
             }
             object['free_days'].append(free_day)
-        elif t.get('free_days_lower_limit'):
-            if not object['free_days'][-1].get('slabs'): #check once
+        if t.get('free_days_lower_limit'):
+            if not object['free_days'][-1].get('slabs'):
                 object['free_days'][-1]['slabs'] = []
             slab = {
                 'lower_limit': t.get('free_days_lower_limit'),
