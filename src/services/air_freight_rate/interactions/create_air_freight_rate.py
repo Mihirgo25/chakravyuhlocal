@@ -2,11 +2,8 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from playhouse.postgres_ext import *
 from database.db_session import db
-import datetime
-import pytz
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
-from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
 
 def create_audit(request, freight_id,validity_id):
     request = { key: value for key, value in request.items() if value }
@@ -39,6 +36,7 @@ def create_air_freight_rate(request):
 
     
 def create_air_freight_rate_data(request):
+    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
 
     if request['commodity']=='general':
         request['commodity_sub_type']='all'
