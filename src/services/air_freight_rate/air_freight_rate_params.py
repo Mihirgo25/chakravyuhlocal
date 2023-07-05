@@ -401,7 +401,7 @@ class CreateAirFreightRateParams(BaseModel):
     length: int = 300
     breadth: int = 300
     height: int = 300
-    maximum_weight: int = 1000
+    maximum_weight: int = 20000
     shipment_type: str = "box"
     stacking_type: str = "stackable"
     rate_type: str = "market_place"

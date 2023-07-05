@@ -6,7 +6,7 @@ from math import ceil
 import json
 
 
-possible_direct_filters = ['id', 'airport_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'commodity', 'airline_id', 'service_provider_id', 'is_line_items_info_messages_present', 'is_line_items_error_messages_present', 'rate_type']
+possible_direct_filters = ['id', 'airport_id', 'country_id', 'trade_id', 'continent_id', 'trade_type', 'commodity', 'airline_id', 'service_provider_id', 'is_line_items_info_messages_present', 'is_line_items_error_messages_present', 'rate_type','procured_by_id']
 
 possible_indirect_filters = ['location_ids']
 
@@ -46,7 +46,7 @@ def apply_location_ids_filter(query,filters):
         AirFreightRateLocal.location_ids.contains(location_ids)
     )
     return query
-
+    
 def apply_indirect_filters(query,filters):
     
     for key in filters:
