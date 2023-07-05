@@ -31,7 +31,7 @@ def execute_transaction_code(request):
 
     rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
-        raise HTTPException (status_code=500, detail='Rate is invalid')
+        raise HTTPException(status_code=404, detail='Rate Not Found')
     
     row={
       'air_freight_rate_id': request['rate_id'],
@@ -73,6 +73,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code= 400, detail="couldnt validate the object")
     
     create_audit(request,feedback.id)
+    
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
     update_likes_dislike_count(rate,request)

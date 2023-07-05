@@ -88,16 +88,3 @@ def add_line_item(old_line_items, line_item):
     if is_new_line_item:
         old_line_items.append(line_item)
     return old_line_items
-
-
-        
-
-
-
-
-
-
-
-
-    
-

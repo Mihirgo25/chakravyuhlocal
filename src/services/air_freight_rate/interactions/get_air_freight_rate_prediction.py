@@ -1,10 +1,11 @@
 from micro_services.client import maps,organization,shipment
 from datetime import datetime,timedelta
 from services.envision.interaction.get_air_freight_predicted_rate import predict_air_freight_rate
-from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,AIR_EXPORTS_HIGH_DENSITY_RATIO,AIR_EXPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_HIGH_DENSITY_RATIO,DEFAULT_AIRLINE_IDS,COGOLENS_URL,SLAB_WISE_CHANGE_FACTOR,DEFAULT_SERVICE_PROVIDER_ID,COGO_ENVISION_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,AIR_EXPORTS_HIGH_DENSITY_RATIO,AIR_EXPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_LOW_DENSITY_RATIO,AIR_IMPORTS_HIGH_DENSITY_RATIO,DEFAULT_AIRLINE_IDS,SLAB_WISE_CHANGE_FACTOR,DEFAULT_SERVICE_PROVIDER_ID
 from celery_worker import air_freight_rate_prediction_feedback_delay
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate_data
 from database.rails_db import get_eligible_orgs
+from configs.env import DEFAULT_USER_ID
 
 def get_air_freight_rate_prediction(request):
     currency = 'INR'
@@ -38,7 +39,7 @@ def get_air_freight_rate_prediction(request):
     if service_provider_id_eligible is None:
         service_provider_id_eligible = DEFAULT_SERVICE_PROVIDER_ID
     
-    cogo_envision_id = COGO_ENVISION_ID
+    cogo_envision_id = DEFAULT_USER_ID
             
     for result in results:
         price = result.get('predicted_price')

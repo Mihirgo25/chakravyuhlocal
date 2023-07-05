@@ -108,15 +108,6 @@ TRADE_TYPES = ['import', 'export', 'domestic']
 
 DEAFULT_RATE_PRODUCER_METHOD = 'latest'
 
-AIR_STANDARD_COMMODITIES = ['general', 'perishable', 'live_animals', 'pharma']
-
-AIR_HAZARDOUS_COMMODITIES = ['hazardous']
-
-AIR_GENERAL_COMMODITY_TYPE =['all']
-
-AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES = ['dangerous','temp_controlled', 'other_special']
-
-AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 COUNTRY_CODE_MAPPING = ["IN","VN"]
 
 SEARCH_START_DATE_OFFSET = 2
