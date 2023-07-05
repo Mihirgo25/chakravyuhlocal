@@ -20,7 +20,6 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days impor
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id, get_progress_percent
-from celery_worker import create_fcl_freight_rate_delay
 from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
@@ -641,7 +640,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     'tag': data.get('tag'),
                     'rate_sheet_validation': True,
                 }
-                create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                create_fcl_freight_rate_data(freight_rate_object)
 
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
@@ -940,7 +939,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         'mode': freight['mode']
                     }
                     
-                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    create_fcl_freight_rate_data(freight_rate_object)
 
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
@@ -1175,19 +1174,19 @@ class FclFreightRateBulkOperation(BaseModel):
                 for commodity in data['commodities']:
                     freight_rate_object = create_params | ({ 'commodity': commodity, 'source': 'bulk_operation' })
                     
-                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    id = create_fcl_freight_rate_data(freight_rate_object)
                     total_affected_rates += str(id) != str(freight.id)
                     
                 for container_size in data['container_sizes']:
                     freight_rate_object = create_params | ({ 'container_size': container_size, 'source': 'bulk_operation' })
                     
-                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    id = create_fcl_freight_rate_data(freight_rate_object)
                     total_affected_rates += str(id) != str(freight.id)
                     
                 for container_type in data['container_types']:
                     freight_rate_object = create_params | ({ 'container_type': container_type, 'source': 'bulk_operation' })
                     
-                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    id = create_fcl_freight_rate_data(freight_rate_object)
                     total_affected_rates += str(id) != str(freight.id)
                     
                 create_audit(self.id)
@@ -1301,7 +1300,7 @@ class FclFreightRateBulkOperation(BaseModel):
                         create_params['destination_main_port_id'] = fcl_freight_rate["destination_port_id"]
                     create_params['source'] = 'bulk_operation'
                     
-                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':create_params }, queue='fcl_freight_rate')
+                    create_fcl_freight_rate_data(create_params)
                     total_affected_rates+= 1
                     
         data['total_affected_rates'] = total_affected_rates
