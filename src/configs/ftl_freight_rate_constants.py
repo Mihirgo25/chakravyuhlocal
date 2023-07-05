@@ -207,7 +207,13 @@ PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"  # kshitij sharma
 
 INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
 
-BASIC_CHARGE_LIST = ['toll','tyre', 'maintenance', 'driver', 'insurance', 'emi', 'expense']
+BASIC_CHARGE_LIST = {
+    'IN' : ['driver', 'maintenance', 'insurance', 'tyre', 'toll'],
+    'EU' : ['distance_factor','time_factor','capacity_factor','loading_charge'],
+    'US' : ['driver', 'maintenance', 'insurance', 'tyre', 'toll'],
+    'CN' : ['driver', 'maintenance','tyre', 'toll', 'emi'],
+    'VN' : ['toll', 'maintenance', 'driver', 'insurance', 'emi', 'expense']
+}
 
 HAZ_CLASSES = [
     "hazardous",
@@ -370,8 +376,6 @@ INDIA_FUEL_DATA_LINKS = {
 }
 
 # EUROPE
-
-EU_BASIC_CHARGE_LIST = {'distance_factor','time_factor','capacity_factor','loading_charge'}
 
 EUROPE_CONTINENT_ID = '72abc4ba-6368-4501-9a86-8065f5c191f8'
 

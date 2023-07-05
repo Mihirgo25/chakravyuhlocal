@@ -1,31 +1,32 @@
 from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,HAZ_CLASSES,ADDITIONAL_CHARGE,ROUND_TRIP_CHARGE
 from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
 class VNFtlFreightRateEstimator:
-    def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data):
+    def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data,country_info):
         self.origin_location_id = origin_location_id
         self.destination_location_id  = destination_location_id
         self.location_data_mapping = location_data_mapping
         self.truck_and_commodity_data = truck_and_commodity_data
         self.average_fuel_price = average_fuel_price
         self.path_data = path_data
+        self.country_info = country_info
 
     def estimate(self):
-        currency = 'VND'
+        currency = self.country_info.get('currency_code')
+        country_code = self.country_info.get('country_code')
         total_path_distance = self.path_data['distance']
         truck_mileage = self.truck_and_commodity_data['mileage']
         weight = self.truck_and_commodity_data['weight']
 
         basic_freight_charges = (self.average_fuel_price*total_path_distance)/truck_mileage
+        additional_charges = 0
 
         applicable_rule_set = self.get_applicable_rule_set()
         for data in applicable_rule_set:
-            if data['process_type'] in BASIC_CHARGE_LIST:
-                if data['process_type'] == 'driver':
-                    basic_freight_charges += (float(data['process_value'])*total_path_distance)
-                    
-                else:
-                    basic_freight_charges += (float(data['process_value'])*total_path_distance*weight)
-                    
+            if data['process_type'] in BASIC_CHARGE_LIST[country_code]:
+                additional_charges += ((float(data['process_value'])) if data['process_type'] == 'driver' 
+                                       else (float(data['process_value'])*weight))
+
+        basic_freight_charges += (additional_charges * total_path_distance)   
 
         if self.truck_and_commodity_data['trip_type'] == 'round_trip':
             basic_freight_charges += ROUND_TRIP_CHARGE*basic_freight_charges

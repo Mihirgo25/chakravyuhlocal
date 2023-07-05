@@ -16,19 +16,18 @@ def get_ftl_freight_rate(
 
     ids = [origin_location_id, destination_location_id]
     location_data_mapping = get_location_data_mapping(ids)
-    country_id = location_data_mapping[origin_location_id]['country_id']
-    country_category = get_country_code(location_data_mapping,origin_location_id,destination_location_id)
+    country_info = get_country_info(location_data_mapping,origin_location_id,destination_location_id)
     truck_and_commodity_data = get_truck_and_commodity_data(
-        country_category,truck_type, weight,country_id,trip_type,commodity,truck_body_type
+        country_info,truck_type, weight,trip_type,commodity,truck_body_type
     )
-    rate_estimator = FtlFreightEstimator(origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,country_category)
+    rate_estimator = FtlFreightEstimator(origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,country_info)
     return rate_estimator.estimate()
 
-def get_truck_and_commodity_data(country_category,truck_type, weight,country_id,trip_type,commodity=None,truck_body_type = None):
+def get_truck_and_commodity_data(country_info,truck_type, weight,trip_type,commodity=None,truck_body_type = None):
     filters = {
-        'country_id':country_id
+        'country_id':country_info.get('country_id')
     }
-
+    country_category = country_info.get('country_code')
     truck_weight = get_truck_weight_according_to_country(country_category, weight)
 
     if truck_type:
@@ -71,23 +70,23 @@ def get_location_data_mapping(ids: list):
         location_mapping[data["id"]] = data
     return location_mapping
 
-def get_country_code(location_data_mapping,origin_location_id,destination_location_id):
+def get_country_info(location_data_mapping,origin_location_id,destination_location_id):
     origin_country_code = location_data_mapping[origin_location_id]['country_code']
     destination_country_code = location_data_mapping[destination_location_id]['country_code']
-
+    country_id = location_data_mapping[origin_location_id]['country_id']
     origin_continent_id = location_data_mapping[origin_location_id]['continent_id']
     destination_continent_id = location_data_mapping[destination_location_id]['continent_id']
     if origin_country_code == 'IN' and destination_country_code == 'IN':
-        return 'IN'
+        return {'country_code':'IN','currency_code':'INR','country_id':country_id}
     elif origin_continent_id in EU_ZONE and destination_continent_id in EU_ZONE:
-        return 'EU'
+        return {'country_code':'EU','currency_code':'EUR','country_id':country_id}
     elif origin_country_code == 'US' and destination_country_code == 'US':
-        return 'US'
+        return {'country_code':'US','currency_code':'USD','country_id':country_id}
     elif origin_country_code == 'CN' and destination_country_code == 'CN':
-        return 'CN'
+        return {'country_code':'CN','currency_code':'CNY','country_id':country_id}
     elif origin_country_code == 'VN' and destination_country_code == 'VN':
-        return 'VN'
-    return 'not_found'
+        return {'country_code':'VN','currency_code':'VND','country_id':country_id}
+    return {'country_code':'not_found','currency_code':'not_found','country_id':country_id}
 
 def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type,closest_truck_type):
     truck_and_commodity_data = {
