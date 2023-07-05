@@ -17,15 +17,6 @@ class ShipmentApiClient:
     
     def get_shipment(self, data = {}):
         return self.client.request('GET','get_shipment',data)
-
-    def list_shipment_collection_party(self,data={}):
-        return self.client.request('GET','list_shipment_collection_party',data)
-    
-    def get_shipment_services_quotation(self,data={}):
-        return self.client.request('GET','get_shipment_services_quotation',data)
-    
-    def update_shipment_buy_quotations(self,data={}):
-        return self.client.request('POST','update_shipment_buy_quotations',data)
     
     def list_shipments(self,data = {}):
         return self.client.request('GET','list_shipments',data)
@@ -34,16 +25,7 @@ class ShipmentApiClient:
         return self.client.request('GET','list_shipment_sell_quotations',data)
     
     def get_previous_shipment_airlines(self,data={}):
-        return self.client.request('GET','get_previous_shipment_airlines',data)
-        
-    def get_shipment_sell_and_buy_quotation(self,data={}):
-        return self.client.request('GET','get_shipment_sell_and_buy_quotation',data)
-    
-    def get_new_sell_data(self,data={}):
-        return self.client.request('GET','get_new_sell_data',data)
-    
-    def get_shipment_quotation(self,data={}):
-        return self.client.request('GET','get_shipment_quotation',data)
+        return self.client.request('GET','get_previous_shipment_airlines',data) 
     
     def update_sell_and_buy_quotations_for_air_freight_request(self,data = {}):
         return self.client.request('POST','update_sell_and_buy_quotations_for_air_freight_request',data)

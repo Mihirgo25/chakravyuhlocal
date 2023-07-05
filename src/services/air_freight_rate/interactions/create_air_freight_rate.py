@@ -1,9 +1,6 @@
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from playhouse.postgres_ext import *
 from database.db_session import db
-import datetime
-import pytz
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 
@@ -80,16 +77,9 @@ def create_air_freight_rate_data(request):
         "price_type":price_type
     }
 
-    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}'
-    
-    freight = (
-        AirFreightRate.select()
-        .where(
-            AirFreightRate.init_key == init_key,
-            AirFreightRate.rate_type == row['rate_type']
-        )
-        .first()
-    )
+    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}{str(row["mode"])}'
+
+    freight = (AirFreightRate.select().where(AirFreightRate.init_key == init_key).first())
    
     if not freight:
         freight = AirFreightRate(init_key = init_key)
@@ -106,13 +96,9 @@ def create_air_freight_rate_data(request):
     freight.procured_by_id = request.get("procured_by_id")
 
     freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
-    
-    if request.get('rate_sheet_id'):
-        request['validity_start']  = pytz.timezone('Asia/Kolkata').localize(datetime.datetime.strptime(str(request.get('validity_start')), "%Y-%m-%d %H:%M:%S")).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.UTC)
-        request['validity_end']  = pytz.timezone('Asia/Kolkata').localize(datetime.datetime.strptime(str(request.get('validity_end')), "%Y-%m-%d %H:%M:%S")).replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.UTC)
 
     validity_id = freight.set_validities(
-
+        
         request.get("validity_start").date(),
         request.get("validity_end").date(),
         request.get("min_price"),
@@ -128,7 +114,7 @@ def create_air_freight_rate_data(request):
         request.get("available_gross_weight"),
         request.get("rate_type")
     )
-    if request.get("source")=='cargo_ai':
+    if request.get("source") == 'cargo_ai':
         freight.add_flight_and_external_uuid(validity_id,request.get("flight_uuid"),request.get("external_rate_id"))
 
     freight.set_last_rate_available_date()
