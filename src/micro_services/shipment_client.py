@@ -44,3 +44,6 @@ class ShipmentApiClient:
     
     def get_shipment_quotation(self,data={}):
         return self.client.request('GET','get_shipment_quotation',data)
+    
+    def update_sell_and_buy_quotations_for_air_freight_request(self,data = {}):
+        return self.client.request('POST','update_sell_and_buy_quotations_for_air_freight_request',data)
