@@ -74,7 +74,8 @@ def build_local_line_items(request,query_result, response_object):
 def build_local_line_item_object(request,line_item):
     chargeable_weight = get_chargeable_weight(request)
     code_config = AIR_FREIGHT_LOCAL_CHARGES[line_item['code']]
-
+    if not code_config:
+        return
     if code_config.get('inco_terms') and request.get('inco_term') and request.get('inco_term') not in code_config.get('inco_terms'):
         return
     
