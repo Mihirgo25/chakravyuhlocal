@@ -427,11 +427,6 @@ def get_invoices(days=1, offset=0, limit=5000):
             return all_result
 
 
-
-                    
-            
-    
-
 def get_past_cost_booking_data(limit, offset):
 
     all_result = []
@@ -501,5 +496,30 @@ def get_past_cost_booking_data(limit, offset):
         sentry_sdk.capture_exception(e)
         return all_result
     
-
-
+ 
+def get_supply_agents():
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                sql ='''
+                select user_id from partner_users
+                INNER JOIN auth_roles 
+                ON (auth_roles.id = ANY(partner_users.role_ids) 
+                and auth_roles.name = 'Supply Agent' and 'air_freight' = ANY(partner_users.services) 
+                and partner_users.status = 'active')
+                '''
+                cur.execute(sql)
+                result = cur.fetchall()
+                for res in result:
+                    new_obj = {
+                        'user_id':str(res[0])
+                    }
+                    all_result.append(new_obj)
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
