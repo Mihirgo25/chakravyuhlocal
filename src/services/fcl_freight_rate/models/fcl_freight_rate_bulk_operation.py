@@ -430,9 +430,9 @@ class FclFreightRateBulkOperation(BaseModel):
             count, total_affected_rates = self.perform_batch_extend_validity_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
         
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
-        self.save()    
+        self.save() 
             
             
     def perform_batch_delete_freight_rate_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
@@ -513,7 +513,7 @@ class FclFreightRateBulkOperation(BaseModel):
             count, total_affected_rates = self.perform_batch_delete_freight_rate_action(batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
 
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -557,7 +557,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()    
 
@@ -719,7 +719,7 @@ class FclFreightRateBulkOperation(BaseModel):
             count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
         
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -799,7 +799,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
         
@@ -848,7 +848,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -956,7 +956,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
         
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -1002,7 +1002,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
 
@@ -1044,7 +1044,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.save()
 
 
@@ -1090,7 +1090,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
        
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
             
@@ -1206,7 +1206,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
        
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -1314,7 +1314,7 @@ class FclFreightRateBulkOperation(BaseModel):
                     total_affected_rates+= 1
                     
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
