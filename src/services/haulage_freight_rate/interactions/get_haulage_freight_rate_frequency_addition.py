@@ -38,6 +38,4 @@ def get_data(query, sort_type, group_by):
     return jsonable_encoder(list(data.dicts()))
 
 def apply_procured_by_id_filter(query, filters):
-   query = query.join(HaulageFreightRateAudit, on=(HaulageFreightRateAudit.object_id == HaulageFreightRate.id)).where((HaulageFreightRateAudit.object_type == 'HaulageFreightRate') &
-                        (HaulageFreightRate.procured_by_id == filters['procured_by_id']))
-   return query
+    return query.where(HaulageFreightRate.procured_by_id == filters['procured_by_id'])

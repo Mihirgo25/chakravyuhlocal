@@ -40,9 +40,6 @@ from services.haulage_freight_rate.interactions.create_haulage_freight_rate_not_
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_visibility import (
     get_haulage_freight_rate_visibility,
 )
-from services.haulage_freight_rate.interactions.get_haulage_freight_rate_visibility import (
-    get_haulage_freight_rate_visibility,
-)
 from services.haulage_freight_rate.interactions.get_haulage_freight_rate_cards import (
     get_haulage_freight_rate_cards,
 )
@@ -459,39 +456,6 @@ def create_haulage_freight_rate_not_available_data(
     try:
         data = create_haulage_freight_rate_not_available(
             request.dict(exclude_none=False)
-        )
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(
-            status_code=500, content={"success": False, "error": str(e)}
-        )
-
-
-@haulage_freight_router.post("/get_haulage_freight_rate_visibility")
-def get_haulage_freight_rate_visibility_data(
-    service_provider_id: str = None,
-    origin_location_id: str = None,
-    destination_location_id: str = None,
-    rate_id: str = None,
-    container_size: str = None,
-    container_type: str = None,
-    commodity: str = None,
-    resp: dict = Depends(authorize_token),
-):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    try:
-        data = get_haulage_freight_rate_visibility(
-            service_provider_id,
-            origin_location_id,
-            destination_location_id,
-            rate_id,
-            container_size,
-            container_type,
-            commodity,
         )
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:

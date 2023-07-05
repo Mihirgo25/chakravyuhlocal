@@ -1,18 +1,13 @@
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from database.rails_db import get_organization
-from micro_services.client import organization
+from database.rails_db import get_organization,get_eligible_orgs
 
 def get_haulage_freight_rate_visibility(request):
     response_object = {'reason': '', 'is_rate_available': False, 'is_visible': False }
-
-    org_details = get_organization(id=request['service_provider_id'])[0] if get_organization(id=request['service_provider_id']) else None
-    if org_details:
-        org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})
-        if org_services_data:
-            org_services_data = org_services_data['list']
-        else:
-            org_services_data = []
-        org_services = [service['service'] for service in org_services_data]
+    org_services=[]
+    organizations = get_organization(id=request.get('service_provider_id'))
+    if organizations:
+        org_details = organizations[0] if organizations else None
+        org_services = get_eligible_orgs(None, str(org_details.get('id') or ''))
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
     if kyc_and_service_status:
