@@ -1,15 +1,9 @@
-
 from fastapi import HTTPException
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
-from micro_services.client import organization
-from celery_worker import update_haulage_freight_rate_request_delay
-from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from configs.haulage_freight_rate_constants import DEFAULT_RATE_TYPE
-from celery_worker import delay_haulage_functions
 
 def create_audit(request, freight_id):
-
     audit_data = {}
     audit_data["validity_start"] = request.get("validity_start").isoformat()
     audit_data["validity_end"] = request.get("validity_end").isoformat()
@@ -31,8 +25,7 @@ def create_haulage_freight_rate(request):
     from celery_worker import delay_haulage_functions, update_haulage_freight_rate_request_delay
 
     transport_modes = request.get('transport_modes',[])
-    transport_modes = set(transport_modes)
-    transport_modes = list(transport_modes)
+    transport_modes = list(set(transport_modes))
     transport_modes.sort()
     params = {
         'origin_location_id' : request.get('origin_location_id'),
@@ -53,13 +46,12 @@ def create_haulage_freight_rate(request):
         'mode': request.get('mode', "manual"),
         'accuracy': request.get('accuracy', 100),
         'rate_type': request.get("rate_type", DEFAULT_RATE_TYPE)
-    }
-
-    init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["shipping_line_id"] or "")}:{str(params["haulage_type"])}:{str(params["trailer_type"] or "")}:{str(params["trip_type"] or "")}:{str(params["importer_exporter_id"] or "")}'
+    }   
+    # can't we add rate type in init key
+    init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["shipping_line_id"] or "")}:{str(params["haulage_type"])}:{str(params["trailer_type"] or "")}:{str(params["trip_type"] or "")}:{str(params["importer_exporter_id"] or "")}:{str(params["rate_type"])}'
     haulage_freight_rate = (
         HaulageFreightRate.select().where(
-        HaulageFreightRate.init_key == init_key,
-        HaulageFreightRate.rate_type == params["rate_type"]
+        HaulageFreightRate.init_key == init_key
         ).first()
     )
     
@@ -100,7 +92,6 @@ def create_haulage_freight_rate(request):
     haulage_freight_rate.update_platform_prices_for_other_service_providers()
 
     delay_haulage_functions.apply_async(kwargs={'haulage_object':haulage_freight_rate,'request':request},queue='low')
-    
     if request.get('haulage_freight_rate_request_id'):
         update_haulage_freight_rate_request_delay.apply_async(kwargs={'request':{'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
     

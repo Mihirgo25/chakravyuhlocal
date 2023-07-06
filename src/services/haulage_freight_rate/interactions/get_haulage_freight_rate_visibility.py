@@ -7,7 +7,7 @@ def get_haulage_freight_rate_visibility(request):
     org_details = None
     organizations = get_organization(id=request.get('service_provider_id'))
     if organizations:
-        org_details = organizations[0] if organizations else None
+        org_details = organizations[0]
         org_services = get_eligible_orgs(None, str(org_details.get('id') or ''))
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
@@ -24,11 +24,11 @@ def is_kyc_verified_and_service_validation_status(org_details, org_services):
     kyc_and_service_reason = ''
     if not org_details:
         kyc_and_service_reason += ' service provider not present'
-    if org_details and org_details['kyc_status'] != 'verified':
-        kyc_and_service_reason += f" kyc status is {org_details['kyc_status'].replace('_' , ' ')},"
-    if org_details and org_details['status'] == 'inactive':
+    if org_details and org_details.get('kyc_status') != 'verified':
+        kyc_and_service_reason += f" kyc status is {org_details.get('kyc_status').replace('_' , ' ')},"
+    if org_details and org_details.get('status') == 'inactive':
         kyc_and_service_reason += ' service provider status is inactive,'
-    if (not org_services) or 'haulage_freight' not in org_services:
+    if (not org_services) or ('haulage_freight' not in org_services and 'trailer_freight' not in org_services):
         kyc_and_service_reason += ' haulage service is not activated for the organization,'
     return kyc_and_service_reason
 

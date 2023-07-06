@@ -47,6 +47,8 @@ def execute_transaction_code(request):
 
     create_audit(request, object.id)
 
+    return {"haulage_freight_rate_request_id": request.get('haulage_freight_rate_request_id')}
+
 
 def find_object(request):
     try:

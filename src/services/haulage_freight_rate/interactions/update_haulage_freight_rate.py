@@ -48,8 +48,9 @@ def execute_transaction_code(request):
     return {"id": haulage.id}
 
 def find_haulage_object(request):
-    try:
-        haulage = HaulageFreightRate.get_by_id(request.get("id"))
-    except:
+    query = HaulageFreightRate.select().where(HaulageFreightRate.id==request.get("id"))
+    if query.count()>0:
+        return query.first()
+    else:
         raise HTTPException(status_code=400, detail="Rate Not Found")
-    return haulage
+   

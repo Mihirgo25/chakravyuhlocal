@@ -78,7 +78,6 @@ def get_data(query, expired_rates_required):
         platform_price = validity_object.get('platform_price') or -1
 
         validity = {
-          'id': validity_object.get('id'),
           'validity_start': validity_object['validity_start'],
           'validity_end': validity_object['validity_end'],
           'price': validity_object['price'],

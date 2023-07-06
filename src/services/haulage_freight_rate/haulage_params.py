@@ -46,9 +46,9 @@ class CreateHaulageFreightRate(BaseModel):
 class UpdateHaulageFreightRate(BaseModel):
   performed_by_id: str = None
   procured_by_id: str = None
-  sourced_by_id: str = None
+  sourced_by_id: str= None
   bulk_operation_id: str = None
-  id: str = None
+  id: str
   line_items: list[HaulageLineItem]
 
 
@@ -83,28 +83,30 @@ class CreateHaulageFreightRateRequest(BaseModel):
 class DeleteHaulageFreightRateRequest(BaseModel):
   haulage_freight_rate_request_ids: list[str]
   closing_remarks: list[str] = []
-  performed_by_id: str = None
-  performed_by_type: str = None
+  performed_by_id: str
+  performed_by_type: str
 
 class CreateHaulageFreightRateFeedback(BaseModel):
   source: str
   source_id: str
-  performed_by_id: str = None
+  feedbacks: list[str]=None
+  remarks: list[str] = []
+  haulage_freight_rate_id: str = None
+  performed_by_id: str
   performed_by_org_id: str
   performed_by_type: str = None
-  rate_id: str
-  likes_count: int
-  dislikes_count: int
-  feedbacks: list[str]= []
-  remarks: list[str] = []
   preferred_freight_rate: float = None
   preferred_freight_rate_currency: str = None
-  feedback_type: str
+  outcome: str = None
+  outcome_object_id: str = None
   booking_params: dict = {}
+  feedback_type: str
   status: str = None
   closing_remarks: list[str] = None
   closed_by_id: str = None
   serial_id: int = None
+  created_at: datetime = None
+  updated_at: datetime = None
 
 class DeleteHaulageFreightRateFeedback(BaseModel):
   haulage_freight_rate_feedback_ids: list[str]
@@ -121,7 +123,7 @@ class UpdateHaulageFreightRatePlatformPrices(BaseModel):
   shipping_line_id: str = None
   importer_exporter_id: str = None
   is_line_items_error_messages_present: bool = False
-  performed_by_id: str = None
+  performed_by_id: str
   performed_by_type: str = None
 
 
@@ -147,26 +149,17 @@ class AddMarkup(BaseModel):
   markup_currency: str = None
 
 class CreateHaulageFreightRateBulkOperation(BaseModel):
-  performed_by_id: str = None
+  performed_by_id: str
   performed_by_type: str = None
   service_provider_id: str = None
   procured_by_id: str
   sourced_by_id: str = None
   delete_rate: DeleteRate = None
   add_markup: AddMarkup = None
-
-class HaulageFreightRateEstimation(BaseModel):
-  origin_location_id: str
-  destination_location_id: str
-  container_size: str
-  containers_count: int = None
-  container_type: int = None
-  commodity: str = None
-  cargo_weight_per_container: int = None
   
 class DeleteHaulageFreightRate(BaseModel):
   id: str
-  performed_by_id: str = None
+  performed_by_id: str 
   performed_by_type: str = None
   bulk_operation_id: str = None
   sourced_by_id: str = None
