@@ -37,17 +37,19 @@ def execute_transaction_code(request):
                 request.get("validity_start").date(),
                 request.get("validity_end").date(),
                 t.get("min_price"),
-                None,
+                t.get('currency'),
                 t.get("weight_slabs"),
-                True,
+                False,
                 request.get("validity_id"),
                 t.get("density_category"),
-                None,
-                None,
-                None,
-                None,
-                None,
+                t.get('density_ratio'),
+                t.get('initial_volume'),
+                t.get('initial_gross_weight'),
+                t.get('available_volume'),
+                t.get('available_gross_weight'),
                 object.rate_type,
+                t.get('likes_count'),
+                t.get('dislikes_count')
             )
             object.set_last_rate_available_date
 

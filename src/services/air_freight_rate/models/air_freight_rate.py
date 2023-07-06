@@ -418,7 +418,7 @@ class AirFreightRate(BaseModel):
       result = common.get_money_exchange_for_fcl({"price":price, "from_currency":currency, "to_currency":'INR'})
       return result.get('price')
     
-    def set_validities(self,validity_start, validity_end, min_price, currency, weight_slabs, deleted, validity_id, density_category, density_ratio, initial_volume, initial_gross_weight, available_volume, available_gross_weight, rate_type):
+    def set_validities(self,validity_start, validity_end, min_price, currency, weight_slabs, deleted, validity_id, density_category, density_ratio, initial_volume, initial_gross_weight, available_volume, available_gross_weight, rate_type , likes_count = 0,dislikes_count = 0):
         new_validities = []
         min_density_weight = 0.01  
         max_density_weight = MAX_CARGO_LIMIT
@@ -440,16 +440,16 @@ class AirFreightRate(BaseModel):
             if not validity_object.get("density_category"):
                 validity_object['density_category'] = 'general'
 
-            if validity_object.get('status') ==False:
-                new_validities.append(AirFreightRateValidity(**validity_object))
-                continue
             if validity_object.get("density_category") == 'high_density'  and  not deleted and  validity_object.get("density_category") == density_category:
                 if validity_object.get('min_density_weight') < min_density_weight and validity_object.get('max_density_weight') > min_density_weight:
                     validity_object['max_density_weight'] = min_density_weight
                 if validity_object.get('min_density_weight') > min_density_weight and max_density_weight > validity_object.get('min_density_weight'):
                     max_density_weight = validity_object.get('min_density_weight')
 
-            if validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight") or rate_type in ["promotional", "consolidated"]:
+            if deleted and validity_id and validity_id==validity_object.get('id'):
+                continue
+            
+            if (validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight")) or (rate_type in ["promotional", "consolidated"]):
                 if validity_object_validity_start > validity_end:
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
@@ -460,9 +460,7 @@ class AirFreightRate(BaseModel):
                     min_price = validity_object.get("min_price")
 
                 if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end and validity_id != validity_object.get('id'):
-                    # new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
-                    # validity_object['status'] = False
-                    # new_validities.append(AirFreightRateValidity(**validity_object))
+                    new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
@@ -486,12 +484,11 @@ class AirFreightRate(BaseModel):
             else:
                 new_validities.append(AirFreightRateValidity(**validity_object))
     
-            if validity_id and validity_id == validity_object.get('id') and deleted:
-                validity_object['weight_slabs'] = new_weight_slabs
-                new_validities.append(AirFreightRateValidity(**validity_object))
-                self.min_price = validity_object.get("min_price")
-                continue
-
+            # if validity_id and validity_id == validity_object.get('id') and deleted:
+            #     validity_object['weight_slabs'] = new_weight_slabs
+            #     new_validities.append(AirFreightRateValidity(**validity_object))
+            #     self.min_price = validity_object.get("min_price")
+            #     continue
         if not deleted:
             new_validity_object = {
             "validity_start": validity_start,
@@ -499,9 +496,8 @@ class AirFreightRate(BaseModel):
             "min_price": min_price,
             "currency": currency,
             "weight_slabs": new_weight_slabs,
-            "id": uuid.uuid1(),
-            "likes_count": 0,
-            "dislikes_count": 0,
+            "likes_count": likes_count,
+            "dislikes_count": dislikes_count,
             "status": True,
             "density_category": density_category,
             "min_density_weight": min_density_weight,
@@ -511,6 +507,11 @@ class AirFreightRate(BaseModel):
             "initial_gross_weight": available_gross_weight,
             "available_gross_weight": available_gross_weight
             }
+            if validity_id:
+                new_validity_object['id'] = validity_id
+            else:
+                new_validity_object['id'] = uuid.uuid1(),
+            
             new_validities.append(AirFreightRateValidity(**new_validity_object))
             self.min_price = new_validity_object["min_price"]
 
