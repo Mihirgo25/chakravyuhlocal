@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from celery_worker import update_multiple_service_objects,send_create_notifications_to_supply_agents_function,get_rate_from_cargo_ai_in_delay
+from celery_worker import update_multiple_service_objects,send_air_freight_rate_feedback_notification_in_delay,get_rate_from_cargo_ai_in_delay
 from micro_services.client import *
 from services.air_freight_rate.constants.air_freight_rate_constants import CARGOAI_ACTIVE_ON_DISLIKE_RATE
 
@@ -83,7 +83,7 @@ def execute_transaction_code(request):
             get_rate_from_cargo_ai_in_delay.apply_async(kwargs={'air_freight_rate':rate,'feedback':feedback,'performed_by_id':request.get('performed_by_id')},queue='critical')
             airports = get_locations(rate)
             if airports:
-                send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
+                send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
 
     return {'id': request['rate_id']}
 
@@ -130,7 +130,9 @@ def get_create_params(request,rate):
     return params
 
 def get_locations(air_freight_rate):
-    location_ids = [air_freight_rate['origin_airport_id'], air_freight_rate['destination_airport_id']]
+    location_ids = [str(air_freight_rate.origin_airport_id), str(air_freight_rate.destination_airport_id)]
     locations = maps.list_locations({'filters': { 'id': location_ids }, 'pagination_data_required': False})['list']
-    locations = [locations[air_freight_rate['origin_airport_id']], locations[air_freight_rate['destination_airport_id']]]
-    return locations
+    if locations[0]['id']==str(air_freight_rate.origin_airport_id):
+        return locations
+    destination = locations[0]
+    return [locations[1],destination]

@@ -293,3 +293,22 @@ class AirFreightRateFeedback(BaseModel):
         # self.validate_source_id()
         # self.validate_performed_by_id()
         return True
+    
+    def send_notification_to_supply_agents(self,air_freight_rate,aiports):
+        if air_freight_rate.procured_by_id:
+            commodity = air_freight_rate.commodity
+            notification_data = {
+                'type': 'platform_notification',
+                'user_id': air_freight_rate.procured_by_id,
+                'service': 'air_freight_rate_dislike',
+                'service_id': self.id,
+                'template_name': 'freight_rate_disliked',
+                'variables': {
+                    'origin_port': aiports[0],
+                    'destination_port': aiports[1],
+                    'service_type': 'air freight',
+                    'details': "commodity : {}".format(commodity.upper())
+                }
+                }
+            common.create_communication(notification_data)
+
