@@ -1025,7 +1025,6 @@ def list_air_freight_rates_api(
     all_rates_for_cogo_assured: bool = False,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
-    revenue_desk_data_required: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -1049,13 +1048,13 @@ def list_air_freight_rates_api(
 def get_weight_slabs_for_airline_api(
     airline_id:str,
     chargeable_weight: float = 0,
-    get_weight_slabs_for_airline:float =0.0,
+    overweight_upper_limit:float =0.0,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = get_weight_slabs_for_airline(airline_id,chargeable_weight)
+        data = get_weight_slabs_for_airline(airline_id,chargeable_weight,overweight_upper_limit)
         return JSONResponse(status_code=200, content=data)
 
     except HTTPException as e:
