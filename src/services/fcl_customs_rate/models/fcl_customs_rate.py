@@ -69,7 +69,7 @@ class FclCustomsRate(BaseModel):
         self.country_id = self.location.get('country_id') 
         self.trade_id = self.location.get('trade_id') 
         self.continent_id = self.location.get('continent_id') 
-        self.location_ids = list(filter(None, [uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
+        self.location_ids = list(filter(None, [uuid.UUID(self.location_id),uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
         
     def set_location_type(self):
         self.location_type = self.location.get('type')
