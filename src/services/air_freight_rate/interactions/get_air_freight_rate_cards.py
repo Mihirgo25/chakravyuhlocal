@@ -4,7 +4,7 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
 from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID
 from fastapi.encoders import jsonable_encoder
-from database.rails_db import get_shipping_line
+from database.rails_db import get_operators
 from database.rails_db import get_eligible_orgs
 from configs.global_constants import RATE_ENTITY_MAPPING
 from configs.definitions import AIR_FREIGHT_SURCHARGES,AIR_FREIGHT_CHARGES
@@ -28,6 +28,7 @@ def initialize_freight_query(requirements,prediction_required=False):
         AirFreightRate.shipment_type,
         AirFreightRate.validities,
         AirFreightRate.price_type,
+        AirFreightRate.rate_type,
         AirFreightRate.service_provider_id,
         AirFreightRate.cogo_entity_id,
         AirFreightRate.mode,
@@ -38,7 +39,7 @@ def initialize_freight_query(requirements,prediction_required=False):
     AirFreightRate.commodity == requirements.get('commodity'),
     AirFreightRate.commodity_type == requirements.get('commodity_type'),
     AirFreightRate.commodity_sub_type == requirements.get('commodity_subtype'),
-    AirFreightRate.rate_not_available_entry==False,
+    ~(AirFreightRate.rate_not_available_entry),
     AirFreightRate.shipment_type == requirements.get('packing_type'),
     AirFreightRate.stacking_type == requirements.get('handling_type'),
     )
@@ -58,7 +59,7 @@ def initialize_freight_query(requirements,prediction_required=False):
 
 
     if not prediction_required:
-        freight_query  = freight_query.where(((AirFreightRate.mode != 'predicted') | (AirFreightRate.mode.is_null(True))))
+        freight_query  = freight_query.where(AirFreightRate.mode != 'predicted')
 
     return freight_query
 
@@ -142,10 +143,10 @@ def build_surcharge_line_item_object(line_item,requirements):
 def build_response_list(freight_rates, requirements,is_predicted):
     grouping = {}
     for freight_rate in freight_rates:
-        key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or ""])
+        key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or ""],freight_rate['rate_type'] or "",freight_rate['mode'] or "")
         response_object = build_response_object(freight_rate, requirements,is_predicted)
 
-        if key in grouping.keys() and grouping[key]['freights'] and grouping[key]['freights'][0]['line_items'] and grouping[key]['freights'][0]['line_items']:
+        if key in grouping.keys() and grouping[key]['freights'] and grouping[key]['freights'][0]['line_items'] :
             to_currency = grouping[key]['freights'][0]['line_items'][0]['currency']
             if response_object and response_object['freights'] and response_object['freights'][0]['line_items']:
                 from_currency = response_object['freights'][0]['line_items'][0]['currency']
@@ -187,7 +188,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     freight_validity['min_density_weight'] = freight_validity['min_density_weight'] if  freight_validity.get('min_density_weight') else 0.01
     freight_validity['max_density_weight'] = freight_validity['max_density_weight'] if  freight_validity.get('max_density_weight') else MAX_CARGO_LIMIT
     
-    if datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() > requirements.get('validity_end').date() or datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() or requirements.get('cargo_clearance_date') >datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date() or not freight_validity['status']:
+    if datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() > requirements.get('validity_end').date() or datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() or requirements.get('cargo_clearance_date') >datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date():
         return
     
     freight_object = {
@@ -218,12 +219,12 @@ def build_freight_object(freight_validity,required_weight,requirements):
             break
     
     if not required_slab:
-        return
-    
+        return None
+
     if required_weight <= 500:
         required_next_slab = None
         for weight_slab in weight_slabs:
-            if (required_slab['upper_limit'] + 1)  <= int(weight_slab['lower_limit']) and required_weight < weight_slab['upper_limit']:
+            if int(weight_slab['lower_limit'])<=required_slab['upper_limit']+1 and weight_slab['upper_limit'] > (required_slab['upper_limit']+1):
                 required_next_slab = weight_slab
                 break
         
@@ -317,7 +318,7 @@ def get_surcharges(requirements,rates):
 
 def discard_noneligible_airlines(freight_rates):
     airline_ids = [rate["airline_id"] for rate in freight_rates]
-    airlines = get_shipping_line(id=airline_ids,operator_type = 'airline')
+    airlines = get_operators(id=airline_ids,operator_type = 'airline')
     active_airline_ids = [airline["id"] for airline in airlines if airline["status"] == "active"]
     freight_rates = [rate for rate in freight_rates if rate["airline_id"] in active_airline_ids]
     return freight_rates

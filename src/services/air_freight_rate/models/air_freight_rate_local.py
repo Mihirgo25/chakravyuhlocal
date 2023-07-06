@@ -233,7 +233,7 @@ class AirFreightRateLocal(BaseModel):
     def set_airline(self):
         if self.airline or not self.airline_id:
             return
-        airline = get_shipping_line(id=self.airline_id,operator_type='airline')
+        airline = get_operators(id=self.airline_id,operator_type='airline')
         if len(airline) != 0:
             self.airline = {key:str(value) for key,value in airline[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}
 

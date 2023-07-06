@@ -93,7 +93,7 @@ class AirFreightStorageRates(BaseModel):
             raise HTTPException(status_code=500,detail='Invalid airport')
         
     def validate_airline_id(self):
-        airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
+        airline_data = get_operators(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
