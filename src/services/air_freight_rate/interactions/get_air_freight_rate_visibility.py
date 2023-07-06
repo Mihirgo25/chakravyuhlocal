@@ -8,8 +8,6 @@ def get_air_freight_rate_visibility(request):
     org_details = get_organization(id = request.get('service_provider_id'),account_type = 'service_provider')
     if org_details:
         org_details=org_details[0]
-    else:
-        org_details=[]
 
     org_services_data = organization.list_organization_services({'filters':{'organization_id' : str(org_details['id']), 'status' : 'active'}})
     if 'list' in org_services_data:
@@ -40,7 +38,7 @@ def is_kyc_verified_and_service_validation_status(org_details,org_services):
     if not org_details:
         kyc_and_service_reason += ' service provider not present'
     if org_details and org_details['kyc_status'] != 'verified':
-        kyc_and_service_reason += f" kyc status is f{org_details['kyc_status'].replace('_' , ' ')},"
+        kyc_and_service_reason += " kyc status is {},".format(org_details['kyc_status'].replace('_', ' '))
     if org_details and org_details['status'] == 'inactive':
         kyc_and_service_reason += ' air service provider status is inactive,'
     if (not org_services) or 'air_freight' not in org_services:
