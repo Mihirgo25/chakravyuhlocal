@@ -93,23 +93,31 @@ def get_rate_from_cargo_ai(air_freight_rate, feedback, performed_by_id):
 
     if not spot_search_detail:
         return 
-    
     cargo_clearance_date = spot_search_detail['cargo_clearance_date']
     cargo_clearance_date = datetime.strptime(cargo_clearance_date, '%Y-%m-%d').date()
     cargo_clearance_date = cargo_clearance_date + timedelta(days=1)
-    params_for_cargoai['departue_date']=cargo_clearance_date
+    params_for_cargoai['departure_date']=cargo_clearance_date
     params_for_cargoai['origin_airport_id'] = spot_search_detail['origin_airport_id']
     params_for_cargoai['destination_airport_id'] = spot_search_detail['destination_airport_id']
 
     airport_locs=maps.list_locations({"filters":{"id":[params_for_cargoai['origin_airport_id'],params_for_cargoai['destination_airport_id']],"type":"airport","status":"active"}})['list']
-    params_for_cargoai['origin']=airport_locs[params_for_cargoai['origin_airport_id']]
-    params_for_cargoai['destination']=airport_locs[params_for_cargoai['destination_airport_id']]
+
+    if airport_locs[0]['id'] == params_for_cargoai['origin_airport_id']:
+        origin =  airport_locs[0]['port_code']
+        destination = airport_locs[1]['port_code']
+    else:
+        origin = airport_locs[1]['port_code']
+        destination = airport_locs[0]['port_code']
+
+    params_for_cargoai['origin'] = origin
+    params_for_cargoai['destination']=destination
     params_for_cargoai['commodity'] = spot_search_detail['commodity']
     params_for_cargoai['volume'] = spot_search_detail['volume']
     params_for_cargoai['packages_count'] = spot_search_detail.get('package_count', 1)
     params_for_cargoai['weight'] = spot_search_detail['weight']
     params_for_cargoai['commodity_details'] = spot_search_detail['commodity_details']
     params_for_cargoai['time'] = 25
+
     try:
         all_rates = common.get_air_routes_and_schedules_from_cargo_ai(params_for_cargoai)
     except Exception as e:
@@ -146,7 +154,7 @@ def make_entry_in_rates(all_rates, params_for_cargoai):
                 for rate in individual_rate['rates']:
                     if rate['allInRate'] and  params_for_cargoai['commodity_details']:
                         for operation_type in operation_types:
-                            new_params = params_for_cargoai({ 'airline_id': airline_details[:id], operation_type: operation_type, 'flight_uuid': individual_rate['flightUID'], 'density_category': density_category, 'density_ratio': density_ratio, 'service_provider_ff': SERVICE_PROVIDER_FF, 'price_type': 'all_in', 'final_weight_slab': final_weight_slab })
+                            new_params = params_for_cargoai({ 'airline_id': airline_details[:id], 'operation_type': operation_type, 'flight_uuid': individual_rate['flightUID'], 'density_category': density_category, 'density_ratio': density_ratio, 'service_provider_ff': SERVICE_PROVIDER_FF, 'price_type': 'all_in', 'final_weight_slab': final_weight_slab })
                             create_params = get_create_params(new_params, rate, SERVICE_PROVIDER_FF)
                             create_air_freight_rate(create_params)
                     if rate['netRate'] and  rate['charges']  and  params_for_cargoai['commodity_details']  and  rate['netRate'] != 0:

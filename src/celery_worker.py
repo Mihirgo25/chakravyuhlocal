@@ -759,3 +759,13 @@ def send_near_expiry_air_freight_rate_notification_in_delay(self):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight_rate,airports):
+    try:
+        object.send_notification_to_supply_agents(air_freight_rate,airports)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
