@@ -108,17 +108,6 @@ TRADE_TYPES = ['import', 'export', 'domestic']
 
 DEAFULT_RATE_PRODUCER_METHOD = 'latest'
 
-AIR_STANDARD_COMMODITIES = ['general', 'perishable', 'live_animals', 'pharma']
-
-AIR_HAZARDOUS_COMMODITIES = ['hazardous']
-
-AIR_GENERAL_COMMODITY_TYPE =['all']
-
-AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES = ['dangerous','temp_controlled', 'other_special']
-
-AIR_DANGEROUS_COMMODITY_SUB_TYPE=['class_1.1','class_1.2','class_1.3','class_1.4','class_1.5','class_1.6','class_2.1','class_2.2','class_2.3','class_3','class_4.1','class_4.3','class_5.1','class_5.2','class_6.1','class_6.2','class_7','class_8','class_9']
-
-AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 COUNTRY_CODE_MAPPING = ["IN","VN"]
 
 SEARCH_START_DATE_OFFSET = 2
@@ -177,7 +166,6 @@ DEFAULT_WEIGHT_SLABS=[
     }
 
 ]
-DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
 
 DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
 
@@ -227,3 +215,5 @@ RATE_ENTITY_MAPPING = {
   "b67d40b1-616c-4471-b77b-de52b4c9f2ff": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88'],
   "default": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88']
 }
+
+SERVICE_PROVIDER_FF='36cee6fb-eeaf-4643-9db5-397544339635'

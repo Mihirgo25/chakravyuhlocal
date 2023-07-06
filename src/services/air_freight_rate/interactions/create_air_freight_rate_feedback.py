@@ -5,9 +5,9 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from celery_worker import update_multiple_service_objects
-from celery_worker import send_create_notifications_to_supply_agents_function
+from celery_worker import update_multiple_service_objects,send_create_notifications_to_supply_agents_function,get_rate_from_cargo_ai_in_delay
 from micro_services.client import *
+from services.air_freight_rate.constants.air_freight_rate_constants import CARGOAI_ACTIVE_ON_DISLIKE_RATE
 
 def create_audit(request,feedback_id):
     AirServiceAudit.create(
@@ -29,9 +29,9 @@ def create_air_freight_rate_feedback(request):
      
 def execute_transaction_code(request):
 
-    rate=AirFreightRate.select(AirFreightRate.id).where(AirFreightRate.id==request['rate_id']).first()
+    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
-        raise HTTPException (status_code=500, detail='Rate is invalid')
+        raise HTTPException(status_code=404, detail='Rate Not Found')
     
     row={
       'air_freight_rate_id': request['rate_id'],
@@ -73,12 +73,17 @@ def execute_transaction_code(request):
         raise HTTPException(status_code= 400, detail="couldnt validate the object")
     
     create_audit(request,feedback.id)
+    
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
     update_likes_dislike_count(rate,request)
 
     if request['feedback_type']=='disliked':
-        send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
+        if CARGOAI_ACTIVE_ON_DISLIKE_RATE:
+            get_rate_from_cargo_ai_in_delay.apply_async(kwargs={'air_freight_rate':rate,'feedback':feedback,'performed_by_id':request.get('performed_by_id')},queue='critical')
+            airports = get_locations(rate)
+            if airports:
+                send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
     return {'id': request['rate_id']}
 
@@ -123,3 +128,9 @@ def get_create_params(request,rate):
         'airline_id':request.get('airline_id')
       }
     return params
+
+def get_locations(air_freight_rate):
+    location_ids = [air_freight_rate['origin_airport_id'], air_freight_rate['destination_airport_id']]
+    locations = maps.list_locations({'filters': { 'id': location_ids }, 'pagination_data_required': False})['list']
+    locations = [locations[air_freight_rate['origin_airport_id']], locations[air_freight_rate['destination_airport_id']]]
+    return locations

@@ -1,14 +1,19 @@
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
-
 DEFAULT_FACTOR = 0.89
-from configs.global_constants import *
 
 MAX_CARGO_LIMIT = 10000000.0
+
 REQUEST_SOURCES = ["spot_search", "shipment"]
 
-AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
-
 AIR_TRADE_IMPORT_TYPE = "import"
+
+AIR_STANDARD_COMMODITIES = ['general', 'perishable', 'live_animals', 'pharma']
+
+AIR_HAZARDOUS_COMMODITIES = ['hazardous']
+
+AIR_GENERAL_COMMODITY_TYPE =['all']
+
+AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES = ['dangerous','temp_controlled', 'other_special']
 
 AIR_TRADE_EXPORT_TYPE = "export"
 
@@ -62,23 +67,6 @@ POSSIBLE_FEEDBACKS = [
     "unpreferred_airlines",
 ]
 
-RATE_CONSTANT_MAPPING = [
-    {
-      'cogo_entity_id': '6fd98605-9d5d-479d-9fac-cf905d292b88',
-      'allowed_entity_ids': ['6fd98605-9d5d-479d-9fac-cf905d292b88', 'b67d40b1-616c-4471-b77b-de52b4c9f2ff']
-    },
-    {
-      'cogo_entity_id': 'b67d40b1-616c-4471-b77b-de52b4c9f2ff',
-      'allowed_entity_ids': ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88']
-    }
-  ]
-
-DEFAULT_EXPORT_DESTINATION_STORAGE = 2
-
-DEFAULT_IMPORT_DESTINATION_STORAGE = 2
-
-DEFAULT_DOMESTIC_DESTINATION_STORAGE = 2
-
 REQUEST_SOURCES = ["spot_search", "shipment"]
 
 FEEDBACK_SOURCES = ["spot_search", "checkout", "rate_sheet"]
@@ -114,11 +102,7 @@ DEFAULT_AIRLINE_IDS = [
     "3a8dc0d2-2bb9-40f4-b9c4-993b6bf273e4",
 ]
 
-COGOLENS_URL = "https://lens.cogoport.com/cogolens/create_air_freight_rate_prediction"
-
 SLAB_WISE_CHANGE_FACTOR = 0.89
-
-COGO_ENVISION_ID = "2dbe768e-929d-4e54-baf0-309ef68c978b"
 
 AIRLINE_IDS_WITH_CUSTOM_WEIGHT_SLABS = [
     "6e557d55-82df-43a1-b609-d613292bcbf7",
@@ -157,13 +141,14 @@ DEFAULT_WEIGHT_SLABS = [
     },
 
     {"lower_limit": 100.1, 
-     "upper_limit": 250
+     "upper_limit": 300
     },
     
-    {"lower_limit": 250.1, 
+    {"lower_limit": 300.1, 
      "upper_limit": 500
     },
 ]
 
-# below are the airport ids of DELHI, BOMBAY AND KOLKATA
-ORIGIN_AIRPORT_IDS = ['7391cac2-e8db-467f-a59b-574d01dd7e7c', 'aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19', 'bdef6da0-8353-4b9a-b422-550ebe9c2474']
+DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
+
+CARGOAI_ACTIVE_ON_DISLIKE_RATE = ''

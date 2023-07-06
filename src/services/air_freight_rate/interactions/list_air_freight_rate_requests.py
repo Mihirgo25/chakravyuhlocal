@@ -1,7 +1,6 @@
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
-from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT,RATE_ENTITY_MAPPING
 from micro_services.client import *
-from services.air_freight_rate.constants.air_freight_rate_constants import RATE_ENTITY_MAPPING
 from math import ceil
 from peewee import fn, SQL
 import concurrent.futures, json
@@ -12,7 +11,7 @@ from database.rails_db import get_partner_user_experties, get_organization_servi
 from datetime import datetime
 from micro_services.client import spot_search
 
-possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id']
+possible_direct_filters = ['origin_airport_id', 'destination_airport_id', 'performed_by_id', 'status', 'closed_by_id', 'origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'cogo_entity_id','source']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id', 'partner_id']
 
 def list_air_freight_rate_requests(filters = {}, page_limit = 10, page = 1, performed_by_id = None, is_stats_required = True):

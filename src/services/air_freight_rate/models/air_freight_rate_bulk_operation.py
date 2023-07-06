@@ -219,11 +219,10 @@ class AirFreightRateBulkOperation(BaseModel):
             if AirFreightRateAudit.select().where(
                 AirFreightRateAudit.bulk_operation_id == self.id,
                 AirFreightRateAudit.object_id == freight["air_freight_rate_id"],
-            ):
+            ).execute():
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
                 continue
-
             delete_air_freight_rate(
                 {
                     "id": str(freight["air_freight_rate_id"]),
@@ -575,7 +574,6 @@ class AirFreightRateBulkOperation(BaseModel):
             self.save()
 
     def perform_delete_freight_rate_local_action(self):
-        print("hello")
         data = self.data
         count = 0
         total_count = len(data)

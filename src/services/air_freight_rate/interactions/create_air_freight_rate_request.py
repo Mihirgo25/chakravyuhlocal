@@ -39,7 +39,6 @@ def execute_transaction_code(request):
         "performed_by_type": request.get("performed_by_type"),
         "performed_by_org_id": request.get("performed_by_org_id"),
     }
-
     request_object = (
         AirFreightRateRequest.select()
         .where(
@@ -62,15 +61,16 @@ def execute_transaction_code(request):
             ids=[]
             for val in value:
                 ids.append(uuid.UUID(str(val)))
-            print(";",ids)
             setattr(request_object,attr,ids)
         else:
             setattr(request_object, attr, value)
     
     request_object.set_locations()
     request_object.validate()
-    if not request_object.save():
-        raise HTTPException(status_code = 500, detail = 'Error while saving')
+    try:
+        request_object.save()
+    except Exception as e:
+        raise HTTPException(status_code = 400, detail = 'Request is Not Saved')
 
     create_audit(request, request_object.id)
 
@@ -96,7 +96,7 @@ def execute_transaction_code(request):
                 request, request_object, air_freight_rate_request, airports
             )
             send_notification_to_supply_agents(
-                request, request_object, air_freight_rate_request, airports
+                 request_object, air_freight_rate_request, airports
             )
 
     return {"id": str(request_object.id)}
@@ -171,7 +171,7 @@ def send_notification_for_rates_not_found(request, request_object, air_freight_r
     create_communication_background.apply_async(kwargs={"data": notification_data}, queue="communication")
 
 
-def send_notification_to_supply_agents(request, request_object, air_freight_rate_request, airports):
+def send_notification_to_supply_agents( request_object, air_freight_rate_request, airports):
 
     supply_agents_data = get_partner_users_by_expertise("air_freight", airports[0], airports[1])
 

@@ -6,6 +6,7 @@ from micro_services.client import *
 from database.rails_db import *
 from playhouse.postgres_ext import *
 import datetime
+from fastapi.encoders import jsonable_encoder
 
 
 class UnknownField(object):
@@ -56,9 +57,8 @@ class AirFreightRateRequest(BaseModel):
     airline_id = BinaryJSONField(null=True)
     price_type = CharField(null=True)
     operation_type = CharField(null=True)
-    preferred_airline_ids = ArrayField(
-        constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True
-    )
+    preferred_airlines = BinaryJSONField(null=True)
+    preferred_airline_ids = BinaryJSONField( null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
@@ -140,11 +140,8 @@ class AirFreightRateRequest(BaseModel):
                 AirFreightRateRequest.origin_airport_id,
                 AirFreightRateRequest.destination_airport_id,
             )
-            .where(AirFreightRateRequest.source_id == self.source_id)
-            .limit(1)
-            .dicts()
-            .get()
-        )
+            .where(AirFreightRateRequest.source_id == self.source_id).first())
+        location_pair = jsonable_encoder(list(location_pair).dicts())
         location_pair_data = maps.list_locations(
             {
                 "filters": {
@@ -192,7 +189,33 @@ class AirFreightRateRequest(BaseModel):
                 "importer_exporter_id": importer_exporter_id,
             },
         }
+        push_notification_data = self.get_push_notification_data(location_pair_name,location_pair)
+        common.create_communication(push_notification_data)
         common.create_communication(data)
+
+    def get_push_notification_data(self,location_pair_name,location_pair):
+        if  'rate_added'  in self.closing_remarks:
+            subject = 'Freight Rate Request Completed'
+            body = f"Rate has been added for Request No: {self.serial_id}, air freight from {location_pair_name[location_pair['origin_airport_id']]} to {location_pair_name[location_pair['destination_airport_id']]}."
+        else:
+            subject ='Freight Rate Request Closed'
+            remarks = f"Reason: #{self.closing_remarks[0]}."
+            body = f"Your rate request has been closed for Request No: {self.serial_id}, air freight from {location_pair_name[location_pair['origin_airport_id']]} to {location_pair_name[location_pair['destination_airport_id']]}. #{remarks}"
+
+        return {
+            'type':'push_notification',
+            'service':'air_freight_rate',
+            'service_id':self.id,
+            'provider_name':'firebase',
+            'template_name':'push_notification',
+            'user_id':self.performed_by_id,
+            'variables':{
+                'subject':subject,
+                'body':body,
+                'notification_source':'spot_search',
+                'notification_source_id':self.source_id
+            }
+        }
 
     def set_locations(self):
         ids = [str(self.origin_airport_id), str(self.destination_airport_id)]

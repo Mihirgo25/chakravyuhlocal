@@ -51,6 +51,10 @@ class AirFreightRateSurcharge(BaseModel):
     updated_at=DateTimeField(default=datetime.datetime.now,index=True)
     created_at=DateTimeField(default=datetime.datetime.now,index=True)
 
+    def save(self, *args, **kwargs):
+        self.updated_at = datetime.datetime.now()
+        return super(AirFreightRateSurcharge, self).save(*args, **kwargs)
+    
     class Meta:
         table_name = 'air_freight_rate_surcharges'
 
@@ -115,23 +119,28 @@ class AirFreightRateSurcharge(BaseModel):
         self.is_line_items_info_messages_present = is_line_items_info_messages_present
         self.is_line_items_error_messages_present = is_line_items_error_messages_present
         
-    
-    # check
     def update_freight_objects(self):
         from services.air_freight_rate.models.air_freight_rate import AirFreightRate
         surcharge = {
-            'line_items':self.line_items
+            'line_items':self.line_items,
+            'line_items_info_messages': self.line_items_info_messages,
+            'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
+            'line_items_error_messages': self.line_items_error_messages,
+            'is_line_items_error_messages_present': self.is_line_items_error_messages_present
         }
-        AirFreightRate.update(surcharge_id=self.id,surcharge = surcharge).where(
-            (AirFreightRate.origin_airport_id == self.origin_airport_id),
-            (AirFreightRate.destination_airport_id == self.destination_airport_id),
-            (AirFreightRate.commodity == self.commodity) ,
-            (AirFreightRate.commodity_type == self.commodity_type) ,
-            (AirFreightRate.operation_type == self.operation_type) ,
-            (AirFreightRate.airline_id == self.airline_id) ,
-            (AirFreightRate.service_provider == self.service_provider_id),
-            ((AirFreightRate.surcharge_id == None) | (AirFreightRate.surcharge_id == self.id)),
-            (AirFreightRate.price_type == "net_net"))
+        try:
+            t = AirFreightRate.update(surcharge_id=self.id,surcharge = surcharge).where(
+                (AirFreightRate.origin_airport_id == self.origin_airport_id),
+                (AirFreightRate.destination_airport_id == self.destination_airport_id),
+                (AirFreightRate.commodity == self.commodity) ,
+                (AirFreightRate.commodity_type == self.commodity_type) ,
+                (AirFreightRate.operation_type == self.operation_type) ,
+                (AirFreightRate.airline_id == self.airline_id) ,
+                (AirFreightRate.service_provider_id == self.service_provider_id),
+                (AirFreightRate.surcharge_id.is_null(True)),
+                (AirFreightRate.price_type == "net_net")).execute()
+        except Exception as e:
+            print(e)
     
     def set_origin_location_ids(self):
         self.origin_country_id = self.origin_airport.get('country_id')
@@ -236,30 +245,3 @@ class AirFreightRateSurcharge(BaseModel):
           "country_code": location["country_code"]
         }
         return loc_data
-    
-
-
-
-
-
-
-
-
-    
-
-
-      
-
-
-
-
-
-
-
-        
-    
-
-
-    
-
-

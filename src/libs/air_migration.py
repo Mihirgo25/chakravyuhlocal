@@ -31,40 +31,6 @@ class ParallelJobs:
 
 p  = ParallelJobs()
 
-######################### FCL Customs Migration ##################################################
-
-# def fcl_customs_rates_migration():
-#     file_path = "zone_data.json"
-#     with open(file_path, 'r') as file:
-#         zone_data = json.load(file)
-
-#     procured_ids_path = "procured_by_sourced_by_customs.json"
-#     with open(procured_ids_path, 'r') as file:
-#         procured_sourced_customs_dict = json.load(file)
-    
-#     location_data_path = 'location_data_customs.json'
-#     with open(location_data_path, 'r') as file:
-#         loc_dict = json.load(file)
-
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = """
-#                 SELECT * from fcl_customs_rates
-#                 """   
-#                 cur.execute(sql_query,)
-#                 result = cur
-
-#                 columns = [col[0] for col in result.description]
-#                 p.parallel_function(result.fetchall(), columns, zone_data, procured_sourced_customs_dict, loc_dict, func_in_parallel)  
-#                 cur.close()
-#         conn.close()
-#         print('FCL Customs Done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
 
 def air_freight_rate_feedback_migration():
     from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
@@ -164,38 +130,6 @@ def delay_updation_bulk_operation(row,columns):
     return
     
 
-# def fcl_customs_rate_bulk_operation_migration():
-#     from services.fcl_customs_rate.models.fcl_customs_rate_bulk_operation import FclCustomsRateBulkOperation
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-                    
-#                 sql_query = "SELECT * FROM fcl_customs_rate_bulk_operations"
-#                 cur.execute(sql_query,)
-#                 result = cur.fetchall()
- 
-#             for res in result:
-#                 new_obj = {
-#                     "id": str(res[0]),   
-#                     "progress": res[1],   
-#                     "action_name": res[2],   
-#                     "performed_by_id": str(res[3]),   
-#                     "data": res[4],
-#                     "created_at": res[5],
-#                     "updated_at": res[6],
-#                     "service_provider_id":str(res[7])
-#                 }
-#                 all_result.append(new_obj)
-#             cur.close()
-#         FclCustomsRateBulkOperation.insert_many(all_result).execute()
-#         conn.close()
-#         print('FCL Customs Bulk Operation Done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
-
 def air_freight_rate_migration():
     all_result=[]
     procured_ids_path = "procured_by_sourced_by_rates.json"
@@ -269,136 +203,28 @@ def air_freight_rate_audits_migration():
         with conn.cursor() as cur:
             sql_query = """
             SELECT * 
-            FROM air_freight_rate_audits limit 1000
+            FROM air_freight_rate_audits limit 100000
             """
             cur.execute(sql_query,)
             result = cur
-            columns = [col[0] for col in result.description]    
-            result = Parallel(n_jobs=4)(delayed(delay_updation_audits)(row, columns) for row in result.fetchall())
+            columns = [col[0] for col in result.description]   
+            result = Parallel(n_jobs=4)(delayed(delay_updation_audits)(row, columns,row[3]) for row in result.fetchall())
             cur.close()
     conn.close()
     print('Air Freight Rate audits Done')
     return all_result
 
 
-def delay_updation_audits(row,columns,model):
+def delay_updation_audits(row,columns,object_type):
     param = dict(zip(columns, row))
-    if(model=='air_freight_rate'):
+    if(object_type=='AirFreightRate'):
         obj = AirFreightRateAudit(**param)
         obj.save(force_insert = True)
     else:
         obj = AirServiceAudit(**param)
-    
+        obj.save(force_insert = True)
+
     return
-
-# def air_freight_storage_rates_migration():
-#     from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
-#     procured_ids_path = "procured_by_sourced_by_storage.json"
-#     with open(procured_ids_path, 'r') as file:
-#         procured_sourced_cfs_dict = json.load(file)
-    
-#     location_data_path = 'location_data_cfs.json'
-#     with open(location_data_path, 'r') as file:
-#         loc_dict = json.load(file)
-
-#     all_result =[]
-#     conn = get_connection()
-#     with conn:
-#         with conn.cursor() as cur:
-#             sql_query = """
-#             SELECT * from air_freight_storage_rates
-#             """   
-#             cur.execute(sql_query,)
-#             result = cur
-                            
-#             columns = [col[0] for col in result.description]    
-#             for row in result.fetchall():
-#                 param = dict(zip(columns, row))
-#                 obj = AirFreightStorageRate(**param)
-#                 obj.save(force_insert = True)
-#             cur.close()
-#     conn.close()
-#     print('Air Freight Storage Rates migration Done')
-#     return all_result
-
-
-################################## FCL CFS Migration ############################################
-
-# def fcl_cfs_rate_requests_migration():
-#     from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = "SELECT * FROM fcl_cfs_rate_requests"
-#                 cur.execute(sql_query,)
-#                 result = cur
-
-#                 columns = [col[0] for col in result.description]
-#                 for row in result.fetchall():
-#                     param = dict(zip(columns, row))
-#                     param['commodity'] = param['commodity'] if param['commodity'] else None
-#                     obj = FclCfsRateRequest(**param)
-#                     set_locations(obj)
-#                     spot_search_data(obj)
-#                     get_multiple_service_objects(obj)
-#                     obj.save(force_insert = True)
-#                 cur.close()
-#             conn.close()
-#         print('CFS requests done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
-
-# def fcl_cfs_rate_bulk_operation_migration():
-#     from services.fcl_cfs_rate.models.fcl_cfs_rate_bulk_operation import FclCfsRateBulkOperation
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = "SELECT * FROM fcl_cfs_rate_bulk_operations"
-#                 cur.execute(sql_query,)
-#                 result = cur.fetchall()
- 
-#             for res in result:
-#                 new_obj = {
-#                     "id": str(res[0]),   
-#                     "progress": res[1],   
-#                     "action_name": res[2],   
-#                     "performed_by_id": str(res[3]),   
-#                     "data": res[4],
-#                     "created_at": res[5],
-#                     "updated_at": res[6],
-#                     "service_provider_id":str(res[7])
-#                 }
-                
-#                 all_result.append(new_obj)
-#                 cur.close()
-#         FclCfsRateBulkOperation.insert_many(all_result).execute()
-#         conn.close()
-#         return all_result
-#     except Exception as e:
-#         return all_result
-    
-# def fcl_cfs_rate_audits_migration():
-#     from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
-#     all_result = []
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = "SELECT * FROM fcl_cfs_rate_audits"
-#                 cur.execute(sql_query,)
-#                 result = cur.fetchall()
-#              
-#                 cur.close()
-#         conn.close()
-#         print('CFS audits done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
     
 def set_locations(rate):
     ids = []
@@ -431,18 +257,6 @@ def get_required_location_data(location):
     }
     return loc_data
           
-# def get_required_location_data(location):
-#     loc_data = {
-#         "id": location["id"],
-#         "name": location["name"],
-#         "is_icd": location["is_icd"],
-#         "port_code": location["port_code"],
-#         "country_id": location["country_id"],
-#         "continent_id": location["continent_id"],
-#         "trade_id": location["trade_id"],
-#         "country_code": location["country_code"]
-#     }
-#     return loc_data
 
 def spot_search_data(rate):
     from micro_services.client import spot_search
@@ -529,32 +343,6 @@ def get_locations():
 
 def set_location_data(obj,loc_dict):
     obj.location = loc_dict.get(str(obj.location_id))
-
-def all_locations_data():
-    try:
-        conn = get_connection()
-        with conn:
-            with conn.cursor() as cur:
-                                
-                sql_query = """select id, name, port_code, country_id,country_code, continent_id,trade_id from locations"""
-                cur.execute(sql_query,)
-                result = cur
-                procured_sourced_dict = {}
-                for row in result.fetchall():
-                    procured_sourced_dict[str(row[0])] = {
-                        'procured_by_id':str(row[1]) if row[1] else None,
-                        'sourced_by_id':str(row[2]) if row[2] else None
-                    }
-                cur.close()
-        conn.close()
-        if model == 'air_freight_storage_rate':
-            file_path = "procured_by_sourced_by_storage.json"
-        else:
-            file_path = "procured_by_sourced_by_cfs.json"
-        with open(file_path, 'w') as file:
-            json.dump(procured_sourced_dict, file)
-    except Exception as e:
-        return None
     
     
 def run_migration():
@@ -562,7 +350,7 @@ def run_migration():
     # all_locations_data()
     print('Procured by Sourced by Data done')
     # air_freight_rate_feedback_migration()
-    # air_freight_rate_audits_migration()
+    air_freight_rate_audits_migration()
     # air_freight_rate_bulk_operations_migration()
     # air_freight_rate_requests_migration()
     # air_freight_storage_rates_migration()

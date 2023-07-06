@@ -1,5 +1,4 @@
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from micro_services.client import organization
 from playhouse.shortcuts import model_to_dict
 from database.rails_db import get_eligible_orgs
 

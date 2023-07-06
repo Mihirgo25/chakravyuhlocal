@@ -10,10 +10,10 @@ from fastapi.encoders import jsonable_encoder
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'airline_id', 'commodity', 'operation_type', 'service_provider_id', 'rate_not_available_entry', 'price_type', 'shipment_type', 'stacking_type', 'commodity_type', 'cogo_entity_id', 'rate_type']
 
-POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at']
+POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at','not_predicted_rate','date']
 
 
-def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = False):
+def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = True):
 
   query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, page, page_limit,older_rates_required)
   if filters:
@@ -49,7 +49,8 @@ def get_query(all_rates_for_cogo_assured,sort_by, sort_type, page, page_limit,ol
          ((query.c.validity['status']==True) | (query.c.validty['status'].is_null(True))),
 
        )
-    query = query.order_by(eval('AirFreightRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
+
+    query = query.order_by(eval('AirFreightRate.{}.{}()'.format(sort_by,sort_type)))
     return query
 def apply_indirect_filters(query, filters):
   for key in filters:
@@ -97,10 +98,11 @@ def apply_density_category_filter(query,filters):
     density_category = filters['density_category']
     if density_category == 'general':
         query=query.where(
-           ((query.c.validty['density_category'] == density_category) |(query.c.validty['density_category'].is_null(True)))
+           (((SQL("validity->>'density_category'")) == density_category) |((SQL("validity->>'density_category'")).is_null(True)))
         )
     else:
-        ((query.c.validty['density_category'] == density_category) |(query.c.validty['density_category'].is_null(False)))
+        query=query.where(((SQL("validity->>'density_category'")) == density_category))
+    return query
 
 def apply_is_rate_not_available_entry_filter(query,filters):
    query=query.where(AirFreightRate.rate_not_available_entry==False)
@@ -134,7 +136,6 @@ def apply_available_volume_range_filter(query,filters):
    return query
 
 def apply_available_gross_weight_range_filter(query,filters):
-   print(1234)
    if filters.get('rate_type') == 'market_place':
       return query
    query = query.where(
@@ -142,8 +143,6 @@ def apply_available_gross_weight_range_filter(query,filters):
         ((SQL("CAST(validity->>'available_gross_weight' as numeric)")) <= filters['available_gross_weight_range']['max'])
     
    )
-   print(query)
-
    return query
 
 def apply_achieved_volume_percentage_filter(query,filters):
@@ -168,17 +167,25 @@ def apply_achieved_gross_weight_percentage_filter(query,filters):
 
    return query
 
+def apply_date_filter(query,filters):
+  query = query.where(
+    (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')")>= datetime.fromisoformat(filters['date']).date()),
+    (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')") < datetime.fromisoformat(filters['date']).date()),
+    (SQL("validity->>'status' is null") | (SQL("validity->>'status' = 'true'")))
+  )
+  
+  return query
+
 def get_data(query):
     results = []
     rates = jsonable_encoder(list(query.dicts()))
-
+    density_filter_hash = {}
     now = datetime.now()
     beginning_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     for rate in rates:
       validity = rate['validity']
       if validity.get('status') == None:
         validity['status'] = True
-        
       if validity.get('density_category')==None:
           validity['density_category'] = 'general'
       
@@ -213,3 +220,4 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
       'page_limit': page_limit
     }
     return params
+   

@@ -152,7 +152,7 @@ def process_fcl_freight_local(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
@@ -379,7 +379,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
@@ -854,7 +854,7 @@ def process_fcl_freight_freight(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':

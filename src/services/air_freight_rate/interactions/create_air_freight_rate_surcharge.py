@@ -57,13 +57,14 @@ def execute_transaction_code(request):
             old_line_items = add_line_item(old_line_items, line_item)
         surcharge.line_items = old_line_items
     
-
-    surcharge.procured_by_id = request.get('procured_by_id')
-    surcharge.sourced_by_id = request.get('sourced_by_id')
     surcharge.update_freight_objects()
+
     surcharge.update_line_item_messages()
+
     surcharge.validate()
+
     surcharge.sourced_by_id = request.get('sourced_by_id')
+
     surcharge.procured_by_id = request.get('procured_by_id')
     try:
         surcharge.save()
@@ -87,16 +88,3 @@ def add_line_item(old_line_items, line_item):
     if is_new_line_item:
         old_line_items.append(line_item)
     return old_line_items
-
-
-        
-
-
-
-
-
-
-
-
-    
-

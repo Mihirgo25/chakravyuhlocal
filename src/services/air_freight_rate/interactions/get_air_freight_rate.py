@@ -20,7 +20,7 @@ def get_air_freight_rate(request):
     object = find_object(request)
     if not object:
         return {}
-
+    freight_object = None
     if (
         request.get("weight")
         and request.get("volume")
@@ -38,17 +38,17 @@ def get_air_freight_rate(request):
 
 def build_freight_object(freight_validity, required_weight, request):
     validity_start = datetime.strptime(
-        freight_validity["validity_start"], "%Y-%m-%dT%H:%M:%S.%fz"
+        freight_validity["validity_start"], "%Y-%m-%d"
     ).date()
     validity_end = datetime.strptime(
-        freight_validity["validity_end"], "%Y-%m-%dT%H:%M:%S.%fz"
+        freight_validity["validity_end"], "%Y-%m-%d"
     ).date()
 
     if (
         validity_start > request.get("validity_end").date()
         or validity_end <= request.get("validity_start").date()
-        or request.get("cargo_readiness_date").date() < validity_start
-        or request.get("cargo_readiness_date").date() > validity_end
+        or request.get("cargo_readiness_date") < validity_start
+        or request.get("cargo_readiness_date") > validity_end
     ):
         return None
 
@@ -79,17 +79,17 @@ def build_freight_object(freight_validity, required_weight, request):
     line_item["source"] = "system"
     freight_object["line_items"].append(line_item)
     density_params = get_density_params(freight_object, required_weight, request)
-    lala = get_density_wise_rate(density_params)
-    print(lala)
+    density_wise_rate = get_density_wise_rate(density_params)
 
-    return lala
+    return density_wise_rate
 
 
 def get_chargable_weight(request):
     volumetric_weight = (
         request.get("volume") * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
     )
-    chargeable_weight = max(volumetric_weight, request.get("weight"))
+    
+    chargeable_weight = max(volumetric_weight, request.get("weight"),request.get('chargeable_weight'))
     return chargeable_weight
 
 
@@ -137,9 +137,8 @@ def get_density_wise_rate(density_params):
         ratio <= high_density_upper_limit and density_params["chargeable_weight"] >= 100
     ):
         density_category = "high_density"
-
-    density_category = "general"
-
+    else:
+        density_category = "general"
     if density_category == density_params["freight_object"]["density_category"]:
         if density_category == "general" or (
             density_category == "low_density"
@@ -161,12 +160,13 @@ def get_density_wise_rate(density_params):
 
 def get_freight_object(freight_validity, request):
     start = datetime.strptime(
-        freight_validity["validity_start"], "%Y-%m-%dT%H:%M:%S.%fz"
+        freight_validity["validity_start"], "%Y-%m-%d"
     ).date()
     end = datetime.strptime(
-        freight_validity["validity_end"], "%Y-%m-%dT%H:%M:%S.%fz"
+        freight_validity["validity_end"], "%Y-%m-%d"
     ).date()
-
+    validity_start = start
+    validity_end = end
     if start <= request.get("validity_start").date():
         validity_start = request.get("validity_start")
 
@@ -219,7 +219,7 @@ def find_object(request):
             == request.get("destination_airport_id"),
             AirFreightRate.commodity == request.get("commodity"),
             AirFreightRate.commodity_type == request.get("commodity_type"),
-            AirFreightRate.commodity_sub_type == request.get("commodity_type"),
+            AirFreightRate.commodity_sub_type == request.get("commodity_sub_type"),
             AirFreightRate.service_provider_id == request.get("service_provider_id"),
             AirFreightRate.airline_id == request.get("airline_id"),
             AirFreightRate.operation_type == request.get("operation_type"),
