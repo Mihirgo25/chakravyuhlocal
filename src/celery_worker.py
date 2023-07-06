@@ -41,7 +41,7 @@ from services.air_freight_rate.interactions.create_air_freight_rate import creat
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 from services.air_freight_rate.helpers.create_saas_air_schedule_helper import create_saas_air_schedule_airport_pair
 from services.air_freight_rate.interactions.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
-
+from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -700,3 +700,14 @@ def send_air_freight_rate_task_notification_in_delay(self,task_id):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def get_rate_from_cargo_ai_in_delay(self,air_freight_rate,feedback,performed_by_id):
+    try:
+        get_rate_from_cargo_ai(air_freight_rate,feedback,performed_by_id)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        

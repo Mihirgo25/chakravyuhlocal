@@ -5,10 +5,9 @@ from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_EXPORTS_LOW_DENSITY_RATIO,
     AIR_EXPORTS_HIGH_DENSITY_RATIO,
 )
-from configs.global_constants import MAX_VALUE
 from micro_services.client import spot_search,maps
 from datetime import datetime, timedelta
-from configs.global_constants import SERVICE_PROVIDER_FF,AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+from configs.global_constants import SERVICE_PROVIDER_FF,MAX_VALUE
 from services.air_freight_rate.interactions.get_weight_slabs_for_airline import get_weight_slabs_for_airline
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
@@ -168,14 +167,10 @@ def make_entry_in_rates(all_rates, params_for_cargoai):
      return rates_for_airlines
                 
 
-
-def get_create_params(params,service_provider_id):
-    return 
-    # return { 'origin_airport_id': params['origin_airport_id'], 'destination_airport_id': params['destination_airport_id'], 'commodity': params['commodity'], 'commodity_type': params['commodity_details'][0]['commodity_type'], 'commodity_sub_type': params['commodity_details'][0]['commodity_subtype'], 'airline_id': params['airline_id'], 'operation_type': params['operation_type'], 'currency': rate['currency'], 'price_type': params['price_type'], 'service_provider_id': SERVICE_PROVIDER_FF, 'performed_by_id': SERVICE_PROVIDER_FF, 'procured_by_id': SERVICE_PROVIDER_FF, 'sourced_by_id': SERVICE_PROVIDER_FF, 'shipment_type': 'box', 'stacking_type': 'stackable', 'weight_slabs': Array.wrap(params.to_dot.final_weight_slab.merge(tariff_price: rate[:allInRate], currency: rate[:currency])), validity_start: Time.zone.now.beginning_of_day.to_datetime, validity_end: params.to_dot.departure_date.to_datetime, external_rate_id: rate[:id], flight_uuid: params.to_dot.flight_uuid, density_category: params.to_dot.density_category, 'density_ratio': params['density_ratio'], source: 'cargo_ai' }
-
-
-
-
+def get_create_params(params,rate,service_provider_id):
+    beginning_of_the_day =datetime.now().date()
+    weight_slabs = [{**params.get('final_weight_slabs'),'tariff_price':rate['allInRate'],'currency':rate['currency']}] 
+    return { 'origin_airport_id': params['origin_airport_id'], 'destination_airport_id': params['destination_airport_id'], 'commodity': params['commodity'], 'commodity_type': params['commodity_details'][0]['commodity_type'], 'commodity_sub_type': params['commodity_details'][0]['commodity_subtype'], 'airline_id': params['airline_id'], 'operation_type': params['operation_type'], 'currency': rate['currency'], 'price_type': params['price_type'], 'service_provider_id': service_provider_id, 'performed_by_id': service_provider_id, 'procured_by_id': service_provider_id, 'sourced_by_id': service_provider_id, 'shipment_type': 'box', 'stacking_type': 'stackable', 'weight_slabs': weight_slabs, 'validity_start': beginning_of_the_day, 'validity_end': params['departure_date'], 'external_rate_id': rate[:id], 'flight_uuid': params['flight_uuid'], 'density_category': params['density_category'], 'density_ratio': params['density_ratio'], 'mode': 'cargo_ai' }
 
 def get_chargeable_weight(weight, volume):
     volumetric_weight = volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO

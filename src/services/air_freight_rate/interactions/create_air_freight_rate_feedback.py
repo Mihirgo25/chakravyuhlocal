@@ -5,9 +5,9 @@ from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from celery_worker import update_multiple_service_objects
-from celery_worker import send_create_notifications_to_supply_agents_function
+from celery_worker import update_multiple_service_objects,send_create_notifications_to_supply_agents_function,get_rate_from_cargo_ai_in_delay
 from micro_services.client import *
+from services.air_freight_rate.constants.air_freight_rate_constants import CARGOAI_ACTIVE_ON_DISLIKE_RATE
 
 def create_audit(request,feedback_id):
     AirServiceAudit.create(
@@ -29,7 +29,7 @@ def create_air_freight_rate_feedback(request):
      
 def execute_transaction_code(request):
 
-    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities).where(AirFreightRate.id==request['rate_id']).first()
+    rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
         raise HTTPException(status_code=404, detail='Rate Not Found')
     
@@ -79,6 +79,8 @@ def execute_transaction_code(request):
     update_likes_dislike_count(rate,request)
 
     if request['feedback_type']=='disliked':
+        if CARGOAI_ACTIVE_ON_DISLIKE_RATE:
+            get_rate_from_cargo_ai_in_delay.apply_async(kwargs={'air_freight_rate':rate,'feedback':feedback,'performed_by_id':request.get('performed_by_id')},queue='critical')
         send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
     return {'id': request['rate_id']}
