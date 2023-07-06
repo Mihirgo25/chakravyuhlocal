@@ -106,12 +106,12 @@ FC:
   trade_types: ['export']
   condition: true
   tags: ['additional_service', 'cfs']
-CFSCLO:
-  name: "CFS Lift On/Off Charges"
-  units: ['per_container']
-  trade_types: ['export', 'import']
-  condition: true
-  tags: ['additional_service', 'cfs']
+# CFSCLO:
+#   name: "CFS Lift On/Off Charges"
+#   units: ['per_container']
+#   trade_types: ['export', 'import']
+#   condition: true
+#   tags: ['additional_service', 'cfs']
 PTC:
   name: "Palletization"
   units: ['per_container']
@@ -166,24 +166,24 @@ GIC:
   trade_types: ['import', 'export']
   condition: true
   tags: ['customs_clearance']
-CFSTHC:
-  name: "CFS Transportation & Handling Charges"
-  units: ['per_container']
-  trade_types: ['import', 'export']
-  condition: true
-  tags: ['cfs', 'customs_clearance']
+# CFSTHC:
+#   name: "CFS Transportation & Handling Charges"
+#   units: ['per_container']
+#   trade_types: ['import', 'export']
+#   condition: true
+#   tags: ['cfs', 'customs_clearance']
 EDI:
   name: "Electronic Data Interchange"
   units: ['per_bl']
   trade_types: ['import', 'export']
   condition: true
   tags: ['customs_clearance']
-CFS:
-  name: "Container Freight Station Charge"
-  units: ['per_container']
-  trade_types: ['import', 'export']
-  condition: true
-  tags: ['cfs']
+# CFS:
+#   name: "Container Freight Station Charge"
+#   units: ['per_container']
+#   trade_types: ['import', 'export']
+#   condition: true
+#   tags: ['cfs']
 SUR:
   name: "Export Survey Fee"
   units: ['per_shipment']
