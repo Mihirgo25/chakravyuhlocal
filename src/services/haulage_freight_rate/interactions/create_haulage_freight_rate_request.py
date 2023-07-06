@@ -38,8 +38,7 @@ def execute_transaction_code(request):
     for attr, value in create_params.items():
         setattr(request_object, attr, value)
 
-    if request_object.validate():
-        request_object.save()
+    request_object.save()
 
     create_audit(request,request_object.id)
 

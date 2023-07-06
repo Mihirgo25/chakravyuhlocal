@@ -28,14 +28,15 @@ POSSIBLE_DIRECT_FILTERS = [
     "shipping_line_id",
     "trailer_type",
     "transport_modes_keyword",
+    "procured_by_id",
+    "transport_modes",
+    "origin_location_ids"
+    "destination_location_ids",
 ]
 
 POSSIBLE_INDIRECT_FILTERS = [
-    "origin_location_ids",
-    "destination_location_ids",
     "transport_modes",
     "is_rate_available",
-    "procured_by_id",
 ]
 
 
@@ -164,6 +165,7 @@ def list_haulage_freight_rates(
     query, total_count = apply_pagination(query, page, page_limit)
 
     # get final data
+    print(query)
     final_data = get_final_data(query)
 
     # add service objects
@@ -217,9 +219,11 @@ def apply_is_rate_available_filter(query, val, filters):
     query = query.where(HaulageFreightRate.rate_not_available_entry != True)
     return query
 
-
 def apply_transport_modes_filter(query, val, filters):
-    transport_modes = filters["transport_modes"]
-    query = query.where(HaulageFreightRate.transport_modes.contains(transport_modes))
-    # query.where('haulage_freight_rates.transport_modes && ?', "{#{transport_modes.join(',')}}")
     return query
+
+# def apply_transport_modes_filter(query, val, filters):
+#     transport_modes = filters["transport_modes"]
+#     query = query.where(HaulageFreightRate.transport_modes.contains(transport_modes))
+#     # query.where('haulage_freight_rates.transport_modes && ?', "{#{transport_modes.join(',')}}")
+#     return query
