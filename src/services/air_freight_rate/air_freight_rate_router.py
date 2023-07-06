@@ -73,7 +73,7 @@ def create_air_freight_rate_api(request: CreateAirFreightRateParams, resp: dict 
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
-        create_rate=create_air_freight_rate(request.dict(exclude_none=True))
+        create_rate=create_air_freight_rate(request.dict())
         return JSONResponse(status_code=200,content=jsonable_encoder(create_rate))
     except HTTPException as e :
         raise
