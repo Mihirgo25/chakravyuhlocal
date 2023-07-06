@@ -1,17 +1,19 @@
 from services.ftl_freight_rate.models.ftl_freight_rate_rule_set import FtlFreightRateRuleSet
-from configs.ftl_freight_rate_constants import SG_BASIC_CHARGE_LIST,ROUND_TRIP_CHARGE,HAZ_CLASSES,SINGAPORE_HAZARDOUS_RATE,SINGAPORE_REEFER_RATE
+from configs.ftl_freight_rate_constants import BASIC_CHARGE_LIST,ROUND_TRIP_CHARGE,HAZ_CLASSES,SINGAPORE_HAZARDOUS_RATE,SINGAPORE_REEFER_RATE
 
 class SGFtlFreightRateEstimator:
-    def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data):
+    def __init__(self,origin_location_id,destination_location_id,location_data_mapping,truck_and_commodity_data,average_fuel_price,path_data,country_info):
         self.origin_location_id = origin_location_id
         self.destination_location_id  = destination_location_id
         self.location_data_mapping = location_data_mapping
         self.truck_and_commodity_data = truck_and_commodity_data
         self.average_fuel_price = average_fuel_price
         self.path_data = path_data
+        self.country_info = country_info
 
     def estimate(self):
-        currency = 'SGD'
+        currency = self.country_info.get('currency_code')
+        country_code = self.country_info.get('country_code')
         total_path_distance = self.path_data['distance']
         truck_type = self.truck_and_commodity_data["truck_type"]
         truck_mileage = self.truck_and_commodity_data['mileage']
@@ -20,7 +22,7 @@ class SGFtlFreightRateEstimator:
 
         applicable_rule_set = self.get_applicable_rule_set_country()
         for data in applicable_rule_set:
-            if data['process_type'] in SG_BASIC_CHARGE_LIST:
+            if data['process_type'] in BASIC_CHARGE_LIST[country_code]:
                 process_unit = data['process_unit']
                 if data['process_type'] == 'distance_factor':
                     # distance
