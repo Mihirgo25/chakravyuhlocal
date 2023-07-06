@@ -6,7 +6,7 @@ from services.ftl_freight_rate.rate_estimators.VN_ftl_freight_rate_estimator imp
 from services.ftl_freight_rate.rate_estimators.SG_ftl_freight_rate_estimator import SGFtlFreightRateEstimator
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_path_data
-from micro_services.client import *
+from micro_services.client import maps
 from fastapi import HTTPException
 
 class FtlFreightEstimator:

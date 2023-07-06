@@ -86,7 +86,7 @@ def get_country_info(location_data_mapping,origin_location_id,destination_locati
         return {'country_code':'CN','currency_code':'CNY','country_id':country_id}
     elif origin_country_code == 'VN' and destination_country_code == 'VN':
         return {'country_code':'VN','currency_code':'VND','country_id':country_id}
-    elif origin_country_code == 'SG' and destination_country_code == 'SG':
+    elif origin_country_code == 'SG':
         return {'country_code':'SG','currency_code':'SGD','country_id':country_id}
     return {'country_code':'not_found','currency_code':'not_found','country_id':country_id}
 
