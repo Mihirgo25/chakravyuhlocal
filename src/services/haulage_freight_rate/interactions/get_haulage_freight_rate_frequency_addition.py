@@ -7,7 +7,7 @@ from libs.get_applicable_filters import get_applicable_filters
 from peewee import fn, SQL
 import json
 
-possible_direct_filters = ['procured_by_id''origin_location_ids', 'destination_location_ids']
+possible_direct_filters = ['procured_by_id']
 
 possible_indirect_filters = ['origin_location_ids', 'destination_location_ids']
 
@@ -31,11 +31,11 @@ def apply_indirect_filters(query, filters):
       query = eval(f'{apply_filter_function}(query, filters)')
   return query
 
-def apply_origin_location_id_filter(query, filters):
+def apply_origin_location_ids_filter(query, filters):
    query= query.where(HaulageFreightRate.origin_location_ids.contains(filters['origin_location_ids']))
    return query
 
-def apply_destination_location_id_filter(query, filters):
+def apply_destination_location_ids_filter(query, filters):
    query= query.where(HaulageFreightRate.destination_location_ids.contains(filters['destination_location_ids']))
    return query
 
