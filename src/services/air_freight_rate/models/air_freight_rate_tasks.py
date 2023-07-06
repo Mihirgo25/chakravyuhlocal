@@ -105,7 +105,7 @@ class AirFreightRateTasks(BaseModel):
         
     
     def validate_airline_id(self):
-        airline_data = get_shipping_line(id=str(self.airline_id))
+        airline_data = get_operators(id=str(self.airline_id))
         if airline_data:
             self.airline = airline_data[0]
         else:

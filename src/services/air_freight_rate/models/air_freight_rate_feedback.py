@@ -227,7 +227,7 @@ class AirFreightRateFeedback(BaseModel):
             pass
         if self.preferred_airline_ids:
             # need to change the name to get operators name
-            airline_data = get_shipping_line(id=self.preferred_airline_ids)
+            airline_data = get_operators(id=self.preferred_airline_ids)
             if len(airline_data) != len(self.preferred_airline_ids):
                 raise HTTPException(status_code=400, detail="Invalid Shipping Line ID")
             self.preferred_airlines = airline_data

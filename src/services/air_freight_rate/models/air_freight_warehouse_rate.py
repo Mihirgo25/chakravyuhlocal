@@ -8,7 +8,7 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from configs.definitions import AIR_FREIGHT_WAREHOUSE_CHARGES
 from services.air_freight_rate.constants.air_freight_rate_constants import LOCAL_COMMODITIES
 from micro_services.client import *
-from database.rails_db import get_organization,get_shipping_line
+from database.rails_db import get_organization,get_operators
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass

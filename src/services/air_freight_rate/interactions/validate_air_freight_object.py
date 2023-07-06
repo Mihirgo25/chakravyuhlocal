@@ -1,5 +1,5 @@
 from micro_services.client import maps
-from database.rails_db import get_shipping_line
+from database.rails_db import get_operators
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
 
 def validate_air_freight_object(request):
@@ -56,7 +56,7 @@ def get_airport_id(port_code,country_code):
 
 def get_airline_id(airline_name):
     try:
-        airline_id = get_shipping_line(short_name=airline_name,operator_type='airline')[0]['id']
+        airline_id = get_operators(short_name=airline_name,operator_type='airline')[0]['id']
     except:
         airline_id = None
     return airline_id
