@@ -116,12 +116,16 @@ AIR_GENERAL_COMMODITY_TYPE =['all']
 
 AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES = ['dangerous','temp_controlled', 'other_special']
 
+AIR_DANGEROUS_COMMODITY_SUB_TYPE=['class_1.1','class_1.2','class_1.3','class_1.4','class_1.5','class_1.6','class_2.1','class_2.2','class_2.3','class_3','class_4.1','class_4.3','class_5.1','class_5.2','class_6.1','class_6.2','class_7','class_8','class_9']
+
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 COUNTRY_CODE_MAPPING = ["IN","VN"]
 
 SEARCH_START_DATE_OFFSET = 2
 
 MAX_VALUE = 1000000000000000
+
+AIR_EXPRESS_COMMODITIES = ['express']
 
 ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 

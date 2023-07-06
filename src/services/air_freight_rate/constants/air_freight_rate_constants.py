@@ -24,7 +24,25 @@ MAX_CARGO_LIMIT = 10000000.0
 
 COMMODITY = ["general", "special_consideration"]
 
+TEMP_CONTROLLED_COMMODITY_SUB_TYPE=['active_general_pharma','active_chilled','active_ambient','active_frozen','passive_general_pharma','passive_chilled','passive_ambient','passive_frozen']
+
+OTHER_SPECIAL_COMMODITY_SUB_TYPE = ['valuables', 'perishable' ,'fragile', 'others']
+
+GENERAL_COMMODITY_SUB_TYPE=["all"]
+
+COMMODITY_TYPE_CODES = ['AUP', 'PER', 'FSD', 'PES', 'VUP', 'PEM', 'PAN']
+
+GENERAL_COMMODITY_SUB_TYPE_CODE = []
+
+SPECIAL_CONSIDERATION_COMMODITY_SUB_TYPE_CODE = []
+
 COMMODITY_TYPE = AIR_GENERAL_COMMODITY_TYPE + AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES
+
+ALL_COMMODITY = COMMODITY + AIR_GENERAL_COMMODITY_TYPE + GENERAL_COMMODITY_SUB_TYPE + GENERAL_COMMODITY_SUB_TYPE_CODE + AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES + TEMP_CONTROLLED_COMMODITY_SUB_TYPE + OTHER_SPECIAL_COMMODITY_SUB_TYPE + AIR_DANGEROUS_COMMODITY_SUB_TYPE + SPECIAL_CONSIDERATION_COMMODITY_SUB_TYPE_CODE
+
+COMMODITY_SUB_TYPE = GENERAL_COMMODITY_SUB_TYPE+AIR_DANGEROUS_COMMODITY_SUB_TYPE+TEMP_CONTROLLED_COMMODITY_SUB_TYPE+OTHER_SPECIAL_COMMODITY_SUB_TYPE
+
+COMMODITIES=AIR_EXPRESS_COMMODITIES+AIR_STANDARD_COMMODITIES+AIR_HAZARDOUS_COMMODITIES
 
 LOCAL_COMMODITIES = AIR_STANDARD_COMMODITIES + AIR_HAZARDOUS_COMMODITIES
 
@@ -36,7 +54,7 @@ DEFAULT_SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
 
 DEFAULT_PROCURED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
 
-FEEDBACK_TYPES = ["liked", "disliked"]
+DEFAULT_LOCAL_AGENT_ID = '536abfe7-eab8-4a43-a4c3-6ff318ce01b5'
 
 POSSIBLE_FEEDBACKS = [
     "unsatisfactory_rate",
@@ -44,7 +62,22 @@ POSSIBLE_FEEDBACKS = [
     "unpreferred_airlines",
 ]
 
-FEEDBACK_SOURCES = ["spot_search", "checkout"]
+RATE_CONSTANT_MAPPING = [
+    {
+      'cogo_entity_id': '6fd98605-9d5d-479d-9fac-cf905d292b88',
+      'allowed_entity_ids': ['6fd98605-9d5d-479d-9fac-cf905d292b88', 'b67d40b1-616c-4471-b77b-de52b4c9f2ff']
+    },
+    {
+      'cogo_entity_id': 'b67d40b1-616c-4471-b77b-de52b4c9f2ff',
+      'allowed_entity_ids': ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88']
+    }
+  ]
+
+DEFAULT_EXPORT_DESTINATION_STORAGE = 2
+
+DEFAULT_IMPORT_DESTINATION_STORAGE = 2
+
+DEFAULT_DOMESTIC_DESTINATION_STORAGE = 2
 
 REQUEST_SOURCES = ["spot_search", "shipment"]
 
@@ -57,9 +90,8 @@ PRICE_TYPES = ["net_net", "all_in"]
 COMMODITY = ["general", "special_consideration"]
 
 PACKING_TYPE = ["pallet", "box", "crate", "loose"]
-HANDLING_TYPE = ["stackable", "non_stackable"]
 
-COMMODITY_SUB_TYPE = []
+HANDLING_TYPE = ["stackable", "non_stackable"]
 
 RATE_TYPES = ["market_place", "promotional", "consolidated", "cogo_assured", "general"]
 
@@ -132,3 +164,6 @@ DEFAULT_WEIGHT_SLABS = [
      "upper_limit": 500
     },
 ]
+
+# below are the airport ids of DELHI, BOMBAY AND KOLKATA
+ORIGIN_AIRPORT_IDS = ['7391cac2-e8db-467f-a59b-574d01dd7e7c', 'aa0e7e59-cbb9-43b2-98ce-1f992ae7ab19', 'bdef6da0-8353-4b9a-b422-550ebe9c2474']

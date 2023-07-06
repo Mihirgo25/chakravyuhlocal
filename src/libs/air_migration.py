@@ -10,7 +10,7 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
-from services.air_freight_rate.models.air_service_audit import AirServiceAudit
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from libs.migration import delayed_func
 
 import time
