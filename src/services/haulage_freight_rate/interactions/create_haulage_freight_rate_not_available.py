@@ -1,6 +1,6 @@
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from micro_services.client import organization
 from database.rails_db import get_eligible_orgs
+from fastapi.encoders import jsonable_encoder
 
 
 def create_haulage_freight_rate_not_available(request):
@@ -19,9 +19,10 @@ def create_haulage_freight_rate_not_available(request):
         HaulageFreightRate.importer_exporter_id == None,
         HaulageFreightRate.transport_modes_keyword == transport_modes
     )
-    present_service_provider_ids = list(present_service_provider_data.dicts())
+    present_service_provider_ids = [ids['service_provider_id'] for ids in jsonable_encoder(list(present_service_provider_data.dicts()))]
+    
     find_service_provider_ids = find_service_providers()
-
+    
     for service_provider_id in list(set(find_service_provider_ids).difference(set(present_service_provider_ids))):
         HaulageFreightRate.create(
             origin_location_id = request.get('origin_location_id'),

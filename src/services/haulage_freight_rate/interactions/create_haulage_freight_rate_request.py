@@ -2,7 +2,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_request import Ha
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from celery_worker import create_communication_background, update_multiple_service_objects
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
-from micro_services.client import *
+from micro_services.client import maps
 from database.db_session import db
 
 def create_haulage_freight_rate_request(request):
