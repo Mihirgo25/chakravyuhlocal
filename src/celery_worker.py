@@ -68,8 +68,10 @@ celery.conf.broker_transport_options = {
     'visibility_timeout': 14400
 }
 celery.conf.critical_queues = [Queue('critical', Exchange('critical'), routing_key='critical',
-          queue_arguments={'x-max-priority': 4})]
+          queue_arguments={'x-max-priority': 6})]
 celery.conf.communication_queues = [Queue('communication', Exchange('communication'), routing_key='communication',
+          queue_arguments={'x-max-priority': 6})]
+celery.conf.bulk_operation_queues = [Queue('bulk_operations', Exchange('bulk_operations'), routing_key='low',
           queue_arguments={'x-max-priority': 4})]
 celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
           queue_arguments={'x-max-priority': 2})]
