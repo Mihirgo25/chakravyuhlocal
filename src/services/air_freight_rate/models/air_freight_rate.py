@@ -489,7 +489,7 @@ class AirFreightRate(BaseModel):
             #     new_validities.append(AirFreightRateValidity(**validity_object))
             #     self.min_price = validity_object.get("min_price")
             #     continue
-        if not deleted:
+        if not deleted :
             new_validity_object = {
             "validity_start": validity_start,
             "validity_end": validity_end,
@@ -579,7 +579,7 @@ class AirFreightRate(BaseModel):
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue
-            final_old_weight_slabs.append(new_weight_slab)
+        final_old_weight_slabs.append(new_weight_slab)
 
         
         return final_old_weight_slabs

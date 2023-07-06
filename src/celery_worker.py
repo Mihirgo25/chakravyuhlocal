@@ -41,6 +41,9 @@ from services.air_freight_rate.interactions.create_air_freight_rate import creat
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 from services.air_freight_rate.helpers.create_saas_air_schedule_helper import create_saas_air_schedule_airport_pair
 from services.air_freight_rate.interactions.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
+from services.air_freight_rate.workers.send_air_freight_local_charges_update_reminder_notification import send_air_freight_local_charges_update_reminder_notification
+from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
+from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 # Rate Producers
 
@@ -110,7 +113,23 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.fcl_cost_booking_estimation',
         'schedule': crontab(minute=30,hour=18),
         'options': {'queue' : 'fcl_freight_rate'}
+    },
+    'send_near_expiry_air_freight_rate_notification':{
+        'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5),
+        'options': {'queue' : 'air_freight_rate'}
+    },
+    'send_expired_air_freight_rate_notification':{
+        'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5),
+        'options': {'queue' : 'air_freight_rate'}
+    },
+    'send_air_freight_local_charges_update_reminder_notification':{
+        'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
+        'options': {'queue': 'air_freight_rate'}
     }
+
 }
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
@@ -711,3 +730,32 @@ def get_rate_from_cargo_ai_in_delay(self,air_freight_rate,feedback,performed_by_
         else:
             raise self.retry(exc= exc)
         
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_air_freight_local_charges_update_reminder_notification_in_delay(self):
+    try:
+        send_air_freight_local_charges_update_reminder_notification()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_expired_air_freight_rate_notification_in_delay(self):
+    try:
+        send_expired_air_freight_rate_notification()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_near_expiry_air_freight_rate_notification_in_delay(self):
+    try:
+        send_near_expiry_air_freight_rate_notification()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
