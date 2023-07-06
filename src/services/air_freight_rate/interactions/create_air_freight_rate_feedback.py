@@ -81,7 +81,9 @@ def execute_transaction_code(request):
     if request['feedback_type']=='disliked':
         if CARGOAI_ACTIVE_ON_DISLIKE_RATE:
             get_rate_from_cargo_ai_in_delay.apply_async(kwargs={'air_freight_rate':rate,'feedback':feedback,'performed_by_id':request.get('performed_by_id')},queue='critical')
-        send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
+            airports = get_locations(rate)
+            if airports:
+                send_create_notifications_to_supply_agents_function.apply_async(kwargs={'object':feedback},queue='communication')
 
     return {'id': request['rate_id']}
 
@@ -126,3 +128,9 @@ def get_create_params(request,rate):
         'airline_id':request.get('airline_id')
       }
     return params
+
+def get_locations(air_freight_rate):
+    location_ids = [air_freight_rate['origin_airport_id'], air_freight_rate['destination_airport_id']]
+    locations = maps.list_locations({'filters': { 'id': location_ids }, 'pagination_data_required': False})['list']
+    locations = [locations[air_freight_rate['origin_airport_id']], locations[air_freight_rate['destination_airport_id']]]
+    return locations
