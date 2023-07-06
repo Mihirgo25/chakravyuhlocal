@@ -5,30 +5,38 @@ from services.air_freight_rate.constants.air_freight_rate_constants import AIR_S
 from fastapi.encoders import jsonable_encoder
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from micro_services.client import organization
-from database.rails_db import get_eligible_orgs
+from database.rails_db import get_eligible_orgs,get_operators
 
 def get_air_freight_local_rate_cards(request):
     local_query = initialize_local_query(request)
     local_query_results = jsonable_encoder(list(local_query.dicts()))
-    local_freight_rates = build_response_list(request,local_query_results)
     local_freight_rates = ignore_non_eligible_service_providers(local_freight_rates)
+    local_freight_rates = discard_noneligible_airlines(local_freight_rates)
+    local_freight_rates = build_response_list(request,local_query_results)
 
     return {'list':local_freight_rates}
 
 
 def initialize_local_query(request):    
-    query = AirFreightRateLocal.select(AirFreightRateLocal.service_provider_id,AirFreightRateLocal.airline_id,AirFreightRateLocal.line_items).where(
+    query = AirFreightRateLocal.select(AirFreightRateLocal.id,AirFreightRateLocal.service_provider_id,AirFreightRateLocal.airline_id,AirFreightRateLocal.line_items).where(
         AirFreightRateLocal.airport_id == request.get('airport_id'),
         AirFreightRateLocal.trade_type == request.get('trade_type'),
         AirFreightRateLocal.commodity == request.get('commodity'),
         AirFreightRateLocal.commodity_type == request.get('commodity_type'),
-        AirFreightRateLocal.is_line_items_error_messages_present == False
+        ~(AirFreightRateLocal.is_line_items_error_messages_present)
     )
 
     if request.get('airline_id'):
         query = query.where(AirFreightRateLocal.airline_id == request.get('airline_id'))
     
     return query
+
+def discard_noneligible_airlines(local_rates):
+    airline_ids = [rate["airline_id"] for rate in local_rates]
+    airlines = get_operators(id=airline_ids,operator_type = 'airline')
+    active_airline_ids = [airline["id"] for airline in airlines if airline["status"] == "active"]
+    local_rates = [rate for rate in local_rates if rate["airline_id"] in active_airline_ids]
+    return local_rates
 
 def local_query_results(local_query):
     selected_columns = ['service_provider_id', 'airline_id', 'line_items']
@@ -48,7 +56,6 @@ def build_response_object(request,query_result):
     response_object={
         'service_provider_id':query_result.get('service_provider_id'),
         'airline_id':query_result.get('airline_id'),
-        'source': 'predicted' if query_result.get('service_provider_id') in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates'
     }
     if not build_local_line_items(request,query_result, response_object):
         return  

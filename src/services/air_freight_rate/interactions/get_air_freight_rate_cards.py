@@ -146,17 +146,6 @@ def build_response_list(freight_rates, requirements,is_predicted):
         key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or ""],freight_rate['rate_type'] or "",freight_rate['mode'] or "")
         response_object = build_response_object(freight_rate, requirements,is_predicted)
 
-        if key in grouping.keys() and grouping[key]['freights'] and grouping[key]['freights'][0]['line_items'] :
-            to_currency = grouping[key]['freights'][0]['line_items'][0]['currency']
-            if response_object and response_object['freights'] and response_object['freights'][0]['line_items']:
-                from_currency = response_object['freights'][0]['line_items'][0]['currency']
-                new_price = response_object['freights'][0]['line_items'][0]['total_price']
-                try:
-                    converted_price = common.get_money_exchange_for_fcl({'from_currency': from_currency.upper(), 'to_currency': to_currency.upper(), 'price': new_price})['price']
-                except:
-                    converted_price = new_price
-                if converted_price > grouping[key]['freights'][0]['line_items'][0]['total_price']:
-                    continue
         if response_object:
             grouping[key] = response_object
 
@@ -184,12 +173,14 @@ def add_freight_objects(freight_query_result, response_object, requirements):
     return len(response_object['freights'])>0
 
 def build_freight_object(freight_validity,required_weight,requirements):
+    validity_start = datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date()
+    validity_end = datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date()
+    if validity_start > requirements.get('validity_end').date() or validity_start < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < validity_start or requirements.get('cargo_clearance_date') > validity_end:
+        return None
     freight_validity['density_category'] = freight_validity['density_category'] if  freight_validity.get('density_category') else 'general'
     freight_validity['min_density_weight'] = freight_validity['min_density_weight'] if  freight_validity.get('min_density_weight') else 0.01
     freight_validity['max_density_weight'] = freight_validity['max_density_weight'] if  freight_validity.get('max_density_weight') else MAX_CARGO_LIMIT
     
-    if datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() > requirements.get('validity_end').date() or datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() < requirements.get('validity_start').date() or requirements.get('cargo_clearance_date') < datetime.strptime(freight_validity['validity_start'], "%Y-%m-%d").date() or requirements.get('cargo_clearance_date') >datetime.strptime(freight_validity['validity_end'], "%Y-%m-%d").date():
-        return
     
     freight_object = {
         'validity_start' : freight_validity['validity_start'],
@@ -351,17 +342,19 @@ def pre_discard_noneligible_rates(freight_rates):
         freight_rates = discard_noneligible_airlines(freight_rates)
     return freight_rates
 
-def remove_cogoxpress_service_provider(list):
-    airline_wise_list = {}
-    for rate in list:
-        airline_id = rate['airline_id']
-        if airline_id not in airline_wise_list:
-            airline_wise_list[airline_id] = []
-        airline_wise_list[airline_id].append(rate)
+def remove_cogoxpress_service_provider(freight_rates):
+    service_providers_hash = {}
+    for freight_rate in freight_rates:
+        key =':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or ""],freight_rate['rate_type'] or "",freight_rate['mode'] or "")
+        if key in service_providers_hash.keys():
+            service_providers_hash[freight_rate['id']].append(freight_rate)
+        else:
+            service_providers_hash[freight_rate['id']] = [freight_rate]
+
     
     new_list = []
-    for _, rate_list in airline_wise_list.items():
-        more_service_providers = len(set([r['service_provider_id'] for r in rate_list if r['service_provider_id'] is not None])) > 1
+    for key, rate_list in service_providers_hash.items():
+        more_service_providers = len(rate_list)>1
         for new_rate in rate_list:
             if more_service_providers and new_rate['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
                 continue
