@@ -3,6 +3,7 @@ from services.ftl_freight_rate.rate_estimators.EU_ftl_freight_rate_estimator imp
 from services.ftl_freight_rate.rate_estimators.US_ftl_freight_rate_estimator import USFtlFreightRateEstimator
 from services.ftl_freight_rate.rate_estimators.CN_ftl_freight_rate_estimator import CNFtlFreightRateEstimator
 from services.ftl_freight_rate.rate_estimators.VN_ftl_freight_rate_estimator import VNFtlFreightRateEstimator
+from services.ftl_freight_rate.rate_estimators.SG_ftl_freight_rate_estimator import SGFtlFreightRateEstimator
 from services.ftl_freight_rate.models.fuel_data import FuelData
 from services.ftl_freight_rate.helpers.ftl_freight_rate_helpers import get_path_data
 
@@ -37,6 +38,9 @@ class FtlFreightEstimator:
         elif country_category == 'VN':
             estimator = VNFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data, self.country_info)
         
+        elif country_category == 'SG':
+            estimator = SGFtlFreightRateEstimator(self.origin_location_id, self.destination_location_id, self.location_data_mapping, self.truck_and_commodity_data, average_fuel_price, path_data, self.country_info)
+        
         price = estimator.estimate()
         return {'list' : [
                 {
@@ -46,6 +50,7 @@ class FtlFreightEstimator:
                     'currency':price['currency'],
                     'truck_type': self.truck_and_commodity_data['truck_name']
                 }]}
+
 
     def get_path_from_valhala(self):
         origin_location_id  = self.origin_location_id

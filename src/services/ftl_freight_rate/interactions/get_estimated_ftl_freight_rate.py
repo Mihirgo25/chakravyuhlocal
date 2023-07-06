@@ -86,6 +86,8 @@ def get_country_info(location_data_mapping,origin_location_id,destination_locati
         return {'country_code':'CN','currency_code':'CNY','country_id':country_id}
     elif origin_country_code == 'VN' and destination_country_code == 'VN':
         return {'country_code':'VN','currency_code':'VND','country_id':country_id}
+    elif origin_country_code == 'SG' and destination_country_code == 'SG':
+        return {'country_code':'SG','currency_code':'SGD','country_id':country_id}
     return {'country_code':'not_found','currency_code':'not_found','country_id':country_id}
 
 def get_additional_truck_and_commodity_data(truck_details,truck_body_type,weight,commodity,trip_type,closest_truck_type):
@@ -108,6 +110,8 @@ def get_truck_weight_according_to_country(country_code,weight):
     if not weight:
         return 0
     if country_code == 'IN':
+        return weight
+    if country_code == 'SG':
         return weight
     if country_code == 'US':
         return weight * TON_TO_POUND

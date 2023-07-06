@@ -212,7 +212,8 @@ BASIC_CHARGE_LIST = {
     'EU' : ['distance_factor','time_factor','capacity_factor','loading_charge'],
     'US' : ['driver', 'maintenance', 'insurance', 'tyre', 'toll'],
     'CN' : ['driver', 'maintenance','tyre', 'toll', 'emi'],
-    'VN' : ['toll', 'maintenance', 'driver', 'insurance', 'emi', 'expense']
+    'VN' : ['toll', 'maintenance', 'driver', 'insurance', 'emi', 'expense'],
+    'SG' : ['distance_factor','driver','capacity_factor','loading_charge']
 }
 
 HAZ_CLASSES = [
@@ -320,6 +321,12 @@ TRUCK_TYPES_MAPPING = {
         'small' : {'lower_limit':4,'upper_limit':9},
         'medium' : {'lower_limit':9,'upper_limit':19},
         'heavy': {'lower_limit':19,'upper_limit':100}
+    },
+    'SG':
+    {
+        'small' : {'lower_limit':0,'upper_limit':3.5},
+        'medium' : {'lower_limit':3.5,'upper_limit':16},
+        'heavy': {'lower_limit':16,'upper_limit':154.3}
     }
 }
 
@@ -396,3 +403,9 @@ AVERAGE_SPEEDS = {
     'medium':80,
     'heavy':75
 }
+
+# SINGAPORE
+
+SINGAPORE_HAZARDOUS_RATE = 1.05
+
+SINGAPORE_REEFER_RATE = 1.15
