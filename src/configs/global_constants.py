@@ -114,8 +114,6 @@ SEARCH_START_DATE_OFFSET = 2
 
 MAX_VALUE = 1000000000000000
 
-AIR_EXPRESS_COMMODITIES = ['express']
-
 ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 
 COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
