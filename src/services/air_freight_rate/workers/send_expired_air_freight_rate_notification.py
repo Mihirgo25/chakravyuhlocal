@@ -4,7 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_supply_agents
 from micro_services.client import common
 
-def perform():
+def send_expired_air_freight_rate_notification():
     now = datetime.now()
     one_day_ago = now - timedelta(days=1)
     fifteen_days_ago = now - timedelta(days=15)

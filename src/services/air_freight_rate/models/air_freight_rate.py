@@ -374,11 +374,13 @@ class AirFreightRate(BaseModel):
             self.last_rate_available_date = new_validities[-1]['validity_end']
 
     def add_flight_and_external_uuid(self,selected_validity_id, flight_uuid, external_rate_id):
+        new_validities = []
         for validity in self.validities:
-            if validity['id']==selected_validity_id:
+            if str(validity['id'])==str(selected_validity_id):
                 validity['flight_uuid']=flight_uuid
                 validity['external_rate_id']=external_rate_id
-                break            
+            new_validities.append(validity)
+        self.validities = new_validities  
     def create_trade_requirement_rate_mapping(self, procured_by_id, performed_by_id):
         return
         if self.last_rate_available_date is None:
@@ -489,7 +491,7 @@ class AirFreightRate(BaseModel):
             #     new_validities.append(AirFreightRateValidity(**validity_object))
             #     self.min_price = validity_object.get("min_price")
             #     continue
-        if not deleted:
+        if not deleted :
             new_validity_object = {
             "validity_start": validity_start,
             "validity_end": validity_end,
@@ -579,7 +581,7 @@ class AirFreightRate(BaseModel):
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue
-            final_old_weight_slabs.append(new_weight_slab)
+        final_old_weight_slabs.append(new_weight_slab)
 
         
         return final_old_weight_slabs

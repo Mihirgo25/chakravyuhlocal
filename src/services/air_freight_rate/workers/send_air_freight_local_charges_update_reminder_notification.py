@@ -2,7 +2,7 @@ from database.rails_db import get_supply_agents
 from micro_services.client import common
 
 
-def execute():
+def send_air_freight_local_charges_update_reminder_notification():
     supply_agents=get_supply_agents()
     if not supply_agents:
         return  
