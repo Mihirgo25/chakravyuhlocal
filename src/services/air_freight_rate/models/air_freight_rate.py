@@ -510,7 +510,7 @@ class AirFreightRate(BaseModel):
             if validity_id:
                 new_validity_object['id'] = validity_id
             else:
-                new_validity_object['id'] = uuid.uuid1(),
+                new_validity_object['id'] = uuid.uuid1()
             
             new_validities.append(AirFreightRateValidity(**new_validity_object))
             self.min_price = new_validity_object["min_price"]
