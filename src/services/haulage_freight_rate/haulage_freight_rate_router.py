@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from params import *
 import traceback
 from rms_utils.auth import authorize_token
 import sentry_sdk

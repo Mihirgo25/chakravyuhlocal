@@ -31,7 +31,7 @@ def execute_transaction_code(request):
         send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')
 
 
-    return request['haulage_freight_rate_feedback_ids']
+    return {'ids': request['haulage_freight_rate_feedback_ids']}
 
 
 def find_objects(request):

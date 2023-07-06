@@ -60,84 +60,84 @@ class HaulageFreightRateFeedback(BaseModel):
     class Meta:
         table_name = 'haulage_freight_rate_feedbacks'
 
-    def validate_source(self):
-        if self.source and self.source in FEEDBACK_SOURCES:
-            return True
-        return False
+    # def validate_source(self):
+    #     if self.source and self.source in FEEDBACK_SOURCES:
+    #         return True
+    #     return False
     
-    def validate_source_id(self):
-        if self.source == 'spot_search':
-            spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
-            if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
-                return True
+    # def validate_source_id(self):
+    #     if self.source == 'spot_search':
+    #         spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})
+    #         if 'list' in spot_search_data and len(spot_search_data['list']) != 0:
+    #             return True
 
-        if self.source == 'checkout':
-            checkout_data = checkout.list_checkouts({'filters':{'id': [str(self.source_id)]}})
-            if 'list' in checkout_data and len(checkout_data['list']) != 0:
-                return True
-        return False
+    #     if self.source == 'checkout':
+    #         checkout_data = checkout.list_checkouts({'filters':{'id': [str(self.source_id)]}})
+    #         if 'list' in checkout_data and len(checkout_data['list']) != 0:
+    #             return True
+    #     return False
     
-    def validate_haulage_freight_rate_id(self):
-        haulage_freight_rate_data = HaulageFreightRate.get(**{'id' : self.haulage_freight_rate_id})
-        if haulage_freight_rate_data:
-            return True
-        return False
+    # def validate_haulage_freight_rate_id(self):
+    #     haulage_freight_rate_data = HaulageFreightRate.get(**{'id' : self.haulage_freight_rate_id})
+    #     if haulage_freight_rate_data:
+    #         return True
+    #     return False
     
-    def validate_performed_by_org_id(self):
-        performed_by_org_data = get_organization(id=self.performed_by_org_id)
-        if len(performed_by_org_data) > 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
-            return True
+    # def validate_performed_by_org_id(self):
+    #     performed_by_org_data = get_organization(id=self.performed_by_org_id)
+    #     if len(performed_by_org_data) > 0 and performed_by_org_data[0]['account_type'] == 'importer_exporter':
+    #         return True
         
-        return False
+    #     return False
         
-    def validate_performed_by_id(self):
-        performed_by_data = get_user(id = self.performed_by_id)
-        if performed_by_data:
-            return True
+    # def validate_performed_by_id(self):
+    #     performed_by_data = get_user(id = self.performed_by_id)
+    #     if performed_by_data:
+    #         return True
         
-        return False
+        # return False
     
-    def validate_feedbacks(self):
-        for feedback in self.feedbacks:
-            if feedback not in POSSIBLE_FEEDBACKS:
-                return False
-        return True
+    # def validate_feedbacks(self):
+    #     for feedback in self.feedbacks:
+    #         if feedback not in POSSIBLE_FEEDBACKS:
+    #             return False
+    #     return True
         
 
-    def validate_preferred_freight_rate_currency(self):
-        if not self.preferred_freight_rate_currency:
-            return False
-        return  True
+    # def validate_preferred_freight_rate_currency(self):
+    #     if not self.preferred_freight_rate_currency:
+    #         return False
+    #     return  True
         
-    def validate_feedback_types(self):
-        if self.feedback_type not in FEEDBACK_TYPES:
-            return False
-        return True
+    # def validate_feedback_types(self):
+    #     if self.feedback_type not in FEEDBACK_TYPES:
+    #         return False
+    #     return True
     
     def validate_before_save(self):
-        if not self.validate_source():
-            raise HTTPException(status_code=400, detail="incorrect source")
+        # if not self.validate_source():
+        #     raise HTTPException(status_code=400, detail="incorrect source")
 
-        if not self.validate_source_id():
-            raise HTTPException(status_code=400, detail="incorrect source id")
+        # if not self.validate_source_id():
+        #     raise HTTPException(status_code=400, detail="incorrect source id")
 
-        if not self.validate_haulage_freight_rate_id():
-            raise HTTPException(status_code=400, detail="incorrect haulage freight rate id")
+        # if not self.validate_haulage_freight_rate_id():
+        #     raise HTTPException(status_code=400, detail="incorrect haulage freight rate id")
 
-        if not self.validate_performed_by_org_id():
-            raise HTTPException(status_code=400, detail="incorrect performed by org id")
+        # if not self.validate_performed_by_org_id():
+        #     raise HTTPException(status_code=400, detail="incorrect performed by org id")
         
-        if not self.validate_performed_by_id():
-            raise HTTPException(status_code=400, detail="incorrect performed by id")
+        # if not self.validate_performed_by_id():
+        #     raise HTTPException(status_code=400, detail="incorrect performed by id")
         
-        if not self.validate_feedbacks():
-            raise HTTPException(status_code=400, detail="invalid feedback")
+        # if not self.validate_feedbacks():
+        #     raise HTTPException(status_code=400, detail="invalid feedback")
         
-        if not self.validate_preferred_freight_rate_currency():
-            raise HTTPException(status_code=400, detail="incorrect currency")
+        # if not self.validate_preferred_freight_rate_currency():
+        #     raise HTTPException(status_code=400, detail="incorrect currency")
         
-        if not self.validate_feedback_types():
-            raise HTTPException(status_code=400, detail="incorrect feedback type")
+        # if not self.validate_feedback_types():
+        #     raise HTTPException(status_code=400, detail="incorrect feedback type")
         
         return True
         

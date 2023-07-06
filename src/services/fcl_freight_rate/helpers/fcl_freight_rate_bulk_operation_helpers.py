@@ -56,3 +56,18 @@ def get_progress_percent(id, progress = 0):
             return progress
     else: 
         return progress
+
+
+def get_total_affected_rates(id, total_affected_rates = 0):
+    progress_percent_hash = "bulk_operation_progress"
+    progress_percent_key =  f"bulk_operations_affected_{id}"
+    
+    if rd:
+        try:
+            cached_response = rd.hget(progress_percent_hash, progress_percent_key)
+            return max(parse_numeric(cached_response) or 0, total_affected_rates)
+        except:
+            return total_affected_rates
+    else: 
+        return total_affected_rates
+    

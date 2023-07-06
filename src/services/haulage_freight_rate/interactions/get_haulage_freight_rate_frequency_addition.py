@@ -7,9 +7,9 @@ from libs.get_applicable_filters import get_applicable_filters
 from peewee import fn, SQL
 import json
 
-possible_direct_filters = ['origin_location_ids', 'destination_location_ids']
+possible_direct_filters = ['procured_by_id']
 
-possible_indirect_filters = ['procured_by_id']
+possible_indirect_filters = ['origin_location_ids', 'destination_location_ids']
 
 def get_haulage_freight_rate_addition_frequency(group_by, filters = {}, sort_type = 'desc'):
     query = HaulageFreightRate.select().where(HaulageFreightRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
@@ -24,6 +24,12 @@ def get_haulage_freight_rate_addition_frequency(group_by, filters = {}, sort_typ
     data = get_data(query, sort_type, group_by)
     return data
 
+def get_data(query, sort_type, group_by):
+    data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at).alias(f'date_trunc_{group_by}_haulage_freight_rates_temp_updated_at')
+        ).group_by(fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at)
+        ).order_by(eval(f"fn.date_trunc('{group_by}', HaulageFreightRate.updated_at).{sort_type}()")))
+    return jsonable_encoder(list(data.dicts()))
+
 def apply_indirect_filters(query, filters):
   for key in filters:
     if key in possible_indirect_filters:
@@ -31,11 +37,12 @@ def apply_indirect_filters(query, filters):
       query = eval(f'{apply_filter_function}(query, filters)')
   return query
 
-def get_data(query, sort_type, group_by):
-    data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at).alias(f'date_trunc_{group_by}_haulage_freight_rates_temp_updated_at')
-        ).group_by(fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at)
-        ).order_by(eval(f"fn.date_trunc('{group_by}', HaulageFreightRate.updated_at).{sort_type}()")))
-    return jsonable_encoder(list(data.dicts()))
+def apply_origin_location_ids_filter(query, filters):
+   query = query.where(HaulageFreightRate.origin_location_ids.contains(filters['origin_location_ids']))
+   return query
 
-def apply_procured_by_id_filter(query, filters):
-    return query.where(HaulageFreightRate.procured_by_id == filters['procured_by_id'])
+def apply_destination_location_ids_filter(query, filters):
+   query = query.where(HaulageFreightRate.destination_location_ids.contains(filters['destination_location_ids']))
+   return query
+
+
