@@ -604,7 +604,8 @@ def send_notifications_to_supply_agents_cfs_request_delay(self, object):
         else:
             raise self.retry(exc= exc)
 
-def update_haulage_freight_rate_request_in_delay(self, request):
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def update_haulage_freight_rate_request_delay(self, request):
     try:
         update_haulage_freight_rate_request(request)
     except Exception as exc:

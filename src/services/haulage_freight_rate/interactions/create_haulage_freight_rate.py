@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from micro_services.client import organization
-from celery_worker import update_haulage_freight_rate_request_in_delay
+from celery_worker import update_haulage_freight_rate_request_delay
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from configs.haulage_freight_rate_constants import DEFAULT_RATE_TYPE
 from celery_worker import delay_haulage_functions
@@ -28,7 +28,7 @@ def create_audit(request, freight_id):
     return audit_id
 
 def create_haulage_freight_rate(request):
-    from celery_worker import delay_haulage_functions, update_haulage_freight_rate_request_in_delay
+    from celery_worker import delay_haulage_functions, update_haulage_freight_rate_request_delay
 
     transport_modes = request.get('transport_modes',[])
     transport_modes = set(transport_modes)
@@ -102,6 +102,6 @@ def create_haulage_freight_rate(request):
     delay_haulage_functions.apply_async(kwargs={'haulage_object':haulage_freight_rate,'request':request},queue='low')
     
     if request.get('haulage_freight_rate_request_id'):
-        update_haulage_freight_rate_request_in_delay({'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
+        update_haulage_freight_rate_request_delay.apply_async(kwargs={'request':{'haulage_freight_rate_request_id': request.get('haulage_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
     
     return {"id": haulage_freight_rate.id}
