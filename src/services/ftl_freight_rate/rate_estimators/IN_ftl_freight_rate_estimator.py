@@ -100,10 +100,6 @@ class INFtlFreightRateEstimator:
                     distance_factor_data.get("rate_factor") * basic_freight_charges
                 )
 
-        if self.truck_and_commodity_data["trip_type"] == "round_trip":
-            basic_freight_charges += ROUND_TRIP_CHARGE * basic_freight_charges
-
-
         if (
             self.truck_and_commodity_data["commodity"] in HAZ_CLASSES
             or self.truck_and_commodity_data["truck_body_type"] == "reefer"
@@ -111,6 +107,9 @@ class INFtlFreightRateEstimator:
             basic_freight_charges += ADDITIONAL_CHARGE * basic_freight_charges
         
         basic_freight_charges += truck_capacity * LOADING_UNLOADING_CHARGES
+        if self.truck_and_commodity_data["trip_type"] == "round_trip":
+            basic_freight_charges += ROUND_TRIP_CHARGE * basic_freight_charges
+            
         result = {}
         result["currency"] = currency
         result["base_rate"] = round(basic_freight_charges, 4)
