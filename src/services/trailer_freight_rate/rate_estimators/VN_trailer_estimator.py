@@ -1,14 +1,14 @@
 from peewee import *
 from playhouse.postgres_ext import *
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
+from services.trailer_freight_rate.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
 from services.envision.interaction.get_haulage_freight_predicted_rate import fuel_consumption
 from database.db_session import db
 from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from configs.trailer_freight_rate_constants import *
-from services.trailer_freight_rates.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
+from services.trailer_freight_rate.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
 
-class CNTrailerRateEstimator():
+class VNTrailerRateEstimator():
 
     def __init__(self, origin_location_id, destination_location_id, country_code):
         self.origin_location_id = origin_location_id
@@ -16,10 +16,10 @@ class CNTrailerRateEstimator():
         self.country_code = country_code
 
     def constants_cost(self,distance):
-        constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == self.country_code),
-                    (TrailerFreightRateCharges.status == 'active')
-                    ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
+        constants = TrailerFreightRateEstimatorConstant.select().where(
+                    (TrailerFreightRateEstimatorConstant.country_code == self.country_code),
+                    (TrailerFreightRateEstimatorConstant.status == 'active')
+                    ).order_by(TrailerFreightRateEstimatorConstant.created_at.desc()).first()
         constants_data = model_to_dict(constants)
 
         handling_rate = constants_data.get('handling')
@@ -43,11 +43,11 @@ class CNTrailerRateEstimator():
 
         return total_cost
 
-    def CN_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
+    def VN_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
         ''' 
-        Primary Function to estimate Chinese prices
+        Primary Function to estimate Vietnamese prices
         '''
-        print('Estimating Chinese rates')
+        print('Estimating Vietnam rates')
 
         origin_location_id = self.origin_location_id
         destination_location_id = self.destination_location_id

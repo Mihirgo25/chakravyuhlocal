@@ -20,7 +20,6 @@ from services.fcl_freight_rate.interaction.list_fcl_freight_rate_free_days impor
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_local import delete_fcl_freight_rate_local
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_relevant_rate_ids_from_audits_for_rate_sheet, get_relevant_rate_ids_for_extended_from_object,is_price_in_range,get_rate_sheet_id, get_progress_percent
-from celery_worker import create_fcl_freight_rate_delay
 from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
@@ -59,10 +58,17 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def progress_percent_key(self):
         return f"bulk_operations_{self.id}"
+    
+    def total_affected_rates_key(self):
+        return f"bulk_operations_affected_{self.id}"
 
     def set_progress_percent(self,progress_percent):
         if rd:
             rd.hset(self.progress_percent_hash, self.progress_percent_key(), progress_percent)
+    
+    def set_total_affected_rates(self,total_affected_rates):
+        if rd:
+            rd.hset(self.progress_percent_hash, self.total_affected_rates_key(), total_affected_rates)
 
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
@@ -377,6 +383,7 @@ class FclFreightRateBulkOperation(BaseModel):
             create_fcl_freight_rate_data(freight_rate_object)
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
+            self.set_total_affected_rates(total_affected_rates)
             self.set_progress_percent(progress)
             
         return count, total_affected_rates
@@ -423,9 +430,9 @@ class FclFreightRateBulkOperation(BaseModel):
             count, total_affected_rates = self.perform_batch_extend_validity_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
         
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
-        self.save()    
+        self.save() 
             
             
     def perform_batch_delete_freight_rate_action(self, batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
@@ -457,6 +464,7 @@ class FclFreightRateBulkOperation(BaseModel):
             })
             progress = int((count * 100.0) / total_count)
             total_affected_rates += 1
+            self.set_total_affected_rates(total_affected_rates)
             self.set_progress_percent(progress)
         return count, total_affected_rates
 
@@ -505,7 +513,7 @@ class FclFreightRateBulkOperation(BaseModel):
             count, total_affected_rates = self.perform_batch_delete_freight_rate_action(batch_query,  count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
 
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -549,7 +557,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()    
 
@@ -641,10 +649,11 @@ class FclFreightRateBulkOperation(BaseModel):
                     'tag': data.get('tag'),
                     'rate_sheet_validation': True,
                 }
-                create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                create_fcl_freight_rate_data(freight_rate_object)
 
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
+            self.set_total_affected_rates(total_affected_rates)
             self.set_progress_percent(progress)
         return count, total_affected_rates
         
@@ -710,7 +719,7 @@ class FclFreightRateBulkOperation(BaseModel):
             count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, count , total_count, total_affected_rates, sourced_by_id, procured_by_id)
         
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else  get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -790,7 +799,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
         
@@ -839,7 +848,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -940,14 +949,14 @@ class FclFreightRateBulkOperation(BaseModel):
                         'mode': freight['mode']
                     }
                     
-                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    create_fcl_freight_rate_data(freight_rate_object)
 
             total_affected_rates += 1
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
         
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -993,7 +1002,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
             
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
 
@@ -1035,7 +1044,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
             progress = int((count * 100.0) / total_count)
             self.set_progress_percent(progress)
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.save()
 
 
@@ -1081,7 +1090,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
        
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
             
@@ -1175,19 +1184,19 @@ class FclFreightRateBulkOperation(BaseModel):
                 for commodity in data['commodities']:
                     freight_rate_object = create_params | ({ 'commodity': commodity, 'source': 'bulk_operation' })
                     
-                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    id = create_fcl_freight_rate_data(freight_rate_object)
                     total_affected_rates += str(id) != str(freight.id)
                     
                 for container_size in data['container_sizes']:
                     freight_rate_object = create_params | ({ 'container_size': container_size, 'source': 'bulk_operation' })
                     
-                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    id = create_fcl_freight_rate_data(freight_rate_object)
                     total_affected_rates += str(id) != str(freight.id)
                     
                 for container_type in data['container_types']:
                     freight_rate_object = create_params | ({ 'container_type': container_type, 'source': 'bulk_operation' })
                     
-                    id = create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':freight_rate_object }, queue='fcl_freight_rate')
+                    id = create_fcl_freight_rate_data(freight_rate_object)
                     total_affected_rates += str(id) != str(freight.id)
                     
                 create_audit(self.id)
@@ -1197,7 +1206,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
        
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
@@ -1301,11 +1310,11 @@ class FclFreightRateBulkOperation(BaseModel):
                         create_params['destination_main_port_id'] = fcl_freight_rate["destination_port_id"]
                     create_params['source'] = 'bulk_operation'
                     
-                    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':create_params }, queue='fcl_freight_rate')
+                    create_fcl_freight_rate_data(create_params)
                     total_affected_rates+= 1
                     
         data['total_affected_rates'] = total_affected_rates
-        self.progress = get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()  
 
