@@ -8,7 +8,7 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class TrailerFreightRateCharges(BaseModel):
+class TrailerFreightRateEstimatorConstant(BaseModel):
     id = BigAutoField(primary_key=True)
     country_code = CharField(index=True)
     currency_code = CharField()
@@ -24,8 +24,8 @@ class TrailerFreightRateCharges(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        table_name = 'trailer_freight_rate_estimate_charges'
+        table_name = 'trailer_freight_rate_estimator_constants'
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
-      return super(TrailerFreightRateCharges, self).save(*args, **kwargs)
+      return super(TrailerFreightRateEstimatorConstant, self).save(*args, **kwargs)
