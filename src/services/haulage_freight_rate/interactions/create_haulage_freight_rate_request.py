@@ -83,16 +83,12 @@ def supply_agents_to_notify(request):
     else:
         supply_agents_user_ids=[]
 
-    try:
-        route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}})['list']
-    except Exception as e:
-        print(e)
+    route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}})['list']
     
     route = {key['id']:key['display_name'] for key in route_data}
-    try:
-        return { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_location_id'])], 'destination_location': route[str(locations_data['destination_location_id'])]}
-    except Exception as e:
-        print(e)
+
+    return { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_location_id'])], 'destination_location': route[str(locations_data['destination_location_id'])]}
+    
 
 def send_notifications_to_supply_agents(request):
 

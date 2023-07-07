@@ -1,4 +1,5 @@
-from services.haulage_freight_rate.models.haulage_freight_rate import *
+from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
+from database.db_session import db
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi import HTTPException
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
@@ -9,9 +10,6 @@ def delete_haulage_freight_rate(request):
 
 def execute_transaction_code(request):
     object = find_object(request)
-
-    if not object:
-        raise HTTPException(status_code=400, detail="Rate id not found")
 
     delete_params = get_delete_params()
     for key,value in delete_params.items():
@@ -37,15 +35,17 @@ def create_audit(request, freight_id,audit_data):
         bulk_operation_id = request.get('bulk_operation_id'),
         data = audit_data,
         object_id = freight_id,
-        object_type = 'HaulageFreightRate'
+        object_type = 'HaulageFreightRate',
+        sourced_by_id = request['sourced_by_id'],
+        procured_by_id = request['procured_by_id']
     )
 
 def find_object(request):
-    try:
-        object = HaulageFreightRate.select().where(HaulageFreightRate.id == request.get('id')).first()
-    except:
-        object = None
-    return object
+    object = HaulageFreightRate.select().where(HaulageFreightRate.id == request.get('id'))
+    if object.count()>=0:
+        return object.first()
+    else:
+        raise HTTPException(status_code=400, detail="Rate id not found")
 
 def get_delete_params():
     return  {
