@@ -40,7 +40,7 @@ class AirFreightRateRequest(BaseModel):
     reverted_by_user_ids = ArrayField(field_class=UUIDField, null=True)
     reverted_rates_count = IntegerField(null=True,default=0)
     inco_term = CharField(null=True)
-    origin_airport_id = UUIDField(null=True,index=Tuee)
+    origin_airport_id = UUIDField(null=True,index=True)
     origin_airport = BinaryJSONField(null=True)
     origin_continent_id = UUIDField(null=True,index=True)
     origin_country_id = UUIDField(null=True,index=True)

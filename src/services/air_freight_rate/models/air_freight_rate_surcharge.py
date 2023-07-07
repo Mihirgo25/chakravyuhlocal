@@ -23,7 +23,7 @@ class AirFreightRateSurcharge(BaseModel):
     origin_country_id=UUIDField(null=True,index=True)
     origin_trade_id=UUIDField(null=True,index=True)
     origin_continent_id=UUIDField(null=True,index=True)
-    destination_airport_id=UUIDField(index=True,null=True,index = True)
+    destination_airport_id=UUIDField(index=True,null=True)
     destination_country_id=UUIDField(null=True,index=True)
     destination_trade_id=UUIDField(null=True,index=True)
     destination_continent_id=UUIDField(null=True,index=True)
