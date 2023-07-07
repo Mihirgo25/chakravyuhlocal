@@ -162,6 +162,7 @@ class UpdateFclFreightRate(BaseModel):
   is_extended: bool = None
   rate_type: str = "market_place"
   validities : List[dict] = []
+  rate_not_available_entry: bool = False
 
 class Data(BaseModel):
     line_items: list[LineItem] = []

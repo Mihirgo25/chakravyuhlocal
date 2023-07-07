@@ -116,7 +116,7 @@ Enjoy!
 ## Start Celery
 
 ```
-$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate
+$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate,bulk_operations
 
 ```
 
