@@ -10,6 +10,11 @@ def create_haulage_freight_rate_request(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
+    """
+    Create haulage freight rate request
+    Response Format:
+        {"id": created_rate_request_id}
+    """
 
     unique_object_params = {
         'source': request.get('source'),

@@ -8,11 +8,14 @@ def delete_haulage_freight_rate_request(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    """
+    Delete Haulage Freight Rate Requests
+    Response Format:
+        {"ids": deleted_haulage_freight_rate_request_ids}
+    """
+
     from celery_worker import send_closed_notifications_to_sales_agent_function
     objects = find_objects(request)
-
-    if not objects:
-      raise HTTPException(status_code=400, detail="Haulage Freight rate request id not found")
 
     for obj in objects:
         obj.status = 'inactive'
@@ -32,10 +35,11 @@ def execute_transaction_code(request):
 
 
 def find_objects(request):
-    try:
-        return HaulageFreightRateRequest.select().where(HaulageFreightRateRequest.id << request['haulage_freight_rate_request_ids'] & (HaulageFreightRateRequest.status == 'active')).execute()
-    except:
-        return None
+    object =  HaulageFreightRateRequest.select().where(HaulageFreightRateRequest.id << request['haulage_freight_rate_request_ids'] & (HaulageFreightRateRequest.status == 'active'))
+    if object.count() > 0:
+        return object
+    else:
+        raise HTTPException(status_code=400, detail="Haulage Freight rate request id not found")
 
 
 def create_audit(request, freight_rate_request_id):

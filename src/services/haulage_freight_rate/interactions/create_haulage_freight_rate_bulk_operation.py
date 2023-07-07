@@ -3,6 +3,11 @@ from celery_worker import bulk_operation_perform_action_functions_haulage,update
 
 
 def create_haulage_freight_rate_bulk_operation(request):
+    """
+    Create and delete Haulage Freight rate from a bulk operation
+    Response Format:
+        {"id": bulk_operation_id}
+    """
     action_name = [key for key in request if key not in ['performed_by_type','performed_by_id', 'service_provider_id', 'procured_by_id', 'sourced_by_id']]
 
     if action_name:

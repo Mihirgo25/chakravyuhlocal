@@ -4,6 +4,12 @@ from fastapi.encoders import jsonable_encoder
 
 
 def create_haulage_freight_rate_not_available(request):
+    """
+    Create Haulage Rate Not Available
+    Response Format:
+        {"id": created_rate_ids}
+    """
+
     transport_modes = request.get('transport_modes',[])
     transport_modes = list(set(transport_modes))
     transport_modes.sort()
@@ -22,9 +28,11 @@ def create_haulage_freight_rate_not_available(request):
     present_service_provider_ids = [ids['service_provider_id'] for ids in jsonable_encoder(list(present_service_provider_data.dicts()))]
     
     find_service_provider_ids = find_service_providers()
-    
+
+    created_rate_ids = []
+
     for service_provider_id in list(set(find_service_provider_ids).difference(set(present_service_provider_ids))):
-        HaulageFreightRate.create(
+        object = HaulageFreightRate.create(
             origin_location_id = request.get('origin_location_id'),
             destination_location_id = request.get('destination_location_id'),
             container_size = request.get('container_size'),
@@ -35,8 +43,9 @@ def create_haulage_freight_rate_not_available(request):
             shipping_line_id = request.get('shipping_line_id'),
             transport_modes = request.get('transport_modes'),
         )
+        created_rate_ids.append(object.id)
 
-    return True
+    return created_rate_ids
 
 def find_service_providers():
     service_provider_ids = get_eligible_orgs('haulage_freight')

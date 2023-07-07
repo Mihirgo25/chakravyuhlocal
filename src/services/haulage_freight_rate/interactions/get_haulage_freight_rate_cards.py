@@ -466,9 +466,10 @@ def additional_response_data(data):
 
 def get_haulage_freight_rate_cards(requirements):
     """
-     Returns all eligible rates according to requiremenrs provided
+    Get Haulage Freight Rate Cards
+    Returns all eligible rates according to requiremenrs provided
 
-     Response Format
+    Response Format
      [{
        id:
        service_provider_id:
@@ -492,6 +493,7 @@ def get_haulage_freight_rate_cards(requirements):
      }]
     }]
     """
+    
     try:
         query = select_fields()
         query = initialize_query(requirements, query)

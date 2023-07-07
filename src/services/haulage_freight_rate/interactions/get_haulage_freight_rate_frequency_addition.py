@@ -1,6 +1,5 @@
 from datetime import datetime
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi.encoders import jsonable_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
@@ -12,6 +11,11 @@ possible_direct_filters = ['procured_by_id']
 possible_indirect_filters = ['origin_location_ids', 'destination_location_ids']
 
 def get_haulage_freight_rate_addition_frequency(group_by, filters = {}, sort_type = 'desc'):
+    """
+    Get Haulage Freight Rate Addition Frequency
+    Response Format:
+        returns a intrages of total frequency count that is used in partner user rate stats
+    """
     query = HaulageFreightRate.select().where(HaulageFreightRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
     if filters:
       if type(filters) != dict:
@@ -28,7 +32,7 @@ def get_data(query, sort_type, group_by):
     data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at).alias(f'date_trunc_{group_by}_haulage_freight_rates_temp_updated_at')
         ).group_by(fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at)
         ).order_by(eval(f"fn.date_trunc('{group_by}', HaulageFreightRate.updated_at).{sort_type}()")))
-    return jsonable_encoder(list(data.dicts()))
+    return jsonable_encoder(list(data.dicts()))[0]['count_all']
 
 def apply_indirect_filters(query, filters):
   for key in filters:

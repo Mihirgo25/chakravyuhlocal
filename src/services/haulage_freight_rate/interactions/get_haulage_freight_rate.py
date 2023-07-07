@@ -3,7 +3,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from operator import attrgetter
 
 def all_fields_present(requirements):
-    if all(key in requirements for key in ('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'haulage_type', 'transport_modes', 'service_provider_id')):
+    if all(requirements.get(key) for key in ('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'haulage_type', 'transport_modes', 'service_provider_id')):
         return True
 
 def find_object(requirement):
@@ -35,7 +35,10 @@ def get_object_params(requirement):
 def get_haulage_freight_rate(requirement):
     """
     Get the haulage freight rate for a given requirement.
+    Response Format:
+        key value pair of details of that specific rate
     """
+    
     if not all_fields_present(requirement):
         return {}
     

@@ -9,6 +9,12 @@ def delete_haulage_freight_rate(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    """
+    Delete Haulage Freight Rates
+    Response Format:
+        {"id": deleted_haulage_freight_rate_id}
+    """
+    
     object = find_object(request)
 
     delete_params = get_delete_params()

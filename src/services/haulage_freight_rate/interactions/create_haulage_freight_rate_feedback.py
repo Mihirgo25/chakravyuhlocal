@@ -13,6 +13,12 @@ def create_haulage_freight_rate_feedback(request):
         return execute_transaction_code(request)
     
 def execute_transaction_code(request):
+    """
+    Create Haulage freight rate feedback
+    Response Format:
+        {"id": created_rate_id}
+    """
+
     rate = HaulageFreightRate.select().where(HaulageFreightRate.id == request['rate_id']).first()
 
     if not rate:
