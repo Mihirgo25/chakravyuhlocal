@@ -18,19 +18,19 @@ SQL = pw.SQL
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
-    migrator.add_fields(FclFreightRateFeedback, origin_continent_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, origin_trade_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, origin_country_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, destination_port_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, destination_continent_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, destination_trade_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, destination_country_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, commodity=CharField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, container_size=CharField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, container_type=CharField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, service_provider_id=UUIDField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, origin_port=BinaryJSONField(null=True))
-    migrator.add_fields(FclFreightRateFeedback, destination_port=BinaryJSONField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, origin_continent_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, origin_trade_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, origin_country_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, destination_port_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, destination_continent_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, destination_trade_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, destination_country_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, commodity=CharField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, container_size=CharField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, container_type=CharField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, service_provider_id=UUIDField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, origin_port=BinaryJSONField(null=True))
+    # migrator.add_fields(FclFreightRateFeedback, destination_port=BinaryJSONField(null=True))
 
 
 

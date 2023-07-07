@@ -43,6 +43,7 @@ class FclCustomsRateFeedback(BaseModel):
     trade_id = UUIDField(null=True)
     commodity = CharField(null=True, index=True)
     service_provider_id = UUIDField(null=True)
+    reverted_rate = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
