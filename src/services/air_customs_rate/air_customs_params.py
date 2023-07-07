@@ -45,9 +45,10 @@ class CreateAirCustomsRateFeedback(BaseModel):
   airport_id: str = None
   country_id: str = None
   trade_type: str = None
-  trade_id: str = None
   commodity: str = None
   service_provider_id: str = None
+  city_id: str = None
+  continent_id: str = None
 
 class CreateAirCustomsRateNotAvailable(BaseModel):
   airport_id: str
@@ -78,6 +79,7 @@ class CreateAirCustomsRateRequest(BaseModel):
   continent_id: str 
   city_id: str = None
   trade_type: str = None
+  trade_id: str = None
 
 class CreateAirCustomsRate(BaseModel):
   rate_sheet_id: str = None

@@ -43,7 +43,6 @@ class AirCustomsRateFeedback(BaseModel):
     airport_id = UUIDField(null=True)
     country_id = UUIDField(null=True)
     trade_type = CharField(null=True)
-    trade_id = UUIDField(null=True)
     commodity = CharField(null=True, index=True)
     service_provider_id = UUIDField(null=True)
     continent_id = UUIDField(null=True)
@@ -57,9 +56,9 @@ class AirCustomsRateFeedback(BaseModel):
         table_name = 'air_customs_rate_feedbacks'
 
     def set_airport(self):
-        location_data = maps.list_locations({'filters':{'id':self.airport_id}})['list']
-        if location_data:
-            self.location = {key:value for key,value in location_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+        airport_data = maps.list_locations({'filters':{'id':self.airport_id}})['list']
+        if airport_data:
+            self.airport = {key:value for key,value in airport_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 
     def set_spot_search(self):
         spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']

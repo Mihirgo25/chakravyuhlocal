@@ -68,7 +68,9 @@ def get_create_params(request):
         'trade_type':request.get('trade_type'),
         'trade_id':request.get('trade_id'),
         'commodity': request.get('commodity'),
-        'service_provider_id': request.get('service_provider_id')
+        'service_provider_id': request.get('service_provider_id'),
+        'continent_id':request.get('continent_id'),
+        'city_id':request.get('city_id')
     }
 
 def create_audit(request, air_customs_feedback_id):

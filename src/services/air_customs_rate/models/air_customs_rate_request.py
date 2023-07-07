@@ -45,8 +45,8 @@ class AirCustomsRateRequest(BaseModel):
     closed_by = BinaryJSONField(null=True)
     spot_search = BinaryJSONField(null=True)
     airport = BinaryJSONField(null=True)
-    preferred_airline_ids = ArrayField(field_class=UUIDField, null=True, constraints=[SQL("DEFAULT '{}'::uuid[]")])
-    preferred_airlines_ids = BinaryJSONField(null = True)
+    # preferred_airline_ids = ArrayField(field_class=UUIDField, null=True, constraints=[SQL("DEFAULT '{}'::uuid[]")])
+    # preferred_airlines = BinaryJSONField(null = True)
 
     class Meta:
         table_name = 'air_customs_rate_requests'
@@ -60,22 +60,23 @@ class AirCustomsRateRequest(BaseModel):
         self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
     
     def set_airport(self):
-        port_data = maps.list_locations({'filters':{'id':self.airport_id}})['list']
-        if port_data:
-            self.port = {key:value for key,value in port_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
+        airport_data = maps.list_locations({'filters':{'id':self.airport_id}})['list']
+        if airport_data:
+            self.airport = {key:value for key,value in airport_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
     
-    def validate_preferred_airline_ids(self):
-        if not self.preferred_airline_ids:
-            pass
+    # def validate_preferred_airline_ids(self):
+    #     if not self.preferred_airline_ids:
+    #         pass
 
-        if self.preferred_airline_ids:
-            preferred_airlines = []
-            for airline_id in self.preferred_airline_ids:
-                airline_data = get_shipping_line(id=airline_id)
-                if len(airline_data) == 0:
-                    raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
-                preferred_airlines.append(airline_data[0])
-            self.preferred_airlines = preferred_airlines
+    #     if self.preferred_airline_ids:
+    #         preferred_airlines = []
+    #         for airline_id in self.preferred_airline_ids:
+    #             airline_data = get_shipping_line(id=airline_id)
+    #             if len(airline_data) == 0:
+    #                 raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
+    #             preferred_airlines.append(airline_data[0])
+    #         self.preferred_airlines = preferred_airlines
 
     def validate_before_save(self):
-        self.validate_preferred_airline_ids()
+        # self.validate_preferred_airline_ids()
+        return True
