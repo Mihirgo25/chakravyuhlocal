@@ -1,4 +1,4 @@
-from services.trailer_freight_rates.interaction.get_estimated_trailer_freight_rate import get_estimated_trailer_freight_rate
+from services.trailer_freight_rate.interactions.get_estimated_trailer_freight_rate import get_estimated_trailer_freight_rate
 from datetime import datetime,timedelta
 from configs.haulage_freight_rate_constants import (ENVISION_USER_ID, 
                                                     PREDICTED_PRICE_SERVICE_PROVIDER,
