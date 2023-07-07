@@ -44,6 +44,9 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type,includes):
             ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40'])
     return query
   
+  if includes and  not isinstance(includes, dict):
+    includes = json.loads(includes) 
+  
   all_fields = list(FclFreightRate._meta.fields.keys())
   required_fields = list(includes.keys()) if includes else [c for c in all_fields if c not in NOT_REQUIRED_FIELDS] 
   fields = [getattr(FclFreightRate, key) for key in required_fields]

@@ -1,26 +1,25 @@
 from peewee import *
 from playhouse.postgres_ext import *
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
+from services.trailer_freight_rate.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
 from services.envision.interaction.get_haulage_freight_predicted_rate import fuel_consumption
 from database.db_session import db
 from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from configs.trailer_freight_rate_constants import *
-from services.trailer_freight_rates.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
+from services.trailer_freight_rate.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
 
+class IDTrailerRateEstimator():
 
-class INTrailerRateEstimator():
-
-    def __init__(self, origin_location_id, destination_location_id, country_code):
+    def __init__(self,origin_location_id,destination_local_id,country_code):
         self.origin_location_id = origin_location_id
-        self.destination_location_id = destination_location_id
+        self.destination_location_id = destination_local_id
         self.country_code = country_code
-
+    
     def constants_cost(self,distance):
-        constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == "IN"),
-                    (TrailerFreightRateCharges.status == 'active')
-                    ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
+        constants = TrailerFreightRateEstimatorConstant.select().where(
+                    (TrailerFreightRateEstimatorConstant.country_code == self.country_code),
+                    (TrailerFreightRateEstimatorConstant.status == 'active')
+                    ).order_by(TrailerFreightRateEstimatorConstant.created_at.desc()).first()
         constants_data = model_to_dict(constants)
 
         handling_rate = constants_data.get('handling')
@@ -31,9 +30,10 @@ class INTrailerRateEstimator():
         maintanance_rate = constants_data.get('maintanance')
         misc_rate = constants_data.get('misc')
 
+
         constants_cost = (handling_rate + nh_toll_rate + tyre_rate + driver_rate + document_rate + maintanance_rate + misc_rate) * distance
         return constants_cost
-
+    
     def variable_cost(self, total_cost, container_size, container_type, containers_count):
         total_cost = total_cost * CONTAINER_SIZE_FACTORS[container_size]
 
@@ -43,13 +43,13 @@ class INTrailerRateEstimator():
         total_cost = total_cost * CONTAINR_TYPE_FACTORS[container_type]
 
         return total_cost
-
-    def IN_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
+    
+    def ID_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
         ''' 
-        Primary Function to estimate india prices
+        Primary Function to estimate Indonesian prices
         '''
-        print('Estimating India rates')
-
+        print('Estimating Indonesian rates')
+    
         origin_location_id = self.origin_location_id
         destination_location_id = self.destination_location_id
         country_code = self.country_code
@@ -64,21 +64,23 @@ class INTrailerRateEstimator():
 
         fuel_used = fuel_consumption(distance,cargo_weight_per_container)
         
-        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES["INR"] #use fuel charge with currency
+        fuel_cost = fuel_used * DEFAULT_FUEL_PRICES[COUNTRY_CURRENCY_CODE_MAPPING[self.country_code]] #use fuel charge with currency
 
         constants_cost = self.constants_cost(distance)
         total_cost = fuel_cost + constants_cost
 
-        total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count)
+        total_cost = self.variable_cost(total_cost, container_size, container_type, containers_count) 
 
         if trip_type == 'round_trip':
             total_cost = total_cost * ROUND_TRIP_FACTOR
-
+        
         return {'list':[{
             'base_price' : total_cost,
-            'currency' : "INR",
+            'currency' : COUNTRY_CURRENCY_CODE_MAPPING[self.country_code],
             'distance' : distance,
             'transit_time' : transit_time,
             'upper_limit' : cargo_weight_per_container,
             'trip_type' : trip_type}]
             }
+    
+    
