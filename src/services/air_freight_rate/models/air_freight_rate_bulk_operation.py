@@ -39,7 +39,7 @@ class AirFreightRateBulkOperation(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     progress = IntegerField(null=True)
     action_name = CharField(null=True)
-    performed_by_id = UUIDField(null=True)
+    performed_by_id = UUIDField(null=True,index=True)
     data = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.now)
     created_at = DateTimeField(default=datetime.now)

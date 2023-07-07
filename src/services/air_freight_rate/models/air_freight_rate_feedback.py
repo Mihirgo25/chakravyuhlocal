@@ -20,9 +20,9 @@ class BaseModel(Model):
         only_save_dirty = True
 
 class AirFreightRateFeedback(BaseModel):
-    air_freight_rate_id = UUIDField(null=True)
+    air_freight_rate_id = UUIDField(null=True,index=True)
     booking_params = BinaryJSONField(null=True)
-    closed_by_id = UUIDField(null=True)
+    closed_by_id = UUIDField(null=True,index=True)
     closing_remarks = ArrayField(
         constraints=[SQL("DEFAULT '{}'::character varying[]")],
         field_class=TextField,
@@ -32,9 +32,9 @@ class AirFreightRateFeedback(BaseModel):
     feedback_type = CharField(null=True)
     feedbacks = ArrayField(field_class=TextField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    performed_by_id = UUIDField(null=True)
+    performed_by_id = UUIDField(null=True,index=True)
     performed_by = BinaryJSONField(null=True)
-    performed_by_org_id = UUIDField(null=True)
+    performed_by_org_id = UUIDField(null=True,index=True)
     performed_by_org = BinaryJSONField(null=True)
     performed_by_type = CharField(null=True)
     preferred_airline_ids = ArrayField(field_class=UUIDField, null=True)
@@ -49,14 +49,14 @@ class AirFreightRateFeedback(BaseModel):
         ]
     )
     source = CharField(null=True)
-    source_id = UUIDField(null=True)
+    source_id = UUIDField(null=True,index=True)
     status = CharField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
     closed_by = BinaryJSONField(null=True)
-    reverted_rate_id = UUIDField(null=True)
-    reverted_validity_id = UUIDField(null=True)
+    reverted_rate_id = UUIDField(null=True,index=True)
+    reverted_validity_id = UUIDField(null=True,index=True)
     origin_airport_id = UUIDField(null=True, index=True)
     origin_country_id = UUIDField(null=True, index=True)
     origin_continent_id = UUIDField(null=True, index=True)
@@ -67,8 +67,8 @@ class AirFreightRateFeedback(BaseModel):
     destination_trade_id = UUIDField(null=True, index=True)
     cogo_entity_id = UUIDField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True)
-    commodity = TextField(null=True)
-    operation_type = TextField(null=True)
+    commodity = TextField(null=True,index=True)
+    operation_type = TextField(null=True,index=True)
     airline_id=UUIDField(null=True,index=True)
 
     class Meta:
