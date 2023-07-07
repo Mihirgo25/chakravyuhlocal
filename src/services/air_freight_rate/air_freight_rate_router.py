@@ -780,7 +780,6 @@ def update_air_freight_storage_rate_api(
     except HTTPException as h:
         raise
     except Exception as e:
-        print(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
@@ -1012,7 +1011,7 @@ def update_air_freight_rate_request_api(request:UpdateAirFreightRateRequestParam
     except HTTPException as e:
         raise
     except Exception as e:
-        print(e)
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500 , content={"success":False,"error":str(e)})
     
 @air_freight_router.get("/list_air_freight_rates")
@@ -1083,7 +1082,7 @@ def list_air_freight_rate_tasks_api(
     except HTTPException as e:
         raise
     except Exception as e :
-        print(e)
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
     
 
@@ -1124,7 +1123,7 @@ def get_air_freight_local_rate_cards_api(
     except HTTPException as e:
         raise
     except Exception as e :
-        print(e)
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"sucess":False,"error":str(e)})
 
 @air_freight_router.post("/delete_air_freight_rate_request")
