@@ -20,6 +20,7 @@ def get_zone_wise_rate_query(request):
             FclCustomsRate.location_id
             ).where(
             FclCustomsRate.zone_id == zone_id,
+            FclCustomsRate.country_id == request.get('country_id'),
             FclCustomsRate.container_size == request.get('container_size'),
             FclCustomsRate.container_type == request.get('container_type'),
             FclCustomsRate.trade_type == request.get('trade_type'),
