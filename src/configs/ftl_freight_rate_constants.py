@@ -376,3 +376,15 @@ AVERAGE_SPEEDS = {
 }
 
 DEFAULT_RATE_TYPE = 'market_place'  
+
+RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
+
+BODY_TYPE = ['open', 'closed']
+
+TRIP_TYPES = ['one_way', 'round_trip']
+
+VALID_UNITS = ['per_truck', 'per_ton']
+
+AIR_HAZARDOUS_COMMODITIES = ['hazardous']
+
+COMMODITIES = [None] + HAZ_CLASSES + AIR_HAZARDOUS_COMMODITIES + CONSUMER_DURABLE_COMMODITIES
