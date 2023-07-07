@@ -73,4 +73,6 @@ def create_audit(request, freight_rate_feedback_id):
         },
         object_id=freight_rate_feedback_id,
         object_type="HaulageFreightRateFeedback",
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )

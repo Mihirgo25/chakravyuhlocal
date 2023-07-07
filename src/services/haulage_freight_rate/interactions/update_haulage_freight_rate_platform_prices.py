@@ -1,7 +1,6 @@
 
 def update_haulage_freight_rate_platform_prices(request):
     from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-    print('here')
 
     freight_objects = HaulageFreightRate.select().where(
     HaulageFreightRate.origin_location_id == request.get('origin_location_id'),
@@ -15,7 +14,6 @@ def update_haulage_freight_rate_platform_prices(request):
     HaulageFreightRate.is_line_items_error_messages_present == False
     )
     
-    # freight_objects = freight_objects.execute()
     for freight in freight_objects:
         freight.set_platform_price()
         freight.set_is_best_price()

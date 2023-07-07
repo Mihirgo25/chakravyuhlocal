@@ -2,6 +2,16 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from database.rails_db import get_organization,get_eligible_orgs
 
 def get_haulage_freight_rate_visibility(request):
+    """
+    Get Haulage Freight Rate Visibility
+    Response Format:
+        {
+        reason: reason why its not visible,
+        is_rate_available: True,
+        is_visible: True,
+        }
+    """
+     
     response_object = {'reason': '', 'is_rate_available': False, 'is_visible': False }
     org_services=[]
     org_details = None

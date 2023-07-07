@@ -1,17 +1,12 @@
 from playhouse.postgres_ext import SQL
+from playhouse.postgres_ext import ArrayField
 import json, uuid, math
 from libs.get_filters import get_filters
-
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from services.haulage_freight_rate.models.haulage_freight_rate_audit import (
-    HaulageFreightRateAudit,
-)
-from playhouse.shortcuts import model_to_dict
-
 import services.haulage_freight_rate.interactions.list_haulage_freight_rates as list_haulage_freight_rate
-
 from libs.get_applicable_filters import get_applicable_filters
 from fastapi.encoders import jsonable_encoder
+from micro_services.client import common
 
 
 POSSIBLE_DIRECT_FILTERS = [
@@ -30,12 +25,11 @@ POSSIBLE_DIRECT_FILTERS = [
     "transport_modes_keyword",
     "procured_by_id",
     "transport_modes",
-    "origin_location_ids"
+    "origin_location_ids",
     "destination_location_ids",
 ]
 
 POSSIBLE_INDIRECT_FILTERS = [
-    "transport_modes",
     "is_rate_available",
 ]
 
@@ -83,23 +77,22 @@ DEFAULT_PARAMS = [
     "validity_end",
     "validity_start",
     "weight_slabs",
+    "sourced_by",
+    "procured_by",
+    "service_provider",
+    "shipping_line",
+    "origin_location",
+    "destination_location",
+    "trailer_type",
+    "transit_time",
+    "origin_location_ids",
+    "destination_location_ids"
 ]
-# "total_price",
-# "total_price_currency",
+
 # "priority_score_updated_at",
 # priority_score
 # "importer_exporters_count",
-# origin_location_ids
-# origin_locations
-# destination_locationa
-# procured_by
-# service_provider_
-# shipping_line
-# sourced_by
-# total_price
-# total_price_currency
-# trailer_type
-# transit_time
+
 
 
 def is_valid_uuid(val):
@@ -165,7 +158,6 @@ def list_haulage_freight_rates(
     query, total_count = apply_pagination(query, page, page_limit)
 
     # get final data
-    print(query)
     final_data = get_final_data(query)
 
     # add service objects
@@ -193,37 +185,20 @@ def add_pagination_data(
 
 
 def add_service_objects(data):
+    for object in data:
+        object["total_price_currency"] = 'INR'
+        total_price = 0
+        for line_item in object["line_items"]:
+            total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
+        object["total_price"] = total_price
     return data
 
 
 def get_final_data(query):
     raw_data = jsonable_encoder(list(query.dicts()))
-    ids = [id["id"] for id in raw_data]
-    rate_audits = HaulageFreightRateAudit.select().where(
-        HaulageFreightRateAudit.object_id << ids,
-        HaulageFreightRateAudit.object_type == "HaulageFreightRate",
-    )
-    for result in raw_data:
-        rate_audit = rate_audits.where(
-            HaulageFreightRateAudit.object_id == result["id"]
-        ).order_by(SQL("updated_at desc"))
-        rate_audit = list(rate_audit.dicts())
-        if rate_audit:
-            result["sourced_by_id"] = rate_audit[0].get("sourced_by_id")
-            result["procured_by_id"] = rate_audit[0].get("procured_by_id")
-
     return raw_data
 
 
 def apply_is_rate_available_filter(query, val, filters):
     query = query.where(HaulageFreightRate.rate_not_available_entry != True)
     return query
-
-def apply_transport_modes_filter(query, val, filters):
-    return query
-
-# def apply_transport_modes_filter(query, val, filters):
-#     transport_modes = filters["transport_modes"]
-#     query = query.where(HaulageFreightRate.transport_modes.contains(transport_modes))
-#     # query.where('haulage_freight_rates.transport_modes && ?', "{#{transport_modes.join(',')}}")
-#     return query

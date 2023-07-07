@@ -14,8 +14,6 @@ def update_haulage_freight_rate_request(request):
 def execute_transaction_code(request):
     object = find_object(request)
 
-    if not object:
-        raise HTTPException(status_code=400, detail=" Haulage Freight rate request id not found")
 
     if request.get("closing_remarks"):
         if "rate_added" in request.get("closing_remarks"):
@@ -51,14 +49,11 @@ def execute_transaction_code(request):
 
 
 def find_object(request):
-    try:
-        return (
-            HaulageFreightRateRequest.select()
-            .where(HaulageFreightRateRequest.id == request["haulage_freight_rate_request_id"])
-            .first()
-        )
-    except:
-        return None
+    object = HaulageFreightRateRequest.select().where(HaulageFreightRateRequest.id == request["haulage_freight_rate_request_id"])
+    if object.count()>0:
+        return object.first()
+    else:
+        raise HTTPException(status_code=400, detail=" Haulage Freight rate request id not found")
 
 
 def create_audit(request, freight_rate_request_id):
@@ -71,4 +66,6 @@ def create_audit(request, freight_rate_request_id):
         },
         object_id=freight_rate_request_id,
         object_type="HaulageFreightRateRequest",
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )

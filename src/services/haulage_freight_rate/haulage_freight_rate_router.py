@@ -103,8 +103,8 @@ def get_haulage_freight_rates(
 
 @haulage_freight_router.get("/get_haulage_freight_rate")
 def get_haulage_freight_rate_data(
-    origin_location_id: str,
-    destination_location_id: str,
+    origin_location_id: str = None,
+    destination_location_id: str = None,
     commodity: str = None,
     containers_count: int = None,
     container_type: str = None,

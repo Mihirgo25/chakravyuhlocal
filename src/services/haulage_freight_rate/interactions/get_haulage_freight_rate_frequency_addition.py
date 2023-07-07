@@ -6,9 +6,9 @@ from libs.get_applicable_filters import get_applicable_filters
 from peewee import fn, SQL
 import json
 
-possible_direct_filters = ['procured_by_id']
+possible_direct_filters = ['procured_by_id', 'origin_location_ids', 'destination_location_ids']
 
-possible_indirect_filters = ['origin_location_ids', 'destination_location_ids']
+possible_indirect_filters = []
 
 def get_haulage_freight_rate_addition_frequency(group_by, filters = {}, sort_type = 'desc'):
     """

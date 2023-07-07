@@ -70,7 +70,9 @@ def create_audit(request, request_object_id):
         performed_by_id = performed_by_id,
         data = request,
         object_type = 'HaulageFreightRateRequest',
-        object_id = request_object_id
+        object_id = request_object_id,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 def supply_agents_to_notify(request):

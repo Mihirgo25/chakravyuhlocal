@@ -5,13 +5,13 @@ from libs.get_applicable_filters import get_applicable_filters
 from libs.json_encoder import json_encoder
 from database.rails_db import get_partner_user_experties
 from datetime import datetime
-import concurrent.futures, json
-from peewee import fn, SQL,Window
+import json
+from peewee import fn, SQL
 from math import ceil
 from micro_services.client import spot_search
 from database.rails_db import get_organization
-possible_direct_filters = ['feedback_type','performed_by_id','status','closed_by_id']
-possible_indirect_filters = ['relevant_supply_agent', 'origin_location_id','destination_location_id','validity_start_greater_than','validity_end_less_than','similar_id','origin_country_id','destination_country_id','service_provider_id']
+possible_direct_filters = ['feedback_type','performed_by_id','status','closed_by_id','origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id']
+possible_indirect_filters = ['relevant_supply_agent','validity_start_greater_than','validity_end_less_than','similar_id']
 
 def list_haulage_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = HaulageFreightRateFeedback.select()
@@ -49,9 +49,6 @@ def apply_indirect_filters(query, filters):
             query = eval(f'{apply_filter_function}(query, filters)')
     return query
 
-def apply_service_provider_id_filter(query, filters):
-    query = query.where(HaulageFreightRateFeedback.service_provider_id == filters['service_provider_id'])
-    return query
 
 def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('haulage_freight', filters['relevant_supply_agent'])
@@ -74,21 +71,6 @@ def apply_validity_end_less_than_filter(query, filters):
     query = query.where(HaulageFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
     return query
 
-def apply_origin_location_id_filter(query, filters):
-    query = query.where(HaulageFreightRateFeedback.origin_location_id == filters['origin_location_id'])
-    return query
-
-def apply_destination_location_id_filter(query, filters):
-    query = query.where(HaulageFreightRateFeedback.destination_location_id == filters['destination_location_id'])
-    return query
-
-def apply_origin_country_id_filter(query, filters):
-    query = query.where(HaulageFreightRateFeedback.origin_country_id == filters['origin_country_id'])
-    return query
-
-def apply_destination_country_id_filter(query, filters):
-    query = query.where(HaulageFreightRateFeedback.destination_country_id == filters['destination_country_id'])
-    return query
 
 def apply_similar_id_filter(query, filters):
     feedback_data = (HaulageFreightRateFeedback.select(HaulageFreightRateFeedback.origin_location_id, HaulageFreightRateFeedback.destination_location_id, HaulageFreightRateFeedback.container_size, HaulageFreightRateFeedback.container_type, HaulageFreightRateFeedback.commodity).where(HaulageFreightRateFeedback.id==filters['similar_id'])).first()
