@@ -6,15 +6,24 @@ from fastapi.encoders import jsonable_encoder
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
 from micro_services.client import organization
 from database.rails_db import get_eligible_orgs,get_operators
-
+import sentry_sdk
+import traceback
 def get_air_freight_local_rate_cards(request):
-    local_query = initialize_local_query(request)
-    local_query_results = jsonable_encoder(list(local_query.dicts()))
-    local_freight_rates = ignore_non_eligible_service_providers(local_freight_rates)
-    local_freight_rates = discard_noneligible_airlines(local_freight_rates)
-    local_freight_rates = build_response_list(request,local_query_results)
 
-    return {'list':local_freight_rates}
+    try:
+        local_query = initialize_local_query(request)
+        local_query_results = jsonable_encoder(list(local_query.dicts()))
+        local_freight_rates = ignore_non_eligible_service_providers(local_freight_rates)
+        local_freight_rates = discard_noneligible_airlines(local_freight_rates)
+        local_freight_rates = build_response_list(request,local_query_results)
+
+        return {'list':local_freight_rates}
+    except Exception as e:
+        traceback.print_exc()
+        sentry_sdk.capture_exception(e)
+        return {
+            "list": []
+        }
 
 
 def initialize_local_query(request):    

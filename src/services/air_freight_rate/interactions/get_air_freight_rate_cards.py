@@ -11,7 +11,8 @@ from configs.definitions import AIR_FREIGHT_SURCHARGES,AIR_FREIGHT_CHARGES
 from services.air_freight_rate.interactions.get_air_freight_rate_prediction import get_air_freight_rate_prediction
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_density_wise_rate_card
 from micro_services.client import common
-
+import sentry_sdk
+import traceback
 def initialize_freight_query(requirements,prediction_required=False):
     freight_query = AirFreightRate.select(
         AirFreightRate.id,
@@ -364,35 +365,44 @@ def remove_cogoxpress_service_provider(freight_rates):
 
 
 def get_air_freight_rate_cards(requirements):
-    if requirements['commodity'] =='general':
-        requirements['commodity_subtype'] = 'all'
-    
-    if requirements['commodity'] == 'special_consideration' and not requirements.get('commodity_subtype'):
-        raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
-    
 
-    
-    freight_query = initialize_freight_query(requirements)
-    freight_rates = jsonable_encoder(list(freight_query.dicts()))
+    try:
 
-    freight_rates = remove_cogoxpress_service_provider(freight_rates)
-    freight_rates = pre_discard_noneligible_rates(freight_rates)
+        if requirements['commodity'] =='general':
+            requirements['commodity_subtype'] = 'all'
+        
+        if requirements['commodity'] == 'special_consideration' and not requirements.get('commodity_subtype'):
+            raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
+        
 
-    is_predicted = False
-    if len(freight_rates)==0:
-        get_air_freight_rate_prediction(requirements)
-        is_predicted = True
-        freight_rates = initialize_freight_query(requirements,True)
-        freight_rates = jsonable_encoder(list(freight_rates.dicts()))
-    missing_surcharge = get_missing_surcharges(freight_rates)
-    surcharges = get_surcharges(requirements,missing_surcharge)
-    
-    freight_rates = fill_missing_surcharges(freight_rates,surcharges)
-    freight_rates = build_response_list(freight_rates,requirements,is_predicted)
+        
+        freight_query = initialize_freight_query(requirements)
+        freight_rates = jsonable_encoder(list(freight_query.dicts()))
 
-    return {
-        'list':freight_rates
-    }
+        freight_rates = remove_cogoxpress_service_provider(freight_rates)
+        freight_rates = pre_discard_noneligible_rates(freight_rates)
+
+        is_predicted = False
+        if len(freight_rates)==0:
+            get_air_freight_rate_prediction(requirements)
+            is_predicted = True
+            freight_rates = initialize_freight_query(requirements,True)
+            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        missing_surcharge = get_missing_surcharges(freight_rates)
+        surcharges = get_surcharges(requirements,missing_surcharge)
+        
+        freight_rates = fill_missing_surcharges(freight_rates,surcharges)
+        freight_rates = build_response_list(freight_rates,requirements,is_predicted)
+
+        return {
+            'list':freight_rates
+        }
+    except Exception as e:
+        traceback.print_exc()
+        sentry_sdk.capture_exception(e)
+        return {
+            "list": []
+        }
 
 # NOT USED
 
