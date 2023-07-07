@@ -19,6 +19,17 @@ def create_table():
         db.create_tables(
             [
                 AirFreightRate,
+                AirFreightRateAudit,
+                AirFreightRateBulkOperation,
+                AirFreightRateFeedback,
+                AirFreightRateLocal,
+                AirFreightRateProperty,
+                AirFreightRateRequest,
+                AirFreightRateSurcharge,
+                AirFreightRateTasks,
+                AirFreightStorageRates,
+                AirFreightWarehouseRates,
+                AirServiceAudit,
             ]
         )
         db.close()
