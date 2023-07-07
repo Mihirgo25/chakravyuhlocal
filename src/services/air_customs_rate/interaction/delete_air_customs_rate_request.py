@@ -4,11 +4,11 @@ from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import update_multiple_service_objects
 
-def delete_air_customs_rate_request_data(request):
-    with db.atomic():
-        return delete_air_customs_rate_request(request)
-
 def delete_air_customs_rate_request(request):
+    with db.atomic():
+        return execute_transaction_code(request)
+
+def execute_transaction_code(request):
   request_objects = find_request_objects(request)
   if not request_objects:
     raise HTTPException(status_code=500, detail = 'Requests Not Found')

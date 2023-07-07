@@ -34,6 +34,7 @@ def execute_transaction_code(request):
         setattr(air_customs_request, attr, value)
 
     air_customs_request.set_airport()
+    air_customs_request.set_spot_search()
     air_customs_request.validate_before_save()
     
     try:
@@ -54,13 +55,13 @@ def supply_agents_to_notify(request):
     locations_data = AirCustomsRateRequest.select(AirCustomsRateRequest.airport_id, AirCustomsRateRequest.country_id, AirCustomsRateRequest.continent_id, AirCustomsRateRequest.trade_id).where(AirCustomsRateRequest.source_id == request.get('source_id')).dicts().get()
     locations = list(filter(None,[str(value or "") for key,value in locations_data.items()]))
 
-    supply_agents_data = get_partner_users_by_expertise('air_customs', locations )
+    supply_agents_data = get_partner_users_by_expertise('air_customs', location_ids = locations, trade_type = request.get('trade_type'))
     supply_agents_list = list(set([item.get('partner_user_id') for item in supply_agents_data]))
 
     supply_agents_user_data = get_partner_users(supply_agents_list)
     supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data])) if supply_agents_user_data else None
 
-    airport_ids = locations_data.get('airport_id')
+    airport_ids = str(locations_data.get('airport_id') or '')
     route_data = []
     try:
         route_data = maps.list_locations({'filters':{'id':airport_ids}})['list']

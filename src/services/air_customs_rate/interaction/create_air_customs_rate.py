@@ -2,6 +2,7 @@ from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from database.db_session import db
 from fastapi import HTTPException
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def create_air_customs_rate(request):
     with db.atomic():
@@ -10,6 +11,7 @@ def create_air_customs_rate(request):
 def execute_transaction_code(request):
   from celery_worker import air_customs_functions_delay
 
+  request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
   air_customs_rate = AirCustomsRate.select().where(
         AirCustomsRate.airport_id == request.get('airport_id'),
@@ -29,8 +31,8 @@ def execute_transaction_code(request):
   air_customs_rate.line_items = request.get('line_items')
   air_customs_rate.rate_not_available_entry = False
 
-  air_customs_rate.update_line_item_messages()
   air_customs_rate.validate_before_save()
+  air_customs_rate.update_line_item_messages()
 
   try:
      air_customs_rate.save()
@@ -49,7 +51,7 @@ def get_create_object_params(request):
       'trade_type' : request.get('trade_type'),
       'service_provider_id': request.get('service_provider_id'),
       'commodity' : request.get('commodity'),
-      'rate_type' : request.get('rate_type')
+      'rate_type' : request.get('rate_type',DEFAULT_RATE_TYPE)
     }
 
 def create_audit(request, customs_rate_id):

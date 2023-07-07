@@ -40,7 +40,7 @@ def execute_transaction_code(request):
         setattr(air_customs_feedback, attr, value)
     
     air_customs_feedback.set_airport()
-    air_customs_feedback.validate_source_id()
+    air_customs_feedback.set_spot_search()
 
     try:
         air_customs_feedback.save()
@@ -63,7 +63,7 @@ def get_create_params(request):
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
         'status': 'active',
-        'airport_id':request.get('location_id'),
+        'airport_id':request.get('airport_id'),
         'country_id':request.get('country_id'),
         'trade_type':request.get('trade_type'),
         'trade_id':request.get('trade_id'),

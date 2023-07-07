@@ -22,7 +22,7 @@ def execute_transaction_code(request):
     except Exception as e:
          print("Exception in deleting rate", e)
 
-    create_audit_for_delete_rates(request, rate_object, delete_params)
+    create_audit_for_delete_rates(request, rate_object.id, delete_params)
 
     return {
       'id': rate_object.id
@@ -35,12 +35,12 @@ def find_rate_object(request):
         rate_object = None
     return rate_object
 
-def create_audit_for_delete_rates(request, rate_object, delete_params):
+def create_audit_for_delete_rates(request, rate_object_id, delete_params):
     AirCustomsRateAudit.create(
         action_name = 'delete',
         performed_by_id = request.get('performed_by_id'),
         bulk_operation_id = request.get('bulk_operation_id'),
-        object_id = rate_object.id,
+        object_id = rate_object_id,
         object_type = 'AirCustomsRate',
         data = delete_params
     )

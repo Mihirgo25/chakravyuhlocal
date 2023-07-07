@@ -18,8 +18,11 @@ def create_air_customs_rate_bulk_operation(request):
         except:
             raise HTTPException(status_code = 400, detail='Bulk Operation is not saved')
 
-        bulk_operation_perform_action_functions_air_customs_delay.apply_async(kwargs={'action_name':action_name,
-        'object':bulk_operation_customs_air},queue='low')
+        bulk_operation_perform_action_functions_air_customs_delay.apply_async(
+            kwargs={
+                'action_name':action_name,
+                'object':bulk_operation_customs_air
+                },queue='low')
         
         return {
         'id': bulk_operation_customs_air.id

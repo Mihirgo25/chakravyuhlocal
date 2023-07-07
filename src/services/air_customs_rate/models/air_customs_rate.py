@@ -16,13 +16,13 @@ class BaseModel(Model):
 
 class AirCustomsRate(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    airport_id = UUIDField(index=True)
-    country_id = UUIDField(index=True)
-    trade_id = UUIDField(index=True)
-    continent_id = UUIDField(index=True)
+    airport_id = UUIDField(index=True, null= True)
+    country_id = UUIDField(index=True, null= True)
+    trade_id = UUIDField(index=True, null=True)
+    continent_id = UUIDField(index=True, null=True)
     trade_type = CharField(null=True)
     commodity = CharField(null=True, index=True)
-    service_provider_id = UUIDField(index=True)
+    service_provider_id = UUIDField(index=True, null = True)
     importer_exporter_id = UUIDField(null=True)
     line_items = BinaryJSONField(null=True)
     is_line_items_error_messages_present = BooleanField(null=True)
@@ -121,8 +121,8 @@ class AirCustomsRate(BaseModel):
             
             if 'additional_service' in config.get('tags') or 'shipment_execution_service' in config.get('tags'):
                 if not grouped_charge_codes.get(code):
-                    self.line_items_error_messages[code] = ['can be added for more conversion']
-                    self.is_line_items_error_messages_present = True
+                    self.line_items_info_messages[code] = ['can be added for more conversion']
+                    self.is_line_items_info_messages_present = True
         
         self.save()
 
@@ -172,10 +172,10 @@ class AirCustomsRate(BaseModel):
             self.airport = []
 
     def set_location_ids(self):
-        self.country_id = self.airport.get('country_id') 
-        self.trade_id = self.airport.get('trade_id') 
-        self.continent_id = self.airport.get('continent_id') 
-        self.location_ids = list(filter(None, [uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
+        self.country_id = self.airport.get('country_id')
+        self.trade_id = self.airport.get('trade_id')
+        self.continent_id = self.airport.get('continent_id')
+        self.location_ids = list(filter(None, [uuid.UUID(self.airport_id),uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
 
     def validate_service_provider_id(self):
         if not self.service_provider_id:

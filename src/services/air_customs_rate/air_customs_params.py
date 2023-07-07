@@ -123,7 +123,7 @@ class DeleteAirCustomsRateRequest(BaseModel):
 
 class UpdateAirCustomsRate(BaseModel):
   id: str
-  performed_by_id: str
+  performed_by_id: str = None
   sourced_by_id: str
   procured_by_id: str
   bulk_operation_id: str = None
@@ -133,7 +133,7 @@ class UpdateAirCustomsRate(BaseModel):
 class DeleteAirCustomsRateFeedback(BaseModel):
  air_customs_rate_feedback_ids: list[str] 
  closing_remarks: list[str] = []
- performed_by_id: str
+ performed_by_id: str = None
  performed_by_type: str = None
 
 class DeleteAirCustomsRate(BaseModel):
@@ -145,5 +145,5 @@ class DeleteAirCustomsRate(BaseModel):
 class DeleteAirCustomsRateRequest(BaseModel):
   air_customs_rate_request_ids: list[str] 
   closing_remarks: list[str] = []
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None
