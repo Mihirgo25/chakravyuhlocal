@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from rms_utils.auth import authorize_token
 from fastapi.responses import JSONResponse
 import sentry_sdk
-from services.trailer_freight_rates.interaction.get_estimated_trailer_freight_rate import get_estimated_trailer_freight_rate
+from services.trailer_freight_rate.interactions.get_estimated_trailer_freight_rate import get_estimated_trailer_freight_rate
 from fastapi.encoders import jsonable_encoder
 
 trailer_router = APIRouter()
