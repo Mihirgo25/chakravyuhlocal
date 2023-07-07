@@ -15,9 +15,7 @@ def create_audit(request, freight_id):
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
     audit_data['is_extended'] = request.get("is_extended")
-    ## remove this during prodution for testing I am taking some constant value for performed_by_id
-    request['performed_ by_id'] = '515a7d68-3527-422d-9fce-f63bec350d78'
-    #########
+
     FclFreightRateAudit.create(
         bulk_operation_id = request.get('bulk_operation_id'),
         action_name = 'update',
@@ -93,6 +91,7 @@ def execute_transaction_code(request):
 
   freight_object.sourced_by_id = request.get("sourced_by_id")
   freight_object.procured_by_id = request.get("procured_by_id")
+  freight_object.rate_not_available_entry = request.get("rate_not_available_entry")
   
   freight_object.validate_before_save()
 

@@ -714,6 +714,7 @@ def list_fcl_freight_rate_free_day_requests_data(
 @fcl_freight_router.get("/list_fcl_freight_rates")
 def list_fcl_freight_rates_data(
     filters: str = None,
+    includes: str = None,
     page_limit: int = 10,
     page: int = 1,
     sort_by: str = 'updated_at',
@@ -727,7 +728,7 @@ def list_fcl_freight_rates_data(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured, return_count)
+        data = list_fcl_freight_rates(filters, page_limit, page, sort_by, sort_type, return_query, expired_rates_required, all_rates_for_cogo_assured, return_count, includes)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
