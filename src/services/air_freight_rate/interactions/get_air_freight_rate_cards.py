@@ -144,7 +144,7 @@ def build_surcharge_line_item_object(line_item,requirements):
 def build_response_list(freight_rates, requirements,is_predicted):
     grouping = {}
     for freight_rate in freight_rates:
-        key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or ""],freight_rate['rate_type'] or "",freight_rate['mode'] or "")
+        key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or "",freight_rate['rate_type'] or "",freight_rate['mode'] or ""])
         response_object = build_response_object(freight_rate, requirements,is_predicted)
 
         if response_object:
