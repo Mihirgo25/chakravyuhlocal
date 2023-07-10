@@ -102,7 +102,7 @@ DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 
 
-COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
+COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN", "singapore":"SG"}
 
 DEFAULT_WEIGHT_SLABS=[
     {
