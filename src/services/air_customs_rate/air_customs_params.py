@@ -96,7 +96,6 @@ class CreateAirCustomsRate(BaseModel):
   bulk_operation_id: str = None
   rate_type: str = 'market_place'
 
-
 class UpdateAirCustomsRatePlatformPrices(BaseModel):
   location_id: str
   container_size: str 
@@ -109,19 +108,19 @@ class UpdateAirCustomsRatePlatformPrices(BaseModel):
   is_customs_line_items_error_messages_present: bool = False
   is_cfs_line_items_error_messages_present: bool = False
 
-
 class DeleteAirCustomsRateFeedback(BaseModel):
- air_customs_rate_feedback_ids: list[str] 
+ air_customs_rate_feedback_ids: list[str]
+ closing_remarks: list[str] = []
+ performed_by_id: str = None
+ performed_by_type: str = None
+ rate_id: str = None
+ customs_line_items: List[AirCustomsLineItems] = None
+
+class DeleteAirCustomsRateRequest(BaseModel):
+ air_customs_rate_request_ids: list[str]
  closing_remarks: list[str] = []
  performed_by_id: str
  performed_by_type: str
-
-
-class DeleteAirCustomsRateRequest(BaseModel):
- air_customs_rate_request_ids: list[str] 
- closing_remarks: list[str] = []
- performed_by_id: str
- performed_by_type: str  
 
 class UpdateAirCustomsRate(BaseModel):
   id: str
@@ -132,20 +131,8 @@ class UpdateAirCustomsRate(BaseModel):
   performed_by_type: str = None
   line_items: list[AirCustomsLineItems] = None
 
-class DeleteAirCustomsRateFeedback(BaseModel):
- air_customs_rate_feedback_ids: list[str] 
- closing_remarks: list[str] = []
- performed_by_id: str = None
- performed_by_type: str = None
-
 class DeleteAirCustomsRate(BaseModel):
   id: str
   performed_by_id: str
   performed_by_type: str = None
   bulk_operation_id: str = None
-
-class DeleteAirCustomsRateRequest(BaseModel):
-  air_customs_rate_request_ids: list[str] 
-  closing_remarks: list[str] = []
-  performed_by_id: str = None
-  performed_by_type: str = None
