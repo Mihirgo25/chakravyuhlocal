@@ -1,0 +1,175 @@
+BAS:
+  name: "Basic Freight Rate"
+  units: ["per_truck", "per_ton"]
+  condition: true
+  tags: ["mandatory"]
+VDC:
+  name: "Vehicle Detention Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: ["additional_service"]
+ULC:
+  name: "Union Loading Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: ["additional_service"]
+UUC:
+  name: "Union Unloading Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: ["additional_service"]
+FSC:
+  name: "Fuel Surcharge"
+  units: ["per_truck", "percentage_of_freight"]
+  condition: true
+  tags: ["mandatory"]
+ODC:
+  name: "Over Dimensional Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: ["additional_service"]
+OLC:
+  name: "Over Loading Charges"
+  units: ["per_truck"]
+  condition: true
+  tags: ["additional_service"]
+TC:
+  name: "Toll Charges"
+  units: ["per_truck"]
+  condition: true
+  tags: ["additional_service"]
+TDC:
+  name: "Two Point Delivery Charges"
+  units: ["per_truck"]
+  condition: true
+  tags: ["additional_service"]
+WEH:
+  name: "Weighbridge Fee"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+WC:
+  name: "Weighment Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+OTC:
+  name: "One way Trip Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+TI:
+  name: "Transit Insurance"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+GENS:
+  name: "Genset Charges"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+WRC:
+  name: "Warai Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+TUC:
+  name: "Transport Union Charges"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+VWDC:
+  name: "Vehicle Warehouse Detention Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+VORDC:
+  name: "Vehicle On Route Detention Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+STC:
+  name: "Single Trip Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: []
+GSTC:
+  name: "Single Trip Charge"
+  units: ["per_truck"]
+  condition: true
+  tags: ['additional_service']
+DPM:
+  name: "Delay Charge"
+  units: ["per_shipment", "per_truck"]
+  condition: true
+  tags: []
+MPC:
+  name: "Multi Pickup Charge"
+  units: ["per_truck", "per_touch_point"]
+  condition: true
+  tags: []
+MDC:
+  name: "Multi Pickup And Delivery Charge"
+  units: ["per_truck", "per_touch_point"]
+  condition: true
+  tags: []
+EHC:
+  name: "Extra Hops Charge"
+  units: ["per_shipment", "per_truck", "per_touch_point"]
+  condition: true
+  tags: []
+HGC:
+  name: "Haringhata Charge"
+  units: ["per_truck", "per_shipment"]
+  condition: true
+  tags: []
+EKMC:
+  name: "Extra Km Charge"
+  units: ["per_km"]
+  condition: true
+  tags: []
+ROV:
+  name: "Risk On Value"
+  units: ["absolute", "percentage_of_cargo_value"]
+  condition: true
+  tags: []
+FOV:
+  name: "Freight On Value"
+  units: ["absolute", "percentage_of_cargo_value"]
+  condition: true
+  tags: []
+WBC:
+  name: "Way Bill Charge"
+  units: ["per_way_bill", "per_shipment"]
+  condition: true
+  tags: []
+CDPC:
+  name: "Cheque And Draft Charge"
+  units: ["per_cheque", "per_shipment", "per_draft"]
+  condition: true
+  tags: []
+RISK:
+  name: "Risk Charge"
+  units: ["absolute", "percentage"]
+  condition: true
+  tags: []
+DECC:
+  name: "Diesel Escalation Clause Charge"
+  units: ["absolute", "percentage"]
+  condition: true
+  tags: [ ]
+EAIC:
+  name: "Early Arrival Incentive Charge"
+  units: ['per_day','per_hour']
+  condition: true
+  tags: []
+ETRC:
+  name: "Empty Truck Return Charge"
+  units: ['per_truck','per_tonne']
+  condition: true
+  tags: []
+NPC:
+  name: "Non Placement Charge"
+  units: ['per_truck','per_tonne','per_shipment']
+  condition: true
+  tags: []
