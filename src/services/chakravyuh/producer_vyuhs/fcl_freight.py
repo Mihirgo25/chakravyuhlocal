@@ -36,19 +36,14 @@ class FclFreightVyuh():
     
     def get_rate_combinations_to_extend(self):
         from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import get_fcl_freight_cluster_objects
-        from services.chakravyuh.interaction.get_fcl_freight_relevant_vessel_extensions import get_fcl_freight_relevant_vessel_extensions
-        from services.envision.interaction.get_fcl_freight_relevant_envision_extensions import get_fcl_freight_relevant_envision_extensions
+        from services.fcl_freight_rate.interaction.get_fcl_freight_location_clusters import get_cluster_rate_combinations
 
         extension_rule_set_rates = get_fcl_freight_cluster_objects(self.rate)
 
-        service_lane_rates = []
-        # if self.rate['vessel_number']:
-        #     service_lane_rates = get_fcl_freight_relevant_vessel_extensions()
-
-        envision_cluster_rates = []
-        # envision_cluster_rates = get_fcl_freight_relevant_envision_extensions()
+        cluster_rates = []
+        cluster_rates = get_cluster_rate_combinations(self.rate)
         
-        all_rates  = extension_rule_set_rates + service_lane_rates + envision_cluster_rates
+        all_rates  = extension_rule_set_rates + cluster_rates
         
         for rate in  all_rates:
             rate['extended_from_object_id'] = self.rate['id']

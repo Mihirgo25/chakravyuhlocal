@@ -93,6 +93,7 @@ from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_she
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_deviations import list_fcl_freight_rate_deviations
+from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster import create_fcl_freight_location_cluster
 
 fcl_freight_router = APIRouter()
 
@@ -1865,6 +1866,17 @@ def list_fcl_freight_rate_deviation(
     try:
         data = list_fcl_freight_rate_deviations(filters, page_limit, page)
         return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.post("/create_fcl_freight_location_cluster")
+def create_fcl_freight_location_cluster_func(request: FclLocationCluster):
+    try:
+        response =  create_fcl_freight_location_cluster(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
     except Exception as e:
