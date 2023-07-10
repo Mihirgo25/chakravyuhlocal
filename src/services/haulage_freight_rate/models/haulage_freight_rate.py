@@ -389,7 +389,7 @@ class HaulageFreightRate(BaseModel):
         }
 
     def detail(self):
-        ftl_freight = {
+        haulage_freight = {
             'line_items': self.line_items,
             'transit_time': self.transit_time,
             'detention_free_time': self.detention_free_time,
@@ -403,7 +403,7 @@ class HaulageFreightRate(BaseModel):
             'is_line_items_error_messages_present': self.is_line_items_error_messages_present
         }
 
-        return {'ftl_freight': ftl_freight}
+        return {'haulage_freight': haulage_freight}
 
     def possible_charge_codes(self):
         haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES

@@ -116,8 +116,8 @@ def get_haulage_freight_rate_data(
     shipping_line_id: str = None,
     transport_modes: Union[List[str], None] = Query(None),
     trip_type: str = None,
-    transit_time: int = 12,
-    detention_free_time: int = 1,
+    transit_time: int = None,
+    detention_free_time: int = None,
     trailer_type: str = None,
     resp: dict = Depends(authorize_token),
 ):

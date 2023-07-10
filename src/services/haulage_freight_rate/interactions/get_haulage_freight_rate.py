@@ -2,12 +2,25 @@
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from operator import attrgetter
 
+default_fields = [ 'line_items',
+        'transit_time',
+        'detention_free_time',
+        'trip_type',
+        'validity_start',
+        'validity_end',
+        'trailer_type',
+        'line_items_info_messages',
+        'is_line_items_info_messages_present',
+        'line_items_error_messages',
+        'is_line_items_error_messages_present']
+
 def all_fields_present(requirements):
     if all(requirements.get(key) for key in ('origin_location_id', 'destination_location_id', 'container_size', 'container_type', 'haulage_type', 'transport_modes', 'service_provider_id')):
         return True
 
 def find_object(requirement):
-    query = HaulageFreightRate.select()
+    fields = [getattr(HaulageFreightRate, key) for key in default_fields]
+    query = HaulageFreightRate.select(*fields)
     object_params= get_object_params(requirement)
     for key in object_params:
       if object_params[key]:
@@ -43,16 +56,15 @@ def get_haulage_freight_rate(requirement):
         return {}
     
     object = find_object(requirement)
-    get_data = list(object.dicts())
-    if get_data and get_data[0].get('detail'):
-        detail = get_data[0]['detail']
-    else:
-        detail = {}
-    object_params= get_object_params(requirement)
-    object_params['transport_modes'] = requirement['transport_modes']
-    object = HaulageFreightRate(**object_params)
-    object.set_origin_location_ids
-    object.set_destination_location_ids
-    object.possible_charge_codes
-    detail['haulage_freight_charge_codes'] = object.__data__
+    detail = {"Rate": "Rate not found"}
+    if object:
+        detail = list(object.dicts())[0]
+        object_params= get_object_params(requirement)
+        object_params['transport_modes'] = requirement['transport_modes']
+        object = HaulageFreightRate(**object_params)
+        object.set_origin_location_ids
+        object.set_destination_location_ids
+        object.possible_charge_codes
+        detail['haulage_freight_charge_codes'] = object.__data__
+
     return detail
