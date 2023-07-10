@@ -94,8 +94,8 @@ def create_air_freight_rate_data(request):
 
     freight.sourced_by_id = request.get("sourced_by_id")
     freight.procured_by_id = request.get("procured_by_id")
-
-    freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
+    if 'rate_sheet_validation' not in request:
+        freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
 
     validity_id,weight_slabs = freight.set_validities(
         
@@ -120,8 +120,9 @@ def create_air_freight_rate_data(request):
     freight.set_last_rate_available_date()
 
     set_object_parameters(freight, request)
-
-    freight.validate_before_save()
+    
+    if 'rate_sheet_validation' not in request:
+        freight.validate_before_save()
 
     freight.update_foreign_references(row['price_type'])
     
