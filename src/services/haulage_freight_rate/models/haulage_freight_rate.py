@@ -83,7 +83,7 @@ class HaulageFreightRate(BaseModel):
     
     def set_locations(self):
         ids = [str(self.origin_location_id), str(self.destination_location_id)]
-        locations_response = maps.list_locations({'filters':{"id": ids}})
+        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True}})
         locations = []
         if 'list' in locations_response:
             locations = locations_response["list"]
@@ -203,10 +203,17 @@ class HaulageFreightRate(BaseModel):
         if len(set(map(lambda t: str(t['code']).upper(), self.line_items))) != len(self.line_items):
             raise HTTPException(status_code=500, detail="Contains Duplicates")
         
-    def validate_invalid_line_items(self,possible_charge_codes):
-        invalid_line_items = [str(line_item.get('code') or '') for line_item in self.line_items if str(line_item.get('code') or '').strip() not in possible_charge_codes]
-        if invalid_line_items:
-            raise HTTPException(status_code=500, detail= ','.join(invalid_line_items))
+    # def validate_invalid_line_items(self,possible_charge_codes):
+    #     invalid_line_items = [str(line_item.get('code') or '') for line_item in self.line_items if str(line_item.get('code') or '').strip() not in possible_charge_codes]
+    #     if invalid_line_items:
+            # raise HTTPException(status_code=500, detail= ','.join(invalid_line_items))
+    def validate_invalid_line_items(self):
+        haulage_line_item_codes = [str(t['code']) for t in self.line_items]
+        possible_haulage_charge_codes = [str(key) for key in self.possible_charge_codes().keys()]
+        print(possible_haulage_charge_codes)
+        invalid_haulage_line_items = [t for t in haulage_line_item_codes if t not in possible_haulage_charge_codes]
+        if invalid_haulage_line_items:
+            raise HTTPException(status_code=400, detail="Invalid line items")
         
     def validate_before_save(self):
         self.validate_container_size()
@@ -221,7 +228,7 @@ class HaulageFreightRate(BaseModel):
         self.validate_line_items()
         self.validate_commodity()
         self.validate_duplicate_line_items()
-        self.validate_invalid_line_items(self.possible_charge_codes())
+        self.validate_invalid_line_items()
         self.validate_slabs()
         return True
 
@@ -299,8 +306,8 @@ class HaulageFreightRate(BaseModel):
         currency = line_items[0].get('currency')
         result = 0
 
-        for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+        # for line_item in line_items:
+        #     result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
 
         return result
     
@@ -450,7 +457,8 @@ class HaulageFreightRate(BaseModel):
         ).execute()
 
     def validate_slabs(self):
-        slabs = self.line_items[0]['slabs'] or []
+        # if 'slabs' in  self.line_items[0]:
+        slabs = self.line_items[0].get('slabs') or []
         for index, slab in enumerate(slabs):
             if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index!=0 and float(slab['lower_limit'])<= float(slabs[index-1]['upper_limit'])):
                 raise HTTPException(status_code=400, detail=f"{slabs} are not valid {slab['code']} in line item")

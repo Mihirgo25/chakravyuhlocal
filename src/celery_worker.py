@@ -31,6 +31,7 @@ from services.air_freight_rate.interactions.create_draft_air_freight_rate import
 from database.rails_db import get_past_cost_booking_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
+from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
 from services.fcl_customs_rate.helpers import update_organization_fcl_customs
 from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_request import update_haulage_freight_rate_request
@@ -649,3 +650,14 @@ def delay_haulage_functions(self,haulage_object,request):
             pass
         else:
             raise self.retry(exc= exc)
+        
+
+@celery.task(bind = True, retry_backoff=True, max_retries=5)
+def create_haulage_freight_rate_delay(self, request):
+    try:
+        return create_haulage_freight_rate(request)
+    except Exception as e:
+        if type(e).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= e)

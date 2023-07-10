@@ -6,12 +6,10 @@ from database.rails_db import get_connection
 from joblib import delayed, Parallel, cpu_count
 from services.haulage_freight_rate.models.haulage_freight_rate_feedback import HaulageFreightRateFeedback
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest
-from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from services.haulage_freight_rate.models.haulage_freight_rate_bulk_operation import HaulageFreightRateBulkOperation
 from libs.migration import delayed_func
-
-import time
 import json
 import pandas as pd
 from configs.definitions import ROOT_DIR
@@ -29,40 +27,8 @@ class ParallelJobs:
 
 p  = ParallelJobs()
 
-######################### FCL Customs Migration ##################################################
+######################### Haulage freight rate feedback Migration ##################################################
 
-# def fcl_customs_rates_migration():
-#     file_path = "zone_data.json"
-#     with open(file_path, 'r') as file:
-#         zone_data = json.load(file)
-
-#     procured_ids_path = "procured_by_sourced_by_customs.json"
-#     with open(procured_ids_path, 'r') as file:
-#         procured_sourced_customs_dict = json.load(file)
-    
-#     location_data_path = 'location_data_customs.json'
-#     with open(location_data_path, 'r') as file:
-#         loc_dict = json.load(file)
-
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = """
-#                 SELECT * from fcl_customs_rates
-#                 """   
-#                 cur.execute(sql_query,)
-#                 result = cur
-
-#                 columns = [col[0] for col in result.description]
-#                 p.parallel_function(result.fetchall(), columns, zone_data, procured_sourced_customs_dict, loc_dict, func_in_parallel)  
-#                 cur.close()
-#         conn.close()
-#         print('FCL Customs Done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
 
 def haulage_freight_rate_feedback_migration():
     from services.haulage_freight_rate.models.haulage_freight_rate_feedback import HaulageFreightRateFeedback
@@ -73,26 +39,24 @@ def haulage_freight_rate_feedback_migration():
                 
             sql_query = """
             SELECT feedback.*,
-                rate.origin_haulageport_id,
+                rate.origin_location_id,
                 rate.origin_country_id,
-                rate.origin_continent_id,
-                rate.origin_trade_id,
-                rate.destination_haulageport_id,
-                rate.destination_continent_id,
-                rate.destination_trade_id,
-                rate.cogo_entity_id,
+                rate.origin_city_id,
+                rate.destination_location_id,
                 rate.service_provider_id,
                 rate.destination_country_id,
+                rate.destination_city_id,
                 rate.commodity,
-                rate.haulageline_id,
-                rate.operation_type
+                rate.container_size,
+                rate.container_type
             FROM haulage_freight_rate_feedbacks feedback
             INNER JOIN haulage_freight_rates rate
-            ON rate.id = feedback.haulage_freight_rate_id limit 1000
+            ON rate.id = feedback.haulage_freight_rate_id 
             """
             cur.execute(sql_query,)
             result = cur
             columns = [col[0] for col in result.description]    
+
             result = Parallel(n_jobs=4)(delayed(delay_updation_feedback)(row, columns) for row in result.fetchall())
             cur.close()
     conn.close()
@@ -104,10 +68,15 @@ def haulage_freight_rate_feedback_migration():
 def delay_updation_feedback(row,columns):
     param = dict(zip(columns, row))
     obj = HaulageFreightRateFeedback(**param)
+    print('done')
     set_locations(obj)
     get_multiple_service_objects(obj)
     obj.save(force_insert = True)
     return
+
+
+######################### Haulage freight rate request Migration ##################################################
+
 
 def haulage_freight_rate_requests_migration():
     from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest
@@ -115,7 +84,9 @@ def haulage_freight_rate_requests_migration():
     conn = get_connection()
     with conn:
         with conn.cursor() as cur:
-            sql_query = "SELECT * FROM haulage_freight_rate_requests limit 1000"
+            sql_query = """
+            SELECT * FROM haulage_freight_rate_requests 
+            """
             cur.execute(sql_query,)
             result = cur
             columns = [col[0] for col in result.description]    
@@ -129,6 +100,7 @@ def haulage_freight_rate_requests_migration():
 def delay_updation_request(row,columns):
     param = dict(zip(columns, row))
     obj = HaulageFreightRateRequest(**param)
+    print('here')
     set_locations(obj)
     get_multiple_service_objects(obj)
     obj.save(force_insert = True)
