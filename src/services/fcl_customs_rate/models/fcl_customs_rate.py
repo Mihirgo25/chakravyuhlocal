@@ -446,7 +446,6 @@ class FclCustomsRate(BaseModel):
         self.save()
 
     def validate_before_save(self):
-        self.set_location_type()
         self.validate_duplicate_line_items()
         self.validate_invalid_line_items()
         self.validate_trade_type()
