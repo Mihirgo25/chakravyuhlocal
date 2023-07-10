@@ -28,8 +28,7 @@ def create_table():
                 AirFreightRateSurcharge,
                 AirFreightRateTasks,
                 AirFreightStorageRates,
-                AirFreightWarehouseRates,
-                AirServiceAudit,
+                AirFreightWarehouseRates
             ]
         )
         db.close()
