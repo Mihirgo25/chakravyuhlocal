@@ -130,9 +130,11 @@ def delay_updation_request(row,columns):
         new_al.append(UUID(str(aid)))
     param['preferred_airline_ids'] = new_al
     obj = AirFreightRateRequest(**param)
-    print(obj.__data__)
+    print(obj.__data__, 'kk')
     set_locations(obj)
+    print(obj.__data__, 'll')
     get_multiple_service_objects(obj)
+    print(obj.__data__, 'ml')
     obj.save(force_insert = True)
     return
 
