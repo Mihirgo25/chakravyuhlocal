@@ -1,3 +1,4 @@
+from uuid import UUID
 from configs.env import *
 import json
 from micro_services.client import maps
@@ -123,6 +124,11 @@ def air_freight_rate_requests_migration():
 def delay_updation_request(row,columns):
     from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
     param = dict(zip(columns, row))
+    preferred_airline_ids = param['preferred_airline_ids'] or []
+    new_al = []
+    for aid in preferred_airline_ids:
+        new_al.append(UUID(aid))
+    param['preferred_airline_ids'] = new_al
     obj = AirFreightRateRequest(**param)
     set_locations(obj)
     get_multiple_service_objects(obj)
