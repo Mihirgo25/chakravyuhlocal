@@ -403,7 +403,7 @@ class HaulageFreightRate(BaseModel):
             'is_line_items_error_messages_present': self.is_line_items_error_messages_present
         }
 
-        return {'fcl_customs': ftl_freight}
+        return {'ftl_freight': ftl_freight}
 
     def possible_charge_codes(self):
         haulage_freight_charges_dict = HAULAGE_FREIGHT_CHARGES
