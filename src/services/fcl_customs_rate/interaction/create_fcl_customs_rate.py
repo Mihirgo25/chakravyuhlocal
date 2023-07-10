@@ -35,8 +35,8 @@ def execute_transaction_code(request):
   customs_rate.set_platform_price()
   customs_rate.set_is_best_price()
 
-  customs_rate.update_customs_line_item_messages()
   customs_rate.validate_before_save()
+  customs_rate.update_customs_line_item_messages()
   
   try:
      customs_rate.save()

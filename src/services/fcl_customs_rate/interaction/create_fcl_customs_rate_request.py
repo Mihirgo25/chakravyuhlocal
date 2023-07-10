@@ -54,11 +54,11 @@ def supply_agents_to_notify(request):
     locations_data = FclCustomsRateRequest.select(FclCustomsRateRequest.port_id, FclCustomsRateRequest.country_id).where(FclCustomsRateRequest.source_id == request.get('source_id')).dicts().get()
     locations = list(filter(None,[str(value or "") for key,value in locations_data.items()]))
 
-    supply_agents_data = get_partner_users_by_expertise('fcl_customs', locations )
+    supply_agents_data = get_partner_users_by_expertise('fcl_customs', location_ids = locations , trade_type=request.get('trade_type'))
     supply_agents_list = list(set([item.get('partner_user_id') for item in supply_agents_data]))
 
     supply_agents_user_data = get_partner_users(supply_agents_list)
-    supply_agents_user_ids = list(set([str(data['user_id']) for data in  supply_agents_user_data])) if supply_agents_user_data else None
+    supply_agents_user_ids = list(set([str(data['user_id']) for data in supply_agents_user_data])) if supply_agents_user_data else None
     route_data = []
     port_ids = str(locations_data.get('port_id') or '')
     try:

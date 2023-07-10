@@ -1,34 +1,26 @@
 from peewee import *
 from playhouse.postgres_ext import *
-from services.trailer_freight_rates.models.trailer_freight_rate_estimator_constant import TrailerFreightRateCharges
+from services.trailer_freight_rate.models.trailer_freight_rate_estimator_constant import TrailerFreightRateEstimatorConstant
 from services.envision.interaction.get_haulage_freight_predicted_rate import fuel_consumption
 from database.db_session import db
 from micro_services.client import maps
 from playhouse.shortcuts import model_to_dict
 from configs.trailer_freight_rate_constants import *
-from services.trailer_freight_rates.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
-from currency_converter import CurrencyConverter
+from services.trailer_freight_rate.helpers.trailer_freight_rate_estimator_helper import get_estimated_distance
 
-class USTrailerRateEstimator():
+class SGTrailerRateEstimator():
 
-    def __init__(self, origin_location_id, destination_location_id, country_code):
+    def __init__(self,origin_location_id,destination_local_id,country_code):
         self.origin_location_id = origin_location_id
-        self.destination_location_id = destination_location_id
+        self.destination_location_id = destination_local_id
         self.country_code = country_code
-
+    
     def constants_cost(self,distance):
-        constants = TrailerFreightRateCharges.select().where(
-                    (TrailerFreightRateCharges.country_code == self.country_code),
-                    (TrailerFreightRateCharges.status == 'active')
-                    ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
-        if constants:
-            constants_data = model_to_dict(constants)
-        else:
-            constants = TrailerFreightRateCharges.select().where(
-                            (TrailerFreightRateCharges.country_code == "US"),
-                            (TrailerFreightRateCharges.status == 'active')
-                            ).order_by(TrailerFreightRateCharges.created_at.desc()).first()
-            constants_data = model_to_dict(constants)
+        constants = TrailerFreightRateEstimatorConstant.select().where(
+                    (TrailerFreightRateEstimatorConstant.country_code == self.country_code),
+                    (TrailerFreightRateEstimatorConstant.status == 'active')
+                    ).order_by(TrailerFreightRateEstimatorConstant.created_at.desc()).first()
+        constants_data = model_to_dict(constants)
 
         handling_rate = constants_data.get('handling')
         nh_toll_rate = constants_data.get('nh_toll')
@@ -37,6 +29,7 @@ class USTrailerRateEstimator():
         document_rate = constants_data.get('document')
         maintanance_rate = constants_data.get('maintanance')
         misc_rate = constants_data.get('misc')
+
 
         constants_cost = (handling_rate + nh_toll_rate + tyre_rate + driver_rate + document_rate + maintanance_rate + misc_rate) * distance
         return constants_cost
@@ -50,13 +43,13 @@ class USTrailerRateEstimator():
         total_cost = total_cost * CONTAINR_TYPE_FACTORS[container_type]
 
         return total_cost
-
-    def US_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
+    
+    def SG_estimate(self, container_size, container_type, containers_count, cargo_weight_per_container, trip_type):
         ''' 
-        Primary Function to estimate US prices
+        Primary Function to estimate Singapore prices
         '''
-        print('Estimating USA rates')
-
+        print("Estimating Singapore's rates")
+    
         origin_location_id = self.origin_location_id
         destination_location_id = self.destination_location_id
         country_code = self.country_code
@@ -80,7 +73,7 @@ class USTrailerRateEstimator():
 
         if trip_type == 'round_trip':
             total_cost = total_cost * ROUND_TRIP_FACTOR
-
+        
         return {'list':[{
             'base_price' : total_cost,
             'currency' : COUNTRY_CURRENCY_CODE_MAPPING[self.country_code],
@@ -89,3 +82,4 @@ class USTrailerRateEstimator():
             'upper_limit' : cargo_weight_per_container,
             'trip_type' : trip_type}]
             }
+
