@@ -47,7 +47,7 @@ class AirFreightRateSurcharge(BaseModel):
     procured_by_id=UUIDField(null=True,index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
-    is_active=BooleanField(null=True)
+    rate_not_available_entry = BooleanField(null=True,default=False)
     updated_at=DateTimeField(default=datetime.datetime.now,index=True)
     created_at=DateTimeField(default=datetime.datetime.now,index=True)
 

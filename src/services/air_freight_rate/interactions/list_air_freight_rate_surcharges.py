@@ -32,7 +32,7 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
     return { 'list': data } | (pagination_data)
 
 def get_query(sort_by,sort_type):
-    query = AirFreightRateSurcharge.select().where(AirFreightRateSurcharge.is_active==True).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
+    query = AirFreightRateSurcharge.select().where(~(AirFreightRateSurcharge.rate_not_available_entry)).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):

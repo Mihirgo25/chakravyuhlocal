@@ -58,7 +58,7 @@ class AirFreightRateRequest(BaseModel):
     price_type = CharField(null=True)
     operation_type = CharField(null=True)
     preferred_airlines = BinaryJSONField(null=True)
-    preferred_airline_ids = BinaryJSONField( null=True)
+    preferred_airline_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     preferred_detention_free_days = IntegerField(null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
@@ -134,20 +134,19 @@ class AirFreightRateRequest(BaseModel):
                 uuid.UUID(str(ariline_id)) for ariline_id in self.preferred_airline_ids
             ]
 
-    def send_closed_notification_to_sales_agent(self):
+    def send_closed_notifications_to_sales_agent(self):
         location_pair = (
             AirFreightRateRequest.select(
                 AirFreightRateRequest.origin_airport_id,
                 AirFreightRateRequest.destination_airport_id,
             )
             .where(AirFreightRateRequest.source_id == self.source_id).first())
-        location_pair = jsonable_encoder(list(location_pair).dicts())
         location_pair_data = maps.list_locations(
             {
                 "filters": {
                     "id": [
-                        str(location_pair("origin_airport_id")),
-                        str(location_pair["destination_airport_id"]),
+                        str(location_pair.origin_airport_id),
+                        str(location_pair.destination_airport_id),
                     ]
                 }
             }
@@ -162,9 +161,9 @@ class AirFreightRateRequest(BaseModel):
             )["detail"]["importer_exporter_id"]
         except:
             importer_exporter_id = None
-        origin_location = location_pair_name[str(location_pair["origin_airport_id"])]
+        origin_location = location_pair_name[str(location_pair.origin_airport_id)]
         destination_location = location_pair_name[
-            str(location_pair["destination_airport"])
+            str(location_pair.destination_airport)
         ]
 
         data = {
@@ -196,24 +195,24 @@ class AirFreightRateRequest(BaseModel):
     def get_push_notification_data(self,location_pair_name,location_pair):
         if  'rate_added'  in self.closing_remarks:
             subject = 'Freight Rate Request Completed'
-            body = f"Rate has been added for Request No: {self.serial_id}, air freight from {location_pair_name[location_pair['origin_airport_id']]} to {location_pair_name[location_pair['destination_airport_id']]}."
+            body = f"Rate has been added for Request No: {self.serial_id}, air freight from {location_pair_name[str(location_pair.origin_airport_id)]} to {location_pair_name[str(location_pair.destination_airport_id)]}."
         else:
             subject ='Freight Rate Request Closed'
             remarks = f"Reason: #{self.closing_remarks[0]}."
-            body = f"Your rate request has been closed for Request No: {self.serial_id}, air freight from {location_pair_name[location_pair['origin_airport_id']]} to {location_pair_name[location_pair['destination_airport_id']]}. #{remarks}"
+            body = f"Your rate request has been closed for Request No: {self.serial_id}, air freight from {location_pair_name[str(location_pair.origin_airport_id)]} to {location_pair_name[(location_pair.destination_airport_id)]}. #{remarks}"
 
         return {
             'type':'push_notification',
             'service':'air_freight_rate',
-            'service_id':self.id,
+            'service_id':str(self.id),
             'provider_name':'firebase',
             'template_name':'push_notification',
-            'user_id':self.performed_by_id,
+            'user_id':str(self.performed_by_id),
             'variables':{
                 'subject':subject,
                 'body':body,
                 'notification_source':'spot_search',
-                'notification_source_id':self.source_id
+                'notification_source_id':str(self.source_id)
             }
         }
 

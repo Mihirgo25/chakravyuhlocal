@@ -31,7 +31,8 @@ def find_object(request):
                                                          AirFreightRateSurcharge.commodity==request.get('commodity'),
                                                          AirFreightRateSurcharge.airline_id==request.get('airline_id'),
                                                          AirFreightRateSurcharge.operation_type==request.get('operation_type'),
-                                                         AirFreightRateSurcharge.service_provider_id==request.get('service_provider_id')).first()
+                                                         AirFreightRateSurcharge.service_provider_id==request.get('service_provider_id'),
+                                                         ~(AirFreightRateSurcharge.rate_not_available_entry)).first()
 
     except:
         raise HTTPException(status_code=400, detail="no surcharge entry with the given id exists")

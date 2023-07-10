@@ -300,7 +300,8 @@ def get_surcharges(requirements,rates):
         AirFreightRateSurcharge.destination_airport_id == requirements['destination_airport_id'],
         AirFreightRateSurcharge.commodity == requirements['commodity'],
         AirFreightRateSurcharge.airline_id << airline_ids,
-        AirFreightRateSurcharge.service_provider_id << service_provider_ids
+        AirFreightRateSurcharge.service_provider_id << service_provider_ids,
+        ~(AirFreightRateSurcharge.rate_not_available_entry)
     )
 
     surcharges_results = jsonable_encoder(list(surcharges_query.dicts()))
@@ -383,11 +384,11 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = pre_discard_noneligible_rates(freight_rates)
 
         is_predicted = False
-        if len(freight_rates)==0:
-            get_air_freight_rate_prediction(requirements)
-            is_predicted = True
-            freight_rates = initialize_freight_query(requirements,True)
-            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        # if len(freight_rates)==0:
+        #     get_air_freight_rate_prediction(requirements)
+        #     is_predicted = True
+        #     freight_rates = initialize_freight_query(requirements,True)
+        #     freight_rates = jsonable_encoder(list(freight_rates.dicts()))
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
         
@@ -399,7 +400,7 @@ def get_air_freight_rate_cards(requirements):
         }
     except Exception as e:
         traceback.print_exc()
-        sentry_sdk.capture_exception(e)
+        print(e)
         return {
             "list": []
         }

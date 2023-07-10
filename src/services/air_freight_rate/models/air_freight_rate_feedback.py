@@ -55,8 +55,8 @@ class AirFreightRateFeedback(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
     closed_by = BinaryJSONField(null=True)
-    reverted_rate_id = UUIDField(null=True,index=True)
-    reverted_validity_id = UUIDField(null=True,index=True)
+    reverted_rate_id = UUIDField(null=True, index=True)
+    reverted_rate= BinaryJSONField(null=True)
     origin_airport_id = UUIDField(null=True, index=True)
     origin_country_id = UUIDField(null=True, index=True)
     origin_continent_id = UUIDField(null=True, index=True)
@@ -169,26 +169,30 @@ class AirFreightRateFeedback(BaseModel):
     def send_closed_notifications_to_sales_agent(self):
         variables_data = {}
         reverted_rates = AirFreightRate.select(AirFreightRate.airline_id,AirFreightRate.price_type).where(AirFreightRate.id == self.reverted_rate_id).first()
-        locations_data = AirFreightRate.select(
-                                                                AirFreightRate.origin_airport_id,
-                                                                AirFreightRate.destination_airport_id,
-                                                                AirFreightRate.airline_id,
-                                                                AirFreightRate.price_type
-                                                            ).where(AirFreightRate.id == self.air_freight_rate_id).first()
-        locations_data = jsonable_encoder(list(locations_data).dicts())
-        variables_data['locations_data'] = locations_data
-        reverted_airline = maps.list_operators({'filters': { 'id': reverted_rates['airline_id']}})['list'][0]['short_name']
+        locations_data = AirFreightRate.select( 
+            AirFreightRate.origin_airport_id,
+            AirFreightRate.destination_airport_id,
+            AirFreightRate.airline_id,
+            AirFreightRate.price_type
+            ).where(AirFreightRate.id == self.air_freight_rate_id)
+        locations_data = jsonable_encoder(list(locations_data.dicts()))
+        variables_data['locations_data'] = locations_data[0]
+        reverted_airline = maps.list_operators({'filters': { 'id': reverted_rates.airline_id}})['list'][0]['short_name']
 
         if reverted_rates:
             variables_data['changed_components'] = ''
-            variables_data['changed_components'] += f'with new airline {reverted_airline}' if reverted_rates['airline_id'] != variables_data['locations_data']['airline_id'] else ""
-            variables_data['changed_components'] += f'with new price type {reverted_rates["price_type"]}' if reverted_rates['price_type'] != variables_data['locations_data']['price_type'] else ""
+            variables_data['changed_components'] += f'with new airline {reverted_airline}' if reverted_rates.airline_id != variables_data['locations_data']['airline_id'] else ""
+            variables_data['changed_components'] += f'with new price type {reverted_rates.price_type}' if reverted_rates.price_type != variables_data['locations_data']['price_type'] else ""
             variables_data['changed_components'] += '.'
         locations = [variables_data['locations_data']['origin_airport_id'],variables_data['locations_data']['destination_airport_id']]
         variables_data['location_pair_name'] = maps.list_locations({'filters':{ 'id':locations }})['list']
-        variables_data['importer_exporter_id'] = spot_search.get_spot_search({'id':self.source_id})['importer_exporter_id']
+        variables_data['importer_exporter_id'] = spot_search.get_spot_search({'id':self.source_id})['detail']['importer_exporter_id']
         
-        location_pair_name = variables_data['location_pair_name']
+        if variables_data['location_pair_name'][0]['id']==variables_data['locations_data']['origin_airport_id']:
+            location_pair_name = variables_data['location_pair_name']
+        else:
+            destination  = variables_data['location_pair_name'][0]
+            location_pair_name = [variables_data['location_pair_name'][1],destination]
         locations_data = variables_data['locations_data']
         importer_exporter_id = variables_data['importer_exporter_id']
         changed_components = variables_data['changed_components']
@@ -201,8 +205,8 @@ class AirFreightRateFeedback(BaseModel):
             "template_name": "freight_rate_feedback_completed_notification_for_air" if ("rate_added" in self.closing_remarks) else "freight_rate_feedback_closed_notification",
             "variables": {
                 "service_type": "air freight",
-                "origin_location": location_pair_name[locations_data['origin_airport_id']],
-                "destination_location": location_pair_name[locations_data['destination_airport_id']],
+                "origin_location": location_pair_name[0],
+                "destination_location": location_pair_name[1],
                 "remarks": None
                 if ("rate_added" in self.closing_remarks)
                 else f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}",

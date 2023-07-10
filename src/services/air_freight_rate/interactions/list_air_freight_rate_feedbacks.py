@@ -20,7 +20,7 @@ possible_indirect_filters = ['relevant_supply_agent','origin_airport_id', 'desti
 
 def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = AirFreightRateFeedback.select()
-
+    
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -115,7 +115,7 @@ def get_data(query, spot_search_details_required, booking_details_required):
     for rate in data:
         if rate['air_freight_rate_id']:
             air_freight_rate_ids.append((rate['air_freight_rate_id']))
-        if rate['reverted_rate_id']:
+        if rate.get('reverted_rate_id'):
             air_freight_rate_ids.append((rate['reverted_rate_id']))
     air_freight_rates = AirFreightRate.select(AirFreightRate.id,
                                             AirFreightRate.validities,
@@ -178,12 +178,11 @@ def get_data(query, spot_search_details_required, booking_details_required):
             object['reverted_rate_data']['price_type'] = reverted_rate.get('price_type')
             reverted_validity_data=None
             for validity_data in reverted_rate['validities']:
-                if validity_data['id']==object['reverted_validity_id']:
+                if validity_data['id']==object['reverted_rate']['validity_id']:
                     reverted_validity_data=validity_data
                     break
             object['reverted_rate_data']['min_price'] = reverted_validity_data.get('min_price') 
             object['reverted_rate_data']['weight_slabs'] = reverted_validity_data.get('weight_slabs')
-            print(object['weight'])
             object['chargeable_weight'] = get_chargeable_weight(object['weight'], object['volume'])
             for  weight_slab in reverted_validity_data['weight_slabs']:
                 if weight_slab['lower_limit']<=object['chargeable_weight'] and weight_slab['upper_limit']<=object['chargeable_weight']:

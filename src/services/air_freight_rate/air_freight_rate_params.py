@@ -416,14 +416,27 @@ class CreateAirFreightRateParams(BaseModel):
     mode: str = 'manual'
     flight_uuid: str = None
     air_freight_rate_request_id: str = None
+    is_weight_slabs_required:bool = False
 
+class LineItem(BaseModel):
+    code: str
+    unit: str
+    price: float
+    currency: str
+    remarks: list[str] = []
+    quantity:float 
 
+class RevertedRateParams(BaseModel):
+    id:str
+    validity_id:str
+    weight_slabs:List[WeightSlab]
 class DeleteAirFreightRateFeedbackParams(BaseModel):
     air_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
     reverted_rate_id: str = None
-    reverted_validity_id: str = None
+    reverted_rate: RevertedRateParams = None
+
 
 
 class CreateAirFreightStorageRateParams(BaseModel):

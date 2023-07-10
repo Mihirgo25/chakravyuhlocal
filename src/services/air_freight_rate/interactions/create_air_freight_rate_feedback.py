@@ -15,7 +15,7 @@ def create_audit(request,feedback_id):
         updated_at=datetime.now(),
         data={key:value for key , value in request.items() if key != 'performed_by_id'},
         object_id=feedback_id,
-        object_type='AirFreightRateFeedback',
+        object_type='AirFreightRateFeedbacks',
         action_name='create',
         performed_by_id=request['performed_by_id']
         )
@@ -70,7 +70,7 @@ def execute_transaction_code(request):
     try:
         feedback.save()
     except:
-        raise HTTPException(status_code= 400, detail="couldnt validate the object")
+        raise HTTPException(status_code= 400, detail = "Feedback Didn't Save")
     
     create_audit(request,feedback.id)
     

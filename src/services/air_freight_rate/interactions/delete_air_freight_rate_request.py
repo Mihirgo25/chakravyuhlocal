@@ -1,6 +1,6 @@
 from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_request import (
-    AirFreightRateRequest,
+    AirFreightRateRequest
 )
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
@@ -35,17 +35,23 @@ def execute_transaction_code(request):
             status_code=400, detail="air_freight_rate_request_ids are invalid"
         )
 
-    air_freight_rate = (
-        AirFreightRate.select(AirFreightRate.validities,AirFreightRate.airline_id,AirFreightRate.service_provider_id,
-                                AirFreightRate.price_type,AirFreightRate.operation_type)
-        .where(AirFreightRate.id == request.get("rate_id"))
-    )
-    air_freight_rate =jsonable_encoder(list(air_freight_rate.dicts()))[0]
-    validities = air_freight_rate['validities']
-    air_freight_rate['validities'] = []
-    for validity in validities:
-        validity = {key:value for key,value in validity.items() if key in ["id","validity_end","weight_slabs","validity_start","min_price"] }
-        air_freight_rate['validities'].append(validity)
+    air_freight_rate = None
+    shipment_source = False
+    for request_object in request_objects:
+        if request_object.source == 'shipment' and request_object.source_id:
+            shipment_source = True
+            air_freight_rate = (
+                AirFreightRate.select(AirFreightRate.validities,AirFreightRate.airline_id,AirFreightRate.service_provider_id,
+                                        AirFreightRate.price_type,AirFreightRate.operation_type)
+                .where(AirFreightRate.id == request.get("rate_id"))
+            )
+            air_freight_rate =jsonable_encoder(list(air_freight_rate.dicts()))[0]
+            validities = air_freight_rate['validities']
+            air_freight_rate['validities'] = []
+            for validity in validities:
+                validity = {key:value for key,value in validity.items() if key in ["id","validity_end","weight_slabs","validity_start","min_price"] }
+                air_freight_rate['validities'].append(validity)
+            break
     for request_object in request_objects:
         request_object.status = "inactive"
         request_object.closed_by_id = request.get("performed_by_id")
@@ -64,12 +70,17 @@ def execute_transaction_code(request):
         )
     request_object = jsonable_encoder(list(request_objects.dicts()))
 
-    data = {
-        'air_freight_rate': air_freight_rate,
+    if shipment_source:
+        data = {
         'air_freight_rate_requests': request_object,
-        'validity_id': request.get('validity_id')
-    }
-    shipment.update_sell_and_buy_quotations_for_air_freight_request(data)
+        }
+        if air_freight_rate:
+            data['air_freight_rate'] = air_freight_rate
+            data['validity_id'] = request.get('validity_id')
+        shipment_updation = shipment.update_sell_and_buy_quotations_for_air_freight_request(data)
+        if not shipment_updation:
+            return HTTPException(status_code = 400, detail = 'Request Not Closed')
+
     return {"air_freight_rate_request_ids": request.get("air_freight_rate_request_ids")}
 
 

@@ -97,7 +97,7 @@ def create_air_freight_rate_data(request):
 
     freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
 
-    validity_id = freight.set_validities(
+    validity_id,weight_slabs = freight.set_validities(
         
         request.get("validity_start").date(),
         request.get("validity_end").date(),
@@ -141,10 +141,13 @@ def create_air_freight_rate_data(request):
     if request.get('air_freight_rate_request_id'):
         update_air_freight_rate_details_delay.apply_async(kwargs={ 'request':request }, queue='fcl_freight_rate')
 
-    return {
+    freight_object = {
         "id": freight.id,
         "validity_id":validity_id
     }
+    if request.get('is_weight_slabs_required'):
+        freight_object['weight_slabs'] = weight_slabs
+    return freight_object
     
 def set_object_parameters(freight, request):
     freight.maximum_weight = request.get('maximum_weight')
