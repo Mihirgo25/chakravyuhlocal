@@ -2,7 +2,8 @@
 from micro_services.client import maps
 from libs.get_distance import get_distance
 import httpx, json
-
+from datetime import datetime
+import dateutil.parser as parser
 
 def get_land_route_from_valhalla(location_ids):
     params = {
@@ -21,6 +22,11 @@ def get_road_route(origin_location_id, destination_location_id):
         return data
     return None
 
+def convert_date_format(date):
+    if not date:
+        return date
+    parsed_date = parser.parse(date, dayfirst=True)
+    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
 
 
 def get_transit_time(distance):

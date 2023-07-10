@@ -22,6 +22,12 @@ from services.ftl_freight_rate.interactions.update_truck import update_truck_dat
 from services.ftl_freight_rate.ftl_params import *
 from services.ftl_freight_rate.interactions.create_fuel_data import create_fuel_data
 from services.ftl_freight_rate.interactions.get_truck_detail import get_truck_detail
+from services.ftl_freight_rate.interactions.create_ftl_freight_rate_request import (
+    create_ftl_freight_rate_request,
+)
+from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import (
+    update_ftl_freight_rate_request,
+)
 
 ftl_freight_router = APIRouter()
 
@@ -211,6 +217,42 @@ def get_truck_data(
     try:
         request = {"id": truck_id, "truck_name": truck_name}
         data = get_truck_detail(request)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+
+
+@ftl_freight_router.post("/create_ftl_freight_rate_request")
+def create_ftl_freight_rate_request_api(
+    request: CreateFtlFreightRateRequest, resp: dict = Depends(authorize_token)
+):
+    # if resp["status_code"] != 200:
+    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    # try:
+    data = create_ftl_freight_rate_request(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=data)
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(
+    #         status_code=500, content={"success": False, "error": str(e)}
+    #     )
+
+
+@ftl_freight_router.post("/update_ftl_freight_rate_request")
+def update_ftl_freight_rate_request_api(
+    request: UpdateFtlFreightRateRequest, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = update_ftl_freight_rate_request(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from peewee import *
-from typing import Optional
+from typing import Optional,List
 
 class CreateTruck(BaseModel):
   truck_company: str
@@ -16,18 +16,17 @@ class CreateTruck(BaseModel):
   fuel_type: str
   avg_speed: float
   no_of_wheels: int
-  engine_type: str=None
+  engine_type: str = None
   country_id: str
-  axels: int=None
+  axels: int = None
   truck_type: str
-  body_type: str=None
-  status: str=None
-  horse_power: float=None
+  body_type: str = None
+  status: str = None
+  horse_power: float = None
   data: dict = {}
 
 class UpdateTruck(BaseModel):
     id: int
-
     performed_by_id: Optional[str]=None
     performed_by_type: str=None
     mileage: float=None
@@ -83,3 +82,52 @@ class CreateFuelData(BaseModel):
     fuel_unit: str
     currency:str
     
+    
+class Package(BaseModel):
+    packing_type: str
+    packages_count: int
+    package_weight: float = None
+    handling_type:  str
+    height: float
+    length: float
+    width: float
+    
+class CreateFtlFreightRateRequest(BaseModel):
+     source: str
+     source_id: str
+     performed_by_id: str
+     performed_by_org_id: str
+     performed_by_type: str
+     preferred_freight_rate: float = None
+     preferred_freight_rate_currency: str = None 
+     preferred_detention_free_days: int = None
+     preferred_storage_free_days: int = None
+     cargo_readiness_date: str = None
+     remarks: List[str] = []
+     booking_params: dict = {}
+     trip_type: str = None
+     trucks_count: int = None
+     truck_type: str = None
+     commodity: str = None
+     destination_city_id: str = None
+     destination_country_id: str = None
+     destination_location_id: str = None
+     destination_cluster_id: str = None
+     origin_cluster_id: str = None
+     origin_country_id: str = None
+     origin_city_id: str = None
+     origin_location_id: str = None
+     load_selection_type: str = None
+     free_detention_hours: int = None
+     trade_type: str = None
+     packages: list[Package] = []
+     
+class UpdateFtlFreightRateRequest(BaseModel):
+    ftl_freight_rate_request_id: str
+    closing_remarks: str 
+    status: str = None
+    remarks: str = None
+    performed_by_id: str
+
+     
+     
