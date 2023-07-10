@@ -13,7 +13,7 @@ def get_air_freight_local_rate_cards(request):
     try:
         local_query = initialize_local_query(request)
         local_query_results = jsonable_encoder(list(local_query.dicts()))
-        local_freight_rates = ignore_non_eligible_service_providers(local_freight_rates)
+        local_freight_rates = ignore_non_eligible_service_providers(local_query_results)
         local_freight_rates = discard_noneligible_airlines(local_freight_rates)
         local_freight_rates = build_response_list(request,local_query_results)
 
@@ -32,7 +32,8 @@ def initialize_local_query(request):
         AirFreightRateLocal.trade_type == request.get('trade_type'),
         AirFreightRateLocal.commodity == request.get('commodity'),
         AirFreightRateLocal.commodity_type == request.get('commodity_type'),
-        ~(AirFreightRateLocal.is_line_items_error_messages_present)
+        ~(AirFreightRateLocal.is_line_items_error_messages_present),
+        ~(AirFreightRateLocal.rate_not_available_entry)
     )
 
     if request.get('airline_id'):

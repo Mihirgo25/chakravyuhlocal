@@ -46,7 +46,8 @@ def execute_transaction_code(request):
     air_freight_local.line_items = old_line_items
     air_freight_local.sourced_by_id = request.get('sourced_by_id')
     air_freight_local.procured_by_id = request.get('procured_by_id')
-    air_freight_local.validate()
+    if 'rate_sheet_validation' not in request:
+        air_freight_local.validate()
     
     
     try:

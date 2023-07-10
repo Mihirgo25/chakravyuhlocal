@@ -537,7 +537,7 @@ class AirFreightRate(BaseModel):
           main_validities.append(new_validity)
         self.validities = main_validities
         if not deleted:
-            return new_validity_object['id']
+            return new_validity_object['id'],new_weight_slabs
 
 
     def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs):

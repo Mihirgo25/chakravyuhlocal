@@ -9,7 +9,8 @@ def get_air_freight_rate_local(request):
             AirFreightRateLocal.airline_id == request.get('airline_id'),
             AirFreightRateLocal.trade_type == request.get('trade_type'),
             AirFreightRateLocal.commodity == request.get('commodity'),
-            AirFreightRateLocal.service_provider_id == request.get('service_provider_id')
+            AirFreightRateLocal.service_provider_id == request.get('service_provider_id'),
+            ~(AirFreightRateLocal.rate_not_available_entry)
         ).first()
         if object:
           details = object.detail()

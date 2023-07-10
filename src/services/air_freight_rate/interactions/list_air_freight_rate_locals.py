@@ -36,7 +36,7 @@ sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query
 
 def get_query(sort_by,sort_type):
     
-    query=AirFreightRateLocal.select().where(AirFreightRateLocal.is_active==True).order_by(eval('AirFreightRateLocal.{}.{}()'.format(sort_by,sort_type)))
+    query=AirFreightRateLocal.select().where(~(AirFreightRateLocal.rate_not_available_entry)).order_by(eval('AirFreightRateLocal.{}.{}()'.format(sort_by,sort_type)))
     return query
     
 

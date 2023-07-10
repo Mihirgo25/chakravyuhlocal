@@ -18,7 +18,7 @@ from services.nandi.nandi_router import nandi_router
 from services.ftl_freight_rate.ftl_freight_router import ftl_freight_router
 from services.envision.envision_service_router import envision_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
-from services.trailer_freight_rates.trailer_freight_router import trailer_router
+from services.trailer_freight_rate.trailer_freight_router import trailer_router
 from services.haulage_freight_rate.haulage_freight_rate_router import haulage_freight_router
 from services.extensions.extension_router import extension_router
 
@@ -53,7 +53,7 @@ app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=[
 app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
 app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
 
-app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
+app.include_router(prefix = "/fcl_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
 
 
 app.add_middleware(
