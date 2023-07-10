@@ -4,7 +4,7 @@ from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from datetime import datetime
-from database.rails_db import get_partner_user_experties, get_organization_service_experties
+from database.rails_db import get_partner_user_experties
 from math import ceil
 from peewee import fn
 
@@ -19,7 +19,7 @@ def list_air_customs_rate_requests(filters = {}, page_limit = 10, page = 1, perf
             filters = json.loads(filters)
         
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, AirCustomsRateRequest)
         query = apply_indirect_filters(query, indirect_filters)
 
@@ -71,19 +71,19 @@ def get_pagination_data(query, page, page_limit):
 
 def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
-        return {} 
+        return {}
 
     query = AirCustomsRateRequest.select()
 
     if filters:
         if 'status' in filters:
             del filters['status']
-        
+
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, AirCustomsRateRequest)
         query = apply_indirect_filters(query, indirect_filters)
-    
+
     query = (
         query.select(
             fn.count(AirCustomsRateRequest.id).over().alias('get_total'),
@@ -106,4 +106,4 @@ def get_stats(filters, is_stats_required, performed_by_id):
         }
     else:
         stats ={}
-    return { 'stats': stats }      
+    return { 'stats': stats }

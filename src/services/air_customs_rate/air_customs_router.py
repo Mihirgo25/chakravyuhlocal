@@ -64,7 +64,7 @@ def create_air_customs_rate_bulk_operation_api(request: CreateAirCustomsRateBulk
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.post("/create_air_customs_rate_feedback")
 def create_air_customs_rate_feedback_api(request: CreateAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -112,7 +112,7 @@ def create_air_customs_rate_not_available_api(request: CreateAirCustomsRateNotAv
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.get("/get_air_customs_rate_addition_frequency")
 def get_air_customs_rate_addition_frequency_api(
     group_by: str,
@@ -130,7 +130,6 @@ def get_air_customs_rate_addition_frequency_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
 
 @air_customs_router.get("/get_air_customs_rate_visibility")
 def get_air_customs_rate_visibility_api(
@@ -156,7 +155,7 @@ def get_air_customs_rate_visibility_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.get("/get_air_customs_rate")
 def get_air_customs_rate_api(
     airport_id: str = None,
@@ -185,7 +184,7 @@ def get_air_customs_rate_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 
 @air_customs_router.get("/list_air_customs_rate_feedbacks")
 def list_air_customs_rate_feedbacks_api(
@@ -209,7 +208,7 @@ def list_air_customs_rate_feedbacks_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.get("/list_air_customs_rate_requests")
 def list_air_customs_rate_requests_api(
     filters: str = None,
@@ -229,7 +228,7 @@ def list_air_customs_rate_requests_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.get("/list_air_customs_rates")
 def list_air_customs_rates_api(
     filters: str = None,
@@ -251,7 +250,7 @@ def list_air_customs_rates_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.get("/list_air_customs_charge_codes")
 def list_air_customs_charge_codes_api(
     service_type: str,
@@ -313,7 +312,7 @@ def get_air_cutsoms_rate_cards_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.post("/update_air_customs_rate")
 def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -378,7 +377,7 @@ def delete_air_customs_rate_request_api(request: DeleteAirCustomsRateRequest, re
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.post("/delete_air_customs_rate_feedback")
 def delete_air_customs_rate_feedback_api(request: DeleteAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -394,7 +393,7 @@ def delete_air_customs_rate_feedback_api(request: DeleteAirCustomsRateFeedback, 
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.post("/delete_air_customs_rate_request")
 def delete_air_customs_rate_request_api(request: DeleteAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -410,7 +409,7 @@ def delete_air_customs_rate_request_api(request: DeleteAirCustomsRateRequest, re
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.post("/delete_air_customs_rate")
 def delete_air_customs_rate_api(request: DeleteAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -427,7 +426,7 @@ def delete_air_customs_rate_api(request: DeleteAirCustomsRate, resp: dict = Depe
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-    
+
 @air_customs_router.post("/update_air_customs_rate")
 def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -443,7 +442,7 @@ def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depe
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @air_customs_router.post("/create_air_customs_rate_sheet")
 def create_rate_sheet_api(request: CreateRateSheet, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -462,20 +461,20 @@ def create_rate_sheet_api(request: CreateRateSheet, resp: dict = Depends(authori
 
 @air_customs_router.post("/update_air_customs_rate_sheet")
 def update_rate_sheet_api(request: UpdateRateSheet, resp: dict = Depends(authorize_token)):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-    #     request.performed_by_id = resp["setters"]["performed_by_id"]
-    #     request.performed_by_type = resp["setters"]["performed_by_type"]
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
 
-    # try:
+    try:
         rate_sheet = update_rate_sheet(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.get("/list_air_customs_rate_sheets")
 def list_rate_sheets_api(

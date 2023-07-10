@@ -20,10 +20,8 @@ class AddMarkup(BaseModel):
   markup_currency: str = None
   
 class CreateAirCustomsRateBulkOperation(BaseModel):
-  performed_by_id: str
-  performed_by_type: str
-  procured_by_id: str = None
-  sourced_by_id: str = None
+  performed_by_id: str = None
+  performed_by_type: str = None
   delete_rate: List[DeleteRate] = None
   add_markup: List[AddMarkup] = None
 
@@ -119,8 +117,8 @@ class DeleteAirCustomsRateFeedback(BaseModel):
 class DeleteAirCustomsRateRequest(BaseModel):
  air_customs_rate_request_ids: list[str]
  closing_remarks: list[str] = []
- performed_by_id: str
- performed_by_type: str
+ performed_by_id: str = None
+ performed_by_type: str = None
 
 class UpdateAirCustomsRate(BaseModel):
   id: str

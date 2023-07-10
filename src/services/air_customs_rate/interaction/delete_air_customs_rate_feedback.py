@@ -35,7 +35,6 @@ def execute_transaction_code(request):
 
   return {'air_customs_rate_feedback_ids' : request.get('air_customs_rate_feedback_ids')}
 
-
 def find_feedback_objects(request):
   try:
     query_result = AirCustomsRateFeedback.select().where(

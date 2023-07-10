@@ -18,7 +18,7 @@ def execute_transaction_code(request):
         AirCustomsRate.trade_type ==request.get('trade_type'),
         AirCustomsRate.service_provider_id == request.get('service_provider_id'),
         AirCustomsRate.commodity == request.get('commodity'),
-        AirCustomsRate.rate_type == request.get('rate_type'),
+        AirCustomsRate.rate_type == request.get('rate_type')
     ).first()
 
   if not air_customs_rate:
@@ -26,8 +26,8 @@ def execute_transaction_code(request):
     air_customs_rate.set_airport()
     air_customs_rate.set_location_ids()
 
-  air_customs_rate.sourced_by_id = request.get("sourced_by_id")
-  air_customs_rate.procured_by_id = request.get("procured_by_id")
+  air_customs_rate.sourced_by_id = request.get('sourced_by_id')
+  air_customs_rate.procured_by_id = request.get('procured_by_id')
   air_customs_rate.line_items = request.get('line_items')
   air_customs_rate.rate_not_available_entry = False
 

@@ -15,21 +15,21 @@ def list_air_customs_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
             filters = json.loads(filters)
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, AirCustomsRate)
         query = apply_indirect_filters(query, indirect_filters)
 
     if return_query:
-        return {'list': query} 
-    
+        return {'list': query}
+
     data = get_data(query)
-  
-    return {'list': data } 
+
+    return {'list': data }
 
 def get_query(sort_by, sort_type, page, page_limit):
   query = AirCustomsRate.select().where(AirCustomsRate.rate_not_available_entry == False).order_by(eval('AirCustomsRate.{}.{}()'.format(sort_by,sort_type))).paginate(page, page_limit)
   return query
-  
+
 def get_data(query):
     data = list(query.dicts())
 
@@ -48,23 +48,23 @@ def apply_indirect_filters(query, filters):
 def apply_location_ids_filter(query, filters):
     location_ids = filters['location_ids']
     query = query.where(AirCustomsRate.location_ids.contains(location_ids))
-    return query 
+    return query
 
 def apply_importer_exporter_present_filter(query, filters):
     if filters['importer_exporter_present']:
         return query.where(AirCustomsRate.importer_exporter_id.is_null(False))
-  
+
     query = query.where(AirCustomsRate.importer_exporter_id.is_null(True))
     return query
 
 def apply_is_rate_available_filter(query, filters):
     rate_not_available_entry = not filters.get('is_rate_available')
     query = query.where(AirCustomsRate.rate_not_available_entry == rate_not_available_entry)
-    return query 
+    return query
 
 def get_total_price(line_items, total_price_currency):
     total_price = 0
     for line_item in line_items:
         total_price += common.get_money_exchange_for_fcl({"price": line_item.get('price'), "from_currency": line_item.get('currency'), "to_currency": total_price_currency})['price']
-    
+
     return total_price
