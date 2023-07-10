@@ -1,4 +1,4 @@
-from services.trailer_freight_rates.rate_estimators.trailer_freight_estimator import TrailerFreightEstimator
+from services.trailer_freight_rate.rate_estimators.trailer_freight_estimator import TrailerFreightEstimator
 from configs.trailer_freight_rate_constants import *
 from micro_services.client import maps
 from fastapi import HTTPException
@@ -7,7 +7,7 @@ def get_estimated_trailer_freight_rate(request):
     origin_location_id = request['origin_location_id']
     destination_location_id = request['destination_location_id']
     container_size = request['container_size']
-    container_type = request['container_type']
+    container_type = request['container_type'] if request['container_type'] else DEFAULT_CONTAINER_TYPE
     containers_count = request['containers_count']
     cargo_weight_per_container = request['cargo_weight_per_container'] if request.get('cargo_weight_per_container') is not None else DEFAULT_MAX_WEIGHT_LIMIT.get(container_size)
     trip_type = request['trip_type'] if request['trip_type'] is not None else DEFAULT_TRIP_TYPE
@@ -20,7 +20,7 @@ def get_estimated_trailer_freight_rate(request):
 
     input = {"filters":{"id":[origin_location_id, destination_location_id]}}
     data = maps.list_locations(input)
-    if data:
+    if data and 'list' in data:
         data = data["list"]
     for d in data:
         if d["id"] == origin_location_id:
