@@ -1,11 +1,11 @@
 from configs.env import *
 import json
 from micro_services.client import maps
+from psycopg2 import sql
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import get_connection
 from joblib import delayed, Parallel, cpu_count
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
-from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
@@ -30,6 +30,41 @@ class ParallelJobs:
         return res
 
 p  = ParallelJobs()
+
+def get_data_in_batches(table_name):
+
+    OFFSET = 0
+    limit = 2000
+
+    results = []
+    conn = get_connection()
+
+    total_count = 0
+
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(sql.SQL('select count(id) from {table};').format(table=sql.Identifier(table_name)))
+            total_count = cur.fetchall()[0][0]
+            cur.close()
+    conn.close()
+
+    conn = get_connection()
+    
+    columns = None
+    with conn:
+        with conn.cursor() as cur: 
+            while OFFSET <= total_count:
+                cur.execute(sql.SQL('SELECT * from {table} order by id desc OFFSET %s LIMIT %s ;').format(table=sql.Identifier(table_name)), [OFFSET, limit])
+                result = cur
+                if not columns:
+                    columns = [col[0] for col in result.description]
+                results.extend(result.fetchall()) 
+                OFFSET = OFFSET + limit
+            cur.close()
+    conn.close()
+    return columns, results
+
+# columns, results = get_data_in_batches('fcl_customs_rates')
 
 
 def air_freight_rate_feedback_migration():
@@ -78,23 +113,15 @@ def delay_updation_feedback(row,columns):
     return
 
 def air_freight_rate_requests_migration():
-    from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
+    
     all_result =[]
-    conn = get_connection()
-    with conn:
-        with conn.cursor() as cur:
-            sql_query = "SELECT * FROM air_freight_rate_requests limit 1000"
-            cur.execute(sql_query,)
-            result = cur
-            columns = [col[0] for col in result.description]    
-            result = Parallel(n_jobs=4)(delayed(delay_updation_request)(row, columns) for row in result.fetchall())
-            cur.close()
-            cur.close()
-    conn.close()
+    columns, results = get_data_in_batches('air_freight_rate_requests')
+    result = Parallel(n_jobs=4)(delayed(delay_updation_request)(row, columns) for row in results)
     print("done migrating requests")
     return all_result
 
 def delay_updation_request(row,columns):
+    from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
     param = dict(zip(columns, row))
     obj = AirFreightRateRequest(**param)
     set_locations(obj)
