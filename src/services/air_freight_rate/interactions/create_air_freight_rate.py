@@ -41,7 +41,7 @@ def create_air_freight_rate_data(request):
         request['commodity_sub_type']='all'
     if request['density_category']=='general':
         request['density_ratio']='1:1'
-    if request['commodity'] == 'special_consideration' and not request.get('commodity_subtype'):
+    if request['commodity'] == 'special_consideration' and not request.get('commodity_sub_type'):
         raise HTTPException(status_code=400, detail="Commodity Sub Type is required for Special Consideration")
     if request.get('density_ratio') and request['density_ratio'].split(':')[0]!= '1':
         raise HTTPException(status_code=400,detail='Ratio should be in the form of 1:x')
