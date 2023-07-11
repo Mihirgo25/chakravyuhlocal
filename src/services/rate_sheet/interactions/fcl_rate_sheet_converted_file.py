@@ -81,7 +81,7 @@ def get_airport_id(port_code, country_code):
     except:
         port_code = port_code
     filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
-    airport_id = maps.list_locations({'filters': filters})['list'][0]["id"]
+    airport_id = maps.list_locations(filters)['list'][0]["id"]
     return airport_id
 
 
