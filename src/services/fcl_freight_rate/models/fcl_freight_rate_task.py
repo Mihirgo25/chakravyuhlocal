@@ -80,7 +80,7 @@ class FclFreightRateTask(BaseModel):
                 raise HTTPException(status_code=500,detail='Invalid Main Port')
 
     def validate_shipping_line_id(self):
-        shipping_line_data = get_shipping_line(id=str(self.shipping_line_id))
+        shipping_line_data = get_operators(id=str(self.shipping_line_id))
         if shipping_line_data:
             self.shipping_line = shipping_line_data[0]
         else:

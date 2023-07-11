@@ -10,7 +10,7 @@ from services.air_freight_rate.models.air_freight_location_cluster_mapping impor
 from configs.global_constants import DEFAULT_WEIGHT_SLABS
 from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as AirProducerVyuh
 from statistics import mean
-from configs.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_FACTOR
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_FACTOR
 from configs.env import DEFAULT_USER_ID
 from services.air_freight_rate.models.air_freight_location_cluster_factor import AirFreightLocationClusterFactor
 class AirFreightVyuh():

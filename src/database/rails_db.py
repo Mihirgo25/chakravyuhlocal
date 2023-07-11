@@ -15,7 +15,7 @@ def get_connection():
     return conn
 
 
-def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
+def get_operators(id=None, short_name=None, operator_type='shipping_line'):
     all_result = []
     try:
         newconnection = get_connection()  
@@ -31,9 +31,7 @@ def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
                         id = tuple(id)
                     sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.id in %s'
                     cur.execute(sql, (id,))
-
                 result = cur.fetchall()
-
                 for res in result:
                     all_result.append(
                         {
@@ -51,8 +49,9 @@ def get_shipping_line(id=None, short_name=None, operator_type='shipping_line'):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+    
 
-def get_organization(id=None, short_name=None):
+def get_organization(id=None, short_name=None,account_type = 'importer_exporter'):
     all_result = []
     try:
         conn = get_connection()
@@ -60,7 +59,7 @@ def get_organization(id=None, short_name=None):
             with conn.cursor() as cur:
                 if short_name:
                     sql = 'select organizations.id, organizations.business_name, organizations.short_name,organizations.category_types, organizations.account_type, organizations.kyc_status, organizations.status from organizations where organizations.short_name = %s and status = %s and account_type = %s'
-                    cur.execute(sql, (short_name,'active','importer_exporter',))
+                    cur.execute(sql, (short_name,'active',account_type,))
                 else:
                     if not isinstance(id, list):
                         id = (id,)
@@ -432,11 +431,6 @@ def get_invoices(days=1, offset=0, limit=5000):
             return all_result
 
 
-
-                    
-            
-    
-
 def get_past_cost_booking_data(limit, offset):
 
     all_result = []
@@ -506,5 +500,30 @@ def get_past_cost_booking_data(limit, offset):
         sentry_sdk.capture_exception(e)
         return all_result
     
-
-
+ 
+def get_supply_agents():
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                sql ='''
+                select user_id from partner_users
+                INNER JOIN auth_roles 
+                ON (auth_roles.id = ANY(partner_users.role_ids) 
+                and auth_roles.name = 'Supply Agent' and 'air_freight' = ANY(partner_users.services) 
+                and partner_users.status = 'active')
+                '''
+                cur.execute(sql)
+                result = cur.fetchall()
+                for res in result:
+                    new_obj = {
+                        'user_id':str(res[0])
+                    }
+                    all_result.append(new_obj)
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result

@@ -134,7 +134,7 @@ class FclFreightRateFeedback(BaseModel):
             for sl_id in self.preferred_shipping_line_ids:
                 ids.append(str(sl_id))
             
-            shipping_lines = get_shipping_line(id=ids)
+            shipping_lines = get_operators(id=ids)
             shipping_lines_hash = {}
             for sl in shipping_lines:
                 shipping_lines_hash[sl["id"]] = sl

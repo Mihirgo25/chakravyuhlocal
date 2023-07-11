@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from peewee import *
 from database.db_session import rd
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_current_processing_line
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_processed_percent
+from services.rate_sheet.helpers import get_processed_percent
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'agent_id', 'service_provider_id', 'status', 'service_name', 'serial_id', 'cogo_entity_id']
 POSSIBLE_INDIRECT_FILTERS = ['performed_by_id', 'partner_id']

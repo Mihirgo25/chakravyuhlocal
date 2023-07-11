@@ -9,6 +9,7 @@ from services.rate_sheet.interactions.validate_and_process_rate_sheet_converted_
 from services.fcl_freight_rate.interaction.extend_create_fcl_freight_rate import extend_create_fcl_freight_rate_data
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request import delete_fcl_freight_rate_request
@@ -34,6 +35,17 @@ from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
 from services.fcl_customs_rate.helpers import update_organization_fcl_customs
 from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
+from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
+from services.envision.interaction.create_air_freight_rate_prediction_feedback import create_air_freight_rate_feedback
+from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
+from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
+from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
+from services.air_freight_rate.helpers.create_saas_air_schedule_helper import create_saas_air_schedule_airport_pair
+from services.air_freight_rate.interactions.send_air_freight_rate_task_notification import send_air_freight_rate_task_notification
+from services.air_freight_rate.workers.send_air_freight_local_charges_update_reminder_notification import send_air_freight_local_charges_update_reminder_notification
+from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
+from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
+from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_request import update_haulage_freight_rate_request
 
 
@@ -108,6 +120,22 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=30,hour=18),
         'options': {'queue' : 'fcl_freight_rate'}
     }
+    # 'send_near_expiry_air_freight_rate_notification':{
+    #     'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
+    #     'schedule': crontab(minute=30,hour=5),
+    #     'options': {'queue' : 'air_freight_rate'}
+    # },
+    # 'send_expired_air_freight_rate_notification':{
+    #     'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
+    #     'schedule': crontab(minute=30,hour=5),
+    #     'options': {'queue' : 'air_freight_rate'}
+    # },
+    # 'send_air_freight_local_charges_update_reminder_notification':{
+    #     'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
+    #     'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
+    #     'options': {'queue': 'air_freight_rate'}
+    # }
+
 }
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
@@ -490,6 +518,15 @@ def process_fuel_data_delay(self):
             pass
         else:
             raise self.retry(exc= exc)
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def update_air_freight_rate_details_delay(self, request):
+    try:
+        update_air_freight_rate_request(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_electricity_data_delays(self):
@@ -606,6 +643,58 @@ def send_notifications_to_supply_agents_cfs_request_delay(self, object):
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind = True, retry_backoff = True,max_retries=1)
+def air_freight_rate_prediction_feedback_delay(self, result):
+    try:
+        create_air_freight_rate_feedback(result)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def create_saas_air_schedule_airport_pair_delay (self,air_object,request):
+    try:
+        create_saas_air_schedule_airport_pair(air_object,request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff = True, max_retries=5)
+def create_air_freight_rate_local_delay(self, request):
+    try:
+        return create_air_freight_rate_local(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True,retry_backoff = True, max_retries=5)
+def create_air_freight_rate_freight_delay(self, request):
+    try:
+        return create_air_freight_rate(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+    
+@celery.task(bind = True, retry_backoff = True, max_retries=5)
+def create_air_freight_rate_surcharge_delay(self, request):
+    try:
+        return create_air_freight_rate_surcharge(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+    
+
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def update_haulage_freight_rate_request_delay(self, request):
     try:
@@ -631,6 +720,66 @@ def extend_air_freight_rates(self, rate, source = 'rate_extension'):
 def update_fcl_freight_rate_feedback_in_delay(self, request):
     try:
         update_fcl_freight_rate_feedback(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_air_freight_rate_task_notification_in_delay(self,task_id):
+    try:
+        send_air_freight_rate_task_notification(task_id)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def get_rate_from_cargo_ai_in_delay(self,air_freight_rate,feedback,performed_by_id):
+    try:
+        get_rate_from_cargo_ai(air_freight_rate,feedback,performed_by_id)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_air_freight_local_charges_update_reminder_notification_in_delay(self):
+    try:
+        send_air_freight_local_charges_update_reminder_notification()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_expired_air_freight_rate_notification_in_delay(self):
+    try:
+        send_expired_air_freight_rate_notification()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_near_expiry_air_freight_rate_notification_in_delay(self):
+    try:
+        send_near_expiry_air_freight_rate_notification()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight_rate,airports):
+    try:
+        object.send_notification_to_supply_agents(air_freight_rate,airports)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
