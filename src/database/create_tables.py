@@ -1,27 +1,41 @@
 from database.db_session import db
-from services.air_freight_rate.models.draft_air_freight_rate import DraftAirFreightRate
-from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
-from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
-from services.fcl_customs_rate.models.fcl_customs_rate_bulk_operation import FclCustomsRateBulkOperation
-from services.fcl_customs_rate.models.fcl_customs_rate_feedback import FclCustomsRateFeedback
-from services.fcl_customs_rate.models.fcl_customs_rate_request import FclCustomsRateRequest
-from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
-from services.fcl_cfs_rate.models.fcl_cfs_rate_bulk_operation import FclCfsRateBulkOperation
-from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
-from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
-from database.temp_audit_table import TempAudit
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_freight_rate_bulk_operation import AirFreightRateBulkOperation
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
+from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+from services.air_freight_rate.models.air_freight_rate_property import AirFreightRateProperty
+from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
+from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
+from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
+from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
+from services.air_freight_rate.models.air_freight_warehouse_rate import AirFreightWarehouseRates
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclCustomsRate, FclCustomsRateAudit, FclCustomsRateBulkOperation,FclCustomsRateFeedback, FclCustomsRateRequest, FclCfsRate,FclCfsRateBulkOperation,FclCfsRateRequest, FclCfsRateAudit])
+        db.create_tables(
+            [
+                AirFreightRate,
+                AirFreightRateAudit,
+                AirFreightRateBulkOperation,
+                AirFreightRateFeedback,
+                AirFreightRateLocal,
+                AirFreightRateProperty,
+                AirFreightRateRequest,
+                AirFreightRateSurcharge,
+                AirFreightRateTasks,
+                AirFreightStorageRates,
+                AirFreightWarehouseRates
+            ]
+        )
         db.close()
         print("created table")
     except:
         print("Exception while creating table")
         raise
-
 
 if __name__ == "__main__":
     create_table()

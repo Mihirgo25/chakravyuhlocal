@@ -9,10 +9,7 @@ from services.rate_sheet.interactions.validate_fcl_freight_object import validat
 from database.db_session import rd
 
 from fastapi.encoders import jsonable_encoder
-
-from datetime import datetime
-import dateutil.parser as parser
-from database.rails_db import get_shipping_line, get_organization
+from database.rails_db import get_operators, get_organization
 from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
@@ -28,7 +25,6 @@ csv_options = {
     ),
 }
 
-processed_percent_hash = "process_percent"
 
 def processed_percent_key(params):
     return f"rate_sheet_converted_file_processed_percent_{params['id']}"
@@ -88,18 +84,10 @@ def get_airport_id(port_code, country_code):
 def get_shipping_line_id(shipping_line_name):
     try:
         shipping_line_name = shipping_line_name.strip()
-        shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
+        shipping_line_id = get_operators(short_name=shipping_line_name)[0]['id']
     except:
         shipping_line_id = None
     return shipping_line_id
-
-
-def convert_date_format(date):
-    if not date:
-        return date
-    parsed_date = parser.parse(date, dayfirst=True)
-    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
-
 
 
 def append_in_final_csv(csv, row):
@@ -219,7 +207,7 @@ def process_fcl_freight_local(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
@@ -446,7 +434,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
@@ -921,7 +909,7 @@ def process_fcl_freight_freight(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
