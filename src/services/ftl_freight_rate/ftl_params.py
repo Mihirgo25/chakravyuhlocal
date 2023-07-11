@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from peewee import *
 from typing import Optional,List
+from datetime import datetime
 
 class CreateTruck(BaseModel):
   truck_company: str
@@ -81,8 +82,37 @@ class CreateFuelData(BaseModel):
     fuel_price: float
     fuel_unit: str
     currency:str
-    
-    
+        
+class FtlLineItem(BaseModel):
+  code: str
+  unit: str
+  price: float
+  currency: str
+  remarks: list[str] = None
+
+class CreateFtlFreightRate(BaseModel):
+    rate_sheet_id: str = None
+    origin_location_id: str
+    destination_location_id: str
+    truck_type: str
+    commodity: str = None
+    importer_exporter_id: str = None
+    service_provider_id: str
+    performed_by_id: str
+    procured_by_id: str
+    sourced_by_id: str
+    validity_start: datetime
+    validity_end: datetime
+    truck_body_type: str
+    trip_type: str
+    transit_time: int
+    detention_free_time: int
+    minimum_chargeable_weight: float = None
+    unit: str = None
+    line_items: list[FtlLineItem]
+    ftl_freight_rate_request_id: str = None
+    performed_by_type: str=None
+
 class Package(BaseModel):
     packing_type: str
     packages_count: int
@@ -128,6 +158,3 @@ class UpdateFtlFreightRateRequest(BaseModel):
     status: str = None
     remarks: str = None
     performed_by_id: str
-
-     
-     

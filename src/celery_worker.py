@@ -623,4 +623,27 @@ def update_fcl_freight_rate_feedback_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
-            
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def delay_ftl_functions(self,ftl_object,request):
+    from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
+    try:
+        if not FtlFreightRate.select().where(FtlFreightRate.service_provider_id==request["service_provider_id"], FtlFreightRate.rate_not_available_entry==False).exists():
+            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+        get_multiple_service_objects(ftl_object)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def update_ftl_freight_rate_request_delay(self, request):
+    from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import update_ftl_freight_rate_request
+    try:
+        update_ftl_freight_rate_request(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

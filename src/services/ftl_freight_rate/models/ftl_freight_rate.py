@@ -4,7 +4,8 @@ from fastapi import HTTPException
 from database.db_session import db
 from playhouse.postgres_ext import *
 from configs.ftl_freight_rate_constants import RATE_TYPES, BODY_TYPE, TRIP_TYPES, VALID_UNITS, COMMODITIES
-from micro_services.client import maps
+from micro_services.client  import maps, common
+from configs.definitions import FTL_FREIGHT_CHARGES
 
 class UnknownField(object): 
     def __init__(self, *_, **__): pass
@@ -33,6 +34,7 @@ class FtlFreightRate(BaseModel):
     importer_exporter_id = UUIDField(null=True)
     importer_exporters_count = IntegerField(null=True)
     line_items = BinaryJSONField(null = True)
+    platform_price = FloatField(null=True)
     is_best_price = BooleanField(null=True)
     is_line_items_error_messages_present = BooleanField(null=True)
     is_line_items_info_messages_present = BooleanField(null=True)
@@ -173,8 +175,189 @@ class FtlFreightRate(BaseModel):
         if self.detention_free_time < 0:
             raise HTTPException(status_code=400, detail="Invalid detention_free_time")
         
-    def validate_commoditiy(self):
+    def validate_commodity(self):
         if self.commodity not in COMMODITIES:
             raise HTTPException(status_code=400, detail="Invalid commodity")
     
+    def validate_before_save(self):
+        self.validate_duplicate_line_items()
+        self.validate_truck_body_type()
+        self.validate_trip_type()
+        self.validate_origin_destination_locations()
+        self.validate_unit()
+        self.validate_minimum_chargeable_weight()
+        self.validate_transit_time()
+        self.validate_detention_free_time()
+        self.validate_commodity()
+
+    def mandatory_charge_codes(self,possible_charge_codes):
+        charge_codes = {}
+        for code,config in possible_charge_codes.items():
+            if 'mandatory' in config['tags']:
+                charge_codes[code.upper()] = config
+
+        return charge_codes
     
+    def get_line_items_total_price(self,line_items):
+        currency = line_items[0].get('currency')
+        result = 0
+
+        for line_item in line_items:
+            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+
+        return result
+    
+    def get_mandatory_line_items(self,mandatory_charge_codes):
+        print(self.line_items)
+        mandatory_line_items = [line_item for line_item in self.line_items if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
+        return mandatory_line_items
+    
+    def set_platform_price(self):
+        possible_charge_codes = self.possible_charge_codes()
+        mandatory_charge_codes = self.mandatory_charge_codes(possible_charge_codes)
+        line_items = self.get_mandatory_line_items(mandatory_charge_codes)
+        if not line_items:
+            return
+        currency=self.line_items[0].get('currency')
+        result = self.get_line_items_total_price(line_items)
+
+        rates = FtlFreightRate.select().where(
+            FtlFreightRate.origin_location_id == self.origin_location_id,
+            FtlFreightRate.destination_location_id == self.destination_location_id,
+            FtlFreightRate.truck_type == self.truck_type,
+            FtlFreightRate.truck_body_type == self.truck_body_type,
+            FtlFreightRate.commodity == self.commodity,
+            FtlFreightRate.is_line_items_error_messages_present == False,
+        ).where(FtlFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
+        
+        rates = list(rates)
+        sum = 0
+        if rates:
+            mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
+
+            for prices in mandatory_line_items:
+                    sum = sum + int(common.get_money_exchange_for_fcl({'price': prices["price"], 'from_currency': prices['currency'], 'to_currency':currency})['price'])
+
+            if sum and result > sum:
+                result = sum
+
+            self.platform_price = result
+
+    def set_is_best_price(self):
+        if not self.platform_price:
+            return
+        
+        possible_charge_codes = self.possible_charge_codes()
+        mandatory_charge_codes = self.mandatory_charge_codes(possible_charge_codes)
+        line_items = self.get_mandatory_line_items(mandatory_charge_codes)
+
+        total_price = self.get_line_items_total_price(line_items)
+
+        self.is_best_price = (total_price <= self.platform_price)
+
+    def update_platform_prices_for_other_service_providers(self):
+        from services.ftl_freight_rate.interactions.update_ftl_freight_rate_platform_prices import update_ftl_freight_rate_platform_prices
+
+        data = {
+        "origin_location_id": self.origin_location_id,
+        "destination_location_id": self.destination_location_id,
+        "container_size": self.truck_type,
+        "container_type": self.truck_body_type,
+        "commodity": self.commodity,
+        "importer_exporter_id": self.importer_exporter_id
+        }
+
+        update_ftl_freight_rate_platform_prices(data)
+
+    def update_line_item_messages(self,possible_charge_codes):
+
+        self.line_items_error_messages = {}
+        self.line_items_info_messages = {}
+        self.is_line_items_error_messages_present = False
+        self.is_line_items_info_messages_present = False
+
+        grouped_charge_codes = {}
+
+        for line_item in self.line_items:
+            if grouped_charge_codes.get(line_item.get('code')):
+                item = grouped_charge_codes[line_item.get('code')]
+            else:
+                item = []
+            grouped_charge_codes[line_item.get('code')] = item + [line_item]
+
+        for code,line_items in grouped_charge_codes.items():
+            code_config = FTL_FREIGHT_CHARGES[code]
+
+            if not code_config:
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
+                continue
+
+            if len(set(map(lambda item: item.get('unit'), line_items)) - set(code_config['units'])) > 0:
+                self.line_items_error_messages[code] = ["can only be having units " + ", ".join(code_config['units'])]
+                self.is_line_items_error_messages_present = True
+                continue
+
+            if not eval(str(code_config.get('condition'))):
+                self.line_items_error_messages[code] = ['is invalid']
+                self.is_line_items_error_messages_present = True
+                continue
+
+        for code, config in possible_charge_codes.items():
+            if 'mandatory' in config.get('tags', []):
+                if code not in grouped_charge_codes:
+                    self.line_items_error_messages[code] = ['is not present']
+                    self.is_line_items_error_messages_present = True
+
+        for code, config in possible_charge_codes.items():
+            if 'additional_service' in config.get('tags', []) or 'shipment_execution_service' in config.get('tags', []):
+                if code not in grouped_charge_codes:
+                    self.line_items_info_messages[code] = ['can be added for more conversion']
+                    self.is_line_items_info_messages_present = True
+
+        return {
+        'line_items_error_messages': self.line_items_error_messages,
+        'is_line_items_error_messages_present': self.is_line_items_error_messages_present,
+        'line_items_info_messages': self.line_items_info_messages,
+        'is_line_items_info_messages_present': self.is_line_items_info_messages_present
+        }
+    
+    def detail(self):
+        ftl_freight = {
+            'line_items': self.line_items,
+            'transit_time': self.transit_time,
+            'detention_free_time': self.detention_free_time,
+            'trip_type': self.truck_body_type,
+            'validity_start': self.validity_start,
+            'validity_end': self.validity_end,
+            'trailer_type': self.unit,
+            'line_items_info_messages': self.line_items_info_messages,
+            'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
+            'line_items_error_messages': self.line_items_error_messages,
+            'is_line_items_error_messages_present': self.is_line_items_error_messages_present,
+            'minimum_chargeable_weight': self.minimum_chargeable_weight
+        }
+
+        return {'ftl_freight': ftl_freight}
+    
+    def possible_charge_codes(self):
+        ftl_freight_charges_dict = FTL_FREIGHT_CHARGES
+
+        charge_codes = {}
+
+        for code,config in ftl_freight_charges_dict.items():
+            if eval(str(config['condition'])):
+                    charge_codes[code] = config
+        return charge_codes
+    
+    def delete_rate_not_available_entry(self):
+
+        FtlFreightRate.delete().where(
+            FtlFreightRate.destination_location_id == self.destination_location_id,
+            FtlFreightRate.origin_location_id == self.origin_location_id,
+            FtlFreightRate.truck_type == self.truck_type,
+            FtlFreightRate.truck_body_type == self.truck_body_type,
+            FtlFreightRate.commodity == self.commodity,
+            FtlFreightRate.service_provider_id == self.service_provider_id,
+            FtlFreightRate.rate_not_available_entry == True
+        ).execute()
