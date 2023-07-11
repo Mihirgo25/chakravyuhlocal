@@ -41,6 +41,10 @@ class AirCustomsRate(BaseModel):
     service_provider = BinaryJSONField(null=True)
     importer_exporter = BinaryJSONField(null=True)
     airport = BinaryJSONField(null=True)
+    mode = CharField(default = 'manual', null = True)
+    tags = BinaryJSONField(null=True)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
+    accuracy = FloatField(default = 100, null = True)
 
     class Meta:
         table_name = 'air_customs_rates'

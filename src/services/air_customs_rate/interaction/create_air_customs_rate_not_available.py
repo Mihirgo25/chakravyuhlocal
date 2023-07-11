@@ -2,10 +2,6 @@ from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from database.rails_db import get_eligible_orgs
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
-def find_service_providers():
-    ids = get_eligible_orgs('air_customs')
-    return ids
-
 def create_air_customs_rate_not_available(request):
     service_provider_query = AirCustomsRate.select(AirCustomsRate.service_provider_id).distinct().where(
       AirCustomsRate.airport_id == request.get('airport_id'),
@@ -19,7 +15,7 @@ def create_air_customs_rate_not_available(request):
     for id in service_provider_query:
         present_service_provider_ids.append(str(id.get('service_provider_id')))
 
-    find_service_provider_ids = find_service_providers()
+    find_service_provider_ids = get_eligible_orgs('air_customs')
 
     for service_provider_id in list(set(find_service_provider_ids).difference(set(present_service_provider_ids))):
         AirCustomsRate.create(

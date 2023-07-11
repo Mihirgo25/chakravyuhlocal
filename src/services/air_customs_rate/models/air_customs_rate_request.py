@@ -20,8 +20,6 @@ class AirCustomsRateRequest(BaseModel):
     performed_by_type = CharField(null=True)
     preferred_customs_rate = DoubleField(null=True)
     preferred_customs_rate_currency = CharField(null=True)
-    # preferred_detention_free_days = IntegerField(null=True)
-    # preferred_storage_free_days = IntegerField(null=True)
     cargo_readiness_date = DateTimeField(null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     booking_params = BinaryJSONField(null=True)
@@ -45,8 +43,6 @@ class AirCustomsRateRequest(BaseModel):
     closed_by = BinaryJSONField(null=True)
     spot_search = BinaryJSONField(null=True)
     airport = BinaryJSONField(null=True)
-    # preferred_airline_ids = ArrayField(field_class=UUIDField, null=True, constraints=[SQL("DEFAULT '{}'::uuid[]")])
-    # preferred_airlines = BinaryJSONField(null = True)
 
     class Meta:
         table_name = 'air_customs_rate_requests'
@@ -60,23 +56,6 @@ class AirCustomsRateRequest(BaseModel):
         self.spot_search = {key:value for key,value in spot_search_data[0].items() if key in ['id', 'importer_exporter_id', 'importer_exporter', 'service_details']}
     
     def set_airport(self):
-        airport_data = maps.list_locations({'filters':{'id':self.airport_id}})['list']
+        airport_data = maps.list_locations({'filters':{'id':str(self.airport_id)}})['list']
         if airport_data:
             self.airport = {key:value for key,value in airport_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-    
-    # def validate_preferred_airline_ids(self):
-    #     if not self.preferred_airline_ids:
-    #         pass
-
-    #     if self.preferred_airline_ids:
-    #         preferred_airlines = []
-    #         for airline_id in self.preferred_airline_ids:
-    #             airline_data = get_shipping_line(id=airline_id)
-    #             if len(airline_data) == 0:
-    #                 raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
-    #             preferred_airlines.append(airline_data[0])
-    #         self.preferred_airlines = preferred_airlines
-
-    def validate_before_save(self):
-        # self.validate_preferred_airline_ids()
-        return True

@@ -74,8 +74,9 @@ def get_create_params(request):
     }
 
 def create_audit(request, air_customs_feedback_id):
+    data = {key:value for key,value in request.items() if key != 'performed_by_id'}
     AirCustomsRateAudit.create(
-        data = {key:value for key,value in request.items() if key != 'performed_by_id'},
+        data = data,
         object_id = air_customs_feedback_id,
         object_type = 'AirCustomsRateFeedback',
         action_name = 'create',

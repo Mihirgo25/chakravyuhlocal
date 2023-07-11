@@ -23,15 +23,12 @@ class AirCustomsRateFeedback(BaseModel):
     feedbacks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     air_customs_rate_id = UUIDField(null=True,index=True)
-    # validity_id = UUIDField(null=True)
-    # outcome = CharField(null=True)
-    # outcome_object_id = UUIDField(null=True)
     booking_params = BinaryJSONField(null=True)
     feedback_type = CharField(index=True, null=True)
     status = CharField(index=True, null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     closed_by_id = UUIDField(null=True)
-    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_customs_rate_feedback_serial_id_seq'::regclass)")])
+    serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('air_customs_rate_feedback_serial_id_seq'::regclass)")])
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     performed_by = BinaryJSONField(null=True)
@@ -57,7 +54,7 @@ class AirCustomsRateFeedback(BaseModel):
         table_name = 'air_customs_rate_feedbacks'
 
     def set_airport(self):
-        airport_data = maps.list_locations({'filters':{'id':self.airport_id}})['list']
+        airport_data = maps.list_locations({'filters':{'id':str(self.airport_id)}})['list']
         if airport_data:
             self.airport = {key:value for key,value in airport_data[0].items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
 

@@ -25,7 +25,7 @@ class AirCustomsRateBulkOperation(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], null=True)
     action_name = CharField(index = True, null=True)
-    performed_by_id = UUIDField(null=True, index=True)
+    performed_by_id = UUIDField(index=True, null=True)
     created_at = DateTimeField(default=datetime.now())
     data = BinaryJSONField(null=True)
     updated_at = DateTimeField(default=datetime.now())

@@ -1,10 +1,11 @@
-import  sentry_sdk, traceback
+import sentry_sdk, traceback
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import  get_eligible_orgs
 from configs.global_constants import PREDICTED_RATES_SERVICE_PROVIDER_IDS,AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from configs.definitions import AIR_CUSTOMS_CHARGES
 from micro_services.client import common
+
 def get_air_customs_rate_cards(request):
     try:
         query = initialize_air_customs_rate_query(request)
@@ -15,9 +16,8 @@ def get_air_customs_rate_cards(request):
             rate_cards = build_response_list(customs_rates,request)
 
             return {'list':rate_cards}
-
         return {'list':[]} 
-       
+
     except Exception as e:
         traceback.print_exc()
         sentry_sdk.capture_exception(e)
@@ -57,17 +57,24 @@ def build_response_list(query_results,request):
             result = rates[0]
         response_object = build_response_object(result, request)
         if response_object:
-            response_list .append(response_object) 
-        return response_list 
+            response_list.append(response_object)
+        return response_list
 
 def build_response_object(result,request):
+    source = 'spot_rates'
+    if result.get('mode') == 'predicted':
+        source = 'predicted'
+    elif result.get('rate_type') != 'market_place':
+        source = result.get('rate_type')
+
     response_object = {
         'service_provider_id':result.get('service_provider_id'),
         'importer_exporter_id':result.get('importer_exporter_id'),
         'line_items':[],
         'total_price':0,
-        'source': 'predicted' if  result.get('service_provider_id') in PREDICTED_RATES_SERVICE_PROVIDER_IDS else 'spot_rates'
+        'source': source
     }
+
     if not add_customs_clearance(result, response_object,request):
         return None
 
@@ -76,10 +83,11 @@ def build_response_object(result,request):
 def add_customs_clearance(result,response_object,request):
     total_price = 0
     total_price_currency = result['line_items'][0]['currency']
+
     if not result.get('line_items'):
         return False
 
-    for line_item in result.get('line_items'):
+    for line_item in (result.get('line_items') or []):
         line_item = build_line_item_object(line_item,request)
         total_price += common.get_money_exchange_for_fcl({"price": line_item.get('total_price'), "from_currency": line_item.get('currency'), "to_currency": total_price_currency})['price']
 
@@ -94,12 +102,15 @@ def add_customs_clearance(result,response_object,request):
         return False
 
     return bool(response_object['line_items'])
+
 def build_line_item_object(line_item,request):
     custom_code_config = AIR_CUSTOMS_CHARGES.get(line_item.get('code'),'')
     is_additional_service = True if 'additional_service' in custom_code_config.get('tags',[]) else False
+
     if is_additional_service and line_item.get('code') not in request.get('additional_services') and request.get('additional_services'):
         return
-    line_item['quantity'] = request.packages_count if line_item['unit'] == 'per_package' else (get_chargeable_weight() if line_item['unit'] == 'per_kg' else 1)
+
+    line_item['quantity'] = request.get('packages_count') if line_item['unit'] == 'per_package' else (get_chargeable_weight() if line_item['unit'] == 'per_kg' else 1)
     line_item['total_price'] = line_item['quantity'] * line_item['price']
     line_item['name'] = custom_code_config.get('name', '')
     line_item['source'] = 'system'
@@ -107,8 +118,8 @@ def build_line_item_object(line_item,request):
     return line_item
 
 def get_chargeable_weight(request):
-    volumetric_weight = request.volume *AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
-    chargeable_weight = max(volumetric_weight, request.weight)
+    volumetric_weight = request.get('volume') * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+    chargeable_weight = max(volumetric_weight, request.get('weight'))
     return round(chargeable_weight, 2)
 
 def group_by(query):
@@ -119,5 +130,3 @@ def group_by(query):
             grouped_query_results[service_provider_id] = []
         grouped_query_results[service_provider_id].append(result)
     return grouped_query_results
-
-

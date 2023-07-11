@@ -35,7 +35,6 @@ def execute_transaction_code(request):
 
     air_customs_request.set_airport()
     air_customs_request.set_spot_search()
-    air_customs_request.validate_before_save()
     
     try:
         air_customs_request.save()
@@ -110,9 +109,7 @@ def get_create_params(request):
       'booking_params': request.get('booking_params'),
       'preferred_customs_rate': request.get('preferred_customs_rate'),
       'preferred_customs_rate_currency': request.get('preferred_customs_rate_currency'),
-    #   'preferred_detention_free_days': request.get('preferred_detention_free_days'),
       'cargo_readiness_date': request.get('cargo_readiness_date'),
-    #   'preferred_storage_free_days': request.get('preferred_storage_free_days'),
       'weight': request.get('weight'),
       'volume': request.get('volume'),
       'commodity': request.get('commodity'),
