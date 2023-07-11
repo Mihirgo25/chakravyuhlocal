@@ -23,6 +23,10 @@ def validate_and_process_rate_sheet_converted_file(params):
             getattr(process_haulage_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
                 params, converted_file, rate_sheet
             )
+        elif converted_file['service_name'] == 'trailer_freight':
+            getattr(process_haulage_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
+                params, converted_file, rate_sheet
+            )
         else:
             getattr(process_rate_sheet, "process_{}_{}".format(converted_file['service_name'], converted_file['module']))(
                 params, converted_file, rate_sheet

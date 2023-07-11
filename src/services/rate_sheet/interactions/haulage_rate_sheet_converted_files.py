@@ -214,26 +214,28 @@ def create_haulage_freight_freight_rate(
 
     object['validity_start'] = convert_date_format(object.get('validity_start'))
     object['validity_end'] = convert_date_format(object.get('validity_end'))
-
+    object["origin_location_id"] = get_location_id(rows[0]['origin_location'])
+    object["destination_location_id"] = get_location_id(rows[0]['destination_location'])
+    object["shipping_line_id"] = get_shipping_line_id(rows[0]["shipping_line"])
+    object['transit_time'] = int(object['transit_time'])
+    object['detention_free_time'] = int(object['detention_free_time'])
     object["transport_modes"] = object["transport_modes"].split(',')
 
     object["line_items"] = []
 
     for data in rows:
-        if 'code' in data:
+        if 'code' in data and data['code']:
             keys_to_extract = ['code', 'unit', 'price', 'currency']
             line_item = dict(filter(lambda item: item[0] in keys_to_extract, data.items()))
-            line_item['remarks'] = [data["remark1"], data["remark2"], data["remark3"]]
+            line_item['remarks'] = list(set([data["remark1"], data["remark2"], data["remark3"]]))
             line_item["slabs"] = []
             object['line_items'].append(line_item)
         else:
             keys_to_extract = ["lower_limit", "upper_limit", "price", "currency"]
             line_item = dict(filter(lambda item: item[0] in keys_to_extract, data.items()))
             object["line_items"][-1]["slabs"].append(line_item)
-    object["shipping_line_id"] = get_shipping_line_id(object["shipping_line"])
     if params.get('service_provider_id'):
         object["service_provider_id"] = params['service_provider_id']
-
 
     object["rate_sheet_id"] = params["id"]
     object["performed_by_id"] = created_by_id
@@ -241,7 +243,7 @@ def create_haulage_freight_freight_rate(
     object["procured_by_id"] = procured_by_id
     object["sourced_by_id"] = sourced_by_id
     object["cogo_entity_id"] = params.get("cogo_entity_id")
-    
+
     request_params = object
     validation = write_haulage_freight_freight_object(
         request_params, csv_writer, params, converted_file, last_row
@@ -273,4 +275,9 @@ def write_haulage_freight_freight_object(rows, csv, params, converted_file, last
             print("no csv")
     converted_file["rates_count"] = int(converted_file["rates_count"]) + 1
     return object_validity
+
+
+def process_trailer_freight_freight(params, converted_file, update):
+    return process_haulage_freight_freight(params, converted_file, update)
+
 

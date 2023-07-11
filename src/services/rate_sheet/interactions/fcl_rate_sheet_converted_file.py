@@ -9,7 +9,7 @@ from services.rate_sheet.interactions.validate_fcl_freight_object import validat
 from database.db_session import rd
 
 from fastapi.encoders import jsonable_encoder
-from database.rails_db import get_operators, get_organization
+from database.rails_db import get_organization
 from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
@@ -26,61 +26,9 @@ csv_options = {
 }
 
 
-def get_shipping_line_id(shipping_line_name):
-    try:
-        shipping_line_name = shipping_line_name.strip()
-        shipping_line_id = get_operators(short_name=shipping_line_name)[0]['id']
-    except:
-        shipping_line_id = None
-    return shipping_line_id
-
-
 def append_in_final_csv(csv, row):
     list_opt = list(row.values())
     csv.writerow(list_opt)
-
-
-def get_location_id(q, country_code = None, service_provider_id = None):
-    if not q:
-        return None
-    
-    pincode_filters =  {"type": "pincode", "postal_code": q, "status": "active"}
-    if country_code is not None:
-        pincode_filters['country_code'] = country_code
-    locations = maps.list_locations({'filters': pincode_filters})['list']
-    filters = {"type": "country", "country_code": q, "status": "active"}
-    if not locations:
-        locations = maps.list_locations({"filters": filters})['list']
-
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if not locations:
-        country_filters = {"type": "country", "country_code": q, "status": "active"}
-        if country_code is not None:
-            country_filters["country_code"]= country_code
-        locations = maps.list_locations({"filters": country_filters})['list']
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        seaport_filters['country_code'] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters":seaport_filters})['list']
-    airport_filters = {"type": "airport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        airport_filters['country_code'] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters":airport_filters})['list']
-    name_filters = {"name": q, "status": "active"}
-    if country_code is not None:
-        name_filters["country_code"] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters": name_filters})['list']
-    display_name_filters = {"display_name": q, "status": "active"}
-    if country_code is not None:
-        display_name_filters = maps.list_locations({"filters": display_name_filters})
-    # if not locations:
-    #     locations = common.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
-    #     return locations[0] if locations else None
-    return locations[0]["id"] if locations else None
-
 
 
 def get_location(location_code, type):

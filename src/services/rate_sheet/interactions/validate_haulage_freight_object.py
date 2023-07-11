@@ -24,16 +24,8 @@ def get_freight_object(object):
     res = object
     res['rate_not_available_entry'] = False
     rate_object = HaulageFreightRate(**res)
-
     try:
-        rate_object.set_origin_location_ids()
-        rate_object.set_origin_location_type()
-        rate_object.set_destination_location_ids()
-        rate_object.set_destination_location_type()
-        rate_object.set_origin_destination_location_type()
-        # rate_object.set_origin_location()
-        # rate_object.set_destination_location()
-        # rate_object.set_shipping_line()
+        rate_object.set_locations()
         rate_object.set_platform_price()
         rate_object.set_is_best_price()
     except HTTPException as e:

@@ -9,6 +9,7 @@ from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from configs.global_constants import CONTAINER_SIZES, CONTAINER_TYPES
 from configs.haulage_freight_rate_constants import HAULAGE_FREIGHT_TYPES, TRANSPORT_MODES, TRIP_TYPES, HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS, TRAILER_TYPES
 from configs.haulage_freight_rate_constants import RATE_TYPES
+from libs.get_applicable_filters import is_valid_uuid
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -82,11 +83,14 @@ class HaulageFreightRate(BaseModel):
         return super(HaulageFreightRate, self).save(*args, **kwargs)
     
     def set_locations(self):
+        if not is_valid_uuid(self.origin_location_id):
+            raise HTTPException(status_code=400, detail="Invalid origin location")
+        if not is_valid_uuid(self.destination_location_id):
+            raise HTTPException(status_code=400, detail="Invalid destination location")
         ids = [str(self.origin_location_id), str(self.destination_location_id)]
         locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True}})
         locations = []
-        if 'list' in locations_response:
-            locations = locations_response["list"]
+        locations = locations_response["list"]
         for location in locations:
             if str(location['id']) == str(self.origin_location_id):
                 self.origin_location = self.get_required_location_data(location)
@@ -115,10 +119,11 @@ class HaulageFreightRate(BaseModel):
         self.origin_cluster_id = self.origin_location.get('cluster_id')
         self.origin_city_id = self.origin_location.get('city_id')
         self.origin_country_id = self.origin_location.get('country_id')
-        if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', str(self.origin_cluster_id)):
-            self.origin_location_ids = [uuid.UUID(str(self.origin_location_id)), uuid.UUID(str(self.origin_cluster_id)),uuid.UUID(str(self.origin_city_id)),uuid.UUID(str(self.origin_country_id))]
-        else:
-            self.origin_location_ids = [uuid.UUID(str(self.origin_location_id)),uuid.UUID(str(self.origin_city_id)),uuid.UUID(str(self.origin_country_id))]
+        ids = [self.origin_location_id, self.origin_cluster_id, self.origin_city_id, self.origin_country_id]
+        self.origin_location_ids = []
+        for id in ids:
+            if is_valid_uuid(id):
+                self.origin_location_ids.append(id)
 
     def set_origin_location_type(self):
         self.origin_location_type = self.origin_location.get('type')
@@ -127,10 +132,11 @@ class HaulageFreightRate(BaseModel):
         self.destination_cluster_id = self.destination_location.get('cluster_id')
         self.destination_city_id = self.destination_location.get('city_id')
         self.destination_country_id = self.destination_location.get('country_id')
-        if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', str(self.destination_cluster_id)):
-            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_cluster_id)),uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
-        else:
-            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]        
+        ids = [self.destination_cluster_id, self.destination_city_id, self.destination_country_id, self.destination_location_id]
+        self.destination_location_ids = []
+        for id in ids:
+            if is_valid_uuid(id):
+                self.destination_location_ids.append(id)       
     
     def set_destination_location_type(self):
         self.destination_location_type = self.destination_location.get('type')
@@ -203,14 +209,10 @@ class HaulageFreightRate(BaseModel):
         if len(set(map(lambda t: str(t['code']).upper(), self.line_items))) != len(self.line_items):
             raise HTTPException(status_code=500, detail="Contains Duplicates")
         
-    # def validate_invalid_line_items(self,possible_charge_codes):
-    #     invalid_line_items = [str(line_item.get('code') or '') for line_item in self.line_items if str(line_item.get('code') or '').strip() not in possible_charge_codes]
-    #     if invalid_line_items:
-            # raise HTTPException(status_code=500, detail= ','.join(invalid_line_items))
+   
     def validate_invalid_line_items(self):
         haulage_line_item_codes = [str(t['code']) for t in self.line_items]
         possible_haulage_charge_codes = [str(key) for key in self.possible_charge_codes().keys()]
-        print(possible_haulage_charge_codes)
         invalid_haulage_line_items = [t for t in haulage_line_item_codes if t not in possible_haulage_charge_codes]
         if invalid_haulage_line_items:
             raise HTTPException(status_code=400, detail="Invalid line items")
