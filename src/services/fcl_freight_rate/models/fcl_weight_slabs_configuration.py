@@ -83,7 +83,7 @@ class FclWeightSlabsConfiguration(BaseModel):
         if not self.shipping_line_id:
             return
 
-        shipping_line_data = get_shipping_line(id=self.shipping_line_id)
+        shipping_line_data = get_operators(id=self.shipping_line_id)
         if len(shipping_line_data) == 0:
             raise HTTPException(status_code=400, detail="Invalid shipping line ID")
 
