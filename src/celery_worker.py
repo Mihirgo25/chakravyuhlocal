@@ -528,6 +528,16 @@ def update_air_freight_rate_details_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
+    try:
+        eval(f"object.perform_{action_name}_action()")
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_electricity_data_delays(self):
     try:
