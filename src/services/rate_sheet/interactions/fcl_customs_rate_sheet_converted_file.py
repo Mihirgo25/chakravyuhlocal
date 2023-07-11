@@ -1,5 +1,10 @@
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import *
+import os, csv
 from services.rate_sheet.interactions.validate_fcl_customs_object import validate_fcl_customs_object
+from services.rate_sheet.helpers import *
+from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
+from fastapi.encoders import jsonable_encoder
+from services.rate_sheet.interactions.upload_file import upload_media_file
+
 
 def process_fcl_customs_customs(params, converted_file, update):
     total_lines = 0
@@ -69,7 +74,7 @@ def process_fcl_customs_customs(params, converted_file, update):
     else:
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
-
+    converted_file['file_url'] = upload_media_file(get_file_path(converted_file))
     set_processed_percent(percent_completed, params)
     try:
         os.remove(get_original_file_path(converted_file))
