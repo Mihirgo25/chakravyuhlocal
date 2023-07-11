@@ -29,7 +29,8 @@ class LoadYmls():
         self.AIR_FREIGHT_LOCAL_CHARGES=self.load_ymls(os.path.join(ROOT_DIR,"charges","air_freight_local_charges.yml"))
         self.AIR_FREIGHT_SURCHARGES = self.load_ymls(os.path.join(ROOT_DIR,"charges","air_freight_surcharges.yml"))
         self.AIR_FREIGHT_WAREHOUSE_CHARGES=self.load_ymls(os.path.join(ROOT_DIR,"charges","air_freight_warehouse_charges.yml"))
-        self.AIR_FREIGHT_CURRENCIES=self.load_ymls(os.path.join(ROOT_DIR,"libs","currencies.yml"))        self.AIR_CUSTOMS_CHARGES = self.load_ymls(os.path.join(ROOT_DIR, "charges", "air_customs_charges.yml"))
+        self.AIR_FREIGHT_CURRENCIES=self.load_ymls(os.path.join(ROOT_DIR,"libs","currencies.yml"))        
+        self.AIR_CUSTOMS_CHARGES = self.load_ymls(os.path.join(ROOT_DIR, "charges", "air_customs_charges.yml"))
         self.FCL_CUSTOMS_CURRENCIES = self.load_ymls(os.path.join(ROOT_DIR, "libs", "currencies.yml"))
 
 
@@ -44,7 +45,8 @@ FCL_FREIGHT_CHARGES = yml_obj.FCL_FREIGHT_CHARGES
 FCL_FREIGHT_LOCAL_CHARGES = yml_obj.FCL_FREIGHT_LOCAL_CHARGES
 FCL_FREIGHT_CURRENCIES = yml_obj.FCL_FREIGHT_CURRENCIES
 FCL_FREIGHT_SEASONAL_CHARGES = yml_obj.FCL_FREIGHT_SEASONAL_CHARGES 
-FCL_CFS_CHARGES  = yml_obj.FCL_CFS_CHARGES FCL_CUSTOMS_CHARGES = yml_obj.FCL_CUSTOMS_CHARGES
+FCL_CFS_CHARGES  = yml_obj.FCL_CFS_CHARGES 
+FCL_CUSTOMS_CHARGES = yml_obj.FCL_CUSTOMS_CHARGES
 
 AIR_FREIGHT_CHARGES=yml_obj.AIR_FREIGHT_CHARGES
 AIR_FREIGHT_LOCAL_CHARGES=yml_obj.AIR_FREIGHT_LOCAL_CHARGES
