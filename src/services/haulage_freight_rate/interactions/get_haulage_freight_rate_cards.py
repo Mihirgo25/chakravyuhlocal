@@ -37,14 +37,12 @@ def initialize_query(requirements, query):
     )
     if requirements.get("trip_type") == "round":
         requirements["trip_type"] = "round_trip"
-    importer_exporter_ids = list(set([None, requirements.get("importer_exporter_id")]))
     freight_query = query.where(
         HaulageFreightRate.container_type == requirements["container_type"],
         HaulageFreightRate.container_size == requirements["container_size"],
         HaulageFreightRate.commodity == requirements["commodity"],
         HaulageFreightRate.haulage_type == requirements.get("haulage_type"),
-        HaulageFreightRate.importer_exporter_id
-        << importer_exporter_ids,
+        (HaulageFreightRate.importer_exporter_id == requirements.get('importer_exporter_id')) | (HaulageFreightRate.importer_exporter_id.is_null(True)),
         HaulageFreightRate.is_line_items_error_messages_present == False,
         HaulageFreightRate.rate_not_available_entry == False,
     )
@@ -107,7 +105,7 @@ def select_fields():
 
 
 def get_query_results(query):
-    data = list(query.dicts())
+    data = jsonable_encoder(list(query.dicts()))
     return data
 
 
@@ -344,7 +342,7 @@ def build_response_list(requirements, query_results):
 def ignore_non_eligible_service_providers(requirements, data):
     ids = get_eligible_orgs("haulage_freight")
 
-    data = [rate for rate in data if str(rate.get("service_provider_id")) in ids]
+    data = [rate for rate in data if rate.get("service_provider_id") in ids]    
     if (
         not data
         and requirements.get("predicted_rate")
