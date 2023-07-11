@@ -12,6 +12,9 @@ class BaseModel(Model):
 class FclFreightLocationClusterFactor(BaseModel):
     id = BigAutoField(primary_key=True)
     location_id = UUIDField(null=True, index=True)
+    container_size = CharField(null=True, index=True)
+    container_type = CharField(null=True, index=True)
+    shipping_line_id = UUIDField(null=True, index=True)
     cluster_id = ForeignKeyField(FclFreightLocationCluster, to_field="id")
     origin_cluster_id = ForeignKeyField(FclFreightLocationCluster, to_field="id")
     destination_cluster_id = ForeignKeyField(FclFreightLocationCluster, to_field="id")
