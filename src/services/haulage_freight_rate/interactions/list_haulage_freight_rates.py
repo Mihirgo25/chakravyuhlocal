@@ -188,9 +188,16 @@ def add_service_objects(data):
     for object in data:
         object["total_price_currency"] = 'INR'
         total_price = 0
-        for line_item in object["line_items"]:
-            total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
+        # for line_item in object["line_items"]:
+        #     total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
         object["total_price"] = total_price
+        try:
+            if 'display_name' not in object['destination_location']:
+                object['destination_location']['display_name'] = object['destination_location']['name']
+            if 'display_name' not in object['origin_location']:
+                object['origin_location']['display_name'] = object['origin_location']['name']
+        except:
+            continue
     return data
 
 
