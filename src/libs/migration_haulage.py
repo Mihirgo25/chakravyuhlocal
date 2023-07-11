@@ -134,38 +134,6 @@ def delay_updation_bulk_operation(row,columns):
     return
     
 
-# def fcl_customs_rate_bulk_operation_migration():
-#     from services.fcl_customs_rate.models.fcl_customs_rate_bulk_operation import FclCustomsRateBulkOperation
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-                    
-#                 sql_query = "SELECT * FROM fcl_customs_rate_bulk_operations"
-#                 cur.execute(sql_query,)
-#                 result = cur.fetchall()
- 
-#             for res in result:
-#                 new_obj = {
-#                     "id": str(res[0]),   
-#                     "progress": res[1],   
-#                     "action_name": res[2],   
-#                     "performed_by_id": str(res[3]),   
-#                     "data": res[4],
-#                     "created_at": res[5],
-#                     "updated_at": res[6],
-#                     "service_provider_id":str(res[7])
-#                 }
-#                 all_result.append(new_obj)
-#             cur.close()
-#         FclCustomsRateBulkOperation.insert_many(all_result).execute()
-#         conn.close()
-#         print('FCL Customs Bulk Operation Done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
-
 def haulage_freight_rate_migration():
     all_result=[]
     procured_ids_path = "procured_by_sourced_by_rates.json"
@@ -220,147 +188,40 @@ def haulage_freight_rate_locals_migration():
 
 
     
-def haulage_freight_rate_audits_migration():
-    from services.haulage_freight_rate.models.haulage_freight_rate_audits import HaulageFreightRateAudit
-    all_result = []
-    # try:
-    conn = get_connection()
-    with conn:
-        with conn.cursor() as cur:
-            sql_query = """
-            SELECT * 
-            FROM haulage_freight_rate_audits limit 1000
-            """
-            cur.execute(sql_query,)
-            result = cur
-            columns = [col[0] for col in result.description]   
-            result = Parallel(n_jobs=4)(delayed(delay_updation_audits)(row, columns,row[3]) for row in result.fetchall())
-            cur.close()
-    conn.close()
-    print('haulage Freight Rate audits Done')
-    return all_result
-
-
-def delay_updation_audits(row,columns,object_type):
-    param = dict(zip(columns, row))
-    if(object_type=='HaulageFreightRate'):
-        obj = HaulageFreightRateAudit(**param)
-        obj.save(force_insert = True)
-    else:
-        obj = HaulageServiceAudit(**param)
-        obj.save(force_insert = True)
-
-    return
-
-# def haulage_freight_storage_rates_migration():
-#     from services.haulage_freight_rate.models.haulage_freight_storage_rate import haulageFreightStorageRates
-#     procured_ids_path = "procured_by_sourced_by_storage.json"
-#     with open(procured_ids_path, 'r') as file:
-#         procured_sourced_cfs_dict = json.load(file)
-    
-#     location_data_path = 'location_data_cfs.json'
-#     with open(location_data_path, 'r') as file:
-#         loc_dict = json.load(file)
-
-#     all_result =[]
+# def haulage_freight_rate_audits_migration():
+#     from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
+#     all_result = []
+#     # try:
 #     conn = get_connection()
 #     with conn:
 #         with conn.cursor() as cur:
 #             sql_query = """
-#             SELECT * from haulage_freight_storage_rates
-#             """   
+#             SELECT * 
+#             FROM haulage_freight_rate_audits limit 1000
+#             """
 #             cur.execute(sql_query,)
 #             result = cur
-                            
-#             columns = [col[0] for col in result.description]    
-#             for row in result.fetchall():
-#                 param = dict(zip(columns, row))
-#                 obj = haulageFreightStorageRate(**param)
-#                 obj.save(force_insert = True)
+#             columns = [col[0] for col in result.description]   
+#             result = Parallel(n_jobs=4)(delayed(delay_updation_audits)(row, columns,row[3]) for row in result.fetchall())
 #             cur.close()
 #     conn.close()
-#     print('haulage Freight Storage Rates migration Done')
+#     print('haulage Freight Rate audits Done')
 #     return all_result
 
 
-################################## FCL CFS Migration ############################################
+# def delay_updation_audits(row,columns,object_type):
+#     param = dict(zip(columns, row))
+#     if(object_type=='HaulageFreightRate'):
+#         obj = HaulageFreightRateAudit(**param)
+#         obj.save(force_insert = True)
+#     else:
+#         obj = HaulageServiceAudit(**param)
+#         obj.save(force_insert = True)
 
-# def fcl_cfs_rate_requests_migration():
-#     from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = "SELECT * FROM fcl_cfs_rate_requests"
-#                 cur.execute(sql_query,)
-#                 result = cur
+    # return
 
-#                 columns = [col[0] for col in result.description]
-#                 for row in result.fetchall():
-#                     param = dict(zip(columns, row))
-#                     param['commodity'] = param['commodity'] if param['commodity'] else None
-#                     obj = FclCfsRateRequest(**param)
-#                     set_locations(obj)
-#                     spot_search_data(obj)
-#                     get_multiple_service_objects(obj)
-#                     obj.save(force_insert = True)
-#                 cur.close()
-#             conn.close()
-#         print('CFS requests done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
 
-# def fcl_cfs_rate_bulk_operation_migration():
-#     from services.fcl_cfs_rate.models.fcl_cfs_rate_bulk_operation import FclCfsRateBulkOperation
-#     all_result =[]
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = "SELECT * FROM fcl_cfs_rate_bulk_operations"
-#                 cur.execute(sql_query,)
-#                 result = cur.fetchall()
- 
-#             for res in result:
-#                 new_obj = {
-#                     "id": str(res[0]),   
-#                     "progress": res[1],   
-#                     "action_name": res[2],   
-#                     "performed_by_id": str(res[3]),   
-#                     "data": res[4],
-#                     "created_at": res[5],
-#                     "updated_at": res[6],
-#                     "service_provider_id":str(res[7])
-#                 }
-                
-#                 all_result.append(new_obj)
-#                 cur.close()
-#         FclCfsRateBulkOperation.insert_many(all_result).execute()
-#         conn.close()
-#         return all_result
-#     except Exception as e:
-#         return all_result
-    
-# def fcl_cfs_rate_audits_migration():
-#     from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
-#     all_result = []
-#     try:
-#         conn = get_connection()
-#         with conn:
-#             with conn.cursor() as cur:
-#                 sql_query = "SELECT * FROM fcl_cfs_rate_audits"
-#                 cur.execute(sql_query,)
-#                 result = cur.fetchall()
-#              
-#                 cur.close()
-#         conn.close()
-#         print('CFS audits done')
-#         return all_result
-#     except Exception as e:
-#         return all_result
-    
+
 def set_locations(rate):
     ids = []
     if hasattr(rate, 'origin_haulageport_id') and rate.origin_haulageport_id:
@@ -391,19 +252,6 @@ def get_required_location_data(location):
         "country_code": location["country_code"]
     }
     return loc_data
-          
-# def get_required_location_data(location):
-#     loc_data = {
-#         "id": location["id"],
-#         "name": location["name"],
-#         "is_icd": location["is_icd"],
-#         "port_code": location["port_code"],
-#         "country_id": location["country_id"],
-#         "continent_id": location["continent_id"],
-#         "trade_id": location["trade_id"],
-#         "country_code": location["country_code"]
-#     }
-#     return loc_data
 
 def spot_search_data(rate):
     from micro_services.client import spot_search
@@ -523,7 +371,7 @@ def run_migration():
     # all_locations_data()
     print('Procured by Sourced by Data done')
     # haulage_freight_rate_feedback_migration()
-    haulage_freight_rate_audits_migration()
+    # haulage_freight_rate_audits_migration()
     # haulage_freight_rate_bulk_operations_migration()
     # haulage_freight_rate_requests_migration()
     # haulage_freight_storage_rates_migration()

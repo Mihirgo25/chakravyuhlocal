@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from configs.haulage_freight_rate_constants import LOCATION_PAIR_HIERARCHY
 from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
-from database.rails_db import get_organization, get_user, get_eligible_orgs
+from database.rails_db import get_organization, get_user, get_eligible_orgs, list_organization_users
 from micro_services.client import common, maps
 from itertools import groupby
 from fastapi.encoders import jsonable_encoder
@@ -338,7 +338,6 @@ def build_response_list(requirements, query_results):
     return data
 
 
-# inclomplete
 def ignore_non_eligible_service_providers(requirements, data):
     ids = get_eligible_orgs("haulage_freight")
 
@@ -401,15 +400,15 @@ def ignore_non_active_shipping_lines(data):
     return final_data
 
 
-# incomplete
 def additional_response_data(data):
-    names = list(
-        map(
-            lambda service_provider_id: service_provider_id["service_provider_id"], data
-        )
-    )
-    names = [user["name"] for user in users]
+    # names = list(
+    #     map(
+    #         lambda service_provider_id: service_provider_id["service_provider_id"], data
+    #     )
+    # )
+    # names = [user["name"] for user in users]
 
+    # adding service provicer ids
     service_provider_ids = list(
         set(
             map(
@@ -419,10 +418,18 @@ def additional_response_data(data):
         )
     )
     service_providers = get_organization(id=service_provider_ids)
+
+    # adding org users 
     audit_ids = list(map(lambda ids: ids["id"], data))
     audits = list(HaulageFreightRateAudit.select().where(object_id=audit_ids).dicts())
-    # org_users = get_user()
-    # will have to look into this
+
+    audit_sourced_by_id = []
+    for data in audits:
+        audit_sourced_by_id.append(data['sourced_by_id'])
+    org_user_ids = list_organization_users(audit_sourced_by_id)
+
+    # adding users
+
     sourced_by_ids = list(
         map(lambda sourced_by_id: sourced_by_id["sourced_by_id"], audits)
     )
