@@ -174,7 +174,7 @@ def get_final_data(query):
     for object in final_data:
         # assumption here
         rates_count_sum=0
-        object['updated_at'] = datetime.fromisoformat(object['updated_at']) +timedelta(hours=5, minutes=30)
+        object['updated_at'] = datetime.fromisoformat(object['updated_at'])
 
         if 'converted_files' in object:
             if object.get('converted_files'):
