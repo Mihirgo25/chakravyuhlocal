@@ -158,3 +158,13 @@ class UpdateFtlFreightRateRequest(BaseModel):
     status: str = None
     remarks: str = None
     performed_by_id: str
+
+class CreateFtlFreightRateNotAvailable(BaseModel):
+    origin_location_id: str
+    origin_cluster_id: str = None
+    destination_location_id: str
+    destination_cluster_id: str = None
+    truck_type: str
+    commodity: str = None
+    performed_by_id: str = None
+    performed_by_type: str = None
