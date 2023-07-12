@@ -60,7 +60,6 @@ def get_data_in_batches(table_name,parallel = False):
                 else:
                     results.extend(result.fetchall()) 
                 OFFSET = OFFSET + limit
-                break
             cur.close()
     conn.close()
     return columns, results
@@ -175,8 +174,8 @@ def delay_updation_request(row,columns):
         new_al.append(UUID(str(aid)))
     param['preferred_airline_ids'] = new_al
     obj = AirFreightRateRequest(**param)
-    set_locations(obj)
-    get_multiple_service_objects(obj)
+    # set_locations(obj)
+    # get_multiple_service_objects(obj)
     obj.save(force_insert = True)
     return
 
