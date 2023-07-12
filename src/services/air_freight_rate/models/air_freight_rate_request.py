@@ -22,7 +22,7 @@ class BaseModel(Model):
 
 class AirFreightRateRequest(BaseModel):
     booking_params = BinaryJSONField(null=True)
-    cargo_readiness_date = DateTimeField(null=True)
+    cargo_readiness_date = DateTimeTZField(null=True)
     cogo_entity_id = UUIDField(null=True,index=True)
     cargo_stacking_type = CharField(null=True)
     closed_by_id = UUIDField(null=True,index=True)
@@ -30,7 +30,7 @@ class AirFreightRateRequest(BaseModel):
     commodity = CharField(null=True,index=True)
     commodity_sub_type = TextField(null=True,index=True)
     commodity_type = TextField(null=True,index=True)
-    created_at = DateTimeField(index=True, default=datetime.datetime.now)
+    created_at = DateTimeTZField(index=True, default=datetime.datetime.now)
     destination_airport_id = UUIDField(null=True,index=True)
     destination_airport = BinaryJSONField(null=True)
     destination_continent_id = UUIDField(null=True,index=True)
@@ -73,7 +73,7 @@ class AirFreightRateRequest(BaseModel):
     source_id = UUIDField(null=True,index=True)
     status = CharField(null=True,index=True, default="active")
     trade_type = CharField(null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeTZField(default=datetime.datetime.now)
     volume = DoubleField(null=True)
     weight = DoubleField(null=True)
 
