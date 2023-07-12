@@ -35,8 +35,8 @@ def get_haulage_freight_rate_estimation(request):
         list_items = data.get('list')
         line_items = list_items[0].get('line_items')
         detention_free_time = 1
-        validity_start = datetime.now().date().isoformat()
-        validity_end = (datetime.now() + timedelta(days = 60)).date().isoformat()
+        validity_start = datetime.now().date()
+        validity_end = (datetime.now() + timedelta(days = 60)).date()
         cogo_envision_id = ENVISION_USER_ID
 
         params = {

@@ -382,7 +382,7 @@ def ignore_non_eligible_service_providers(requirements, data):
         if requirements.get("transport_mode") == "trailer":
             response = get_trailer_freight_rate_estimation(estimation_params)
 
-        elif requirements.get("transport_mode") == "haulage":
+        elif requirements.get("transport_mode") == "rail":
             response = get_haulage_freight_rate_estimation(estimation_params)
 
         if response:

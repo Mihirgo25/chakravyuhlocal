@@ -1,5 +1,4 @@
 from playhouse.postgres_ext import SQL
-from playhouse.postgres_ext import ArrayField
 import json, uuid, math
 from libs.get_filters import get_filters
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
@@ -28,6 +27,7 @@ POSSIBLE_DIRECT_FILTERS = [
     "origin_location_ids",
     "destination_location_ids",
 ]
+
 
 POSSIBLE_INDIRECT_FILTERS = [
     "is_rate_available",
@@ -89,11 +89,6 @@ DEFAULT_PARAMS = [
     "destination_location_ids"
 ]
 
-# "priority_score_updated_at",
-# priority_score
-# "importer_exporters_count",
-
-
 
 def is_valid_uuid(val):
     try:
@@ -130,6 +125,45 @@ def filter_preferences(filters):
             filters = json.loads(filters)
     return filters
 
+def add_pagination_data(
+    response, page, total_count, page_limit, final_data, pagination_data_required
+):
+    if pagination_data_required:
+        response["page"] = page
+        response["total"] = math.ceil(total_count / page_limit)
+        response["total_count"] = total_count
+        response["page_limit"] = page_limit
+    response["success"] = True
+    response["list"] = final_data
+    return response
+
+
+def add_service_objects(data):
+    for object in data:
+        object["total_price_currency"] = 'INR'
+        total_price = 0
+        for line_item in object["line_items"]:
+            total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
+        object["total_price"] = total_price
+        try:
+            if 'display_name' not in object['destination_location']:
+                object['destination_location']['display_name'] = object['destination_location']['name']
+            if 'display_name' not in object['origin_location']:
+                object['origin_location']['display_name'] = object['origin_location']['name']
+        except:
+            continue
+    return data
+
+
+def get_final_data(query):
+    raw_data = jsonable_encoder(list(query.dicts()))
+    return raw_data
+
+
+def apply_is_rate_available_filter(query, val, filters):
+    query = query.where(HaulageFreightRate.rate_not_available_entry != True)
+    return query
+
 
 def list_haulage_freight_rates(
     filters={}, page_limit=10, page=1, return_query=True, pagination_data_required=True
@@ -150,7 +184,6 @@ def list_haulage_freight_rates(
         )
         query = apply_direct_filters(query, direct_filters)
         query = apply_indirect_filters(query, indirect_filters)
-
     # pagination
     query, total_count = apply_pagination(query, page, page_limit)
 
@@ -166,43 +199,3 @@ def list_haulage_freight_rates(
     )
 
     return response
-
-
-def add_pagination_data(
-    response, page, total_count, page_limit, final_data, pagination_data_required
-):
-    if pagination_data_required:
-        response["page"] = page
-        response["total"] = math.ceil(total_count / page_limit)
-        response["total_count"] = total_count
-        response["page_limit"] = page_limit
-    response["success"] = True
-    response["list"] = final_data
-    return response
-
-
-def add_service_objects(data):
-    for object in data:
-        object["total_price_currency"] = 'INR'
-        total_price = 0
-        # for line_item in object["line_items"]:
-        #     total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
-        object["total_price"] = total_price
-        try:
-            if 'display_name' not in object['destination_location']:
-                object['destination_location']['display_name'] = object['destination_location']['name']
-            if 'display_name' not in object['origin_location']:
-                object['origin_location']['display_name'] = object['origin_location']['name']
-        except:
-            continue
-    return data
-
-
-def get_final_data(query):
-    raw_data = jsonable_encoder(list(query.dicts()))
-    return raw_data
-
-
-def apply_is_rate_available_filter(query, val, filters):
-    query = query.where(HaulageFreightRate.rate_not_available_entry != True)
-    return query

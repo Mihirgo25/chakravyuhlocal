@@ -540,7 +540,7 @@ def list_organization_users(id):
                     id = (id,)
                 else:
                     id = tuple(id)
-                sql = 'select organization_users.id, users.name, users.mobile_number from organization_users join users on organization_users.user_id = users.id where users.id in %s'
+                sql = 'select organization_users.id, users.name, users.mobile_number from organization_users join users on organization_users.user_id = users.id where organization_users.id in %s'
                 cur.execute(sql, (id,))
 
                 result = cur.fetchall()
