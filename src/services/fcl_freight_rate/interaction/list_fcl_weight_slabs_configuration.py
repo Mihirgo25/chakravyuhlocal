@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_weight_slabs_configuration import FclWeightSlabsConfiguration
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import maps
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder 
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
@@ -23,7 +23,7 @@ def list_fcl_weight_slabs_configuration(filters = {}, page_limit = 10, page = 1,
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
 
     query = query.paginate(page, page_limit)
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
     
     location_ids = []
     for row in data:
