@@ -367,7 +367,7 @@ def remove_cogoxpress_service_provider(freight_rates):
 
 def get_air_freight_rate_cards(requirements):
 
-    # try:
+    try:
 
         if requirements['commodity'] =='general':
             if requirements.get('commodity_subtype'):
@@ -401,12 +401,12 @@ def get_air_freight_rate_cards(requirements):
         return {
             'list':freight_rates
         }
-    # except Exception as e:
-    #     traceback.print_exc()
-    #     print(e)
-    #     return {
-    #         "list": []
-    #     }
+    except Exception as e:
+        traceback.print_exc()
+        print(e)
+        return {
+            "list": []
+        }
 
 # NOT USED
 
