@@ -189,3 +189,12 @@ class CreateFtlFreightRateNotAvailable(BaseModel):
     commodity: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+
+class UpdateFtlFreightRatePlatformPrices(BaseModel):
+    origin_location_id: str
+    destination_location_id: str
+    truck_type: str
+    commodity_type: str = None
+    importer_exporter_id: str = None
+    is_line_items_error_messages_present: bool = False
+    
