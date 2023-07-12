@@ -10,7 +10,7 @@ from peewee import fn, SQL
 from math import ceil
 from micro_services.client import spot_search
 from database.rails_db import get_organization
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 
 possible_direct_filters = ['feedback_type','performed_by_id','status','closed_by_id','origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id']
@@ -92,7 +92,7 @@ def apply_similar_id_filter(query, filters):
 def get_data(query, spot_search_details_required, booking_details_required):
     if not booking_details_required:
         query = query.select()
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
     service_provider_ids = []
     for object in data:
         service_provider_ids.append(object.get('service_provider_id'))

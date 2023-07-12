@@ -1,6 +1,6 @@
 from datetime import datetime
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from peewee import fn, SQL
@@ -32,7 +32,7 @@ def get_data(query, sort_type, group_by):
     data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at).alias(f'date_trunc_{group_by}_haulage_freight_rates_temp_updated_at')
         ).group_by(fn.date_trunc(f'{group_by}', HaulageFreightRate.updated_at)
         ).order_by(eval(f"fn.date_trunc('{group_by}', HaulageFreightRate.updated_at).{sort_type}()")))
-    return jsonable_encoder(list(data.dicts()))[0]['count_all']
+    return json_encoder(list(data.dicts()))[0]['count_all']
 
 def apply_indirect_filters(query, filters):
   for key in filters:

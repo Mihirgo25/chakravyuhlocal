@@ -4,7 +4,7 @@ from libs.get_filters import get_filters
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 import services.haulage_freight_rate.interactions.list_haulage_freight_rates as list_haulage_freight_rate
 from libs.get_applicable_filters import get_applicable_filters
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from micro_services.client import common
 
 
@@ -156,7 +156,7 @@ def add_service_objects(data):
 
 
 def get_final_data(query):
-    raw_data = jsonable_encoder(list(query.dicts()))
+    raw_data = json_encoder(list(query.dicts()))
     return raw_data
 
 

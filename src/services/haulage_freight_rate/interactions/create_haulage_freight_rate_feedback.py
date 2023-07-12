@@ -3,7 +3,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFre
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from celery_worker import update_multiple_service_objects
 
 
@@ -80,7 +80,7 @@ def get_create_params(request):
     return params
     
 def create_audit(request):
-    request = jsonable_encoder(request)
+    request = json_encoder(request)
     audit_data = {key:value for key,value in request.items() if key != 'performed_by_id'}
 
     HaulageFreightRateAudit.create(

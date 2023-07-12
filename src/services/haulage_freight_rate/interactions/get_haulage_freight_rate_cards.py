@@ -17,7 +17,7 @@ from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from database.rails_db import get_organization, get_user, get_eligible_orgs, list_organization_users
 from micro_services.client import common, maps
 from itertools import groupby
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 
 def initialize_query(requirements, query):
@@ -107,7 +107,7 @@ def select_fields():
 
 
 def get_query_results(query):
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
     return data
 
 
@@ -432,7 +432,7 @@ def additional_response_data(data):
 
     # adding org users 
     audit_ids = list(map(lambda ids: ids["id"], data))
-    audits = jsonable_encoder(list(HaulageFreightRateAudit.select().where(HaulageFreightRateAudit.object_id<<audit_ids).dicts()))
+    audits = json_encoder(list(HaulageFreightRateAudit.select().where(HaulageFreightRateAudit.object_id<<audit_ids).dicts()))
     audit_sourced_by_id = []
     for audit_data in audits:
         audit_sourced_by_id.append(str(audit_data['sourced_by_id']))
