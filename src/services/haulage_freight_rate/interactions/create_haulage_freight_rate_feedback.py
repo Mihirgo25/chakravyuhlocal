@@ -19,14 +19,14 @@ def execute_transaction_code(request):
         {"id": created_rate_id}
     """
 
-    rate = HaulageFreightRate.select().where(HaulageFreightRate.id == request['rate_id']).first()
+    rate = HaulageFreightRate.select().where(HaulageFreightRate.id == request['haulage_freight_rate_id']).first()
 
     if not rate:
-        raise HTTPException(status_code=400, detail='{} is invalid'.format(request['rate_id']))
+        raise HTTPException(status_code=400, detail='{} is invalid'.format(request['haulage_freight_rate_id']))
     
     row  = {
         'status': 'active',
-        'haulage_freight_rate_id': request['rate_id'],
+        'haulage_freight_rate_id': request['haulage_freight_rate_id'],
         'source': request['source'],
         'source_id': request['source_id'],
         'performed_by_id': request['performed_by_id'],
@@ -36,7 +36,7 @@ def execute_transaction_code(request):
 
     feedback = HaulageFreightRateFeedback.select().where(
         HaulageFreightRateFeedback.status == 'active',
-        HaulageFreightRateFeedback.haulage_freight_rate_id == request['rate_id'],
+        HaulageFreightRateFeedback.haulage_freight_rate_id == request['haulage_freight_rate_id'],
         HaulageFreightRateFeedback.source == request['source'],
         HaulageFreightRateFeedback.source_id == request['source_id'],
         HaulageFreightRateFeedback.performed_by_id == request['performed_by_id'],
@@ -60,9 +60,9 @@ def execute_transaction_code(request):
     create_audit(request)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
-    return {'id': request['rate_id']}
+    return {'id': request['haulage_freight_rate_id']}
 
-
+ 
 def get_create_params(request):
     params = {
         'feedbacks': request.get('feedbacks'),
@@ -71,6 +71,12 @@ def get_create_params(request):
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
+        'origin_location_id': request.get('origin_location_id'),
+        'origin_city_id': request.get('origin_city_id'),
+        'origin_country_id': request.get('origin_country_id'),
+        'destination_location_id':request.get('destination_location_id'),
+        'destination_city_id': request.get('destination_city_id'),
+        'destination_country_id': request.get('destination_country_id')
     }
     return params
     

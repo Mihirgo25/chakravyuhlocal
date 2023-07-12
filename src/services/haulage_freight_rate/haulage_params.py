@@ -105,6 +105,12 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   closing_remarks: list[str] = None
   closed_by_id: str = None
   serial_id: int = None
+  origin_location_id: str = None
+  origin_city_id: str = None
+  origin_country_id: str = None
+  destination_location_id: str = None
+  destination_city_id: str = None
+  destination_country_id: str = None
   created_at: datetime = None
   updated_at: datetime = None
 
