@@ -37,7 +37,7 @@ class CostBookingEstimation(BaseModel):
     
 
     def set_attribute_objects(self):
-        from database.rails_db import get_shipping_line
+        from database.rails_db import get_operators
         location_ids = [str(self.origin_location_id), str(self.destination_location_id)]
 
         locations_response = maps.list_locations({ 'filters': { 'id': location_ids }})
@@ -50,7 +50,7 @@ class CostBookingEstimation(BaseModel):
                 if location['id'] == str(self.destination_location_id):
                     self.destination_location = location
         if self.shipping_line_id:
-            shipping_line_list = get_shipping_line(str(self.shipping_line_id))
+            shipping_line_list = get_operators(str(self.shipping_line_id))
 
             if shipping_line_list:
                 self.shipping_line = shipping_line_list[0]

@@ -95,7 +95,7 @@ class FclFreightRateSeasonalSurcharge(BaseModel):
                 raise HTTPException(status_code=400, detail="Location not found")
 
     def validate_shipping_line(self):
-        shipping_line = get_shipping_line(id=str(self.shipping_line_id))
+        shipping_line = get_operators(id=str(self.shipping_line_id))
         if shipping_line:
             shipping_line = shipping_line[0]
             shipping_line['id'] = str(shipping_line['id'])
