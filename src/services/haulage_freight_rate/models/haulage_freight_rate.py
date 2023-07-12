@@ -123,7 +123,10 @@ class HaulageFreightRate(BaseModel):
         self.origin_location_ids = []
         for id in ids:
             if is_valid_uuid(id):
-                self.origin_location_ids.append(uuid.UUID(id))
+                if type(id) == str:
+                    self.origin_location_ids.append(uuid.UUID(id))
+                else:
+                    self.origin_location_ids.append(id)
 
     def set_origin_location_type(self):
         self.origin_location_type = self.origin_location.get('type')
@@ -133,10 +136,12 @@ class HaulageFreightRate(BaseModel):
         self.destination_city_id = self.destination_location.get('city_id')
         self.destination_country_id = self.destination_location.get('country_id')
         ids = [self.destination_cluster_id, self.destination_city_id, self.destination_country_id, self.destination_location_id]
-        self.destination_location_ids = []
         for id in ids:
             if is_valid_uuid(id):
-                self.destination_location_ids.append(uuid.UUID(id))       
+                if type(id) == str:
+                    self.destination_location_ids.append(uuid.UUID(id))
+                else:
+                    self.destination_location_ids.append(id)
     
     def set_destination_location_type(self):
         self.destination_location_type = self.destination_location.get('type')
