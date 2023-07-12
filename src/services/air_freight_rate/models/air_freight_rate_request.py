@@ -81,7 +81,7 @@ class AirFreightRateRequest(BaseModel):
         table_name = "air_freight_rate_requests"
 
     def save(self, *args, **kwargs):
-        # self.updated_at = datetime.datetime.now()
+        self.updated_at = datetime.datetime.now()
         return super(AirFreightRateRequest, self).save(*args, **kwargs)
 
     def validate(self):
