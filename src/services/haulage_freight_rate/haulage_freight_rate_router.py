@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from params import *
 from rms_utils.auth import authorize_token
 import sentry_sdk
@@ -35,7 +35,7 @@ def get_haulage_freight_rate(
             container_size,
             cargo_weight_per_container,
         )
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise

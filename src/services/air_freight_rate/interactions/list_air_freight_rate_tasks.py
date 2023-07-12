@@ -10,7 +10,7 @@ from peewee import *
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
 import json
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 
@@ -33,7 +33,7 @@ def list_air_freight_rate_tasks(filters={},page_limit=10,page=1,sort_by = 'creat
     data=get_data(query,filters)
     stats=get_stats(filters,stats_required)
     return{
-        'list':jsonable_encoder(data)
+        'list':json_encoder(data)
     } | (pagination_data) |(stats)
 
 def apply_indirect_filters(query, filters):
@@ -73,7 +73,7 @@ def get_existing_system_rates(airport_ids,commodities,trade_types,airline_ids,co
 
     )
 
-    return jsonable_encoder(list(existing_system_rates.dicts()))
+    return json_encoder(list(existing_system_rates.dicts()))
 
 def get_shipment_and_sell_quotations(all_shipment_serial_ids):
     shipments = shipment.list_shipments({'filters': { 'serial_id': all_shipment_serial_ids},'page_limit':1000})['list']
@@ -102,7 +102,7 @@ def get_data(query,filters):
     new_data=[]
     air_freight_local_charges = AIR_FREIGHT_LOCAL_CHARGES
 
-    data_list = jsonable_encoder(list(query.dicts()))
+    data_list = json_encoder(list(query.dicts()))
     airport_ids = []
     commodities = []
     trade_types = []

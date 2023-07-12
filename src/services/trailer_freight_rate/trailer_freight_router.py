@@ -3,7 +3,7 @@ from rms_utils.auth import authorize_token
 from fastapi.responses import JSONResponse
 import sentry_sdk
 from services.trailer_freight_rate.interactions.get_estimated_trailer_freight_rate import get_estimated_trailer_freight_rate
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 trailer_router = APIRouter()
 
@@ -33,7 +33,7 @@ def get_trailer_freight_rate_estimate(
 
     try:
         data = get_estimated_trailer_freight_rate(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
