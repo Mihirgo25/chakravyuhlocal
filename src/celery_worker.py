@@ -45,6 +45,8 @@ from services.air_freight_rate.workers.send_air_freight_local_charges_update_rem
 from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
+from services.air_customs_rate.helpers import update_organization_air_customs
+
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -781,6 +783,8 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
             pass
         else:
             raise self.retry(exc= exc)@celery.task(bind = True, max_retries=5, retry_backoff = True)
+        
+@celery.task(bind = True, retry_backoff=True, max_retries=5) 
 def air_customs_functions_delay(self,air_customs_object,request):
     try:
         update_organization_air_customs(request)
