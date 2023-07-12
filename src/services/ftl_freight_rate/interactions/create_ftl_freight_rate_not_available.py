@@ -2,11 +2,6 @@ from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
 from database.rails_db import get_eligible_orgs
 from configs.ftl_freight_rate_constants import DEFAULT_RATE_TYPE
 
-def find_service_providers():
-    service_provider_ids = get_eligible_orgs('ftl_freight')
-    return service_provider_ids
-
-
 def create_ftl_freight_rate_not_available(request):
     service_provider_query = FtlFreightRate.select(FtlFreightRate.service_provider_id).distinct().where(
         FtlFreightRate.origin_location_id == request.get('origin_location_id'),
@@ -33,3 +28,7 @@ def create_ftl_freight_rate_not_available(request):
             rate_not_available_entry = True)
         
     return True
+
+def find_service_providers():
+    service_provider_ids = get_eligible_orgs('ftl_freight')
+    return service_provider_ids
