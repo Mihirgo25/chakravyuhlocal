@@ -158,21 +158,6 @@ class UpdateFtlFreightRateRequest(BaseModel):
     status: str = None
     remarks: str = None
     
-class UpdateFtlFreightRate(BaseModel):
-    id: str	    
-    performed_by_id: str
-    performed_by_type: str = None
-    procured_by_id: str
-    sourced_by_id: str	
-    bulk_operation_id: str = None	
-    truck_body_type: str	   
-    transit_time: int	 
-    detension_free_time: int	
-    validity_start: datetime	
-    validity_end: datetime	    
-    minimum_chargeable_weight: float = None	 
-    line_items: list[FtlLineItem]
-    
     
 class DeleteFtlFreightRateRequest(BaseModel):
     ftl_freight_rate_request_ids: List[str]
@@ -198,3 +183,26 @@ class UpdateFtlFreightRatePlatformPrices(BaseModel):
     importer_exporter_id: str = None
     is_line_items_error_messages_present: bool = False
     
+
+class UpdateFtlFreightRate(BaseModel):
+    id: str
+    performed_by_id: str
+    performed_by_type: str = None
+    procured_by_id: str
+    sourced_by_id: str
+    bulk_operation_id: str = None
+    truck_body_type: str
+    transit_time: int
+    detension_free_time: int
+    validity_start: datetime
+    validity_end: datetime
+    minimum_chargeable_weight: float = None
+    line_items: list[FtlLineItem]
+
+class DeleteFtlFreightRate(BaseModel):
+    id: str
+    performed_by_id: str
+    performed_by_type: str = None
+    sourced_by_id: str
+    procured_by_id: str
+    bulk_operation_id: str = None
