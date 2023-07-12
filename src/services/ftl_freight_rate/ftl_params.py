@@ -158,3 +158,18 @@ class UpdateFtlFreightRateRequest(BaseModel):
     status: str = None
     remarks: str = None
     performed_by_id: str
+
+class UpdateFtlFreightRate(BaseModel):
+    id: str
+    performed_by_id: str
+    performed_by_type: str = None
+    procured_by_id: str
+    sourced_by_id: str
+    bulk_operation_id: str = None
+    truck_body_type: str
+    transit_time: int
+    detension_free_time: int
+    validity_start: datetime
+    validity_end: datetime
+    minimum_chargeable_weight: float = None
+    line_items: list[FtlLineItem]
