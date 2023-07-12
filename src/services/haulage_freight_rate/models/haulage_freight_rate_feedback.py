@@ -50,6 +50,8 @@ class HaulageFreightRateFeedback(BaseModel):
     container_size=CharField(null=True)
     container_type=CharField(null=True)
     service_provider_id= UUIDField(null=True)
+    origin_location = BinaryJSONField(null=True)
+    destination_location = BinaryJSONField(null=True)
 
 
 

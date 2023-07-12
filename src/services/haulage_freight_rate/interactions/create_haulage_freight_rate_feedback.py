@@ -1,4 +1,3 @@
-
 from services.haulage_freight_rate.models.haulage_freight_rate_feedback import HaulageFreightRateFeedback
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
@@ -60,7 +59,7 @@ def execute_transaction_code(request):
     create_audit(request)
     update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
 
-    return {'id': request['haulage_freight_rate_id']}
+    return {'id': feedback.id}
 
  
 def get_create_params(request):

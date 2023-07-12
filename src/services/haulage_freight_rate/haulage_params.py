@@ -111,6 +111,8 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   destination_location_id: str = None
   destination_city_id: str = None
   destination_country_id: str = None
+  origin_location: dict = None
+  destination_location: dict = None
   created_at: datetime = None
   updated_at: datetime = None
 
