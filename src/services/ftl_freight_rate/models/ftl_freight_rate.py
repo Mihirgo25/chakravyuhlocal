@@ -6,6 +6,7 @@ from playhouse.postgres_ext import *
 from configs.ftl_freight_rate_constants import RATE_TYPES, BODY_TYPE, TRIP_TYPES, VALID_UNITS, COMMODITIES
 from micro_services.client  import maps, common
 from configs.definitions import FTL_FREIGHT_CHARGES
+from libs.get_applicable_filters import is_valid_uuid
 
 class UnknownField(object): 
     def __init__(self, *_, **__): pass
@@ -108,10 +109,15 @@ class FtlFreightRate(BaseModel):
         self.origin_cluster_id = self.origin_location.get('cluster_id')
         self.origin_city_id = self.origin_location.get('city_id')
         self.origin_country_id = self.origin_location.get('country_id')
-        if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', str(self.origin_cluster_id)):
-            self.origin_location_ids = [uuid.UUID(str(self.origin_location_id)), uuid.UUID(str(self.origin_cluster_id)),uuid.UUID(str(self.origin_city_id)),uuid.UUID(str(self.origin_country_id))]
-        else:
-            self.origin_location_ids = [uuid.UUID(str(self.origin_location_id)),uuid.UUID(str(self.origin_city_id)),uuid.UUID(str(self.origin_country_id))]
+        ids = [self.origin_location_id, self.origin_cluster_id, self.origin_city_id, self.origin_country_id]
+        self.origin_location_ids = []
+        for id in ids:
+            if is_valid_uuid(id):
+                if type(id) == str:
+                    self.origin_location_ids.append(uuid.UUID(id))
+                else:
+                    self.origin_location_ids.append(id)
+
 
     def set_origin_location_type(self):
         self.origin_location_type = self.origin_location.get('type')
@@ -120,10 +126,15 @@ class FtlFreightRate(BaseModel):
         self.destination_cluster_id = self.destination_location.get('cluster_id')
         self.destination_city_id = self.destination_location.get('city_id')
         self.destination_country_id = self.destination_location.get('country_id')
-        if re.match(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$', str(self.destination_cluster_id)):
-            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_cluster_id)),uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]
-        else:
-            self.destination_location_ids = [uuid.UUID(str(self.destination_location_id)), uuid.UUID(str(self.destination_city_id)),uuid.UUID(str(self.destination_country_id))]        
+        ids = [self.destination_location_id, self.destination_cluster_id, self.destination_city_id, self.destination_country_id]
+        self.destination_location_ids = []
+        for id in ids:
+            if is_valid_uuid(id):
+                if type(id) == str:
+                    self.destination_location_ids.append(uuid.UUID(id))
+                else:
+                    self.destination_location_ids.append(id)
+
     
     def set_destination_location_type(self):
         self.destination_location_type = self.destination_location.get('type')
@@ -208,7 +219,6 @@ class FtlFreightRate(BaseModel):
         return result
     
     def get_mandatory_line_items(self,mandatory_charge_codes):
-        print(self.line_items)
         mandatory_line_items = [line_item for line_item in self.line_items if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
         return mandatory_line_items
     

@@ -74,15 +74,15 @@ class UpdateFtlRuleSet(BaseModel):
     process_currency: str = None
     status: str = None
 
-    
+
 class CreateFuelData(BaseModel):
-    location_id: str 
+    location_id: str
     location_type: str
     fuel_type: str
     fuel_price: float
     fuel_unit: str
     currency:str
-        
+
 class FtlLineItem(BaseModel):
   code: str
   unit: str
@@ -121,7 +121,7 @@ class Package(BaseModel):
     height: float
     length: float
     width: float
-    
+
 class CreateFtlFreightRateRequest(BaseModel):
      source: str
      source_id: str
@@ -129,7 +129,7 @@ class CreateFtlFreightRateRequest(BaseModel):
      performed_by_org_id: str
      performed_by_type: str
      preferred_freight_rate: float = None
-     preferred_freight_rate_currency: str = None 
+     preferred_freight_rate_currency: str = None
      preferred_detention_free_days: int = None
      preferred_storage_free_days: int = None
      cargo_readiness_date: str = None
@@ -151,13 +151,12 @@ class CreateFtlFreightRateRequest(BaseModel):
      free_detention_hours: int = None
      trade_type: str = None
      packages: list[Package] = []
-     
+
 class UpdateFtlFreightRateRequest(BaseModel):
     ftl_freight_rate_request_id: str
-    closing_remarks: str 
+    closing_remarks: str
     status: str = None
     remarks: str = None
-    performed_by_id: str
     
 class DeleteFtlFreightRateRequest(BaseModel):
     ftl_freight_rate_request_ids: list[str]

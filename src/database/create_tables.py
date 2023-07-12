@@ -13,6 +13,5 @@ def create_table():
         print("Exception while creating table")
         raise
 
-
 if __name__ == "__main__":
     create_table()

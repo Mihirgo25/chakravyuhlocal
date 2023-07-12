@@ -19,7 +19,6 @@ def execute_transaction_code(request):
       raise HTTPException(status_code=400, detail="freight rate request is not found")
     
     for obj in objects:
-        print(obj)
         obj.status = 'inactive'
         obj.closed_by_id = request.get('performed_by_id')
 
