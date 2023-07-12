@@ -26,7 +26,8 @@ from services.ftl_freight_rate.interactions.get_truck_detail import get_truck_de
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate_request import create_ftl_freight_rate_request
 from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import update_ftl_freight_rate_request
-from services.ftl_freight_rate.interactions.list_ftl_freight_rate_requests import list_ftl_freight_rate_requests;
+from services.ftl_freight_rate.interactions.list_ftl_freight_rate_requests import list_ftl_freight_rate_requests
+from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_request import delete_ftl_freight_rate_request
 ftl_freight_router = APIRouter()
 
 
@@ -276,21 +277,41 @@ def update_ftl_freight_rate_request_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
-@ftl_freight_router.get("list_ftl_freight_rate_requests")
+
+@ftl_freight_router.post("/delete_ftl_freight_rate_request")
+def delete_ftl_freight_rate_request_api(
+    request: DeleteFtlFreightRateRequest, resp: dict = Depends(authorize_token)
+):
+    # if resp["status_code"] != 200:
+    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    # try:
+    data = delete_ftl_freight_rate_request(request.dict(exclude_none=True))
+    return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    # except HTTPException as e:
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(
+    #         status_code=500, content={"success": False, "error": str(e)}
+    #     )
+
+@ftl_freight_router.get("/list_ftl_freight_rate_requests")
 def list_ftl_freight_rate_request_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
     sort_by: str = "created_at",
     sort_type: str = "asc",
-    pagination_data_required: bool = False,
+    is_stats_required: bool = False,
+    spot_search_details_required: bool = False,
+    performed_by_id = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_ftl_freight_rate_requests(
-            filters, page_limit, page, sort_by, sort_type, pagination_data_required
+            filters, page_limit, page, sort_by, sort_type,is_stats_required,spot_search_details_required,performed_by_id
         )
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
