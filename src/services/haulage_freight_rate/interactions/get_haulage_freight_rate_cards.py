@@ -100,6 +100,8 @@ def select_fields():
         HaulageFreightRate.transit_time,
         HaulageFreightRate.detention_free_time,
         HaulageFreightRate.service_provider_id,
+        HaulageFreightRate.validity_start,
+        HaulageFreightRate.validity_end,
     )
     return freight_query
 
@@ -111,14 +113,16 @@ def get_query_results(query):
 
 def build_line_item_object(line_item, requirements):
     code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
-    try:
-        is_additional_service = code_config["tags"].get("additional_service")
-    except:
-        return False
-    if is_additional_service and requirements["additional_services"].get(
-        line_item["code"]
-    ):
+
+    # checking if additional_service is required in line item  
+    is_additional_service = code_config["tags"]
+
+    is_additional_service = True if 'additional_service' in is_additional_service else False
+
+    if is_additional_service and line_item["code"] not in requirements["additional_services"]:
         return
+    
+    # finding slab value
     slab_value = None
     if line_item.get("slabs"):
         if "slab_containers_count" in code_config["tags"]:
@@ -126,7 +130,7 @@ def build_line_item_object(line_item, requirements):
 
         if "slab_cargo_weight_per_container" in code_config["tags"]:
             slab_value = requirements["cargo_weight_per_container"]
-
+    # adding line item price currency as per slab value
     if slab_value:
         slabs = line_item["slabs"]
         slab = next(
@@ -141,10 +145,11 @@ def build_line_item_object(line_item, requirements):
             line_item["price"] = slab["price"]
             line_item["currency"] = slab["currency"]
 
+    # adding other neccessary info name, source
     keys_to_slice = ["code", "unit", "price", "currency", "remarks"]
     line_item = {key: line_item[key] for key in keys_to_slice if key in line_item}
     line_item["quantity"] = (
-        requirements["container_count"] if line_item["unit"] in ["per_container"] else 1
+        requirements["containers_count"] if line_item["unit"] in ["per_container"] else 1
     )
     line_item["total_price"] = line_item["quantity"] * line_item["price"]
     line_item["name"] = code_config["name"]
@@ -170,17 +175,29 @@ def build_response_object(result, requirements):
         "tags": [],
         "transit_time": result["transit_time"],
         "detention_free_time": result["detention_free_time"],
+        "trailer_type": result.get("trailer_type"),
+        "trailer_count": requirements.get("containers_count")
     }
+
+    #appeding tags for specific service_provider_id
     if (
         response_object["service_provider_id"]
         in CONFIRMED_INVENTORY["service_provider_ids"]
     ):
         response_object["tags"].append(CONFIRMED_INVENTORY["tags"])
+
+    # additional_services and charge code comparison
     additional_services = requirements["additional_services"]
-    # why is there a upcase here
-    if additional_services and additional_services - result["line_items"][0]["code"]:
+    if additional_services:
+        additional_services = [string.upper() for string in additional_services]
+
+    charger_codes = []
+    for codes in result["line_items"]:
+        charger_codes.append(codes['code'])  
+    if additional_services and list(set(additional_services) - set(charger_codes)):
         return False
-    # very doubbtful
+    
+    # modifying line items
     for line_item in result["line_items"]:
         if line_item["code"] == "FSC" and line_item["unit"] == "percentage_of_freight":
             for required_line_item in line_item:
@@ -401,12 +418,6 @@ def ignore_non_active_shipping_lines(data):
 
 
 def additional_response_data(data):
-    # names = list(
-    #     map(
-    #         lambda service_provider_id: service_provider_id["service_provider_id"], data
-    #     )
-    # )
-    # names = [user["name"] for user in users]
 
     # adding service provicer ids
     service_provider_ids = list(
@@ -421,41 +432,41 @@ def additional_response_data(data):
 
     # adding org users 
     audit_ids = list(map(lambda ids: ids["id"], data))
-    audits = list(HaulageFreightRateAudit.select().where(object_id=audit_ids).dicts())
-
+    audits = jsonable_encoder(list(HaulageFreightRateAudit.select().where(HaulageFreightRateAudit.object_id<<audit_ids).dicts()))
     audit_sourced_by_id = []
-    for data in audits:
-        audit_sourced_by_id.append(data['sourced_by_id'])
-    org_user_ids = list_organization_users(audit_sourced_by_id)
+    for audit_data in audits:
+        audit_sourced_by_id.append(str(audit_data['sourced_by_id']))
+    org_users = list_organization_users(audit_sourced_by_id)
 
     # adding users
-
     sourced_by_ids = list(
         map(lambda sourced_by_id: sourced_by_id["sourced_by_id"], audits)
     )
     users = get_user(id=sourced_by_ids)
-
     for addon_data in data:
-        service_providers = [
-            service_provider
-            for service_provider in service_providers
-            if service_provider["id"] == data["service_provider_id"]
-        ][0]["short_name"]
-        addon_data["service_provider_name"] = service_providers
+        for service_provider in service_providers:
+            if service_provider['id'] == addon_data['service_provider_id']:
+                addon_data["service_provider_name"] = service_provider['short_name']
+                break
+    
         audits_object = next(
             filter(lambda t: t["object_id"] == addon_data["id"], audits), None
         )
+        if not audits_object:
+            continue
         user = next(
+            filter(lambda t: t["id"] == audits_object["sourced_by_id"], org_users), None
+        ) or next(
             filter(lambda t: t["id"] == audits_object["sourced_by_id"], users), None
         )
-        # if not here then org user
-        addon_data["user_name"] = user["name"]
-        addon_data["user_contact"] = user["mobile_number"]
+        
+        addon_data["user_name"] = user.get("name")
+        addon_data["user_contact"] = user.get("mobile_number") or user.get("mobile_number_eformat")
         addon_data["last_updated_at"] = audits_object["updated_at"]
         addon_data["buy_rate_currency"] = "INR"
         addon_data["buy_rate"] = addon_data["line_items"]
         total_price = 0
-        for line_item in addon_data["line_item"]:
+        for line_item in addon_data["line_items"]:
             total_price += int(
                 common.get_money_exchange_for_fcl(
                     {
@@ -480,7 +491,7 @@ def get_haulage_freight_rate_cards(requirements):
        service_provider_id:
        shipping_line_id:
        haulage_type:
-       transport_mode_keyword:
+       transport_modes_keyword:
        transport_modes:
        transit_time:
        detention_free_time:
@@ -500,12 +511,25 @@ def get_haulage_freight_rate_cards(requirements):
     """
     
     try:
+        # select default required columns
         query = select_fields()
+
+        # initialize query with required conditions
         query = initialize_query(requirements, query)
+
+        # get data from generated query
         query_results = get_query_results(query)
+
+        # process and organize query results
         list = build_response_list(requirements, query_results)
+
+        # ignore non eligible service providers
         list = ignore_non_eligible_service_providers(requirements, list)
+
+        # ignore non active shipping lines
         list = ignore_non_active_shipping_lines(list)
+
+        # adding additional response data
         if requirements.get("include_additional_response_data"):
             list = additional_response_data(list)
         return {"list": list}
