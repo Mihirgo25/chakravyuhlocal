@@ -213,6 +213,8 @@ def delay_freight_rates(row,columns):
         param['mode'] = 'manual'
     if param['rate_type'] == 'general':
         param['rate_type'] = 'market_place'
+    init_key = f'{str(param.get("origin_airport_id"))}:{str(param["destination_airport_id"])}:{str(param["commodity"])}:{str(param["airline_id"])}:{str(param["service_provider_id"])}:{str(param["shipment_type"])}:{str(param["stacking_type"])}:{str(param["cogo_entity_id"] )}:{str(param["commodity_type"])}:{str(param["commodity_sub_type"])}:{str(param["price_type"])}:{str(param["rate_type"])}:{str(param["operation_type"])}:{str(param["mode"])}'
+    param['init_key'] = init_key
     obj = AirFreightRate(**param)
     validities = obj.validities
     new_validities = []
@@ -423,9 +425,12 @@ def run_migration():
     # air_freight_rate_locals_migration()
     # air_freight_rate_surcharge_migration()
     # air_freight_rate_tasks()
-    # air_freight_rate_migration()
+    air_freight_rate_migration()
     # rate_sheets()
-    update_locations_for_air_freight()
+    # update_locations_for_air_freight()
+    # set_all_airlines()
+    # set_all_sps()
+    update_locations_for_air_freight_surcharge()
 
 
 
@@ -542,6 +547,25 @@ def set_locations(location_ids,service,origin=False,destination=False,airport=Fa
         if rem and index==loops-1:
             limit = rem
 
+######################################################################################################
+def set_all_airlines():
+    from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+    from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
+    from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal 
+    from fastapi.encoders import jsonable_encoder
+    freight_rate_airline_ids = AirFreightRate.select(AirFreightRate.airline_id.distinct())
+    freight_rate_airline_ids = jsonable_encoder(list(freight_rate_airline_ids.dicts()))
+    set_airlines(airlines = freight_rate_airline_ids,service = 'AirFreightRate')
+
+    local_rate_ariline_ids = AirFreightRateLocal.select(AirFreightRateLocal.airline_id.distinct())
+    local_rate_ariline_ids = jsonable_encoder(list(local_rate_ariline_ids.dicts()))
+    set_airlines(airlines = local_rate_ariline_ids,service='AirFreightRateLocal')
+
+    surcharge_rate_airline_ids = AirFreightRateSurcharge.select(AirFreightRateSurcharge.airline_id.distinct())
+    surcharge_rate_airline_ids = jsonable_encoder(list(surcharge_rate_airline_ids.dicts()))
+    set_airlines(airlines = surcharge_rate_airline_ids,service='AirFreightRateSurcharge')
+
+
 
 def set_airlines(airlines,service):
     from services.air_freight_rate.models.air_freight_rate import AirFreightRate
@@ -563,21 +587,18 @@ def set_airlines(airlines,service):
         loops = loops+1
     
     for index in range(0,loops):
-        airline_temp = airlines[offset:offset+limit]
+        if rem and index==loops-1:
+            limit = rem
+        airline_temp = airlines_ids[offset:offset+limit]
         airlines = get_operators(id=airline_temp,operator_type= 'airline')
         offset = limit+offset
         if airlines:
             for airline in airlines:
                 if service == 'AirFreightRate':
-                    AirFreightRate.update(airline=airline).where(
+                    t = AirFreightRate.update(airline=airline).where(
                         AirFreightRate.airline_id == airline['id']
                         ).execute()
                 
-                if service == 'AirFreightRateRequest':
-                    AirFreightRateRequest.update(airline=airline).where(
-                        AirFreightRateRequest.airline_id == airline['id']
-                        ).execute()
-
                 if service == 'AirFreightRateSurcharge':
                     AirFreightRateSurcharge.update(airline=airline).where(
                         AirFreightRateSurcharge.airline_id == airline['id']
@@ -587,8 +608,72 @@ def set_airlines(airlines,service):
                     AirFreightRateLocal.update(airline=airline).where(
                         AirFreightRateLocal.airline_id == airline['id']
                     )
+
+
+#####################################################################################################
+
+def set_all_sps():
+    from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+    from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
+    from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal 
+    from fastapi.encoders import jsonable_encoder
+    freight_rate_service_provider_ids = AirFreightRate.select(AirFreightRate.service_provider_id.distinct())
+    freight_rate_service_provider_ids = jsonable_encoder(list(freight_rate_service_provider_ids.dicts()))
+    set_service_provider(service_providers = freight_rate_service_provider_ids,service = 'AirFreightRate')
+
+    local_rate_service_provider_ids = AirFreightRateLocal.select(AirFreightRateLocal.service_provider_id.distinct())
+    local_rate_service_provider_ids = jsonable_encoder(list(local_rate_service_provider_ids.dicts()))
+    set_service_provider(service_providers = local_rate_service_provider_ids,service='AirFreightRateLocal')
+
+    surcharge_rate_service_provider_ids = AirFreightRateSurcharge.select(AirFreightRateSurcharge.service_provider_id.distinct())
+    surcharge_rate_service_provider_ids = jsonable_encoder(list(surcharge_rate_service_provider_ids.dicts()))
+    set_service_provider(service_providers = surcharge_rate_service_provider_ids,service='AirFreightRateSurcharge')
+
+
+def set_service_provider(service_providers,service):
+    from services.air_freight_rate.models.air_freight_rate import AirFreightRate
+    from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
+    from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
+    from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
+    from database.rails_db import get_organization
+    service_provider_ids = []
+    for service_provider in service_providers:
+        service_provider_ids.append(service_provider['service_provider_id'])
+    
+    total_count = len(service_provider_ids)
+    offset = 0
+    limit = 200
+    loops = int(total_count/limit)
+    rem = total_count%limit
+    if rem:
+        loops = loops+1
+    
+    for index in range(0,loops):
         if rem and index==loops-1:
             limit = rem
+        service_provider_temp = service_provider_ids[offset:offset+limit]
+        service_providers = get_organization(id=service_provider_temp)
+        offset = limit+offset
+        if service_providers:
+            for sp in service_providers:
+                if service == 'AirFreightRate':
+                    t = AirFreightRate.update(service_provider=sp).where(
+                        AirFreightRate.service_provider_id == sp['id']
+                        ).execute()
+                
+                if service == 'AirFreightRateSurcharge':
+                    AirFreightRateSurcharge.update(service_provider=sp).where(
+                        AirFreightRateSurcharge.service_provider_id == sp['id']
+                        ).execute()                            
+
+                if service == 'AirFreightRateLocal':
+                    AirFreightRateLocal.update(service_provider=sp).where(
+                        AirFreightRateLocal.service_provider_id == sp['id']
+                    )
+
+
+
+
 
 
     
