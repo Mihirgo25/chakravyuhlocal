@@ -26,6 +26,7 @@ from services.ftl_freight_rate.interactions.get_truck_detail import get_truck_de
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate_request import create_ftl_freight_rate_request
 from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import update_ftl_freight_rate_request
+from services.ftl_freight_rate.interactions.list_ftl_freight_rates import list_ftl_freight_rates
 
 ftl_freight_router = APIRouter()
 
@@ -276,3 +277,25 @@ def update_ftl_freight_rate_request_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
+
+@ftl_freight_router.get("/list_ftl_freight_rates")
+def list_ftl_freight_rates_data(
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
+    all_rates_for_cogo_assured: bool = False,
+    return_count: bool = False,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = list_ftl_freight_rates(filters, page_limit, page, sort_by, sort_type, all_rates_for_cogo_assured, return_count)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
