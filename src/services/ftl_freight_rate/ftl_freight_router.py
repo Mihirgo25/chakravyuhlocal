@@ -28,6 +28,7 @@ from services.ftl_freight_rate.interactions.create_ftl_freight_rate_request impo
 from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import update_ftl_freight_rate_request
 from services.ftl_freight_rate.interactions.list_ftl_freight_rate_requests import list_ftl_freight_rate_requests;
 from services.ftl_freight_rate.interactions.list_ftl_freight_rates import list_ftl_freight_rates
+from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_request import delete_ftl_freight_rate_request
 
 ftl_freight_router = APIRouter()
 
@@ -304,7 +305,7 @@ def list_ftl_freight_rate_request_api(
         )
 
 @ftl_freight_router.get("/list_ftl_freight_rates")
-def list_ftl_freight_rates_data(
+def list_ftl_freight_rates_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
@@ -319,6 +320,22 @@ def list_ftl_freight_rates_data(
     try:
         data = list_ftl_freight_rates(filters, page_limit, page, sort_by, sort_type, all_rates_for_cogo_assured, return_count)
         return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@ftl_freight_router.post("/delete_ftl_freight_rate_request")
+def delete_ftl_freight_rate_request_api(request: DeleteFtlFreightRateRequest, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_ftl_freight_rate_request(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
