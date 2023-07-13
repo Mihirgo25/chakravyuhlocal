@@ -14,6 +14,7 @@ from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
+from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
 
 def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
@@ -822,6 +823,12 @@ def get_fcl_freight_rate_cards(requirements):
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
         is_predicted = False
+        
+        if len(freight_rates) == 0:
+            get_fcl_freight_rates_from_clusters(requirements)
+            initial_query = initialize_freight_query(requirements)
+            freight_rates = jsonable_encoder(list(initial_query.dicts()))
+            
         freight_rates_length = len(freight_rates)
         if freight_rates_length == 0:
             get_fcl_freight_predicted_rate(requirements)
