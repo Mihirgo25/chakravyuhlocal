@@ -52,7 +52,6 @@ class FclFreightVyuh():
         
         for rate in  all_rates:
             rate['extended_from_object_id'] = self.rate['id']
-        
 
         return all_rates
     
