@@ -31,6 +31,7 @@ from services.ftl_freight_rate.interactions.list_ftl_freight_rates import list_f
 from services.ftl_freight_rate.interactions.update_ftl_freight_rate import update_ftl_freight_rate
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate_not_available import create_ftl_freight_rate_not_available
 from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_request import delete_ftl_freight_rate_request
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate_addition_frequency import get_ftl_freight_rate_addition_frequency
 
 ftl_freight_router = APIRouter()
 
@@ -345,7 +346,7 @@ def update_ftl_freight_rate_api(request: UpdateFtlFreightRate, resp: dict = Depe
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
-    
+
 @ftl_freight_router.post("/delete_ftl_freight_rate_request")
 def delete_ftl_freight_rate_request_api(request: DeleteFtlFreightRateRequest, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
@@ -372,6 +373,24 @@ def create_ftl_freight_rate_not_available_data(request: CreateFtlFreightRateNotA
     try:
         rate = create_ftl_freight_rate_not_available(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@ftl_freight_router.get("/get_ftl_freight_rate_addition_frequency")
+def get_ftl_freight_rate_addition_frequency_api(
+    group_by: str,
+    filters: str = None,
+    sort_type: str = 'desc',
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        data = get_ftl_freight_rate_addition_frequency( group_by, filters, sort_type)
+        return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
     except Exception as e:
