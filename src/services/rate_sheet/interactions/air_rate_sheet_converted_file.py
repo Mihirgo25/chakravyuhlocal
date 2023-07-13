@@ -1,7 +1,6 @@
 import os, csv
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from micro_services.client import *
-
 from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.rate_sheet.interactions.validate_air_freight_object import (
     validate_air_freight_object,
@@ -9,7 +8,6 @@ from services.rate_sheet.interactions.validate_air_freight_object import (
 from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.helpers import *
 import chardet
-from micro_services.client import maps
 
 
 def get_airport_id(port_code, country_code):
@@ -102,7 +100,7 @@ def process_air_freight_freight(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not "".join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == "":
@@ -452,7 +450,7 @@ def process_air_freight_local(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not "".join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == "":
@@ -774,7 +772,7 @@ def process_air_freight_surcharge(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not "".join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == "":

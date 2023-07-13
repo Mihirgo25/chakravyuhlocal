@@ -14,20 +14,32 @@ def delete_air_freight_rate_data(request):
     if not air_freight_rate:
         raise HTTPException(status_code=400,detail="is invalid")
 
-    validities = air_freight_rate.validities
-    for validity in validities:
-        if validity['id']==request.get('validity_id'):
-            validity['status'] = False
+    for t in air_freight_rate.validities:
+        if t.get("id") == request.get("validity_id"):
+            air_freight_rate.set_validities(
+                None,
+                None,
+                t.get("min_price"),
+                t.get('currency'),
+                t.get("weight_slabs"),
+                True,
+                request.get("validity_id"),
+                t.get("density_category"),
+                t.get('density_ratio'),
+                t.get('initial_volume'),
+                t.get('initial_gross_weight'),
+                t.get('available_volume'),
+                t.get('available_gross_weight'),
+                air_freight_rate.rate_type,
+                t.get('likes_count'),
+                t.get('dislikes_count')
+            )
 
-    total_avaliable_validities=len(validities)
+    validities =  air_freight_rate.validities
+    total_avaliable_validities = len(validities)
 
-    if total_avaliable_validities ==1:
+    if total_avaliable_validities ==0:
         air_freight_rate.rate_not_available_entry=True
-
-    for validity in validities:
-        if validity.get("status"):
-            air_freight_rate.rate_not_available_entry=False
-            break
 
     if air_freight_rate.rate_not_available_entry==False:
         air_freight_rate.set_last_rate_available_date()

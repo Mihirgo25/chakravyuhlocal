@@ -1,7 +1,6 @@
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
-from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
+from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT,RATE_ENTITY_MAPPING
 from micro_services.client import *
-from services.air_freight_rate.constants.air_freight_rate_constants import RATE_ENTITY_MAPPING
 from math import ceil
 from peewee import fn, SQL
 import concurrent.futures, json

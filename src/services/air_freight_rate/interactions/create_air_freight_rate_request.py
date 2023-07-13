@@ -96,7 +96,7 @@ def execute_transaction_code(request):
                 request, request_object, air_freight_rate_request, airports
             )
             send_notification_to_supply_agents(
-                request, request_object, air_freight_rate_request, airports
+                 request_object, air_freight_rate_request, airports
             )
 
     return {"id": str(request_object.id)}
@@ -171,7 +171,7 @@ def send_notification_for_rates_not_found(request, request_object, air_freight_r
     create_communication_background.apply_async(kwargs={"data": notification_data}, queue="communication")
 
 
-def send_notification_to_supply_agents(request, request_object, air_freight_rate_request, airports):
+def send_notification_to_supply_agents( request_object, air_freight_rate_request, airports):
 
     supply_agents_data = get_partner_users_by_expertise("air_freight", airports[0], airports[1])
 

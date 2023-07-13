@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from configs.definitions import AIR_FREIGHT_SURCHARGES
 from micro_services.client import maps
 from services.air_freight_rate.constants.air_freight_rate_constants import *
-from database.rails_db import get_organization,get_shipping_line
+from database.rails_db import get_organization,get_operators
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -20,19 +20,19 @@ class BaseModel(Model):
 class AirFreightRateSurcharge(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     origin_airport_id=UUIDField(index=True,null=True)
-    origin_country_id=UUIDField(null=True)
-    origin_trade_id=UUIDField(null=True)
-    origin_continent_id=UUIDField(null=True)
+    origin_country_id=UUIDField(null=True,index=True)
+    origin_trade_id=UUIDField(null=True,index=True)
+    origin_continent_id=UUIDField(null=True,index=True)
     destination_airport_id=UUIDField(index=True,null=True)
-    destination_country_id=UUIDField(null=True)
-    destination_trade_id=UUIDField(null=True)
-    destination_continent_id=UUIDField(null=True)
+    destination_country_id=UUIDField(null=True,index=True)
+    destination_trade_id=UUIDField(null=True,index=True)
+    destination_continent_id=UUIDField(null=True,index=True)
     commodity=CharField(null=True,index=True)
-    commodity_type=CharField(null=True)
+    commodity_type=CharField(null=True,index=True)
     origin_airport=BinaryJSONField(null=True)
     destination_airport=BinaryJSONField(null=True)
-    airline_id=UUIDField(null=True)
-    service_provider_id=UUIDField(null=True)
+    airline_id=UUIDField(null=True,index=True)
+    service_provider_id=UUIDField(null=True,index=True)
     is_line_items_error_messages_present = BooleanField(null=True)
     is_line_items_info_messages_present = BooleanField(null=True)
     line_items = BinaryJSONField(null=True)
@@ -47,7 +47,7 @@ class AirFreightRateSurcharge(BaseModel):
     procured_by_id=UUIDField(null=True,index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
-    is_active=BooleanField(null=True)
+    rate_not_available_entry = BooleanField(null=True,default=False)
     updated_at=DateTimeField(default=datetime.datetime.now,index=True)
     created_at=DateTimeField(default=datetime.datetime.now,index=True)
 
@@ -186,7 +186,7 @@ class AirFreightRateSurcharge(BaseModel):
         raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
     
     def validate_airline_id(self):
-        airline_data = get_shipping_line(id=self.airline_id,operator_type='airline')
+        airline_data = get_operators(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True

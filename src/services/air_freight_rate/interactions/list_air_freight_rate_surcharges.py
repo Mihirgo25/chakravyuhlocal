@@ -1,12 +1,12 @@
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
 import json
 
 
-possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type']
+possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type','procured_by_id']
 possible_indirect_filters = ['location_ids']
 
 def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pagination_data_required=True, return_query = False, sort_by='updated_at', sort_type = 'desc'):
@@ -23,16 +23,16 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
    
                
     if return_query: 
-        return { 'list': jsonable_encoder(list(query.dicts())) }
+        return { 'list': json_encoder(list(query.dicts())) }
     
     pagination_data = get_pagination_data(query,page, page_limit, pagination_data_required)
     query = query.paginate(page, page_limit)
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
 
     return { 'list': data } | (pagination_data)
 
 def get_query(sort_by,sort_type):
-    query = AirFreightRateSurcharge.select().where(AirFreightRateSurcharge.is_active==True).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
+    query = AirFreightRateSurcharge.select().where(~(AirFreightRateSurcharge.rate_not_available_entry)).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):

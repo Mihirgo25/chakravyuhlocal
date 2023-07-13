@@ -9,7 +9,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, RATE_TYPES
 from libs.common_validations import validate_shipping_line
-from database.rails_db import get_shipping_line, get_organization
+from database.rails_db import get_operators, get_organization
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 
 # validate_validity_object
@@ -145,7 +145,7 @@ def get_port_id(port_code):
 
 def get_shipping_line_id(shipping_line_name):
     try:
-        shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
+        shipping_line_id = get_operators(short_name=shipping_line_name)[0]['id']
     except:
         shipping_line_id = None
     return shipping_line_id

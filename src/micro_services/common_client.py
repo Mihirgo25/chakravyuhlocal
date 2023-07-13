@@ -33,3 +33,6 @@ class CommonApiClient:
     
     def create_saas_air_schedule_airport_pair(self, data={}):
         return self.client.request('POST', 'create_saas_air_schedule_airport_pair', data)
+    
+    def get_air_routes_and_schedules_from_cargo_ai(self,data={}):
+        return self.client.request('GET','get_air_routes_and_schedules_from_cargo_ai',data)

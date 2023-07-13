@@ -28,9 +28,9 @@ class AirFreightRateTasks(BaseModel):
     trade_id=UUIDField(null=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
     commodity=CharField(null=True,index = True)
-    commodity_type=CharField(null=True)
-    logistics_service_type=CharField(null=True)
-    trade_type=CharField(null=True)
+    commodity_type=CharField(null=True,index=True)
+    logistics_service_type=CharField(null=True,index=True)
+    trade_type=CharField(null=True,index=True)
     airline_id=UUIDField(index=True,null=True)
     airline=BinaryJSONField(null=True)
     source=CharField(null=True)
@@ -39,7 +39,7 @@ class AirFreightRateTasks(BaseModel):
     status=CharField(null=True,index = True)
     completion_data=BinaryJSONField(null=True)
     completed_at=DateTimeField(default=datetime.datetime.now(),null=True)
-    completed_by_id=UUIDField(null=True)
+    completed_by_id=UUIDField(null=True,index=True)
     completed_by=BinaryJSONField(null=True)
     created_at=DateTimeField(default=datetime.datetime.now(),null=True)
     updated_at=DateTimeField(default=datetime.datetime.now(),null=True)
@@ -105,7 +105,7 @@ class AirFreightRateTasks(BaseModel):
         
     
     def validate_airline_id(self):
-        airline_data = get_shipping_line(id=str(self.airline_id))
+        airline_data = get_operators(id=str(self.airline_id))
         if airline_data:
             self.airline = airline_data[0]
         else:

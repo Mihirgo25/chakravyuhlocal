@@ -7,23 +7,22 @@ from micro_services.client import *
 from database.rails_db import *
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 import datetime
+from fastapi.encoders import jsonable_encoder
 
 
 class UnknownField(object):
     def __init__(self, *_, **__):
         pass
 
-
 class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
 
-
 class AirFreightRateFeedback(BaseModel):
-    air_freight_rate_id = UUIDField(null=True)
+    air_freight_rate_id = UUIDField(null=True,index=True)
     booking_params = BinaryJSONField(null=True)
-    closed_by_id = UUIDField(null=True)
+    closed_by_id = UUIDField(null=True,index=True)
     closing_remarks = ArrayField(
         constraints=[SQL("DEFAULT '{}'::character varying[]")],
         field_class=TextField,
@@ -33,9 +32,9 @@ class AirFreightRateFeedback(BaseModel):
     feedback_type = CharField(null=True)
     feedbacks = ArrayField(field_class=TextField, null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    performed_by_id = UUIDField(null=True)
+    performed_by_id = UUIDField(null=True,index=True)
     performed_by = BinaryJSONField(null=True)
-    performed_by_org_id = UUIDField(null=True)
+    performed_by_org_id = UUIDField(null=True,index=True)
     performed_by_org = BinaryJSONField(null=True)
     performed_by_type = CharField(null=True)
     preferred_airline_ids = ArrayField(field_class=UUIDField, null=True)
@@ -50,14 +49,14 @@ class AirFreightRateFeedback(BaseModel):
         ]
     )
     source = CharField(null=True)
-    source_id = UUIDField(null=True)
+    source_id = UUIDField(null=True,index=True)
     status = CharField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True)
     closed_by = BinaryJSONField(null=True)
-    reverted_rate_id = UUIDField(null=True)
-    reverted_validity_id = UUIDField(null=True)
+    reverted_rate_id = UUIDField(null=True, index=True)
+    reverted_rate= BinaryJSONField(null=True)
     origin_airport_id = UUIDField(null=True, index=True)
     origin_country_id = UUIDField(null=True, index=True)
     origin_continent_id = UUIDField(null=True, index=True)
@@ -68,8 +67,8 @@ class AirFreightRateFeedback(BaseModel):
     destination_trade_id = UUIDField(null=True, index=True)
     cogo_entity_id = UUIDField(null=True, index=True)
     service_provider_id = UUIDField(null=True, index=True)
-    commodity = TextField(null=True)
-    operation_type = TextField(null=True)
+    commodity = TextField(null=True,index=True)
+    operation_type = TextField(null=True,index=True)
     airline_id=UUIDField(null=True,index=True)
 
     class Meta:
@@ -168,63 +167,53 @@ class AirFreightRateFeedback(BaseModel):
             common.create_communication(data)
 
     def send_closed_notifications_to_sales_agent(self):
-        locations_data = (
-            AirFreightRate.select(
-                AirFreightRate.origin_airport_id,
-                AirFreightRate.origin_country_id,
-                AirFreightRate.origin_continent_id,
-                AirFreightRate.origin_trade_id,
-                AirFreightRate.destination_airport_id,
-                AirFreightRate.destination_country_id,
-                AirFreightRate.destination_continent_id,
-                AirFreightRate.destination_trade_id,
-            )
-            .where(AirFreightRate.id == self.air_freight_rate_id)
-            .first()
-        )
+        variables_data = {}
+        reverted_rates = AirFreightRate.select(AirFreightRate.airline_id,AirFreightRate.price_type).where(AirFreightRate.id == self.reverted_rate_id).first()
+        locations_data = AirFreightRate.select( 
+            AirFreightRate.origin_airport_id,
+            AirFreightRate.destination_airport_id,
+            AirFreightRate.airline_id,
+            AirFreightRate.price_type
+            ).where(AirFreightRate.id == self.air_freight_rate_id)
+        locations_data = jsonable_encoder(list(locations_data.dicts()))
+        variables_data['locations_data'] = locations_data[0]
+        reverted_airline = maps.list_operators({'filters': { 'id': reverted_rates.airline_id}})['list'][0]['short_name']
 
-        location_pair_name = maps.list_locations(
-            {
-                "filters": {
-                    "id": [
-                        str(locations_data.origin_airport_id),
-                        str(locations_data.destination_airport_id),
-                    ]
-                }
-            }
-        )["list"]
-        location_pair_name = {t["id"]: t["display_name"] for t in location_pair_name}
-
-        try:
-            importer_exporter_id = spot_search.get_spot_search(
-                {"id": str(self.source_id)}
-            )["detail"]["importer_exporter_id"]
-
-        except:
-            importer_exporter_id = None
-        origin_location = location_pair_name[str(locations_data.origin_airport_id)]
-        destination_location = location_pair_name[
-            str(locations_data.destination_airport_id)
-        ]
+        if reverted_rates:
+            variables_data['changed_components'] = ''
+            variables_data['changed_components'] += f'with new airline {reverted_airline}' if reverted_rates.airline_id != variables_data['locations_data']['airline_id'] else ""
+            variables_data['changed_components'] += f'with new price type {reverted_rates.price_type}' if reverted_rates.price_type != variables_data['locations_data']['price_type'] else ""
+            variables_data['changed_components'] += '.'
+        locations = [variables_data['locations_data']['origin_airport_id'],variables_data['locations_data']['destination_airport_id']]
+        variables_data['location_pair_name'] = maps.list_locations({'filters':{ 'id':locations }})['list']
+        variables_data['importer_exporter_id'] = spot_search.get_spot_search({'id':self.source_id})['detail']['importer_exporter_id']
+        
+        if variables_data['location_pair_name'][0]['id']==variables_data['locations_data']['origin_airport_id']:
+            location_pair_name = variables_data['location_pair_name']
+        else:
+            destination  = variables_data['location_pair_name'][0]
+            location_pair_name = [variables_data['location_pair_name'][1],destination]
+        locations_data = variables_data['locations_data']
+        importer_exporter_id = variables_data['importer_exporter_id']
+        changed_components = variables_data['changed_components']
 
         data = {
             "user_id": str(self.performed_by_id),
             "type": "platform_notification",
             "service": "air_freight_rate",
             "service_id": str(self.id),
-            "template_name": "freight_rate_feedback_completed_notification"
-            if ("rate_added" in self.closing_remarks)
-            else "freight_rate_feedback_closed_notification",
+            "template_name": "freight_rate_feedback_completed_notification_for_air" if ("rate_added" in self.closing_remarks) else "freight_rate_feedback_closed_notification",
             "variables": {
                 "service_type": "air freight",
-                "origin_location": origin_location,
-                "destination_location": destination_location,
+                "origin_location": location_pair_name[0],
+                "destination_location": location_pair_name[1],
                 "remarks": None
                 if ("rate_added" in self.closing_remarks)
                 else f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}",
                 "request_serial_id": str(self.serial_id),
                 "spot_search_id": str(self.source_id),
                 "importer_exporter_id": importer_exporter_id,
+                "changed_components" :changed_components
             },
         }
         common.create_communication(data)
@@ -242,7 +231,7 @@ class AirFreightRateFeedback(BaseModel):
             pass
         if self.preferred_airline_ids:
             # need to change the name to get operators name
-            airline_data = get_shipping_line(id=self.preferred_airline_ids)
+            airline_data = get_operators(id=self.preferred_airline_ids)
             if len(airline_data) != len(self.preferred_airline_ids):
                 raise HTTPException(status_code=400, detail="Invalid Shipping Line ID")
             self.preferred_airlines = airline_data
@@ -308,3 +297,22 @@ class AirFreightRateFeedback(BaseModel):
         # self.validate_source_id()
         # self.validate_performed_by_id()
         return True
+    
+    def send_notification_to_supply_agents(self,air_freight_rate,aiports):
+        if air_freight_rate.procured_by_id:
+            commodity = air_freight_rate.commodity
+            notification_data = {
+                'type': 'platform_notification',
+                'user_id': air_freight_rate.procured_by_id,
+                'service': 'air_freight_rate_dislike',
+                'service_id': self.id,
+                'template_name': 'freight_rate_disliked',
+                'variables': {
+                    'origin_port': aiports[0],
+                    'destination_port': aiports[1],
+                    'service_type': 'air freight',
+                    'details': "commodity : {}".format(commodity.upper())
+                }
+                }
+            common.create_communication(notification_data)
+

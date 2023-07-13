@@ -1,16 +1,23 @@
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
-
 DEFAULT_FACTOR = 0.89
-from configs.global_constants import *
 
 MAX_CARGO_LIMIT = 10000000.0
-REQUEST_SOURCES = ["spot_search", "shipment"]
 
-AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
+REQUEST_SOURCES = ["spot_search", "shipment"]
 
 AIR_TRADE_IMPORT_TYPE = "import"
 
+AIR_STANDARD_COMMODITIES = ['general', 'perishable', 'live_animals', 'pharma']
+
+AIR_HAZARDOUS_COMMODITIES = ['hazardous']
+
+AIR_GENERAL_COMMODITY_TYPE =['all']
+
+AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES = ['dangerous','temp_controlled', 'other_special']
+
 AIR_TRADE_EXPORT_TYPE = "export"
+
+AIR_EXPRESS_COMMODITIES = ['express']
 
 AIR_IMPORTS_HIGH_DENSITY_RATIO = 0.835
 
@@ -24,7 +31,28 @@ MAX_CARGO_LIMIT = 10000000.0
 
 COMMODITY = ["general", "special_consideration"]
 
+TEMP_CONTROLLED_COMMODITY_SUB_TYPE=['active_general_pharma','active_chilled','active_ambient','active_frozen','passive_general_pharma','passive_chilled','passive_ambient','passive_frozen']
+
+DANGEROUS_COMMODITY_SUB_TYPE = ['class_1.1',' class_1.2', 'class_1.3', 'class_1.4', 'class_1.5', 'class_1.6', 'class_2.1', 'class_2.2', 'class_2.3','class_3', 'class_4.1', 'class_4.3', 'class_5.1', 'class_5.2', 'class_6.1', 'class_6.2', 'class_7' 'class_8', 'class_9']
+
+
+OTHER_SPECIAL_COMMODITY_SUB_TYPE = ['valuables', 'perishable' ,'fragile', 'others']
+
+GENERAL_COMMODITY_SUB_TYPE=["all"]
+
+COMMODITY_TYPE_CODES = ['AUP', 'PER', 'FSD', 'PES', 'VUP', 'PEM', 'PAN']
+
+GENERAL_COMMODITY_SUB_TYPE_CODE = []
+
+SPECIAL_CONSIDERATION_COMMODITY_SUB_TYPE_CODE = []
+
 COMMODITY_TYPE = AIR_GENERAL_COMMODITY_TYPE + AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES
+
+ALL_COMMODITY = COMMODITY + AIR_GENERAL_COMMODITY_TYPE + GENERAL_COMMODITY_SUB_TYPE + GENERAL_COMMODITY_SUB_TYPE_CODE + AIR_SPECIAL_CONSIDERATION_COMMODITY_TYPES + TEMP_CONTROLLED_COMMODITY_SUB_TYPE + OTHER_SPECIAL_COMMODITY_SUB_TYPE + DANGEROUS_COMMODITY_SUB_TYPE + SPECIAL_CONSIDERATION_COMMODITY_SUB_TYPE_CODE
+
+COMMODITY_SUB_TYPE = GENERAL_COMMODITY_SUB_TYPE+DANGEROUS_COMMODITY_SUB_TYPE+TEMP_CONTROLLED_COMMODITY_SUB_TYPE+OTHER_SPECIAL_COMMODITY_SUB_TYPE
+
+COMMODITIES=AIR_EXPRESS_COMMODITIES+AIR_STANDARD_COMMODITIES+AIR_HAZARDOUS_COMMODITIES
 
 LOCAL_COMMODITIES = AIR_STANDARD_COMMODITIES + AIR_HAZARDOUS_COMMODITIES
 
@@ -36,15 +64,13 @@ DEFAULT_SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
 
 DEFAULT_PROCURED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
 
-FEEDBACK_TYPES = ["liked", "disliked"]
+DEFAULT_LOCAL_AGENT_ID = '536abfe7-eab8-4a43-a4c3-6ff318ce01b5'
 
 POSSIBLE_FEEDBACKS = [
     "unsatisfactory_rate",
     "unsatisfactory_destination_storage",
     "unpreferred_airlines",
 ]
-
-FEEDBACK_SOURCES = ["spot_search", "checkout"]
 
 REQUEST_SOURCES = ["spot_search", "shipment"]
 
@@ -57,9 +83,8 @@ PRICE_TYPES = ["net_net", "all_in"]
 COMMODITY = ["general", "special_consideration"]
 
 PACKING_TYPE = ["pallet", "box", "crate", "loose"]
-HANDLING_TYPE = ["stackable", "non_stackable"]
 
-COMMODITY_SUB_TYPE = []
+HANDLING_TYPE = ["stackable", "non_stackable"]
 
 RATE_TYPES = ["market_place", "promotional", "consolidated", "cogo_assured", "general"]
 
@@ -82,11 +107,7 @@ DEFAULT_AIRLINE_IDS = [
     "3a8dc0d2-2bb9-40f4-b9c4-993b6bf273e4",
 ]
 
-COGOLENS_URL = "https://lens.cogoport.com/cogolens/create_air_freight_rate_prediction"
-
 SLAB_WISE_CHANGE_FACTOR = 0.89
-
-COGO_ENVISION_ID = "2dbe768e-929d-4e54-baf0-309ef68c978b"
 
 AIRLINE_IDS_WITH_CUSTOM_WEIGHT_SLABS = [
     "6e557d55-82df-43a1-b609-d613292bcbf7",
@@ -125,10 +146,14 @@ DEFAULT_WEIGHT_SLABS = [
     },
 
     {"lower_limit": 100.1, 
-     "upper_limit": 250
+     "upper_limit": 300
     },
     
-    {"lower_limit": 250.1, 
+    {"lower_limit": 300.1, 
      "upper_limit": 500
     },
 ]
+
+DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
+
+CARGOAI_ACTIVE_ON_DISLIKE_RATE = False

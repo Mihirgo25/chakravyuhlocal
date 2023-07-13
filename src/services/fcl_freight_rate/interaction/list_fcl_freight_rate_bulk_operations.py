@@ -1,11 +1,11 @@
 from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from services.fcl_freight_rate.models.fcl_freight_rate_bulk_operation import FclFreightRateBulkOperation
 from math import ceil 
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.parse_numeric import parse_numeric
 from libs.get_applicable_filters import get_applicable_filters
-from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_progress_percent
+from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import get_progress_percent, get_total_affected_rates
 import json
 
 possible_direct_filters = ['action_name', 'service_provider_id', 'performed_by_id', ]
@@ -24,7 +24,7 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
 
     pagination_data = get_pagination_data(query, page, page_limit)
     query = query.paginate(page, page_limit)
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
     data = get_details(data)
 
     return {'list': data } | (pagination_data)
@@ -49,6 +49,8 @@ def apply_indirect_filters(query, filters):
 def get_details(data):
     for d in data: 
         progress = parse_numeric(d.get('progress')) or 0
+        total_affected_rates = parse_numeric(d['data'].get('total_affected_rates')) or 0
+        d['data']['total_affected_rates'] = get_total_affected_rates(str(d['id']), total_affected_rates)
         d['progress'] = 100 if progress == 100 else min(get_progress_percent(str(d['id']), progress), 100)
     return data
 

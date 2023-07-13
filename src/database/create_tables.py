@@ -8,7 +8,6 @@ from services.air_freight_rate.models.air_freight_rate_property import AirFreigh
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
-from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
 from services.air_freight_rate.models.air_freight_warehouse_rate import AirFreightWarehouseRates
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
@@ -17,7 +16,21 @@ from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 def create_table():
     # db.connect()
     try:
-        db.create_tables([AirFreightRateFeedback])
+        db.create_tables(
+            [
+                AirFreightRate,
+                AirFreightRateAudit,
+                AirFreightRateBulkOperation,
+                AirFreightRateFeedback,
+                AirFreightRateLocal,
+                AirFreightRateProperty,
+                AirFreightRateRequest,
+                AirFreightRateSurcharge,
+                AirFreightRateTasks,
+                AirFreightStorageRates,
+                AirFreightWarehouseRates
+            ]
+        )
         db.close()
         print("created table")
     except:

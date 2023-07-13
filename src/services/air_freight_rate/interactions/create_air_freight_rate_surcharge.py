@@ -60,8 +60,9 @@ def execute_transaction_code(request):
     surcharge.update_freight_objects()
 
     surcharge.update_line_item_messages()
-
-    surcharge.validate()
+    
+    if 'rate_sheet_validation' not in request:
+        surcharge.validate()
 
     surcharge.sourced_by_id = request.get('sourced_by_id')
 
@@ -88,16 +89,3 @@ def add_line_item(old_line_items, line_item):
     if is_new_line_item:
         old_line_items.append(line_item)
     return old_line_items
-
-
-        
-
-
-
-
-
-
-
-
-    
-

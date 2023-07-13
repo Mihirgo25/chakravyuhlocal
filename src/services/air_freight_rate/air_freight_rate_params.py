@@ -401,7 +401,7 @@ class CreateAirFreightRateParams(BaseModel):
     length: int = 300
     breadth: int = 300
     height: int = 300
-    maximum_weight: int = 1000
+    maximum_weight: int = 20000
     shipment_type: str = "box"
     stacking_type: str = "stackable"
     rate_type: str = "market_place"
@@ -413,17 +413,30 @@ class CreateAirFreightRateParams(BaseModel):
     validity_start: datetime
     validity_end: datetime
     external_rate_id: str = None
-    mode: str = None
+    mode: str = 'manual'
     flight_uuid: str = None
     air_freight_rate_request_id: str = None
+    is_weight_slabs_required:bool = False
 
+class LineItem(BaseModel):
+    code: str
+    unit: str
+    price: float
+    currency: str
+    remarks: list[str] = []
+    quantity:float 
 
+class RevertedRateParams(BaseModel):
+    id:str
+    validity_id:str
+    weight_slabs:List[WeightSlab]
 class DeleteAirFreightRateFeedbackParams(BaseModel):
     air_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
     reverted_rate_id: str = None
-    reverted_validity_id: str = None
+    reverted_rate: RevertedRateParams = None
+
 
 
 class CreateAirFreightStorageRateParams(BaseModel):

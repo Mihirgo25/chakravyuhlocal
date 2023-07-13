@@ -28,6 +28,8 @@ class AirFreightRateValidity(BaseModel):
     available_gross_weight: float = None
     min_density_weight: float = None
     max_density_weight: float = None
+    flight_uuid: str = None
+    external_rate_id: str = None
 
     # class Config:
     #     orm_mode = True
