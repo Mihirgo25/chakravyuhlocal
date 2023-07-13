@@ -34,6 +34,7 @@ from services.ftl_freight_rate.interactions.delete_ftl_freight_rate_request impo
 from services.ftl_freight_rate.interactions.update_ftl_freight_rate_platform_prices import update_ftl_freight_rate_platform_prices
 from services.ftl_freight_rate.interactions.delete_ftl_freight_rate import delete_ftl_freight_rate
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_addition_frequency import get_ftl_freight_rate_addition_frequency
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate_visibility import get_ftl_freight_rate_visibility
 
 ftl_freight_router = APIRouter()
 
@@ -422,6 +423,39 @@ def get_ftl_freight_rate_addition_frequency_api(
     try:
         data = get_ftl_freight_rate_addition_frequency( group_by, filters, sort_type)
         return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@ftl_freight_router.get("/get_ftl_freight_rate_visibility")
+def get_ftl_freight_rate_visibility_api(
+    service_provider_id: str,
+    origin_location_id: str = None,
+    destination_location_id: str = None,
+    from_date: datetime = None,
+    to_date: datetime = None,
+    rate_id: str = None,
+    truck_type: str = None,
+    commodity: str = None,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'service_provider_id' : service_provider_id,
+        'origin_location_id': origin_location_id,
+        'destination_location_id': destination_location_id,
+        'from_date': from_date,
+        'to_date': to_date,
+        'rate_id': rate_id,
+        'truck_type': truck_type,
+        'commodity': commodity
+    }
+    try:
+        data = get_ftl_freight_rate_visibility(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
