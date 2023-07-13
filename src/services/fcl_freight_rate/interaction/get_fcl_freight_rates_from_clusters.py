@@ -125,8 +125,6 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
     return create_params
 
 def convert_date_format(date):
-    if not date:
-        return date
     parsed_date = parser.parse(date, dayfirst=True)
     return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
         
