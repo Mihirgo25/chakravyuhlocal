@@ -18,8 +18,8 @@ SQL = pw.SQL
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """write here"""
-    # migrator.add_fields(FclFreightRateAudit, extended_from_object_id=UUIDField(index=True,null=True))  
-    # migrator.sql('Create index fcl_freight_rate_audit_source on fcl_freight_rate_audits (source) ;')
-    # migrator.sql('Create index fcl_freight_rate_audit_extended_from_object_id on fcl_freight_rate_audits (extended_from_object_id) ;')
+    migrator.add_fields(FclFreightRateAudit, extended_from_object_id=UUIDField(index=True,null=True))  
+    migrator.sql('Create index fcl_freight_rate_audit_source on fcl_freight_rate_audits (source) ;')
+    migrator.sql('Create index fcl_freight_rate_audit_extended_from_object_id on fcl_freight_rate_audits (extended_from_object_id) ;')
 def rollback(migrator: Migrator, database, fake=False, **kwargs):
     pass
