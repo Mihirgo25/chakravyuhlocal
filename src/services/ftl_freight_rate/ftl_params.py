@@ -206,3 +206,27 @@ class DeleteFtlFreightRate(BaseModel):
     sourced_by_id: str
     procured_by_id: str
     bulk_operation_id: str = None
+
+class CreateFtlFreightRateFeedback(BaseModel):
+    source: str
+    source_id: str
+    performed_by_id: str = None
+    performed_by_org_id: str
+    performed_by_type: str = None
+    rate_id: str
+    likes_count: int
+    dislikes_count: int
+    feedbacks: list[str] = []
+    remarks: list[str] = []
+    preferred_freight_rate: float = None
+    preferred_freight_rate_currency: str = None
+    feedback_type: str
+    booking_params: dict = {}
+
+class DeleteFtlFreightRateFeedback(BaseModel):
+    ftl_freight_rate_feedback_ids: List[str]
+    closing_remarks: List[str] = []
+    performed_by_id: str = None
+    performed_by_type: str = None
+
+    
