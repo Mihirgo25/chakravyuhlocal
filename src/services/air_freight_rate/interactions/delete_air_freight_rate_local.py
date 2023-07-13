@@ -19,7 +19,7 @@ def execute_transaction_code(request):
     if not air_freight_rate_local:
         raise HTTPException(status_code=400, detail="not found")
 
-    air_freight_rate_local.rate_not_available_entry = False
+    air_freight_rate_local.rate_not_available_entry = True
 
     create_audit(request, air_freight_rate_local.id)
 
