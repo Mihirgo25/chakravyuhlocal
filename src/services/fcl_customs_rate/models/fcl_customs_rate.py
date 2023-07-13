@@ -104,7 +104,7 @@ class FclCustomsRate(BaseModel):
         if location:
             self.location = location[0]
         else:
-            self.location = []
+            self.location = {}
 
     def validate_trade_type(self):
         if self.trade_type and self.trade_type in TRADE_TYPES:
