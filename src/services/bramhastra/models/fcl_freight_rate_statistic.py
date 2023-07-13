@@ -1,4 +1,4 @@
-from peewee import Model, BigAutoField, UUIDField, FloatField, IntegerField, CharField
+from peewee import Model, BigAutoField, UUIDField, FloatField, IntegerField, CharField, TextField
 import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, ArrayField, BinaryJSONField
@@ -12,6 +12,8 @@ class BaseModel(Model):
 
 class FclFreightRateStatistic(BaseModel):
     id = BigAutoField()
+    clickhouse_id = IntegerField(default=0)
+    identifier = TextField()
     validity_id = UUIDField()
     rate_id = UUIDField()
     origin_port_id = UUIDField(null=True)
@@ -33,15 +35,15 @@ class FclFreightRateStatistic(BaseModel):
     line_items = BinaryJSONField()
     shipping_line_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
-    accuracy = FloatField()
+    accuracy = FloatField(default=-1.0)
     source = CharField()
     mode = CharField()
-    likes_count = IntegerField()
-    dislikes_count = IntegerField()
-    spot_search_count = IntegerField()
-    quotations_created = IntegerField()
-    checkout_count = IntegerField()
-    bookings_created = IntegerField()
+    likes_count = IntegerField(default=0)
+    dislikes_count = IntegerField(default=0)
+    spot_search_count = IntegerField(default=0)
+    quotations_created = IntegerField(default=0)
+    checkout_count = IntegerField(default=0)
+    bookings_created = IntegerField(default=0)
     rate_created_at = DateTimeTZField()
     rate_updated_at = DateTimeTZField()
     validity_created_at = DateTimeTZField()
@@ -79,8 +81,10 @@ class FclFreightRateStatistic(BaseModel):
         IntegerField(default=0)
     )
     shipment_booking_rate_is_too_low_count = IntegerField(default=0)
+    average_booking_rate = FloatField(default=-1.0)
     created_at = DateTimeTZField()
     updated_at = DateTimeTZField()
+    version = IntegerField(default=1)
     status = CharField()
 
     def save(self, *args, **kwargs):
