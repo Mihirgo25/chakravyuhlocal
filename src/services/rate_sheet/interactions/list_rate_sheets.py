@@ -1,7 +1,7 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from libs.get_filters import get_filters
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from peewee import *
 from database.db_session import rd
 from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_total_line, get_current_processing_line
-from services.rate_sheet.interactions.fcl_rate_sheet_converted_file import get_processed_percent
+from services.rate_sheet.helpers import get_processed_percent
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'agent_id', 'service_provider_id', 'status', 'service_name', 'serial_id', 'cogo_entity_id']
 POSSIBLE_INDIRECT_FILTERS = ['performed_by_id', 'partner_id']
@@ -165,7 +165,7 @@ def add_service_objects(data):
 
 def get_final_data(query):
     data = list(query.dicts())
-    final_data = jsonable_encoder(data)
+    final_data = json_encoder(data)
     final_data = detail(final_data)
     audit_ids = []
     audit_ids = [data['id'] for data in final_data]
@@ -174,7 +174,6 @@ def get_final_data(query):
     for object in final_data:
         # assumption here
         rates_count_sum=0
-        object['updated_at'] = datetime.fromisoformat(object['updated_at']) +timedelta(hours=5, minutes=30)
 
         if 'converted_files' in object:
             if object.get('converted_files'):
@@ -186,7 +185,7 @@ def get_final_data(query):
         object['procured_by_id'] = rate_sheet_audit.get('procured_by_id')
         object['performed_by_id'] = rate_sheet_audit.get('performed_by_id')
     final_data = add_service_objects(final_data)
-    final_data = jsonable_encoder(final_data)
+    final_data = json_encoder(final_data)
     return final_data
 
 

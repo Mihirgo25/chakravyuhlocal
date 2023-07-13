@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 import json
 from datetime import datetime
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from micro_services.client import *
@@ -64,7 +64,7 @@ def get_query(sort_by, sort_type, page, page_limit):
 def get_data(query):
     data = []
 
-    all_list = jsonable_encoder(list(query.dicts()))
+    all_list = json_encoder(list(query.dicts()))
 
     for result in all_list:
         result['line_items'] = result['data'].get('line_items')
