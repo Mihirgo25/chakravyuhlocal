@@ -19,7 +19,7 @@ class AirCustomsRate(BaseModel):
     airport_id = UUIDField(index=True, null= True)
     country_id = UUIDField(index=True, null= True)
     trade_id = UUIDField(index=True, null=True)
-    continent_id = UUIDField(index=True, null=True)
+    continent_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     commodity = CharField(null=True, index=True)
     service_provider_id = UUIDField(index=True, null = True)

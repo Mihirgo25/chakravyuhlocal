@@ -273,7 +273,7 @@ def list_air_customs_charge_codes_api(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_customs_router.get("/get_air_customs_rate_cards")
-def get_air_cutsoms_rate_cards_api(
+def get_air_customs_rate_cards_api(
     airport_id: str,
     trade_type: str,
     weight : float,

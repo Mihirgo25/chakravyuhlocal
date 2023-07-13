@@ -34,7 +34,10 @@ def get_data(query):
     data = list(query.dicts())
 
     for object in data:
-        object['total_price_currency'] = 'INR'
+        if object['line_items']:
+            object['total_price_currency'] = object['line_items'][0].get('currency')
+        else:
+            object['total_price_currency'] = 'INR'
         object['total_price'] = get_total_price(object['line_items'], object['total_price_currency'])
 
     return data

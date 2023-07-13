@@ -244,7 +244,7 @@ class FclCfsRate(BaseModel):
  
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CFS_CHARGES.get(code)
-            location = self.location
+
             if code_config is None:
                 self.line_items_error_messages[code] = ['is invalid']
                 self.is_line_items_error_messages_present = True
