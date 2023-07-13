@@ -136,6 +136,7 @@ class HaulageFreightRate(BaseModel):
         self.destination_city_id = self.destination_location.get('city_id')
         self.destination_country_id = self.destination_location.get('country_id')
         ids = [self.destination_cluster_id, self.destination_city_id, self.destination_country_id, self.destination_location_id]
+        self.destination_location_ids = []
         for id in ids:
             if is_valid_uuid(id):
                 if type(id) == str:
@@ -150,7 +151,10 @@ class HaulageFreightRate(BaseModel):
         self.origin_destination_location_type = ':'.join([str(self.origin_location_type),str(self.destination_location_type)])
     
     def validate_validity_object(self, validity_start, validity_end):
-        if self.transport_modes[0] != 'trailer':
+        if not self.transport_modes:
+            raise HTTPException(status_code=400, detail="transport mode can't be empty")
+
+        if self.transport_modes[0] != 'trailer' :
             return
         
         if not validity_start:
@@ -158,6 +162,7 @@ class HaulageFreightRate(BaseModel):
         
         if not validity_end:
             raise HTTPException(status_code=400, detail="validity_end is invalid")
+
         if validity_end < validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
     
@@ -238,19 +243,6 @@ class HaulageFreightRate(BaseModel):
         self.validate_invalid_line_items()
         self.validate_slabs()
         return True
-
-    def validate_validity_object(self, validity_start, validity_end):
-        if self.transport_modes[0] != 'trailer':
-            return
-        
-        if not validity_start:
-            raise HTTPException(status_code=400, detail="validity_start is invalid")
-        
-        if not validity_end:
-            raise HTTPException(status_code=400, detail="validity_end is invalid")
-
-        if validity_end < validity_start:
-            raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
         
       
     def get_mandatory_line_items(self,mandatory_charge_codes):
@@ -464,7 +456,7 @@ class HaulageFreightRate(BaseModel):
         ).execute()
 
     def validate_slabs(self):
-        # if 'slabs' in  self.line_items[0]:
+        # check once
         slabs = self.line_items[0].get('slabs') or []
         for index, slab in enumerate(slabs):
             if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index!=0 and float(slab['lower_limit'])<= float(slabs[index-1]['upper_limit'])):

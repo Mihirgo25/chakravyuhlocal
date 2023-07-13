@@ -14,7 +14,7 @@ def get_haulage_freight_rate_addition_frequency(group_by, filters = {}, sort_typ
     """
     Get Haulage Freight Rate Addition Frequency
     Response Format:
-        returns a intrages of total frequency count that is used in partner user rate stats
+        returns a integer of total frequency count that is used in partner user rate stats
     """
     query = HaulageFreightRate.select().where(HaulageFreightRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
     if filters:

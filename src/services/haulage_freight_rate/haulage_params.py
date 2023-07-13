@@ -94,11 +94,11 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   haulage_freight_rate_id: str = None
   performed_by_id: str
   performed_by_org_id: str
+  dislikes_count: int = None
+  likes_count: int = None
   performed_by_type: str = None
   preferred_freight_rate: float = None
   preferred_freight_rate_currency: str = None
-  outcome: str = None
-  outcome_object_id: str = None
   booking_params: dict = {}
   feedback_type: str
   status: str = None
@@ -113,6 +113,10 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   destination_country_id: str = None
   origin_location: dict = None
   destination_location: dict = None
+  container_size: str = None
+  container_type: str = None
+  commodity: str = None
+  service_provider_id: str = None
   created_at: datetime = None
   updated_at: datetime = None
 

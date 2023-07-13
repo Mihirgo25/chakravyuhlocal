@@ -52,11 +52,11 @@ def initialize_query(requirements, query):
         )
     if origin_location_ids:
         freight_query = freight_query.where(
-            HaulageFreightRate.origin_location_id == origin_location_ids
+            HaulageFreightRate.origin_location_id << origin_location_ids
         )
     if destination_location_ids:
         freight_query = freight_query.where(
-            HaulageFreightRate.destination_location_id == destination_location_ids
+            HaulageFreightRate.destination_location_id << destination_location_ids
         )
     if requirements.get("shipping_line_id"):
         freight_query = freight_query.where(
@@ -190,13 +190,13 @@ def build_response_object(result, requirements):
     additional_services = requirements["additional_services"]
     if additional_services:
         additional_services = [string.upper() for string in additional_services]
-
+    additional_services = list(filter(None, additional_services))
     charger_codes = []
     for codes in result["line_items"]:
-        charger_codes.append(codes['code'])  
+        charger_codes.append(codes['code']) 
+    
     if additional_services and list(set(additional_services) - set(charger_codes)):
         return False
-    
     # modifying line items
     for line_item in result["line_items"]:
         if line_item["code"] == "FSC" and line_item["unit"] == "percentage_of_freight":

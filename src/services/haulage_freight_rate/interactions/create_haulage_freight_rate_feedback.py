@@ -75,7 +75,13 @@ def get_create_params(request):
         'origin_country_id': request.get('origin_country_id'),
         'destination_location_id':request.get('destination_location_id'),
         'destination_city_id': request.get('destination_city_id'),
-        'destination_country_id': request.get('destination_country_id')
+        'destination_country_id': request.get('destination_country_id'),
+        'origin_location': request.get('origin_location'),
+        'destination_location': request.get('destination_location'),
+        'service_provider_id': request.get('service_provider_id'),
+        'container_type': request.get('container_type'),
+        'container_size': request.get('container_size'),
+        'commodity': request.get('commodity'),
     }
     return params
     

@@ -18,6 +18,8 @@ def get_trailer_freight_rate_estimation(request):
     cargo_weight_per_container = request.get('cargo_weight_per_container')
     if not request.get('trip_type'):
         trip_type = DEFAULT_TRIP_TYPE
+    else:
+        trip_type = request.get('trip_type')
 
     req={"origin_location_id" : origin_location_id,
         "destination_location_id" : destination_location_id,

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from libs.json_encoder import json_encoder
-import traceback
+import traceback, json
 from rms_utils.auth import authorize_token
 import sentry_sdk
 from fastapi import HTTPException, Query
@@ -120,7 +120,7 @@ def get_haulage_freight_rate_data(
     service_provider_id: str = None,
     importer_exporter_id: str = None,
     shipping_line_id: str = None,
-    transport_modes: Union[List[str], None] = Query(None),
+    transport_modes: str = None,
     trip_type: str = None,
     transit_time: int = None,
     detention_free_time: int = None,
@@ -129,6 +129,10 @@ def get_haulage_freight_rate_data(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
+    if transport_modes:
+        transport_modes = json.loads(transport_modes)
+    else:
+        transport_modes = []
     request = {
         "origin_location_id": origin_location_id,
         "destination_location_id": destination_location_id,
@@ -147,7 +151,7 @@ def get_haulage_freight_rate_data(
         "detention_free_time": detention_free_time,
         "trailer_type": trailer_type,
     }
-
+    request = {key: value for key, value in request.items() if value is not None}
     try:
         data = get_haulage_freight_rate(request)
         data = json_encoder(data)
@@ -490,7 +494,7 @@ def get_haulage_freight_rate_cards_data(
     destination_country_id: str = None,
     commodity: str = None,
     shipping_line_id: str = None,
-    haulage_type: str = None,
+    haulage_type: str = 'merchant',
     transport_mode: str = None,
     importer_exporter_id: str = None,
     cargo_weight_per_container: int = None,

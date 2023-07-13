@@ -2,11 +2,13 @@ from fastapi import HTTPException
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 from configs.haulage_freight_rate_constants import DEFAULT_RATE_TYPE
+from libs.json_encoder import json_encoder
+
 
 def create_audit(request, freight_id):
     audit_data = {}
-    audit_data["validity_start"] = request.get("validity_start").isoformat()
-    audit_data["validity_end"] = request.get("validity_end").isoformat()
+    audit_data["validity_start"] = request.get("validity_start")
+    audit_data["validity_end"] = request.get("validity_end")
     audit_data["line_items"] = request.get("line_items")
     audit_data["haulage_freight_rate_request_id"] = request.get("haulage_freight_rate_request_id")
 
@@ -94,7 +96,7 @@ def create_haulage_freight_rate(request):
     if not haulage_freight_rate.importer_exporter_id:
         haulage_freight_rate.delete_rate_not_available_entry()
 
-    create_audit(request, haulage_freight_rate.id)
+    create_audit(json_encoder(request), haulage_freight_rate.id)
 
     haulage_freight_rate.update_platform_prices_for_other_service_providers()
 
