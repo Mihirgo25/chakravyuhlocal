@@ -370,10 +370,13 @@ def get_air_freight_rate_cards(requirements):
     try:
 
         if requirements['commodity'] =='general':
-            requirements['commodity_subtype'] = 'all'
+            if requirements.get('commodity_subtype'):
+                requirements['commodity_subtype'] = requirements['commodity_subtype']
+            else:
+                requirements['commodity_subtype']='all'
         
         if requirements['commodity'] == 'special_consideration' and not requirements.get('commodity_subtype'):
-            raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
+            raise HTTPException(status_code=400, detail="commodity_subtype is required for special_consideration")
         
 
         
@@ -384,11 +387,11 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = pre_discard_noneligible_rates(freight_rates)
 
         is_predicted = False
-        # if len(freight_rates)==0:
-        #     get_air_freight_rate_prediction(requirements)
-        #     is_predicted = True
-        #     freight_rates = initialize_freight_query(requirements,True)
-        #     freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        if len(freight_rates)==0:
+            get_air_freight_rate_prediction(requirements)
+            is_predicted = True
+            freight_rates = initialize_freight_query(requirements,True)
+            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
         

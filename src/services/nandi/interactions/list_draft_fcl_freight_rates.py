@@ -2,7 +2,7 @@ from services.nandi.models.draft_fcl_freight_rate import DraftFclFreightRate
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 possible_direct_filters = ["id", "rate_id", "source", "status", "shipment_serial_id"]
 possible_indirect_filters = []
@@ -25,5 +25,5 @@ def get_query(sort_by, sort_type):
     return query
 
 def get_data(query):
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
     return data

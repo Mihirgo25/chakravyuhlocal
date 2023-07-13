@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from libs.json_encoder import json_encoder
 from math import ceil
 from services.air_freight_rate.models.air_freight_warehouse_rate import AirFreightWarehouseRates

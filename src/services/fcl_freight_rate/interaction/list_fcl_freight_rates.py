@@ -6,7 +6,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 from configs.fcl_freight_rate_constants import RATE_TYPES
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 NOT_REQUIRED_FIELDS = ["destination_local_line_items_info_messages",  "origin_local_line_items_info_messages", "origin_local_line_items_error_messages", "destination_local_line_items_error_messages", "destination_location_ids", "origin_location_ids", "omp_dmp_sl_sp", "init_key"]
 
@@ -62,7 +62,7 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type,includes):
 def get_data(query, expired_rates_required):
   data = []
 
-  raw_data = jsonable_encoder(list(query.dicts()))
+  raw_data = json_encoder(list(query.dicts()))
 
   for result in raw_data:
 
