@@ -12,7 +12,7 @@ def execute_transaction_code(request):
   feedback_objects = find_feedback_objects(request)
   if not feedback_objects:
     raise HTTPException(status_code=500, detail = 'Feedbacks Not Found')
-
+    
   data = {key:value for key,value in request.items() if key != 'fcl_customs_rate_feedback_ids'},
   for object in feedback_objects:
     object.status = 'inactive'
@@ -23,7 +23,7 @@ def execute_transaction_code(request):
         object.save()
     except Exception as e:
         print("Exception in deleting feedback", e)
-
+    
     create_audit_for_customs_feedback(request, object, data)
     update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
 
