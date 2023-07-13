@@ -825,9 +825,13 @@ def get_fcl_freight_rate_cards(requirements):
         is_predicted = False
         
         if len(freight_rates) == 0:
-            get_fcl_freight_rates_from_clusters(requirements)
+            try:
+                get_fcl_freight_rates_from_clusters(requirements)
+            except:
+                pass
             initial_query = initialize_freight_query(requirements)
             freight_rates = jsonable_encoder(list(initial_query.dicts()))
+            
             
         freight_rates_length = len(freight_rates)
         if freight_rates_length == 0:
