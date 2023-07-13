@@ -182,6 +182,7 @@ class UpdateFtlFreightRatePlatformPrices(BaseModel):
     commodity_type: str = None
     importer_exporter_id: str = None
     is_line_items_error_messages_present: bool = False
+
     
 
 class UpdateFtlFreightRate(BaseModel):

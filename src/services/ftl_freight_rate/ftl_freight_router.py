@@ -37,6 +37,7 @@ from services.ftl_freight_rate.interactions.update_ftl_freight_rate_platform_pri
 from services.ftl_freight_rate.interactions.delete_ftl_freight_rate import delete_ftl_freight_rate
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_addition_frequency import get_ftl_freight_rate_addition_frequency
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_visibility import get_ftl_freight_rate_visibility
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate import get_ftl_freight_rate
 
 ftl_freight_router = APIRouter()
 
@@ -415,7 +416,7 @@ def create_ftl_freight_rate_not_available_data(request: CreateFtlFreightRateNotA
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@ftl_freight_router.route("/update_ftl_freight_rate_platform_prices")
+@ftl_freight_router.post("/update_ftl_freight_rate_platform_prices")
 def update_ftl_freight_rate_platform_prices_api(request:UpdateFtlFreightRatePlatformPrices, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
