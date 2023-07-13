@@ -38,11 +38,15 @@ def create_air_freight_rate_data(request):
     from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
 
     if request['commodity']=='general':
-        request['commodity_sub_type']='all'
+        if request.get('commodity_sub_type'):
+            request['commodity_sub_type']='commodity_sub_type'
+        else:
+            request['commodity_sub_type']='all'
     if request['density_category']=='general':
         request['density_ratio']='1:1'
-    if request['commodity'] == 'special_consideration' and not request.get('commodity_subtype'):
-        raise HTTPException(status_code=400, detail="Commodity Sub Type is required for Special Consideration")
+    if request['commodity'] in ['dangerous goods','temperature control','special_consideration'] and not request.get('commodity_sub_type'):
+        raise HTTPException(status_code=400, detail="Commodity Sub Type is required for {}".format(request['commodity']))
+    
     if request.get('density_ratio') and request['density_ratio'].split(':')[0]!= '1':
         raise HTTPException(status_code=400,detail='Ratio should be in the form of 1:x')
     if len(set(slab['currency'] for slab in request['weight_slabs']))!=1 or request['weight_slabs'][0]['currency'] != request['currency']:

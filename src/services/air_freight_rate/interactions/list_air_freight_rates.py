@@ -6,7 +6,7 @@ from libs.get_filters import get_filters
 from math import ceil
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from peewee import fn, SQL,Window
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'airline_id', 'commodity', 'operation_type', 'service_provider_id', 'rate_not_available_entry', 'price_type', 'shipment_type', 'stacking_type', 'commodity_type', 'cogo_entity_id', 'rate_type']
 
@@ -29,7 +29,7 @@ def list_air_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
 
   query = query.paginate(page,page_limit)
   data = get_data(query=query)
-  return {'list':jsonable_encoder(data) }| (pagination_data)
+  return {'list':json_encoder(data) }| (pagination_data)
 
 
 def get_query(all_rates_for_cogo_assured,sort_by, sort_type, page, page_limit,older_rates_required):
@@ -178,7 +178,7 @@ def apply_date_filter(query,filters):
 
 def get_data(query):
     results = []
-    rates = jsonable_encoder(list(query.dicts()))
+    rates = json_encoder(list(query.dicts()))
     density_filter_hash = {}
     now = datetime.now()
     beginning_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)

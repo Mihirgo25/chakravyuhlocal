@@ -1,7 +1,7 @@
 from services.fcl_customs_rate.fcl_customs_params import *
 from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from fastapi.responses import JSONResponse
 import sentry_sdk, traceback
 from fastapi import HTTPException
@@ -42,7 +42,7 @@ def create_fcl_customs_rate_api(request: CreateFclCustomsRate, resp: dict = Depe
 
     try:
         rate = create_fcl_customs_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -58,7 +58,7 @@ def create_fcl_customs_rate_bulk_operation_api(request: CreateFclCustomsRateBulk
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_fcl_customs_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -74,7 +74,7 @@ def create_fcl_customs_rate_feedback_api(request: CreateFclCustomsRateFeedback, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_fcl_customs_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -90,7 +90,7 @@ def create_fcl_customs_rate_request_api(request: CreateFclCustomsRateRequest, re
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_fcl_customs_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -106,7 +106,7 @@ def create_fcl_customs_rate_not_available_api(request: CreateFclCustomsRateNotAv
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_fcl_customs_rate_not_available(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -154,7 +154,7 @@ def get_fcl_customs_rate_visibility_api(
     }
     try:
         data = get_fcl_customs_rate_visibility(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -190,7 +190,7 @@ def get_fcl_customs_rate_api(
 
     try:
         data = get_fcl_customs_rate(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -214,7 +214,7 @@ def list_fcl_customs_rate_feedbacks_api(
 
     try:
         data = list_fcl_customs_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -234,7 +234,7 @@ def list_fcl_customs_rate_requests_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_customs_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -256,7 +256,7 @@ def list_fcl_customs_rates_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_customs_rates(filters, page_limit, page, sort_by, sort_type, return_query, pagination_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -306,7 +306,7 @@ def get_fcl_customs_rate_cards_api(
 
     try:
         data = get_fcl_customs_rate_cards(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -322,7 +322,7 @@ def update_fcl_customs_rate_api(request: UpdateFclCustomsRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = update_fcl_customs_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -339,7 +339,7 @@ def delete_fcl_customs_rate_api(request: DeleteFclCustomsRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = delete_fcl_customs_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -355,7 +355,7 @@ def delete_fcl_customs_rate_feedback_api(request: DeleteFclCustomsRateFeedback, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = delete_fcl_customs_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -371,7 +371,7 @@ def delete_fcl_customs_rate_request_api(request: DeleteFclCustomsRateRequest, re
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = delete_fcl_customs_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -388,7 +388,7 @@ def update_fcl_customs_rate_platform_prices_api(request: UpdateFclCustomsRatePla
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_customs_rate_platform_prices(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -404,7 +404,7 @@ def create_rate_sheet_api(request: CreateRateSheet, resp: dict = Depends(authori
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -421,7 +421,7 @@ def update_rate_sheet_api(request: UpdateRateSheet, resp: dict = Depends(authori
 
     try:
         rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:

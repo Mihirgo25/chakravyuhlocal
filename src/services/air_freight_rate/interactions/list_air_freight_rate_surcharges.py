@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
@@ -23,11 +23,11 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
    
                
     if return_query: 
-        return { 'list': jsonable_encoder(list(query.dicts())) }
+        return { 'list': json_encoder(list(query.dicts())) }
     
     pagination_data = get_pagination_data(query,page, page_limit, pagination_data_required)
     query = query.paginate(page, page_limit)
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
 
     return { 'list': data } | (pagination_data)
 

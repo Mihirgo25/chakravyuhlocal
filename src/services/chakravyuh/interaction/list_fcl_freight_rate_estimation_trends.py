@@ -1,5 +1,5 @@
 from services.chakravyuh.models.fcl_freight_rate_estimation_audit import FclFreightRateEstimationAudit
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from math import ceil
 from datetime import datetime
 from libs.get_filters import get_filters
@@ -50,7 +50,7 @@ def list_fcl_freight_rate_estimation_trends(filters, page_limit, page, sort_by, 
 
 
 def get_data(query):
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
 
 
     for item in data:
