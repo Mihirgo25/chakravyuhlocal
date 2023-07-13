@@ -37,6 +37,7 @@ from services.ftl_freight_rate.interactions.update_ftl_freight_rate_platform_pri
 from services.ftl_freight_rate.interactions.delete_ftl_freight_rate import delete_ftl_freight_rate
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_addition_frequency import get_ftl_freight_rate_addition_frequency
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_visibility import get_ftl_freight_rate_visibility
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate import get_ftl_freight_rate
 
 ftl_freight_router = APIRouter()
 
@@ -415,7 +416,7 @@ def create_ftl_freight_rate_not_available_data(request: CreateFtlFreightRateNotA
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@ftl_freight_router.route("/update_ftl_freight_rate_platform_prices")
+@ftl_freight_router.post("/update_ftl_freight_rate_platform_prices")
 def update_ftl_freight_rate_platform_prices_api(request:UpdateFtlFreightRatePlatformPrices, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
@@ -494,3 +495,30 @@ def get_ftl_freight_rate_visibility_api(
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@ftl_freight_router.get("/get_ftl_freight_rate")
+def get_ftl_freight_rate_api(origin_location_id: str = None,destination_location_id: str = None, truck_type: str = None, truck_body_type: str = None, transit_time: str = None, detention_free_time: str = None, commodity: str = None, trip_type: str = None, service_provider_id: str = None, importer_exporter_id: str = None, unit: str = None, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        request = {
+            'origin_location_id' : origin_location_id,
+            'destination_location_id': destination_location_id,
+            'truck_type':truck_type,
+            'transit_time':transit_time,
+            'detention_free_time':detention_free_time,
+            'commodity': commodity,
+            'trip_type': trip_type,
+            'service_provider_id': service_provider_id,
+            'importer_exporter_id': importer_exporter_id,
+            'unit': unit,
+            'truck_body_type': truck_body_type 
+        }
+        rate = get_ftl_freight_rate(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })   
+
