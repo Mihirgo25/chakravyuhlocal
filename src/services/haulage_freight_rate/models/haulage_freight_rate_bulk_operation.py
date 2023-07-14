@@ -1,6 +1,6 @@
 from database.db_session import db
 from peewee import * 
-from playhouse.postgres_ext import BinaryJSONField
+from playhouse.postgres_ext import BinaryJSONField, DateTimeTZField
 from micro_services.client import *
 from fastapi import HTTPException
 from datetime import datetime
@@ -27,8 +27,8 @@ class HaulageFreightRateBulkOperation(BaseModel):
     data = BinaryJSONField(null=True)
     performed_by_id = UUIDField(null=True, index=True)
     service_provider_id = UUIDField(index=True, null=True)
-    updated_at = DateTimeField(default=datetime.now())
-    created_at = DateTimeField(default=datetime.now())
+    updated_at = DateTimeTZField(default=datetime.now())
+    created_at = DateTimeTZField(default=datetime.now())
 
     class Meta:
         table_name = 'haulage_freight_rate_bulk_operations'

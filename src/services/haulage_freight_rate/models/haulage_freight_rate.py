@@ -1,7 +1,7 @@
 import uuid, datetime, json, re
-from peewee import DateTimeField, UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, CharField
+from peewee import UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, CharField
 from database.db_session import db
-from playhouse.postgres_ext import BinaryJSONField, ArrayField
+from playhouse.postgres_ext import BinaryJSONField, DateTimeTZField, ArrayField
 from fastapi import HTTPException
 from micro_services.client  import maps, common
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
@@ -41,8 +41,8 @@ class HaulageFreightRate(BaseModel):
     line_items_info_messages = BinaryJSONField(index=True, null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True, index=True)
     trip_type = TextField(index=True, null=True)
-    validity_start = DateTimeField(default=datetime.datetime.now, null=True)
-    validity_end = DateTimeField(default = datetime.datetime.now() - datetime.timedelta(30), null=True)
+    validity_start = DateTimeTZField(default=datetime.datetime.now, null=True)
+    validity_end = DateTimeTZField(default = datetime.datetime.now() - datetime.timedelta(30), null=True)
     detention_free_time = IntegerField(index=True, null=True)
     transit_time = IntegerField(index=True, null=True)
     haulage_type = TextField(index=True, null=True, default='merchant')
@@ -63,8 +63,8 @@ class HaulageFreightRate(BaseModel):
     shipping_line = BinaryJSONField(null=True)
     trailer_type = TextField(index=True, null=True)
     platform_price = FloatField(null=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeTZField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeTZField(default=datetime.datetime.now, index=True)
     mode = CharField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
     sourced_by_id = UUIDField(null=True, index=True)
