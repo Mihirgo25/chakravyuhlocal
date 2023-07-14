@@ -359,6 +359,8 @@ CHINA_FUEL_DATA_LINKS = "https://www.globalpetrolprices.com/China/diesel_prices/
 
 VIETNAM_FUEL_DATA_LINKS = "https://www.globalpetrolprices.com/Vietnam/diesel_prices/"
 
+SINGAPORE_FUEL_DATA_LINK = "https://www.shell.com.sg/motorists/shell-fuels/shell-station-price-board.html"
+
 INDIA_FUEL_DATA_LINKS = {
     "https://www.ndtv.com/fuel-prices/petrol-price-in-india": [
         "tbl-container b_rad4 tbl-scrolling",

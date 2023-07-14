@@ -1,5 +1,5 @@
 
-from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS, EUROPE_FUEL_DATA_LINK, CHINA_FUEL_DATA_LINKS, VIETNAM_FUEL_DATA_LINKS
+from configs.ftl_freight_rate_constants import USA_FUEL_DATA_LINK, INDIA_FUEL_DATA_LINKS, EUROPE_FUEL_DATA_LINK, CHINA_FUEL_DATA_LINKS, VIETNAM_FUEL_DATA_LINKS, SINGAPORE_FUEL_DATA_LINK
 import time
 import copy
 from bs4 import BeautifulSoup
@@ -12,7 +12,7 @@ import httpx
 
 
 def fuel_scheduler():
-    list_of_countries = ["europe","india", "usa", "china", "vietnam"]
+    list_of_countries = ["europe","india", "usa", "china", "vietnam","singapore"]
 
     for country in list_of_countries:
         list_fuel_data = getattr(
@@ -213,3 +213,31 @@ def get_scrapped_data_for_vietnam():
     fuel_data["fuel_price"] = diesel_price
     fuel_data_for_vietnam.append(fuel_data)
     return fuel_data_for_vietnam
+
+def get_scrapped_data_for_singapore():
+    url = SINGAPORE_FUEL_DATA_LINK
+    with httpx.Client() as client:
+        response = client.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    table = soup.find('table')
+    rows = table.find_all('tr')
+    req = ['Shell FuelSave 95','Shell FuelSave Diesel']
+    fuel_data_for_singapore = []
+    for row in rows:
+        cols = row.find_all('td')
+        cols = [col.text.strip() for col in cols]
+        if cols == [] or cols[0] not in req:
+            continue
+        fuel_data = {}
+        fuel_data["currency"] = "SGD"
+        fuel_data["fuel_unit"] = "Lt"
+        fuel_data["location_type"] = "country"
+        fuel_data["location_id"] = "6e18d508-87b9-4e7e-a785-b47edc76b0b7"
+        fuel_data["location_name"] = "Singapore"
+        if cols[0]=='Shell FuelSave 95':
+            fuel_data["fuel_type"] = 'petrol'
+        else:
+            fuel_data["fuel_type"] = 'diesel'
+        fuel_data['fuel_price'] = cols[1].split('$')[1]
+        fuel_data_for_singapore.append(copy.deepcopy(fuel_data))
+    return fuel_data_for_singapore
