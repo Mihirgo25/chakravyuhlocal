@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 import uuid
 import datetime
-from playhouse.postgres_ext import BinaryJSONField
+from playhouse.postgres_ext import BinaryJSONField, DateTimeTZField
 
 
 class BaseModel(Model):
@@ -29,8 +29,8 @@ class HaulageFreightRateRuleSet(BaseModel):
     haulage_type = CharField(index=True, null=True, default='merchant')
     generalized_data = BinaryJSONField(null=True)
     container_size = CharField(index=True, null=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeTZField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeTZField(default=datetime.datetime.now, index=True)
 
     class Meta:
         table_name = 'haulage_freight_rate_rule_sets'

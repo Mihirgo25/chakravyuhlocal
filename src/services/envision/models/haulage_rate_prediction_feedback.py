@@ -23,14 +23,14 @@ class HaulageRatePredictionFeedback(BaseModel):
     haulage_type = TextField(index=True, null=True)
     transit_time = TextField(null=True)
     detention_free_time = TextField(null=True)
-    validity_start = DateTimeField(null=True)
-    validity_end = DateTimeField(null=True)
+    validity_start = DateTimeTZField(null=True)
+    validity_end = DateTimeTZField(null=True)
     predicted_price = FloatField(null=True)
     actual_price = FloatField(null=True)
     predicted_price_currency = TextField(null=True)
     actual_price_currency = TextField(null=True)
-    created_at = DateTimeField(default=datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeTZField(default=datetime.datetime.now)
+    updated_at = DateTimeTZField(default=datetime.datetime.now)
 
     class Meta:
         db_table = "haulage_rate_prediction_feedbacks"

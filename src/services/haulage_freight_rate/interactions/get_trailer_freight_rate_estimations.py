@@ -66,8 +66,8 @@ def get_trailer_freight_rate_estimation(request):
     for data in trailer_estimated_data['list']:
         line_items = line_item
         detention_free_time = 1
-        validity_start = datetime.now().date().isoformat()
-        validity_end = (datetime.now() + timedelta(days = 60)).date().isoformat()
+        validity_start = datetime.now().date(),
+        validity_end = (datetime.now() + timedelta(days = 60)).date()
         cogo_envision_id = ENVISION_USER_ID
 
         params = {

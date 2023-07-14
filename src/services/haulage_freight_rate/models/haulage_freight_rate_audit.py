@@ -19,8 +19,8 @@ class HaulageFreightRateAudit(BaseModel):
     procured_by_id = UUIDField(index=True, null =True)
     sourced_by_id = UUIDField(index=True, null =True)
     data = BinaryJSONField(null=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    created_at = DateTimeTZField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeTZField(default=datetime.datetime.now)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

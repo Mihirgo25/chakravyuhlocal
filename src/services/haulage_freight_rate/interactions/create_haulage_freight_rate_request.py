@@ -57,7 +57,7 @@ def execute_transaction_code(request):
 
 def get_create_params(request):
     if request.get('cargo_readiness_date'):
-        request['cargo_readiness_date'] = request.get('cargo_readiness_date').isoformat()
+        request['cargo_readiness_date'] = request.get('cargo_readiness_date')
         
     return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id','origin_location_id', 'destination_location_id']} | ({'status': 'active'})
 

@@ -5,7 +5,7 @@ from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.rate_sheet.interactions.validate_haulage_freight_object import (
     validate_haulage_freight_object,
 )
-from fastapi.encoders import jsonable_encoder
+from fastapi.encoders import json_encoder
 from services.rate_sheet.helpers import *
 import chardet
 
@@ -46,7 +46,7 @@ def process_haulage_freight_freight(params, converted_file, update):
         (RateSheetAudit.object_id == params["rate_sheet_id"])
         & (RateSheetAudit.action_name == "update")
     )
-    rate_sheet = jsonable_encoder(rate_sheet)["__data__"]
+    rate_sheet = json_encoder(rate_sheet)["__data__"]
     created_by_id = rate_sheet["performed_by_id"]
     procured_by_id = rate_sheet["procured_by_id"]
     sourced_by_id = rate_sheet["sourced_by_id"]

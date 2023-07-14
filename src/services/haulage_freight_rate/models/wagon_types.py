@@ -1,7 +1,7 @@
 from peewee import *
 from database.db_session import db
 import datetime
-from playhouse.postgres_ext import ArrayField
+from playhouse.postgres_ext import ArrayField, DateTimeTZField
 from services.haulage_freight_rate.models.haulage_freight_rate_rule_sets import HaulageFreightRateRuleSet
 
 
@@ -23,8 +23,8 @@ class WagonTypes(BaseModel):
     unloading_type = CharField(null=True)
     remarks = CharField(null=True)
     status = CharField(index=True, default='active')
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeTZField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeTZField(default=datetime.datetime.now, index=True)
 
     class Meta:
         table_name = 'wagon_types'

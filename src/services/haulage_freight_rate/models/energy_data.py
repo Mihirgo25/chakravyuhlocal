@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 import datetime
 import uuid
-
+from playhouse.postgres_ext import DateTimeTZField
 class BaseModel(Model):
     class Meta:
         database = db
@@ -13,12 +13,12 @@ class EnergyData(BaseModel):
     fuel_unit = CharField(null=False)
     fuel_type = CharField(null=False, index=True)
     fuel_price = DecimalField(null=False,max_digits = 10, decimal_places= 6)
-    created_at = DateTimeField(null=False, default=datetime.datetime.now())
-    updated_at = DateTimeField(null=False, default=datetime.datetime.now())
+    created_at = DateTimeTZField(null=False, default=datetime.datetime.now())
+    updated_at = DateTimeTZField(null=False, default=datetime.datetime.now())
 
     class Meta:
         table_name = "energy_data"
 
     def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.now()
+        self.updated_at = datetime.now()
         return super(EnergyData, self).save(*args, **kwargs)
