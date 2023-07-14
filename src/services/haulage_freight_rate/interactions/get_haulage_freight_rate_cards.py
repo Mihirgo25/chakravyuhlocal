@@ -102,6 +102,7 @@ def select_fields():
         HaulageFreightRate.service_provider_id,
         HaulageFreightRate.validity_start,
         HaulageFreightRate.validity_end,
+        HaulageFreightRate.service_provider
     )
     return freight_query
 
@@ -419,20 +420,9 @@ def ignore_non_active_shipping_lines(data):
 
 def additional_response_data(data):
 
-    # adding service provicer ids
-    service_provider_ids = list(
-        set(
-            map(
-                lambda service_provider_id: service_provider_id["service_provider_id"],
-                data,
-            )
-        )
-    )
-    service_providers = get_organization(id=service_provider_ids)
-
     # adding org users 
-    audit_ids = list(map(lambda ids: ids["id"], data))
-    audits = json_encoder(list(HaulageFreightRateAudit.select().where(HaulageFreightRateAudit.object_id<<audit_ids).dicts()))
+    audit_object_ids = list(map(lambda ids: ids["id"], data))
+    audits = json_encoder(list(HaulageFreightRateAudit.select().where(HaulageFreightRateAudit.object_id<<audit_object_ids).dicts()))
     audit_sourced_by_id = []
     for audit_data in audits:
         audit_sourced_by_id.append(str(audit_data['sourced_by_id']))
@@ -444,10 +434,7 @@ def additional_response_data(data):
     )
     users = get_user(id=sourced_by_ids)
     for addon_data in data:
-        for service_provider in service_providers:
-            if service_provider['id'] == addon_data['service_provider_id']:
-                addon_data["service_provider_name"] = service_provider['short_name']
-                break
+        addon_data["service_provider_name"] = addon_data["service_provider"].get("short_name")
     
         audits_object = next(
             filter(lambda t: t["object_id"] == addon_data["id"], audits), None
