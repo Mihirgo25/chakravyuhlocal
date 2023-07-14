@@ -74,14 +74,14 @@ def create_air_freight_rate_data(request):
         "stacking_type":request.get("stacking_type"),
         "shipment_type":request.get("shipment_type"),
         "operation_type":request.get("operation_type"),
-        "mode": request.get("mode", DEFAULT_MODE),
+        "source": request.get("source", DEFAULT_MODE),
         "accuracy":request.get("accuracy", 100),
         "cogo_entity_id":request.get("cogo_entity_id"),
         "rate_type":request.get("rate_type", DEFAULT_RATE_TYPE),
         "price_type":price_type
     }
 
-    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["mode"])}'
+    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["source"])}'
 
     freight = (AirFreightRate.select().where(AirFreightRate.init_key == init_key).first())
    
@@ -118,7 +118,7 @@ def create_air_freight_rate_data(request):
         request.get("available_gross_weight"),
         request.get("rate_type")
     )
-    if request.get("mode") == 'cargo_ai':   
+    if request.get("source") == 'cargo_ai':   
         freight.add_flight_and_external_uuid(validity_id,request.get("flight_uuid"),request.get("external_rate_id"))
 
     freight.set_last_rate_available_date()
