@@ -116,7 +116,11 @@ MAX_VALUE = 1000000000000000
 
 ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 
-COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
+DEAFULT_RATE_PRODUCER_METHOD = "latest"
+
+
+
+COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN", "vietnam":"VN", "singapore":"SG"}
 
 DEFAULT_WEIGHT_SLABS=[
     {
