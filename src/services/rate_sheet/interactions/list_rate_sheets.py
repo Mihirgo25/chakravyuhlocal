@@ -1,7 +1,7 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from libs.get_filters import get_filters
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
@@ -165,7 +165,7 @@ def add_service_objects(data):
 
 def get_final_data(query):
     data = list(query.dicts())
-    final_data = jsonable_encoder(data)
+    final_data = json_encoder(data)
     final_data = detail(final_data)
     audit_ids = []
     audit_ids = [data['id'] for data in final_data]
@@ -174,7 +174,6 @@ def get_final_data(query):
     for object in final_data:
         # assumption here
         rates_count_sum=0
-        object['updated_at'] = datetime.fromisoformat(object['updated_at']) +timedelta(hours=5, minutes=30)
 
         if 'converted_files' in object:
             if object.get('converted_files'):
@@ -186,7 +185,7 @@ def get_final_data(query):
         object['procured_by_id'] = rate_sheet_audit.get('procured_by_id')
         object['performed_by_id'] = rate_sheet_audit.get('performed_by_id')
     final_data = add_service_objects(final_data)
-    final_data = jsonable_encoder(final_data)
+    final_data = json_encoder(final_data)
     return final_data
 
 

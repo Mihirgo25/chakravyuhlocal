@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from math import ceil
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
@@ -27,7 +27,7 @@ def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pag
     if return_query: 
         return { 'list': str(query) } 
 
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
 
     return { 'list': data } | pagination_data
 

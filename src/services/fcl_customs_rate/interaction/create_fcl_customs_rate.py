@@ -26,12 +26,13 @@ def execute_transaction_code(request):
     customs_rate = FclCustomsRate(**params)
     customs_rate.set_location()
     customs_rate.set_location_ids()
+    customs_rate.set_location_type()
 
   customs_rate.sourced_by_id = request.get("sourced_by_id")
   customs_rate.procured_by_id = request.get("procured_by_id")
   customs_rate.customs_line_items = request.get('customs_line_items')
   customs_rate.cfs_line_items = request.get('cfs_line_items')
-  customs_rate.zone_id = request.get('zone_id')
+
   customs_rate.set_platform_price()
   customs_rate.set_is_best_price()
 

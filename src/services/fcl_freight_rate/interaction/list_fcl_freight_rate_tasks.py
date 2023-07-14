@@ -2,7 +2,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRat
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
-from fastapi.encoders import jsonable_encoder
 from configs.fcl_freight_rate_constants import *
 from playhouse.shortcuts import model_to_dict
 from configs.fcl_freight_rate_constants import EXPECTED_TAT

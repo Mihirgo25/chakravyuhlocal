@@ -32,7 +32,7 @@ def initialize_freight_query(requirements,prediction_required=False):
         AirFreightRate.rate_type,
         AirFreightRate.service_provider_id,
         AirFreightRate.cogo_entity_id,
-        AirFreightRate.mode,
+        AirFreightRate.source,
         AirFreightRate.surcharge.alias('freight_surcharge')
     ).where(
     AirFreightRate.origin_airport_id == requirements.get('origin_airport_id'),
@@ -60,14 +60,14 @@ def initialize_freight_query(requirements,prediction_required=False):
 
 
     if not prediction_required:
-        freight_query  = freight_query.where(AirFreightRate.mode != 'predicted')
+        freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
 
     return freight_query
 
 
 def build_response_object(freight_rate,requirements,is_predicted):
     source = 'spot_rates'
-    if freight_rate['mode'] == 'predicted':
+    if freight_rate['source'] == 'predicted':
         source = 'predicted'
 
     response_object = {
@@ -144,7 +144,7 @@ def build_surcharge_line_item_object(line_item,requirements):
 def build_response_list(freight_rates, requirements,is_predicted):
     grouping = {}
     for freight_rate in freight_rates:
-        key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or "",freight_rate['rate_type'] or "",freight_rate['mode'] or ""])
+        key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or "",freight_rate['rate_type'] or "",freight_rate['source'] or ""])
         response_object = build_response_object(freight_rate, requirements,is_predicted)
 
         if response_object:
@@ -347,7 +347,7 @@ def pre_discard_noneligible_rates(freight_rates):
 def remove_cogoxpress_service_provider(freight_rates):
     service_providers_hash = {}
     for freight_rate in freight_rates:
-        key =':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or ""],freight_rate['rate_type'] or "",freight_rate['mode'] or "")
+        key =':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or ""],freight_rate['rate_type'] or "",freight_rate['source'] or "")
         if key in service_providers_hash.keys():
             service_providers_hash[freight_rate['id']].append(freight_rate)
         else:
@@ -370,10 +370,13 @@ def get_air_freight_rate_cards(requirements):
     try:
 
         if requirements['commodity'] =='general':
-            requirements['commodity_subtype'] = 'all'
+            if requirements.get('commodity_subtype'):
+                requirements['commodity_subtype'] = requirements['commodity_subtype']
+            else:
+                requirements['commodity_subtype']='all'
         
         if requirements['commodity'] == 'special_consideration' and not requirements.get('commodity_subtype'):
-            raise HTTPException(status_code=400, detail="commodity_sub_type is required for special_consideration")
+            raise HTTPException(status_code=400, detail="commodity_subtype is required for special_consideration")
         
 
         
@@ -384,11 +387,11 @@ def get_air_freight_rate_cards(requirements):
         freight_rates = pre_discard_noneligible_rates(freight_rates)
 
         is_predicted = False
-        # if len(freight_rates)==0:
-        #     get_air_freight_rate_prediction(requirements)
-        #     is_predicted = True
-        #     freight_rates = initialize_freight_query(requirements,True)
-        #     freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+        if len(freight_rates)==0:
+            get_air_freight_rate_prediction(requirements)
+            is_predicted = True
+            freight_rates = initialize_freight_query(requirements,True)
+            freight_rates = jsonable_encoder(list(freight_rates.dicts()))
         missing_surcharge = get_missing_surcharges(freight_rates)
         surcharges = get_surcharges(requirements,missing_surcharge)
         
