@@ -78,7 +78,7 @@ class AirFreightRate(BaseModel):
     validities = BinaryJSONField(default = [], null=True)
     warehouse_rate_id = UUIDField(null=True)
     weight_slabs = BinaryJSONField(null=True)
-    mode = CharField(default = 'manual', null = True, index=True)
+    source = CharField(default = 'manual', null = True, index=True)
     accuracy = FloatField(default = 100, null = True)
     cogo_entity_id = UUIDField(index=True, null=True)
     sourced_by_id = UUIDField(null=True, index=True)
