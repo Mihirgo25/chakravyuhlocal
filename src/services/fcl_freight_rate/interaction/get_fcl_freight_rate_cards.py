@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
-from database.rails_db import get_shipping_line, get_eligible_orgs
+from database.rails_db import get_operators, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
@@ -634,7 +634,7 @@ def build_response_list(freight_rates, request):
     grouping = {}
     for freight_rate in freight_rates:
         # if freight_query_result['freight']['origin_main_port_id'] and freight_query_result['freight']['destination_main_port_id']:
-        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or "", freight_rate['rate_type'] or ""])
+        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or "", freight_rate['rate_type'] or "", freight_rate['cogo_entity_id'] or ""])
         if grouping.get(key) and grouping[key].get('importer_exporter_id'):
             continue
         response_object = build_response_object(freight_rate, request)
@@ -653,7 +653,7 @@ def discard_noneligible_lsps(freight_rates, requirements):
 
 def discard_noneligible_shipping_lines(freight_rates, requirements):
     shipping_line_ids = [rate["shipping_line_id"] for rate in freight_rates]
-    shipping_lines = get_shipping_line(id=shipping_line_ids)
+    shipping_lines = get_operators(id=shipping_line_ids)
     active_shipping_lines_ids = [sl["id"] for sl in shipping_lines if sl["status"] == "active"]
     freight_rates = [rate for rate in freight_rates if rate["shipping_line_id"] in active_shipping_lines_ids]
     return freight_rates

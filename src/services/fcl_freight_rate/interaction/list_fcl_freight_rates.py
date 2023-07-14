@@ -6,7 +6,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 from configs.fcl_freight_rate_constants import RATE_TYPES
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 NOT_REQUIRED_FIELDS = ["destination_local_line_items_info_messages",  "origin_local_line_items_info_messages", "origin_local_line_items_error_messages", "destination_local_line_items_error_messages", "destination_location_ids", "origin_location_ids", "omp_dmp_sl_sp", "init_key"]
 
@@ -44,6 +44,9 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type,includes):
             ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40'])
     return query
   
+  if includes and  not isinstance(includes, dict):
+    includes = json.loads(includes) 
+  
   all_fields = list(FclFreightRate._meta.fields.keys())
   required_fields = list(includes.keys()) if includes else [c for c in all_fields if c not in NOT_REQUIRED_FIELDS] 
   fields = [getattr(FclFreightRate, key) for key in required_fields]
@@ -59,7 +62,7 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type,includes):
 def get_data(query, expired_rates_required):
   data = []
 
-  raw_data = jsonable_encoder(list(query.dicts()))
+  raw_data = json_encoder(list(query.dicts()))
 
   for result in raw_data:
 
