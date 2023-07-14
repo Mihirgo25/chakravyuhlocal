@@ -8,7 +8,6 @@ from database.rails_db import *
 from configs.haulage_freight_rate_constants import REQUEST_SOURCES
 
 class BaseModel(Model):
-    # db.execute_sql('create sequence haulage_freight_rate_request_serial_id_seq')
     class Meta:
         database = db
         only_save_dirty = True
@@ -65,40 +64,7 @@ class HaulageFreightRateRequest(BaseModel):
 
     class Meta:
         table_name = 'haulage_freight_rate_requests'
-
-
-    # def validate_source(self):
-    #     if self.source and self.source not in REQUEST_SOURCES:
-    #         raise HTTPException(status_code=400, detail="Invalid source")
-
-
-    # def validate_source_id(self):
-    #     if self.source == 'spot_search':
-    #         spot_search_data = spot_search.list_spot_searches({'filters': {'id': [str(self.source_id)]}})['list']
-    #         if len(spot_search_data) == 0:
-    #             raise HTTPException(status_code=400, detail="Invalid Source ID")
-
-    # def validate_performed_by_id(self):
-    #     data = get_user(self.performed_by_id)
-
-    #     if data!={}:
-    #         pass
-    #     else:
-    #         raise HTTPException(status_code=400, detail='Invalid Performed by ID')
-
-    # def validate_performed_by_org_id(self):
-    #     performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
-    #     if len(performed_by_org_data) == 0 or performed_by_org_data[0]['account_type'] != 'importer_exporter':
-    #         raise HTTPException(status_code=400, detail='Invalid Account Type')
         
-
-    # def validate(self):
-    #     self.validate_source()
-    #     self.validate_source_id()
-    #     self.validate_performed_by_id()
-    #     self.validate_performed_by_org_id()
-    #     return True
-    
     
     def send_closed_notifications_to_sales_agent(self):
         location_pair = HaulageFreightRateRequest.select(HaulageFreightRateRequest.origin_location_id, HaulageFreightRateRequest.destination_location_id).where(HaulageFreightRateRequest.source_id == self.source_id).limit(1).dicts().get()
@@ -126,5 +92,4 @@ class HaulageFreightRateRequest(BaseModel):
                 'importer_exporter_id': importer_exporter_id 
             }
         }
-
         common.create_communication(data)

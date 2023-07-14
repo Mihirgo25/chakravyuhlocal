@@ -5,7 +5,7 @@ from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.rate_sheet.interactions.validate_haulage_freight_object import (
     validate_haulage_freight_object,
 )
-from fastapi.encoders import json_encoder
+from libs.json_encoder import json_encoder
 from services.rate_sheet.helpers import *
 import chardet
 
