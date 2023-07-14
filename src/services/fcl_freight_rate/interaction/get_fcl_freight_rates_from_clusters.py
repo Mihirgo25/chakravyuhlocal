@@ -4,7 +4,7 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping impor
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_factor import FclFreightLocationClusterFactor
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import maps
-from datetime import datetime, timedelta
+from datetime import datetime
 import concurrent.futures
 from configs.fcl_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID
 from configs.env import DEFAULT_USER_ID
@@ -81,6 +81,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
         FclFreightRate.commodity == request['commodity'],
         FclFreightRate.service_provider_id.in_(ff_mlo),
         ~FclFreightRate.rate_not_available_entry,
+        FclFreightRate.rate_type == "market_place",
         FclFreightRate.last_rate_available_date >= request['validity_start']
     )
     
@@ -115,7 +116,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
             param['destination_main_port_id'] = destination_port_id
             
         for validity in rate["validities"]:
-            param["validity_start"] = convert_date_format(validity["validity_start"])
+            param["validity_start"] = datetime.strptime(datetime.now().date().isoformat(),'%Y-%m-%d')
             param["validity_end"] = convert_date_format(validity["validity_end"])
             param["schedule_type"] = validity["schedule_type"]
             param["payment_term"] = validity["payment_term"]

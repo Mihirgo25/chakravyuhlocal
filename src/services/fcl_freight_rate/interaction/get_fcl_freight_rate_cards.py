@@ -695,6 +695,45 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
 
+def get_cluster_or_predicted_rates(requirements, is_predicted):
+    try:
+        get_fcl_freight_rates_from_clusters(requirements)
+    except:
+        pass
+    initial_query = initialize_freight_query(requirements)
+    freight_rates = jsonable_encoder(list(initial_query.dicts()))
+    
+    if len(freight_rates) == 0:
+        get_fcl_freight_predicted_rate(requirements)
+        initial_query = initialize_freight_query(requirements, True)
+        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        is_predicted = True
+        
+    return freight_rates, is_predicted
+
+def filter_default_service_provider(freight_rates, is_predicted):
+    freight_rates_length = len(freight_rates)
+    if freight_rates_length != 0 and not is_predicted:
+        predicted_rates_length = 0
+        for val in freight_rates:
+            if val['mode'] == 'predicted':
+                predicted_rates_length = predicted_rates_length + 1
+        
+        if predicted_rates_length != freight_rates_length:
+            freight_rates = list(filter(lambda item: item['mode'] != 'predicted', freight_rates))
+            new_freight_rates_length = len(freight_rates)
+            cogofreight_freight_rates_length = 0
+            for val in freight_rates:
+                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                    cogofreight_freight_rates_length += 1
+            
+            if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != new_freight_rates_length:
+                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+        else:
+                is_predicted = True
+                
+    return freight_rates, is_predicted
+
 def get_fcl_freight_rate_cards(requirements):
     """
     Returns all eligible rates according to requirements provided
@@ -823,40 +862,11 @@ def get_fcl_freight_rate_cards(requirements):
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
         is_predicted = False
-        
+
         if len(freight_rates) == 0:
-            try:
-                get_fcl_freight_rates_from_clusters(requirements)
-            except:
-                pass
-            initial_query = initialize_freight_query(requirements)
-            freight_rates = jsonable_encoder(list(initial_query.dicts()))
+            freight_rates, is_predicted = get_cluster_or_predicted_rates(requirements, is_predicted)
             
-            
-        freight_rates_length = len(freight_rates)
-        if freight_rates_length == 0:
-            get_fcl_freight_predicted_rate(requirements)
-            initial_query = initialize_freight_query(requirements, True)
-            freight_rates = jsonable_encoder(list(initial_query.dicts()))
-            is_predicted = True
-        else:
-            predicted_rates_length = 0
-            for val in freight_rates:
-                if val['mode'] == 'predicted':
-                    predicted_rates_length = predicted_rates_length + 1
-            
-            if predicted_rates_length != freight_rates_length:
-                freight_rates = list(filter(lambda item: item['mode'] != 'predicted', freight_rates))
-                new_freight_rates_length = len(freight_rates)
-                cogofreight_freight_rates_length = 0
-                for val in freight_rates:
-                    if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
-                        cogofreight_freight_rates_length += 1
-                
-                if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != new_freight_rates_length:
-                    freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
-            else:
-                is_predicted = True
+        freight_rates, is_predicted = filter_default_service_provider(freight_rates, is_predicted)
         
         if is_predicted and requirements['cogo_entity_id'] == VN_ENTITY_ID:
             return {
