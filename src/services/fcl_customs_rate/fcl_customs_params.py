@@ -35,7 +35,7 @@ class AddMarkup(BaseModel):
   filters: dict = {}
   markup: float
   line_item_code: str = 'CCO'
-  markup_type: str    
+  markup_type: str
   markup_currency: str = None
 
 class CreateFclCustomsRateBulkOperation(BaseModel):
@@ -69,12 +69,12 @@ class CreateFclCustomsRateRequest(BaseModel):
   remarks: list[str] = []
   booking_params: dict = {}
   containers_count: int
-  container_size: str 
+  container_size: str
   commodity: str = None
-  cargo_handling_type: str 
+  cargo_handling_type: str
   country_id: str = None
-  port_id: str 
-  container_type: str 
+  port_id: str
+  container_type: str
   trade_type: str = None
 
 class CreateFclCustomsRateFeedback(BaseModel):
@@ -101,8 +101,8 @@ class CreateFclCustomsRateFeedback(BaseModel):
 
 class UpdateFclCustomsRatePlatformPrices(BaseModel):
   location_id: str
-  container_size: str 
-  container_type: str 
+  container_size: str
+  container_type: str
   commodity: str = None
   trade_type:str
   performed_by_id: str = None
@@ -113,7 +113,7 @@ class UpdateFclCustomsRatePlatformPrices(BaseModel):
 
 
 class DeleteFclCustomsRateFeedback(BaseModel):
- fcl_customs_rate_feedback_ids: list[str] 
+ fcl_customs_rate_feedback_ids: list[str]
  closing_remarks: list[str] = []
  performed_by_id: str = None
  performed_by_type: str = None
@@ -122,7 +122,7 @@ class DeleteFclCustomsRateFeedback(BaseModel):
  cfs_line_items: List[FclCustomsLineItems] = None
 
 class DeleteFclCustomsRateRequest(BaseModel):
- fcl_customs_rate_request_ids: list[str] 
+ fcl_customs_rate_request_ids: list[str]
  closing_remarks: list[str] = []
  performed_by_id: str = None
  performed_by_type: str  = None
