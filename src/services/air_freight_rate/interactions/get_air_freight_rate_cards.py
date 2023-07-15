@@ -413,14 +413,15 @@ def post_discard_less_relevant_rates(freight_rates):
         if priority_of_rate == group_without_source[key]:
             if key in rates_grouped_without_source:
                 already_added = rates_grouped_without_source[key] or []
-                rates_grouped_without_source[key] = already_added.append(freight_rate)
+                already_added.append(freight_rate)
+                rates_grouped_without_source[key] = already_added
             else:
                 rates_grouped_without_source[key] = [freight_rate]
 
     all_freight_rates = []
     all_rate_keys = list(rates_grouped_without_source.keys())
     for key in all_rate_keys:
-        rates = rates_grouped_without_source[key]
+        rates = rates_grouped_without_source[key] or []
         if len(rates) == 1:
             all_freight_rates.extend(rates)
         else:
