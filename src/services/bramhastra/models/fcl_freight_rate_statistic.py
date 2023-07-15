@@ -85,6 +85,7 @@ class FclFreightRateStatistic(BaseModel):
     created_at = DateTimeTZField()
     updated_at = DateTimeTZField()
     version = IntegerField(default=1)
+    state = IntegerField(default=1)
     status = CharField()
 
     def save(self, *args, **kwargs):

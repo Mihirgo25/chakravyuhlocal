@@ -27,6 +27,7 @@ from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from services.air_freight_rate.air_freight_rate_router import air_freight_router
 from micro_services.client import *
 from database.db_support import get_db
+from fastapi.openapi.utils import get_openapi
 
 
 sentry_sdk.init(
@@ -37,13 +38,21 @@ sentry_sdk.init(
     ignore_errors=[HTTPException],
 )
 
-docs_url = None if APP_ENV == "production" else "/docs"
+docs = {
+    "title": "Chakravyuh",
+    "docs_url": None if APP_ENV == "production" else "/docs",
+    "redoc_url": None if APP_ENV == "production" else "/redoc",
+    "openapi_url": None if APP_ENV == "production" else "/openapi.json",
+    "debug": True,
+    'dependencies': [Depends(get_db)],
+    "swagger_ui_parameters": {"docExpansion": None},
+}
 
-app = FastAPI(docs_url=docs_url, debug=True,dependencies=[Depends(get_db)])
+app = FastAPI(**docs)
 
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'])
-app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['FTL Freight Rate'])
+app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['Ftl Freight Rate'])
 app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Predictions'])
 app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'])
 app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'])
@@ -119,15 +128,15 @@ def shutdown():
         db.close()
 
 
-@app.get("/")
+@app.get("/",tags = ["Health Checks"])
 def read_root():
     return "WELCOME TO OCEAN RMS"
 
 
-@app.get("/fcl_freight_rate/health")
+@app.get("/fcl_freight_rate/health",tags = ["Health Checks"])
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
 
-@app.get("/fcl_freight_rate/health_check")
+@app.get("/fcl_freight_rate/health_check",tags=["Health Checks"])
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })

@@ -9,37 +9,63 @@ from peewee import Model
 
 class FclFreight:
     def __init__(self, rate_id, validity_id) -> None:
-        self.rate_id = (rate_id,)
+        self.rate_id = (rate_id)
         self.validity_id = validity_id
         self.fcl_freight_rate_statistics_identifier = (
             self.get_clickhouse_fcl_freight_rate_statistics_identifier()
         )
         self.rails_db = get_connection()
         self.clickhouse_client = get_clickhouse_client()
-        self.fcl_freight_rate_statistic = None
+        self.postgres_statistics_current_row = self.get_postgres_statistics_current_row
 
-    def create_statistics_stale_row():
-        pass
+    def create_statistics_stale_row(self,row) -> Model:
+        row.version+=1
+        return FclFreightRateStatistic.create(row)
 
-    def get_postgres_statistics_current_row(self) -> Model:
+    def get_postgres_statistics_current_row_by_identifier(self) -> Model:
         return (
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.identifier
-                == self.fcl_freight_rate_statistics_identifier
+                == self.fcl_freight_rate_statistics_identifier,
+                FclFreightRateStatistic.state == 1
             )
             .first()
         )
 
-    def get_clickhouse_statistics_current_row(self):
+
+    def get_clickhouse_statistics_current_row_by_identifier(self) -> dict:
         parameters = {
             "table": Table.fcl_freight_rate_statistics,
             "identifier": self.fcl_freight_rate_statistics_identifier,
         }
-        return self.clickhouse_client.command(
-            "SELECT * FROM {table:Identifier} WHERE identifier = {identifier:UUID}",
+        if row := self.clickhouse_client.command(
+            "SELECT * FROM {table:Identifier} WHERE identifier = {identifier:UUID} FINAL",
             parameters,
+        ):
+            return row
+    
+    def get_clickhouse_statistics_rows_by_rate_id(self) -> dict:
+        parameters = {
+            "table": Table.fcl_freight_rate_statistics,
+            "identifier": self.rate_id,
+        }
+        if row := self.clickhouse_client.command(
+            "SELECT * FROM {table:Identifier} WHERE rate_id = {identifier:UUID} FINAL",
+            parameters,
+        ):
+            return row
+        
+    def get_postgres_statistics_rows_by_rate_id(self) -> Model:
+        return (
+            FclFreightRateStatistic.select()
+            .where(
+                FclFreightRateStatistic.rate_id
+                == self.rate_id,
+                FclFreightRateStatistic.state == 1
+            )
         )
+        
 
     def get_clickhouse_fcl_freight_rate_statistics_identifier(self) -> str:
         self.fcl_freight_rate_statistics_identifier = "".join(
@@ -48,10 +74,21 @@ class FclFreight:
 
 
 class Rate(FclFreight):
-    def apply_create_stats(self, params):
+    def __init__(self, freight) -> None:
+        super().__init__(rate_id=freight["id"], validity_id=freight["validity_id"])
+        self.freight = freight
+
+    def get_or_create_statistics_current_row(self) -> Model:
+        row = self.get_postgres_statistics_current_row_by_identifier()
+        if not row:
+            row_params = self.get()
+            row = self.apply_create_stats(row_params)
+        return row
+
+    def apply_create_stats(self, params) -> Model:
         return FclFreightRateStatistic.create(params)
 
-    def apply_update_stats(self, params):
+    def apply_update_stats(self, params) -> int:
         return (
             FclFreightRateStatistic.update(*params)
             .where(
@@ -63,8 +100,11 @@ class Rate(FclFreight):
 
 
 class SpotSearch(FclFreight):
-    def apply_create_stats(self,statistical_params,params):
-        FclFreightRateStatistic.update(statistical_params).where(FclFreightRateStatistic.identifier == self.fcl_freight_rate_statistics_identifier)
+    def apply_create_stats(self, statistical_params, params):
+        FclFreightRateStatistic.update(statistical_params).where(
+            FclFreightRateStatistic.identifier
+            == self.fcl_freight_rate_statistics_identifier
+        )
 
     def apply_update_stats(params):
         pass

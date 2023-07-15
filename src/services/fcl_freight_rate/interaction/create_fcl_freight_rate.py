@@ -145,7 +145,7 @@ def create_fcl_freight_rate(request):
     if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request['validities'])
     else:
-        freight.set_validities(
+        validites = freight.set_validities(
             request["validity_start"].date(),
             request["validity_end"].date(),
             line_items,
@@ -167,7 +167,7 @@ def create_fcl_freight_rate(request):
 
     freight.update_special_attributes()
 
-    freight.update_local_references()  
+    freight.update_local_references()
 
     try:
         freight.save()
@@ -200,6 +200,8 @@ def create_fcl_freight_rate(request):
 
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
+        
+    send_freight_rate_stats(freight,validites)
 
     return {"id": freight.id}
 
@@ -285,11 +287,17 @@ def validities_for_cogo_assured(request):
 def validate_value_props(v_props):
     for prop in v_props:
         name = prop.get('name')
-        # print(name)
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
 
+def send_freight_rate_stats(freight,validities):
+    from celery_worker import allocate_create_fcl_freight_rate_statistics_from_self
+    from playhouse.shortcuts import model_to_dict
+    stats = model_to_dict(freight)
+    stats['validities'] = validities
+    allocate_create_fcl_freight_rate_statistics_from_self.apply_async({'kwargs': stats},queue = 'monitoring')
+    
 
 
     
