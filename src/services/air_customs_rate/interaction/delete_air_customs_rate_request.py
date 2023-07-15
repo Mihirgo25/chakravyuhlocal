@@ -26,6 +26,7 @@ def execute_transaction_code(request):
 
     update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
     create_audit_for_customs_request(request, object, data)
+    object.send_closed_notifications_to_sales_agent()
 
   return {'air_customs_rate_request_ids' : request.get('air_customs_rate_request_ids')}
 
