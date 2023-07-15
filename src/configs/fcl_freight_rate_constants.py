@@ -83,7 +83,7 @@ SOURCES = ['tech_ops_dashboard', 'purchase_invoice', 'rms_upload', 'cogo_lens', 
 
 SCHEDULE_TYPES = ['direct', 'transhipment']
 
-DEFAULT_SCHEDULE_TYPES = 'transhipment'
+DEFAULT_SCHEDULE_TYPES = 'direct'
 
 POSSIBLE_FEEDBACKS = ['unsatisfactory_rate', 'unsatisfactory_destination_detention', 'unpreferred_shipping_lines']
 

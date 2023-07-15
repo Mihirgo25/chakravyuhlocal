@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
 from services.fcl_freight_rate.models.fcl_freight_rate_bulk_operation import FclFreightRateBulkOperation
 from math import ceil 
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.parse_numeric import parse_numeric
 from libs.get_applicable_filters import get_applicable_filters
@@ -24,7 +24,7 @@ def list_fcl_freight_rate_bulk_operations(filters = {}, page_limit = 10, page = 
 
     pagination_data = get_pagination_data(query, page, page_limit)
     query = query.paginate(page, page_limit)
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
     data = get_details(data)
 
     return {'list': data } | (pagination_data)

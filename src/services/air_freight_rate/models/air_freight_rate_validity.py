@@ -1,0 +1,80 @@
+from peewee import *
+import datetime
+from database.db_session import db
+from playhouse.postgres_ext import *
+from fastapi import HTTPException
+from micro_services.client import maps
+from services.air_freight_rate.air_freight_rate_params import WeightSlab
+
+class BaseModel(Model):
+    class Meta:
+        database = db
+        only_save_dirty = True
+
+class AirFreightRateValidity(BaseModel):
+    validity_start: datetime.date
+    validity_end: datetime.date
+    min_price: float
+    id: str
+    currency: str
+    status: bool = True
+    likes_count: int = None
+    dislikes_count: int = None
+    weight_slabs: list[WeightSlab] = []
+    density_category: str = 'general'
+    initial_volume: float = None
+    available_volume: float = None
+    initial_gross_weight: float = None
+    available_gross_weight: float = None
+    min_density_weight: float = None
+    max_density_weight: float = None
+    flight_uuid: str = None
+    external_rate_id: str = None
+
+    # class Config:
+    #     orm_mode = True
+    #     exclude = ('validity_start', 'validity_end')
+
+    def validations(self):
+        if self.initial_volume and self.initial_volume < 0:
+            raise HTTPException(status_code=400,details = 'Initial Volume Should Be Positive')
+
+        if self.available_volume and self.available_volume < 0:
+            raise HTTPException(status_code=400,details = 'Available Volume Should Be Positive')
+        
+        if self.initial_gross_weight and self.initial_gross_weight < 0:
+            raise HTTPException(status_code=400,details = 'Initial Gross Weight Be Positive')
+        
+        if self.available_gross_weight and self.available_gross_weight < 0:
+            raise HTTPException(status_code=400,details = 'Available Gross Weight Be Positive')
+        
+        if self.min_density_weight and self.min_density_weight < 0:
+            raise HTTPException(status_code=400,details = 'Minimum Density Weight Be Positive')
+        
+        if self.max_density_weight and self.max_density_weight < 0:
+            raise HTTPException(status_code=400,details = 'Maximum Density Weight Be Positive')
+        
+        self.validate_weight_slabs()
+        return True
+    
+    def validate_weight_slabs(self):
+        now = datetime.datetime.now()
+        beginning_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        if not self.status and self.validity_end < beginning_of_day:
+            return
+        
+        lower_limits = []
+        upper_limits = []
+        check = False
+        for slab in self.weight_slabs:
+            if float(slab.get('upper_limit')) <= float(slab.get('lower_limit')):
+                check = True
+            lower_limits.append(slab.get('lower_limit'))
+            upper_limits.append(slab.ge('upper_limit'))
+        if check:
+            raise HTTPException(status_code = 400,details = 'Invalid Weight Slabs')
+        
+        for i in range(len(upper_limits) - 1):
+            if upper_limits[i] >= lower_limits[i + 1]:
+                raise HTTPException(status_code = 400,details = 'Weight Slabs OverLapping')

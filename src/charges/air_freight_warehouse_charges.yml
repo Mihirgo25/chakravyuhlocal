@@ -1,0 +1,55 @@
+LOD: 
+  name: "Loading Charge"
+  units: ['per_kg', 'per_package']
+  trade_types: ['export']
+  condition: true
+  tags: ['mandatory']
+ULOD: 
+  name: "Unloading Charge"
+  units: ['per_kg', 'per_package']
+  trade_types: ['export']
+  condition: true
+  tags: ['mandatory']
+WH:
+  name: "Warehouse Storage Charge"
+  units: ['per_kg_per_day']
+  trade_types: ['export']
+  condition: true
+  tags: ['mandatory']
+TRA:
+  name: "Transportation Charge"
+  units: ['per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['mandatory']
+LBL: 
+  name: "Labeling Charge"
+  units: ['per_package']
+  trade_types: ['export']
+  condition: true
+  tags: ['mandatory']
+FC:
+  name: "Fumigation Charge"
+  units: ['per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['mandatory']
+FLC:
+  name: "Forklift charges loading"
+  units: ['per_kg', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+FULC:
+  name: "Forklift charges unloading"
+  units: ['per_kg', 'per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+PKC:
+  name: "Packaging Charge"
+  units: ['per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: []
+  
