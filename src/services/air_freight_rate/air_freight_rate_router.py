@@ -460,7 +460,7 @@ def list_air_freight_rate_surcharges_api(
     page_limit: int = 10,
     page: int = 1,
     pagination_data_required: bool = True,
-    return_query: bool = True,
+    return_query: bool = False,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
