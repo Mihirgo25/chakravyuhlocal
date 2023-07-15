@@ -37,7 +37,7 @@ sentry_sdk.init(
     ignore_errors=[HTTPException],
 )
 
-docs_url = None if APP_ENV != "production" else "/docs"
+docs_url = None if APP_ENV == "production" else "/docs"
 
 app = FastAPI(docs_url=docs_url, debug=True,dependencies=[Depends(get_db)])
 
