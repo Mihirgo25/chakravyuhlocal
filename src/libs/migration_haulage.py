@@ -367,13 +367,8 @@ def all_locations_data():
     
     
 def run_migration():
-    procured_by_sourced_by('haulage_freight_rate_local')
-    # all_locations_data()
     print('Procured by Sourced by Data done')
     # haulage_freight_rate_feedback_migration()
     # haulage_freight_rate_audits_migration()
     # haulage_freight_rate_bulk_operations_migration()
     # haulage_freight_rate_requests_migration()
-    # haulage_freight_storage_rates_migration()
-    # haulage_freight_warehouse_rates_migration()
-    # haulage_freight_rate_locals_migration()

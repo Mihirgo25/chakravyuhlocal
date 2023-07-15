@@ -14,7 +14,11 @@ from datetime import datetime, timedelta
 from configs.haulage_freight_rate_constants import LOCATION_PAIR_HIERARCHY
 from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
-from database.rails_db import get_organization, get_user, get_eligible_orgs, list_organization_users
+from database.rails_db import (
+    get_user,
+    get_eligible_orgs,
+    list_organization_users,
+)
 from micro_services.client import common, maps
 from itertools import groupby
 from libs.json_encoder import json_encoder
@@ -42,7 +46,11 @@ def initialize_query(requirements, query):
         HaulageFreightRate.container_size == requirements["container_size"],
         HaulageFreightRate.commodity == requirements["commodity"],
         HaulageFreightRate.haulage_type == requirements.get("haulage_type"),
-        (HaulageFreightRate.importer_exporter_id == requirements.get('importer_exporter_id')) | (HaulageFreightRate.importer_exporter_id.is_null(True)),
+        (
+            HaulageFreightRate.importer_exporter_id
+            == requirements.get("importer_exporter_id")
+        )
+        | (HaulageFreightRate.importer_exporter_id.is_null(True)),
         HaulageFreightRate.is_line_items_error_messages_present == False,
         HaulageFreightRate.rate_not_available_entry == False,
     )
@@ -70,14 +78,14 @@ def initialize_query(requirements, query):
             HaulageFreightRate.transport_modes_keyword
             == requirements.get("transport_mode")
         )
-    if requirements.get("transport_mode") == "trailer":
-        freight_query = freight_query.where(
-            HaulageFreightRate.validity_start <= datetime.now()
-            and HaulageFreightRate.validity_end >= datetime.now()
-        )
-    freight_query = freight_query.where(
-        HaulageFreightRate.updated_at >= (datetime.now() - timedelta(days=90)).date()
-    )
+    # if requirements.get("transport_mode") == "trailer":
+    #     freight_query = freight_query.where(
+    #         HaulageFreightRate.validity_start <= datetime.now()
+    #         and HaulageFreightRate.validity_end >= datetime.now()
+    #     )
+    # freight_query = freight_query.where(
+    #     HaulageFreightRate.updated_at >= (datetime.now() - timedelta(days=90)).date()
+    # )
 
     return freight_query
 
@@ -99,10 +107,9 @@ def select_fields():
         HaulageFreightRate.updated_at,
         HaulageFreightRate.transit_time,
         HaulageFreightRate.detention_free_time,
-        HaulageFreightRate.service_provider_id,
         HaulageFreightRate.validity_start,
         HaulageFreightRate.validity_end,
-        HaulageFreightRate.service_provider
+        HaulageFreightRate.service_provider,
     )
     return freight_query
 
@@ -115,14 +122,19 @@ def get_query_results(query):
 def build_line_item_object(line_item, requirements):
     code_config = HAULAGE_FREIGHT_CHARGES[line_item["code"]]
 
-    # checking if additional_service is required in line item  
+    # checking if additional_service is required in line item
     is_additional_service = code_config["tags"]
 
-    is_additional_service = True if 'additional_service' in is_additional_service else False
+    is_additional_service = (
+        True if "additional_service" in is_additional_service else False
+    )
 
-    if is_additional_service and line_item["code"] not in requirements["additional_services"]:
-        return
-    
+    if (
+        is_additional_service
+        and line_item["code"] not in requirements["additional_services"]
+    ):
+        return None
+
     # finding slab value
     slab_value = None
     if line_item.get("slabs"):
@@ -150,7 +162,9 @@ def build_line_item_object(line_item, requirements):
     keys_to_slice = ["code", "unit", "price", "currency", "remarks"]
     line_item = {key: line_item[key] for key in keys_to_slice if key in line_item}
     line_item["quantity"] = (
-        requirements["containers_count"] if line_item["unit"] in ["per_container"] else 1
+        requirements["containers_count"]
+        if line_item["unit"] in ["per_container"]
+        else 1
     )
     line_item["total_price"] = line_item["quantity"] * line_item["price"]
     line_item["name"] = code_config["name"]
@@ -177,10 +191,10 @@ def build_response_object(result, requirements):
         "transit_time": result["transit_time"],
         "detention_free_time": result["detention_free_time"],
         "trailer_type": result.get("trailer_type"),
-        "trailer_count": requirements.get("containers_count")
+        "trailer_count": requirements.get("containers_count"),
     }
 
-    #appeding tags for specific service_provider_id
+    # appeding tags for specific service_provider_id
     if (
         response_object["service_provider_id"]
         in CONFIRMED_INVENTORY["service_provider_ids"]
@@ -191,11 +205,11 @@ def build_response_object(result, requirements):
     additional_services = requirements["additional_services"]
     if additional_services:
         additional_services = [string.upper() for string in additional_services]
-    additional_services = list(filter(None, additional_services))
+        additional_services = list(filter(None, additional_services))
     charger_codes = []
     for codes in result["line_items"]:
-        charger_codes.append(codes['code']) 
-    
+        charger_codes.append(codes["code"])
+
     if additional_services and list(set(additional_services) - set(charger_codes)):
         return False
     # modifying line items
@@ -228,138 +242,53 @@ def build_response_object(result, requirements):
 
 
 def build_response_list(requirements, query_results):
-    data = []
-    grouped_query_results = {}
-
-    if not requirements.get("origin_location_id"):
-        sorted_rates = sorted(
+    grouping = {}
+    query_results = sorted(
             query_results,
-            key=lambda t: (
-                t["origin_location_id"],
-                t["service_provider_id"],
-                t["shipping_line_id"],
-                t["haulage_type"],
-                t["transport_modes_keyword"],
-            ),
-        )
-
-        for (
-            origin_location_id,
-            service_provider_id,
-            shipping_line_id,
-            haulage_type,
-            transport_modes_keyword,
-        ), group in groupby(
-            sorted_rates,
-            key=lambda t: (
-                t["origin_location_id"],
-                t["service_provider_id"],
-                t["shipping_line_id"],
-                t["haulage_type"],
-                t["transport_modes_keyword"],
-            ),
-        ):
-            grouped_query_results[
-                (
-                    origin_location_id,
-                    service_provider_id,
-                    shipping_line_id,
-                    haulage_type,
-                    transport_modes_keyword,
-                )
-            ] = list(group)
-
-    elif not requirements.get("destination_location_id"):
-        sorted_rates = sorted(
-            query_results,
-            key=lambda t: (
-                t["destination_location_id"],
-                t["service_provider_id"],
-                t["shipping_line_id"],
-                t["haulage_type"],
-                t["transport_modes_keyword"],
-            ),
-        )
-
-        for (
-            destination_location_id,
-            service_provider_id,
-            shipping_line_id,
-            haulage_type,
-            transport_modes_keyword,
-        ), group in groupby(
-            sorted_rates,
-            key=lambda t: (
-                t["destination_location_id"],
-                t["service_provider_id"],
-                t["shipping_line_id"],
-                t["haulage_type"],
-                t["transport_modes_keyword"],
-            ),
-        ):
-            grouped_query_results[
-                (
-                    destination_location_id,
-                    service_provider_id,
-                    shipping_line_id,
-                    haulage_type,
-                    transport_modes_keyword,
-                )
-            ] = list(group)
-
-    else:
-        sorted_rates = sorted(
-            query_results,
-            key=lambda t: (
-                t["service_provider_id"],
-                t["shipping_line_id"],
-                t["haulage_type"],
-                t["transport_modes_keyword"],
-            ),
-        )
-
-        for (
-            service_provider_id,
-            shipping_line_id,
-            haulage_type,
-            transport_modes_keyword,
-        ), group in groupby(
-            sorted_rates,
-            key=lambda t: (
-                t["service_provider_id"],
-                t["shipping_line_id"],
-                t["haulage_type"],
-                t["transport_modes_keyword"],
-            ),
-        ):
-            grouped_query_results[
-                (
-                    service_provider_id,
-                    shipping_line_id,
-                    haulage_type,
-                    transport_modes_keyword,
-                )
-            ] = list(group)
-    for key, results in grouped_query_results.items():
-        results = sorted(
-            results,
             key=lambda t: LOCATION_PAIR_HIERARCHY[
                 t["origin_destination_location_type"]
             ],
         )
-        result = next((t for t in results if t.get("importer_exporter_id")), None)
-        if not result:
-            result = results[0]
-        response_object = build_response_object(result, requirements)
+    for results in query_results:
+        if not requirements.get("origin_location_id"):
+            key = ":".join([
+                results["origin_location_id"],
+                results["service_provider_id"] or "",
+                results["shipping_line_id"] or "",
+                results["haulage_type"] or "",
+                results["transport_modes_keyword"] or "",
+            ])
+
+        elif not requirements.get("destination_location_id"):
+            key = ":".join([
+                results["destination_location_id"],
+                results["service_provider_id"] or "",
+                results["shipping_line_id"] or "",
+                results["haulage_type"] or "",
+                results["transport_modes_keyword"] or "",
+            ])
+        else:
+            key = ":".join([
+                results["service_provider_id"] or "",
+                results["shipping_line_id"] or "",
+                results["haulage_type"] or "",
+                results["transport_modes_keyword"] or "",
+            ])
+        
+        if grouping.get(key) and grouping[key].get('importer_exporter_id'):
+            continue
+
+        response_object = build_response_object(results, requirements)
         if response_object:
-            data.append(response_object)
-    return data
+            grouping[key] = response_object
+
+    return list(grouping.values())
 
 
 def ignore_non_eligible_service_providers(requirements, data):
     ids = get_eligible_orgs("haulage_freight")
 
-    data = [rate for rate in data if rate.get("service_provider_id") in ids]    
+    data = [rate for rate in data if rate.get("service_provider_id") in ids]
     if (
         not data
         and requirements.get("predicted_rate")
@@ -419,13 +348,18 @@ def ignore_non_active_shipping_lines(data):
 
 
 def additional_response_data(data):
-
-    # adding org users 
+    # adding org users
     audit_object_ids = list(map(lambda ids: ids["id"], data))
-    audits = json_encoder(list(HaulageFreightRateAudit.select().where(HaulageFreightRateAudit.object_id<<audit_object_ids).dicts()))
+    audits = json_encoder(
+        list(
+            HaulageFreightRateAudit.select()
+            .where(HaulageFreightRateAudit.object_id << audit_object_ids)
+            .dicts()
+        )
+    )
     audit_sourced_by_id = []
     for audit_data in audits:
-        audit_sourced_by_id.append(str(audit_data['sourced_by_id']))
+        audit_sourced_by_id.append(str(audit_data["sourced_by_id"]))
     org_users = list_organization_users(audit_sourced_by_id)
 
     # adding users
@@ -434,8 +368,11 @@ def additional_response_data(data):
     )
     users = get_user(id=sourced_by_ids)
     for addon_data in data:
-        addon_data["service_provider_name"] = addon_data["service_provider"].get("short_name")
-    
+        if "service_provider" in addon_data:
+            addon_data["service_provider_name"] = addon_data["service_provider"].get(
+                "short_name"
+            )
+
         audits_object = next(
             filter(lambda t: t["object_id"] == addon_data["id"], audits), None
         )
@@ -446,9 +383,11 @@ def additional_response_data(data):
         ) or next(
             filter(lambda t: t["id"] == audits_object["sourced_by_id"], users), None
         )
-        
+
         addon_data["user_name"] = user.get("name")
-        addon_data["user_contact"] = user.get("mobile_number") or user.get("mobile_number_eformat")
+        addon_data["user_contact"] = user.get("mobile_number") or user.get(
+            "mobile_number_eformat"
+        )
         addon_data["last_updated_at"] = audits_object["updated_at"]
         addon_data["buy_rate_currency"] = "INR"
         addon_data["buy_rate"] = addon_data["line_items"]
@@ -496,7 +435,7 @@ def get_haulage_freight_rate_cards(requirements):
      }]
     }]
     """
-    
+
     try:
         # select default required columns
         query = select_fields()
