@@ -78,14 +78,14 @@ def initialize_query(requirements, query):
             HaulageFreightRate.transport_modes_keyword
             == requirements.get("transport_mode")
         )
-    # if requirements.get("transport_mode") == "trailer":
-    #     freight_query = freight_query.where(
-    #         HaulageFreightRate.validity_start <= datetime.now()
-    #         and HaulageFreightRate.validity_end >= datetime.now()
-    #     )
-    # freight_query = freight_query.where(
-    #     HaulageFreightRate.updated_at >= (datetime.now() - timedelta(days=90)).date()
-    # )
+    if requirements.get("transport_mode") == "trailer":
+        freight_query = freight_query.where(
+            HaulageFreightRate.validity_start <= datetime.now()
+            and HaulageFreightRate.validity_end >= datetime.now()
+        )
+    freight_query = freight_query.where(
+        HaulageFreightRate.updated_at >= (datetime.now() - timedelta(days=90)).date()
+    )
 
     return freight_query
 
