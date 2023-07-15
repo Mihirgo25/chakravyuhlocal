@@ -1024,6 +1024,7 @@ def list_air_freight_rates_api(
     all_rates_for_cogo_assured: bool = False,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
+    revenue_desk_data_required: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
