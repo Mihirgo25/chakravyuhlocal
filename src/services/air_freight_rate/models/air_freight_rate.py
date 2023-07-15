@@ -51,7 +51,7 @@ class AirFreightRate(BaseModel):
     height = IntegerField(null=True)
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     is_best_price = BooleanField(null=True)
-    last_rate_available_date = DateTimeField(index=True, null=True)
+    last_rate_available_date = DateField(index=True, null=True)
     length = IntegerField(null=True)
     maximum_weight = IntegerField(null=True)
     min_price = FloatField(null=True)
