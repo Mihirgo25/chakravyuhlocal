@@ -213,7 +213,7 @@ class AirFreightRateLocal(BaseModel):
         self.validate_service_provider_id()
         
         if self.trade_type not in TRADE_TYPES:
-            raise HTTPException(staus_code = 400, detail = 'Invalid Trade Type')
+            raise HTTPException(status_code = 400, detail = 'Invalid Trade Type')
         return True
     
     def set_locations(self):

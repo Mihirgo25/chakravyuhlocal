@@ -46,7 +46,8 @@ def get_applicable_filters(filters, POSSIBLE_DIRECT_FILTERS=[], POSSIBLE_INDIREC
         "destination_airport_id",
         "cluster_id",
         "shipping_line_id",
-        "service_provider_id"
+        "service_provider_id",
+        "object_id"
     ]:
         if type in direct_filters:
             if isinstance(direct_filters[type], str):
