@@ -696,18 +696,18 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     return freight_rates
 
 def get_cluster_or_predicted_rates(requirements, is_predicted):
-    # try:
-    #     get_fcl_freight_rates_from_clusters(requirements)
-    # except:
-    #     pass
-    # initial_query = initialize_freight_query(requirements)
-    # freight_rates = jsonable_encoder(list(initial_query.dicts()))
-    
-    # if len(freight_rates) == 0:
-    get_fcl_freight_predicted_rate(requirements)
-    initial_query = initialize_freight_query(requirements, True)
+    try:
+        get_fcl_freight_rates_from_clusters(requirements)
+    except:
+        pass
+    initial_query = initialize_freight_query(requirements)
     freight_rates = jsonable_encoder(list(initial_query.dicts()))
-    is_predicted = True
+    
+    if len(freight_rates) == 0:
+        get_fcl_freight_predicted_rate(requirements)
+        initial_query = initialize_freight_query(requirements, True)
+        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        is_predicted = True
         
     return freight_rates, is_predicted
 
