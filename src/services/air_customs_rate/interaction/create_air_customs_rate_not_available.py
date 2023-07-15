@@ -15,7 +15,7 @@ def create_air_customs_rate_not_available(request):
     for id in service_provider_query:
         present_service_provider_ids.append(str(id.get('service_provider_id')))
 
-    find_service_provider_ids = get_eligible_orgs('air_customs')
+    find_service_provider_ids = get_eligible_orgs(service = 'air_customs')
 
     for service_provider_id in list(set(find_service_provider_ids).difference(set(present_service_provider_ids))):
         AirCustomsRate.create(

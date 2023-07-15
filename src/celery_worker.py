@@ -46,6 +46,7 @@ from services.air_freight_rate.workers.send_expired_air_freight_rate_notificatio
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.air_customs_rate.helpers import update_organization_air_customs
+from services.air_customs_rate.interaction.create_air_customs_rate import create_air_customs_rate
 
 # Rate Producers
 
@@ -691,8 +692,6 @@ def create_air_freight_rate_surcharge_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-    
-
 @celery.task(bind = True, retry_backoff=True, max_retries=5)       
 def create_air_customs_rate_delay(self, request):
     try:
@@ -723,7 +722,7 @@ def update_fcl_freight_rate_feedback_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
-                
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def send_air_freight_rate_task_notification_in_delay(self,task_id):
     try:
@@ -733,7 +732,7 @@ def send_air_freight_rate_task_notification_in_delay(self,task_id):
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def get_rate_from_cargo_ai_in_delay(self,air_freight_rate,feedback,performed_by_id):
     try:
@@ -743,7 +742,7 @@ def get_rate_from_cargo_ai_in_delay(self,air_freight_rate,feedback,performed_by_
             pass
         else:
             raise self.retry(exc= exc)
-        
+
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def send_air_freight_local_charges_update_reminder_notification_in_delay(self):
     try:
@@ -783,7 +782,7 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
             pass
         else:
             raise self.retry(exc= exc)@celery.task(bind = True, max_retries=5, retry_backoff = True)
-        
+
 @celery.task(bind = True, retry_backoff=True, max_retries=5) 
 def air_customs_functions_delay(self,air_customs_object,request):
     try:

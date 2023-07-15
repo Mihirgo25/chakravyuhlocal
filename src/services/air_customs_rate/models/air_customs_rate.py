@@ -1,13 +1,14 @@
 from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
-from configs.fcl_freight_rate_constants import *
+from configs.fcl_freight_rate_constants import TRADE_TYPES
 from database.rails_db import *
 from micro_services.client import common, maps
 import datetime
 from fastapi import HTTPException
 from configs.definitions import AIR_CUSTOMS_CHARGES
 from configs.air_customs_rate_constants import COMMODITIES
+from services.air_freight_rate.constants.air_freight_rate_constants import RATE_TYPES
 
 class BaseModel(Model):
     class Meta:
@@ -175,7 +176,7 @@ class AirCustomsRate(BaseModel):
         if airport_data:
             self.airport = airport_data[0]
         else:
-            self.airport = []
+            self.airport = {}
 
     def set_location_ids(self):
         self.country_id = self.airport.get('country_id')
@@ -191,16 +192,16 @@ class AirCustomsRate(BaseModel):
             raise HTTPException(status_code=400, detail="Invalid service provider ID")
         
     def validate_trade_type(self):
-        if self.trade_type and self.trade_type in TRADE_TYPES:
-            return True
-        return False
+        if self.trade_type and self.trade_type not in TRADE_TYPES:
+            raise HTTPException(status_code = 400, detail = 'Invalid Trade Type')
         
     def validate_commodity(self):
-        if self.commodity in COMMODITIES:
-            return True
-        return False
+        if self.commodity not in COMMODITIES:
+            raise HTTPException(status_code = 400, detail = 'Invalid Commodity')
     
-    # def validate_rate_type():
+    def validate_rate_type(self):
+        if self.rate_type not in RATE_TYPES:
+            raise HTTPException(status_code = 400, detail = 'Invalid Rate Type')
 
     def validate_uniqueness(self):
         uniqueness = AirCustomsRate.select(AirCustomsRate.id).where(
@@ -222,5 +223,5 @@ class AirCustomsRate(BaseModel):
         self.validate_service_provider_id()
         self.validate_trade_type()
         self.validate_commodity()
-        # self.validate_rate_type()
+        self.validate_rate_type()
         self.validate_uniqueness()

@@ -1,12 +1,11 @@
 
 from database.rails_db import get_organization, get_eligible_orgs
-from micro_services.client import organization
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 
 def get_air_customs_rate_visibility(request):
     response_object = { 'reason': '', 'is_rate_available': False, 'is_visible': False }
     org_services = []
-    org_details = get_organization(id=request.get('service_provider_id'))
+    org_details = get_organization(id=request.get('service_provider_id'), account_type = 'service_provider')
     if org_details:
         org_details = org_details[0]
         org_services = get_eligible_orgs(None, str(org_details.get('id') or ''))

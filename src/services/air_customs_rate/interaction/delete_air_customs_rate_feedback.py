@@ -15,10 +15,10 @@ def execute_transaction_code(request):
 
   reverted_rate = {
      'rate_id':request.get('rate_id'),
-     'customs_line_items':request.get('customs_line_items')
+     'line_items':request.get('customs_line_items')
   }
 
-  data = {key:value for key,value in request.items() if key != 'air_customs_rate_feedback_ids'},
+  data = {key:value for key,value in request.items() if key != 'air_customs_rate_feedback_ids'}
   for object in air_feedback_objects:
     object.status = 'inactive'
     object.closed_by_id = request.get('performed_by_id')

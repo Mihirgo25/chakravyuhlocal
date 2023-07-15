@@ -77,25 +77,23 @@ class AirCustomsRateBulkOperation(BaseModel):
     def perform_delete_rate_action(self):
         data = self.data
         count = 0
+        rate_ids = []
 
+        for customs_id in data:
+            rate_ids.append(customs_id.get('air_customs_rate_id'))
+
+        customs_rate_data = AirCustomsRate.select().where(AirCustomsRate.id << rate_ids).dicts()
         total_count = len(data)
-        for custom_data in data:
+
+        for custom_data in customs_rate_data:
             count += 1
-            object = AirCustomsRate.select().where(
-                AirCustomsRate.id == custom_data.get('air_customs_rate_id'))
-
-            try:
-                object = object.get()
-            except:
-                raise HTTPException(status_code=400, detail='Rate is not present')
-
             if AirCustomsRateAudit.get_or_none(bulk_operation_id = self.id, object_id = custom_data.get('id')):
                 self.progress = int((count * 100.0) / total_count)
                 self.set_processed_percent_air_customs_bulk_operation(self.progress, self.id)
                 continue
 
             delete_air_customs_rate({
-                'id': custom_data.get('air_customs_rate_id'),
+                'id': custom_data.get('id'),
                 'performed_by_id': self.performed_by_id,
                 'bulk_operation_id': self.id
             })

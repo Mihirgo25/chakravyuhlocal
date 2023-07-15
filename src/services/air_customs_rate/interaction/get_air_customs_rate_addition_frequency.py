@@ -4,7 +4,7 @@ from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import json
 from peewee import fn, SQL
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 possible_direct_filters = ['procured_by_id']
 
@@ -37,7 +37,7 @@ def get_data(query, sort_type, group_by):
     data = (query.select(fn.COUNT(SQL('*')).alias('count_all'), fn.date_trunc(f'{group_by}', AirCustomsRate.updated_at).alias(f'date_trunc_{group_by}_air_customs_rates_updated_at')
         ).group_by(fn.date_trunc(f'{group_by}', AirCustomsRate.updated_at)
         ).order_by(eval(f"fn.date_trunc('{group_by}', AirCustomsRate.updated_at).{sort_type}()")))
-    return jsonable_encoder(list(data.dicts()))
+    return json_encoder(list(data.dicts()))
 
 def apply_location_ids_filter(query, filters):
     location_ids = filters.get('location_ids')

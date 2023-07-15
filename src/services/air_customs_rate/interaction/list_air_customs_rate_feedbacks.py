@@ -30,7 +30,7 @@ def list_air_customs_rate_feedbacks(filters = {}, spot_search_details_required=F
     pagination_data = get_pagination_data(query, page, page_limit)
 
     query = get_page(query, page, page_limit)
-    data = get_data(query,spot_search_details_required,customer_details_required) 
+    data = get_data(query,spot_search_details_required,customer_details_required)
 
     return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
@@ -80,12 +80,14 @@ def get_data(query, spot_search_details_required, customer_details_required):
             for rate in rates:
                 if 'service_provider_id' in rate:
                     service_provider_ids.append(rate['service_provider_id'])
+
     service_providers = []
     service_providers_hash = {}
     if len(service_provider_ids):
         service_providers = get_organization(service_provider_ids)
         for sp in service_providers:
             service_providers_hash[sp['id']] = sp
+
     spot_search_hash = {}
     new_data = []
     if spot_search_details_required:

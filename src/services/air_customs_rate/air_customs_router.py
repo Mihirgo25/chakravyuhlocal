@@ -2,7 +2,7 @@ from services.air_customs_rate.air_customs_params import *
 from params import CreateRateSheet, UpdateRateSheet
 from rms_utils.auth import authorize_token
 from fastapi import APIRouter, Depends
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from fastapi.responses import JSONResponse
 import sentry_sdk, traceback
 from fastapi import HTTPException
@@ -39,10 +39,9 @@ def create_air_customs_rate_api(request: CreateAirCustomsRate, resp: dict = Depe
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
-
     try:
         rate = create_air_customs_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -58,7 +57,7 @@ def create_air_customs_rate_bulk_operation_api(request: CreateAirCustomsRateBulk
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_air_customs_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -74,7 +73,7 @@ def create_air_customs_rate_feedback_api(request: CreateAirCustomsRateFeedback, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_air_customs_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -90,7 +89,7 @@ def create_air_customs_rate_request_api(request: CreateAirCustomsRateRequest, re
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_air_customs_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -106,7 +105,7 @@ def create_air_customs_rate_not_available_api(request: CreateAirCustomsRateNotAv
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_air_customs_rate_not_available(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -149,7 +148,7 @@ def get_air_customs_rate_visibility_api(
     }
     try:
         data = get_air_customs_rate_visibility(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -177,7 +176,7 @@ def get_air_customs_rate_api(
 
     try:
         data = get_air_customs_rate(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -202,7 +201,7 @@ def list_air_customs_rate_feedbacks_api(
 
     try:
         data = list_air_customs_rate_feedbacks(filters, spot_search_details_required, customer_details_required, page_limit, page, performed_by_id, is_stats_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -222,7 +221,7 @@ def list_air_customs_rate_requests_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_air_customs_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -244,7 +243,7 @@ def list_air_customs_rates_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_air_customs_rates(filters, page_limit, page, sort_by, sort_type,return_query, pagination_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -265,7 +264,7 @@ def list_air_customs_charge_codes_api(
     }
     try:
         data = list_air_customs_charge_codes(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -306,7 +305,7 @@ def get_air_customs_rate_cards_api(
 
     try:
         data = get_air_customs_rate_cards(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -322,7 +321,7 @@ def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = update_air_customs_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -339,7 +338,7 @@ def delete_air_customs_rate_api(request: DeleteAirCustomsRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = delete_air_customs_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -355,7 +354,7 @@ def delete_air_customs_rate_feedback_api(request: DeleteAirCustomsRateFeedback, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = delete_air_customs_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -371,72 +370,7 @@ def delete_air_customs_rate_request_api(request: DeleteAirCustomsRateRequest, re
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = delete_air_customs_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@air_customs_router.post("/delete_air_customs_rate_feedback")
-def delete_air_customs_rate_feedback_api(request: DeleteAirCustomsRateFeedback, resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        delete_rate = delete_air_customs_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@air_customs_router.post("/delete_air_customs_rate_request")
-def delete_air_customs_rate_request_api(request: DeleteAirCustomsRateRequest, resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        delete_rate = delete_air_customs_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@air_customs_router.post("/delete_air_customs_rate")
-def delete_air_customs_rate_api(request: DeleteAirCustomsRate, resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        delete_rate = delete_air_customs_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-
-@air_customs_router.post("/update_air_customs_rate")
-def update_air_customs_rate_api(request: UpdateAirCustomsRate, resp: dict = Depends(authorize_token)):
-    if resp["status_code"] != 200:
-        return JSONResponse(status_code=resp["status_code"], content=resp)
-    if resp["isAuthorized"]:
-        request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
-    try:
-        data = update_air_customs_rate(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -452,7 +386,7 @@ def create_rate_sheet_api(request: CreateRateSheet, resp: dict = Depends(authori
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -469,7 +403,7 @@ def update_rate_sheet_api(request: UpdateRateSheet, resp: dict = Depends(authori
 
     try:
         rate_sheet = update_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:

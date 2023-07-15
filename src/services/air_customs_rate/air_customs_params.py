@@ -53,8 +53,8 @@ class CreateAirCustomsRateNotAvailable(BaseModel):
   country_id: str
   trade_type: str
   commodity: str = None
-  performed_by_type: str
-  performed_by_id: str
+  performed_by_type: str = None
+  performed_by_id: str = None
 
 class CreateAirCustomsRateRequest(BaseModel):
   source: str
@@ -64,8 +64,6 @@ class CreateAirCustomsRateRequest(BaseModel):
   performed_by_type: str
   preferred_customs_rate: float = None
   preferred_customs_rate_currency: str = None
-  # preferred_detention_free_days: int = None
-  # preferred_storage_free_days: int = None
   cargo_readiness_date: date = None
   remarks: list[str] = []
   booking_params: dict = {}
@@ -73,8 +71,8 @@ class CreateAirCustomsRateRequest(BaseModel):
   volume: float
   commodity: str = None
   country_id: str = None
-  airport_id: str 
-  continent_id: str 
+  airport_id: str = None
+  continent_id: str = None
   city_id: str = None
   trade_type: str = None
   trade_id: str = None
@@ -95,18 +93,6 @@ class CreateAirCustomsRate(BaseModel):
   performed_by_type: str = None
   bulk_operation_id: str = None
   rate_type: str = 'market_place'
-
-class UpdateAirCustomsRatePlatformPrices(BaseModel):
-  location_id: str
-  container_size: str 
-  container_type: str 
-  commodity: str = None
-  trade_type:str
-  performed_by_id: str
-  performed_by_type: str
-  importer_exporter_id: str = None
-  is_customs_line_items_error_messages_present: bool = False
-  is_cfs_line_items_error_messages_present: bool = False
 
 class DeleteAirCustomsRateFeedback(BaseModel):
  air_customs_rate_feedback_ids: list[str]

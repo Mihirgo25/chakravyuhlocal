@@ -379,12 +379,18 @@ CCOV:
   tags: ['additional_service']
   sac_code: '996712'
 #new
-#DOCG:
-#  name: "Documentation Charges"
-#  units: ['per document']
-#  trade_types: ['import', 'export']
-#  condition: true
-#  tags: ['additional_service']
+DOCG:
+ name: "Documentation Charges"
+ units: ['per_document']
+ trade_types: ['import', 'export']
+ condition: true
+ tags: ['additional_service']
+AAI:
+  name: 'Airports Authority of India'
+  units: [ 'per_kg' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: [ 'additional_service' ]
 #AC:
 #  name: "Amendment charges"
 #  units: ['per_shipment']

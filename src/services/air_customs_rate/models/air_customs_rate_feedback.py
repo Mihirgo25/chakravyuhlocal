@@ -2,9 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from fastapi import HTTPException
 from micro_services.client import spot_search, maps
-from database.rails_db import *
 
 class BaseModel(Model):
     class Meta:

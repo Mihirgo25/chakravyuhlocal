@@ -3,12 +3,11 @@ import json
 from fastapi import HTTPException
 
 def list_air_customs_charge_codes(request):
-    # request = json.loads(request)
     validate_service_type(request)
     charges = get_charge_codes(request)
     if not charges:
         return {}
-    
+
     return charges
 
 def get_charge_codes(request):
