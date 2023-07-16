@@ -52,6 +52,8 @@ def execute_transaction_code(request):
                 validity = {key:value for key,value in validity.items() if key in ["id","validity_end","weight_slabs","validity_start","min_price"] }
                 air_freight_rate['validities'].append(validity)
             break
+    requests_objects = jsonable_encoder(list(request_objects.dicts()))
+
     for request_object in request_objects:
         request_object.status = "inactive"
         request_object.closed_by_id = request.get("performed_by_id")
@@ -68,11 +70,10 @@ def execute_transaction_code(request):
         send_closed_notifications_to_sales_agent_function.apply_async(
             kwargs={"object": request_object}, queue="low"
         )
-    request_object = jsonable_encoder(list(request_objects.dicts()))
 
     if shipment_source:
         data = {
-        'air_freight_rate_requests': request_object,
+        'air_freight_rate_requests': requests_objects,
         }
         if air_freight_rate:
             data['air_freight_rate'] = air_freight_rate
