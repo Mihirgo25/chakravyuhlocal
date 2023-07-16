@@ -45,13 +45,15 @@ def execute_transaction_code(request):
                                         AirFreightRate.price_type,AirFreightRate.operation_type)
                 .where(AirFreightRate.id == request.get("rate_id"))
             )
-            air_freight_rate =jsonable_encoder(list(air_freight_rate.dicts()))[0]
-            validities = air_freight_rate['validities']
-            air_freight_rate['validities'] = []
-            for validity in validities:
-                validity = {key:value for key,value in validity.items() if key in ["id","validity_end","weight_slabs","validity_start","min_price"] }
-                air_freight_rate['validities'].append(validity)
-            break
+            air_freight_rates =jsonable_encoder(list(air_freight_rate.dicts()))
+            if len(air_freight_rates):
+                air_freight_rate = air_freight_rates[0]
+                validities = air_freight_rate['validities']
+                air_freight_rate['validities'] = []
+                for validity in validities:
+                    validity = {key:value for key,value in validity.items() if key in ["id","validity_end","weight_slabs","validity_start","min_price"] }
+                    air_freight_rate['validities'].append(validity)
+                break
     requests_objects = jsonable_encoder(list(request_objects.dicts()))
 
     for request_object in request_objects:
