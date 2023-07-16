@@ -15,7 +15,7 @@ def create_audit(request,feedback_id):
         updated_at=datetime.now(),
         data={key:value for key , value in request.items() if key != 'performed_by_id'},
         object_id=feedback_id,
-        object_type='AirFreightRateFeedbacks',
+        object_type='AirFreightRateFeedback',
         action_name='create',
         performed_by_id=request['performed_by_id']
         )
