@@ -73,6 +73,10 @@ class AirFreightRateFeedback(BaseModel):
 
     class Meta:
         table_name = "air_freight_rate_feedbacks"
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(AirFreightRateFeedback, self).save(*args, **kwargs)
 
     def supply_agents_notify(self):
         locations_data = (
@@ -205,8 +209,8 @@ class AirFreightRateFeedback(BaseModel):
             "template_name": "freight_rate_feedback_completed_notification_for_air" if ("rate_added" in self.closing_remarks) else "freight_rate_feedback_closed_notification",
             "variables": {
                 "service_type": "air freight",
-                "origin_location": location_pair_name[0],
-                "destination_location": location_pair_name[1],
+                "origin_location": location_pair_name[0].get('display_name'),
+                "destination_location": location_pair_name[1].get('display_name'),
                 "remarks": None
                 if ("rate_added" in self.closing_remarks)
                 else f"Reason: {self.closing_remarks[0].lower().replace('_', ' ')}",
@@ -298,9 +302,13 @@ class AirFreightRateFeedback(BaseModel):
         # self.validate_performed_by_id()
         return True
     
-    def send_notification_to_supply_agents(self,air_freight_rate,aiports):
+    def send_notification_to_supply_agents(self,air_freight_rate,airports):
         if air_freight_rate.procured_by_id:
             commodity = air_freight_rate.commodity
+            if len(airports) < 2:
+                return
+            origin_airport = airports[0]
+            destination_airport = airports[1]
             notification_data = {
                 'type': 'platform_notification',
                 'user_id': air_freight_rate.procured_by_id,
@@ -308,11 +316,11 @@ class AirFreightRateFeedback(BaseModel):
                 'service_id': self.id,
                 'template_name': 'freight_rate_disliked',
                 'variables': {
-                    'origin_port': aiports[0],
-                    'destination_port': aiports[1],
+                    "origin_port": origin_airport.get('display_name'),
+                    "destination_port": destination_airport.get('display_name'),
                     'service_type': 'air freight',
                     'details': "commodity : {}".format(commodity.upper())
                 }
-                }
+            }
             common.create_communication(notification_data)
 
