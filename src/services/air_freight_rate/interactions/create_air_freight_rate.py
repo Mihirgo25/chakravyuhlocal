@@ -39,7 +39,7 @@ def create_air_freight_rate_data(request):
 
     if request['commodity']=='general':
         if request.get('commodity_sub_type'):
-            request['commodity_sub_type']='commodity_sub_type'
+            request['commodity_sub_type']= request.get('commodity_sub_type')
         else:
             request['commodity_sub_type']='all'
     if request['density_category']=='general':
