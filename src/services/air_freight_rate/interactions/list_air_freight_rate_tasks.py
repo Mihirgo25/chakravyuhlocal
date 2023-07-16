@@ -166,10 +166,11 @@ def get_data(query,filters):
                             if shipment['state'] in ['cancelled', 'aborted']:
                                 serial_ids.append(serial_id)
                                 break
-                            for quotation in shipment_quotation_dict[shipment['id']]:
-                                if quotation['line_items']:
-                                    serial_ids.append(serial_id)
-                                    break
+                            if shipment['id'] in shipment_quotation_dict:
+                                for quotation in shipment_quotation_dict[shipment['id']]:
+                                    if quotation['line_items']:
+                                        serial_ids.append(serial_id)
+                                        break
                     
                     if len(set(object.get('shipment_serial_ids')).difference(set(serial_ids))):
                         object['closable'] = True

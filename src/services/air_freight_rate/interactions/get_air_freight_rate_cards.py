@@ -285,7 +285,7 @@ def check_and_update_min_price_line_items(line_item,freight_object,requirements)
 
 
 def is_missing_surcharge(freight_rate):
-    return not freight_rate['freight_surcharge'] or 'line_items' not in freight_rate['freight_surcharge'] or len(freight_rate['freight_surcharge']['line_items']) == 0 or freight_rate["freight_surcharge"]["is_surcharge_line_items_error_messages_present"]
+    return not freight_rate['freight_surcharge'] or 'line_items' not in freight_rate['freight_surcharge'] or len(freight_rate['freight_surcharge'].get('line_items') or []) == 0 or freight_rate["freight_surcharge"].get("is_surcharge_line_items_error_messages_present")
 
 def get_missing_surcharges(freight_rates):
     missing_surcharges = []
