@@ -33,6 +33,7 @@ def get_density_wise_rate_card(
     else:
         low_density_lower_limit = AIR_EXPORTS_LOW_DENSITY_RATIO
         high_density_upper_limit = AIR_EXPORTS_HIGH_DENSITY_RATIO
+
     freights = []
     if ratio > low_density_lower_limit:
         closest_density_match = {}
@@ -73,11 +74,17 @@ def get_density_wise_rate_card(
             if freight["density_category"] == "general":
                 freights.append(freight)
 
+        # If no rate available show low in general as price is going to be always higher
+        if len(freights) == 0:
+            for freight in response_object["freights"]:
+                if freight["density_category"] == "low_density":
+                    freights.append(freight)
+        
     if density_rate_category == "high_density" and density_rate_present:
         freights = [
             freight_object
             for freight_object in freights
-            if freight_object["density_category"] == "general"
+            if freight_object["density_category"] != "general"
         ]
 
     if not freights:

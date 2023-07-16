@@ -101,11 +101,11 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=00,hour=21),
         'options': {'queue' : 'fcl_freight_rate'}
         },
-    'adjust_air_freight_dynamic_pricing':{
-        'task': 'celery_worker.adjust_air_freight_dynamic_pricing',
-        'schedule': crontab(minute=00,hour=00),
-        'options': {'queue' : 'fcl_freight_rate'}
-    },
+    # 'adjust_air_freight_dynamic_pricing':{
+    #     'task': 'celery_worker.adjust_air_freight_dynamic_pricing',
+    #     'schedule': crontab(minute=00,hour=00),
+    #     'options': {'queue' : 'fcl_freight_rate'}
+    # },
     'process_electricity_data_delays': {
         'task': 'celery_worker.process_electricity_data_delays',
         'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
