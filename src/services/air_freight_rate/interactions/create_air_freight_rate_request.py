@@ -16,7 +16,7 @@ from celery_worker import (
 
 def create_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
-    query = "create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(
+    query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(
         object_type.lower(), object_type.replace("_", "")
     )
     db.execute_sql(query)
