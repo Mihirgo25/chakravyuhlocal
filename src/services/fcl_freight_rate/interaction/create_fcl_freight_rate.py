@@ -81,7 +81,7 @@ def create_fcl_freight_rate(request):
         "cogo_entity_id": request.get("cogo_entity_id"),
         "sourced_by_id": request.get("sourced_by_id"),
         "procured_by_id": request.get("procured_by_id"),
-        "mode": request.get("mode", "manual"),
+        "mode": request.get("mode") or request.get("source") or "manual",
         "accuracy":request.get("accuracy", 100),
         "payment_term": request.get("payment_term", "prepaid"),
         "schedule_type": request.get("schedule_type", "direct"),
