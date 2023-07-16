@@ -29,7 +29,9 @@ def get_tech_ops_dashboard_stats(request):
         return stats
     
     user_ids=list(set([t['performed_by_id'] for t in stats]))
-    users=get_user(user_ids)
+    users = []
+    if len(user_ids) > 0:
+        users=get_user(user_ids)
 
     users=[{'id':str(user['id']),'name':user['name'],'email':user['email'],'mobile_number_eformat':user['mobile_number_eformat']}for user in users]
 

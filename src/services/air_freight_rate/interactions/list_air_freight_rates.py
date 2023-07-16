@@ -130,6 +130,10 @@ def apply_partner_id_filter(query, filters):
     query = query.where(AirFreightRate.cogo_entity_id == None)
   return query
 
+def apply_not_predicted_rate_filter(query):
+  query = query.where(AirFreightRate.source != 'predicted')
+  return query
+
 def apply_available_volume_range_filter(query,filters):
    if filters.get('rate_type') == 'market_place':
       return query
