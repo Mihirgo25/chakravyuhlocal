@@ -40,12 +40,12 @@ def execute_transaction_code(request):
     for request_object in request_objects:
         if request_object.source == 'shipment' and request_object.source_id:
             shipment_source = True
-            air_freight_rate = (
+            air_freight_rates = (
                 AirFreightRate.select(AirFreightRate.validities,AirFreightRate.airline_id,AirFreightRate.service_provider_id,
                                         AirFreightRate.price_type,AirFreightRate.operation_type)
                 .where(AirFreightRate.id == request.get("rate_id"))
             )
-            air_freight_rates =jsonable_encoder(list(air_freight_rate.dicts()))
+            air_freight_rates =jsonable_encoder(list(air_freight_rates.dicts()))
             if len(air_freight_rates):
                 air_freight_rate = air_freight_rates[0]
                 validities = air_freight_rate['validities']
