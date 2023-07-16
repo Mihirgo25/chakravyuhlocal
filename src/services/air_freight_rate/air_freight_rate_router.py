@@ -1034,12 +1034,17 @@ def list_air_freight_rates_api(
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_air_freight_rates(filters= filters, 
-                                      page_limit =page_limit,
-                                      page= page, return_query=return_query,
-                                      older_rates_required= older_rates_required,
-                                      all_rates_for_cogo_assured= all_rates_for_cogo_assured,
-                                      sort_by=sort_by,sort_type=sort_type)
+        data = list_air_freight_rates(
+            revenue_desk_data_required=revenue_desk_data_required,
+            filters= filters,
+            page_limit =page_limit,
+            page= page,
+            return_query=return_query,
+            older_rates_required= older_rates_required,
+            all_rates_for_cogo_assured= all_rates_for_cogo_assured,
+            sort_by=sort_by,
+            sort_type=sort_type
+        )
         return JSONResponse(status_code=200, content=data)
     
     except HTTPException as e:
