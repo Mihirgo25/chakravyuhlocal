@@ -66,7 +66,6 @@ class GlobalClient:
             else:
                 kwargs['params'] = params  # Python Backend   
         try:
-
             if method == 'GET':
                 response = self.client.get(**kwargs)
             else:
