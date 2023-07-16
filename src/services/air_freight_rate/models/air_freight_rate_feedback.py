@@ -286,9 +286,11 @@ class AirFreightRateFeedback(BaseModel):
         raise HTTPException(status_code=400, detail="invalid source id")
 
     def validate_performed_by_id(self):
-        performed_by = get_user(id=self.performed_by_id)
-        if not performed_by:
-            raise HTTPException(status_code=400, detail="Invalid Performed By Id")
+        if self.performed_by_id:
+            performed_by = get_user(id=str(self.performed_by_id))
+            if not performed_by:
+                raise HTTPException(status_code=400, detail="Invalid Performed By Id")
+        return True
 
     def validate_before_save(self):
         self.validate_trade_type()
