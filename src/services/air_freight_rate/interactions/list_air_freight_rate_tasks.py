@@ -142,7 +142,6 @@ def get_data(query,filters):
 
                 object['expiration_time'] = datetime.fromisoformat(object['created_at']) + timedelta(seconds = EXPECTED_TAT * 60 * 60)
                 object['skipped_time'] = 0
-                print(object['created_at'])
                 created_at = datetime.fromisoformat(object['created_at'])
                 start_time = datetime.strptime("{} 04:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S')
                 start_time_utc = start_time.astimezone(timezone.utc)
