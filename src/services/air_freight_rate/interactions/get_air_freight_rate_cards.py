@@ -270,14 +270,14 @@ def build_freight_object(freight_validity,required_weight,requirements):
 def check_and_update_min_price_line_items(line_item,freight_object,requirements):
     if line_item['min_price'] > line_item['total_price']:
         line_item['price'] = line_item['min_price']
-    if line_item.get('unit') == 'per_package':
-        line_item['quantity'] = requirements.get('packages_count')
-    elif line_item.get('unit') == 'per_kg':
-        line_item['quantity'] = 1
-    else:
-        line_item['quantity'] = 1
-    line_item['total_price'] = line_item['quantity']*line_item['price']
-    freight_object['is_minimum_threshold_rate'] = True
+        if line_item.get('unit') == 'per_package':
+            line_item['quantity'] = requirements.get('packages_count')
+        elif line_item.get('unit') == 'per_kg':
+            line_item['quantity'] = 1
+        else:
+            line_item['quantity'] = 1
+        line_item['total_price'] = line_item['quantity']*line_item['price']
+        freight_object['is_minimum_threshold_rate'] = True
 
     return line_item,freight_object
 
@@ -285,7 +285,7 @@ def check_and_update_min_price_line_items(line_item,freight_object,requirements)
 
 
 def is_missing_surcharge(freight_rate):
-    return not freight_rate['freight_surcharge'] or 'line_items' not in freight_rate['freight_surcharge'] or len(freight_rate['freight_surcharge']['line_items']) == 0 or freight_rate["freight_surcharge"]["is_surcharge_line_items_error_messages_present"]
+    return not freight_rate['freight_surcharge'] or 'line_items' not in freight_rate['freight_surcharge'] or len(freight_rate['freight_surcharge'].get('line_items') or []) == 0 or freight_rate["freight_surcharge"].get("is_surcharge_line_items_error_messages_present")
 
 def get_missing_surcharges(freight_rates):
     missing_surcharges = []

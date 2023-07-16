@@ -162,17 +162,17 @@ def get_data(query,filters):
                 serial_ids = []
                 if object.get('shipment_serial_ids') and shipments_dict and shipment_quotation_dict:
                     for serial_id in object.get('shipment_serial_ids'):
-                        if serial_id in shipments_dict.keys():
+                        if serial_id in shipments_dict:
                             for shipment in shipments_dict[serial_id]:
                                 if shipment['state'] in ['cancelled', 'aborted']:
                                     serial_ids.append(serial_id)
                                     break
-                                if shipment['id'] in shipment_quotation_dict.keys():
+                                if shipment['id'] in shipment_quotation_dict:
                                     for quotation in shipment_quotation_dict[shipment['id']]:
-                                        if quotation.get('line_items'):
+                                        if quotation['line_items']:
                                             serial_ids.append(serial_id)
                                             break
-                        
+                    
                     if len(set(object.get('shipment_serial_ids')).difference(set(serial_ids))):
                         object['closable'] = True
                 object['purchase_invoice_rate'] = object['job_data']['rate']

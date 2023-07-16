@@ -113,7 +113,7 @@ def build_local_line_item_object(request,line_item):
     if is_additional_service and line_item['code'] not in request.get('additional_services'):
         return
     
-    line_item = {key:value for key,value in line_item.items() if key in ['code','unti','price','currency','min_price','remarks']}
+    line_item = {key:value for key,value in line_item.items() if key in ['code','unit','price','currency','min_price','remarks']}
     if line_item.get('unit') == 'per_package':
         line_item['quantity'] = request.get('packages_count')
     elif line_item.get('unit') == 'per_kg':
