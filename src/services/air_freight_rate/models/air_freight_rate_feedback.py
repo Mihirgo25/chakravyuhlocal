@@ -73,6 +73,10 @@ class AirFreightRateFeedback(BaseModel):
 
     class Meta:
         table_name = "air_freight_rate_feedbacks"
+    
+    def save(self, *args, **kwargs):
+      self.updated_at = datetime.datetime.now()
+      return super(AirFreightRateFeedback, self).save(*args, **kwargs)
 
     def supply_agents_notify(self):
         locations_data = (
