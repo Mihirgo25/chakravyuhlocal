@@ -147,7 +147,9 @@ def add_service_objects(data):
         for id in user_ids:
             if is_valid_uuid(id):
                 objects_user.append(id)
-        list_user = get_user(objects_user)
+        list_user = []
+        if len(objects_user) > 0:
+            list_user = get_user(objects_user)
         for user_obj in list_user:
             objects_user_hash[user_obj['id']] =user_obj
     for object in data:
