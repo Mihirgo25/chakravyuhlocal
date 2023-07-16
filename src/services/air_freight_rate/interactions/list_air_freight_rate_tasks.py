@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,timezone
 from math import ceil
 from micro_services.client import common,shipment
 from configs.definitions import AIR_FREIGHT_LOCAL_CHARGES
@@ -79,6 +79,10 @@ def get_shipment_and_sell_quotations(all_shipment_serial_ids):
     shipments = shipment.list_shipments({'filters': { 'serial_id': all_shipment_serial_ids},'page_limit':1000})['list']
     shipment_ids = []
     shipment_dict = {}
+    shipment_sell_quotation_dict = {}
+
+    if not shipments:
+        return shipment_dict,shipment_sell_quotation_dict
     for shipment_data in shipments:
         if shipment_data['serial_id'] in shipment_data.keys():
             shipment_dict[str(shipment_data['serial_id']) ] = shipment_dict[str(shipment_data['serial_id'])] + [shipment_data]
@@ -86,7 +90,6 @@ def get_shipment_and_sell_quotations(all_shipment_serial_ids):
             shipment_dict[str(shipment_data['serial_id']) ] = [shipment_data]
         shipment_ids.append(shipment_data['id'])
     
-    shipment_sell_quotation_dict = {}
 
     quotations = shipment.list_shipment_sell_quotations({'filters':{'shipment_id':shipment_ids,'service_type': 'air_freight_local_service', 'is_deleted': False, 'source': 'billed_at_actuals'},'page_limit':MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT })['list']
 
@@ -139,21 +142,26 @@ def get_data(query,filters):
 
                 object['expiration_time'] = datetime.fromisoformat(object['created_at']) + timedelta(seconds = EXPECTED_TAT * 60 * 60)
                 object['skipped_time'] = 0
-
-                if datetime.fromisoformat(object['created_at']) < datetime.strptime("{} 04:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S'):
-                    object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
-                elif datetime.fromisoformat(object['created_at']) > datetime.strptime("{} 13:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S'):
-                    object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(next_date)), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = EXPECTED_TAT * 60 * 60)
+                print(object['created_at'])
+                created_at = datetime.fromisoformat(object['created_at'])
+                start_time = datetime.strptime("{} 04:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S')
+                start_time_utc = start_time.astimezone(timezone.utc)
+                end_time = datetime.strptime("{} 13:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S')
+                end_time_utc = end_time.astimezone(timezone.utc)
+                if created_at < start_time_utc:
+                    object['expiration_time'] = start_time_utc + timedelta(seconds = EXPECTED_TAT * 60 * 60)
+                elif created_at > end_time_utc:
+                    object['expiration_time'] = end_time_utc + timedelta(seconds = EXPECTED_TAT * 60 * 60)
                 else:
-                    skipped_time = int((datetime.fromisoformat(object['created_at']) + timedelta(seconds = EXPECTED_TAT * 60 * 60)).timestamp()) - int(datetime.strptime("{} 13:00:00".format(str(created_at_date)), '%Y-%m-%d %H:%M:%S').timestamp())
+                    skipped_time = int((created_at + timedelta(seconds = EXPECTED_TAT * 60 * 60)).timestamp()) - int(end_time_utc.timestamp())
                     skipped_time = max([0, skipped_time])
                     if skipped_time > 0:
-                        object['expiration_time'] = datetime.strptime("{} 04:00:00".format(str(next_date.date())), '%Y-%m-%d %H:%M:%S') + timedelta(seconds = skipped_time)
+                        object['expiration_time'] = start_time_utc + timedelta(seconds = skipped_time)
 
                 
                 object['closable'] = False
                 serial_ids = []
-                if object.get('shipment_serial_ids'):
+                if object.get('shipment_serial_ids') and shipments_dict and shipment_quotation_dict:
                     for serial_id in object.get('shipment_serial_ids'):
                         for shipment in shipments_dict[serial_id]:
                             if shipment['state'] in ['cancelled', 'aborted']:
