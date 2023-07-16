@@ -101,8 +101,7 @@ def create_air_freight_rate_data(request):
     if 'rate_sheet_validation' not in request:
         freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
 
-    validity_id,weight_slabs = freight.set_validities(
-        
+    validity_id,weight_slabs = freight.set_validities(  
         request.get("validity_start").date(),
         request.get("validity_end").date(),
         request.get("min_price"),
