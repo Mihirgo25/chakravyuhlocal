@@ -78,7 +78,7 @@ def create_air_freight_rate_api(request: CreateAirFreightRateParams, resp: dict 
     except HTTPException as e :
         raise
     except Exception as e:
-        # sentry_sdk.capture_exception(e)
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @air_freight_router.post("/delete_air_freight_rate")
@@ -578,6 +578,7 @@ def create_air_freight_rate_request_api(
     except HTTPException as h:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
@@ -624,6 +625,7 @@ def create_air_freight_warehouse_rate_api(
     except HTTPException:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
@@ -780,6 +782,7 @@ def update_air_freight_storage_rate_api(
     except HTTPException as h:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
@@ -828,6 +831,7 @@ def create_air_freight_rate_feedback_api(request: CreateAirFreightRateFeedbackPa
     except HTTPException as e:
         raise 
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
     
 
@@ -1047,7 +1051,7 @@ def list_air_freight_rates_api(
 def get_weight_slabs_for_airline_api(
     airline_id:str,
     chargeable_weight: float = 0,
-    overweight_upper_limit:float =0.0,
+    overweight_upper_limit:float = 50.0,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
