@@ -62,6 +62,7 @@ class GlobalClient:
             if data: 
                 prefinal_url = str(http_build_query(data))
                 final_url = re.sub(r'%5D%5B\d%5D','%5D%5B%5D',prefinal_url)
+                final_url = re.sub(r'%5D%5B\d+%5D','%5D%5B%5D',prefinal_url)
                 kwargs['url'] = kwargs['url'] + '?' + final_url  # Rails backend
             else:
                 kwargs['params'] = params  # Python Backend   
