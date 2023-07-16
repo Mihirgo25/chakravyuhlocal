@@ -119,17 +119,17 @@ celery.conf.beat_schedule = {
     'send_near_expiry_air_freight_rate_notification':{
         'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
         'schedule': crontab(minute=30,hour=5),
-        'options': {'queue' : 'air_freight_rate'}
+        'options': {'queue' : 'low'}
     },
     'send_expired_air_freight_rate_notification':{
         'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
         'schedule': crontab(minute=30,hour=5),
-        'options': {'queue' : 'air_freight_rate'}
+        'options': {'queue' : 'low'}
     },
     'send_air_freight_local_charges_update_reminder_notification':{
         'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
         'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
-        'options': {'queue': 'air_freight_rate'}
+        'options': {'queue': 'low'}
     }
 
 }
