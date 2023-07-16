@@ -24,6 +24,7 @@ class INFtlFreightRateEstimator:
         truck_and_commodity_data,
         average_fuel_price,
         path_data,
+        country_info
     ):
         self.origin_location_id = origin_location_id
         self.destination_location_id = destination_location_id
@@ -31,9 +32,11 @@ class INFtlFreightRateEstimator:
         self.truck_and_commodity_data = truck_and_commodity_data
         self.average_fuel_price = average_fuel_price
         self.path_data = path_data
+        self.country_info = country_info
 
     def estimate(self):
-        currency = "INR"
+        currency = self.country_info.get('currency_code')
+        country_code = self.country_info.get('country_code')
         total_path_distance = self.path_data["distance"]
         truck_mileage = self.truck_and_commodity_data["mileage"]
 
@@ -44,7 +47,7 @@ class INFtlFreightRateEstimator:
         additional_charges = 0
         applicable_rule_set = self.get_applicable_rule_set()
         for data in applicable_rule_set:
-            if data["process_type"] in BASIC_CHARGE_LIST:
+            if data["process_type"] in BASIC_CHARGE_LIST[country_code]:
                 additional_charges += float(data["process_value"])
         truck_capacity = self.truck_and_commodity_data["weight"]
 
@@ -97,17 +100,16 @@ class INFtlFreightRateEstimator:
                     distance_factor_data.get("rate_factor") * basic_freight_charges
                 )
 
-        if self.truck_and_commodity_data["trip_type"] == "round_trip":
-            basic_freight_charges += ROUND_TRIP_CHARGE * basic_freight_charges
-
-        basic_freight_charges += truck_capacity * LOADING_UNLOADING_CHARGES
-
         if (
             self.truck_and_commodity_data["commodity"] in HAZ_CLASSES
             or self.truck_and_commodity_data["truck_body_type"] == "reefer"
         ):
             basic_freight_charges += ADDITIONAL_CHARGE * basic_freight_charges
-
+        
+        basic_freight_charges += truck_capacity * LOADING_UNLOADING_CHARGES
+        if self.truck_and_commodity_data["trip_type"] == "round_trip":
+            basic_freight_charges += ROUND_TRIP_CHARGE * basic_freight_charges
+            
         result = {}
         result["currency"] = currency
         result["base_rate"] = round(basic_freight_charges, 4)
