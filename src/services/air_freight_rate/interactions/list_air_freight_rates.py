@@ -182,10 +182,6 @@ def apply_date_filter(query,filters):
   
   return query
 
-def apply_not_predicted_rate_filter(query,filters):
-   query = query.where(AirFreightRate.mode!='predicted')
-   return query
-
 def get_data(query,revenue_desk_data_required):
     if revenue_desk_data_required:
       revenue_desk_data_required = json.loads(revenue_desk_data_required)
