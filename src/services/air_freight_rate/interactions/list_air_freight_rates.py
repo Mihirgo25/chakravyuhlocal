@@ -130,6 +130,10 @@ def apply_partner_id_filter(query, filters):
     query = query.where(AirFreightRate.cogo_entity_id == None)
   return query
 
+def apply_not_predicted_rate_filter(query,filters):
+  query = query.where(AirFreightRate.source != 'predicted')
+  return query
+
 def apply_available_volume_range_filter(query,filters):
    if filters.get('rate_type') == 'market_place':
       return query
@@ -174,11 +178,17 @@ def apply_achieved_gross_weight_percentage_filter(query,filters):
    return query
 
 def apply_date_filter(query,filters):
-  query = query.where(
-    (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')")>= datetime.fromisoformat(filters['date']).date()),
-    (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')") < datetime.fromisoformat(filters['date']).date()),
-    (SQL("validity->>'status' is null") | (SQL("validity->>'status' = 'true'")))
-  )
+  date_to_apply = None
+  try:
+    date_to_apply = datetime.fromisoformat(filters['date']).date()
+  except:
+    date_to_apply = datetime.strptime(filters['date'], "%d-%m-%Y").date()
+    
+  if date_to_apply:
+    query = query.where(
+      (SQL("TO_DATE(validity->>'validity_start','YYYY-MM-DD')") >= date_to_apply),
+      (SQL("TO_DATE(validity->>'validity_start','YYYY-MM-DD')") <= date_to_apply)
+    )
   
   return query
 
@@ -205,8 +215,9 @@ def get_data(query,revenue_desk_data_required):
         validity['density_ratio'] = "1:{}".format(int(validity['min_density_weight']))
       validity_end = datetime.fromisoformat(validity['validity_end'])
       if validity.get('status') and not (validity_end > beginning_of_day and validity_end <= now):
-        validity['validity_id'] = validity['id']
-        del validity['id']
+        validity['validity_id'] = validity.get('id')
+        if validity['validity_id']:
+          del validity['id']
         rate = rate | validity
         rate['is_origin_local_missing'] = rate['origin_local']['is_line_items_error_messages_present'] if rate.get('origin_local') else None
         rate['is_destination_local_missing'] = rate['destination_local']['is_line_items_error_messages_present'] if rate.get('destination_local') else None

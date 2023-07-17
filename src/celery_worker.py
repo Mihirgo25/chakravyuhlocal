@@ -115,22 +115,22 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.fcl_cost_booking_estimation',
         'schedule': crontab(minute=30,hour=18),
         'options': {'queue' : 'fcl_freight_rate'}
+    },
+    'send_near_expiry_air_freight_rate_notification':{
+        'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5),
+        'options': {'queue' : 'low'}
+    },
+    'send_expired_air_freight_rate_notification':{
+        'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5),
+        'options': {'queue' : 'low'}
+    },
+    'send_air_freight_local_charges_update_reminder_notification':{
+        'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
+        'options': {'queue': 'low'}
     }
-    # 'send_near_expiry_air_freight_rate_notification':{
-    #     'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
-    #     'schedule': crontab(minute=30,hour=5),
-    #     'options': {'queue' : 'air_freight_rate'}
-    # },
-    # 'send_expired_air_freight_rate_notification':{
-    #     'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
-    #     'schedule': crontab(minute=30,hour=5),
-    #     'options': {'queue' : 'air_freight_rate'}
-    # },
-    # 'send_air_freight_local_charges_update_reminder_notification':{
-    #     'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
-    #     'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
-    #     'options': {'queue': 'air_freight_rate'}
-    # }
 
 }
 

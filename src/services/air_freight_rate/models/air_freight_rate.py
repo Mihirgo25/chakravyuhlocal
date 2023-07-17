@@ -448,10 +448,10 @@ class AirFreightRate(BaseModel):
                 if validity_object.get('min_density_weight') > min_density_weight and max_density_weight > validity_object.get('min_density_weight'):
                     max_density_weight = validity_object.get('min_density_weight')
 
-            if deleted and validity_id and validity_id==validity_object.get('id'):
+            if deleted and validity_id and str(validity_id)== str(validity_object.get('id')):
                 continue
             
-            if (validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight")) or (rate_type in ["promotional", "consolidated"]):
+            if ((validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight")) or (rate_type in ["promotional", "consolidated"])) and not deleted:
                 if validity_object_validity_start > validity_end:
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue

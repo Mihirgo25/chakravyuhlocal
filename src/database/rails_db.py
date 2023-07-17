@@ -94,6 +94,8 @@ def get_organization(id=None, short_name=None,account_type = 'importer_exporter'
 
 def get_user(id):
     all_result = []
+    if not id:
+        return []
     try:
         conn = get_connection()
         with conn:

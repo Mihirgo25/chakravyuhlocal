@@ -48,6 +48,7 @@ def execute_transaction_code(request):
             AirFreightRateRequest.performed_by_type == request.get("performed_by_type"),
             AirFreightRateRequest.performed_by_org_id
             == request.get("performed_by_org_id"),
+            AirFreightRateRequest.status == 'active'
         )
         .first()
     )
