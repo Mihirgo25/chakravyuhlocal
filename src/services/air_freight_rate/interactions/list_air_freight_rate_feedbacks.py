@@ -176,9 +176,11 @@ def get_data(query, spot_search_details_required, booking_details_required):
             object['reverted_rate_data']['stacking_type'] = reverted_rate['stacking_type']
             object['reverted_rate_data']['shipment_type'] = reverted_rate['shipment_type']
             object['reverted_rate_data']['price_type'] = reverted_rate.get('price_type')
-            reverted_validity_data=None
+            reverted_validity_data= {
+                'weight_slabs': []
+            }
             for validity_data in reverted_rate['validities']:
-                if validity_data['id']==object['reverted_rate']['validity_id']:
+                if validity_data['id']== (object.get('reverted_rate') or {}).get('validity_id'):
                     reverted_validity_data=validity_data
                     break
             object['reverted_rate_data']['min_price'] = reverted_validity_data.get('min_price') 

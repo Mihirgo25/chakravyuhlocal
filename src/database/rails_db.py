@@ -15,7 +15,7 @@ def get_connection():
     return conn
 
 
-def get_operators(id=None, short_name=None, operator_type='shipping_line'):
+def get_operators(id=None, short_name=None,iata_code = None, operator_type='shipping_line'):
     all_result = []
     try:
         newconnection = get_connection()  
@@ -24,7 +24,10 @@ def get_operators(id=None, short_name=None, operator_type='shipping_line'):
                 if short_name:
                     sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.short_name = %s and operators.status = %s and operators.operator_type = %s'
                     cur.execute(sql, (short_name,'active',operator_type,))
-                else:
+                elif iata_code:
+                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.iata_code = %s and operators.status = %s and operators.operator_type = %s'
+                    cur.execute(sql, (iata_code,'active',operator_type,))
+                else :
                     if not isinstance(id, list):
                         id = (id,)
                     else:
@@ -91,6 +94,8 @@ def get_organization(id=None, short_name=None,account_type = 'importer_exporter'
 
 def get_user(id):
     all_result = []
+    if not id:
+        return []
     try:
         conn = get_connection()
         with conn:

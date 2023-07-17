@@ -105,12 +105,14 @@ class AirFreightRateRequest(BaseModel):
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
 
     def validate_performed_by_id(self):
-        data = get_user(str(self.performed_by_id))
+        if self.performed_by_id:
+            data = get_user(str(self.performed_by_id))
 
-        if data:
-            pass
-        else:
-            raise HTTPException(status_code=400, detail="Invalid Performed by ID")
+            if data:
+                pass
+            else:
+                raise HTTPException(status_code=400, detail="Invalid Performed by ID")
+        return True
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
