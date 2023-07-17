@@ -16,7 +16,8 @@ def create_fcl_freight_rate_statistic(action, params):
 
     if action == "create":
         rate.set_new_stats()
-
-
+    elif action == "update":
+        rate.set_existing_stats()
+        
 def update_fcl_freight_rate_statistic(action, params):
     pass

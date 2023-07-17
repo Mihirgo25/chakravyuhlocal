@@ -14,8 +14,8 @@ class LineItems(BaseModel):
 
 
 class FclValidities(BaseModel):
-    validity_id: str = Field(alias='id')
-    action: str
+    validity_id: str = Field(alias="id")
+    last_action: str = Field(alias="action")
     price: float
     currency: str
     market_price: str
@@ -29,7 +29,7 @@ class FclValidities(BaseModel):
 
 
 class FclFreight(BaseModel):
-    rate_id: str = Field(alias='id')
+    rate_id: str = Field(alias="id")
     commodity: str
     container_size: str
     container_type: str
@@ -57,14 +57,14 @@ class FclFreight(BaseModel):
     procured_by_id: str = None
     rate_type: str
     validities: list[FclValidities]
-    rate_created_at: datetime = Field(alias='created_at')
-    rate_updated_at: datetime = Field(alias='updated_at')
-    
-    @validator('containers_count',pre=True)
+    rate_created_at: datetime = Field(alias="created_at")
+    rate_updated_at: datetime = Field(alias="updated_at")
+
+    @validator("containers_count", pre=True)
     def convert_invalid_container_count(cls, v):
-        if isinstance(cls,str) or not v:
+        if isinstance(cls, str) or not v:
             v = 1
-            
+
         return v
 
 

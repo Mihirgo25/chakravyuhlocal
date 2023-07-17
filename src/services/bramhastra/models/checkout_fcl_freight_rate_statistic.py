@@ -23,7 +23,7 @@ class CheckoutFclFreightRateStatistic(BaseModel):
     created_at = DateTimeTZField()
     updated_at = DateTimeTZField()
     status = CharField()
-    state = IntegerField(default=1)
+    sign = IntegerField(default=1)
     version = IntegerField()
 
     class Meta:

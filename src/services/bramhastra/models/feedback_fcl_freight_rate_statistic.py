@@ -25,7 +25,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     feedback_type = CharField()
     closed_by_id = UUIDField()
     serial_id = IntegerField()
-    state = IntegerField(default=1)
+    sign = IntegerField(default=1)
     version = IntegerField()
 
     class Meta:

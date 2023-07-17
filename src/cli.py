@@ -38,7 +38,7 @@ def shell(ipython_args):
     from database.db_session import db
     config = load_default_config()
     config.TerminalInteractiveShell.banner1 = f"""Python {sys.version} on {sys.platform} IPython: {IPython.__version__}"""
-    config.InteractiveShellApp.exec_lines.append('%load_ext autoreload')
+    config.InteractiveShellApp.exec_lines = ['%load_ext autoreload','%autoreload 2']
     user_ns = {"database": db}
     with db.connection_context():
         IPython.start_ipython(argv=ipython_args, user_ns=user_ns, config=config)

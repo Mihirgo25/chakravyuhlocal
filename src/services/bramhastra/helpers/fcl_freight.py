@@ -9,9 +9,12 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping impor
     FclFreightLocationClusterMapping,
     FclFreightLocationCluster,
 )
-from peewee import Case
 from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
+from datetime import datetime
+
+def json_encoder(data):
+    return jsonable_encoder(data, custom_encoder={datetime: lambda dt: dt.strftime('%Y-%m-%d %H:%M:%S')})
 
 
 class Connection:
@@ -28,9 +31,14 @@ class FclFreightValidity(Connection):
         self.fcl_freight_rate_statistics_identifier = None
         self.set_identifier_details(rate_id, validity_id, schedule_type, payment_term)
 
-    def create_statistics_stale_row(self, row) -> Model:
-        row.version += 1
-        return FclFreightRateStatistic.create(row)
+    def update_row_status_to_stale(self, row) -> Model:
+        force_insert = False
+        if isinstance(row, dict):
+            row = FclFreightRateStatistic(**row)
+            force_insert = True
+        row.sign = -1
+        row.save(force_insert = force_insert)
+        return row.version
 
     def get_postgres_statistics_current_row_by_identifier(self) -> Model:
         return (
@@ -38,7 +46,7 @@ class FclFreightValidity(Connection):
             .where(
                 FclFreightRateStatistic.identifier
                 == self.fcl_freight_rate_statistics_identifier,
-                FclFreightRateStatistic.state == 1,
+                FclFreightRateStatistic.sign == 1,
             )
             .first()
         )
@@ -65,10 +73,10 @@ class FclFreightValidity(Connection):
         ):
             return row
 
-    def get_postgres_statistics_rows_by_rate_id(self, state=1, version=None) -> Model:
+    def get_postgres_statistics_rows_by_rate_id(self, sign=1, version=None) -> Model:
         fcl_freight_rate_statistic_query = FclFreightRateStatistic.select().where(
             FclFreightRateStatistic.rate_id == self.rate_id,
-            FclFreightRateStatistic.state == state,
+            FclFreightRateStatistic.sign == sign,
         )
         if version:
             fcl_freight_rate_statistic_query.where(
@@ -94,17 +102,14 @@ class FclFreightValidity(Connection):
         return row
 
     def create_stats(self, create_param) -> Model:
-        return FclFreightRateStatistic.create(create_param)
+        return FclFreightRateStatistic.create(**create_param)
 
-    def update_stats(self, params) -> int:
-        return (
-            FclFreightRateStatistic.update(*params)
-            .where(
-                FclFreightRateStatistic.identifier
-                == self.fcl_freight_rate_statistics_identifier
-            )
-            .execute()
-        )
+    def update_stats(self, new_row):
+        old_row = self.get_postgres_statistics_current_row_by_identifier()
+        if not old_row:
+            old_row = self.get_clickhouse_statistics_current_row_by_identifier()
+        new_row["version"] = self.update_row_status_to_stale(old_row) + 1
+        self.create_stats(new_row)
 
 
 class Rate:
@@ -118,18 +123,32 @@ class Rate:
         self.destination_pricing_zone_map_id = None
         self.origin_region_id = None
         self.destination_region_id = None
+        self.origin_continent_id = None
+        self.destination_continent_id = None
         self.set_non_existing_location_details()
 
     def set_new_stats(self) -> int:
         return FclFreightRateStatistic.insert_many(self.params).execute()
 
     def set_existing_stats(self) -> None:
-        for validity in self.freight.valditiies:
-            if validity.action == ValidityAction.create.value:
-                pass
-            elif validity.action == ValidityAction.update.value:
-                pass
-            elif validity.action == ValidityAction.unchanged.value:
+        if self.params:
+            fcl_freight_validity = FclFreightValidity(
+                rate_id=self.params[0]["rate_id"],
+                validity_id=self.params[0]["validity_id"],
+                payment_term=self.params[0]["payment_term"],
+                schedule_type=self.params[0]["schedule_type"]
+            )
+        for i, new_row in enumerate(self.params):
+            # we dont want to run this in async so we just make one connection for one rate
+            if i:
+                fcl_freight_validity.set_identifier_details(
+                    rate_id=new_row["rate_id"], validity_id=new_row["validity_id"],schedule_type=new_row["schedule_type"],payment_term=new_row["payment_term"]
+                )
+            if new_row["last_action"] == ValidityAction.create.value:
+                fcl_freight_validity.create_stats(new_row)
+            elif new_row["last_action"] == ValidityAction.update.value:
+                fcl_freight_validity.update_stats(new_row)
+            elif new_row["last_action"] == ValidityAction.unchanged.value:
                 continue
 
     def set_non_existing_location_details(self) -> None:
@@ -148,16 +167,21 @@ class Rate:
             self.origin_pricing_zone_map_id,
             self.destination_pricing_zone_map_id,
         ) = self.get_pricing_map_zone_ids(self.origin_port_id, self.destination_port_id)
-        self.origin_region_id, self.destination_region_id = self.get_region_ids(
+        origin, destination = self.get_missing_location_ids(
             self.origin_port_id, self.destination_port_id
         )
+        
+        self.origin_region_id = origin.get('region_id')
+        self.destination_region_id = destination.get('region_id')
+        self.origin_continent_id = origin.get('continent_id')
+        self.destination_continent_id = destination.get('continent_id')
 
     def set_formatted_data(self) -> None:
         freight = self.freight.dict(exclude={"validities"})
 
         for validity in self.freight.validities:
             param = freight.copy()
-            param.update(validity.dict(exclude={"action"}))
+            param.update(validity.dict())
             param["identifier"] = "".join(
                 [
                     param["rate_id"],
@@ -172,7 +196,8 @@ class Rate:
             ] = self.destination_pricing_zone_map_id
             param["origin_region_id"] = self.origin_region_id
             param["destination_region_id"] = self.destination_region_id
-            param["last_action"] = validity.action
+            param["origin_continent_id"] = self.origin_continent_id
+            param["destination_continent_id"] = self.destination_continent_id
             self.params.append(param)
 
     def get_pricing_map_zone_ids(self, origin_port_id, destination_port_id) -> list:
@@ -195,16 +220,16 @@ class Rate:
             origin_port_id
         ), map_zone_location_mapping.get(destination_port_id)
 
-    def get_region_ids(self, origin_port_id, destination_port_id):
+    def get_missing_location_ids(self, origin_port_id, destination_port_id):
         response = maps.list_locations(
             data={
                 "filters": {"id": [origin_port_id, destination_port_id]},
-                "includes": {"region_id": True, "id": True},
+                "includes": {"continent_id": True,"region_id": True, "id": True},
             }
         )
         if "list" in response and len(response["list"]) == 2:
             region_id_mapping = {
-                item["id"]: item["region_id"] for item in response["list"]
+                item["id"]: dict(region_id = item["region_id"],continent_id = item["continent_id"]) for item in response["list"]
             }
             return region_id_mapping.get(origin_port_id), region_id_mapping.get(
                 destination_port_id

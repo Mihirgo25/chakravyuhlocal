@@ -23,7 +23,7 @@ class SpotSearchFclFreightRateStatistic(BaseModel):
     shipment_id = UUIDField(null=True)
     created_at = DateTimeTZField()
     updated_at = DateTimeTZField()
-    state = IntegerField(default=1)
+    sign = IntegerField(default=1)
     version = IntegerField()
 
     class Meta:

@@ -1,7 +1,7 @@
-from peewee import Model, BigAutoField, UUIDField, FloatField, IntegerField, CharField, TextField, DateField
+from peewee import Model, UUIDField, FloatField, IntegerField, CharField, TextField, DateField
 from datetime import datetime
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField, ArrayField, BinaryJSONField
+from playhouse.postgres_ext import DateTimeTZField, BinaryJSONField
 
 
 class BaseModel(Model):
@@ -11,20 +11,22 @@ class BaseModel(Model):
 
 
 class FclFreightRateStatistic(BaseModel):
-    id = BigAutoField()
+    id = IntegerField(sequence='check_seq')
     identifier = TextField()
     validity_id = UUIDField()
     rate_id = UUIDField()
     payment_term = CharField()
     schedule_type = CharField()
-    origin_port_id = UUIDField(null=True)
-    destination_port_id = UUIDField(null=True)
+    origin_port_id = UUIDField()
+    destination_port_id = UUIDField()
     origin_main_port_id = UUIDField(null=True)
     destination_main_port_id = UUIDField(null=True)
-    origin_region_id = UUIDField(null=True)
-    destination_region_id = UUIDField(null=True)
-    origin_country_id = UUIDField(null=True)
-    destination_country_id = UUIDField(null=True)
+    origin_region_id = UUIDField()
+    destination_region_id = UUIDField()
+    origin_country_id = UUIDField()
+    destination_country_id = UUIDField()
+    origin_continent_id = UUIDField()
+    destination_continent_id = UUIDField()
     origin_trade_id = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     origin_pricing_zone_map_id = UUIDField(null=True)
@@ -64,7 +66,6 @@ class FclFreightRateStatistic(BaseModel):
     destination_demurrage_id = UUIDField(null=True)
     cogo_entity_id = UUIDField(null=True)
     rate_type = CharField()
-    slabs = BinaryJSONField(null = True)
     sourced_by_id = UUIDField(null=True)
     procured_by_id = UUIDField(null=True)
     shipment_aborted_count = IntegerField(default=0)
@@ -81,13 +82,17 @@ class FclFreightRateStatistic(BaseModel):
         IntegerField(default=0)
     )
     shipment_booking_rate_is_too_low_count = IntegerField(default=0)
-    average_booking_rate = FloatField(default=-1.0)
     created_at = DateTimeTZField(default = datetime.utcnow())
     updated_at = DateTimeTZField(default = datetime.utcnow())
     version = IntegerField(default=1)
-    state = IntegerField(default=1)
+    sign = IntegerField(default=1)
     status = CharField(default = 'active')
     last_action = CharField(default = 'create')
+    rate_deviation_from_booking_rate = FloatField(default=0)
+    rate_deviation_from_cluster_base_rate = FloatField(default=0)
+    rate_deviation_from_booking_on_cluster_base_rate = FloatField(default=0)
+    rate_deviation_from_latest_booking = FloatField(default=0)
+    average_booking_rate = FloatField(default=-1)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.utcnow()
