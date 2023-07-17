@@ -287,7 +287,7 @@ def update_ftl_freight_rate_request_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
-        )    
+        )
 
 @ftl_freight_router.post("/create_ftl_freight_rate_feedback")
 def create_ftl_freight_rate_feedback_data(request: CreateFtlFreightRateFeedback, resp: dict = Depends(authorize_token)):
@@ -304,7 +304,7 @@ def create_ftl_freight_rate_feedback_data(request: CreateFtlFreightRateFeedback,
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-    
+
 @ftl_freight_router.post("/delete_ftl_freight_rate_feedback")
 def delete_ftl_freight_rates_feedback(request: DeleteFtlFreightRateFeedback, resp: dict = Depends(authorize_token)):
     # if resp["status_code"] != 200:
@@ -351,16 +351,15 @@ def list_ftl_freight_rates_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
-    sort_by: str = 'updated_at',
-    sort_type: str = 'desc',
+    return_query : bool = False,
+    pagination_data_required: bool = False,
     all_rates_for_cogo_assured: bool = False,
-    return_count: bool = False,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_ftl_freight_rates(filters, page_limit, page, sort_by, sort_type, all_rates_for_cogo_assured, return_count)
+        data = list_ftl_freight_rates(filters, page_limit, page, return_query, pagination_data_required, all_rates_for_cogo_assured)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -512,7 +511,7 @@ def get_ftl_freight_rate_api(origin_location_id: str = None,destination_location
             'service_provider_id': service_provider_id,
             'importer_exporter_id': importer_exporter_id,
             'unit': unit,
-            'truck_body_type': truck_body_type 
+            'truck_body_type': truck_body_type
         }
         rate = get_ftl_freight_rate(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
@@ -520,5 +519,5 @@ def get_ftl_freight_rate_api(origin_location_id: str = None,destination_location
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })   
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 

@@ -11,8 +11,8 @@ POSSIBLE_DIRECT_FILTERS = ['id','origin_location_id','origin_cluster_id','origin
 
 POSSIBLE_INDIRECT_FILTERS = ['origin_location_ids','destination_location_ids','importer_exporter_present','is_rate_available','procured_by_id']
 
-def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', all_rates_for_cogo_assured = False, return_count = False):
-    query = get_query(all_rates_for_cogo_assured, sort_by, sort_type)
+def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, return_query = False, pagination_data_required = False, all_rates_for_cogo_assured = False):
+    query = get_query(all_rates_for_cogo_assured)
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -22,17 +22,20 @@ def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
         query = get_filters(direct_filters, query, FtlFreightRate)
         query = apply_indirect_filters(query, indirect_filters)
 
-    if return_count:
-      return {'total_count': query.count()}
+    total_count = query.count()
+
+    if return_query:
+      return {'list': query}
 
     if page_limit:
       query = query.paginate(page, page_limit)
 
     data = get_data(query)
+    pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required, total_count)
 
-    return {'list': data}
+    return {'list': data } | (pagination_data)
 
-def get_query(all_rates_for_cogo_assured, sort_by, sort_type):
+def get_query(all_rates_for_cogo_assured):
    if all_rates_for_cogo_assured:
     query = FtlFreightRate.select(
        FtlFreightRate.id,
@@ -51,7 +54,7 @@ def get_query(all_rates_for_cogo_assured, sort_by, sort_type):
     return query
 
    query = FtlFreightRate.select()
-   query = query.order_by(eval('FtlFreightRate.{}.{}()'.format(sort_by,sort_type)))
+   query = query.order_by(eval('FtlFreightRate.{}.{}()'.format('updated_at','desc')))
 
    return query
 
@@ -71,15 +74,17 @@ def get_data(query):
       final_data.append(object)
   return final_data
 
-def get_pagination_data(query, page, page_limit):
-    total_count = query.count()
-    pagination_data = {
-        'page': page,
-        'total': ceil(total_count/page_limit),
-        'total_count': total_count,
-        'page_limit': page_limit
-        }
-    return pagination_data
+def get_pagination_data(query, page, page_limit, pagination_data_required, total_count):
+    if not pagination_data_required:
+        return {}
+
+    params = {
+      'page': page,
+      'total': ceil(total_count/page_limit),
+      'total_count': total_count,
+      'page_limit': page_limit
+    }
+    return params
 
 def apply_indirect_filters(query, filters):
   for key in filters:
