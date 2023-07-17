@@ -15,11 +15,13 @@ class AirFreightAirlineFactors(BaseModel):
     status = CharField(index=True, default='active')
     origin_cluster_id = ForeignKeyField(AirFreightLocationClusters,to_field="id")
     destination_cluster_id = ForeignKeyField(AirFreightLocationClusters,to_field= "id")
-    rate_factor = DoubleField(default=1)
+    origin_airport_id = UUIDField(index=True)
+    destination_airport_id = UUIDField(index=True)
+    slab_wise_factor = BinaryJSONField()    
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     class Meta:
         table_name = 'air_freight_airline_factors'
         indexes = (
-        (("origin_cluster_id", "base_airline_id","destination_cluster_id","derive_airline_id"), True),)
+        (("origin_airport_id", "base_airline_id","destination_airportid","derive_airline_id"), True),)
