@@ -187,7 +187,6 @@ def get_shipping_line_id(shipping_line_name):
 
 
 def get_location_id(q, country_code=None, service_provider_id=None):
-    #see once again critical
     if not q:
         return None
 

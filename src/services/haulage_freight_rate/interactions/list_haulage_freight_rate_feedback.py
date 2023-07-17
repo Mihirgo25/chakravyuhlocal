@@ -160,7 +160,6 @@ def get_stats(filters, is_stats_required, performed_by_id):
          )
     ).limit(1)
 
-
     result = query.execute()
     if len(result)>0:
         result = result[0]
@@ -174,34 +173,3 @@ def get_stats(filters, is_stats_required, performed_by_id):
     else:
         stats = {}
     return { 'stats': stats }
-
-def get_total(query, performed_by_id):
-    try:
-        query = query.select(HaulageFreightRateFeedback.id)
-        return {'get_total':query.count()}
-    except:
-        return {'get_total' : 0}
-
-def get_total_closed_by_user(query, performed_by_id):
-    try:
-        query = query.select(HaulageFreightRateFeedback.id)
-        return {'get_total_closed_by_user':query.where(HaulageFreightRateFeedback.status == 'inactive', HaulageFreightRateFeedback.closed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_closed_by_user':0}
-
-def get_total_opened_by_user(query, performed_by_id):
-    try:
-        query = query.select(HaulageFreightRateFeedback.id)
-        return {'get_total_opened_by_user' : query.where(HaulageFreightRateFeedback.status == 'active', HaulageFreightRateFeedback.performed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_opened_by_user' : 0}
-
-def get_status_count(query, performed_by_id):
-    try:
-        query = query.select(HaulageFreightRateFeedback.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(HaulageFreightRateFeedback.status)
-        result = {}
-        for row in query.execute():
-            result[row.status] = row.count_all
-        return {'get_status_count' : result}
-    except:
-        return {'get_status_count' : 0}
