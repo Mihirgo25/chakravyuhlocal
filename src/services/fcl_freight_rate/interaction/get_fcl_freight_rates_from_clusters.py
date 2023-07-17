@@ -72,7 +72,8 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
     critical_freight_rates_query = FclFreightRate.select(
         FclFreightRate.id,
         FclFreightRate.shipping_line_id,
-        FclFreightRate.validities
+        FclFreightRate.validities,
+        FclFreightRate.weight_limit
     ).where(
         FclFreightRate.origin_port_id == origin_base_port_id,
         FclFreightRate.destination_port_id == destination_base_port_id,
@@ -100,6 +101,7 @@ def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
             'container_type': request['container_type'],
             'commodity': request['commodity'] if request.get('commodity') else 'general',
             'shipping_line_id' : rate["shipping_line_id"],
+            'weight_limit': rate["weight_limit"],
             'service_provider_id' : DEFAULT_SERVICE_PROVIDER_ID,
             'performed_by_id': DEFAULT_USER_ID,
             'procured_by_id': DEFAULT_USER_ID,

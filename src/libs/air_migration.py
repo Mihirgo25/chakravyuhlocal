@@ -277,7 +277,7 @@ def delay_updation_audits(row,columns):
         obj = AirServiceAudit(**param)
         print("bedada")
         object_type = obj.object_type
-        query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+        query="create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
         db.execute_sql(query)
         obj.save(force_insert = True)
 
