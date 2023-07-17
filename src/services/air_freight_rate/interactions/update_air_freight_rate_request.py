@@ -51,8 +51,8 @@ def create_audit(request,air_freight_rate_request_id):
         action_name="update",
         performed_by_id=request["performed_by_id"],
         data={
-            "closing_remarks": request["closing_remarks"],
-            "performed_by_id": request["performed_by_id"],
+            "closing_remarks": request.get("closing_remarks"),
+            "performed_by_id": request.get("performed_by_id"),
         },
         object_id=air_freight_rate_request_id,
         object_type="AirFreightRateRequest",
