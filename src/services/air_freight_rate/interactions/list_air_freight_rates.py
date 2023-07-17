@@ -178,11 +178,18 @@ def apply_achieved_gross_weight_percentage_filter(query,filters):
    return query
 
 def apply_date_filter(query,filters):
-  query = query.where(
-    (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')")>= datetime.fromisoformat(filters['date']).date()),
-    (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')") < datetime.fromisoformat(filters['date']).date()),
-    (SQL("validity->>'status' is null") | (SQL("validity->>'status' = 'true'")))
-  )
+  date_to_apply = None
+  try:
+    date_to_apply = datetime.fromisoformat(filters['date']).date()
+  except:
+    date_to_apply = datetime.strptime(filters['date'], "%d-%m-%Y").date()
+    
+  if date_to_apply:
+    query = query.where(
+      (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')")>= date_to_apply),
+      (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')") < date_to_apply),
+      (SQL("validity->>'status' is null") | (SQL("validity->>'status' = 'true'")))
+    )
   
   return query
 
