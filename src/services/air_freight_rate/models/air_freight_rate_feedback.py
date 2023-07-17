@@ -314,8 +314,8 @@ class AirFreightRateFeedback(BaseModel):
             notification_data = {
                 'type': 'platform_notification',
                 'user_id': air_freight_rate.procured_by_id,
-                'service': 'air_freight_rate_dislike',
-                'service_id': self.id,
+                'service': 'air_freight_rate',
+                'service_id': str(air_freight_rate.id),
                 'template_name': 'freight_rate_disliked',
                 'variables': {
                     "origin_port": origin_airport.get('display_name'),
