@@ -55,7 +55,6 @@ from services.haulage_freight_rate.interactions.create_haulage_freight_rate impo
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate import (
     update_haulage_freight_rate,
 )
-from services.haulage_freight_rate.haulage_params import *
 from services.haulage_freight_rate.interactions.list_haulage_freight_rate_feedback import (
     list_haulage_freight_rate_feedbacks,
 )
@@ -65,6 +64,7 @@ from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_feed
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate_bulk_operation import (
     create_haulage_freight_rate_bulk_operation,
 )
+from services.haulage_freight_rate.haulage_params import *
 from services.rate_sheet.interactions.create_rate_sheet import create_rate_sheet
 from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets

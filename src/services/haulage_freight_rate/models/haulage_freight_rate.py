@@ -456,9 +456,7 @@ class HaulageFreightRate(BaseModel):
         ).execute()
 
     def validate_slabs(self):
-        # check once
         slabs = self.line_items[0].get('slabs') or []
         for index, slab in enumerate(slabs):
             if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index!=0 and float(slab['lower_limit'])<= float(slabs[index-1]['upper_limit'])):
                 raise HTTPException(status_code=400, detail=f"{slabs} are not valid {slab['code']} in line item")
-

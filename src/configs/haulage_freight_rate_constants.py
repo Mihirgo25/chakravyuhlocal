@@ -186,8 +186,6 @@ TRIP_TYPES = ['one_way', 'round_trip']
 
 COMMODITY = ['general', 'dangerous', 'temp_controlled']
 
-HAZ_CLASSES=[]
-
 HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS = {
     'standard':  [None] + HAZ_CLASSES + COMMODITY,
     'refer':  [None] + COMMODITY,
