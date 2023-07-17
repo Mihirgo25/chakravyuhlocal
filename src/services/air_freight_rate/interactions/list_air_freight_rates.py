@@ -186,9 +186,8 @@ def apply_date_filter(query,filters):
     
   if date_to_apply:
     query = query.where(
-      (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')")>= date_to_apply),
-      (SQL("TO_DATE(validity->>'validity_start','YYYYMMDD')") < date_to_apply),
-      (SQL("validity->>'status' is null") | (SQL("validity->>'status' = 'true'")))
+      (SQL("TO_DATE(validity->>'validity_start','YYYY-MM-DD')") >= date_to_apply),
+      (SQL("TO_DATE(validity->>'validity_start','YYYY-MM-DD')") <= date_to_apply)
     )
   
   return query
