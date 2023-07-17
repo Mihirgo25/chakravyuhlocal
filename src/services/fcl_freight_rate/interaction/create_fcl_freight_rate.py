@@ -334,10 +334,12 @@ def send_freight_rate_stats(action,freight):
             FclFreightRate.tags,
             FclFreightRate.sourced_by_id,
             FclFreightRate.procured_by_id,
+            FclFreightRate.created_at,
+            FclFreightRate.updated_at,
         ],
     )
     
-    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(create_params=jsonable_encoder({'action': action,'freight': freight})))
+    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,create_params=jsonable_encoder({'freight': freight})))
 
     
 

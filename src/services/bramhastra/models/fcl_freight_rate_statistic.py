@@ -1,5 +1,5 @@
-from peewee import Model, BigAutoField, UUIDField, FloatField, IntegerField, CharField, TextField
-import datetime
+from peewee import Model, BigAutoField, UUIDField, FloatField, IntegerField, CharField, TextField, DateField
+from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, ArrayField, BinaryJSONField
 
@@ -15,6 +15,8 @@ class FclFreightRateStatistic(BaseModel):
     identifier = TextField()
     validity_id = UUIDField()
     rate_id = UUIDField()
+    payment_term = CharField()
+    schedule_type = CharField()
     origin_port_id = UUIDField(null=True)
     destination_port_id = UUIDField(null=True)
     origin_main_port_id = UUIDField(null=True)
@@ -30,12 +32,14 @@ class FclFreightRateStatistic(BaseModel):
     origin_pricing_zone_map_id = UUIDField(null=True)
     destination_pricing_zone_map_id = UUIDField(null=True)
     price = FloatField()
+    market_price = FloatField()
+    validity_start = DateField()
+    validity_end = DateField()
     currency = CharField(max_length=3)
     line_items = BinaryJSONField()
     shipping_line_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
     accuracy = FloatField(default=-1.0)
-    source = CharField()
     mode = CharField()
     likes_count = IntegerField(default=0)
     dislikes_count = IntegerField(default=0)
@@ -45,8 +49,8 @@ class FclFreightRateStatistic(BaseModel):
     bookings_created = IntegerField(default=0)
     rate_created_at = DateTimeTZField()
     rate_updated_at = DateTimeTZField()
-    validity_created_at = DateTimeTZField()
-    validity_updated_at = DateTimeTZField()
+    validity_created_at = DateTimeTZField(default = datetime.utcnow())
+    validity_updated_at = DateTimeTZField(default = datetime.utcnow())
     commodity = CharField()
     container_size = CharField(max_length=10)
     container_type = CharField()
@@ -58,12 +62,11 @@ class FclFreightRateStatistic(BaseModel):
     origin_detention_id = UUIDField(null=True)
     destination_detention_id = UUIDField(null=True)
     origin_demurrage_id = UUIDField(null=True)
-    destintination_demurrage_id = UUIDField(null=True)
+    destination_demurrage_id = UUIDField(null=True)
     cogo_entity_id = UUIDField(null=True)
     rate_type = CharField()
     tags = ArrayField(CharField, null=True)
-    slabs = BinaryJSONField()
-    free_limit = IntegerField()
+    slabs = BinaryJSONField(null = True)
     sourced_by_id = UUIDField(null=True)
     procured_by_id = UUIDField(null=True)
     shipment_aborted_count = IntegerField(default=0)
@@ -81,14 +84,16 @@ class FclFreightRateStatistic(BaseModel):
     )
     shipment_booking_rate_is_too_low_count = IntegerField(default=0)
     average_booking_rate = FloatField(default=-1.0)
-    created_at = DateTimeTZField()
-    updated_at = DateTimeTZField()
+    created_at = DateTimeTZField(default = datetime.utcnow())
+    updated_at = DateTimeTZField(default = datetime.utcnow())
     version = IntegerField(default=1)
     state = IntegerField(default=1)
     status = CharField(default = 'active')
+    last_action = CharField(default = 'create')
 
     def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.now()
+        self.updated_at = datetime.utcnow()
+        self.validity_updated_at = datetime.utcnow()
         return super(FclFreightRateStatistic, self).save(*args, **kwargs)
 
     class Meta:

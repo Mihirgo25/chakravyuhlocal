@@ -562,7 +562,6 @@ class FclFreightRate(BaseModel):
                   "dislikes_count": 0,
                   "action": "create"
               }
-              new_validities.append(FclFreightRateValidity(**new_validity_object))
               new_tags[id] = tag
 
           new_validities.append(FclFreightRateValidity(**new_validity_object))

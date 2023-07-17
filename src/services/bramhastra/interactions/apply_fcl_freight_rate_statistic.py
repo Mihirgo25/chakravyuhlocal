@@ -1,29 +1,22 @@
-from services.bramhastra.helpers.fcl_freight import Rate, FclFreight
-from services.bramhastra.enums import ValidityAction
-from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
+from services.bramhastra.helpers.fcl_freight import Rate
 
 
 def apply_fcl_freight_rate_statistic(request):
-    if request.action == 'create':
-        create_fcl_freight_rate_statistic(request.create_params)
-    elif request.action == 'update':
-        update_fcl_freight_rate_statistic(request.update_params)
+    if request.create_params:
+        create_fcl_freight_rate_statistic(request.action, request.create_params)
+    elif request.update_params:
+        update_fcl_freight_rate_statistic(request.action, request.update_params)
     else:
-        raise ValueError("send create or update freight parameters")
+        raise ValueError("Send create or update freight parameters")
 
 
-def create_fcl_freight_rate_statistic(params):
-    rate = FclFreight(freight=params.freight)
-    rate.
-    from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+def create_fcl_freight_rate_statistic(action, params):
+    rate = Rate(freight=params.freight)
+    rate.set_formatted_data()
 
-    FclFreightRate.delete().where(FclFreightRate.id == params.freight.rate_id).execute()
-
-
-def update_fcl_freight_rate_statistic(params):
-    pass 
+    if action == "create":
+        rate.set_new_stats()
 
 
-def add_pricing_zone_map_ids(origin_port_id, destination_port_id):
-    FclFreightLocationClusterMapping.select().where(FclFreightLocationClusterMapping.location_id.in_([origin_port_id,destination_port_id]))
-    
+def update_fcl_freight_rate_statistic(action, params):
+    pass
