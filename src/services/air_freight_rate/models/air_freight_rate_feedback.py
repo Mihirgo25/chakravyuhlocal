@@ -190,7 +190,7 @@ class AirFreightRateFeedback(BaseModel):
             variables_data['changed_components'] += '.'
         locations = [variables_data['locations_data']['origin_airport_id'],variables_data['locations_data']['destination_airport_id']]
         variables_data['location_pair_name'] = maps.list_locations({'filters':{ 'id':locations }})['list']
-        variables_data['importer_exporter_id'] = spot_search.get_spot_search({'id':self.source_id})['detail']['importer_exporter_id']
+        variables_data['importer_exporter_id'] = spot_search.get_spot_search({'id':str(self.source_id)})['detail']['importer_exporter_id']
         
         if variables_data['location_pair_name'][0]['id']==variables_data['locations_data']['origin_airport_id']:
             location_pair_name = variables_data['location_pair_name']
