@@ -11,7 +11,7 @@ def send_air_freight_rate_task_notification(task_id):
 
 def send_communication(airline_id,airport_id,task_id):
     from celery_worker import create_communication_background
-    partners_list = partner.list_partner_users({'filters':{'role_ids': ','.join(ROLE_IDS_FOR_NOTIFICATIONS), 'status' : 'active'}})
+    partners_list = partner.list_partner_users({'filters':{'role_ids': ROLE_IDS_FOR_NOTIFICATIONS, 'status' : 'active'}})
     if 'list' in partners_list:
         partners_list = partners_list['list']
     else:
