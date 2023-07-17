@@ -185,7 +185,7 @@ class AirFreightRateFeedback(BaseModel):
         if reverted_rates:
             reverted_airline = get_operators(id=str(reverted_rates.airline_id))[0]['short_name']
             variables_data['changed_components'] = ''
-            variables_data['changed_components'] += f'with new airline {reverted_airline}' if reverted_rates.airline_id != variables_data['locations_data']['airline_id'] else ""
+            variables_data['changed_components'] += f'with new airline {reverted_airline}' if str(reverted_rates.airline_id) != variables_data['locations_data']['airline_id'] else ""
             variables_data['changed_components'] += f'with new price type {reverted_rates.price_type}' if reverted_rates.price_type != variables_data['locations_data']['price_type'] else ""
             variables_data['changed_components'] += '.'
         locations = [variables_data['locations_data']['origin_airport_id'],variables_data['locations_data']['destination_airport_id']]
