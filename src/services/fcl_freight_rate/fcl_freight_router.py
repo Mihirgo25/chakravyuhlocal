@@ -247,6 +247,8 @@ def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: d
     except HTTPException as e:
         raise
     except Exception as e:
+        traceback.print_exc()
+        print(request.dict(exclude_none = False))
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
