@@ -13,11 +13,7 @@ def create_air_customs_rate_bulk_operation(request):
         bulk_operation_customs_air = AirCustomsRateBulkOperation(**params)
         eval(f"bulk_operation_customs_air.validate_{action_name}_data()")
 
-        try:
-            bulk_operation_customs_air.save()
-        except:
-            raise HTTPException(status_code = 400, detail='Bulk Operation is not saved')
-
+        bulk_operation_customs_air.save()
         bulk_operation_perform_action_functions_air_customs_delay.apply_async(
             kwargs={
                 'action_name':action_name,
