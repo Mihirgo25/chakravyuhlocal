@@ -243,7 +243,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
                 required_slab = required_next_slab
     
     price = round(required_slab['tariff_price'],2)
-    min_price = freight_validity['min_price']
+    min_price = float(freight_validity['min_price'])
     currency = freight_validity['currency']
     line_item = { 'code': 'BAS', 'unit': 'per_kg', 'price': price, 'currency': currency, 'min_price': min_price, 'remarks': [] }
     #  code name from charges but not required as there only one line item
