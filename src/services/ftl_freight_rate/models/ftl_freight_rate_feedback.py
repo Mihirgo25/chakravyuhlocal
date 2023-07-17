@@ -38,6 +38,11 @@ class FtlFreightRateFeedback(BaseModel):
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('fcl_freight_rate_feedback_serial_id_seq'::regclass)")])
     closed_by_id = UUIDField(index=True, null=True)
+    origin_location_id = UUIDField(index=True,null=True)
+    origin_country_id = UUIDField(null=True)
+    destination_location_id = UUIDField(index=True,null=True)
+    destination_country_id = UUIDField(null=True)
+    service_provider_id= UUIDField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

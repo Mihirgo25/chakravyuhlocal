@@ -38,6 +38,7 @@ from services.ftl_freight_rate.interactions.delete_ftl_freight_rate import delet
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_addition_frequency import get_ftl_freight_rate_addition_frequency
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_visibility import get_ftl_freight_rate_visibility
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate import get_ftl_freight_rate
+from services.ftl_freight_rate.interactions.list_ftl_freight_rate_feedbacks import list_ftl_freight_rate_feedbacks
 
 ftl_freight_router = APIRouter()
 
@@ -290,12 +291,12 @@ def update_ftl_freight_rate_request_api(
         )
 
 @ftl_freight_router.post("/create_ftl_freight_rate_feedback")
-def create_ftl_freight_rate_feedback_data(request: CreateFtlFreightRateFeedback, resp: dict = Depends(authorize_token)):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-    #     request.performed_by_id = resp["setters"]["performed_by_id"]
-    #     request.performed_by_type = resp["setters"]["performed_by_type"]
+def create_ftl_freight_rate_feedback_api(request: CreateFtlFreightRateFeedback, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_id = create_ftl_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
@@ -306,12 +307,12 @@ def create_ftl_freight_rate_feedback_data(request: CreateFtlFreightRateFeedback,
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @ftl_freight_router.post("/delete_ftl_freight_rate_feedback")
-def delete_ftl_freight_rates_feedback(request: DeleteFtlFreightRateFeedback, resp: dict = Depends(authorize_token)):
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # if resp["isAuthorized"]:
-    #     request.performed_by_id = resp["setters"]["performed_by_id"]
-    #     request.performed_by_type = resp["setters"]["performed_by_type"]
+def delete_ftl_freight_rates_feedback_api(request: DeleteFtlFreightRateFeedback, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_ftl_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
@@ -515,6 +516,28 @@ def get_ftl_freight_rate_api(origin_location_id: str = None,destination_location
         }
         rate = get_ftl_freight_rate(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })   
+    
+@ftl_freight_router.get("/list_ftl_freight_rate_feedbacks")
+def list_ftl_freight_rate_feedbacks_api(
+    filters: str = None,
+    spot_search_details_required: bool = False,
+    page_limit: int = 10,
+    page: int = 1,
+    performed_by_id: str = None,
+    is_stats_required: bool = True,
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+
+    try:
+        data = list_ftl_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:

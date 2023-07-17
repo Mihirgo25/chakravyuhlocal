@@ -2,7 +2,6 @@ from services.ftl_freight_rate.models.ftl_freight_rate_feedback import FtlFreigh
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
 
 def delete_ftl_freight_rate_feedback(request):
     with db.atomic():
@@ -37,7 +36,6 @@ def find_objects(request):
 
 
 def create_audit(request, freight_rate_feedback_id):
-    breakpoint()
     FtlFreightRateAudit.create(
     action_name = 'delete',
     performed_by_id = request['performed_by_id'],

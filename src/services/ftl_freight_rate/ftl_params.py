@@ -222,6 +222,12 @@ class CreateFtlFreightRateFeedback(BaseModel):
     preferred_freight_rate_currency: str = None
     feedback_type: str
     booking_params: dict = {}
+    origin_location_id: str = None
+    origin_country_id: str = None
+    destination_location_id: str = None
+    destination_country_id: str = None
+    service_provider_id: str = None
+
 
 class DeleteFtlFreightRateFeedback(BaseModel):
     ftl_freight_rate_feedback_ids: List[str]

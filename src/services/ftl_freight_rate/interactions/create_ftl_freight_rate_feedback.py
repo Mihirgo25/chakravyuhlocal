@@ -18,15 +18,15 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail='{} is invalid'.format(request['rate_id']))
     
     row = {
-        'status': 'active',
         'ftl_freight_rate_id': request['rate_id'],
         'source': request['source'],
         'source_id': request['source_id'],
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id']
+        'performed_by_org_id': request['performed_by_org_id'],
+        'origin_location_id':request['origin_location_id']
     }
-    print(row)
+
     feedback = FtlFreightRateFeedback.select().where(
         FtlFreightRateFeedback.ftl_freight_rate_id == request['rate_id'],
         FtlFreightRateFeedback.source == request['source'],
@@ -34,13 +34,13 @@ def execute_transaction_code(request):
         FtlFreightRateFeedback.performed_by_id == request['performed_by_id'],
         FtlFreightRateFeedback.performed_by_type == request['performed_by_type'],
         FtlFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
+    
     if not feedback:
         feedback = FtlFreightRateFeedback(**row)
+
     create_params = get_create_params(request)
-    
     for attr, value in create_params.items():
         setattr(feedback, attr, value)
-
     try:
         feedback.save()
     except:
@@ -58,11 +58,19 @@ def get_create_params(request):
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
+        'status': 'active',
+        'origin_location_id':request.get('origin_location_id'),
+        'origin_country_id': request.get('origin_country_id'),
+        'destination_location_id': request.get('destination_location_id'),
+        'destination_country_id': request.get('destination_country_id'),
+        'service_provider_id': request.get('service_provider_id'),
     }
     return params
 
 def create_audit(request, feedback):
     FtlFreightRateAudit.create(
+        created_at = datetime.now(),
+        updated_at = datetime.now(),
         object_type = 'FtlFreightRateFeedback',
         object_id = feedback.id,
         action_name = 'create',
