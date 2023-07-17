@@ -4,15 +4,15 @@ from services.air_freight_rate.constants.air_freight_rate_constants import (
     AIR_IMPORTS_HIGH_DENSITY_RATIO,
     AIR_EXPORTS_LOW_DENSITY_RATIO,
     AIR_EXPORTS_HIGH_DENSITY_RATIO,
+    PROCURE_NON_AVAILABLE_RATE_FROM_CARGOAI
 )
-from micro_services.client import spot_search,maps
+from micro_services.client import spot_search,maps,common
 from datetime import datetime, timedelta
 from configs.global_constants import SERVICE_PROVIDER_FF,MAX_VALUE
 from services.air_freight_rate.interactions.get_weight_slabs_for_airline import get_weight_slabs_for_airline
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
-from  micro_services.client import common
-
+from database.rails_db import get_operators
 
 def get_density_wise_rate_card(
     response_object, trade_type, gross_weight, gross_volume, chargeable_weight
@@ -33,6 +33,7 @@ def get_density_wise_rate_card(
     else:
         low_density_lower_limit = AIR_EXPORTS_LOW_DENSITY_RATIO
         high_density_upper_limit = AIR_EXPORTS_HIGH_DENSITY_RATIO
+
     freights = []
     if ratio > low_density_lower_limit:
         closest_density_match = {}
@@ -73,11 +74,17 @@ def get_density_wise_rate_card(
             if freight["density_category"] == "general":
                 freights.append(freight)
 
+        # If no rate available show low in general as price is going to be always higher
+        if len(freights) == 0:
+            for freight in response_object["freights"]:
+                if freight["density_category"] == "low_density":
+                    freights.append(freight)
+        
     if density_rate_category == "high_density" and density_rate_present:
         freights = [
             freight_object
             for freight_object in freights
-            if freight_object["density_category"] == "general"
+            if freight_object["density_category"] != "general"
         ]
 
     if not freights:
@@ -132,7 +139,7 @@ def get_rate_from_cargo_ai(air_freight_rate, feedback, performed_by_id):
 
 def make_entry_in_rates(all_rates, params_for_cargoai):
      rates_for_airlines = []
-     if all_rates and all_rates['flights']:
+     if all_rates and all_rates.get('flights'):
         chargeable_weight = get_chargeable_weight(params_for_cargoai['weight'], params_for_cargoai['volume'])
         density_params = get_density_ratio_and_category(params_for_cargoai['weight'], params_for_cargoai['volume'], params_for_cargoai['trade_type'])
         density_ratio = density_params['density_ratio']
@@ -140,24 +147,34 @@ def make_entry_in_rates(all_rates, params_for_cargoai):
         operation_types = ['passenger', 'freighter']
 
         for individual_rate in all_rates['flights']:
-            if individual_rate['available'] or 'PROCURE_NON_AVAILABLE_RATE_FROM_CARGOAI':
-                if individual_rate['airlineCode'] == '00': individual_rate['airlineCode'] = 'OO' 
-                airline_details = maps.list_operators({'filters': { 'iata_code': individual_rate['airlineCode'], 'status': 'active' }})['list'][0]
-                if not  airline_details :
+            if individual_rate['available'] or PROCURE_NON_AVAILABLE_RATE_FROM_CARGOAI:
+                if individual_rate['airlineCode'] == '00': 
+                    individual_rate['airlineCode'] = 'OO' 
+                airline_details = get_operators(iata_code=individual_rate['airlineCode'],operator_type='airline')
+                if not airline_details :
                     continue
+                airline_details = airline_details[0]
                 final_weight_slabs = get_weight_slabs_for_airline(airline_id=airline_details['id'],chargeable_weight=chargeable_weight,overweight_upper_limit=100.0)
-                if not  final_weight_slabs:
+                if not final_weight_slabs:
                     continue
                 final_weight_slab = final_weight_slabs[0]
                 rates_for_airlines.append(airline_details['business_name'])
 
                 for rate in individual_rate['rates']:
-                    if rate['allInRate'] and  params_for_cargoai['commodity_details']:
+                    if rate.get('allInRate') and  params_for_cargoai.get('commodity_details'):
                         for operation_type in operation_types:
-                            new_params = params_for_cargoai({ 'airline_id': airline_details[:id], 'operation_type': operation_type, 'flight_uuid': individual_rate['flightUID'], 'density_category': density_category, 'density_ratio': density_ratio, 'service_provider_ff': SERVICE_PROVIDER_FF, 'price_type': 'all_in', 'final_weight_slab': final_weight_slab })
+                            cargo_param = { 'airline_id': airline_details[:id], 'operation_type': operation_type, 'flight_uuid': individual_rate['flightUID'], 'density_category': density_category, 'density_ratio': density_ratio, 'service_provider_ff': SERVICE_PROVIDER_FF, 'price_type': 'all_in', 'final_weight_slab': final_weight_slab }
+                            new_params = params_for_cargoai | cargo_param
                             create_params = get_create_params(new_params, rate, SERVICE_PROVIDER_FF)
                             create_air_freight_rate(create_params)
-                    if rate['netRate'] and  rate['charges']  and  params_for_cargoai['commodity_details']  and  rate['netRate'] != 0:
+                    
+                    if rate.get('netRate') and rate.get('allInRate') != rate.get('netRate') and params_for_cargoai.get('commodity_details'):
+                        for operation_type in operation_types:
+                            cargo_param = { 'airline_id': airline_details[:id], 'operation_type': operation_type, 'flight_uuid': individual_rate['flightUID'], 'density_category': density_category, 'density_ratio': density_ratio, 'service_provider_ff': SERVICE_PROVIDER_FF, 'price_type': 'net_net', 'final_weight_slab': final_weight_slab }
+                            new_params = params_for_cargoai | cargo_param
+                            create_params = get_create_params(new_params, rate, SERVICE_PROVIDER_FF)
+                            create_air_freight_rate(create_params)
+                    if rate.get('netRate') and rate.get('charges') and params_for_cargoai.get('commodity_details') and rate['netRate'] != 0:
                         line_items = []
                         for item in rate['charges']:
                             line_item = {}
@@ -213,7 +230,7 @@ def get_density_ratio_and_category(weight, volume, trade_type):
       else:
         density_ratio = '1:200'
 
-    return { density_category: density_category, density_ratio: density_ratio }
+    return { 'density_category': density_category, 'density_ratio': density_ratio }
 
 
 def notification_to_sales_agent_for_rate_added(air_freight_rate, performed_by_id, variables):

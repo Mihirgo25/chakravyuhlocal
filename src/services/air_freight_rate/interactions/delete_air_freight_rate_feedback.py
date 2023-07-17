@@ -43,7 +43,7 @@ def create_audit(request,id):
         performed_by_id=request.get('performed_by_id'),
         data={key:value for key,value in request.items() if key not in ['air_freight_rate_feedback_ids'] },
         object_id=id,
-        object_type='AirFreightRateFeedbacks'
+        object_type='AirFreightRateFeedback'
     )    
 
 def find_object(request):
