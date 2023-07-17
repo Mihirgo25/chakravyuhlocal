@@ -159,10 +159,10 @@ class AirFreightRate(BaseModel):
     def validate_available_volume_and_gross_weight(self):
         if self.commodity!='general':
             for validity in self.validities:
-                if validity['available_volume'] > validity['initial_volume']:
+                if  validity.get('available_volume') and validity.get('initial_volume') and  validity['available_volume'] > validity['initial_volume']:
                     raise HTTPException(status_code = 400,detail='available volume can\'t be greater than initial volume')
                 
-                if validity['available_gross_weight'] > validity['initial_gross_weight']:
+                if validity.get('available_gross_weight') and validity.get('initial_gross_weight') and validity['available_gross_weight'] > validity['initial_gross_weight']:
                     raise HTTPException(status_code = 400,detail='available gross weight can\'t be greater than initial gross weight')
                 
     def set_locations(self):

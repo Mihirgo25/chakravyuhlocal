@@ -164,7 +164,7 @@ class AirFreightRateRequest(BaseModel):
             importer_exporter_id = None
         origin_location = location_pair_name[str(location_pair.origin_airport_id)]
         destination_location = location_pair_name[
-            str(location_pair.destination_airport)
+            str(location_pair.destination_airport_id)
         ]
 
         data = {

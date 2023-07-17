@@ -199,7 +199,7 @@ class AirFreightRateFeedback(BaseModel):
             location_pair_name = [variables_data['location_pair_name'][1],destination]
         locations_data = variables_data['locations_data']
         importer_exporter_id = variables_data['importer_exporter_id']
-        changed_components = variables_data['changed_components']
+        changed_components = variables_data.get('changed_components')
 
         data = {
             "user_id": str(self.performed_by_id),
@@ -314,8 +314,8 @@ class AirFreightRateFeedback(BaseModel):
             notification_data = {
                 'type': 'platform_notification',
                 'user_id': air_freight_rate.procured_by_id,
-                'service': 'air_freight_rate_dislike',
-                'service_id': self.id,
+                'service': 'air_freight_rate',
+                'service_id': str(air_freight_rate.id),
                 'template_name': 'freight_rate_disliked',
                 'variables': {
                     "origin_port": origin_airport.get('display_name'),
