@@ -138,7 +138,7 @@ def build_surcharge_line_item_object(line_item,requirements):
     line_item['total_price'] = line_item['quantity']*line_item['price']
     if line_item['min_price'] > line_item['total_price']:
         line_item['total_price'] = line_item['min_price']
-    line_item['name'] = surcharge_charges[line_item['code']]['name']
+    line_item['name'] = surcharge_charges['name']
     line_item['source'] = 'system'
 
     return line_item
