@@ -16,10 +16,10 @@ class FtlFreightRateRequest(BaseModel):
     cogo_entity_id = UUIDField(index=True, null = True)
     closed_by_id = UUIDField(index=True, null=True)
     closed_by = BinaryJSONField(null=True)
-    cargo_readiness_date = DateTimeField(null=True)
+    cargo_readiness_date = DateTimeTZField(null=True)
     closing_remarks = ArrayField(constraints=[SQL("DEFAULT '{}'::text[]")], field_class=TextField, null=True)
     commodity = CharField(index=True, null=True)
-    created_at = DateTimeField(index=True, default = datetime.datetime.now)
+    created_at = DateTimeTZField(index=True, default = datetime.datetime.now)
     destination_country_id = UUIDField( null=True)
     destination_cluster_id = UUIDField( null=True)
     destination_location_id = UUIDField(index=True)
@@ -44,7 +44,7 @@ class FtlFreightRateRequest(BaseModel):
     source = CharField( null=True)
     source_id = UUIDField(index=True ,null=True)
     status = CharField(index=True, null=True)
-    updated_at = DateTimeField(default = datetime.datetime.now)
+    updated_at = DateTimeTZField(default = datetime.datetime.now)
     reverted_rates_count = IntegerField(null=True)
     reverted_by_user_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     trip_type = TextField(null=True)
@@ -73,7 +73,7 @@ class FtlFreightRateRequest(BaseModel):
                 self.origin_location = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
             elif location['id']==self.destination_location_id:
                 self.destination_location = {key:value for key,value in location.items() if key in ['id', 'name', 'display_name', 'port_code', 'type']}
-        
+
 
     def send_closed_notifications_to_sales_agent(self):
         location_pair = FtlFreightRateRequest.select(FtlFreightRateRequest.origin_location_id, FtlFreightRateRequest.destination_location_id).where(FtlFreightRateRequest.source_id == self.source_id).limit(1).dicts().get()
@@ -91,14 +91,14 @@ class FtlFreightRateRequest(BaseModel):
             'service': 'ftl_freight_rate',
             'service_id': self.id,
             'template_name': 'freight_rate_request_completed_notification' if 'rate_added' in self.closing_remarks else 'freight_rate_request_closed_notification',
-            'variables': { 
+            'variables': {
                 'service_type': 'ftl freight',
                 'origin_location': origin_location,
                 'destination_location': destination_location,
                 'remarks': None if 'rate_added' in self.closing_remarks else "Reason: {}.".format(self.closing_remarks[0].lower().replace('_', ' ')),
                 'request_serial_id': str(self.serial_id),
                 'spot_search_id': str(self.source_id),
-                'importer_exporter_id': importer_exporter_id 
+                'importer_exporter_id': importer_exporter_id
             }
         }
 
@@ -126,4 +126,4 @@ class FtlFreightRateRequest(BaseModel):
         }
 
         common.create_communication(push_notification_data)
-        common.create_communication(data) 
+        common.create_communication(data)

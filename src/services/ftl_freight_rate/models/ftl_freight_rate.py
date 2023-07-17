@@ -8,10 +8,10 @@ from micro_services.client  import maps, common
 from configs.definitions import FTL_FREIGHT_CHARGES
 from libs.get_applicable_filters import is_valid_uuid
 
-class UnknownField(object): 
+class UnknownField(object):
     def __init__(self, *_, **__): pass
 
-class BaseModel(Model): 
+class BaseModel(Model):
     class Meta:
         database = db
         only_save_dirty = True
@@ -49,15 +49,15 @@ class FtlFreightRate(BaseModel):
     unit = CharField(index=True, null=True)
     trucks_count = IntegerField(null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True, index=True)
-    validity_start = DateTimeField(default=datetime.datetime.now, null=True)
-    validity_end = DateTimeField(default = datetime.datetime.now() + datetime.timedelta(15), null=True)
+    validity_start = DateTimeTZField(default=datetime.datetime.now, null=True)
+    validity_end = DateTimeTZField(default = datetime.datetime.now() + datetime.timedelta(15), null=True)
     detention_free_time = CharField(index=True, null = True)
     importer_exporter = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
     origin_location = BinaryJSONField(index=True, null=True)
     destination_location = BinaryJSONField(index=True, null=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeTZField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeTZField(default=datetime.datetime.now, index=True)
     mode = CharField(default = 'manual', index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
     sourced_by_id = UUIDField(null=True, index=True)
@@ -67,7 +67,7 @@ class FtlFreightRate(BaseModel):
     rate_type = CharField(default='market_place', choices = RATE_TYPES, index=True)
     tags = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True)
-    
+
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
       return super(FtlFreightRate, self).save(*args, **kwargs)
@@ -135,61 +135,61 @@ class FtlFreightRate(BaseModel):
                 else:
                     self.destination_location_ids.append(id)
 
-    
+
     def set_destination_location_type(self):
         self.destination_location_type = self.destination_location.get('type')
-    
+
     def set_origin_destination_location_type(self):
         self.origin_destination_location_type = ':'.join([str(self.origin_location_type),str(self.destination_location_type)])
-    
+
     def validate_validities(self, validity_start, validity_end):
-        
+
         if not validity_start:
             raise HTTPException(status_code=400, detail="validity_start is invalid")
-        
+
         if not validity_end:
             raise HTTPException(status_code=400, detail="validity_end is invalid")
-        
+
         if validity_end < validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
-        
+
     def validate_duplicate_line_items(self):
         self.line_items = self.line_items or []
         if len(set(map(lambda t: str(t['code']).upper(), self.line_items))) != len(self.line_items):
             raise HTTPException(status_code=500, detail="Contains Duplicates")
-        
+
     def validate_truck_body_type(self):
         if self.truck_body_type not in BODY_TYPE:
             raise HTTPException(status_code=400, detail="Invalid truck_body_type")
-    
+
     def validate_trip_type(self):
         if self.trip_type not in TRIP_TYPES:
             raise HTTPException(status_code=400, detail="Invalid trip_type")
-        
+
     def validate_origin_destination_locations(self):
         if self.origin_location_id == self.destination_location_id and self.origin_location_type == 'pincode':
             raise HTTPException(status_code=400, detail="origin_location and destination_location can not be same")
-        
+
     def validate_minimum_chargeable_weight(self):
         if self.unit == 'per_ton' and not self.minimum_chargeable_weight:
             raise HTTPException(status_code=400, detail="minimum_chargeable_weight is required")
-        
+
     def validate_unit(self):
         if self.unit and self.unit not in VALID_UNITS:
             raise HTTPException(status_code=400, detail="Invalid unit")
-        
+
     def validate_transit_time(self):
         if self.transit_time <=0:
             raise HTTPException(status_code=400, detail="Invalid transit_time")
-        
+
     def validate_detention_free_time(self):
         if self.detention_free_time < 0:
             raise HTTPException(status_code=400, detail="Invalid detention_free_time")
-        
+
     def validate_commodity(self):
         if self.commodity not in COMMODITIES:
             raise HTTPException(status_code=400, detail="Invalid commodity")
-    
+
     def validate_before_save(self):
         self.validate_duplicate_line_items()
         self.validate_truck_body_type()
@@ -208,7 +208,7 @@ class FtlFreightRate(BaseModel):
                 charge_codes[code.upper()] = config
 
         return charge_codes
-    
+
     def get_line_items_total_price(self,line_items):
         currency = line_items[0].get('currency')
         result = 0
@@ -217,11 +217,11 @@ class FtlFreightRate(BaseModel):
             result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
 
         return result
-    
+
     def get_mandatory_line_items(self,mandatory_charge_codes):
         mandatory_line_items = [line_item for line_item in self.line_items if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
         return mandatory_line_items
-    
+
     def set_platform_price(self):
         possible_charge_codes = self.possible_charge_codes()
         mandatory_charge_codes = self.mandatory_charge_codes(possible_charge_codes)
@@ -239,7 +239,7 @@ class FtlFreightRate(BaseModel):
             FtlFreightRate.commodity == self.commodity,
             FtlFreightRate.is_line_items_error_messages_present == False,
         ).where(FtlFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
-        
+
         rates = list(rates)
         sum = 0
         if rates:
@@ -256,7 +256,7 @@ class FtlFreightRate(BaseModel):
     def set_is_best_price(self):
         if not self.platform_price:
             return
-        
+
         possible_charge_codes = self.possible_charge_codes()
         mandatory_charge_codes = self.mandatory_charge_codes(possible_charge_codes)
         line_items = self.get_mandatory_line_items(mandatory_charge_codes)
@@ -331,7 +331,7 @@ class FtlFreightRate(BaseModel):
         'line_items_info_messages': self.line_items_info_messages,
         'is_line_items_info_messages_present': self.is_line_items_info_messages_present
         }
-    
+
     def detail(self):
         ftl_freight = {
             'line_items': self.line_items,
@@ -349,7 +349,7 @@ class FtlFreightRate(BaseModel):
         }
 
         return {'ftl_freight': ftl_freight}
-    
+
     def possible_charge_codes(self):
         ftl_freight_charges_dict = FTL_FREIGHT_CHARGES
 
@@ -359,7 +359,7 @@ class FtlFreightRate(BaseModel):
             if eval(str(config['condition'])):
                     charge_codes[code] = config
         return charge_codes
-    
+
     def delete_rate_not_available_entry(self):
 
         FtlFreightRate.delete().where(
