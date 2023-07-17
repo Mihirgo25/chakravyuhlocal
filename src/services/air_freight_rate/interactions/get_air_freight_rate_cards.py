@@ -122,7 +122,7 @@ def add_surcharge_object(freight_rate,response_object,requirements):
     return True
 
 def build_surcharge_line_item_object(line_item,requirements):
-    surcharge_charges = AIR_FREIGHT_SURCHARGES[line_item['code']]
+    surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
     if not surcharge_charges:
         return
 
@@ -248,7 +248,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     line_item = { 'code': 'BAS', 'unit': 'per_kg', 'price': price, 'currency': currency, 'min_price': min_price, 'remarks': [] }
     #  code name from charges but not required as there only one line item
 
-    code_config = AIR_FREIGHT_CHARGES[line_item['code']]
+    code_config = AIR_FREIGHT_CHARGES.get(line_item['code'])
     if not code_config:
         return
     if line_item.get('unit') == 'per_package':
