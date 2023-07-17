@@ -9,6 +9,7 @@ from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
+from playhouse.shortcuts import model_to_dict
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -66,6 +67,7 @@ def create_fcl_freight_rate_data(request):
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
+    action = 'update'
     request = { key: value for key, value in request.items() if value }
     row = {
         'origin_port_id': request.get('origin_port_id'),
@@ -102,6 +104,7 @@ def create_fcl_freight_rate(request):
         freight = FclFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
+        action = 'create'
 
     freight.set_locations()
     freight.set_origin_location_ids()
@@ -145,7 +148,7 @@ def create_fcl_freight_rate(request):
     if row["rate_type"] == "cogo_assured":
         freight.set_validities_for_cogo_assured_rates(request['validities'])
     else:
-        validites = freight.set_validities(
+        freight.set_validities(
             request["validity_start"].date(),
             request["validity_end"].date(),
             line_items,
@@ -201,7 +204,7 @@ def create_fcl_freight_rate(request):
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
         
-    send_freight_rate_stats(freight,validites)
+    send_freight_rate_stats(action,freight)
 
     return {"id": freight.id}
 
@@ -291,14 +294,50 @@ def validate_value_props(v_props):
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
 
-def send_freight_rate_stats(freight,validities):
-    from celery_worker import allocate_create_fcl_freight_rate_statistics_from_self
-    from playhouse.shortcuts import model_to_dict
-    stats = model_to_dict(freight)
-    stats['validities'] = validities
-    allocate_create_fcl_freight_rate_statistics_from_self.apply_async({'kwargs': stats},queue = 'monitoring')
-    
+def send_freight_rate_stats(action,freight):
+    from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
+        apply_fcl_freight_rate_statistic,
+    )
+    from  services.bramhastra.request_params import ApplyFclFreightRateStatistic
 
+    freight = model_to_dict(
+        freight,
+        only=[
+            FclFreightRate.id,
+            FclFreightRate.origin_port_id,
+            FclFreightRate.destination_port_id,
+            FclFreightRate.origin_main_port_id,
+            FclFreightRate.destination_main_port_id,
+            FclFreightRate.origin_country_id,
+            FclFreightRate.destination_country_id,
+            FclFreightRate.origin_country_id,
+            FclFreightRate.destination_country_id,
+            FclFreightRate.origin_trade_id,
+            FclFreightRate.destination_trade_id,
+            FclFreightRate.shipping_line_id,
+            FclFreightRate.service_provider_id,
+            FclFreightRate.accuracy,
+            FclFreightRate.validities,
+            FclFreightRate.mode,
+            FclFreightRate.commodity,
+            FclFreightRate.container_size,
+            FclFreightRate.container_type,
+            FclFreightRate.containers_count,
+            FclFreightRate.origin_local_id,
+            FclFreightRate.destination_local_id,
+            FclFreightRate.origin_detention_id,
+            FclFreightRate.destination_detention_id,
+            FclFreightRate.origin_demurrage_id,
+            FclFreightRate.destination_demurrage_id,
+            FclFreightRate.cogo_entity_id,
+            FclFreightRate.rate_type,
+            FclFreightRate.tags,
+            FclFreightRate.sourced_by_id,
+            FclFreightRate.procured_by_id,
+        ],
+    )
+    
+    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(create_params=jsonable_encoder({'action': action,'freight': freight})))
 
     
 

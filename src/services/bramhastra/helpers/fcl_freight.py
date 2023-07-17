@@ -3,20 +3,22 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from database.rails_db import get_connection
-from services.bramhastra.enums import Table
+from services.bramhastra.enums import Table,ValidityAction
 from peewee import Model
 
-
-class FclFreight:
-    def __init__(self, rate_id, validity_id) -> None:
-        self.rate_id = (rate_id)
-        self.validity_id = validity_id
-        self.fcl_freight_rate_statistics_identifier = (
-            self.get_clickhouse_fcl_freight_rate_statistics_identifier()
-        )
+class Connection:
+    def __init__(self) -> None:
         self.rails_db = get_connection()
         self.clickhouse_client = get_clickhouse_client()
-        self.postgres_statistics_current_row = self.get_postgres_statistics_current_row
+
+
+class FclFreightValidity(Connection):
+    def __init__(self,rate_id,validity_id) -> None:
+        super().__init__()
+        self.rate_id = None
+        self.validity_id = None
+        self.fcl_freight_rate_statistics_identifier = None
+        self.set_initial_parameters(rate_id,validity_id)
 
     def create_statistics_stale_row(self,row) -> Model:
         row.version+=1
@@ -56,39 +58,39 @@ class FclFreight:
         ):
             return row
         
-    def get_postgres_statistics_rows_by_rate_id(self) -> Model:
-        return (
+    def get_postgres_statistics_rows_by_rate_id(self,state = 1,version = None) -> Model:
+        fcl_freight_rate_statistic_query = (
             FclFreightRateStatistic.select()
             .where(
                 FclFreightRateStatistic.rate_id
                 == self.rate_id,
-                FclFreightRateStatistic.state == 1
+                FclFreightRateStatistic.state == state
             )
         )
+        if version:
+            fcl_freight_rate_statistic_query.where(FclFreightRateStatistic.version == version)
+            
+        return fcl_freight_rate_statistic_query
         
 
-    def get_clickhouse_fcl_freight_rate_statistics_identifier(self) -> str:
+    def set_initial_parameters(self,rate_id,validity_id) -> None:
+        self.rate_id = rate_id
+        self.validity_id = validity_id
         self.fcl_freight_rate_statistics_identifier = "".join(
-            [self.rate_id, self.validity_id]
+            [rate_id, validity_id]
         )
-
-
-class Rate(FclFreight):
-    def __init__(self, freight) -> None:
-        super().__init__(rate_id=freight["id"], validity_id=freight["validity_id"])
-        self.freight = freight
-
+        
     def get_or_create_statistics_current_row(self) -> Model:
         row = self.get_postgres_statistics_current_row_by_identifier()
         if not row:
             row_params = self.get()
-            row = self.apply_create_stats(row_params)
+            row = self.create_stats(row_params)
         return row
-
-    def apply_create_stats(self, params) -> Model:
-        return FclFreightRateStatistic.create(params)
-
-    def apply_update_stats(self, params) -> int:
+    
+    def create_stats(self,create_param) -> Model:
+            return FclFreightRateStatistic.create(create_param)
+        
+    def update_stats(self, params) -> int:
         return (
             FclFreightRateStatistic.update(*params)
             .where(
@@ -99,12 +101,26 @@ class Rate(FclFreight):
         )
 
 
+class Statistics([FclFreightValidity]):
+    def __init__(self, freight) -> None:
+        super().__init__({'rate_id': freight.rate_id,'validity_id': freight.validity_id})
+        self.freight = freight
+    
+    def set_formatted_data(self)-> None:
+        if self.freight.action == ValidityAction.unchanged.value:
+            pass
+        elif self.freight.action == ValidityAction.create.value:
+            pass
+        elif self.freight.action == ValidityAction.update.value:
+            self.update_params = None
+            
+    def insert_stats(self,create_params):
+            FclFreightRateStatistic.insert_many(create_params).execute()
+
+
 class SpotSearch(FclFreight):
-    def apply_create_stats(self, statistical_params, params):
-        FclFreightRateStatistic.update(statistical_params).where(
-            FclFreightRateStatistic.identifier
-            == self.fcl_freight_rate_statistics_identifier
-        )
+    def apply_create_stats(self, statistical_params):
+        pass
 
     def apply_update_stats(params):
         pass

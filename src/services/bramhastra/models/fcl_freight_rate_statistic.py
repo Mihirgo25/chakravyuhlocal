@@ -12,7 +12,6 @@ class BaseModel(Model):
 
 class FclFreightRateStatistic(BaseModel):
     id = BigAutoField()
-    clickhouse_id = IntegerField(default=0)
     identifier = TextField()
     validity_id = UUIDField()
     rate_id = UUIDField()
@@ -86,7 +85,7 @@ class FclFreightRateStatistic(BaseModel):
     updated_at = DateTimeTZField()
     version = IntegerField(default=1)
     state = IntegerField(default=1)
-    status = CharField()
+    status = CharField(default = 'active')
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

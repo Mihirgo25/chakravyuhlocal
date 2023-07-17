@@ -6,3 +6,10 @@ class Bramhastra(Enum):
 
 class Table(Bramhastra):
     fcl_freight_rate_statistics = 'fcl_freight_rate_statistics'
+    
+    
+class ValidityAction(Bramhastra):
+    create = 'create'
+    update = 'update'
+    unchanged = 'unchanged'
+    

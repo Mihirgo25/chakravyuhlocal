@@ -1,38 +1,141 @@
-from datetime import datetime
-from pydantic import BaseModel
+from datetime import datetime, date
+from pydantic import BaseModel, validator, Field
 
-class CreateFclFreightRateStatisticsFromSelf(BaseModel):
-    validity_id: str
-    shipment_id: str
-    shipment_fcl_freight_rate_services_id: str
-    created_at: datetime
-    updated_at: datetime
-    
 
-class CreateFclFreightRateStatisticsFromSpotSearch(BaseModel):
-    validity_id: str
-    spot_search_id: str
-    spot_search_fcl_freight_rate_services_id: str
-    created_at: datetime
-    
-    
-class CreateFclFreightRateStatisticsFromCheckout(BaseModel):
-    validity_id: str
-    checkout_id: str
-    checkout_fcl_freight_rate_services_id: str
-    created_at: datetime
-    
-    
-class CreateFclFreightRateStatisticsFromQuotation(BaseModel):
-    validity_id: str
-    quotation_id: str
-    created_at: datetime
-    updated_at: datetime
-    
+# Apply Fcl Freight Statistics
 
-class CreateFclFreightRateStatisticsFromShipment(BaseModel):
-    validity_id: str
-    shipment_id: str
-    shipment_fcl_freight_rate_services_id: str
-    created_at: datetime
-    updated_at: datetime
+
+class LineItems(BaseModel):
+    price: str
+    market_price: str
+    currency: str
+    unit: str
+    code: str
+
+
+class FclValidities(BaseModel):
+    validity_id: str = Field(alias='id')
+    action: str
+    price: float
+    currency: str
+    market_price: str
+    validity_start: date
+    validity_end: date
+    line_items: list[LineItems]
+    schedule_type: str
+    payment_term: str
+    likes_count: int
+    dislikes_count: int
+
+
+class FclFreight(BaseModel):
+    rate_id: str = Field(alias='id')
+    commodity: str
+    container_size: str
+    container_type: str
+    containers_count: str = None
+    destination_country_id: str = None
+    destination_local_id: str = None
+    destination_detention_id: str = None
+    destination_demurrage_id: str = None
+    destination_main_port_id: str = None
+    destination_port_id: str
+    destination_trade_id: str = None
+    origin_country_id: str = None
+    origin_local_id: str = None
+    origin_detention_id: str = None
+    origin_demurrage_id: str = None
+    origin_main_port_id: str = None
+    origin_port_id: str
+    origin_trade_id: str = None
+    service_provider_id: str
+    shipping_line_id: str
+    mode: str
+    accuracy: float
+    cogo_entity_id: str = None
+    sourced_by_id: str = None
+    procured_by_id: str = None
+    rate_type: str
+    validities: list[FclValidities]
+
+
+class CreateFclFreightRateStatistic(BaseModel):
+    freight: FclFreight
+
+
+class UpdateFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class ApplyFclFreightRateStatistic(BaseModel):
+    action: str
+    create_params: CreateFclFreightRateStatistic = None
+    update_params: UpdateFclFreightRateStatistic = None
+
+
+# Apply Spot Search Fcl Freight Statistics
+
+
+class CreateSpotSearchFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class UpdateSpotSearchFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class CreateCheckoutFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class UpdateCheckoutFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class CreateQuotationFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class UpdateQuotationFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class CreateShipmentFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class UpdateShipmentFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class CreateFeedbackFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class UpdateFeedbackFclFreightRateStatistic(BaseModel):
+    pass
+
+
+class ApplySpotSearchFclFreightRateStatistic(BaseModel):
+    create_params: CreateSpotSearchFclFreightRateStatistic = None
+    update_params: UpdateSpotSearchFclFreightRateStatistic = None
+
+
+class ApplyCheckoutFclFreightRateStatistic(BaseModel):
+    create_params: CreateCheckoutFclFreightRateStatistic = None
+    update_params: UpdateCheckoutFclFreightRateStatistic = None
+
+
+class ApplyQuotationFclFreightRateStatistics(BaseModel):
+    create_params: CreateQuotationFclFreightRateStatistic = None
+    update_params: UpdateQuotationFclFreightRateStatistic = None
+
+
+class ApplyShipmentFclFreightRateStatistics(BaseModel):
+    create_params: CreateShipmentFclFreightRateStatistic = None
+    update_params: UpdateShipmentFclFreightRateStatistic = None
+
+
+class ApplyFeedbackFclFreightRateStatistics(BaseModel):
+    create_params: CreateFeedbackFclFreightRateStatistic = None
+    update_params: UpdateFeedbackFclFreightRateStatistic = None

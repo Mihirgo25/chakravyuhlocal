@@ -57,7 +57,6 @@ from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as Fc
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
 
 # Monitoring
-from services.bramhastra.interactions.create_fcl_freight_rate_statisitcs_from_self import create_fcl_freight_rate_statistics_from_self
 
 CELERY_CONFIG = {
     "enable_utc": True,
