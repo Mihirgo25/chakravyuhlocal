@@ -1,5 +1,5 @@
 from services.ftl_freight_rate.models.ftl_freight_rate_request import FtlFreightRateRequest
-from libs.json_encoder import json_encoder
+from fastapi.encoders import jsonable_encoder
 from math import ceil
 from datetime import datetime
 from peewee import fn
@@ -14,7 +14,7 @@ possible_direct_filters = ['origin_location_id','serial_id','destination_locatio
 
 def list_ftl_freight_rate_requests(filters, page_limit, page, sort_by, sort_type,is_stats_required,spot_search_details_required,performed_by_id):
     query = get_query(sort_by, sort_type)
-    
+
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -26,12 +26,12 @@ def list_ftl_freight_rate_requests(filters, page_limit, page, sort_by, sort_type
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
     pagination_data = get_pagination_data(query, page, page_limit)
-    
-    query = get_page(query, page, page_limit)
-    
-    data = get_data(query,spot_search_details_required) 
 
-    return {'list': json_encoder(data) } | (pagination_data) | (stats)
+    query = get_page(query, page, page_limit)
+
+    data = get_data(query,spot_search_details_required)
+
+    return {'list': jsonable_encoder(data) } | (pagination_data) | (stats)
 
 def get_query(sort_by, sort_type):
     query = FtlFreightRateRequest.select().order_by(eval("FtlFreightRateRequest.{}.{}()".format(sort_by, sort_type)))
@@ -100,7 +100,7 @@ def apply_similar_id_filter(query,filters):
 
 def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
-        return {} 
+        return {}
 
     query = FtlFreightRateRequest.select()
 
@@ -109,12 +109,12 @@ def get_stats(filters, is_stats_required, performed_by_id):
             del filters['status']
         if 'closed_by_id' in filters:
             del filters['closed_by_id']
-        
+
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+
         query = get_filters(direct_filters, query, FtlFreightRateRequest)
         query = apply_indirect_filters(query, indirect_filters)
-    
+
     query = (
         query
         .select(

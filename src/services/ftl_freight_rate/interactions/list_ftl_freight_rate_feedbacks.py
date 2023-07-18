@@ -3,7 +3,7 @@ from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
 from playhouse.shortcuts import model_to_dict
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
-from libs.json_encoder import json_encoder
+from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 import concurrent.futures, json
@@ -31,9 +31,9 @@ def list_ftl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     pagination_data = get_pagination_data(query, page, page_limit)
 
     query = get_page(query, page, page_limit)
-    data = get_data(query,spot_search_details_required) 
+    data = get_data(query,spot_search_details_required)
 
-    return {'list': json_encoder(data) } | (pagination_data) | (stats)
+    return {'list': jsonable_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
     query = query.order_by(FtlFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
@@ -50,11 +50,11 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('ftl_freight', filters['relevant_supply_agent'])
     origin_location_id = [t['origin_location_id'] for t in expertises]
     destination_location_id = [t['destination_location_id'] for t in expertises]
-    
-    query = query.where((FtlFreightRateFeedback.origin_location_id << origin_location_id)| 
+
+    query = query.where((FtlFreightRateFeedback.origin_location_id << origin_location_id)|
                         (FtlFreightRateFeedback.origin_country_id << origin_location_id))
-    
-    query = query.where((FtlFreightRateFeedback.destination_location_id <<destination_location_id)| 
+
+    query = query.where((FtlFreightRateFeedback.destination_location_id <<destination_location_id)|
                         (FtlFreightRateFeedback.destination_country_id << destination_location_id))
     return query
 
@@ -78,7 +78,7 @@ def apply_similar_id_filter(query, filters):
 
 def get_data(query, spot_search_details_required):
     query = query.select()
-    data = json_encoder(list(query.dicts()))
+    data = jsonable_encoder(list(query.dicts()))
 
     service_provider_ids = []
     for object in data:
