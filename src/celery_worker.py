@@ -345,7 +345,7 @@ def celery_create_fcl_freight_rate_local(self, request):
             raise self.retry(exc= e)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
+def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')")
     except Exception as exc:
@@ -353,8 +353,19 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             pass
         else:
             raise self.retry(exc= exc)
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
 
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def ftl_bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id):
+    try:
+        eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
 def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action()")

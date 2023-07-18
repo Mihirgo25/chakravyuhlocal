@@ -39,6 +39,7 @@ from services.ftl_freight_rate.interactions.get_ftl_freight_rate_addition_freque
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_visibility import get_ftl_freight_rate_visibility
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate import get_ftl_freight_rate
 from services.ftl_freight_rate.interactions.list_ftl_freight_rate_feedbacks import list_ftl_freight_rate_feedbacks
+from services.ftl_freight_rate.interactions.create_ftl_freight_rate_bulk_operation import create_ftl_freight_rate_bulk_operation
 
 ftl_freight_router = APIRouter()
 
@@ -544,3 +545,20 @@ def list_ftl_freight_rate_feedbacks_api(
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
+
+
+@ftl_freight_router.post("/create_ftl_freight_rate_bulk_operation")
+def create_ftl_freight_rate_bulk_operation_data(request:CreateBulkOperation, resp: dict = Depends(authorize_token)):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        data=create_ftl_freight_rate_bulk_operation(request.dict(exclude_none=True))
+        return JSONResponse(content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })

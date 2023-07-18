@@ -235,4 +235,22 @@ class DeleteFtlFreightRateFeedback(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
 
-    
+
+class DeleteRate(BaseModel):
+    filters: dict = {}
+
+class AddMarkup(BaseModel):
+    filters: dict = {}
+    markup: float
+    line_item_code: str = 'OTC'
+    markup_type: str
+    markup_currency: str
+
+class CreateBulkOperation(BaseModel):
+    performed_by_id: str
+    performed_by_type: str = None
+    service_provider_id: str
+    procured_by_id:str
+    sourced_by_id:str
+    delete_rate: DeleteRate = None
+    add_markup: AddMarkup = None
