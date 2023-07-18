@@ -124,6 +124,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
 class DeleteHaulageFreightRateFeedback(BaseModel):
   haulage_freight_rate_feedback_ids: list[str]
   closing_remarks: list[str] = []
+  reverted_rate_id: str = None
   performed_by_id: str = None
     
 class UpdateHaulageFreightRatePlatformPrices(BaseModel):

@@ -49,7 +49,7 @@ class HaulageFreightRateRequest(BaseModel):
     performed_by = BinaryJSONField(null=True)
     preferred_shipping_line_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     preferred_shipping_lines = BinaryJSONField(null=True)
-    request_type = CharField(null=True)
+    request_type = TextField(null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('haulage_freight_rate_request_serial_id_seq'::regclass)")])
     updated_at = DateTimeField(default = datetime.datetime.now)
     reverted_rates_count = IntegerField(null=True)

@@ -1,5 +1,5 @@
 import uuid, datetime, json, re
-from peewee import UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, CharField, DateTimeField
+from peewee import UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, DateTimeField
 from database.db_session import db
 from playhouse.postgres_ext import BinaryJSONField, ArrayField, DateTimeField
 from fastapi import HTTPException
@@ -65,13 +65,13 @@ class HaulageFreightRate(BaseModel):
     platform_price = FloatField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
-    source = CharField(default = 'manual',index=True, null = True)
+    source = TextField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
-    rate_type = CharField(default='market_place', choices = RATE_TYPES, index=True)
+    rate_type = TextField(default='market_place', choices = RATE_TYPES, index=True)
     tags = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True, unique=True)
 

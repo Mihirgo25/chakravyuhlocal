@@ -26,7 +26,7 @@ class BaseModel(Model):
 
 class HaulageFreightRateBulkOperation(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    action_name = CharField(index = True, null=True)
+    action_name = TextField(index = True, null=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
     data = BinaryJSONField(null=True)
     performed_by_id = UUIDField(null=True, index=True)

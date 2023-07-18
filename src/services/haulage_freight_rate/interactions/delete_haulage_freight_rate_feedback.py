@@ -29,6 +29,11 @@ def execute_transaction_code(request):
 
     for obj in objects:
         obj.status = "inactive"
+
+        if request.get('reverted_rate_id') and request.get('reverted_rate'):
+            obj.reverted_rate_id=request.get('reverted_rate_id')
+            obj.reverted_rate = request.get('reverted_rate')
+        
         obj.closed_by_id = request["performed_by_id"]
 
         obj.closing_remarks = request.get("closing_remarks")
