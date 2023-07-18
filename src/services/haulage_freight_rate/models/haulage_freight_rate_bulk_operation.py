@@ -11,9 +11,13 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import Haul
 from services.haulage_freight_rate.interactions.list_haulage_freight_rates import list_haulage_freight_rates
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate import delete_haulage_freight_rate
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate import update_haulage_freight_rate
+from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import get_progress_percent
+from libs.parse_numeric import parse_numeric
+from fastapi.encoders import jsonable_encoder
+
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
-
+BATCH_SIZE = 1000
 
 class BaseModel(Model):
     class Meta:
@@ -27,8 +31,8 @@ class HaulageFreightRateBulkOperation(BaseModel):
     data = BinaryJSONField(null=True)
     performed_by_id = UUIDField(null=True, index=True)
     service_provider_id = UUIDField(index=True, null=True)
-    updated_at = DateTimeTZField(default=datetime.now())
-    created_at = DateTimeTZField(default=datetime.now())
+    updated_at = DateTimeField(default=datetime.now())
+    created_at = DateTimeField(default=datetime.now())
 
     class Meta:
         table_name = 'haulage_freight_rate_bulk_operations'
@@ -105,18 +109,10 @@ class HaulageFreightRateBulkOperation(BaseModel):
             self.set_processed_percent_haulage_operation(self.progress, self.id)
         self.save()
 
-    
-    def perform_add_markup_action(self, sourced_by_id, procured_by_id):
+    def perform_batch_action(self, batch_query, count, total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
 
-        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
-        page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
-
-        haulage_freight_rates = list_haulage_freight_rates(filters = filters, return_query = True, page_limit = page_limit, pagination_data_required = False)['list']
-        haulage_freight_rates = list(haulage_freight_rates.dicts())
-
-        total_count = len(haulage_freight_rates)
-        count = 0
+        haulage_freight_rates = jsonable_encoder(list(batch_query.dicts()))
 
         for freight in haulage_freight_rates:
             count = count + 1
@@ -177,8 +173,30 @@ class HaulageFreightRateBulkOperation(BaseModel):
             
             self.progress = int((count * 100.0) / total_count)
             self.set_processed_percent_haulage_operation(self.progress, self.id)
-        self.save()
 
+        return count, total_affected_rates
+    
+    def perform_add_markup_action(self, sourced_by_id, procured_by_id):
+        data = self.data
+        total_affected_rates = 0
+
+        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
+
+        haulage_freight_rates = list_haulage_freight_rates(filters = filters, return_query = True, page_limit = None, pagination_data_required = False)['list']
+        total_count = haulage_freight_rates.count()
+
+        count = 0
+
+        while count < total_count:
+            batch_query = haulage_freight_rates.limit(BATCH_SIZE)
+            if not batch_query.exist():
+                break
+            count, total_affected_rates = self.perform_batch_action(batch_query, count, total_count, total_affected_rates, sourced_by_id, procured_by_id)
+
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()
     
     def delete_rate_detail(self):
         return self

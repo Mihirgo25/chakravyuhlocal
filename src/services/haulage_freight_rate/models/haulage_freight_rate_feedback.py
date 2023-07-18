@@ -29,7 +29,7 @@ class HaulageFreightRateFeedback(BaseModel):
     performed_by_type = CharField(index=True, null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
-    outcome = CharField(null=True)
+    outcome = TextField(null=True)
     outcome_object_id = UUIDField(null=True)
     booking_params = BinaryJSONField(null=True)
     feedback_type = CharField(index=True, null=True)
@@ -38,8 +38,8 @@ class HaulageFreightRateFeedback(BaseModel):
     closed_by = BinaryJSONField(null=True)
     closed_by_id = UUIDField(index=True, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('haulage_freight_rate_feedback_serial_id_seq'::regclass)")])
-    created_at = DateTimeTZField(index=True, default = datetime.datetime.now)
-    updated_at = DateTimeTZField(default=datetime.datetime.now)
+    created_at = DateTimeField(index=True, default = datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now)
     origin_location_id = UUIDField(index=True,null=True)
     origin_city_id = UUIDField(null=True)
     origin_country_id = UUIDField(null=True)
@@ -52,6 +52,8 @@ class HaulageFreightRateFeedback(BaseModel):
     service_provider_id= UUIDField(null=True)
     origin_location = BinaryJSONField(null=True)
     destination_location = BinaryJSONField(null=True)
+    reverted_rate_id = UUIDField(null=True)
+    reverted_rate = BinaryJSONField(null=True)
 
 
 
