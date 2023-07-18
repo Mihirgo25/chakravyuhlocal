@@ -161,7 +161,7 @@ def get_final_data(query):
 
 
 def apply_is_rate_available_filter(query, val, filters):
-    query = query.where(HaulageFreightRate.rate_not_available_entry != True)
+    query = query.where(HaulageFreightRate.rate_not_available_entry == False)
     return query
 
 def get_query(sort_by, sort_type, includes):

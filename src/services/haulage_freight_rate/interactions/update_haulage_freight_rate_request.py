@@ -40,7 +40,7 @@ def execute_transaction_code(request):
         object.save()
     except:
         raise HTTPException(
-            status_code=500, detail= "Freight rate request updation failed"
+            status_code=400, detail= "Freight rate request updation failed"
         )
 
     create_audit(request, object.id)

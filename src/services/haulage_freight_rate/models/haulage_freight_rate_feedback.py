@@ -2,12 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from configs.haulage_freight_rate_constants import FEEDBACK_SOURCES, POSSIBLE_FEEDBACKS, FEEDBACK_TYPES
 from micro_services.client import *
-from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from database.rails_db import get_organization, get_user
-from fastapi import HTTPException
-import uuid
 
 class BaseModel(Model):
     class Meta:

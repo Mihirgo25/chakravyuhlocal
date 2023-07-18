@@ -37,7 +37,7 @@ def execute_transaction_code(request):
             obj.save()
         except:
             raise HTTPException(
-                status_code=500, detail="Freight rate local deletion failed"
+                status_code=400, detail="Freight rate local deletion failed"
             )
 
         create_audit(request, obj.id)
@@ -59,7 +59,7 @@ def find_objects(request):
         return object
     else:
         raise HTTPException(
-            status_code=400, detail="Freight rate feedback id not found"
+            status_code=404, detail="Freight rate feedback id not found"
         )
 
 

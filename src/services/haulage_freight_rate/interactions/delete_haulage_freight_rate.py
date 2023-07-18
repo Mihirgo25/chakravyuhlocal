@@ -24,7 +24,7 @@ def execute_transaction_code(request):
     try:
         object.save()
     except Exception as e:
-        print("Exception in saving haulage freight rate", e)
+        raise HTTPException(status_code=400, detail="Exception in saving haulage freight rate")
 
     create_audit(request, object.id, delete_params)
 
@@ -51,7 +51,7 @@ def find_object(request):
     if object.count()>=0:
         return object.first()
     else:
-        raise HTTPException(status_code=400, detail="Rate id not found")
+        raise HTTPException(status_code=404, detail="Rate id not found")
 
 def get_delete_params():
     return  {

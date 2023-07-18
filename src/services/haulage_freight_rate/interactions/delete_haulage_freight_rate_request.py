@@ -26,7 +26,7 @@ def execute_transaction_code(request):
         try:
             obj.save()
         except:
-            raise HTTPException(status_code=500, detail="Freight rate request deletion failed")
+            raise HTTPException(status_code=400, detail="Freight rate request deletion failed")
 
         create_audit(request, obj.id)
 
@@ -39,7 +39,7 @@ def find_objects(request):
     if object.count() > 0:
         return object
     else:
-        raise HTTPException(status_code=400, detail="Haulage Freight rate request id not found")
+        raise HTTPException(status_code=404, detail="Haulage Freight rate request id not found")
 
 
 def create_audit(request, freight_rate_request_id):

@@ -54,5 +54,5 @@ def find_haulage_object(request):
     if query.count()>0:
         return query.first()
     else:
-        raise HTTPException(status_code=400, detail="Rate Not Found")
+        raise HTTPException(status_code=404, detail="Rate Not Found")
    

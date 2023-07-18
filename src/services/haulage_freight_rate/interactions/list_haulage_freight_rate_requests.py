@@ -126,9 +126,13 @@ def apply_relevant_supply_agent_filter(query, filters):
 
 
 def apply_shipping_line_id_filter(query, filters):
+    if isinstance( filters["shipping_line_id"], list):
+        shipping_line_id = filters["shipping_line_id"]
+    else:
+        shipping_line_id = [filters["shipping_line_id"]]
     query = query.where(
         HaulageFreightRateRequest.preferred_shipping_line_ids.contains(
-            filters["shipping_line_id"]
+            shipping_line_id
         )
     )
     return query

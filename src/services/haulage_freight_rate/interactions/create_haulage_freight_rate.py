@@ -6,10 +6,13 @@ from fastapi.encoders import jsonable_encoder
 
 def create_audit(request, freight_id):
     audit_data = {}
-    audit_data["validity_start"] = request.get("validity_start")
-    audit_data["validity_end"] = request.get("validity_end")
+    audit_data["validity_start"] = request.get("validity_start").isoformat()
+    audit_data["validity_end"] = request.get("validity_end").isoformat()
     audit_data["line_items"] = request.get("line_items")
     audit_data["haulage_freight_rate_request_id"] = request.get("haulage_freight_rate_request_id")
+    audit_data["performed_by_id"] = request.get("performed_by_id")
+    audit_data["procured_by_id"] = request.get("procured_by_id")
+    audit_data["sourced_by_id"] = request.get("sourced_by_id")
 
     audit_id = HaulageFreightRateAudit.create(
         rate_sheet_id=request.get("rate_sheet_id"),

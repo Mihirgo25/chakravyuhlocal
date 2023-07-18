@@ -6,7 +6,7 @@ from libs.json_encoder import json_encoder
 from database.rails_db import get_partner_user_experties
 from datetime import datetime
 import json
-from peewee import fn, SQL
+from peewee import fn
 from math import ceil
 from micro_services.client import spot_search
 from database.rails_db import get_organization
@@ -18,7 +18,6 @@ possible_indirect_filters = ['relevant_supply_agent','validity_start_greater_tha
 
 def list_haulage_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = HaulageFreightRateFeedback.select()
-    # spot_search_details_required = True
 
     # apply direct and indirect filter
     if filters:
@@ -48,10 +47,6 @@ def get_page(query, page, page_limit):
     query = query.order_by(HaulageFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
     return query
 
-def get_join_query(query):
-    return query.join(HaulageFreightRate, on=(HaulageFreightRateFeedback.haulage_freight_rate_id == HaulageFreightRate.id))
-
-
 def apply_indirect_filters(query, filters):
     for key in filters:
         if key in possible_indirect_filters:
@@ -64,13 +59,13 @@ def apply_relevant_supply_agent_filter(query, filters):
     expertises = get_partner_user_experties('haulage_freight', filters['relevant_supply_agent'])
     origin_location_id = [t['origin_location_id'] for t in expertises]
     destination_location_id = [t['destination_location_id'] for t in expertises]
-    query = query.where((HaulageFreightRateFeedback.origin_location_id << origin_location_id) | 
+    query = query.where(((HaulageFreightRateFeedback.origin_location_id << origin_location_id) | 
                         (HaulageFreightRateFeedback.origin_city_id << origin_location_id) | 
-                        (HaulageFreightRateFeedback.origin_country_id << origin_location_id))
+                        (HaulageFreightRateFeedback.origin_country_id << origin_location_id)))
     
-    query = query.where((HaulageFreightRateFeedback.destination_location_id <<destination_location_id) | 
+    query = query.where(((HaulageFreightRateFeedback.destination_location_id <<destination_location_id) | 
                         (HaulageFreightRateFeedback.destination_city_id << destination_location_id) | 
-                        (HaulageFreightRateFeedback.origin_country_id << destination_location_id))
+                        (HaulageFreightRateFeedback.origin_country_id << destination_location_id)))
     return query
 
 def apply_validity_start_greater_than_filter(query, filters):
