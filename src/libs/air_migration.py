@@ -681,6 +681,7 @@ def migrate_request_audits(audit):
         with conn.cursor() as cur:
             cur.execute(sql.SQL('select * from {table} where object_type = %s;').format(table=sql.Identifier('air_freight_rate_audits')),[audit])
             results = cur
+            print(cur.fetchall())
             if not columns:
                 columns = [col[0] for col in results.description]
             Parallel(n_jobs=4)(delayed(delay_request_feebacks_audits)(row, columns) for row in results.fetchall())
