@@ -16,7 +16,7 @@ def execute_transaction_code(request):
     
     air_freight_rate_local = AirFreightRateLocal.select().where(AirFreightRateLocal.id == request.get('id')).first()
     if not air_freight_rate_local:
-        raise HTTPException(status_code=400, detail=" Local not found")
+        raise HTTPException(status_code=404, detail="Local Not Found")
     
     air_freight_rate_local.line_items=request.get('line_items')
 
