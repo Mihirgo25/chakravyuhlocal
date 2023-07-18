@@ -48,6 +48,7 @@ def create_cluster_factor_mapping():
             FclFreightLocationClusterFactor.insert_many(factor_list).execute()
         
 
+
     
                 
 
