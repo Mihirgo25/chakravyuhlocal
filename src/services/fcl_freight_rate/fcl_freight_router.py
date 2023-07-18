@@ -727,7 +727,6 @@ def list_fcl_freight_rates_data(
     all_rates_for_cogo_assured: bool = False,
     return_count: bool = False,
     is_line_items_required: bool = False,
-    includes: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
