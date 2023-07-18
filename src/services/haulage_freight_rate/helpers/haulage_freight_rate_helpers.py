@@ -1,6 +1,8 @@
 from micro_services.client import maps
 from fastapi import HTTPException
 from libs.get_distance import get_distance
+from database.db_session import rd
+from libs.parse_numeric import parse_numeric
 
 
 def get_railway_route(origin_location_id, destination_location_id):
@@ -139,3 +141,16 @@ def get_distances(origin_location_id, destination_location_id, data):
     distance = get_distance(coords_1, coords_2)
     transit_time = get_transit_time(distance)
     return distance, transit_time
+
+def get_progress_percent(id, progress = 0):
+    progress_percent_hash = "process_percent_haulage_operation"
+    progress_percent_key =  f"haulage_rate_bulk_operation_{id}"
+    
+    if rd:
+        try:
+            cached_response = rd.hget(progress_percent_hash, progress_percent_key)
+            return max(parse_numeric(cached_response) or 0, progress)
+        except:
+            return progress
+    else: 
+        return progress
