@@ -27,7 +27,7 @@ class CreateHaulageFreightRate(BaseModel):
   service_provider_id: str
   shipping_line_id: str = None
   haulage_type: str 
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None
   procured_by_id: str 
   sourced_by_id: str 
@@ -50,12 +50,13 @@ class UpdateHaulageFreightRate(BaseModel):
   bulk_operation_id: str = None
   id: str
   line_items: list[HaulageLineItem]
+  performed_by_type: str = None
 
 
 class CreateHaulageFreightRateRequest(BaseModel):
   source: str = "spot_search"
   source_id: str
-  performed_by_id: str 
+  performed_by_id: str = None
   performed_by_org_id: str
   performed_by_type: str = "user"
   preferred_freight_rate: float = None
@@ -83,8 +84,8 @@ class CreateHaulageFreightRateRequest(BaseModel):
 class DeleteHaulageFreightRateRequest(BaseModel):
   haulage_freight_rate_request_ids: list[str]
   closing_remarks: list[str] = []
-  performed_by_id: str
-  performed_by_type: str
+  performed_by_id: str = None
+  performed_by_type: str = None
 
 class CreateHaulageFreightRateFeedback(BaseModel):
   source: str
@@ -92,7 +93,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   feedbacks: list[str]=None
   remarks: list[str] = []
   haulage_freight_rate_id: str = None
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_org_id: str
   dislikes_count: int = None
   likes_count: int = None
@@ -123,7 +124,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
 class DeleteHaulageFreightRateFeedback(BaseModel):
   haulage_freight_rate_feedback_ids: list[str]
   closing_remarks: list[str] = []
-  performed_by_id: str
+  performed_by_id: str = None
     
 class UpdateHaulageFreightRatePlatformPrices(BaseModel):
   origin_location_id: str
@@ -135,7 +136,7 @@ class UpdateHaulageFreightRatePlatformPrices(BaseModel):
   shipping_line_id: str = None
   importer_exporter_id: str = None
   is_line_items_error_messages_present: bool = False
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None
 
 
@@ -161,7 +162,7 @@ class AddMarkup(BaseModel):
   markup_currency: str = None
 
 class CreateHaulageFreightRateBulkOperation(BaseModel):
-  performed_by_id: str
+  performed_by_id: str = None
   performed_by_type: str = None
   service_provider_id: str = None
   procured_by_id: str
@@ -171,7 +172,7 @@ class CreateHaulageFreightRateBulkOperation(BaseModel):
   
 class DeleteHaulageFreightRate(BaseModel):
   id: str
-  performed_by_id: str 
+  performed_by_id: str = None
   performed_by_type: str = None
   bulk_operation_id: str = None
   sourced_by_id: str = None
