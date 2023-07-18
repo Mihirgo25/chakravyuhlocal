@@ -47,6 +47,7 @@ from services.air_freight_rate.workers.send_expired_air_freight_rate_notificatio
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_request import update_haulage_freight_rate_request
+from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import adding_multiple_service_object
 
 
 # Rate Producers
@@ -357,7 +358,7 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)    
+@celery.task(bind = True, max_retries=3, retry_backoff = True)    
 def bulk_operation_perform_action_functions_haulage(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
@@ -705,7 +706,7 @@ def create_air_freight_rate_surcharge_delay(self, request):
 
     
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=3, retry_backoff = True)
 def update_haulage_freight_rate_request_delay(self, request):
     try:
         update_haulage_freight_rate_request(request)
@@ -796,14 +797,10 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@celery.task(bind = True, max_retries=3, retry_backoff = True)
 def delay_haulage_functions(self,haulage_object,request):
-    from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
     try:
-        if not HaulageFreightRate.select().where(HaulageFreightRate.service_provider_id==request["service_provider_id"], HaulageFreightRate.rate_not_available_entry==False).exists():
-            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-
-        get_multiple_service_objects(haulage_object)
+       adding_multiple_service_object(haulage_object, request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -811,7 +808,7 @@ def delay_haulage_functions(self,haulage_object,request):
             raise self.retry(exc= exc)
         
 
-@celery.task(bind = True, retry_backoff=True, max_retries=5)
+@celery.task(bind = True, retry_backoff=True, max_retries=3)
 def create_haulage_freight_rate_delay(self, request):
     try:
         return create_haulage_freight_rate(request)

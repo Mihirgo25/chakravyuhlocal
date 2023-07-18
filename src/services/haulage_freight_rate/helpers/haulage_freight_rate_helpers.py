@@ -1,6 +1,8 @@
 from micro_services.client import maps
 from fastapi import HTTPException
 from libs.get_distance import get_distance
+from micro_services.client import organization
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
 def get_railway_route(origin_location_id, destination_location_id):
@@ -139,3 +141,9 @@ def get_distances(origin_location_id, destination_location_id, data):
     distance = get_distance(coords_1, coords_2)
     transit_time = get_transit_time(distance)
     return distance, transit_time
+
+def adding_multiple_service_object(haulage_object,request):
+    from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
+    if not HaulageFreightRate.select().where(HaulageFreightRate.service_provider_id==request["service_provider_id"], HaulageFreightRate.rate_not_available_entry==False).exists():
+        organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
+    get_multiple_service_objects(haulage_object)

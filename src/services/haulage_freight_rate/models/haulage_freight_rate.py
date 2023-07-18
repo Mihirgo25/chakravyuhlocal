@@ -73,7 +73,7 @@ class HaulageFreightRate(BaseModel):
     procured_by = BinaryJSONField(null=True)
     rate_type = CharField(default='market_place', choices = RATE_TYPES, index=True)
     tags = BinaryJSONField(null=True)
-    init_key = TextField(index=True, null=True)
+    init_key = TextField(index=True, null=True, unique=True)
 
     class Meta:
         table_name = 'haulage_freight_rates_temp'

@@ -31,7 +31,7 @@ from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_requ
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate_feedback import (
     create_haulage_freight_rate_feedback,
 )
-from services.haulage_freight_rate.interactions.get_haulage_freight_rate_frequency_addition import (
+from services.haulage_freight_rate.interactions.get_haulage_freight_rate_addition_frequency import (
     get_haulage_freight_rate_addition_frequency,
 )
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import (
@@ -55,7 +55,7 @@ from services.haulage_freight_rate.interactions.create_haulage_freight_rate impo
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate import (
     update_haulage_freight_rate,
 )
-from services.haulage_freight_rate.interactions.list_haulage_freight_rate_feedback import (
+from services.haulage_freight_rate.interactions.list_haulage_freight_rate_feedbacks import (
     list_haulage_freight_rate_feedbacks,
 )
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate_feedback import (
@@ -108,7 +108,7 @@ def get_haulage_freight_rates(
 
 
 @haulage_freight_router.get("/get_haulage_freight_rate")
-def get_haulage_freight_rate_data(
+def get_haulage_freight_rate_api(
     origin_location_id: str = None,
     destination_location_id: str = None,
     commodity: str = None,
@@ -166,7 +166,7 @@ def get_haulage_freight_rate_data(
 
 
 @haulage_freight_router.post("/create_haulage_freight_rate")
-def create_haulage_freight_rate_func(
+def create_haulage_freight_rate_api(
     request: CreateHaulageFreightRate, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -192,7 +192,7 @@ def create_haulage_freight_rate_func(
 
 
 @haulage_freight_router.post("/update_haulage_freight_rate")
-def update_haulage_freight_rate_func(
+def update_haulage_freight_rate_api(
     request: UpdateHaulageFreightRate, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -210,7 +210,7 @@ def update_haulage_freight_rate_func(
 
 
 @haulage_freight_router.get("/list_haulage_freight_rate_feedbacks")
-def list_haulage_freight_rate_feedbacks_data(
+def list_haulage_freight_rate_feedbacks_api(
     filters: str = None,
     spot_search_details_required: bool = False,
     page_limit: int = 10,
@@ -243,7 +243,7 @@ def list_haulage_freight_rate_feedbacks_data(
 
 
 @haulage_freight_router.post("/create_haulage_freight_rate_feedback")
-def create_haualge_freight_rate_feedback_data(
+def create_haualge_freight_rate_feedback_api(
     request: CreateHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -264,7 +264,7 @@ def create_haualge_freight_rate_feedback_data(
 
 
 @haulage_freight_router.post("/delete_haulage_freight_rate_feedback")
-def delete_haulage_freight_rates_feedback(
+def delete_haulage_freight_rates_feedback_api(
     request: DeleteHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -286,7 +286,7 @@ def delete_haulage_freight_rates_feedback(
 
 
 @haulage_freight_router.get("/list_haulage_freight_rate_requests")
-def list_haulage_freight_rate_requests_data(
+def list_haulage_freight_rate_requests_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
@@ -311,11 +311,13 @@ def list_haulage_freight_rate_requests_data(
 
 
 @haulage_freight_router.get("/list_haulage_freight_rates")
-def list_haulage_freight_rates_data(
+def list_haulage_freight_rates_api(
     filters: str = None,
+    includes: str = None,
     page_limit: int = 10,
     page: int = 1,
-    return_query: str = None,
+    sort_by: str = 'updated_at',
+    sort_type: str = 'desc',
     pagination_data_required: bool = True,
     resp: dict = Depends(authorize_token),
 ):
@@ -323,7 +325,7 @@ def list_haulage_freight_rates_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_haulage_freight_rates(
-            filters, page_limit, page, return_query, pagination_data_required
+            filters, includes, page_limit, page, sort_by, sort_type, pagination_data_required
         )
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
@@ -335,8 +337,9 @@ def list_haulage_freight_rates_data(
         )
 
 
+
 @haulage_freight_router.post("/create_haulage_freight_rate_request")
-def create_haualge_freight_rate_request_data(
+def create_haualge_freight_rate_request_api(
     request: CreateHaulageFreightRateRequest, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -357,7 +360,7 @@ def create_haualge_freight_rate_request_data(
 
 
 @haulage_freight_router.post("/delete_haulage_freight_rate_request")
-def delete_haulage_freight_rates_request(
+def delete_haulage_freight_rates_request_api(
     request: DeleteHaulageFreightRateRequest, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -380,7 +383,7 @@ def delete_haulage_freight_rates_request(
 
 
 @haulage_freight_router.get("/get_haulage_freight_rate_addition_frequency")
-def get_haulage_freight_rate_addition_frequency_data(
+def get_haulage_freight_rate_addition_frequency_api(
     group_by: str,
     filters: str = None,
     sort_type: str = "desc",
@@ -401,7 +404,7 @@ def get_haulage_freight_rate_addition_frequency_data(
 
 
 @haulage_freight_router.post("/update_haulage_freight_rate_platform_prices")
-def update_haulage_freight_rate_platform_prices_data(
+def update_haulage_freight_rate_platform_prices_api(
     request: UpdateHaulageFreightRatePlatformPrices,
     resp: dict = Depends(authorize_token),
 ):
@@ -425,7 +428,7 @@ def update_haulage_freight_rate_platform_prices_data(
 
 
 @haulage_freight_router.get("/get_haulage_freight_rate_visibility")
-def get_haulage_freight_rate_visibility_data(
+def get_haulage_freight_rate_visibility_api(
     service_provider_id: str,
     origin_location_id: str = None,
     destination_location_id: str = None,
@@ -459,7 +462,7 @@ def get_haulage_freight_rate_visibility_data(
 
 
 @haulage_freight_router.post("/create_haulage_freight_rate_not_available")
-def create_haulage_freight_rate_not_available_data(
+def create_haulage_freight_rate_not_available_api(
     request: CreateHaulageFreightRateNotAvailable, resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
@@ -482,7 +485,7 @@ def create_haulage_freight_rate_not_available_data(
 
 
 @haulage_freight_router.get("/get_haulage_freight_rate_cards")
-def get_haulage_freight_rate_cards_data(
+def get_haulage_freight_rate_cards_api(
     container_size: str,
     container_type: str,
     containers_count: int,

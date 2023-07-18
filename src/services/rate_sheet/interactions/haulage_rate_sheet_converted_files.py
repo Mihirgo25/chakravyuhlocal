@@ -8,6 +8,8 @@ from services.rate_sheet.interactions.validate_haulage_freight_object import (
 from libs.json_encoder import json_encoder
 from services.rate_sheet.helpers import *
 import chardet
+from libs.parse_numeric import parse_numeric
+
 
 
 def process_haulage_freight_freight(params, converted_file, update):
@@ -232,7 +234,7 @@ def create_haulage_freight_freight_rate(
             object['line_items'].append(line_item)
         else:
             keys_to_extract = ["lower_limit", "upper_limit", "price", "currency"]
-            line_item = dict(filter(lambda item: item[0] in keys_to_extract, data.items()))
+            line_item = {key: parse_numeric(value) if key in  ["lower_limit", "upper_limit", "price"] else value for key, value in data.items() if key in keys_to_extract}
             object["line_items"][-1]["slabs"].append(line_item)
     if params.get('service_provider_id'):
         object["service_provider_id"] = params['service_provider_id']

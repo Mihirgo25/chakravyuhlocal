@@ -1,10 +1,10 @@
 from services.trailer_freight_rate.interactions.get_estimated_trailer_freight_rate import get_estimated_trailer_freight_rate
 from datetime import datetime,timedelta
-from configs.haulage_freight_rate_constants import (ENVISION_USER_ID, 
-                                                    PREDICTED_PRICE_SERVICE_PROVIDER,
+from configs.haulage_freight_rate_constants import (PREDICTED_PRICE_SERVICE_PROVIDER,
                                                     PREDICTION_HAULAGE_TYPE, 
                                                     PREDICTION_TRAILER_TYPE, 
                                                     TRAILER_PREDICTION_TRANSPORT_MODES)
+from configs.env import DEFAULT_USER_ID
 from configs.trailer_freight_rate_constants import DEFAULT_TRIP_TYPE
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
 
@@ -68,7 +68,7 @@ def get_trailer_freight_rate_estimation(request):
         detention_free_time = 1
         validity_start = datetime.now().date().isoformat()
         validity_end = (datetime.now() + timedelta(days = 60)).date().isoformat()
-        cogo_envision_id = ENVISION_USER_ID
+        cogo_envision_id = DEFAULT_USER_ID
 
         params = {
             'origin_location_id': origin_location_id,

@@ -1,11 +1,10 @@
 
 from services.haulage_freight_rate.interactions.get_estimated_haulage_freight_rate import haulage_rate_calculator
 from datetime import datetime,timedelta
-from configs.haulage_freight_rate_constants import (ENVISION_USER_ID, 
-                                                    PREDICTED_PRICE_SERVICE_PROVIDER, 
+from configs.haulage_freight_rate_constants import (PREDICTED_PRICE_SERVICE_PROVIDER, 
                                                     PREDICTION_HAULAGE_TYPE, 
                                                     HAULAGE_PREDICTION_TRANSPORT_MODES)
-
+from configs.env import DEFAULT_USER_ID
 from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
 
 def get_haulage_freight_rate_estimation(request):
@@ -37,7 +36,7 @@ def get_haulage_freight_rate_estimation(request):
         detention_free_time = 1
         validity_start = datetime.now().date()
         validity_end = (datetime.now() + timedelta(days = 60)).date()
-        cogo_envision_id = ENVISION_USER_ID
+        cogo_envision_id = DEFAULT_USER_ID
 
         params = {
             'origin_location_id': origin_location_id,

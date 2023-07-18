@@ -164,20 +164,34 @@ def apply_is_rate_available_filter(query, val, filters):
     query = query.where(HaulageFreightRate.rate_not_available_entry != True)
     return query
 
+def get_query(sort_by, sort_type, includes):
+    fields = [getattr(HaulageFreightRate, key) for key in DEFAULT_PARAMS]
+
+    if includes and  not isinstance(includes, dict):
+        includes = json.loads(includes)
+    
+    query = HaulageFreightRate.select(*fields)
+
+    if sort_by:
+        query = query.order_by(eval('FclFreightRate.{}.{}()'.format(sort_by,sort_type)))
+
+    return query
 
 def list_haulage_freight_rates(
-    filters={}, page_limit=10, page=1, return_query=True, pagination_data_required=True
+    filters={}, includes = {}, page_limit=10, page=1, sort_by= 'updated_at', sort_type = 'desc',  pagination_data_required=True
 ):
     response = {"success": False, "status_code": 200}
 
     # filters
     filters = filter_preferences(filters)
 
-    # default field params
-    fields = [getattr(HaulageFreightRate, key) for key in DEFAULT_PARAMS]
+
+    # applying sorting filters
+    query = get_query(sort_by, sort_type, includes)
+
 
     # direct and indirect filters
-    query = HaulageFreightRate.select(*fields)
+
     if filters:
         direct_filters, indirect_filters = get_applicable_filters(
             filters, POSSIBLE_DIRECT_FILTERS, POSSIBLE_INDIRECT_FILTERS
