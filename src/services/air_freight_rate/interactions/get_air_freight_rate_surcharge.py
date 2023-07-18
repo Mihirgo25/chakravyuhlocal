@@ -35,5 +35,5 @@ def find_object(request):
                                                          ~(AirFreightRateSurcharge.rate_not_available_entry)).first()
 
     except:
-        raise HTTPException(status_code=400, detail="no surcharge entry with the given id exists")
+        raise HTTPException(status_code=404, detail="Surcharge Not Found")
     return object

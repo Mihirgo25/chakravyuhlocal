@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from database.db_session import db 
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 
 def delete_air_freight_rate_feedback(request):
     with db.atomic():
@@ -12,7 +12,7 @@ def delete_air_freight_rate_feedback(request):
 def execute_transaction_code(request):
     objects=find_object(request)
     if not objects :
-        raise HTTPException(status_code=400, detail='id not found')
+        raise HTTPException(status_code=404, detail='Feedback Not Found')
     
     for obj in objects:
         obj.status='inactive'
@@ -38,7 +38,7 @@ def execute_transaction_code(request):
     return {"id":request['air_freight_rate_feedback_ids']}      
 
 def create_audit(request,id):
-    AirFreightRateAudit.create(
+    AirServiceAudit.create(
         action_name='delete',
         performed_by_id=request.get('performed_by_id'),
         data={key:value for key,value in request.items() if key not in ['air_freight_rate_feedback_ids'] },
