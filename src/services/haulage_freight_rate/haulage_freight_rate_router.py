@@ -501,13 +501,17 @@ def get_haulage_freight_rate_cards_api(
     transport_mode: str = None,
     importer_exporter_id: str = None,
     cargo_weight_per_container: int = None,
-    additional_services: Union[List[str], None] = Query(None),
+    additional_services: str = None,
     include_confirmed_inventory_rates: bool = False,
     include_additional_response_data: bool = False,
     trip_type: str = None,
     predicted_rate: bool = False,
     resp: dict = Depends(authorize_token),
 ):
+    if additional_services:
+        additional_services = json.loads(additional_services)
+    else:
+        additional_services = []
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     request = {

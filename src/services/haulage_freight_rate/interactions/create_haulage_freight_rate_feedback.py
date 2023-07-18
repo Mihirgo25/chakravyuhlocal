@@ -82,6 +82,9 @@ def get_create_params(request):
         'container_type': request.get('container_type'),
         'container_size': request.get('container_size'),
         'commodity': request.get('commodity'),
+        'trailer_type': request.get('trailer_type'),
+        'haulage_type': request.get('haulage_type'),
+        'trip_type': request.get('trip_type'),
     }
     return params
     
