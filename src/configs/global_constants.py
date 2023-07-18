@@ -215,3 +215,9 @@ RATE_ENTITY_MAPPING = {
 }
 
 SERVICE_PROVIDER_FF='36cee6fb-eeaf-4643-9db5-397544339635'
+
+
+CONFIRMED_INVENTORY = {
+    'service_provider_ids': ["536abfe7-eab8-4a43-a4c3-6ff318ce01b5"], #CogoXpress
+    'tag': "confirmed_inventory"
+}

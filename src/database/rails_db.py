@@ -523,3 +523,32 @@ def get_supply_agents():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+ 
+def list_organization_users(id):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+               
+                if not isinstance(id, list):
+                    id = (id,)
+                else:
+                    id = tuple(id)
+                sql = 'select organization_users.id, users.name, users.mobile_number from organization_users join users on organization_users.user_id = users.id where organization_users.id in %s'
+                cur.execute(sql, (id,))
+
+                result = cur.fetchall()
+
+                for res in result:
+                    all_result.append(
+                        {
+                            "id": str(res[0]),
+                        }
+                    )
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result

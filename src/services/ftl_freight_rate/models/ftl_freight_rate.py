@@ -30,6 +30,7 @@ class FtlFreightRate(BaseModel):
     destination_city_id = UUIDField(null=True, index=True)
     destination_location_type = CharField(null=True, index=True)
     destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
+    origin_destination_location_type = CharField(null=True, index=True)
     commodity = TextField(null=True, index=True)
     service_provider_id = UUIDField(index=True, null=True)
     importer_exporter_id = UUIDField(null=True)

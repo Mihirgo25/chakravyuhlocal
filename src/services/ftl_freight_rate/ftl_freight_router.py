@@ -40,6 +40,7 @@ from services.ftl_freight_rate.interactions.get_ftl_freight_rate_visibility impo
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate import get_ftl_freight_rate
 from services.ftl_freight_rate.interactions.list_ftl_freight_rate_feedbacks import list_ftl_freight_rate_feedbacks
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate_bulk_operation import create_ftl_freight_rate_bulk_operation
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate_cards import get_ftl_freight_rate_cards
 
 ftl_freight_router = APIRouter()
 
@@ -562,3 +563,65 @@ def create_ftl_freight_rate_bulk_operation_data(request:CreateBulkOperation, res
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@ftl_freight_router.get("/get_ftl_freight_rate_cards")
+def get_ftl_freight_rate_cards_api(
+    trip_type: str,
+    origin_location_id: str = None,
+    origin_location_type: str = None,
+    origin_city_id: str = None,
+    origin_country_id:str = None,
+    destination_location_id: str = None,
+    destination_location_type: str = None,
+    destination_city_id: str = None,
+    destination_country_id: str = None ,
+    truck_type: str = None,
+    break_point_location_ids: str = None,
+    weight: float = None,
+    volume: float = None,
+    commodity:str = None,
+    importer_exporter_id: str = None,
+    trucks_count:int = None,
+    additional_services: str = None,
+    include_confirmed_inventory_rates: bool = False,
+    include_additional_response_data:bool=False,
+    cargo_readiness_date: str = None,
+    load_selection_type:str = None, 
+    predicted_rate: bool = True,
+    resp: dict = Depends(authorize_token)):
+    # if resp["status_code"] != 200:
+    #     return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
+        request = {
+                        'trip_type':trip_type,
+                        'origin_location_id': origin_location_id,
+                        'origin_location_type': origin_location_type,
+                        'origin_city_id': origin_city_id,
+                        'origin_country_id': origin_country_id,  
+                        'destination_location_id': destination_location_id,
+                        'destination_location_type': destination_location_type,
+                        'destination_city_id': destination_city_id,
+                        'destination_country_id':destination_country_id,   
+                        'truck_type': truck_type,
+                        'break_point_location_ids': break_point_location_ids,
+                        'weight': weight,
+                        'volume': volume,
+                        'commodity': commodity,
+                        'importer_exporter_id': importer_exporter_id,
+                        'trucks_count': trucks_count,
+                        'additional_services': additional_services,
+                        'include_confirmed_inventory_rates': include_confirmed_inventory_rates,
+                        'include_additional_response_data': include_additional_response_data,
+                        'cargo_readiness_date': cargo_readiness_date,
+                        'load_selection_type': load_selection_type,
+                        'predicted_rate':predicted_rate     
+        }
+        list = get_ftl_freight_rate_cards(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(list))
+    except HTTPException as e:
+        print(e)
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })   
+
