@@ -11,7 +11,7 @@ class BaseModel(Model):
 
 class SpotSearchFclFreightRateStatistic(BaseModel):
     id = BigIntegerField(sequence = 'spot_search_fcl_freight_rate_statistic_seq')
-    fcl_freight_rate_statistic_id = UUIDField()
+    fcl_freight_rate_statistic_id = BigIntegerField()
     spot_search_id = UUIDField()
     spot_search_fcl_freight_services_id = UUIDField()
     checkout_id = UUIDField(null = True)

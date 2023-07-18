@@ -114,13 +114,25 @@ class SpotSearchFclFreightRateStatistic(BaseModel):
 class ApplySpotSearchFclFreightRateStatistic(BaseModel):
     action: str
     params: SpotSearchFclFreightRateStatistic
+    
+    
+# Apply Checkout Fcl Freight Statistics
 
-class CreateCheckoutFclFreightRateStatistic(BaseModel):
-    pass
+class CheckoutFclFreightRateStatistic(BaseModel):
+    checkout_id: str
+    checkout_fcl_freight_services_id: str
+    rates: list[Rates]
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
 
 
 class UpdateCheckoutFclFreightRateStatistic(BaseModel):
     pass
+
+
+class ApplyCheckoutFclFreightRateStatistic(BaseModel):
+    params: CheckoutFclFreightRateStatistic = None
+    action: str
 
 
 class CreateQuotationFclFreightRateStatistic(BaseModel):
@@ -145,11 +157,6 @@ class CreateFeedbackFclFreightRateStatistic(BaseModel):
 
 class UpdateFeedbackFclFreightRateStatistic(BaseModel):
     pass
-
-
-class ApplyCheckoutFclFreightRateStatistic(BaseModel):
-    create_params: CreateCheckoutFclFreightRateStatistic = None
-    update_params: UpdateCheckoutFclFreightRateStatistic = None
 
 
 class ApplyQuotationFclFreightRateStatistics(BaseModel):
