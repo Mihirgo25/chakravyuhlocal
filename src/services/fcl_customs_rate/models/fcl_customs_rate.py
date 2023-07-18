@@ -69,7 +69,7 @@ class FclCustomsRate(BaseModel):
         self.country_id = self.location.get('country_id') 
         self.trade_id = self.location.get('trade_id') 
         self.continent_id = self.location.get('continent_id') 
-        self.location_ids = list(filter(None, [uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
+        self.location_ids = list(filter(None, [uuid.UUID(self.location_id),uuid.UUID(self.country_id),uuid.UUID(self.trade_id),uuid.UUID(self.continent_id)]))
         
     def set_location_type(self):
         self.location_type = self.location.get('type')
@@ -104,7 +104,7 @@ class FclCustomsRate(BaseModel):
         if location:
             self.location = location[0]
         else:
-            self.location = []
+            self.location = {}
 
     def validate_trade_type(self):
         if self.trade_type and self.trade_type in TRADE_TYPES:
@@ -395,7 +395,7 @@ class FclCustomsRate(BaseModel):
 
     def update_cfs_line_item_messages(self):
         self.set_location()
-
+        location = self.location
         self.cfs_line_items_error_messages = {}
         self.cfs_line_items_info_messages = {}
         self.is_cfs_line_items_error_messages_present = False
@@ -409,7 +409,7 @@ class FclCustomsRate(BaseModel):
         for code, line_items in grouped_charge_codes.items():
             code_config = FCL_CUSTOMS_CHARGES.get(code)
 
-            code_config = {key:value for key,value in code_config.items() if 'cfs' in line_items.get('tags', [])}
+            code_config = {key:value for key,value in code_config.items() if 'cfs' in code_config.get('tags', [])}
 
             if not code_config:
                 self.cfs_line_items_error_messages[code] = ['is invalid']
@@ -446,7 +446,6 @@ class FclCustomsRate(BaseModel):
         self.save()
 
     def validate_before_save(self):
-        self.set_location_type()
         self.validate_duplicate_line_items()
         self.validate_invalid_line_items()
         self.validate_trade_type()

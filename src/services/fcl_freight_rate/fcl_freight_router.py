@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from typing import Union, List
 import json
 import traceback
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from params import *
 from datetime import datetime, timedelta
 from rms_utils.auth import authorize_token
@@ -93,6 +93,7 @@ from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_she
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
 from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_deviations import list_fcl_freight_rate_deviations
+from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster import create_fcl_freight_location_cluster
 
 fcl_freight_router = APIRouter()
 
@@ -105,7 +106,7 @@ def create_fcl_freight_commodity_cluster_data(request: CreateFclFreightCommodity
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_commodity_cluster(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -121,7 +122,7 @@ def create_fcl_freight_rate_commodity_surcharge_data(request: CreateFclFreightRa
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -138,7 +139,7 @@ def create_fcl_freight_rate_local_agent_data(request: CreateFclFreightRateLocalA
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_local_agent(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -174,7 +175,7 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
 
     try:
         rate = create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -191,7 +192,7 @@ def create_fcl_freight_rate_feedback_data(request: CreateFclFreightRateFeedback,
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_id = create_fcl_freight_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
+        return JSONResponse(status_code=200, content=json_encoder(rate_id))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -226,7 +227,7 @@ def create_fcl_freight_rate_local_data(request: PostFclFreightRateLocal, resp: d
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_local(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -242,10 +243,12 @@ def create_fcl_freight_rate_task_data(request: CreateFclFreightRateTask, resp: d
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_task(request.dict(exclude_none = False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
+        traceback.print_exc()
+        print(request.dict(exclude_none = False))
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
@@ -258,7 +261,7 @@ def create_fcl_freight_rate_request_data(request: CreateFclFreightRateRequest, r
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -274,7 +277,7 @@ def create_fcl_freight_rate_local_request_data(request: CreateFclFreightRateLoca
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_local_request(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -290,7 +293,7 @@ def create_fcl_weight_slabs_configuration_data(request: CreateFclWeightSlabsConf
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_weight_slabs_configuration(request.dict(exclude_none = False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -334,7 +337,7 @@ def get_fcl_freight_rate_data(
 
     try:
         data = get_fcl_freight_rate(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -378,7 +381,7 @@ def get_fcl_freight_rate_for_lcl_func(
         }
 
         data = get_fcl_freight_rate_for_lcl(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -415,7 +418,7 @@ def get_fcl_freight_local_data(
 
     try:
         data = get_fcl_freight_rate_local(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content = data)
     except HTTPException as e:
         raise
@@ -470,7 +473,7 @@ def get_fcl_freight_local_rate_cards_data(
 
     try:
         data = get_fcl_freight_local_rate_cards(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -553,7 +556,7 @@ def get_fcl_freight_rate_cards_data(
 
     try:
         data = get_fcl_freight_rate_cards(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -591,7 +594,7 @@ def get_fcl_freight_rate_suggestions_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = get_fcl_freight_rate_suggestions(validity_start, validity_end, searched_origin_port_id, searched_destination_port_id, filters)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -628,7 +631,7 @@ def get_fcl_freight_rate_visibility_data(
     }
     try:
         data = get_fcl_freight_rate_visibility(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -641,7 +644,7 @@ def list_dashboard_fcl_freight_rates_data(resp: dict = Depends(authorize_token))
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_dashboard_fcl_freight_rates()
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -665,7 +668,7 @@ def list_fcl_freight_audits_data(
 
     try:
         data = list_fcl_freight_rate_audits(filters, page_limit, page, sort_by, sort_type, pagination_data_required, user_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -714,6 +717,7 @@ def list_fcl_freight_rate_free_day_requests_data(
 @fcl_freight_router.get("/list_fcl_freight_rates")
 def list_fcl_freight_rates_data(
     filters: str = None,
+    includes: str = None,
     page_limit: int = 10,
     page: int = 1,
     sort_by: str = 'updated_at',
@@ -752,7 +756,7 @@ def list_fcl_freight_rate_locals_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_freight_rate_locals(filters, page_limit, page, sort_by, sort_type, return_query)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -796,7 +800,7 @@ def list_fcl_freight_rate_tasks_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_freight_rate_tasks(filters, page_limit, page, sort_by, sort_type, stats_required, pagination_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -816,7 +820,7 @@ def list_fcl_freight_rate_requests_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_freight_rate_requests(filters, page_limit, page, performed_by_id, is_stats_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -836,7 +840,7 @@ def list_fcl_freight_rate_local_requests_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_freight_rate_local_requests(filters, page_limit, page, is_stats_required, performed_by_id)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -880,7 +884,7 @@ def list_fcl_freight_rate_feedbacks_data(
 
     try:
         data = list_fcl_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required, booking_details_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -923,7 +927,7 @@ def list_fcl_freight_rate_commodity_surcharges_data(
 
     try:
         data = list_fcl_freight_rate_commodity_surcharges(filters, page_limit, page, pagination_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -941,7 +945,7 @@ def list_fcl_freight_rate_dislikes_data(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_freight_rate_dislikes(filters, page_limit, page)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -966,7 +970,7 @@ def list_fcl_freight_local_suggestions_data(
             filters = json.loads(filters)
     try:
         data = list_fcl_freight_rate_local_suggestions(service_provider_id, filters, page_limit, page, sort_by, sort_type, pagination_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -987,7 +991,7 @@ def list_fcl_freight_rate_free_days_data(
 
     try:
         data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1007,7 +1011,7 @@ def list_fcl_freight_rate_weight_limits_data(
 
     try:
         data = list_fcl_freight_rate_weight_limits(filters, page_limit, page, pagination_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1027,7 +1031,7 @@ def list_fcl_weight_slabs_configuration_data(
 
     try:
         data = list_fcl_weight_slabs_configuration(filters, page_limit, page, pagination_data_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1046,7 +1050,7 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
         request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         data = update_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1063,7 +1067,7 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_local(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1074,7 +1078,7 @@ def update_fcl_freight_rate_local_data(request: UpdateFclFreightRateLocal, resp:
 def update_fcl_freight_rate_properties_data(request: UpdateRateProperties,resp: dict=Depends(authorize_token)):
     try:
         data = update_fcl_freight_rate_properties(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1091,7 +1095,7 @@ def update_fcl_freight_rate_local_agent_data(request: UpdateFclFreightRateLocalA
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_local_agent(request.__dict__)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -1108,7 +1112,7 @@ def update_fcl_weight_slabs_configuration_data(request: UpdateFclWeightSlabsConf
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_weight_slabs_configuration(request.dict(exclude_none=True))
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -1125,7 +1129,7 @@ def update_fcl_freight_rate_platform_prices_data(request: UpdateFclFreightRatePl
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_platform_prices(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1144,7 +1148,7 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends
         request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1160,7 +1164,7 @@ def create_fcl_freight_rate_extension_rule_set(request: PostFclFreightRateExtens
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1176,7 +1180,7 @@ def extend_create_fcl_freight_rate(request: ExtendCreateFclFreightRate, resp: di
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = extend_create_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1194,7 +1198,7 @@ def update_fcl_freight_rate_extension_rule_set(request: UpdateFclFreightRateExte
 
     try:
         data = update_fcl_freight_rate_extension_rule_set_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1215,7 +1219,7 @@ def list_fcl_freight_rate_extension_rule_set(
 
     try:
         data =  list_fcl_freight_rate_extension_rule_set_data(filters, page_limit, page, sort_by, sort_type)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -1240,7 +1244,7 @@ def get_fcl_freight_rate_extension(
 
     try:
         data = get_fcl_freight_rate_extension_data(service_provider_id, shipping_line_id, origin_port_id, destination_port_id, commodity, container_size, container_type)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -1274,7 +1278,7 @@ def delete_fcl_freight_rates_request(request: DeleteFclFreightRateRequest, resp:
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1290,7 +1294,7 @@ def delete_fcl_freight_rates_feedback(request: DeleteFclFreightRateFeedback, res
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1306,7 +1310,7 @@ def delete_fcl_freight_rates_local_request(request: DeleteFclFreightRateLocalReq
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_local_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1322,7 +1326,7 @@ def delete_fcl_freight_rates_local(request: DeleteFclFreightRateLocal, resp: dic
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_local(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1338,7 +1342,7 @@ def delete_fcl_freight_rates_free_day_request(request: DeleteFclFreightRateFreeD
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_freight_rate_free_day_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1355,7 +1359,7 @@ def create_fcl_freight_rate_weight_limit_data(request: CreateFclFreightRateWeigh
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1384,7 +1388,7 @@ def get_fcl_freight_rate_weight_limit_data(
     }
     try:
         data = get_fcl_freight_rate_weight_limit(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1400,7 +1404,7 @@ def update_fcl_freight_rate_weight_limit_data(request: UpdateFclFreightRateWeigh
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_weight_limit(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1416,7 +1420,7 @@ def create_fcl_freight_rate_free_day_data(request: CreateFclFreightRateFreeDay, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_free_day(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1450,7 +1454,7 @@ def get_fcl_freight_rate_free_day_data(
     }
     try:
         data = get_fcl_freight_rate_free_day(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content= data)
     except HTTPException as e:
         raise
@@ -1468,7 +1472,7 @@ def update_fcl_freight_rate_free_day_data(request: UpdateFclFreightRateFreeDay, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_free_day(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1493,7 +1497,7 @@ def get_fcl_freight_rate_stats_data(
     }
     try:
         data = get_fcl_freight_rate_stats(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1504,7 +1508,7 @@ def get_fcl_freight_rate_stats_data(
 def get_fcl_freight_rate_properties_data(rate_id:str=None):
     try:
         data = get_fcl_freight_rate_properties(rate_id)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1536,7 +1540,7 @@ def get_fcl_freight_rate_seasonal_surcharge_data(
     }
     try:
         data = get_fcl_freight_rate_seasonal_surcharge(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1568,7 +1572,7 @@ def get_fcl_freight_rate_commodity_surcharge_data(
     }
     try:
         data = get_fcl_freight_rate_commodity_surcharge(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1585,7 +1589,7 @@ def get_fcl_freight_commodity_cluster_data(
 
     try:
         data = get_fcl_freight_commodity_cluster(id)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code = 200, content = data)
     except HTTPException as e:
         raise
@@ -1602,7 +1606,7 @@ def update_fcl_freight_commodity_cluster_data(request:UpdateFclFreightCommodityC
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_commodity_cluster(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content = data)
     except HTTPException as e:
         raise
@@ -1619,7 +1623,7 @@ def update_fcl_freight_commodity_surcharge_data(request:UpdateFclFreightRateComm
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_freight_rate_commodity_surcharge(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content = jsonable_encoder(data))
+        return JSONResponse(status_code=200, content = json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1636,7 +1640,7 @@ def create_fcl_freight_rate_seasonal_surcharge_data(request: CreateFclFreightSea
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_seasonal_surcharge(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
+        return JSONResponse(status_code=200 ,content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1653,7 +1657,7 @@ def create_fcl_freight_rate_bulk_operation_data(request:CreateBulkOperation, res
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data=create_fcl_freight_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(content=jsonable_encoder(data))
+        return JSONResponse(content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1670,7 +1674,7 @@ def create_fcl_freight_rate_free_day_requests(request: CreateFclFreightRateFreeD
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_freight_rate_free_day_request(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200 ,content=jsonable_encoder(data))
+        return JSONResponse(status_code=200 ,content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1686,7 +1690,7 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1705,7 +1709,7 @@ def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_
 
     try:
         rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1845,7 +1849,7 @@ def get_suggested_cogo_assured_fcl_freight_rates_data(
             'currency': currency
         }
         data = get_suggested_cogo_assured_fcl_freight_rates(rate_params)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1865,7 +1869,18 @@ def list_fcl_freight_rate_deviation(
 
     try:
         data = list_fcl_freight_rate_deviations(filters, page_limit, page)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    
+@fcl_freight_router.post("/create_fcl_freight_location_cluster")
+def create_fcl_freight_location_cluster_func(request: FclLocationCluster):
+    try:
+        response =  create_fcl_freight_location_cluster(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=response)
     except HTTPException as e:
         raise
     except Exception as e:

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 import sentry_sdk
 from fastapi import HTTPException
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from rms_utils.auth import authorize_token
 from services.extensions.extension_params import *
 
@@ -21,7 +21,7 @@ def create_freight_look_rates_api(request: CreateFreightLookRatesParams):
     #     request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_freight_look_rates(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -37,7 +37,7 @@ def create_new_max_rates_api(request: CreateNewMaxRatesParams):
     #     request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_new_max_rates(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -53,7 +53,7 @@ def create_web_cargo_rates_api(request: CreateWebCargoRatesParams):
     #     request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_web_cargo_rates(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:

@@ -6,9 +6,9 @@ from libs.get_applicable_filters import get_applicable_filters
 from peewee import fn, SQL
 import json
 
-possible_direct_filters = ['origin_location_ids', 'destination_location_ids']
+possible_direct_filters = ['procured_by_id']
 
-possible_indirect_filters = ['procured_by_id']
+possible_indirect_filters = ['origin_location_ids', 'destination_location_ids']
 
 def get_fcl_freight_rate_addition_frequency(group_by, filters = {}, sort_type = 'desc'):
     query = FclFreightRate.select().where(FclFreightRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
@@ -37,5 +37,10 @@ def get_data(query, sort_type, group_by):
         ).order_by(eval(f"fn.date_trunc('{group_by}', FclFreightRate.updated_at).{sort_type}()")))
     return jsonable_encoder(list(data.dicts()))
 
-def apply_procured_by_id_filter(query, filters):
-    return query.where(FclFreightRate.procured_by_id == filters['procured_by_id'])
+def apply_origin_location_ids_filter(query, filters):
+   query= query.where(FclFreightRate.origin_location_ids.contains(filters['origin_location_ids']))
+   return query
+
+def apply_destination_location_ids_filter(query, filters):
+   query= query.where(FclFreightRate.destination_location_ids.contains(filters['destination_location_ids']))
+   return query

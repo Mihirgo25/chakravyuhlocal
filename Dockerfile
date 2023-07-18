@@ -30,7 +30,7 @@ EXPOSE 8110
 EXPOSE 8111
 
 FROM base as rms
-CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port", "8110", "--workers=4"]
+CMD ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8110", "--preload", "--access-logfile", "-"]
 
 FROM base as celery
-CMD ["celery" ,"-A" ,"celery_worker.celery" , "worker" ,"-B" , "--loglevel=info" , "-Q" , "communication,critical,low,fcl_freight_rate"]
+CMD ["celery" ,"-A" ,"celery_worker.celery" , "worker" ,"-B" , "--loglevel=info" , "-Q" , "communication,critical,low,fcl_freight_rate,bulk_operations"]

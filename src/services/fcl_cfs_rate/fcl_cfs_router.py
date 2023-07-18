@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import List
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from services.fcl_cfs_rate.fcl_cfs_params import *
 from rms_utils.auth import authorize_token
 import sentry_sdk
@@ -30,7 +30,7 @@ def create_fcl_cfs_rate_api(request: CreateFclCfsRate, resp: dict = Depends(auth
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_cfs_rate(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -47,7 +47,7 @@ def create_fcl_cfs_rate_request_api(request: CreateFclCfsRateRequest, resp: dict
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_cfs_rate_request(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -63,7 +63,7 @@ def create_fcl_cfs_rate_not_available_api(request: CreateFclCfsRateNotAvailable,
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_cfs_rate_not_available(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -80,7 +80,7 @@ def create_fcl_customs_rate_bulk_operation_api(request: CreateFclCfsRateBulkOper
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_fcl_cfs_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -127,7 +127,7 @@ def get_fcl_cfs_rate_cards_api(trade_type: str,
             'include_confirmed_inventory_rates':include_confirmed_inventory_rates
         }
         data = get_fcl_cfs_rate_cards(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -162,7 +162,7 @@ def get_fcl_cfs_rate_api(location_id: str = None,
     }
     try:
         data = get_fcl_cfs_rate(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -185,7 +185,7 @@ def list_fcl_cfs_rates_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_cfs_rates(filters, page_limit, page, sort_by, sort_type,pagination_data_required, return_query)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -204,7 +204,7 @@ def list_fcl_cfs_rate_requests_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = list_fcl_cfs_rate_requests(filters, page_limit, page, is_stats_required, performed_by_id)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -220,7 +220,7 @@ def delete_fcl_cfs_rate_api(request: DeleteFclCfsRate, resp: dict = Depends(auth
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_cfs_rate(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -236,7 +236,7 @@ def delete_fcl_cfs_rates_request_api(request: DeleteFclCfsRateRequest, resp: dic
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_fcl_cfs_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -252,7 +252,7 @@ def update_fcl_cfs_platform_prices_api(request:UpdateFclCfsRatePlatformPrice, re
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_cfs_rate_platform_prices(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -269,7 +269,7 @@ def update_fcl_cfs_rate_api(request: UpdateFclCfsRate, resp: dict = Depends(auth
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_fcl_cfs_rate(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:

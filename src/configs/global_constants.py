@@ -92,9 +92,27 @@ OPEN_TOP_COMMODITIES = ["in_gauge_cargo"]
 
 OPEN_SIDE_COMMODITIES = []
 
-FLAT_RACK_COMMODITIES = ["in_gauge_cargo"]
+FLAT_RACK_COMMODITIES = ['in_gauge_cargo']
 
-TRADE_TYPES = ["import", "export", "domestic"]
+ISO_TANK_COMMODITIES = ['non_haz_solids', 'non_haz_liquids', 'non_haz_gases']
+
+ALL_COMMODITIES = list(set((STANDARD_COMMODITIES + REFER_COMMODITIES + OPEN_TOP_COMMODITIES + OPEN_SIDE_COMMODITIES + FLAT_RACK_COMMODITIES + ISO_TANK_COMMODITIES + HAZ_CLASSES)))
+
+CONTAINER_SIZES = ['20', '40', '40HC', '45HC']
+
+CONTAINER_TYPES = ['standard', 'refer', 'open_top', 'open_side', 'flat_rack', 'iso_tank']
+
+PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID = ['dcdcb3d8-4dca-42c2-ba87-1a54bc4ad7fb']
+
+TRADE_TYPES = ['import', 'export', 'domestic']
+
+DEAFULT_RATE_PRODUCER_METHOD = 'latest'
+
+COUNTRY_CODE_MAPPING = ["IN","VN"]
+
+SEARCH_START_DATE_OFFSET = 2
+
+MAX_VALUE = 1000000000000000
 
 ALLOWED_RATE_PRODUCER_METHODS = ["minimum", "maximum", "latest"]
 
@@ -102,7 +120,7 @@ DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 
 
-COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN"}
+COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN", "vietnam":"VN", "singapore":"SG"}
 
 DEFAULT_WEIGHT_SLABS=[
     {
@@ -150,7 +168,6 @@ DEFAULT_WEIGHT_SLABS=[
     }
 
 ]
-DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
 
 DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
 
@@ -192,3 +209,13 @@ ALL_COMMODITIES = list(
 CHINA_COUNTRY_ID = '1b94734e-7d51-4e94-9dd2-ef96aee64a8f'
 
 INDIA_COUNTRY_ID = '541d1232-58ce-4d64-83d6-556a42209eb7'
+
+DEFAULT_RATE_TYPE = 'market_place'
+
+RATE_ENTITY_MAPPING = {
+  "6fd98605-9d5d-479d-9fac-cf905d292b88": ['6fd98605-9d5d-479d-9fac-cf905d292b88', 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'],
+  "b67d40b1-616c-4471-b77b-de52b4c9f2ff": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88'],
+  "default": ['b67d40b1-616c-4471-b77b-de52b4c9f2ff', '6fd98605-9d5d-479d-9fac-cf905d292b88']
+}
+
+SERVICE_PROVIDER_FF='36cee6fb-eeaf-4643-9db5-397544339635'
