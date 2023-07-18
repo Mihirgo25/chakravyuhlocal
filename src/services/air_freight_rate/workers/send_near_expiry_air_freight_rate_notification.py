@@ -4,7 +4,6 @@ from database.rails_db import get_supply_agents
 from micro_services.client import common
 from datetime import datetime,timedelta
 from peewee import fn
-import pdb
 def send_near_expiry_air_freight_rate_notification():
     rates_about_to_expire = (AirFreightRate
                          .select(AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id)

@@ -13,7 +13,7 @@ def execute_transaction_code(request):
 
     object=AirFreightRateRequest.select().where(AirFreightRateRequest.id==request.get('air_freight_rate_request_id')).first()
     if not object:
-        raise HTTPException(status_code=404, detail="Request Not Found")
+        raise HTTPException(status_code=404, detail="Invalid Rate Request")
     
     object.remarks = request.get('remarks')
     if request.get("closing_remarks"):

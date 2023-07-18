@@ -32,7 +32,7 @@ def execute_transaction_code(request):
 
     if not request_objects:
         raise HTTPException(
-            status_code=404, detail="Air Freight Rate Requests Not Found"
+            status_code=404, detail="Invalid Rate Request"
         )
 
     air_freight_rate = None
