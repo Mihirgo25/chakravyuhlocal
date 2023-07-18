@@ -84,14 +84,36 @@ class ApplyFclFreightRateStatistic(BaseModel):
 
 # Apply Spot Search Fcl Freight Statistics
 
+class Rates(BaseModel):
+    rate_id: str
+    validity_id: str
+    payment_term: str
+    schedule_type: str = 'direct'
+    
+    @validator("payment_term", pre=True)
+    def convert_invalid_payment_term(cls, v):
+        if not v:
+            v = "prepaid"
+        return v
+    
+    @validator("schedule_type", pre=True)
+    def convert_invalid_schedule_type(cls, v):
+        if not v:
+            v = "direct"
+        return v
 
-class CreateSpotSearchFclFreightRateStatistic(BaseModel):
-    pass
 
+class SpotSearchFclFreightRateStatistic(BaseModel):
+    spot_search_id: str
+    spot_search_fcl_freight_services_id: str
+    rates: list[Rates]
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    
 
-class UpdateSpotSearchFclFreightRateStatistic(BaseModel):
-    pass
-
+class ApplySpotSearchFclFreightRateStatistic(BaseModel):
+    action: str
+    params: SpotSearchFclFreightRateStatistic
 
 class CreateCheckoutFclFreightRateStatistic(BaseModel):
     pass
@@ -123,11 +145,6 @@ class CreateFeedbackFclFreightRateStatistic(BaseModel):
 
 class UpdateFeedbackFclFreightRateStatistic(BaseModel):
     pass
-
-
-class ApplySpotSearchFclFreightRateStatistic(BaseModel):
-    create_params: CreateSpotSearchFclFreightRateStatistic = None
-    update_params: UpdateSpotSearchFclFreightRateStatistic = None
 
 
 class ApplyCheckoutFclFreightRateStatistic(BaseModel):

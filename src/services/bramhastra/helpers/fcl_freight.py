@@ -2,6 +2,7 @@ from services.bramhastra.clickhouse.connect import get_clickhouse_client
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
+from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import SpotSearchFclFreightRateStatistic
 from database.rails_db import get_connection
 from services.bramhastra.enums import Table, ValidityAction
 from peewee import Model
@@ -66,6 +67,13 @@ class FclFreightValidity(Connection):
             )
             .first()
         )
+        
+    def get_current_statistic_row_by_identifier(self):
+        current_row =  self.get_postgres_statistics_current_row_by_identifier()
+        if current_row:
+            return current_row.get()
+        return get_clickhouse_rows_with_column_names(self.get_clickhouse_statistics_current_row_by_identifier)
+        
 
     def get_clickhouse_statistics_current_row_by_identifier(self) -> dict:
         parameters = {
@@ -258,11 +266,34 @@ class Rate:
 
 
 class SpotSearch:
-    def apply_create_stats(self, statistical_params):
+    def __init__(self,params) -> None:
+        self.common_param = params.dict(exclude = {'rates'})
+        self.spot_search_params = []
+        self.rates = params.rates
+        
+    def set_format_and_existing_rate_stats(self):
+        fcl_freight_validity = None
+        for rate in self.rates:
+            param = self.common_param.copy()
+            rate_dict = rate.dict()
+            param.update(rate_dict)
+            self.spot_search_params.append(param)
+            
+            if not fcl_freight_validity:
+                fcl_freight_validity = FclFreightValidity(**rate_dict)
+            else:
+                fcl_freight_validity.set_identifier_details(**rate_dict)
+            
+            new_row = fcl_freight_validity.get_current_statistic_row_by_identifier
+            fcl_freight_validity.update_stats(new_row)
+    
+    def set_new_stats(self) -> int:
+        return SpotSearchFclFreightRateStatistic.insert_many(self.spot_search_params).execute()
+    
+    
+    def set_existing_stats(self) -> None:
         pass
-
-    def apply_update_stats(params):
-        pass
+            
 
 
 class Checkout(FclFreightValidity):
@@ -287,3 +318,7 @@ class Shipment(FclFreightValidity):
 
     def apply_update_stats(params):
         pass
+    
+
+class Feedback(FclFreightValidity):
+    pass
