@@ -15,5 +15,5 @@ def get_weight_slabs_for_airline(airline_id,chargeable_weight,overweight_upper_l
         if overweight_upper_limit >0.0:
                     new_lower_limit = int((chargeable_weight / 100))* 100 + 0.1
                     new_upper_limit = int((chargeable_weight / 100)) * 100 + max(overweight_upper_limit, 50)
-                    weight_slabs.append({ 'lower_limit' : new_lower_limit, 'upper_limit' : new_upper_limit})
+                    return [{ 'lower_limit' : new_lower_limit, 'upper_limit' : new_upper_limit}]
     return weight_slabs

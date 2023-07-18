@@ -8,6 +8,7 @@ from services.rate_sheet.interactions.validate_air_freight_object import (
 from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.helpers import *
 import chardet
+from libs.parse_numeric import parse_numeric
 
 
 def get_airport_id(port_code, country_code):
@@ -288,6 +289,11 @@ def create_air_freight_freight_rate(
         "density_ratio",
     ]
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
+    key_to_float = ['min_price']
+    for key in object:
+        if key in key_to_float:
+            object[key] = parse_numeric(object[key])
+
     object["commodity"] = object["commodity"].lower().strip()
     object["commodity_type"] = object["commodity_type"].lower().strip()
     object["commodity_sub_type"] = object["commodity_sub_type"].lower().strip()
@@ -324,9 +330,9 @@ def create_air_freight_freight_rate(
 
     for slab in rows:
         weight_slab = {}
-        weight_slab["lower_limit"] = slab["lower_limit"].strip()
-        weight_slab["upper_limit"] = slab["upper_limit"].strip()
-        weight_slab["tariff_price"] = slab["tariff_price"].strip()
+        weight_slab["lower_limit"] = parse_numeric(slab["lower_limit"].strip())
+        weight_slab["upper_limit"] = parse_numeric(slab["upper_limit"].strip())
+        weight_slab["tariff_price"] = parse_numeric(slab["tariff_price"].strip())
         weight_slab["currency"] = object["currency"]
         weight_slab["unit"] = object.get("unit")
         object["weight_slabs"].append(weight_slab)
@@ -668,10 +674,14 @@ def create_air_freight_local_rate(
             line_item = dict(
                 filter(lambda item: item[0] in keys_to_extract, slab.items())
             )
+            key_to_float = ['min_price']
+            for key in line_item:
+                if key in key_to_float:
+                    line_item[key] = parse_numeric(line_item[key])
             line_item["currency"] = line_item["currency"].upper().strip()
             line_item["unit"] = line_item["unit"].lower().strip()
             line_item["code"] = line_item["code"].upper().strip()
-            line_item["price"] = slab["base_price"]
+            line_item["price"] = parse_numeric(slab["base_price"])
             remarks = [slab["remark1"], slab["remark2"], slab["remark3"]]
             line_item["remark"] = list(filter(lambda x: x is not None, remarks))
             line_item["slabs"] = []
@@ -679,7 +689,7 @@ def create_air_freight_local_rate(
         else:
             keys_to_extract = ["lower_limit", "upper_limit", "price"]
             weight_slab = dict(
-                filter(lambda item: item[0] in keys_to_extract, slab.items())
+                filter(lambda item: parse_numeric(item[0]) in keys_to_extract, slab.items())
             )
             object["line_items"][-1]["slabs"].append(weight_slab)
     for line_item in object["line_items"]:
@@ -968,6 +978,10 @@ def create_air_freight_surcharge_rate(
     for slab in rows:
         keys_to_extract = ["code", "unit", "price", "min_price", "currency"]
         line_item = dict(filter(lambda item: item[0] in keys_to_extract, slab.items()))
+        key_to_float = ['min_price', 'price']
+        for key in line_item:
+            if key in key_to_float:
+                line_item[key] = parse_numeric(line_item[key])
         line_item["currency"] = line_item["currency"].upper().strip()
         line_item["unit"] = line_item["unit"].upper().strip()
         line_item["code"] = line_item["code"].upper().strip()
