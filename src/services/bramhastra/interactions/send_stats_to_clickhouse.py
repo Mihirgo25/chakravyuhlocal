@@ -7,32 +7,32 @@ from services.bramhastra.helpers.fcl_freight import json_encoder
 
 def send_stats_to_clickhouse(client = get_clickhouse_client()):
     query = (
-        "INSERT INTO brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
+        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
     )
 
     values = []
     for rate in json_encoder(list(FclFreightRateStatistic.select().dicts())):
-        value = f"""(
+        value = value = f"""(
     {rate['id']},
     '{rate['identifier']}',
     '{rate['validity_id']}',
     '{rate['rate_id']}',
     '{rate['payment_term']}',
     '{rate['schedule_type']}',
-    '{rate['origin_port_id']}',
-    '{rate['destination_port_id']}',
-    '{rate['origin_main_port_id']}',
-    '{rate['destination_main_port_id']}',
-    '{rate['origin_country_id']}',
-    '{rate['destination_country_id']}',
-    '{rate['origin_continent_id']}',
-    '{rate['origin_continent_id']}',
-    '{rate['origin_region_id']}',
-    '{rate['destination_region_id']}',
-    '{rate['origin_trade_id']}',
-    '{rate['destination_trade_id']}',
-    '{rate['origin_pricing_zone_map_id']}',
-    '{rate['destination_pricing_zone_map_id']}',
+    {f"'{rate['origin_port_id']}'" if rate['origin_port_id'] is not None else 'NULL'},
+    {f"'{rate['destination_port_id']}'" if rate['destination_port_id'] is not None else 'NULL'},
+    {f"'{rate['origin_main_port_id']}'" if rate['origin_main_port_id'] is not None else 'NULL'},
+    {f"'{rate['destination_main_port_id']}'" if rate['destination_main_port_id'] is not None else 'NULL'},
+    {f"'{rate['origin_country_id']}'" if rate['origin_country_id'] is not None else 'NULL'},
+    {f"'{rate['destination_country_id']}'" if rate['destination_country_id'] is not None else 'NULL'},
+    {f"'{rate['origin_continent_id']}'" if rate['origin_continent_id'] is not None else 'NULL'},
+    {f"'{rate['origin_continent_id']}'" if rate['origin_continent_id'] is not None else 'NULL'},
+    {f"'{rate['origin_region_id']}'" if rate['origin_region_id'] is not None else 'NULL'},
+    {f"'{rate['destination_region_id']}'" if rate['destination_region_id'] is not None else 'NULL'},
+    {f"'{rate['origin_trade_id']}'" if rate['origin_trade_id'] is not None else 'NULL'},
+    {f"'{rate['destination_trade_id']}'" if rate['destination_trade_id'] is not None else 'NULL'},
+    {f"'{rate['origin_pricing_zone_map_id']}'" if rate['origin_pricing_zone_map_id'] is not None else 'NULL'},
+    {f"'{rate['destination_pricing_zone_map_id']}'" if rate['destination_pricing_zone_map_id'] is not None else 'NULL'},
     {rate['price']},
     {rate['market_price']},
     '{rate['validity_start']}',
@@ -92,8 +92,10 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     {rate['rate_deviation_from_latest_booking']},
     {rate['average_booking_rate']}
 )"""
+
         values.append(value)
 
     query += ", ".join(values)
-    print(query)
     client.command(query)
+    
+    FclFreightRateStatistic.delete().execute()

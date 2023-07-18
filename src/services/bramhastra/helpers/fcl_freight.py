@@ -17,6 +17,22 @@ def json_encoder(data):
     return jsonable_encoder(data, custom_encoder={datetime: lambda dt: dt.strftime('%Y-%m-%d %H:%M:%S')})
 
 
+def get_clickhouse_rows_with_column_names(result):
+    rows = result.result_rows
+    columns = result.column_names
+    data = []
+    for row in rows:
+        decoded_row = []
+        for value in row:
+            if isinstance(value, bytes):
+                decoded_value = value.decode('utf-8').replace('\x00', '')
+            else:
+                decoded_value = value
+            decoded_row.append(decoded_value)
+        data.append(dict(zip(columns, decoded_row)))
+    return data
+
+
 class Connection:
     def __init__(self) -> None:
         self.rails_db = get_connection()
@@ -38,7 +54,7 @@ class FclFreightValidity(Connection):
             force_insert = True
         row.sign = -1
         row.save(force_insert = force_insert)
-        return row.version
+        return row.id,row.version + 1
 
     def get_postgres_statistics_current_row_by_identifier(self) -> Model:
         return (
@@ -53,14 +69,18 @@ class FclFreightValidity(Connection):
 
     def get_clickhouse_statistics_current_row_by_identifier(self) -> dict:
         parameters = {
-            "table": Table.fcl_freight_rate_statistics,
+            "table": Table.fcl_freight_rate_statistics.value,
             "identifier": self.fcl_freight_rate_statistics_identifier,
+            "sign" : 1
         }
-        if row := self.clickhouse_client.command(
-            "SELECT * FROM {table:Identifier} WHERE identifier = {identifier:UUID} FINAL",
+        if row := self.clickhouse_client.query(
+            "SELECT * FROM brahmastra.{table:Identifier} WHERE identifier = {identifier:FixedString(256)} and sign = {sign:Int8}",
             parameters,
         ):
-            return row
+            if rows := get_clickhouse_rows_with_column_names(row):
+                breakpoint()
+                return rows[0]
+            
 
     def get_clickhouse_statistics_rows_by_rate_id(self) -> dict:
         parameters = {
@@ -71,7 +91,7 @@ class FclFreightValidity(Connection):
             "SELECT * FROM {table:Identifier} WHERE rate_id = {identifier:UUID} FINAL",
             parameters,
         ):
-            return row
+            return get_clickhouse_rows_with_column_names(row)
 
     def get_postgres_statistics_rows_by_rate_id(self, sign=1, version=None) -> Model:
         fcl_freight_rate_statistic_query = FclFreightRateStatistic.select().where(
@@ -108,7 +128,7 @@ class FclFreightValidity(Connection):
         old_row = self.get_postgres_statistics_current_row_by_identifier()
         if not old_row:
             old_row = self.get_clickhouse_statistics_current_row_by_identifier()
-        new_row["version"] = self.update_row_status_to_stale(old_row) + 1
+        new_row["id"],new_row["version"] = self.update_row_status_to_stale(old_row)
         self.create_stats(new_row)
 
 

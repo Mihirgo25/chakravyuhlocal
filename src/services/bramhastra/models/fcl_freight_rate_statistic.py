@@ -1,4 +1,4 @@
-from peewee import Model, UUIDField, FloatField, IntegerField, CharField, TextField, DateField
+from peewee import Model, UUIDField, FloatField, BigIntegerField, CharField, TextField, DateField,IntegerField
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, BinaryJSONField
@@ -11,7 +11,7 @@ class BaseModel(Model):
 
 
 class FclFreightRateStatistic(BaseModel):
-    id = IntegerField(sequence='check_seq')
+    id = BigIntegerField(sequence='fcl_freight_rate_stats_seq')
     identifier = TextField()
     validity_id = UUIDField()
     rate_id = UUIDField()
@@ -21,12 +21,12 @@ class FclFreightRateStatistic(BaseModel):
     destination_port_id = UUIDField()
     origin_main_port_id = UUIDField(null=True)
     destination_main_port_id = UUIDField(null=True)
-    origin_region_id = UUIDField()
-    destination_region_id = UUIDField()
-    origin_country_id = UUIDField()
-    destination_country_id = UUIDField()
-    origin_continent_id = UUIDField()
-    destination_continent_id = UUIDField()
+    origin_region_id = UUIDField(null=True)
+    destination_region_id = UUIDField(null=True)
+    origin_country_id = UUIDField(null=True)
+    destination_country_id = UUIDField(null=True)
+    origin_continent_id = UUIDField(null=True)
+    destination_continent_id = UUIDField(null=True)
     origin_trade_id = UUIDField(null=True)
     destination_trade_id = UUIDField(null=True)
     origin_pricing_zone_map_id = UUIDField(null=True)
@@ -36,7 +36,6 @@ class FclFreightRateStatistic(BaseModel):
     validity_start = DateField()
     validity_end = DateField()
     currency = CharField(max_length=3)
-    line_items = BinaryJSONField()
     shipping_line_id = UUIDField(null=True)
     service_provider_id = UUIDField(null=True)
     accuracy = FloatField(default=-1.0)
