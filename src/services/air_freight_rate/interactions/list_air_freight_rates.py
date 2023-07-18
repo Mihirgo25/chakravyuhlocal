@@ -186,8 +186,8 @@ def apply_date_filter(query,filters):
     
   if date_to_apply:
     query = query.where(
-      (SQL("TO_DATE(validity->>'validity_start','YYYY-MM-DD')") >= date_to_apply),
-      (SQL("TO_DATE(validity->>'validity_start','YYYY-MM-DD')") <= date_to_apply)
+      (SQL("TO_DATE(validity->>'validity_end','YYYY-MM-DD')") >= date_to_apply),
+      (SQL("TO_DATE(validity->>'validity_start','YYYY-MM-DD')") < date_to_apply)
     )
   
   return query
@@ -230,7 +230,7 @@ def get_data(query,revenue_desk_data_required):
          chargeable_weight = revenue_desk_data_required['chargeable_weight']
          for slab in weight_slabs:
             if int(slab['lower_limit']) <= chargeable_weight and int(slab['upper_limit']) >chargeable_weight:
-              rate['is_minimum_price_system_rate'] = (slab['tariff_price'] * chargeable_weight) <= rate['validity']['min_price']
+              rate['is_minimum_price_system_rate'] = (float(slab['tariff_price']) * float(chargeable_weight)) <= float(rate['validity']['min_price'] or 0)
               if rate['is_minimum_price_system_rate']:   
                 line_item_price = rate['validity']['min_price']
                 line_item_quantity = 1

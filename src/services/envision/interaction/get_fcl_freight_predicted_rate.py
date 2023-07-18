@@ -50,9 +50,9 @@ def get_fcl_freight_predicted_rate(request):
     destination_main_port_ids = []
 
     for loc in location_data:
-        if loc['country_id'] == request['origin_country_id']:
+        if loc['icd_port_id'] == request['origin_port_id']:
             origin_main_port_ids.append(loc['id'])
-        elif loc['country_id'] == request['destination_country_id']:
+        elif loc['icd_port_id'] == request['destination_port_id']:
             destination_main_port_ids.append(loc['id'])
 
     if len(origin_main_port_ids) == 0:

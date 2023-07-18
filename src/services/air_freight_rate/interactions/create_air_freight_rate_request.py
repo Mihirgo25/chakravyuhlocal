@@ -152,8 +152,8 @@ def send_notification_for_rates_not_found(request, request_object, airports):
     notification_data = {
         "type": "platform_notification",
         "user_id": request.get("performed_by_id"),
-        "service": "air_freight_rate_request",
-        "service_id": request_object.id,
+        "service": "spot_search",
+        "service_id": request_object.source_id,
         "template_name": "air_freight_rates_not_found_on_any_sales_channel",
         "variables": {
             "origin_port": origin_airport.get('display_name'),
@@ -196,8 +196,8 @@ def send_notification_for_new_search_made_for_rates(request_object, airports, su
     notification_data = {
         "type": "platform_notification",
         "user_id": supply_agents_user_id,
-        "service": "air_freight_rate_request",
-        "service_id": request_object.id,
+        "service": "spot_search",
+        "service_id": request_object.source_id,
         "template_name": "air_freight_rates_not_available_for_new_search",
         "variables": {
             "origin_port": origin_airport,
