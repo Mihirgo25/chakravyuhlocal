@@ -131,8 +131,3 @@ def get_health_check():
 @app.get("/fcl_freight_rate/health_check")
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
-
-from services.air_freight_rate.estimators.relate_airlines import RelateAirline
-@app.get("/test")
-def test():
-    return RelateAirline()

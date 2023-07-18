@@ -150,7 +150,7 @@ class AirFreightVyuh():
     
     def get_final_invoice_prices(self, origin_location_id, destination_location_id, location_type):
         
-        past_air_invoices = get_past_air_invoices(origin_location_id, destination_location_id, location_type, self.months)
+        past_air_invoices = get_past_air_invoices(origin_location_id, destination_location_id, location_type, self.months,'month','months')
 
         actual_invoice_data = []
 
