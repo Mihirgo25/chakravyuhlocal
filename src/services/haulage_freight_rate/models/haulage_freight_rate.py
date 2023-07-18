@@ -1,7 +1,7 @@
 import uuid, datetime, json, re
-from peewee import UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, CharField
+from peewee import UUIDField, TextField, IntegerField, SQL, BooleanField, FloatField, Model, TextField, CharField, DateTimeField
 from database.db_session import db
-from playhouse.postgres_ext import BinaryJSONField, DateTimeTZField, ArrayField
+from playhouse.postgres_ext import BinaryJSONField, ArrayField
 from fastapi import HTTPException
 from micro_services.client  import maps, common
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate_platform_prices import update_haulage_freight_rate_platform_prices
@@ -63,9 +63,9 @@ class HaulageFreightRate(BaseModel):
     shipping_line = BinaryJSONField(null=True)
     trailer_type = TextField(index=True, null=True)
     platform_price = FloatField(null=True)
-    created_at = DateTimeTZField(default=datetime.datetime.now, index=True)
-    updated_at = DateTimeTZField(default=datetime.datetime.now, index=True)
-    mode = CharField(default = 'manual',index=True, null = True)
+    created_at = DateTimeField(default=datetime.datetime.now, index=True)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
+    source = CharField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
@@ -76,7 +76,7 @@ class HaulageFreightRate(BaseModel):
     init_key = TextField(index=True, null=True, unique=True)
 
     class Meta:
-        table_name = 'haulage_freight_rates_temp'
+        table_name = 'haulage_freight_rates'
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
