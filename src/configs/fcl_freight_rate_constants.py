@@ -209,3 +209,5 @@ RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 DEFAULT_RATE_TYPE = 'market_place'
 
 VN_ENTITY_ID = 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'
+
+REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}

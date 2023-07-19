@@ -1,7 +1,7 @@
 from peewee import Model, BigAutoField, UUIDField, CharField, IntegerField
 import datetime
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField, BinaryJSONField
+from playhouse.postgres_ext import DateTimeTZField
 
 
 class BaseModel(Model):

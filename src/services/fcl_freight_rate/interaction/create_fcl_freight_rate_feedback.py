@@ -8,6 +8,7 @@ from celery_worker import send_create_notifications_to_supply_agents_function, s
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
 from micro_services.client import *
+from libs.json_encoder import json_encoder
 
 
 
@@ -19,6 +20,8 @@ def create_fcl_freight_rate_feedback(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
+    action = 'update'
+    
     rate = FclFreightRate.select().where(FclFreightRate.id == request['rate_id']).first()
 
     if not rate:
@@ -45,6 +48,7 @@ def execute_transaction_code(request):
         FclFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
 
     if not feedback:
+        action = 'create'
         feedback = FclFreightRateFeedback(**row)
 
     create_params = get_create_params(request)
@@ -70,6 +74,8 @@ def execute_transaction_code(request):
     # update_likes_dislikes_count(rate, request)
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
+        
+    set_feedback_statistics(action,request,feedback)
 
     return {'id': request['rate_id']}
 
@@ -144,4 +150,41 @@ def create_audit(request, feedback):
         object_type = 'FclFreightRateFeedback',
         action_name = 'create',
         performed_by_id = request['performed_by_id']
+    )
+    
+def set_feedback_statistics(action, request, feedback):
+    from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import (
+        apply_feedback_fcl_freight_rate_statistic,
+    )
+    from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
+    from playhouse.shortcuts import model_to_dict
+    from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
+
+    params = model_to_dict(
+        feedback,
+        only=[
+            FclFreightRateFeedback.id,
+            FclFreightRateFeedback.source,
+            FclFreightRateFeedback.source_id,
+            FclFreightRateFeedback.closed_by_id,
+            FclFreightRateFeedback.fcl_freight_rate_id,
+            FclFreightRateFeedback.validity_id,
+            FclFreightRateFeedback.service_provider_id,
+            FclFreightRateFeedback.serial_id,
+            FclFreightRateFeedback.created_at,
+            FclFreightRateFeedback.updated_at,
+            FclFreightRateFeedback.performed_by_id,
+            FclFreightRateFeedback.performed_by_org_id,
+            FclFreightRateFeedback.feedback_type,
+        ],
+    )
+
+    for k, v in request.items():
+        if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
+            params[k] = v 
+        
+    apply_feedback_fcl_freight_rate_statistic(
+        ApplyFeedbackFclFreightRateStatistics(
+            action=action, params=json_encoder(params)
+        )
     )
