@@ -222,6 +222,7 @@ def create_haulage_freight_freight_rate(
     object['transit_time'] = int(object['transit_time'])
     object['detention_free_time'] = int(object['detention_free_time'])
     object["transport_modes"] = object["transport_modes"].split(',')
+    object["rate_type"] = "market_place"
 
     object["line_items"] = []
 

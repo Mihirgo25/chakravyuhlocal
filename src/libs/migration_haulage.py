@@ -135,7 +135,7 @@ def haulage_freight_rate_migration():
     with conn:
         with conn.cursor() as cur:
             sql_query = """
-            SELECT haulage_freight_rates.*, haulage_freight_rate_audits.sourced_by_id, haulage_freight_rate_audits.procured_by_id  FROM haulage_freight_rates join haulage_freight_rate_audits on haulage_freight_rates.id = haulage_freight_rate_audits.object_id  where haulage_freight_rate_audits.action_name = 'create' limit 1000
+            select * from haulage_freight_rates where transport_modes_keyword = 'rail' limit 10000
             """
             cur.execute(sql_query,)
             result = cur
