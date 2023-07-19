@@ -35,8 +35,7 @@ class FtlFreightRateBulkOperation(BaseModel):
     performed_by_id = UUIDField(index=True, null =True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     service_provider_id = UUIDField(null=True)
-    updated_at = DateTimeField(default=datetime.datetime.now)
-
+    
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super(FtlFreightRateBulkOperation, self).save(*args, **kwargs)

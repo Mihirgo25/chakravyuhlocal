@@ -254,3 +254,26 @@ class CreateBulkOperation(BaseModel):
     sourced_by_id:str
     delete_rate: DeleteRate = None
     add_markup: AddMarkup = None
+    
+class ExtendFtlFreightRates(BaseModel):
+    performed_by_id: str
+    performed_by_type: str = None
+    rate_sheet_id: str = None
+    origin_location_id: str
+    destination_location_id: str
+    truck_type: str
+    commodity: str = None
+    importer_exporter_id: str = None
+    service_provider_id: str
+    procured_by_id: str
+    sourced_by_id: str
+    validity_start: datetime
+    validity_end: datetime
+    truck_body_type: str
+    trip_type: str
+    transit_time: int
+    detention_free_time: int
+    line_items: list[FtlLineItem]
+    ftl_freight_rate_request_id: str = None
+
+    

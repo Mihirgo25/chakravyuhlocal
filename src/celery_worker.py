@@ -46,6 +46,7 @@ from services.air_freight_rate.workers.send_air_freight_local_charges_update_rem
 from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
+from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -364,6 +365,16 @@ def ftl_bulk_operation_perform_action_functions(self, action_name,object,sourced
         else:
             raise self.retry(exc= exc)
 
+@celery.task(bind = True, max_retries=3, retry_backoff = True)
+def create_ftl_freight_rate_delay(self, request):
+    try:
+        print('function_called')
+        return create_ftl_freight_rate(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
