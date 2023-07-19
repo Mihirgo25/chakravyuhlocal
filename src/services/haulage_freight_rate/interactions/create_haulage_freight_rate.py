@@ -86,10 +86,10 @@ def create_haulage_freight_rate(request):
     haulage_freight_rate.set_platform_price()
     haulage_freight_rate.set_is_best_price()
     haulage_freight_rate.rate_not_available_entry = False
-    print('here')
+
     if 'rate_sheet_validation' not in request:
         haulage_freight_rate.validate_before_save()
-    print('here')
+
     haulage_freight_rate.update_line_item_messages(haulage_freight_rate.possible_charge_codes())
 
     try:

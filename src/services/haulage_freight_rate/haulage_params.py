@@ -84,6 +84,7 @@ class CreateHaulageFreightRateRequest(BaseModel):
 class DeleteHaulageFreightRateRequest(BaseModel):
   haulage_freight_rate_request_ids: list[str]
   closing_remarks: list[str] = []
+  rate_id: str = None
   performed_by_id: str = None
   performed_by_type: str = None
 
@@ -121,10 +122,15 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   created_at: datetime = None
   updated_at: datetime = None
 
+class RevertedRateParams(BaseModel):
+    id: str = None
+    line_items: list[HaulageLineItem] = []
+
 class DeleteHaulageFreightRateFeedback(BaseModel):
   haulage_freight_rate_feedback_ids: list[str]
   closing_remarks: list[str] = []
   reverted_rate_id: str = None
+  reverted_rate: RevertedRateParams = None
   performed_by_id: str = None
     
 class UpdateHaulageFreightRatePlatformPrices(BaseModel):
