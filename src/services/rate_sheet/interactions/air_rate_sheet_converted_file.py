@@ -308,7 +308,7 @@ def create_air_freight_freight_rate(
     object["breadth"] = 300
     object["height"] = 300
 
-    object["rate_type"] = "general"
+    object["rate_type"] = "market_place"
     object["initial_volume"] = None
     object["available_volume"] = None
     object["initial_gross_weight"] = None
@@ -666,7 +666,7 @@ def create_air_freight_local_rate(
     object["service_provider_id"] = params.get("service_provider_id")
     object["performed_by_id"] = params.get("performed_by_id")
     object["line_items"] = []
-    object["rate_type"] = "general"
+    object["rate_type"] = "market_place"
     for slab in rows:
         if slab.get("code"):
             keys_to_extract = ["code", "unit", "min_price", "currency"]
