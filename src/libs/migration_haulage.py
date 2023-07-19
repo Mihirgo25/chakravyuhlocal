@@ -127,32 +127,36 @@ def delay_updation_bulk_operation(row,columns):
     
 def haulage_freight_rate_migration():
     all_result=[]
-    procured_ids_path = "procured_by_sourced_by_rates.json"
-    with open(procured_ids_path, 'r') as file:
-        procured_sourced_rates_dict = json.load(file)
+    # procured_ids_path = "procured_by_sourced_by_rates.json"
+    # with open(procured_ids_path, 'r') as file:
+    #     procured_sourced_rates_dict = json.load(file)
+    
     conn = get_connection()
     with conn:
         with conn.cursor() as cur:
             sql_query = """
-            SELECT * FROM haulage_freight_rates limit 100
+            SELECT haulage_freight_rates.*, haulage_freight_rate_audits.sourced_by_id, haulage_freight_rate_audits.procured_by_id  FROM haulage_freight_rates join haulage_freight_rate_audits on haulage_freight_rates.id = haulage_freight_rate_audits.object_id  where haulage_freight_rate_audits.action_name = 'create' limit 1000
             """
             cur.execute(sql_query,)
             result = cur
             columns = [col[0] for col in result.description]
-            result = Parallel(n_jobs=4)(delayed(delay_updation_rate)(row, columns,procured_sourced_rates_dict) for row in result.fetchall())  
+            result = Parallel(n_jobs=4)(delayed(delay_updation_rate)(row, columns) for row in result.fetchall())  
             cur.close()
     conn.close()
     print('haulage Freight Rate Done')
     return all_result
 
-def delay_updation_rate(row,columns,procured_sourced_dict):
+def delay_updation_rate(row,columns):
     param = dict(zip(columns, row))
-    obj = HaulageFreightRate(**param)
-    set_procured_sourced(obj,procured_sourced_dict)
-    set_locations(obj)
-    get_multiple_service_objects(obj)
-    
-    obj.save(force_insert = True)
+    try:
+        obj = HaulageFreightRate(**param)
+        # set_procured_sourced(obj,procured_sourced_dict)
+        set_locations(obj)
+        get_multiple_service_objects(obj)
+        
+        obj.save(force_insert = True)
+    except:
+        print('ss')
     return
 
 

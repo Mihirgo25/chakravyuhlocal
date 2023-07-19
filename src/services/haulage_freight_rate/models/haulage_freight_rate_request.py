@@ -56,6 +56,8 @@ class HaulageFreightRateRequest(BaseModel):
     reverted_by_user_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     expiration_time = DateTimeTZField(null = True)
     trade_type = TextField(index=True, null=True)
+    reverted_rate_id = UUIDField(null=True)
+    reverted_rate = BinaryJSONField(null=True)
 
 
     def save(self, *args, **kwargs):
