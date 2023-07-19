@@ -173,7 +173,7 @@ def get_query(sort_by, sort_type, includes):
     query = HaulageFreightRate.select(*fields)
 
     if sort_by:
-        query = query.order_by(eval('FclFreightRate.{}.{}()'.format(sort_by,sort_type)))
+        query = query.order_by(eval('HaulageFreightRate.{}.{}()'.format(sort_by,sort_type)))
 
     return query
 
