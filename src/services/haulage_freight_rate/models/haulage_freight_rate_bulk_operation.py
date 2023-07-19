@@ -112,14 +112,14 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
             if HaulageFreightRateAudit.get_or_none(bulk_operation_id=self.id):
                 self.progress = int((count * 100.0) / total_count)
-                self.set_processed_percent_haulage_operation(self.progress, self.id)
+                processed_percent_key(self.progress, self.id)
                 continue
 
             line_items = [t for t in freight['line_items'] if t['code'] == data['line_item_code']]
 
             if not line_items:
                 self.progress = int((count * 100.0) / total_count)
-                self.set_processed_percent_haulage_operation(self.progress, self.id)
+                processed_percent_key(self.progress, self.id)
                 continue
 
             freight['line_items'] = [t for t in freight['line_items'] if t not in line_items]
@@ -161,11 +161,11 @@ class HaulageFreightRateBulkOperation(BaseModel):
                     'sourced_by_id': sourced_by_id,
                     'procured_by_id': procured_by_id,
                     'bulk_operation_id': self.id,
-                    'line_items': freight['data']
+                    'line_items': freight['line_items']
                 })
             
             self.progress = int((count * 100.0) / total_count)
-            self.set_processed_percent_haulage_operation(self.progress, self.id)
+            processed_percent_key(self.progress, self.id)
 
         return count, total_affected_rates
     
@@ -175,7 +175,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
 
-        haulage_freight_rates = list_haulage_freight_rates(filters = filters, page_limit = None, pagination_data_required = False)['list']
+        haulage_freight_rates = list_haulage_freight_rates(filters = filters, page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT, pagination_data_required = False)['list']
         total_count = len(haulage_freight_rates)
 
         count = 0

@@ -167,6 +167,7 @@ class AddMarkup(BaseModel):
   markup: float
   markup_type: str
   markup_currency: str = None
+  line_item_code: str = None
 
 class CreateHaulageFreightRateBulkOperation(BaseModel):
   performed_by_id: str = None

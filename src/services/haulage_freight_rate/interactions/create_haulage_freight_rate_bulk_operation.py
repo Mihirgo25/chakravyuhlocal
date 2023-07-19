@@ -8,8 +8,8 @@ def create_haulage_freight_rate_bulk_operation(request):
     Response Format:
         {"id": bulk_operation_id}
     """
+    request = {key: value for key, value in request.items() if value is not None}
     action_name = [key for key in request if key not in ['performed_by_type','performed_by_id', 'service_provider_id', 'procured_by_id', 'sourced_by_id']]
-
     if action_name:
         action_name=action_name[0]
         data = request[action_name]

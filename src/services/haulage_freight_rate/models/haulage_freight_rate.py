@@ -94,7 +94,7 @@ class HaulageFreightRate(BaseModel):
         for location in locations:
             if str(location['id']) == str(self.origin_location_id):
                 self.origin_location = self.get_required_location_data(location)
-            elif str(location['id']) == str(self.destination_location_id):
+            if str(location['id']) == str(self.destination_location_id):
                 self.destination_location = self.get_required_location_data(location)
         self.set_origin_location_ids()
         self.set_origin_location_type()
@@ -305,8 +305,8 @@ class HaulageFreightRate(BaseModel):
         currency = line_items[0].get('currency')
         result = 0
 
-        for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+        # for line_item in line_items:
+        #     result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
 
         return result
     
