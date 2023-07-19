@@ -12,7 +12,6 @@ class BaseModel(Model):
 
 class FeedbackFclFreightRateStatistic(BaseModel):
     id = BigIntegerField(sequence="feedback_fcl_freight_rate_statistic_seq")
-    source = CharField(null=True)
     fcl_freight_rate_statistic_id = BigIntegerField()
     feedback_id = UUIDField()
     validity_id = UUIDField()
