@@ -153,7 +153,7 @@ def send_notification_for_rates_not_found(request, request_object, airports):
         "type": "platform_notification",
         "user_id": request.get("performed_by_id"),
         "service": "spot_search",
-        "service_id": request_object.source_id,
+        "service_id": str(request_object.source_id),
         "template_name": "air_freight_rates_not_found_on_any_sales_channel",
         "variables": {
             "origin_port": origin_airport.get('display_name'),
@@ -167,8 +167,8 @@ def send_notification_for_rates_not_found(request, request_object, airports):
 
 def send_notification_to_supply_agents(request_object, airports):
 
-    origin_location_ids = [str(request_object.origin_airport_id), str(request_object.origin_continent_id), str(request_object.origin_country_id)]
-    destination_location_ids = [str(request_object.destination_airport_id), str(request_object.destination_continent_id), str(request_object.destination_country_id)]
+    origin_location_ids = [str(t) for t in [request_object.origin_airport_id, request_object.origin_continent_id, request_object.origin_country_id] if t ]
+    destination_location_ids = [str(t) for t in [request_object.destination_airport_id, request_object.destination_continent_id, request_object.destination_country_id] if t]
 
     supply_agents_data = get_partner_users_by_expertise("air_freight", origin_location_ids, destination_location_ids)
 
@@ -197,7 +197,7 @@ def send_notification_for_new_search_made_for_rates(request_object, airports, su
         "type": "platform_notification",
         "user_id": supply_agents_user_id,
         "service": "spot_search",
-        "service_id": request_object.source_id,
+        "service_id": str(request_object.source_id),
         "template_name": "air_freight_rates_not_available_for_new_search",
         "variables": {
             "origin_port": origin_airport,

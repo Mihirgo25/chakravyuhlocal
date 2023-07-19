@@ -17,7 +17,7 @@ def send_expired_air_freight_rate_notification():
                     AirFreightRate.created_at >= fifteen_days_ago
                 )
                 .group_by(AirFreightRate.origin_airport_id, AirFreightRate.destination_airport_id))
-    rates_expired_count = jsonable_encoder(list(rates_expired).dicts())
+    rates_expired_count = jsonable_encoder(list(rates_expired.dicts()))
     if not rates_expired:
         return 
     rates_expired_count = len(rates_expired_count)

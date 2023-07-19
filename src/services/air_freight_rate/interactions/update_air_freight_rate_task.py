@@ -2,7 +2,7 @@ from datetime import datetime
 from database.db_session import db
 from fastapi import HTTPException
 from celery_worker import update_multiple_service_objects
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from services.air_freight_rate.constants.air_freight_rate_constants import * 
 from services.air_freight_rate.interactions.create_air_freight_rate_local import create_air_freight_rate_local
@@ -11,7 +11,7 @@ from micro_services.client import *
 def create_audit(request):
     data = {key:str(value) for key, value in request.items() if key not in ['performed_by_id','id'] and not value == None}
 
-    AirFreightRateAudit.create(
+    AirServiceAudit.create(
         action_name = 'update',
         performed_by_id = request['performed_by_id'],
         data = data,
@@ -41,7 +41,7 @@ def execute_transaction_code(request):
 
 
     if not task:
-        raise HTTPException(status_code=400,detail=f"{request.get('id')} is invalid")
+        raise HTTPException(status_code=404,detail="Task Is Not Found")
     
     update_params=get_update_params(request)
    

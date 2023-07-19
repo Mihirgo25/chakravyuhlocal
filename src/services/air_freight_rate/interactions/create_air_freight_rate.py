@@ -149,8 +149,6 @@ def create_air_freight_rate_data(request):
         "id": freight.id,
         "validity_id":validity_id
     }
-    if request.get('is_weight_slabs_required'):
-        freight_object['weight_slabs'] = weight_slabs
     return freight_object
     
 def set_object_parameters(freight, request):

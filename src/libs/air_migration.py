@@ -416,7 +416,7 @@ def run_migration():
     # procured_by_sourced_by('air_freight_rate_local')
     # all_locations_data()
     # air_freight_rate_feedback_migration()
-    # air_freight_rate_audits_migration()
+    air_freight_rate_audits_migration()
     # air_freight_rate_bulk_operations_migration()
     # air_freight_rate_requests_migration()
     # air_freight_storage_rates_migration()
@@ -671,6 +671,33 @@ def set_service_provider(service_providers,service):
                     )
 
 
+####################################################################
+
+def migrate_request_audits(audit):
+    conn = get_connection()
+    columns = None
+    results = []
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(sql.SQL('select * from {table} where object_type = %s;').format(table=sql.Identifier('air_freight_rate_audits')),[audit])
+            results = cur.fetchall()
+            if not columns:
+                columns = [col[0] for col in results.description]
+            Parallel(n_jobs=4)(delayed(delay_request_feebacks_audits)(row, columns) for row in results)
+            cur.close()
+    conn.close()
+
+def delay_request_feebacks_audits(row,columns):
+    from services.air_freight_rate.models.air_services_audit import AirServiceAudit
+    from database.db_session import db
+    param = dict(zip(columns, row))
+    obj = AirServiceAudit(**param)
+    obj.save(force_insert = True)
+    return
+
+def request_and_feedback():
+    migrate_request_audits('AirFreightRateFeedback')
+    migrate_request_audits('AirFreightRateRequest')
 
 
 

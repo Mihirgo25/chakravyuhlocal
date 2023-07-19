@@ -6,8 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from peewee import fn, SQL
 import json
 
-possible_direct_filters = ['origin_airport_id', 'destination_airport_id']
-possible_indirect_filters = ['procured_by_id']
+possible_direct_filters = ['origin_airport_id', 'destination_airport_id','procured_by_id']
+possible_indirect_filters = []
 
 def get_air_freight_rate_addition_frequency(group_by, filters = {}, sort_type = 'desc'):
     query = get_query()
@@ -24,7 +24,7 @@ def get_air_freight_rate_addition_frequency(group_by, filters = {}, sort_type = 
     return data
 
 def get_query():
-    query = AirFreightRate.select().where(AirFreightRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
+    query = AirFreightRate.select(AirFreightRate.id).where(AirFreightRate.updated_at >= datetime.now().date().replace(year=datetime.now().year-1))
     return query
 
 def get_data(query,group_by,sort_type ):
