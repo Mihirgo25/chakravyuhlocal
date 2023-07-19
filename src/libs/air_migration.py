@@ -699,19 +699,6 @@ def request_and_feedback():
     migrate_request_audits('AirFreightRateFeedback')
     migrate_request_audits('AirFreightRateRequest')
 
-def delete_rates():
-    file_path_r = os.path.join(ROOT_DIR, 'libs/delete.json')
-    f_all_rate = open(file_path_r)
-    data_f = json.load(f_all_rate)
-    conn = get_connection()
-    # try:
-    with conn:
-        with conn.cursor() as cur:
-            cur.execute(sql.SQL('delete from air_freight_rates where id in %s'),(tuple(data_f),))
-            cur.close()
-    conn.close()
-    # except Exception as e:
-    #     print(e)
 
 
         
