@@ -32,7 +32,7 @@ def execute_transaction_code(request):
 
     if not request_objects:
         raise HTTPException(
-            status_code=400, detail="air_freight_rate_request_ids are invalid"
+            status_code=404, detail="Invalid Rate Request"
         )
 
     air_freight_rate = None

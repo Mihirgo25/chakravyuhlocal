@@ -89,7 +89,7 @@ class AirFreightRateFeedback(BaseModel):
                 AirFreightRate.destination_country_id,
                 AirFreightRate.destination_continent_id,
                 AirFreightRate.destination_trade_id,
-                AirFreightRate.commodity,
+                AirFreightRate.commodity
             )
             .where(AirFreightRate.id == self.air_freight_rate_id)
             .first()
@@ -97,28 +97,28 @@ class AirFreightRateFeedback(BaseModel):
 
         if locations_data:
             origin_locations = [
-                str(locations_data.origin_airport_id),
-                str(locations_data.origin_counrtry_id),
-                str(locations_data.origin_continent_id),
-                str(locations_data.origin_trade_id),
+                locations_data.origin_airport_id,
+                locations_data.origin_counrtry_id,
+                locations_data.origin_continent_id,
+                locations_data.origin_trade_id,
             ]
-            origin_locations = [t for t in origin_locations if t is not None]
+            origin_locations = [str(t) for t in origin_locations if t is not None]
         else:
             origin_locations = []
 
         if locations_data:
             destination_locations = [
-                str(locations_data.destination_airport),
-                str(locations_data.destination_counrtry_id),
-                str(locations_data.destination_continent_id),
-                str(locations_data.destination_trade_id),
+                locations_data.destination_airport,
+                locations_data.destination_counrtry_id,
+                locations_data.destination_continent_id,
+                locations_data.destination_trade_id,
             ]
-            destination_locations = [t for t in destination_locations if t is not None]
+            destination_locations = [str(t) for t in destination_locations if t is not None]
         else:
             destination_locations = []
 
         supply_agents_list = get_partner_users_by_expertise(
-            "air_freight", origin_locations, destination_locations
+            service="air_freight", origin_location_ids = origin_locations, destination_location_ids = destination_locations
         )
 
         supply_agents_list = list(set(t["partner_user_id"] for t in supply_agents_list))
@@ -183,9 +183,11 @@ class AirFreightRateFeedback(BaseModel):
         variables_data['locations_data'] = locations_data[0]
 
         if reverted_rates:
-            reverted_airline = get_operators(id=str(reverted_rates.airline_id))[0]['short_name']
+            reverted_airline = get_operators(id=str(reverted_rates.airline_id))
             variables_data['changed_components'] = ''
-            variables_data['changed_components'] += f'with new airline {reverted_airline}' if str(reverted_rates.airline_id) != variables_data['locations_data']['airline_id'] else ""
+            if reverted_airline:
+                reverted_airline = reverted_airline[0]['short_name']
+                variables_data['changed_components'] += f'with new airline {reverted_airline}' if str(reverted_rates.airline_id) != variables_data['locations_data']['airline_id'] else ""
             variables_data['changed_components'] += f'with new price type {reverted_rates.price_type}' if reverted_rates.price_type != variables_data['locations_data']['price_type'] else ""
             variables_data['changed_components'] += '.'
         locations = [variables_data['locations_data']['origin_airport_id'],variables_data['locations_data']['destination_airport_id']]
@@ -313,7 +315,7 @@ class AirFreightRateFeedback(BaseModel):
             destination_airport = airports[1]
             notification_data = {
                 'type': 'platform_notification',
-                'user_id': air_freight_rate.procured_by_id,
+                'user_id': str(air_freight_rate.procured_by_id),
                 'service': 'air_freight_rate',
                 'service_id': str(air_freight_rate.id),
                 'template_name': 'freight_rate_disliked',
