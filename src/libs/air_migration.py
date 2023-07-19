@@ -680,11 +680,10 @@ def migrate_request_audits(audit):
     with conn:
         with conn.cursor() as cur:
             cur.execute(sql.SQL('select * from {table} where object_type = %s;').format(table=sql.Identifier('air_freight_rate_audits')),[audit])
-            results = cur
-            print(cur.fetchall())
+            results = cur.fetchall()
             if not columns:
                 columns = [col[0] for col in results.description]
-            Parallel(n_jobs=4)(delayed(delay_request_feebacks_audits)(row, columns) for row in results.fetchall())
+            Parallel(n_jobs=4)(delayed(delay_request_feebacks_audits)(row, columns) for row in results)
             cur.close()
     conn.close()
 
@@ -704,7 +703,6 @@ def delete_rates():
     file_path_r = os.path.join(ROOT_DIR, 'libs/delete.json')
     f_all_rate = open(file_path_r)
     data_f = json.load(f_all_rate)
-    data_f = ['004a7dc6-93e2-4cb5-a4b8-e6ee2b716dbb']
     conn = get_connection()
     # try:
     with conn:
