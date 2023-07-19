@@ -5,6 +5,7 @@ from database.db_session import rd
 from libs.parse_numeric import parse_numeric
 from micro_services.client import organization
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+processed_percent_hash = "process_percent_haulage_operation"
 
 
 def get_railway_route(origin_location_id, destination_location_id):
@@ -162,3 +163,11 @@ def adding_multiple_service_object(haulage_object,request):
     if not HaulageFreightRate.select().where(HaulageFreightRate.service_provider_id==request["service_provider_id"], HaulageFreightRate.rate_not_available_entry==False).exists():
         organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
     get_multiple_service_objects(haulage_object)
+
+    
+def processed_percent_key(self, id):
+    return f"haulage_rate_bulk_operation_{id}"
+
+def set_processed_percent_haulage_operation(processed_percent, id):
+    if rd:
+        rd.hset(processed_percent_hash, processed_percent_key(id), processed_percent)

@@ -25,10 +25,11 @@ def find_object(requirement):
     for key in object_params:
       if object_params[key]:
         query = query.where(attrgetter(key)(HaulageFreightRate) == object_params[key])
-    return query
+    return query.first()
 
 def get_object_params(requirement):
-    return {
+
+    objects = {
       'origin_location_id': requirement.get('origin_location_id'),
       'destination_location_id': requirement.get('destination_location_id'),
       'container_size': requirement.get('container_size'),
@@ -42,8 +43,9 @@ def get_object_params(requirement):
       'transport_modes_keyword': requirement.get('transport_modes'),
       'service_provider_id': requirement.get('service_provider_id'),
       'importer_exporter_id': requirement.get('importer_exporter_id'),
-      'shipping_line_id': requirement.get('shipping_line_id')
+      'shipping_line_id': requirement.get('shipping_line_id'),
     }
+    return {key: value for key, value in objects.items() if value is not None}
 
 def get_haulage_freight_rate(requirement):
     """
@@ -54,17 +56,16 @@ def get_haulage_freight_rate(requirement):
     
     if not all_fields_present(requirement):
         return {}
+    detail = {}
     
     object = find_object(requirement)
-    detail = {"Rate": "Rate not found"}
     if object:
-        detail = list(object.dicts())[0]
-        object_params= get_object_params(requirement)
-        object_params['transport_modes'] = requirement['transport_modes']
-        object = HaulageFreightRate(**object_params)
-        object.set_origin_location_ids
-        object.set_destination_location_ids
-        object.possible_charge_codes
-        detail['haulage_freight_charge_codes'] = object.__data__
+        detail = object.detail()
+    object_params= get_object_params(requirement)
+    object_params['transport_modes'] = requirement['transport_modes']
+    object = HaulageFreightRate(**object_params)
+    object.set_locations()
+    charges_code = object.possible_charge_codes()
+    detail['haulage_freight_charge_codes'] = charges_code
 
     return detail

@@ -11,7 +11,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import Haul
 from services.haulage_freight_rate.interactions.list_haulage_freight_rates import list_haulage_freight_rates
 from services.haulage_freight_rate.interactions.delete_haulage_freight_rate import delete_haulage_freight_rate
 from services.haulage_freight_rate.interactions.update_haulage_freight_rate import update_haulage_freight_rate
-from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import get_progress_percent
+from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import get_progress_percent, processed_percent_key
 from libs.parse_numeric import parse_numeric
 from fastapi.encoders import jsonable_encoder
 
@@ -43,14 +43,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
     
     def validate_delete_rate_data(self):
         return True
-    
-    def processed_percent_key(self, id):
-        return f"haulage_rate_bulk_operation_{id}"
 
-    def set_processed_percent_haulage_operation(self, processed_percent, id):
-        processed_percent_hash = "process_percent_haulage_operation"
-        if rd:
-            rd.hset(processed_percent_hash, self.processed_percent_key(id), processed_percent)
     
     def validate_add_markup_data(self):
         data = self.data
@@ -81,11 +74,11 @@ class HaulageFreightRateBulkOperation(BaseModel):
     def perform_delete_rate_action(self,sourced_by_id,procured_by_id):
         data = self.data
 
-        filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
+        filters = (data['filters'] or {})
+        filters["service_provider_id"] = self.service_provider_id
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
-        haulage_freight_rates = list_haulage_freight_rates(filters = filters, return_query = True, page_limit = page_limit, pagination_data_required = False)['list']
-        haulage_freight_rates = list(haulage_freight_rates.dicts())
+        haulage_freight_rates = list_haulage_freight_rates(filters = filters, page_limit = page_limit, pagination_data_required = False)['list']
         total_count = len(haulage_freight_rates)
         count = 0
 
@@ -94,7 +87,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
             if HaulageFreightRateAudit.get_or_none(bulk_operation_id=self.id,object_id=freight["id"]):
                 self.progress = int((count * 100.0) / total_count)
-                self.set_processed_percent_haulage_operation(self.progress, self.id)
+                processed_percent_key(self.progress, self.id)
                 continue
 
             delete_haulage_freight_rate({
@@ -106,7 +99,7 @@ class HaulageFreightRateBulkOperation(BaseModel):
             })
 
             self.progress = int((count * 100.0) / total_count)
-            self.set_processed_percent_haulage_operation(self.progress, self.id)
+            processed_percent_key(self.progress, self.id)
         self.save()
 
     def perform_batch_action(self, batch_query, count, total_count, total_affected_rates, sourced_by_id, procured_by_id):
