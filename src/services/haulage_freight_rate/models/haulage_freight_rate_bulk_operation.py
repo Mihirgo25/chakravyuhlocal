@@ -109,10 +109,10 @@ class HaulageFreightRateBulkOperation(BaseModel):
             self.set_processed_percent_haulage_operation(self.progress, self.id)
         self.save()
 
-    def perform_batch_action(self, batch_query, count, total_count, total_affected_rates, sourced_by_id, procured_by_id):
+    def perform_batch_action(self, batch_data, count, total_count, total_affected_rates, sourced_by_id, procured_by_id):
         data = self.data
 
-        haulage_freight_rates = jsonable_encoder(list(batch_query.dicts()))
+        haulage_freight_rates = batch_data
 
         for freight in haulage_freight_rates:
             count = count + 1
@@ -182,16 +182,16 @@ class HaulageFreightRateBulkOperation(BaseModel):
 
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id})
 
-        haulage_freight_rates = list_haulage_freight_rates(filters = filters, return_query = True, page_limit = None, pagination_data_required = False)['list']
-        total_count = haulage_freight_rates.count()
+        haulage_freight_rates = list_haulage_freight_rates(filters = filters, page_limit = None, pagination_data_required = False)['list']
+        total_count = len(haulage_freight_rates)
 
         count = 0
 
         while count < total_count:
-            batch_query = haulage_freight_rates.limit(BATCH_SIZE)
-            if not batch_query.exist():
+            batch_data = haulage_freight_rates[count:count+BATCH_SIZE]
+            if not batch_data:
                 break
-            count, total_affected_rates = self.perform_batch_action(batch_query, count, total_count, total_affected_rates, sourced_by_id, procured_by_id)
+            count, total_affected_rates = self.perform_batch_action(batch_data, count, total_count, total_affected_rates, sourced_by_id, procured_by_id)
 
         data['total_affected_rates'] = total_affected_rates
         self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
