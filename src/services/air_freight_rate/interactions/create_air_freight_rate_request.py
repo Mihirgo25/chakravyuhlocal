@@ -200,8 +200,8 @@ def send_notification_for_new_search_made_for_rates(request_object, airports, su
         "service_id": str(request_object.source_id),
         "template_name": "air_freight_rates_not_available_for_new_search",
         "variables": {
-            "origin_port": origin_airport,
-            "destination_port": destination_airport,
+            "origin_port": origin_airport.get('display_name'),
+            "destination_port": destination_airport.get('display_name'),
             "commodity": commodity,
         },
     }
