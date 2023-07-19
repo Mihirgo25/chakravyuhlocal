@@ -416,7 +416,6 @@ class CreateAirFreightRateParams(BaseModel):
     source: str = 'manual'
     flight_uuid: str = None
     air_freight_rate_request_id: str = None
-    is_weight_slabs_required:bool = False
 
 class LineItem(BaseModel):
     code: str
