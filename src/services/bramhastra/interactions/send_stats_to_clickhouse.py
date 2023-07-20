@@ -1,6 +1,18 @@
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
+    FeedbackFclFreightRateStatistic,
+)
+from services.bramhastra.models.quotation_fcl_freight_rate_statistic import (
+    QuotationFclFreightRateStatistic,
+)
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic,
+)
+from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
+    SpotSearchFclFreightRateStatistic,
+)
 from services.bramhastra.clickhouse.connect import get_clickhouse_client
 from services.bramhastra.helpers.post_fcl_freight_helper import json_encoder_for_clickhouse
 
@@ -99,3 +111,138 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     client.command(query)
     
     FclFreightRateStatistic.delete().execute()
+
+
+def send_feedback_stats_to_clickhouse(client = get_clickhouse_client()):
+    query = (
+        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
+    )
+
+    values = []
+    for rate in json_encoder_for_clickhouse(list(FeedbackFclFreightRateStatistic.select().dicts())):
+        value = value = f"""(
+        {rate['id']},
+        '{rate['fcl_freight_rate_statistic_id']}',
+        '{rate['feedback_id']}',
+        '{rate['validity_id']}',
+        '{rate['rate_id']}',
+        {f"'{rate['source']}'" if rate['source'] is not None else 'NULL'},
+        {f"'{rate['source_id']}'" if rate['source_id'] is not None else 'NULL'},
+        {f"'{rate['performed_by_id']}'" if rate['performed_by_id'] is not None else 'NULL'},
+        {f"'{rate['performed_by_org_id']}'" if rate['performed_by_org_id'] is not None else 'NULL'},
+        '{rate['created_at']}',
+        '{rate['updated_at']},
+        {f"'{rate['importer_exporter_id']}'" if rate['importer_exporter_id'] is not None else 'NULL'},
+        {f"'{rate['service_provider_id']}'" if rate['service_provider_id'] is not None else 'NULL'},
+        '{rate['feedback_type']}',
+        {f"'{rate['closed_by_id']}'" if rate['closed_by_id'] is not None else 'NULL'},
+        {rate['serial_id']},
+        {rate['sign']},
+        {rate['version']}
+)"""
+        values.append(value)
+        
+    query += ", ".join(values)
+    print(values, '><><><><><><>><><><><><><><><><><><><><><><><><><><><><><')
+    client.command(query)
+    
+    FeedbackFclFreightRateStatistic.delete().execute()
+breakpoint()
+def send_quotation_stats_to_clickhouse(client=get_clickhouse_client):
+    query = (
+        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
+    )
+
+    values = []
+    for rate in json_encoder_for_clickhouse(list(QuotationFclFreightRateStatistic.select().dicts())):
+        value = value = f"""(
+        {rate['id']},
+        '{rate['validity_id']}',
+        '{rate['rate_id']}',
+        '{rate['spot_search_id']}',
+        '{rate['spot_search_fcl_customs_services_id']}',
+        '{rate['checkout_id']}',
+        {f"'{rate['checkout_fcl_freight_rate_services_id']}'" if rate['checkout_fcl_freight_rate_services_id'] is not None else 'NULL'},
+        '{rate['sell_quotation_id']}',
+        '{rate['buy_quotation_id']}',
+        {f"'{rate['shipment_id']}'" if rate['shipment_id'] is not None else 'NULL'},
+        {f"'{rate['shipment_fcl_freight_rate_services_id']}'" if rate['shipment_fcl_freight_rate_services_id'] is not None else 'NULL'},
+        '{rate['cancellation_reason']}',
+        '{rate['is_active']}',
+        '{rate['created_at']}',
+        '{rate['updated_at']}',
+        '{rate['status']}',
+        {rate['sign']},
+        {rate['version']},
+)"""
+        values.append(value)
+        
+    query += ", ".join(values)
+    client.command(query)
+    
+    QuotationFclFreightRateStatistic.delete().execute()
+
+def send_shipment_stats_to_clickhouse(client=get_clickhouse_client):
+    query = (
+        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
+    )
+
+    values = []
+    for rate in json_encoder_for_clickhouse(list(ShipmentFclFreightRateStatistic.select().dicts())):
+        value = value = f"""(
+        {rate['id']},
+        '{rate['spot_search_id']}',
+        '{rate['spot_search_fcl_customs_services_id']}',
+        '{rate['checkout_id']}',
+        {f"'{rate['checkout_fcl_freight_rate_services_id']}'" if rate['checkout_fcl_freight_rate_services_id'] is not None else 'NULL'},
+        '{rate['sell_quotation_id']}',
+        '{rate['buy_quotation_id']}',
+        '{rate['validity_id']}',
+        '{rate['rate_id']}',
+        {f"'{rate['shipment_id']}'" if rate['shipment_id'] is not None else 'NULL'},
+        {f"'{rate['shipment_fcl_freight_rate_services_id']}'" if rate['shipment_fcl_freight_rate_services_id'] is not None else 'NULL'},
+        '{rate['cancellation_reason']}',
+        '{rate['is_active']}',
+        '{rate['created_at']}',
+        '{rate['updated_at']}',
+        '{rate['status']}',
+        {rate['sign']},
+        {rate['version']}
+)"""
+        values.append(value)
+        
+    query += ", ".join(values)
+    client.command(query)
+    
+    ShipmentFclFreightRateStatistic.delete().execute()
+
+def send_spot_search_stats_to_clickhouse(client=get_clickhouse_client):
+    query = (
+        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
+    )
+
+    values = []
+    for rate in json_encoder_for_clickhouse(list(SpotSearchFclFreightRateStatistic.select().dicts())):
+        value = value = f"""(
+        {rate['id']},
+        {rate['fcl_freight_rate_statistic_id']},
+        '{rate['spot_search_id']}',
+        '{rate['spot_search_fcl_freight_services_id']}',
+        {f"'{rate['checkout_id']}'" if rate['checkout_id'] is not None else 'NULL'},
+        {f"'{rate['checkout_fcl_freight_rate_services_id']}'" if rate['checkout_fcl_freight_rate_services_id'] is not None else 'NULL'},
+        {f"'{rate['validity_id']}'" if rate['validity_id'] is not None else 'NULL'},
+        {f"'{rate['rate_id']}'" if rate['rate_id'] is not None else 'NULL'},
+        {f"'{rate['sell_quotation_id']}'" if rate['sell_quotation_id'] is not None else 'NULL'},
+        {f"'{rate['buy_quotation_id']}'" if rate['buy_quotation_id'] is not None else 'NULL'},
+        {f"'{rate['shipment_id']}'" if rate['shipment_id'] is not None else 'NULL'},
+        '{rate['created_at']}',
+        '{rate['updated_at']}',
+        {rate['sign']},
+        {rate['version']}
+)"""
+        values.append(value)
+        
+    query += ", ".join(values)
+    client.command(query)
+    
+    SpotSearchFclFreightRateStatistic.delete().execute()
