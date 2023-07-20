@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
-from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, DEFAULT_SERVICE_PROVIDER_ID
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 from configs.env import DEFAULT_USER_ID
 
 def add_rate_properties(request,freight_id):
@@ -320,9 +320,9 @@ def get_bulk_operation_params(request):
     
     params = {}
     params["performed_by_type"] = "agent"
-    params["performed_by_id"] = request.get("performed_by_id")
-    params["procured_by_id"] = request.get("procured_by_id")
-    params["sourced_by_id"] = request.get("sourced_by_id")
+    params["performed_by_id"] = DEFAULT_USER_ID
+    params["procured_by_id"] = DEFAULT_USER_ID
+    params["sourced_by_id"] = DEFAULT_USER_ID
     params["extend_freight_rate"] = data
     
     return params

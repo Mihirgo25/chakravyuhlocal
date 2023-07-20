@@ -1123,6 +1123,8 @@ class FclFreightRateBulkOperation(BaseModel):
             'service_provider_id':True,
             'cogo_entity_id': True,
             'rate_type': True,
+            'sourced_by_id': True,
+            'procured_by_id': True
         }
         
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
@@ -1148,12 +1150,9 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.set_progress_percent(progress)
                 continue
 
-            create_params = {key: value for key, value in freight.items() if key in ['origin_port_id', 'origin_main_port_id', 'destination_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'weight_limit', 'cogo_entity_id', 'rate_type', 'mode']}
+            create_params = {key: value for key, value in freight.items() if key in ['origin_port_id', 'origin_main_port_id', 'destination_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'weight_limit', 'cogo_entity_id', 'rate_type', 'mode', 'sourced_by_id', 'procured_by_id']}
 
             create_params['performed_by_id'] = self.performed_by_id
-            create_params['sourced_by_id'] = sourced_by_id
-            create_params['procured_by_id'] = procured_by_id
-            create_params['cogo_entity_id'] = cogo_entity_id
             create_params['bulk_operation_id'] = self.id
 
             for validity_object in validities:
