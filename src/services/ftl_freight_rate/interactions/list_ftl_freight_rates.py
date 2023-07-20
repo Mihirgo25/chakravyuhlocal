@@ -68,7 +68,7 @@ def get_data(query):
         object['unit'] = line_item['unit']
         object['currency'] = line_item['currency']
 
-      final_data.append(object)
+    final_data.append(object)
   return final_data
 
 def get_pagination_data(query, page, page_limit, pagination_data_required, total_count):
