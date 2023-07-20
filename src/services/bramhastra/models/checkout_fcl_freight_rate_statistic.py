@@ -12,7 +12,6 @@ class BaseModel(Model):
 class CheckoutFclFreightRateStatistic(BaseModel):
     id = BigAutoField()
     spot_search_id = UUIDField()
-    spot_search_fcl_customs_services_id = UUIDField()
     checkout_id = UUIDField()
     checkout_fcl_freight_rate_services_id = UUIDField(null=True)
     validity_id = UUIDField()
