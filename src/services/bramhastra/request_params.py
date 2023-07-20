@@ -84,21 +84,80 @@ class ApplyFclFreightRateStatistic(BaseModel):
 
 # Apply Spot Search Fcl Freight Statistics
 
+class Rates(BaseModel):
+    rate_id: str
+    validity_id: str
+    payment_term: str
+    schedule_type: str = 'direct'
+    
+    @validator("payment_term", pre=True)
+    def convert_invalid_payment_term(cls, v):
+        if not v:
+            v = "prepaid"
+        return v
+    
+    @validator("schedule_type", pre=True)
+    def convert_invalid_schedule_type(cls, v):
+        if not v:
+            v = "direct"
+        return v
 
-class CreateSpotSearchFclFreightRateStatistic(BaseModel):
-    pass
 
+class SpotSearchFclFreightRateStatistic(BaseModel):
+    spot_search_id: str
+    spot_search_fcl_freight_services_id: str
+    rates: list[Rates]
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    
 
-class UpdateSpotSearchFclFreightRateStatistic(BaseModel):
-    pass
+class ApplySpotSearchFclFreightRateStatistic(BaseModel):
+    action: str
+    params: SpotSearchFclFreightRateStatistic
+    
+    
+# Apply Checkout Fcl Freight Statistics
 
-
-class CreateCheckoutFclFreightRateStatistic(BaseModel):
-    pass
+class CheckoutFclFreightRateStatistic(BaseModel):
+    checkout_id: str
+    checkout_fcl_freight_services_id: str
+    rates: list[Rates]
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
 
 
 class UpdateCheckoutFclFreightRateStatistic(BaseModel):
     pass
+
+
+class ApplyCheckoutFclFreightRateStatistic(BaseModel):
+    params: CheckoutFclFreightRateStatistic = None
+    action: str
+    
+    
+# Apply Feedback Fcl Freight Statistics
+
+class FeedbackFclFreightRateStatistic(BaseModel):
+    feedback_id: str = Field(alias='id')
+    validity_id: str
+    rate_id: str = Field(alias='fcl_freight_rate_id')
+    feedback_type: str
+    source: str
+    source_id: str
+    serial_id: str = None
+    importer_exporter_id: str = None
+    service_provider_id: str = None
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    performed_by_id: str
+    performed_by_org_id: str
+    closed_by_id: str = None
+    likes_count: int
+    dislikes_count: int
+
+class ApplyFeedbackFclFreightRateStatistics(BaseModel):
+    action: str
+    params: FeedbackFclFreightRateStatistic = None
 
 
 class CreateQuotationFclFreightRateStatistic(BaseModel):
@@ -117,24 +176,6 @@ class UpdateShipmentFclFreightRateStatistic(BaseModel):
     pass
 
 
-class CreateFeedbackFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class UpdateFeedbackFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class ApplySpotSearchFclFreightRateStatistic(BaseModel):
-    create_params: CreateSpotSearchFclFreightRateStatistic = None
-    update_params: UpdateSpotSearchFclFreightRateStatistic = None
-
-
-class ApplyCheckoutFclFreightRateStatistic(BaseModel):
-    create_params: CreateCheckoutFclFreightRateStatistic = None
-    update_params: UpdateCheckoutFclFreightRateStatistic = None
-
-
 class ApplyQuotationFclFreightRateStatistics(BaseModel):
     create_params: CreateQuotationFclFreightRateStatistic = None
     update_params: UpdateQuotationFclFreightRateStatistic = None
@@ -143,8 +184,3 @@ class ApplyQuotationFclFreightRateStatistics(BaseModel):
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
     create_params: CreateShipmentFclFreightRateStatistic = None
     update_params: UpdateShipmentFclFreightRateStatistic = None
-
-
-class ApplyFeedbackFclFreightRateStatistics(BaseModel):
-    create_params: CreateFeedbackFclFreightRateStatistic = None
-    update_params: UpdateFeedbackFclFreightRateStatistic = None

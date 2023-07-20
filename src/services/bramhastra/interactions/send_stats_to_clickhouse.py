@@ -2,7 +2,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from services.bramhastra.clickhouse.connect import get_clickhouse_client
-from services.bramhastra.helpers.fcl_freight import json_encoder
+from services.bramhastra.helpers.fcl_freight import json_encoder_for_clickhouse
 
 
 def send_stats_to_clickhouse(client = get_clickhouse_client()):
@@ -11,7 +11,7 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     )
 
     values = []
-    for rate in json_encoder(list(FclFreightRateStatistic.select().dicts())):
+    for rate in json_encoder_for_clickhouse(list(FclFreightRateStatistic.select().dicts())):
         value = value = f"""(
     {rate['id']},
     '{rate['identifier']}',

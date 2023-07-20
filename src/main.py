@@ -25,6 +25,7 @@ from services.extensions.extension_router import extension_router
 from services.fcl_customs_rate.fcl_customs_rate_router import fcl_customs_router
 from services.fcl_cfs_rate.fcl_cfs_router import fcl_cfs_router
 from services.air_freight_rate.air_freight_rate_router import air_freight_router
+from services.bramhastra.router import bramhastra
 from micro_services.client import *
 from database.db_support import get_db
 from fastapi.openapi.utils import get_openapi
@@ -61,8 +62,8 @@ app.include_router(prefix = "/fcl_freight_rate", router=haulage_freight_router, 
 app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=['Web Extensions'])
 app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
 app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
-
 app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
+app.include_router(prefix = "/fcl_freight_rate",router = bramhastra, tags = ['Brahmastra'])
 
 
 app.add_middleware(
