@@ -205,6 +205,7 @@ def get_data(query,revenue_desk_data_required):
     for rate in rates:
       validity = rate['validity']
       rate['weight_slabs'] = validity['weight_slabs']
+      validity['min_price'] = int(validity['min_price'])
       if validity.get('status') == None:
         validity['status'] = True
       if validity.get('density_category')==None:
