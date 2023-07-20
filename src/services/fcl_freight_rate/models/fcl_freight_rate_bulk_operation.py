@@ -389,7 +389,7 @@ class FclFreightRateBulkOperation(BaseModel):
             
         return count, total_affected_rates
         
-    def perform_extend_validity_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_extend_validity_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
 
@@ -469,7 +469,7 @@ class FclFreightRateBulkOperation(BaseModel):
             self.set_progress_percent(progress)
         return count, total_affected_rates
 
-    def perform_delete_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_delete_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
 
@@ -520,7 +520,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
 
 
-    def perform_delete_local_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_delete_local_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
         
@@ -660,7 +660,7 @@ class FclFreightRateBulkOperation(BaseModel):
         
         
         
-    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_add_freight_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
                         
@@ -725,7 +725,7 @@ class FclFreightRateBulkOperation(BaseModel):
         self.save()  
 
 
-    def perform_add_local_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_add_local_rate_markup_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
 
@@ -805,7 +805,7 @@ class FclFreightRateBulkOperation(BaseModel):
         self.save()
         
 
-    def perform_update_free_days_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_update_free_days_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
 
@@ -853,7 +853,7 @@ class FclFreightRateBulkOperation(BaseModel):
         self.data = data
         self.save()  
 
-    def perform_add_freight_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_add_freight_line_item_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
 
@@ -962,7 +962,7 @@ class FclFreightRateBulkOperation(BaseModel):
         self.save()  
 
 
-    def perform_update_free_days_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_update_free_days_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         total_affected_rates = 0
 
@@ -1007,7 +1007,7 @@ class FclFreightRateBulkOperation(BaseModel):
         self.data = data
         self.save()
 
-    def perform_update_commodity_surcharge_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_update_commodity_surcharge_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         data = self.data
         
         filters = data['filters'] | ({ 'service_provider_id': self.service_provider_id, 'importer_exporter_present': False, 'partner_id': cogo_entity_id })
@@ -1049,7 +1049,7 @@ class FclFreightRateBulkOperation(BaseModel):
         self.save()
 
 
-    def perform_update_weight_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_update_weight_limit_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
         
@@ -1227,7 +1227,7 @@ class FclFreightRateBulkOperation(BaseModel):
 
 
 
-    def perform_extend_freight_rate_to_icds_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_extend_freight_rate_to_icds_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
         
