@@ -252,6 +252,7 @@ def create_haualge_freight_rate_feedback_api(
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
+        request.transport_mode = 'haulage'
         data = create_haulage_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
@@ -799,8 +800,29 @@ def list_trailer_freight_rate_requests_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
-    
 
+@haulage_freight_router.post("/delete_trailer_freight_rate_request")
+def delete_haulage_freight_rates_request_api(
+    request: DeleteHaulageFreightRateRequest, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        delete_rate = delete_haulage_freight_rate_request(
+            request.dict(exclude_none=True)
+        )
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+    
 @haulage_freight_router.get("/list_trailer_freight_rate_feedbacks")
 def list_trailer_freight_rate_feedbacks_api(
     filters: str = None,
