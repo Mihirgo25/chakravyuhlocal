@@ -239,7 +239,8 @@ class FclFreightRateBulkOperation(BaseModel):
 
     def validate_extend_freight_rate_data(self):
         data = self.data
-        
+        if data.get("extend_for_flash_booking"):
+            return
 
 
         if  [x for x in data['commodities'] if x not in ALL_COMMODITIES]!=[]:
@@ -1095,7 +1096,7 @@ class FclFreightRateBulkOperation(BaseModel):
         self.save()  
             
 
-    def perform_extend_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id):
+    def perform_extend_freight_rate_action(self, sourced_by_id, procured_by_id, cogo_entity_id=None):
         total_affected_rates = 0
         data = self.data
         
@@ -1152,6 +1153,7 @@ class FclFreightRateBulkOperation(BaseModel):
             create_params['sourced_by_id'] = sourced_by_id
             create_params['procured_by_id'] = procured_by_id
             create_params['cogo_entity_id'] = cogo_entity_id
+            create_params['bulk_operation_id'] = self.id
 
             for validity_object in validities:
                 create_params['validity_start'] = validity_object['validity_start']
@@ -1173,7 +1175,11 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = common.get_money_exchange_for_fcl({'from_currency':data['markup_currency'], 'to_currency':line_item['currency'], 'price':markup})['price']
 
                 if data['markup_type'].lower() == 'absolute':
-                    line_item['price'] = markup
+                    if data.get("extend_for_flash_booking") and markup > line_item["price"]:
+                        line_item["original_price"] = line_item["price"] if "original_price" not in line_item else line_item.get("original_price")
+                        line_item["price"] = markup
+                    else:
+                        line_item['price'] = markup
                 else:
                     line_item['price'] = line_item['price'] + markup
 
@@ -1181,25 +1187,30 @@ class FclFreightRateBulkOperation(BaseModel):
 
                 create_params['validity_start'] = max(datetime.strptime(validity_object["validity_start"], '%Y-%m-%d'), datetime.now())
                 create_params['validity_end'] = datetime.strptime(validity_object["validity_end"], '%Y-%m-%d')
+                
+                if data.get("extend_for_flash_booking"):
+                    freight_rate_object = create_params | ({ 'source': 'bulk_operation' })
+                    id = create_fcl_freight_rate_data(freight_rate_object)
+                    total_affected_rates += str(id) != str(freight["id"])
+                    continue
+                
                 for commodity in data['commodities']:
                     freight_rate_object = create_params | ({ 'commodity': commodity, 'source': 'bulk_operation' })
                     
                     id = create_fcl_freight_rate_data(freight_rate_object)
-                    total_affected_rates += str(id) != str(freight.id)
+                    total_affected_rates += str(id) != str(freight["id"])
                     
                 for container_size in data['container_sizes']:
                     freight_rate_object = create_params | ({ 'container_size': container_size, 'source': 'bulk_operation' })
                     
                     id = create_fcl_freight_rate_data(freight_rate_object)
-                    total_affected_rates += str(id) != str(freight.id)
+                    total_affected_rates += str(id) != str(freight["id"])
                     
                 for container_type in data['container_types']:
                     freight_rate_object = create_params | ({ 'container_type': container_type, 'source': 'bulk_operation' })
                     
                     id = create_fcl_freight_rate_data(freight_rate_object)
-                    total_affected_rates += str(id) != str(freight.id)
-                    
-                create_audit(self.id)
+                    total_affected_rates += str(id) != str(freight["id"])
 
             
             progress = int((count * 100.0) / total_count)
@@ -1316,10 +1327,6 @@ class FclFreightRateBulkOperation(BaseModel):
         data['total_affected_rates'] = total_affected_rates
         self.progress = 100 if count == total_count else get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
-        self.save()  
+        self.save()
+        
 
-
-def create_audit(id):
-    FclFreightRateAudit.create(
-        bulk_operation_id = id
-    )

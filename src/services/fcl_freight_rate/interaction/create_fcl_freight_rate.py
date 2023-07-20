@@ -8,7 +8,8 @@ from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
-from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, DEFAULT_SERVICE_PROVIDER_ID
+from configs.env import DEFAULT_USER_ID
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -193,6 +194,8 @@ def create_fcl_freight_rate(request):
     
     freight.update_platform_prices_for_other_service_providers()
 
+    if request.get("source") == "flash_booking":
+        id = create_fcl_freight_rate_bulk_operation_func(request)
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
      
@@ -294,6 +297,35 @@ def validate_value_props(v_props):
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
 
+def create_fcl_freight_rate_bulk_operation_func(request):
+    from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
+    return create_fcl_freight_rate_bulk_operation(get_bulk_operation_params(request))
+
+def get_bulk_operation_params(request):
+    data = {}
+    data["filters"] = {
+        "origin_port_id": request.get("origin_port_id"),
+        "origin_main_port_id": request.get("origin_main_port_id"),
+        "destination_port_id": request.get("destination_port_id"),
+        "destination_main_port_id": request.get("destination_main_port_id"),
+        "container_size": request.get("container_size"),
+        "container_type": request.get("container_type"),
+        "commodity": request.get("commodity"),
+        "shipping_line_id": request.get("shipping_line_id")
+    }
+    data["line_item_code"] = "BAS"
+    data["markup_type"] = "absolute"
+    data["markup"] = [val["price"] for val in request.get("line_items") if val["code"] == "BAS"][0]
+    data["extend_for_flash_booking"] = True
+    
+    params = {}
+    params["performed_by_type"] = "agent"
+    params["performed_by_id"] = request.get("performed_by_id")
+    params["procured_by_id"] = request.get("procured_by_id")
+    params["sourced_by_id"] = request.get("sourced_by_id")
+    params["extend_freight_rate"] = data
+    
+    return params
 
 
     
