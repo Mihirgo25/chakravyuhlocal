@@ -1,6 +1,6 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_feedback import HaulageFreightRateFeedback
-from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from libs.get_filters import get_filters
+from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from libs.get_applicable_filters import get_applicable_filters
 from libs.json_encoder import json_encoder
 from database.rails_db import get_partner_user_experties
@@ -88,6 +88,21 @@ def get_data(query, spot_search_details_required, booking_details_required):
     if not booking_details_required:
         query = query.select()
     data = json_encoder(list(query.dicts()))
+    haulage_freight_rate_ids = []
+    for rate in data:
+        if rate['haulage_freight_rate_id']:
+            haulage_freight_rate_ids.append((rate['haulage_freight_rate_id']))
+        if rate.get('reverted_rate_id'):
+            haulage_freight_rate_ids.append((rate['reverted_rate_id']))
+    haulage_freight_rates = HaulageFreightRate.select(HaulageFreightRate.id,
+                                            HaulageFreightRate.origin_location,
+                                            HaulageFreightRate.destination_location,
+                                            HaulageFreightRate.commodity,
+                                            HaulageFreightRate.line_items,
+            ).where(HaulageFreightRate.id.in_(haulage_freight_rate_ids))
+    haulage_freight_rates = json_encoder(list(haulage_freight_rates.dicts()))
+    haulage_freight_rate_mappings = {k['id']: k for k in haulage_freight_rates}
+
     service_provider_ids = []
     for object in data:
         service_provider_ids.append(object.get('service_provider_id'))
@@ -95,8 +110,8 @@ def get_data(query, spot_search_details_required, booking_details_required):
     service_providers_hash = {}
     if len(service_provider_ids):
         service_providers = get_organization(service_provider_ids)
-        for sp in service_providers:
-            service_providers_hash[sp['id']] = sp
+        for service_provider in service_providers:
+            service_providers_hash[service_provider['id']] = service_provider
     spot_search_hash = {}
     new_data = []
     if spot_search_details_required:
@@ -106,6 +121,13 @@ def get_data(query, spot_search_details_required, booking_details_required):
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for object in data:
+        rate = haulage_freight_rate_mappings.get((object.get('haulage_freight_rate_id')))
+        if rate:
+            object["origin_location"] = rate.get("origin_location")
+            object["destination_location"] = rate.get("destination_location")
+            object["commodity"] = rate.get("commodity")
+            object["price"] = sum(p['price'] for p in rate.get("line_items")) if rate.get("line_items") else None
+            object["currency"] = rate["line_items"][0].get('currency') if rate["line_items"] else None
         service_provider = object.get('service_provider_id', None)
         if service_provider:
             object['service_provider'] = service_providers_hash.get(service_provider)

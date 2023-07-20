@@ -1,6 +1,7 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_request import (
     HaulageFreightRateRequest,
 )
+from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from micro_services.client import *
 from math import ceil
 from peewee import fn
@@ -211,6 +212,19 @@ def get_stats(filters, is_stats_required, performed_by_id):
 def get_data(query):
     spot_search_hash = {}
     data = list(query.dicts())
+    haulage_freight_rate_ids = []
+    for rate in data:
+        if rate.get('reverted_rate_id'):
+            haulage_freight_rate_ids.append((rate['reverted_rate_id']))
+    haulage_freight_rates = HaulageFreightRate.select(HaulageFreightRate.id,
+                                            HaulageFreightRate.origin_location,
+                                            HaulageFreightRate.destination_location,
+                                            HaulageFreightRate.commodity,
+                                            HaulageFreightRate.line_items,
+            ).where(HaulageFreightRate.id.in_(haulage_freight_rate_ids))
+    haulage_freight_rates = json_encoder(list(haulage_freight_rates.dicts()))
+    haulage_freight_rate_mappings = {k['id']: k for k in haulage_freight_rates}
+
     spot_search_ids = list(set([str(row["source_id"]) for row in data]))
     try:
         spot_search_data = spot_search.list_spot_searches(
@@ -227,9 +241,17 @@ def get_data(query):
             "service_details": search.get("service_details"),
         }
 
-    for value in data:
-        if str(value["source_id"]) in spot_search_hash:
-            value["spot_search"] = spot_search_hash[str(value["source_id"])]
+    for object in data:
+        rate = haulage_freight_rate_mappings.get((object.get('haulage_freight_rate_id')))
+        if rate:
+            object["origin_location"] = rate.get("origin_location")
+            object["destination_location"] = rate.get("destination_location")
+            object["commodity"] = rate.get("commodity")
+            object["price"] = sum(p['price'] for p in rate.get("line_items")) if rate.get("line_items") else None
+            object["currency"] = rate["line_items"][0].get('currency') if rate["line_items"] else None
+    
+        if str(object["source_id"]) in spot_search_hash:
+            object["spot_search"] = spot_search_hash[str(object["source_id"])]
         else:
-            value["spot_search"] = {}
+            object["spot_search"] = {}
     return data
