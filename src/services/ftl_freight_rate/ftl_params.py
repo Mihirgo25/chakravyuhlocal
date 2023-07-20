@@ -157,14 +157,14 @@ class UpdateFtlFreightRateRequest(BaseModel):
     closing_remarks: str
     status: str = None
     remarks: str = None
-    
-    
+
+
 class DeleteFtlFreightRateRequest(BaseModel):
     ftl_freight_rate_request_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
     performed_by_type: str = None
-    
+
 class CreateFtlFreightRateNotAvailable(BaseModel):
     origin_location_id: str
     origin_cluster_id: str = None
@@ -193,7 +193,7 @@ class UpdateFtlFreightRate(BaseModel):
     bulk_operation_id: str = None
     truck_body_type: str
     transit_time: int
-    detension_free_time: int
+    detention_free_time: int
     validity_start: datetime
     validity_end: datetime
     minimum_chargeable_weight: float = None
@@ -254,7 +254,7 @@ class CreateBulkOperation(BaseModel):
     sourced_by_id:str
     delete_rate: DeleteRate = None
     add_markup: AddMarkup = None
-    
+
 class ExtendFtlFreightRates(BaseModel):
     performed_by_id: str
     performed_by_type: str = None
@@ -276,4 +276,3 @@ class ExtendFtlFreightRates(BaseModel):
     line_items: list[FtlLineItem]
     ftl_freight_rate_request_id: str = None
 
-    
