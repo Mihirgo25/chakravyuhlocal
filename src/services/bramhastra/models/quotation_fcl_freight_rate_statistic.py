@@ -24,11 +24,11 @@ class QuotationFclFreightRateStatistic(BaseModel):
     shipment_fcl_freight_rate_services_id = UUIDField(null=True)
     cancellation_reason = CharField(default = '')
     is_active = CharField()
-    created_at = DateTimeTZField()
-    updated_at = DateTimeTZField()
-    status = CharField()
+    created_at = DateTimeTZField(default = datetime.utcnow())
+    updated_at = DateTimeTZField(default = datetime.utcnow())
+    status = CharField(default = 'active')
     sign = IntegerField(default=1)
-    version = IntegerField()
+    version = IntegerField(default=1)
 
     class Meta:
         table_name = "quotation_fcl_freight_rate_statistics"

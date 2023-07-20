@@ -98,5 +98,11 @@ class FclFreightRateStatistic(BaseModel):
         self.validity_updated_at = datetime.utcnow()
         return super(FclFreightRateStatistic, self).save(*args, **kwargs)
 
+    def update(self, params):
+        for k, v in params.items():
+            setattr(self, k, v)
+        self.save()
+        pass
+
     class Meta:
         table_name = "fcl_freight_rate_statistics"

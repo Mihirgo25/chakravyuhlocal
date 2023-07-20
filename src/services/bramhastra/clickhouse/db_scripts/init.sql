@@ -10,25 +10,25 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     schedule_type FixedString(256),
     origin_port_id UUID,
     destination_port_id UUID,
-    origin_main_port_id UUID DEFAULT NULL,
-    destination_main_port_id UUID DEFAULT NULL,
+    origin_main_port_id UUID  ,
+    destination_main_port_id UUID  ,
     origin_country_id UUID,
     destination_country_id UUID,
     origin_continent_id UUID,
     destination_continent_id UUID,
     origin_region_id UUID ,
     destination_region_id UUID,
-    origin_trade_id UUID DEFAULT NULL,
-    destination_trade_id UUID DEFAULT NULL,
-    origin_pricing_zone_map_id UUID DEFAULT NULL,
-    destination_pricing_zone_map_id UUID DEFAULT NULL,
+    origin_trade_id UUID  ,
+    destination_trade_id UUID  ,
+    origin_pricing_zone_map_id UUID  ,
+    destination_pricing_zone_map_id UUID  ,
     price Float64,         
     market_price Float64,
     validity_start Date,
     validity_end Date,
     currency FixedString(3),
-    shipping_line_id UUID DEFAULT NULL,
-    service_provider_id UUID DEFAULT NULL,
+    shipping_line_id UUID  ,
+    service_provider_id UUID  ,
     accuracy Float64 DEFAULT -1.0,
     mode FixedString(256),
     likes_count UInt16 DEFAULT 0,
@@ -46,8 +46,8 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     container_size FixedString(10),
     container_type FixedString(256),
     containers_count UInt8 DEFAULT 0,
-    origin_local_id UUID DEFAULT NULL,
-    destination_local_id UUID DEFAULT NULL,
+    origin_local_id UUID  ,
+    destination_local_id UUID  ,
     applicable_origin_local_count UInt16 DEFAULT 0,
     applicable_destination_local_count UInt16 DEFAULT 0,
     origin_detention_id UUID DEFAULT NULL,
@@ -84,3 +84,124 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id)
 ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);
+
+
+CREATE TABLE brahmastra.checkout_fcl_freight_rate_statistics
+(
+    id UInt256,
+    spot_search_id UUID,
+    spot_search_fcl_customs_services_id UUID,
+    checkout_id UUID,
+    checkout_fcl_freight_rate_services_id UUID  ,
+    validity_id UUID,
+    rate_id UUID,
+    sell_quotation_id UUID,
+    buy_quotation_id UUID,
+    shipment_id UUID  ,
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    status FixedString(10) DEFAULT 'active',
+    sign Int8 DEFAULT 1,
+    version UInt32 DEFAULT 1,
+)
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY (rate_id,validity_id,)
+ORDER BY (rate_id,validity_id,version);
+
+CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
+(
+    id UInt256,
+    source FixedString(256),
+    fcl_freight_rate_statistic_id UInt256,
+    feedback_id UUID,
+    validity_id UUID,
+    rate_id UUID,
+    source_id UUID  ,
+    performed_by_id UUID  ,
+    performed_by_org_id UUID  ,
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    importer_exporter_id UUID  ,
+    service_provider_id UUID  ,
+    feedback_type FixedString(256),
+    closed_by_id  UUID  ,
+    serial_id UInt256,
+    sign Int8 DEFAULT 1,
+    version UInt32 DEFAULT 1,
+)
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY (rate_id)
+ORDER BY (rate_id,version);
+
+CREATE TABLE brahmastra.quotation_fcl_freight_rate_statistics
+(
+    id UInt256,
+    validity_id UUID,
+    rate_id UUID,
+    spot_search_id UUID,
+    spot_search_fcl_customs_services_id UUID,
+    checkout_id UUID,
+    checkout_fcl_freight_rate_services_id UUID  ,
+    sell_quotation_id UUID,
+    buy_quotation_id UUID,
+    shipment_id UUID  ,
+    shipment_fcl_freight_rate_services_id UUID  ,
+    cancellation_reason String,
+    is_active Bool,
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    status FixedString(10) DEFAULT 'active',
+    sign Int8 DEFAULT 1,
+    version UInt32 DEFAULT 1,
+)
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY (rate_id)
+ORDER BY (rate_id,version);
+
+
+CREATE TABLE brahmastra.shipment_fcl_freight_rate_services_statistics
+(
+    id UInt256,
+    spot_search_id UUID,
+    spot_search_fcl_customs_services_id UUID,
+    checkout_id UUID,
+    checkout_fcl_freight_rate_services_id UUID  ,
+    sell_quotation_id UUID,
+    buy_quotation_id UUID,
+    validity_id UUID,
+    rate_id UUID,
+    shipment_id UUID  ,
+    shipment_fcl_freight_rate_services_id  UUID  ,
+    cancellation_reason String,
+    is_active Bool,
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    status FixedString(10) DEFAULT 'active',
+    sign Int8 DEFAULT 1,
+    version UInt32 DEFAULT 1,
+)
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY (rate_id)
+ORDER BY (rate_id,version);
+
+CREATE TABLE brahmastra.spot_search_fcl_freight_rate_statistics
+(
+    id UInt256,
+    fcl_freight_rate_statistic_id UInt256,
+    spot_search_id UUID,
+    spot_search_fcl_freight_services_id UUID,
+    checkout_id UUID  ,
+    checkout_fcl_freight_rate_services_id UUID  ,
+    validity_id UUID  ,
+    rate_id UUID  ,
+    sell_quotation_id UUID  ,
+    buy_quotation_id UUID  ,
+    shipment_id UUID  ,
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    sign Int8 DEFAULT 1,
+    version UInt32 DEFAULT 1,
+)
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY (rate_id)
+ORDER BY (rate_id,version);
