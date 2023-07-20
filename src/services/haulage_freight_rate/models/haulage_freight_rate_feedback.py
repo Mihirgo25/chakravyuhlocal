@@ -52,6 +52,7 @@ class HaulageFreightRateFeedback(BaseModel):
     trailer_type = TextField(null=True)
     haulage_type = TextField(null=True)
     trip_type = TextField(null=True)
+    transport_mode = TextField(index=True)
 
 
 

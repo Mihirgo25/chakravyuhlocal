@@ -33,7 +33,8 @@ def execute_transaction_code(request):
         HaulageFreightRateRequest.performed_by_type == request.get('performed_by_type'),
         HaulageFreightRateRequest.performed_by_org_id == request.get('performed_by_org_id'),
         HaulageFreightRateRequest.origin_location_id == request.get('origin_location_id'),
-        HaulageFreightRateRequest.destination_location_id == request.get('destination_location_id')
+        HaulageFreightRateRequest.destination_location_id == request.get('destination_location_id'),
+        HaulageFreightRateRequest.transport_mode == request.get('transport_mode')
     ).first()
 
     if not request_object:

@@ -28,24 +28,28 @@ possible_direct_filters = [
     "closed_by_id",
     "origin_country_id",
     "destination_country_id",
+    "transport_mode"
 ]
 
 
 def list_haulage_freight_rate_requests(
-    filters={}, page_limit=10, page=1, performed_by_id=None, is_stats_required=True
+    filters={}, page_limit=10, page=1, performed_by_id=None, is_stats_required=True, transport_mode = 'haulage'
 ):
     query = HaulageFreightRateRequest.select()
 
-    # applying direct and indirect
-    if filters:
-        if type(filters) != dict:
-            filters = json.loads(filters)
+    if not filters:
+        filters = {}
 
-        direct_filters, indirect_filters = get_applicable_filters(
-            filters, possible_direct_filters, possible_indirect_filters
-        )
-        query = get_filters(direct_filters, query, HaulageFreightRateRequest)
-        query = apply_indirect_filters(query, indirect_filters)
+    # applying direct and indirect
+    if type(filters) != dict:
+        filters = json.loads(filters)
+
+    direct_filters, indirect_filters = get_applicable_filters(
+        filters, possible_direct_filters, possible_indirect_filters
+    )
+    direct_filters["transport_mode"] = transport_mode
+    query = get_filters(direct_filters, query, HaulageFreightRateRequest)
+    query = apply_indirect_filters(query, indirect_filters)
 
     # getting closed by and other stats
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}

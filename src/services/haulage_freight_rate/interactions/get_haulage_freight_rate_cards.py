@@ -236,7 +236,7 @@ def build_response_object(result, requirements):
 
         if not line_item:
             continue
-        response_object["line_items"] = line_item
+        response_object["line_items"].append(line_item)
 
     return response_object
 
@@ -390,7 +390,6 @@ def additional_response_data(data):
         )
         addon_data["last_updated_at"] = audits_object["updated_at"]
         addon_data["buy_rate_currency"] = "INR"
-        addon_data["buy_rate"] = addon_data["line_items"]
         total_price = 0
         for line_item in addon_data["line_items"]:
             total_price += int(

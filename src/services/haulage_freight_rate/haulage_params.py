@@ -80,6 +80,7 @@ class CreateHaulageFreightRateRequest(BaseModel):
   origin_location_id: str
   container_type: str = None
   trade_type: str = None
+  transport_mode: str = None
 
 class DeleteHaulageFreightRateRequest(BaseModel):
   haulage_freight_rate_request_ids: list[str]

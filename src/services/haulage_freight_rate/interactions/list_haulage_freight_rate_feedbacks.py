@@ -16,18 +16,25 @@ from libs.json_encoder import json_encoder
 possible_direct_filters = ['feedback_type','performed_by_id','status','closed_by_id','origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id']
 possible_indirect_filters = ['relevant_supply_agent','validity_start_greater_than','validity_end_less_than','similar_id']
 
-def list_haulage_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
+def list_haulage_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False, transport_mode = 'haulage'):
     query = HaulageFreightRateFeedback.select()
 
     # apply direct and indirect filter
-    if filters:
-        if type(filters) != dict:
-            filters = json.loads(filters)
+    if not filters:
+        filters = {}
 
-        direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
+    # applying direct and indirect
+    if type(filters) != dict:
+        filters = json.loads(filters)
 
-        query = get_filters(direct_filters, query, HaulageFreightRateFeedback)
-        query = apply_indirect_filters(query, indirect_filters)
+    direct_filters, indirect_filters = get_applicable_filters(
+        filters, possible_direct_filters, possible_indirect_filters
+    )
+    direct_filters["transport_mode"] = transport_mode
+
+    query = get_filters(direct_filters, query, HaulageFreightRateFeedback)
+    query = apply_indirect_filters(query, indirect_filters)
+
 
     # get required stats
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}

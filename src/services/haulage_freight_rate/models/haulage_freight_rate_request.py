@@ -58,6 +58,7 @@ class HaulageFreightRateRequest(BaseModel):
     trade_type = TextField(index=True, null=True)
     reverted_rate_id = UUIDField(null=True)
     reverted_rate = BinaryJSONField(null=True)
+    transport_mode = TextField(index=True)
 
 
     def save(self, *args, **kwargs):
