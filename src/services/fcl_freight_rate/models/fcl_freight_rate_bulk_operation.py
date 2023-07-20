@@ -1147,7 +1147,7 @@ class FclFreightRateBulkOperation(BaseModel):
                 self.set_progress_percent(progress)
                 continue
 
-            create_params = {key: value for key, value in freight.items() if key in ['origin_port_id', 'origin_main_port_id', 'destination_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'cogo_entity_id', 'rate_type', 'mode']}
+            create_params = {key: value for key, value in freight.items() if key in ['origin_port_id', 'origin_main_port_id', 'destination_port_id', 'destination_main_port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'service_provider_id', 'weight_limit', 'cogo_entity_id', 'rate_type', 'mode']}
 
             create_params['performed_by_id'] = self.performed_by_id
             create_params['sourced_by_id'] = sourced_by_id
