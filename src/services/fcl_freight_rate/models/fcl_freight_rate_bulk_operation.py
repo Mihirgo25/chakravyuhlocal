@@ -1154,6 +1154,11 @@ class FclFreightRateBulkOperation(BaseModel):
 
             create_params['performed_by_id'] = self.performed_by_id
             create_params['bulk_operation_id'] = self.id
+            
+            if not data.get("extend_for_flash_booking"):
+                create_params['sourced_by_id'] = sourced_by_id
+                create_params['procured_by_id'] = procured_by_id
+                create_params['cogo_entity_id'] = cogo_entity_id
 
             for validity_object in validities:
                 create_params['validity_start'] = validity_object['validity_start']
