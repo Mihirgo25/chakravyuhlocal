@@ -1175,9 +1175,12 @@ class FclFreightRateBulkOperation(BaseModel):
                     markup = common.get_money_exchange_for_fcl({'from_currency':data['markup_currency'], 'to_currency':line_item['currency'], 'price':markup})['price']
 
                 if data['markup_type'].lower() == 'absolute':
-                    if data.get("extend_for_flash_booking") and markup > line_item["price"]:
-                        line_item["original_price"] = line_item["price"] if "original_price" not in line_item else line_item.get("original_price")
-                        line_item["price"] = markup
+                    if data.get("extend_for_flash_booking"):
+                        if markup > line_item["price"]:
+                            line_item["original_price"] = line_item["price"] if "original_price" not in line_item else line_item.get("original_price")
+                            line_item["price"] = markup
+                        else:
+                            continue
                     else:
                         line_item['price'] = markup
                 else:
