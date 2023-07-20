@@ -856,3 +856,45 @@ def list_trailer_freight_rate_feedbacks_api(
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
+
+@haulage_freight_router.post("/create_trailer_freight_rate_feedback")
+def create_trailer_freight_rate_feedback_api(
+    request: CreateHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+        request.performed_by_type = resp["setters"]["performed_by_type"]
+    try:
+        request.transport_mode = 'trailer'
+        data = create_haulage_freight_rate_feedback(request.dict(exclude_none=True))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )
+    
+@haulage_freight_router.post("/delete_trailer_freight_rate_feedback")
+def delete_trailer_freight_rates_feedback_api(
+    request: DeleteHaulageFreightRateFeedback, resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    if resp["isAuthorized"]:
+        request.performed_by_id = resp["setters"]["performed_by_id"]
+    try:
+        delete_rate = delete_haulage_freight_rate_feedback(
+            request.dict(exclude_none=True)
+        )
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(
+            status_code=500, content={"success": False, "error": str(e)}
+        )

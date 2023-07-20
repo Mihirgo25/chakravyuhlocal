@@ -122,6 +122,7 @@ class CreateHaulageFreightRateFeedback(BaseModel):
   service_provider_id: str = None
   created_at: datetime = None
   updated_at: datetime = None
+  transport_mode: str = None
 
 class RevertedRateParams(BaseModel):
     id: str = None

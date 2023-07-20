@@ -31,6 +31,7 @@ def execute_transaction_code(request):
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
         'performed_by_org_id': request['performed_by_org_id'],
+        'transport_mode': request['transport_mode'],
     }
 
     feedback = HaulageFreightRateFeedback.select().where(
@@ -40,6 +41,7 @@ def execute_transaction_code(request):
         HaulageFreightRateFeedback.source_id == request['source_id'],
         HaulageFreightRateFeedback.performed_by_id == request['performed_by_id'],
         HaulageFreightRateFeedback.performed_by_type == request['performed_by_type'],
+        HaulageFreightRateFeedback.transport_mode == request['transport_mode'],
         HaulageFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
     
     if not feedback:
