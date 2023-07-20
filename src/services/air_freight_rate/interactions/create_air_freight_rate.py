@@ -13,6 +13,11 @@ def create_audit(request, freight_id,validity_id):
     audit_data["procured_by_id"] = request.get("procured_by_id")
     audit_data["sourced_by_id"] = request.get("sourced_by_id")
     audit_data["currency"] = request.get("currency")
+    audit_data["maximum_weight"] = request.get("maximum_weight")
+    audit_data["length"] = request.get("length")
+    audit_data["breadth"] = request.get("breadth")
+    audit_data["height"] = request.get("height")
+    audit_data["weight_slabs"] = request.get("weight_slabs")
     audit_data["price_type"] = request.get("price_type")
     audit_data["air_freight_rate_request_id"] = request.get("air_freight_rate_request_id")
 
@@ -39,6 +44,7 @@ def create_air_freight_rate_data(request):
 
     if request['rate_type'] == 'general':
         request['rate_type'] = 'market_place'
+
     if request['commodity']=='general':
         if request.get('commodity_sub_type'):
             request['commodity_sub_type']= request.get('commodity_sub_type')
