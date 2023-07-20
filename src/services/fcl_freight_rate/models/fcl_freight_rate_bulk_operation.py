@@ -1119,6 +1119,7 @@ class FclFreightRateBulkOperation(BaseModel):
             'container_type':True,
             'commodity':True,
             'shipping_line_id':True,
+            'weight_limit': True,
             'service_provider_id':True,
             'cogo_entity_id': True,
             'rate_type': True,
