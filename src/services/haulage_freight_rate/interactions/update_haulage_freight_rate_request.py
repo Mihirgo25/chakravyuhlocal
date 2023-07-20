@@ -14,7 +14,7 @@ def update_haulage_freight_rate_request(request):
 def execute_transaction_code(request):
     object = find_object(request)
 
-
+    object.remarks = request.get('remarks')
     if request.get("closing_remarks"):
         if "rate_added" in request.get("closing_remarks"):
             object.reverted_rates_count = (
@@ -22,18 +22,15 @@ def execute_transaction_code(request):
                 if object.reverted_rates_count is not None
                 else 1
             )
-            reverted_by_user_ids = object.reverted_by_user_ids
-            if reverted_by_user_ids is not None:
-                reverted_by_user_ids.append(UUID(request.get("performed_by_id")))
-            else:
-                reverted_by_user_ids = [UUID(request.get("performed_by_id"))]
-
-            object.reverted_by_user_ids = reverted_by_user_ids
-            
+            object.reverted_by_user_ids = (
+                object.reverted_by_user_ids.append(UUID(request.get("performed_by_id")))
+                if object.reverted_by_user_ids is not None
+                else [UUID(request.get("performed_by_id"))]
+            )
         object.closing_remarks = (
             object.closing_remarks.append(request.get("closing_remarks"))
             if object.closing_remarks is not None
-            else request.get("closing_remarks")
+            else [request.get("closing_remarks")]
         )
 
     try:
