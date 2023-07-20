@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.fcl_freight import SpotSearch
+from services.bramhastra.helpers.post_fcl_freight_helper import SpotSearch
 
 
 def apply_spot_search_fcl_freight_rate_statistic(request):

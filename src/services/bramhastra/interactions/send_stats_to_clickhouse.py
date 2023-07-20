@@ -2,7 +2,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
 from services.bramhastra.clickhouse.connect import get_clickhouse_client
-from services.bramhastra.helpers.fcl_freight import json_encoder_for_clickhouse
+from services.bramhastra.helpers.post_fcl_freight_helper import json_encoder_for_clickhouse
 
 
 def send_stats_to_clickhouse(client = get_clickhouse_client()):

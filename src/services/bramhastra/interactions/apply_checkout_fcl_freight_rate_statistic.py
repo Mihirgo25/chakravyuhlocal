@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.fcl_freight import Checkout
+from services.bramhastra.helpers.post_fcl_freight_helper import Checkout
 
 def apply_checkout_fcl_freight_rate_statistic(request):
     checkout = Checkout(request.params)

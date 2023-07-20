@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.fcl_freight import Rate
+from services.bramhastra.helpers.post_fcl_freight_helper import Rate
 
 
 def apply_fcl_freight_rate_statistic(request):

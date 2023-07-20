@@ -51,7 +51,6 @@ class Connection:
         self.rails_db = get_connection()
         self.clickhouse_client = get_clickhouse_client()
 
-
 class FclFreightValidity(Connection):
     def __init__(self, rate_id, validity_id) -> None:
         super().__init__()
