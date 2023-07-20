@@ -4,6 +4,7 @@ from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM,DEFAULT_RATE_TYPE
 from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
+from services.bramhastra.models.checkout_fcl_freight_rate_statistic import CheckoutFclFreightRateStatistic
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFreightLocationCluster
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
@@ -132,12 +133,90 @@ class PopulateFclFreightRateStatistics:
                 if len(row_data) >= 100:
                     FclFreightRateStatistic.insert_many(row_data).execute()
                     row_data = []
-                
 
+    def populate_checkout_fcl_freight_statistics(self, checkout_stats, rate_id, validity_id):  
+        try:
+            params = {
+                'checkout_fcl_freight_rate_services_id':checkout_stats[0],
+                'checkout_id':checkout_stats[2],
+                'created_at':checkout_stats[3],
+                'updated_at':checkout_stats[4],
+                'status':checkout_stats[5],
+                'shipment_id':checkout_stats[6],
+                'spot_search_id':checkout_stats[7],
+                'rate_id':rate_id,
+                'validity_id':validity_id,
+            }
+
+            if(params['shipment_id']):
+                try:
+                    with self.cogoback_connection.cursor() as cur:
+                        sql = f"SELECT id FROM shipment_buy_quotations where shipment_id = '{params['shipment_id']}'"
+                        cur.execute(sql)
+                        result = cur.fetchall()
+                        if(result):
+                            params['buy_quotation_id'] = result[0][0]
+
+                        sql = f"SELECT id FROM shipment_sell_quotations where shipment_id = '{params['shipment_id']}'"
+                        cur.execute(sql)
+                        result = cur.fetchall()
+                        if(result):
+                            params['sell_quotation_id'] = result[0][0]
+
+
+                except Exception as e:
+                    print('! Exception occured while fetching shipment_quotations:',e)
+
+            CheckoutFclFreightRateStatistic.create(**params)
+            print('Saved ...')
+
+        except Exception as e:
+            print('! Exception occured while populating checkout stats:',e)
+
+
+    def update_fcl_freight_rate_checkout_count(self):
+        try:
+            with self.cogoback_connection.cursor() as cur:
+                sql = '''SELECT 
+                        cs.id, cs.rate, cs.checkout_id, cs.created_at, cs.updated_at, cs.status,
+                        co.shipment_id, co.source_id
+                        FROM checkout_fcl_freight_services AS cs
+                        LEFT JOIN checkouts AS co 
+                        ON cs.checkout_id = co.id
+                        WHERE cs.rate ? 'rate_id'
+                    '''
+                cur.execute(sql)
+
+                for row in cur:
+                    rate_card = row[1]
+                    if(
+                        'rate_id' in rate_card and 'validity_id' in rate_card and 
+                        rate_card['rate_id'] and rate_card['validity_id']
+                    ):
+                        identifier = rate_card['rate_id']+'_'+rate_card['validity_id']
+
+                        statistics = FclFreightRateStatistic.select().where(
+                                FclFreightRateStatistic.identifier == identifier,
+                                FclFreightRateStatistic.sign == 1
+                            ).first()
+                        
+                        if not statistics:
+                            print("! Error: Identifier not present", identifier)
+                        else:
+                            setattr(statistics, 'checkout_count', statistics.checkout_count+1)
+                            saved_status = statistics.save()
+                            if not saved_status:
+                                print("! Error: Couldn't save statistics", statistics.id)
+                            else:
+                                self.populate_checkout_fcl_freight_statistics(row,rate_card['rate_id'],rate_card['validity_id'])
+
+        except Exception as e:
+            print('! Exception:',e)
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    populate_from_rates.populate_active_rate_ids()
+    # populate_from_rates.populate_active_rate_ids()
+    populate_from_rates.update_fcl_freight_rate_checkout_count()
 
 if __name__ == '__main__':   
     main()
