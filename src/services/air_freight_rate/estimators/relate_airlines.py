@@ -4,7 +4,7 @@ from services.air_freight_rate.models.air_freight_rate_airline_factors import Ai
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_past_air_invoices,get_spot_search_count
-from configs.global_constants import DEFAULT_WEIGHT_SLABS
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_FACTORS_WEIGHT_SLABS
 from micro_services.client import common,maps
 from peewee import SQL
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_FACTOR
@@ -44,7 +44,7 @@ class RelateAirline:
             return None, None
 
     def get_weight_slab_for_invoice_rates(self, invoice_rate):
-        for weight_slab in DEFAULT_WEIGHT_SLABS:
+        for weight_slab in DEFAULT_FACTORS_WEIGHT_SLABS:
             if (invoice_rate["weight"] >= weight_slab["lower_limit"]and weight_slab["upper_limit"] >= invoice_rate["weight"]):
                 return "{}-{}".format(int(weight_slab["lower_limit"]), int(weight_slab["upper_limit"]))
 

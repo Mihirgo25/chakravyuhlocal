@@ -7,7 +7,7 @@ from services.chakravyuh.models.air_freight_rate_estimation_audit import AirFrei
 from database.rails_db import get_past_air_invoices
 from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
-from configs.global_constants import DEFAULT_WEIGHT_SLABS
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_FACTORS_WEIGHT_SLABS
 from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as AirProducerVyuh
 from statistics import mean
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_FACTOR
@@ -127,7 +127,7 @@ class AirFreightVyuh():
     
 
     def get_weight_slabs(self,invoice_rates):
-        weight_slabs = DEFAULT_WEIGHT_SLABS
+        weight_slabs = DEFAULT_FACTORS_WEIGHT_SLABS
         weight_slabs_dict= {1:[],2:[],3:[],4:[],5:[],6:[]}
         for invoice_rate in invoice_rates:
             for index,weight_slab in enumerate(weight_slabs):
