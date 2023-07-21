@@ -7,10 +7,8 @@ from libs.json_encoder import json_encoder
 from database.rails_db import get_eligible_orgs
 from micro_services.client import maps,common
 from operator import attrgetter
-from datetime import datetime
 from itertools import groupby
 from configs.global_constants import CONFIRMED_INVENTORY
-from playhouse.shortcuts import model_to_dict
 from configs.definitions import FTL_FREIGHT_CHARGES
 from services.ftl_freight_rate.models.ftl_freight_rate_audit import FtlFreightRateAudit
 
@@ -45,7 +43,7 @@ def get_ftl_freight_rate_cards(request):
         return {"list":[]}  
     query = select_fields()
     query = initialize_query(query,request)
-    list = build_response_list(query)
+    list = build_response_list(query,request)
     list = ignore_non_eligible_service_providers(request,list)
     if request.get('include_additional_response_data'):
         list = additional_response_data(list) 
@@ -61,58 +59,53 @@ def initialize_query(query,request):
     filters = {'commodity': request.get('commodity'),'trip_type': request.get('trip_type'),'importer_exporter': request.get('importer_exporter_id'),'rate_not_available_entry': False, 'is_line_items_error_messages_present': False, 'truck_type': request.get('truck_type')}
     for key in filters.keys():
             if filters.get(key) is not None:
-                query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
-    breakpoint()
+                query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])     
     if request.get('load_selection_type') in ['cargo_per_package', 'cargo_gross']:
         query = query.where(FtlFreightRate.unit == 'ton')
     elif request.get('load_selection_type')  == 'truck':
-        query = query.where(FtlFreightRate.unit ==  'per_truck' | FtlFreightRate.unit.is_null(True))
+        query = query.where((FtlFreightRate.unit ==  'per_truck') | (FtlFreightRate.unit.is_null(True)))
         
     origin_location_ids = [request.get('origin_location_id'),request.get('origin_city_id')]
     origin_location_ids = [location_id for location_id in origin_location_ids if location_id is not None]
     
     if len(origin_location_ids) > 0:
-        query = query.where(FtlFreightRate.origin_location_id == origin_location_ids)
+        query = query.where(FtlFreightRate.origin_location_id << origin_location_ids)
     
     destination_location_ids = [request.get('destination_location_id'),request.get('destination_city')]
     destination_location_ids = [location_id for location_id in destination_location_ids if location_id is not None]
     
     if len(destination_location_ids) > 0:
-        query = query.where(FtlFreightRate.destination_location_id == destination_location_ids) 
+        query = query.where(FtlFreightRate.destination_location_id << destination_location_ids) 
 
     if request.get('origin_city_id'):
-        query = query.where(FtlFreightRate.origin_location_id == request.get('origin_city_id') | FtlFreightRate.origin_city_id == request.get('origin_city_id'))
+        query = query.where((FtlFreightRate.origin_location_id == request.get('origin_city_id')) | (FtlFreightRate.origin_city_id == request.get('origin_city_id')))
     if request.get('destination_city_id'):
-        query = query.where(FtlFreightRate.destination_location_id == request.get('destination_city_id') | FtlFreightRate.destination_city_id == request.get('destination_city_id'))
+        query = query.where((FtlFreightRate.destination_location_id == request.get('destination_city_id')) | (FtlFreightRate.destination_city_id == request.get('destination_city_id')))
     
     if request.get('origin_country_id'):
         query = query.where(FtlFreightRate.origin_country_id == request.get('origin_country_id'))
     if request.get('destination_country_id'):
         query = query.where(FtlFreightRate.destination_country_id == request.get('destination_country_id'))
-    
-    cargo_readiness_date = request.get('cargo_readiness_date') or datetime.now()
-    query = query.where(FtlFreightRate.validity_start <= cargo_readiness_date,FtlFreightRate.validity_end >= cargo_readiness_date)
+    cargo_readiness_date = request.get('cargo_readiness_date')
+    query = query.where((FtlFreightRate.validity_start <= cargo_readiness_date) &  (FtlFreightRate.validity_end >= cargo_readiness_date))
     
     return query
 
 def select_fields():
-    breakpoint()
-    return FtlFreightRate.select(FtlFreightRate.id, FtlFreightRate.commodity, FtlFreightRate.line_items, FtlFreightRate.service_provider_id, FtlFreightRate.importer_exporter_id, FtlFreightRate.origin_location_id, FtlFreightRate.destination_location_id, FtlFreightRate.origin_destination_location_type, FtlFreightRate.transit_time, FtlFreightRate.detention_free_time, FtlFreightRate.truck_type, FtlFreightRate.minimum_chargeable_weight, FtlFreightRate.unit, FtlFreightRate.validity_end,FtlFreightRate.service_provider,FtlFreightRate.sourced_by)
+    return FtlFreightRate.select(FtlFreightRate.id, FtlFreightRate.commodity, FtlFreightRate.line_items, FtlFreightRate.service_provider_id, FtlFreightRate.importer_exporter_id, FtlFreightRate.origin_location_id, FtlFreightRate.destination_location_id, FtlFreightRate.origin_destination_location_type, FtlFreightRate.transit_time, FtlFreightRate.detention_free_time, FtlFreightRate.truck_type, FtlFreightRate.minimum_chargeable_weight, FtlFreightRate.unit, FtlFreightRate.validity_start, FtlFreightRate.validity_end,FtlFreightRate.service_provider,FtlFreightRate.sourced_by)
 
-def build_response_list(query_result):
-    list = []
-    ftl_rates = model_to_dict(query_result)
-    for _key, results in groupby(ftl_rates, key=lambda t: ( t["origin_location_id"], t["service_provider_id"], t['destination_location_id'], t['transit_time'])):
-        result = filter(lambda data:data.get('importer_exporter_id') is not None, results)
-        if result is None:
-            result = results[0]
-        
-        response_object = build_response_object(result)
+def build_response_list(query_result,request):
+    ftl_rates = list(query_result.dicts())
+    grouping = {}
+    for rate in ftl_rates:
+        key = ":".join([str(rate["origin_location_id"]) or "", str(rate['destination_location_id']) or "", str(rate["service_provider_id"]) or "" , str(rate['transit_time']) or ""])
+        if grouping.get(key) and grouping[key].get('importer_exporter_id'):
+            continue 
+        response_object =  build_response_object(rate,request)
         if response_object:
-            list.append(response_object) 
+            grouping[key] = response_object
     
-
-    return list
+    return grouping.values()
         
             
     
@@ -150,19 +143,27 @@ def build_response_object(result,request):
       'trucks_count': request.get('trucks_count'),
       'transit_time': result.get('transit_time'),
       'detention_free_time': result.get('detention_free_time'),
+      'validity_start': result.get('validity_start'),
       'validity_end': result.get('validity_end'),
+      'service_provider': request.get('service_provider'),
+      'source_by': request.get('source_by'),
     }
-    if request('load_selection_type') in ['cargo_per_package', 'cargo_gross']:
+    if request.get('load_selection_type') in ['cargo_per_package', 'cargo_gross']:
         response_object =  response_object | get_truck_type_and_count(request,result['truck_type']) 
     
     if response_object['service_provider_id'] in CONFIRMED_INVENTORY['service_provider_ids']:
         response_object['tags'] = CONFIRMED_INVENTORY['tag'] 
     
-    for line_item in list(result['line_items']):
+    result_line_items = result['line_items'] if type(result['line_items']) == list else list(result['line_items'])
+    for line_item in result_line_items:
+        
         if line_item['code'] == 'FSC' and line_item['unit'] == 'percentage_of_freight':
-            for required_line_item in list(result['line_items']):
+            required_line_items = result['line_items'] if type(result['line_items']) == list else list(result['line_items'])
+            for required_line_item in required_line_items:
+                
                 if required_line_item['code'] != 'BAS':
                     continue
+                
                 line_item_object = build_line_item_object(request,required_line_item, response_object['truck_count'],result['minimum_chargeable_weight'], result['maximum_chargeable_weight']) | {}
                 total_price = (float(line_item_object.get('total_price') if line_item_object.get('total_price') else 0 )* float(line_item.get('price') if line_item.get('price') else 0))/ 100
                 line_item['total_price'] = total_price
@@ -171,25 +172,25 @@ def build_response_object(result,request):
                 code_config = FTL_FREIGHT_CHARGES[line_item['code']]
                 line_item['name'] = code_config['name']
         else:
-            line_item = build_line_item_object(line_item, response_object['trucks_count'], result['minimum_chargeable_weight'])
+            line_item = build_line_item_object(request,line_item, response_object['trucks_count'], result['minimum_chargeable_weight'])
         
         if line_item is None:
             continue             
         response_object['line_items'].append(line_item)
     
-    code_hash = {}
-    
-    for code in request['additional_services']:
-        code_hash[code]  = True
-    
-    for line_item_data in response_object['line_items']:
-        if line_item_data.get('code') is not None and code_hash.get(line_item_data.get('code')) is None:
+    additional_charge_code = []
+    for line_item in result_line_items:
+        additional_charge_code.append(line_item['code'])
+        
+    if request.get('additional_services') is not None:
+        for code in request.get('additional_services'):
+            if code not in additional_charge_code:
                 return False
-    
         
     return response_object
 
 def build_line_item_object(request,line_item, trucks_count = 0, minimum_chargeable_weight = 0):
+    
     code_config = FTL_FREIGHT_CHARGES[line_item['code']]
     is_additional_service = True if 'additional_services' in list(code_config.get('tags')) else False
     if is_additional_service and line_item['code'] not in request['additional_services']:
@@ -204,8 +205,8 @@ def build_line_item_object(request,line_item, trucks_count = 0, minimum_chargeab
     line_item['total_price'] = line_item['quantity'] * line_item['price']
     line_item['name'] = code_config['name']
     line_item['source'] = 'system'
-
-    line_item
+    
+    return line_item
 
 def get_truck_type_and_count(request, truck_type):
     filters = {"truck_name": truck_type}
@@ -224,6 +225,7 @@ def ignore_non_eligible_service_providers(request,list):
     for data in list:
         if data['service_provider_id'] in ids:
             final_list.append(data)
+    response = None
     if len(final_list) == 0 and request.get('predicted_rate') and request.get('predicted_rate') and request.get('origin_location_id') and request.get('destination_location_id'):
         rate_estimation_params = {
         'origin_location_id': request.get('origin_location_id'),
@@ -233,14 +235,14 @@ def ignore_non_eligible_service_providers(request,list):
         'commodity': request.get('commodity'),
         'weight': request.get('weight'),
         }
-    response = get_ftl_freight_rate_estimation(rate_estimation_params)
+        response = get_ftl_freight_rate_estimation(rate_estimation_params)
     if response:
         request['predicted_rate'] = False
         final_list  = get_ftl_freight_rate_cards(request)['list']
     return final_list
 
-def additional_response_data(list):
-    audit_object_ids = list(map(lambda obj: obj['id'], list))
+def additional_response_data(list_of_data):
+    audit_object_ids = list(map(lambda obj: obj['id'], list_of_data))
     ftl_audit_data = json_encoder(list(FtlFreightRateAudit.select().where(FtlFreightRateAudit.object_id << audit_object_ids).dicts()))
     
     audit_sourced_by_id = []
@@ -248,18 +250,21 @@ def additional_response_data(list):
     for audit_data in ftl_audit_data:
         audit_sourced_by_id.append(str(audit_data['sourced_by_id']))
         
-    for data in list:
-        data['service_provider_name'] = data['service_provider']['short_name']
-        audit = filter(lambda data:data.get('object_id') == data['id'], ftl_audit_data)[0]
-
-        user = data['sourced_by']
-        data['user_name'] = user['name']
-        data['user_contact'] = user['mobile_number']
-        data['last_updated_at'] = audit['updated_at']
-        data['buy_rate_currency'] = 'INR' 
-        data['buy_rate'] = get_buy_rate(data['line_items'])
+    for data in list_of_data:
+        if data['service_provider'] is not None:
+            data['service_provider_name'] = data['service_provider'].get('short_name')
+        audit = list(filter(lambda audit_data:str(audit_data.get('object_id')) == str(data['id']), ftl_audit_data))
+        print(audit)
+        user = data.get('sourced_by')
+        if user is not None:
+            data['user_name'] = user['name']
+            data['user_contact'] = user['mobile_number']
+            if audit is not None:
+                data['last_updated_at'] = audit[0]['updated_at']
+            data['buy_rate_currency'] = 'INR' 
+            data['buy_rate'] = get_buy_rate(data['line_items'])
     
-    return list
+    return list_of_data
 
 
 def get_buy_rate(line_items):
@@ -270,13 +275,13 @@ def get_buy_rate(line_items):
         
     return net_price
 
-def remove_unnecessary_fields(list):
-    required_fields = ['id','service_provider_id','origin_locaton_id','destination_location_id','importer_exported_id','line_items','truck_body_type','transit_time','detention_free_time','validity_start','validity_end','truck_type','trucks_count']
+def remove_unnecessary_fields(data):
+    required_fields = ['id', 'origin_location_id', 'destination_location_id', 'origin_destination_location_type', 'service_provider_id', 'importer_exporter_id', 'line_items', 'source', 'tags', 'truck_type', 'trucks_count', 'transit_time', 'detention_free_time','validity_start','validity_end','service_provider_name','user_name','user_contact','last_updated_at','buy_rate_currency','buy_rate']
     final_list = []
-    for main_data in list:
+    for main_data in data:
         copy_of_main_data = dict()
         for field in required_fields:
-            copy_of_main_data[field] = main_data[field]
+            copy_of_main_data[field] = main_data.get(field)
         final_list.append(copy_of_main_data)
     
     return final_list

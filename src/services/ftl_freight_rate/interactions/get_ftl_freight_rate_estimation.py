@@ -1,5 +1,5 @@
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
-from services.ftl_freight_rate.interactions.get_estimated_ftl_freight_rate import get_ftl_freight_rate
+from services.ftl_freight_rate.interactions.get_estimated_ftl_freight_rate import get_estimated_ftl_freight_rate
 from micro_services.client import maps
 from datetime import datetime,timedelta
 from configs.ftl_freight_rate_constants import ENVISION_USER_ID, PREDICTED_PRICE_SERVICE_PROVIDER
@@ -13,7 +13,7 @@ def get_ftl_freight_rate_estimation(request):
     commodity = request.get('commodity')
     weight = request.get('weight')
 
-    ftl_estimated_data = get_ftl_freight_rate(request)
+    ftl_estimated_data = get_estimated_ftl_freight_rate(origin_location_id, destination_location_id, trip_type, commodity, weight, truck_type)
 
     ftl_rates_list = ftl_estimated_data['list']
     try:
@@ -43,8 +43,8 @@ def get_ftl_freight_rate_estimation(request):
     if transit_time == 0:
         transit_time = 24
     
-    validity_start = datetime.now().date().isoformat()
-    validity_end = (datetime.now() + timedelta(days = 2)).date().isoformat()
+    validity_start = datetime.now().date()
+    validity_end = (datetime.now() + timedelta(days = 2)).date()
     cogo_envision_id = ENVISION_USER_ID
     trip_type = 'round_trip' if 'round' in trip_type else trip_type
 
@@ -66,6 +66,7 @@ def get_ftl_freight_rate_estimation(request):
         'validity_end': validity_end,
         'minimum_chargeable_weight': 0 if truck_type is None else weight,
         'unit': 'per_truck' if truck_type else 'per_ton',
+        'source':'predicted'
     }
 
     create_ftl_freight_rate(params)

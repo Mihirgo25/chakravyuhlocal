@@ -59,7 +59,7 @@ class FtlFreightRate(BaseModel):
     destination_location = BinaryJSONField(index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
-    mode = CharField(default = 'manual', index=True, null = True)
+    source = CharField(default = 'manual', index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
     sourced_by_id = UUIDField(null=True, index=True)
     procured_by_id = UUIDField(null=True, index=True)
@@ -78,7 +78,7 @@ class FtlFreightRate(BaseModel):
 
     def set_locations(self):
         ids = [str(self.origin_location_id), str(self.destination_location_id)]
-        locations_response = maps.list_locations({'filters':{"id": ids}})
+        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True}})
         locations = []
         if 'list' in locations_response:
             locations = locations_response["list"]
@@ -214,8 +214,8 @@ class FtlFreightRate(BaseModel):
         currency = line_items[0].get('currency')
         result = 0
 
-        for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+        # for line_item in line_items:
+        #     result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
 
         return result
 

@@ -4,8 +4,9 @@ from fastapi.responses import JSONResponse
 import sentry_sdk
 from fastapi.encoders import jsonable_encoder
 from fastapi import HTTPException
+from datetime import datetime
 from services.ftl_freight_rate.interactions.get_estimated_ftl_freight_rate import (
-    get_ftl_freight_rate,
+    get_estimated_ftl_freight_rate,
 )
 from services.ftl_freight_rate.interactions.list_ftl_freight_rule_sets import (
     list_ftl_rule_set_data,
@@ -47,7 +48,7 @@ ftl_freight_router = APIRouter()
 
 
 @ftl_freight_router.get("/get_estimated_ftl_freight_rate")
-def get_ftl_freight_rates(
+def get_estimated_ftl_freight_rate_api(
     origin_location_id: str = None,
     destination_location_id: str = None,
     trip_type: str = "one_way",
@@ -63,7 +64,7 @@ def get_ftl_freight_rates(
     if weight:
         weight = float(weight)
 
-    data = get_ftl_freight_rate(
+    data = get_estimated_ftl_freight_rate(
         origin_location_id,
         destination_location_id,
         commodity,
@@ -627,9 +628,15 @@ def get_ftl_freight_rate_cards_api(
     load_selection_type:str = None, 
     predicted_rate: bool = True,
     resp: dict = Depends(authorize_token)):
+    
+        try:
+            cargo_readiness_date = datetime.fromisoformat(cargo_readiness_date).date()
+        except:
+           cargo_readiness_date = datetime.now().date()
+    
     # if resp["status_code"] != 200:
     #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    try:
+    # try:
         request = {
                         'trip_type':trip_type,
                         'origin_location_id': origin_location_id,
@@ -656,12 +663,12 @@ def get_ftl_freight_rate_cards_api(
         }
         list = get_ftl_freight_rate_cards(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(list))
-    except HTTPException as e:
-        print(e)
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })   
+    # except HTTPException as e:
+    #     print(e)
+    #     raise
+    # except Exception as e:
+    #     sentry_sdk.capture_exception(e)
+    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })   
 
 
 @ftl_freight_router.post("/extend_ftl_freight_rates")

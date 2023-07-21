@@ -52,7 +52,7 @@ def execute_transaction_code(request):
       'unit':request.get('unit'),
       'line_items':request.get('line_items'),
       'ftl_freight_rate_request_id':request.get('ftl_freight_rate_request_id'),
-      'mode': request.get('mode', "manual"),
+      'source': request.get('mode', "manual"),
       'accuracy': request.get('accuracy', 100),
       'rate_type': request.get("rate_type", DEFAULT_RATE_TYPE)
   }
@@ -78,14 +78,12 @@ def execute_transaction_code(request):
 
     ftl_freight_rate.set_platform_price()
     ftl_freight_rate.set_is_best_price()
-
+    ftl_freight_rate.update_line_item_messages(ftl_freight_rate.possible_charge_codes())
     try:
       ftl_freight_rate.save()
     except Exception as e:
       raise HTTPException(status_code=400, detail="rate not saved")
     
-    ftl_freight_rate.update_line_item_messages(ftl_freight_rate.possible_charge_codes())
-
     if not ftl_freight_rate.importer_exporter_id:
         ftl_freight_rate.delete_rate_not_available_entry()
 
