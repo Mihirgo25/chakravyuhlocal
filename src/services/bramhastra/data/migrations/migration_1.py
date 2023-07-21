@@ -12,10 +12,23 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_local_rate_cards impo
 from micro_services.client import maps
 import urllib
 import json
+import nltk
+nltk.download('punkt')
+from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
 
 BATCH_SIZE = 5000
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
 
+CANCELLATION_REASON_CHEAPER_RATE = [
+    ['low','lower','cheap','cheaper','less','lesser','better', 'issue'],
+    ['quot','price','amount','cost','offer']
+]
+
+CANCELLATION_REASON_LOW_RATE = [
+    ['low','lower','less','lesser', 'issue'],
+    ['rate','profit']
+]
 class PopulateFclFreightRateStatistics:
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
@@ -134,6 +147,97 @@ class PopulateFclFreightRateStatistics:
                     FclFreightRateStatistic.insert_many(row_data).execute()
                     row_data = []
 
+    def stem_words_using_nltk(self, sentence):
+        words = word_tokenize(sentence)
+        stemmer = PorterStemmer()
+        stemmed_words = [stemmer.stem(word) for word in words]
+        return stemmed_words
+    
+    def cancellation_reason_matching(self, stemmed_words, arr):
+        flag = 0
+        for word in arr[0]:
+            if(word in stemmed_words):
+                flag = 1
+        if(flag == 1):
+            for word in arr[1]:
+                if(word in stemmed_words):
+                    flag += 1
+        if(flag > 1):
+            return True
+        return False
+
+
+    def populate_shipment_stats_in_fcl_freight_stats(self, rate_id, validity_id, shipment_id):
+        try:
+            with self.cogoback_connection.cursor() as cur:
+                sql = f"""SELECT 
+                        ss.state AS shipment_state, ss.cancellation_reason,
+                        sf.state AS container_state, sf.containers_count
+                        FROM shipments AS ss
+                        LEFT JOIN shipment_fcl_freight_services AS sf 
+                        ON ss.id = sf.shipment_id
+                        WHERE ss.id = '{shipment_id}'
+                    """
+                cur.execute(sql)
+                result = cur.fetchone()
+                shipment_state = result[0]
+                cancellation_reason = result[1]
+                container_state = result[2]
+                containers_count = result[3]
+
+                identifier = rate_id + '_' + validity_id
+                statistic = FclFreightRateStatistic.select().where(
+                            FclFreightRateStatistic.identifier == identifier,
+                            FclFreightRateStatistic.sign == 1
+                        ).first()
+                
+                setattr(statistic, 'containers_count', statistic.containers_count+containers_count)
+                
+                if(shipment_state=='completed'):
+                    setattr(statistic, 'shipment_completed_count', statistic.shipment_completed_count+1)
+                elif(shipment_state=='aborted'):
+                    setattr(statistic, 'shipment_aborted_count', statistic.shipment_aborted_count+1)  
+                elif(shipment_state=='in_progress'):
+                    setattr(statistic, 'shipment_is_active_count', statistic.shipment_is_active_count+1)  
+                elif(shipment_state=='shipment_received'):
+                    setattr(statistic, 'shipment_awaited_service_provider_confirmation_count', statistic.shipment_awaited_service_provider_confirmation_count+1)
+                elif(shipment_state=='confirmed_by_importer_exporter'):
+                    setattr(statistic, 'shipment_confirmed_by_service_provider_countb', statistic.shipment_confirmed_by_service_provider_countb+1)
+                elif(shipment_state=='cancelled'):
+                    setattr(statistic, 'shipment_cancelled_count', statistic.shipment_cancelled_count+1) 
+                    
+                    stem_words = self.stem_words_using_nltk(cancellation_reason)
+                    if self.cancellation_reason_matching(stem_words, CANCELLATION_REASON_CHEAPER_RATE):
+                        setattr(
+                            statistic, 
+                            'shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count', 
+                            statistic.shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count+1
+                        )
+                    elif self.cancellation_reason_matching(stem_words, CANCELLATION_REASON_LOW_RATE):
+                        setattr(
+                            statistic, 
+                            'shipment_booking_rate_is_too_low_count', 
+                            statistic.shipment_booking_rate_is_too_low_count+1
+                        )
+
+                if(container_state=='containers_gated_out'):
+                    setattr(statistic, 'shipment_containers_gated_out_count', statistic.shipment_containers_gated_out_count+1)
+                elif(container_state=='containers_gated_in'):
+                    setattr(statistic, 'shipment_containers_gated_in_count', statistic.shipment_containers_gated_in_count+1)
+                elif(container_state=='init'):
+                    setattr(statistic, 'shipment_init_count', statistic.shipment_init_count+1)
+                elif(container_state=='vessel_arrived'):
+                    setattr(statistic, 'shipment_vessel_arrived_count', statistic.shipment_vessel_arrived_count+1)
+
+                saved_status = statistic.save()
+                if not saved_status:
+                    print("! Error: Couldn't save statistics", statistic.id)
+                else:
+                    print('Saved ...',statistic.id)
+
+        except Exception as e:
+            print('! Exception occured while populating shipment stats:',e)
+
     def populate_checkout_fcl_freight_statistics(self, checkout_stats, rate_id, validity_id):  
         try:
             params = {
@@ -150,6 +254,8 @@ class PopulateFclFreightRateStatistics:
 
             if(params['shipment_id']):
                 try:
+                    self.populate_shipment_stats_in_fcl_freight_stats(rate_id, validity_id, params['shipment_id'])
+
                     with self.cogoback_connection.cursor() as cur:
                         sql = f"SELECT id FROM shipment_buy_quotations where shipment_id = '{params['shipment_id']}'"
                         cur.execute(sql)
@@ -217,6 +323,7 @@ def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     # populate_from_rates.populate_active_rate_ids()
     populate_from_rates.update_fcl_freight_rate_checkout_count()
+    # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats('3041971d-e71d-4556-b580-a986c429d173','727919d1-a079-4b87-85d2-3227a6c392b2','18cff673-651a-41cd-869a-b560ba246dda')
 
 if __name__ == '__main__':   
     main()
