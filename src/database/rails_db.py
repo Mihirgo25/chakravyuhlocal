@@ -552,3 +552,24 @@ def list_organization_users(id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+    
+def list_shipment_flash_booking_rates(shipment_id, currency):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                sql = 'select shipment_flash_booking_rates.validity_end from shipment_flash_booking_rates where shipment_id = %s and currency = %s'
+                cur.execute(sql, (shipment_id, currency))
+                result = cur.fetchall()
+                for res in result:
+                    new_obj = {
+                        "validity_end": str(res[0]),
+                    }
+                    all_result.append(new_obj)
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result

@@ -40,6 +40,7 @@ from services.ftl_freight_rate.interactions.get_ftl_freight_rate_visibility impo
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate import get_ftl_freight_rate
 from services.ftl_freight_rate.interactions.list_ftl_freight_rate_feedbacks import list_ftl_freight_rate_feedbacks
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate_bulk_operation import create_ftl_freight_rate_bulk_operation
+from services.ftl_freight_rate.interactions.get_ftl_freight_rate_min_max_validity_dates import get_ftl_freight_rate_min_max_validity_dates
 from services.ftl_freight_rate.interactions.get_ftl_freight_rate_cards import get_ftl_freight_rate_cards
 from services.ftl_freight_rate.interactions.extend_ftl_freight_rates import extend_ftl_freight_rate
 ftl_freight_router = APIRouter()
@@ -562,7 +563,44 @@ def create_ftl_freight_rate_bulk_operation_data(request:CreateBulkOperation, res
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })    
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })        
+
+@ftl_freight_router.get("/get_ftl_freight_rate_min_max_validity_dates")
+def get_ftl_freight_rate_min_max_validity_dates_api(
+    shipment_id: str,
+    importer_exporter_id: str,
+    trip_type: str,
+    origin_location_id: str = None,
+    destination_location_id: str = None,
+    commodity: str = None,
+    trucks_count: int = None,
+    cargo_readiness_date: datetime = None,
+    load_selection_type: str = None,
+    preferred_currency: str = "USD",
+    resp: dict = Depends(authorize_token)
+):
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    request = {
+        'shipment_id' : shipment_id,
+        'origin_location_id': origin_location_id,
+        'destination_location_id': destination_location_id,
+        'trip_type': trip_type,
+        'commodity': commodity,
+        'importer_exporter_id': importer_exporter_id,
+        'trucks_count': trucks_count,
+        'cargo_readiness_date': cargo_readiness_date,
+        'load_selection_type': load_selection_type,
+        'preferred_currency': preferred_currency
+    }
+    try:
+        data = get_ftl_freight_rate_min_max_validity_dates(request)
+        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @ftl_freight_router.get("/get_ftl_freight_rate_cards")
 def get_ftl_freight_rate_cards_api(

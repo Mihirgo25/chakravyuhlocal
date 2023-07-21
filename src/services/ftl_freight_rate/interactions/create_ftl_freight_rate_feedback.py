@@ -18,16 +18,17 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail='{} is invalid'.format(request['rate_id']))
     
     row = {
+        'status': 'active',
         'ftl_freight_rate_id': request['rate_id'],
         'source': request['source'],
         'source_id': request['source_id'],
         'performed_by_id': request['performed_by_id'],
         'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id'],
-        'origin_location_id':request['origin_location_id']
+        'performed_by_org_id': request['performed_by_org_id']
     }
 
     feedback = FtlFreightRateFeedback.select().where(
+        FtlFreightRateFeedback.status == 'active',
         FtlFreightRateFeedback.ftl_freight_rate_id == request['rate_id'],
         FtlFreightRateFeedback.source == request['source'],
         FtlFreightRateFeedback.source_id == request['source_id'],
@@ -64,6 +65,8 @@ def get_create_params(request):
         'destination_location_id': request.get('destination_location_id'),
         'destination_country_id': request.get('destination_country_id'),
         'service_provider_id': request.get('service_provider_id'),
+        'origin_location': request.get('origin_location'),
+        'destination_location': request.get('destination_location')
     }
     return params
 
