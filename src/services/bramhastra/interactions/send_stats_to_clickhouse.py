@@ -143,7 +143,6 @@ def send_feedback_stats_to_clickhouse(client = get_clickhouse_client()):
         values.append(value)
         
     query += ", ".join(values)
-    print(values, '><><><><><><>><><><><><><><><><><><><><><><><><><><><><><')
     client.command(query)
     
     FeedbackFclFreightRateStatistic.delete().execute()
