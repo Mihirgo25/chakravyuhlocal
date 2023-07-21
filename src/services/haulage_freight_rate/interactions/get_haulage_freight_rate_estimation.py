@@ -53,7 +53,8 @@ def get_haulage_freight_rate_estimation(request):
             'transit_time': data.get('transit_time'),
             'detention_free_time': detention_free_time,
             'validity_start': validity_start,
-            'validity_end': validity_end
+            'validity_end': validity_end,
+            'source': 'predicted'
         }
 
         create_haulage_freight_rate(params)

@@ -55,7 +55,7 @@ def create_haulage_freight_rate(request):
         'importer_exporter_id': request.get('importer_exporter_id'),
         'shipping_line_id': request.get('shipping_line_id'),
         'transport_modes_keyword': '_'.join(transport_modes),
-        'mode': request.get('mode', "manual"),
+        'source': request.get('source', "manual"),
         'accuracy': request.get('accuracy', 100),
         'rate_type': request.get("rate_type", DEFAULT_RATE_TYPE)
     }   
