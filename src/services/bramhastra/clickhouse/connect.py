@@ -1,5 +1,5 @@
-import clickhouse_connect
+from clickhouse_driver import Client
 
 def get_clickhouse_client():
-    with clickhouse_connect.get_client(host='localhost', username='default', password='') as client:
+    with Client(host='localhost', password='') as client:
         return client

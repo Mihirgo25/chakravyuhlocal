@@ -8,26 +8,24 @@ def check_percentages(v):
     assert v < 100 and v > 0
 
 
+
+class AccuracyValues(BaseModel):
+    x: datetime
+    y: float
+
 class RateAccuracyChart(BaseModel):
-    date: datetime
-    accuracy: float
+    id: str
+    data: list[AccuracyValues]
 
 
 class RateDeviationChart(BaseModel):
-    fro: datetime
-    to: datetime
-    value: datetime
-
-
-class Accuracy(BaseModel):
-    supply_rates: list[RateAccuracyChart]
-    predicted_rates: list[RateAccuracyChart]
-    supply_tranformed_rates: list[RateAccuracyChart]
-
+    id: str
+    date: datetime
+    value: float
 
 class FclFreightRateCharts(BaseModel):
     deviation: list[RateDeviationChart]
-    accuracy: Accuracy
+    accuracy: list[RateAccuracyChart]
 
 
 class FclFreightRateBooking(BaseModel):
@@ -81,4 +79,4 @@ class MapDeviations(BaseModel):
     
 class FclFreightMapViewResponse(BaseModel):
     origin_deviation: float = None
-    destination_deviations: list(MapDeviations)
+    destination_deviations: list[MapDeviations]
