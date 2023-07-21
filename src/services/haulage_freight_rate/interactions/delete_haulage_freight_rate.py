@@ -48,7 +48,7 @@ def create_audit(request, freight_id,audit_data):
 
 def find_object(request):
     object = HaulageFreightRate.select().where(HaulageFreightRate.id == request.get('id'))
-    if object.count()>=0:
+    if object.count()>0:
         return object.first()
     else:
         raise HTTPException(status_code=404, detail="Rate id not found")
