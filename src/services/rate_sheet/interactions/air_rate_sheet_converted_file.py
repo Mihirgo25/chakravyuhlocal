@@ -9,6 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
+from database.rails_db import get_operators
 
 
 def get_airport_id(port_code, country_code):
@@ -22,11 +23,9 @@ def get_airport_id(port_code, country_code):
 
 
 def get_airline_id(airline_name):
-    airline_name = airline_name.lower()
     try:
-        airline_id = maps.list_operators(
-            {"filters": {"q": airline_name, "operator_type": "airline"}}
-        )["list"][0]["id"]
+        airline_name = airline_name.strip()
+        airline_id = get_operators(short_name=airline_name, operator_type = 'airline')[0]['id']
     except:
         airline_id = None
     return airline_id
@@ -309,7 +308,7 @@ def create_air_freight_freight_rate(
     object["breadth"] = 300
     object["height"] = 300
 
-    object["rate_type"] = "general"
+    object["rate_type"] = "market_place"
     object["initial_volume"] = None
     object["available_volume"] = None
     object["initial_gross_weight"] = None
@@ -667,7 +666,7 @@ def create_air_freight_local_rate(
     object["service_provider_id"] = params.get("service_provider_id")
     object["performed_by_id"] = params.get("performed_by_id")
     object["line_items"] = []
-    object["rate_type"] = "general"
+    object["rate_type"] = "market_place"
     for slab in rows:
         if slab.get("code"):
             keys_to_extract = ["code", "unit", "min_price", "currency"]

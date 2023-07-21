@@ -44,6 +44,8 @@ def create_audit(request, freight_id):
     audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
     audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
     audit_data['sourced_by_id'] = request.get("sourced_by_id")
+    audit_data['payment_term'] = request.get("payment_term")
+    audit_data['schedule_type'] = request.get("schedule_type")
     audit_data['procured_by_id'] = request.get("procured_by_id")
 
     id = FclFreightRateAudit.create(

@@ -1057,7 +1057,7 @@ def list_air_freight_rates_api(
 def get_weight_slabs_for_airline_api(
     airline_id:str,
     chargeable_weight: float = 0,
-    overweight_upper_limit:float = 50.0,
+    overweight_upper_limit:float = 100.0,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
