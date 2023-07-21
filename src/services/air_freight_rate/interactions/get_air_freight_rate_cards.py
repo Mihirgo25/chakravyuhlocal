@@ -241,6 +241,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
             break_even_weight = (required_next_slab['lower_limit'] * lower_rate) / higher_rate
             if required_weight >= break_even_weight:
                 required_slab = required_next_slab
+                required_weight = int(required_slab['lower_limit'])
     
     price = round(required_slab['tariff_price'],2)
     min_price = float(freight_validity['min_price'])
