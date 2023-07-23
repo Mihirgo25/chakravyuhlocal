@@ -343,38 +343,34 @@ class AddFreightRateMarkupParams(BaseModel):
     markup: float
     markup_type: str
     markup_currency: str = None
-    validity_id: str = None
-    air_freight_rate_id: str
+    filters:dict = {}
 
 
 class DeleteFreightRateParams(BaseModel):
-    air_freight_rate_id: str
-    validity_id: str = None
+    filters:dict = {}
     
 class UpdateFreightRateParams(BaseModel):
-    validity_id: str = None
-    air_freight_rate_id: str
+    filters:dict = {}
     new_start_date: datetime
     new_end_date: datetime
 
 
 class DeleteAirFreightRateLocalParams(BaseModel):
-    air_freight_rate_local_id: str
+    filters: dict = {}
 
 
 class DeleteAirFreightRateSurchargeParams(BaseModel):
-    air_freight_rate_surcharge_id: str
+    filters: dict = {}
 
 
 class CreateBulkOperationParams(BaseModel):
     performed_by_id: str = None
     performed_by_type: str = None
-    add_freight_rate_markup: List[AddFreightRateMarkupParams] = None
-    delete_freight_rate: List[DeleteFreightRateParams] = None
-    add_freight_rate_markup: List[AddFreightRateMarkupParams] = None
-    update_freight_rate: List[UpdateFreightRateParams] = None
-    delete_freight_rate_local: List[DeleteAirFreightRateLocalParams] = None
-    delete_freight_rate_surcharge: List[DeleteAirFreightRateSurchargeParams] = None
+    add_freight_rate_markup: AddFreightRateMarkupParams = None
+    delete_freight_rate: DeleteFreightRateParams = None
+    update_freight_rate: UpdateFreightRateParams = None
+    delete_freight_rate_local: DeleteAirFreightRateLocalParams = None
+    delete_freight_rate_surcharge: DeleteAirFreightRateSurchargeParams = None
 
 
 class CreateAirFreightRateParams(BaseModel):

@@ -13,7 +13,7 @@ DEFAULT_INCLUDES = ['id', 'origin_airport_id', 'destination_airport_id', 'airlin
 
 POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'airline_id', 'commodity', 'operation_type', 'service_provider_id', 'rate_not_available_entry', 'price_type', 'shipment_type', 'stacking_type', 'commodity_type', 'cogo_entity_id', 'rate_type','source']
 
-POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at','not_predicted_rate','date']
+POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at','not_predicted_rate','date','validity_id']
 
 
 def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, older_rates_required = False,all_rates_for_cogo_assured = False,pagination_data_required = True, includes = {}):
@@ -28,6 +28,8 @@ def list_air_freight_rates(revenue_desk_data_required=None,filters = {}, page_li
     query = get_filters(direct_filters, query, AirFreightRate)
     query = apply_indirect_filters(query, indirect_filters)
 
+  if return_query:
+    return {'list':query}
   pagination_data = get_pagination_data(query,page,page_limit,pagination_data_required)
 
   query = query.paginate(page,page_limit)
@@ -191,6 +193,14 @@ def apply_date_filter(query,filters):
     )
   
   return query
+
+def apply_validity_id_filter(query,filters):
+
+  query = query.where(
+     (SQL("(validity->>'id')"))<< filters['validity_id'] 
+  )
+  return query
+
 
 def get_data(query,revenue_desk_data_required):
     if revenue_desk_data_required:

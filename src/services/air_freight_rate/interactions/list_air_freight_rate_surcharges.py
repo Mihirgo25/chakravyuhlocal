@@ -23,7 +23,7 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
    
                
     if return_query: 
-        return { 'list': json_encoder(list(query.dicts())) }
+        return { 'list': query }
     
     pagination_data = get_pagination_data(query,page, page_limit, pagination_data_required)
     query = query.paginate(page, page_limit)
