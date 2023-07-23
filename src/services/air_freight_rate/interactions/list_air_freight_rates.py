@@ -58,6 +58,8 @@ def get_query(all_rates_for_cogo_assured,sort_by, sort_type, older_rates_require
            fn.jsonb_array_elements(AirFreightRate.validities).alias('validity')
        ))
   query = query.order_by(eval('AirFreightRate.{}.{}()'.format(sort_by,sort_type)))
+  query = query.where(~AirFreightRate.rate_not_available_entry)
+  query = query.where(AirFreightRate.last_rate_available_date >= datetime.now().date())
   return query
 
 def apply_indirect_filters(query, filters):
@@ -214,6 +216,7 @@ def get_data(query,revenue_desk_data_required):
     for rate in rates:
       validity = rate['validity']
       rate['weight_slabs'] = validity['weight_slabs']
+      validity['min_price'] = float(validity.get('min_price') or 0)
       if validity.get('status') == None:
         validity['status'] = True
       if validity.get('density_category')==None:
