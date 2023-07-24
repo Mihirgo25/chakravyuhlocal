@@ -210,6 +210,7 @@ class AirFreightRateBulkOperation(BaseModel):
     def perform_batch_wise_delete_freight_rate_action(self,count,batches_query,total_count):
         data = self.data
         freight_rates = jsonable_encoder(list(batches_query.dicts()))
+        weight_slabs = data['weight_slabs']
         for freight in freight_rates:
             count += 1
             if AirFreightRateAudit.select().where(
@@ -220,12 +221,35 @@ class AirFreightRateBulkOperation(BaseModel):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
                 continue
-            delete_air_freight_rate(
+            new_weight_slabs = []
+            slabs = freight['validity']["weight_slabs"]
+            for slab in slabs:
+                slab_found = False
+                for weight_slab in weight_slabs:
+                    if slab['lower_limit'] >=weight_slab['lower_limit'] and slab['upper_limit'] <= weight_slab['upper_limit']:
+                        slab_found = True
+                        break
+                if not slab_found:
+                    new_weight_slabs.append(slab)
+            if not new_weight_slabs:
+                delete_air_freight_rate(
+                    {
+                        "id": freight["id"],
+                        "performed_by_id": self.performed_by_id,
+                        "validity_id": freight['validity']['id'],
+                        "bulk_operation_id": self.id,
+                    }
+                )
+            else:
+                update_air_freight_rate(
                 {
                     "id": freight["id"],
+                    "validity_id": freight['validity']["id"],
                     "performed_by_id": self.performed_by_id,
-                    "validity_id": freight['validity']['id'],
                     "bulk_operation_id": self.id,
+                    "min_price": freight['validity']["min_price"],
+                    "currency": freight['validity']["currency"],
+                    "weight_slabs": new_weight_slabs,
                 }
             )
 
@@ -254,8 +278,8 @@ class AirFreightRateBulkOperation(BaseModel):
     def perform_batch_wise_add_freight_rate_markup_action(self,batches_query, count , total_count):
         freight_rates = jsonable_encoder(list(batches_query.dicts()))
         data = self.data
+        weight_slabs = data['weight_slabs']
         for freight in freight_rates:
-            print(freight)
             count += 1
             if (
                 AirFreightRateAudit.select()
@@ -273,6 +297,14 @@ class AirFreightRateBulkOperation(BaseModel):
 
             slabs = freight['validity']["weight_slabs"]
             for slab in slabs:
+                slab_found = False
+                for weight_slab in weight_slabs:
+                    if slab['lower_limit'] >=weight_slab['lower_limit'] and slab['upper_limit'] <= weight_slab['upper_limit']:
+                        slab_found = True
+                        break
+                
+                if not slab_found:
+                    continue
                 if data["markup_type"].lower() == "percent":
                     markup = (
                         float(data["markup"] * slab["tariff_price"]) / 100

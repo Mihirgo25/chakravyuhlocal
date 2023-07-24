@@ -339,15 +339,21 @@ class UpdateAirFreightRateMarkUpParams(BaseModel):
     validity_end: datetime = None
 
 
+class BulkOperationSlabs(BaseModel):
+    lower_limit:float
+    upper_limit:float
+
 class AddFreightRateMarkupParams(BaseModel):
     markup: float
     markup_type: str
     markup_currency: str = None
+    weight_slabs: List[BulkOperationSlabs]
     filters:dict = {}
 
 
 class DeleteFreightRateParams(BaseModel):
     filters:dict = {}
+    weight_slabs: List[BulkOperationSlabs]
     
 class UpdateFreightRateParams(BaseModel):
     filters:dict = {}
