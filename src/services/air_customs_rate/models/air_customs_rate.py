@@ -7,6 +7,7 @@ from micro_services.client import common, maps
 import datetime
 from fastapi import HTTPException
 from configs.definitions import AIR_CUSTOMS_CHARGES
+from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
 from services.air_customs_rate.constants.air_customs_rate_constants import COMMODITIES
 from services.air_freight_rate.constants.air_freight_rate_constants import RATE_TYPES
 
@@ -25,7 +26,7 @@ class AirCustomsRate(BaseModel):
     commodity = CharField(null=True, index=True)
     commodity_type = CharField(index=True)
     commodity_sub_type = CharField(index=True)
-    service_provider_id = UUIDField(index=True, null = True)
+    service_provider_id = UUIDField(index=True, default = DEFAULT_SERVICE_PROVIDER_ID)
     importer_exporter_id = UUIDField(null=True)
     line_items = BinaryJSONField(null=True)
     is_line_items_error_messages_present = BooleanField(null=True, default=False)
