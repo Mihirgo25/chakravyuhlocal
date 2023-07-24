@@ -7,7 +7,7 @@ from micro_services.client import common, maps
 import datetime
 from fastapi import HTTPException
 from configs.definitions import AIR_CUSTOMS_CHARGES
-from configs.air_customs_rate_constants import COMMODITIES
+from services.air_customs_rate.constants.air_customs_rate_constants import COMMODITIES
 from services.air_freight_rate.constants.air_freight_rate_constants import RATE_TYPES
 
 class BaseModel(Model):
@@ -28,11 +28,11 @@ class AirCustomsRate(BaseModel):
     service_provider_id = UUIDField(index=True, null = True)
     importer_exporter_id = UUIDField(null=True)
     line_items = BinaryJSONField(null=True)
-    is_line_items_error_messages_present = BooleanField(null=True)
-    is_line_items_info_messages_present = BooleanField(null=True)
+    is_line_items_error_messages_present = BooleanField(null=True, default=False)
+    is_line_items_info_messages_present = BooleanField(null=True, default=False)
     line_items_error_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
     line_items_info_messages = BinaryJSONField(constraints=[SQL("DEFAULT '{}'::jsonb")], null=True)
-    rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True)
+    rate_not_available_entry = BooleanField(null=True, default=False)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)

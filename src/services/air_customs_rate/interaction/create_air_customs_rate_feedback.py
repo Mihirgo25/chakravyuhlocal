@@ -13,7 +13,7 @@ def execute_transaction_code(request):
     rate = AirCustomsRate.select(AirCustomsRate.id).where(AirCustomsRate.id == request.get('rate_id')).first()
 
     if not rate:
-        raise HTTPException(status_code=400, detail='Rate is invalid')
+        raise HTTPException(status_code=404, detail='Rate is invalid')
 
     params = {
         'air_customs_rate_id': request.get('rate_id'),

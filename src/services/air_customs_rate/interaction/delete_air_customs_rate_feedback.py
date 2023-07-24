@@ -11,7 +11,7 @@ def delete_air_customs_rate_feedback(request):
 def execute_transaction_code(request):
   air_feedback_objects = find_feedback_objects(request)
   if not air_feedback_objects:
-    raise HTTPException(status_code=500, detail = 'Feedbacks Not Found')
+    raise HTTPException(status_code=404, detail = 'Feedbacks Not Found')
 
   reverted_rate = {
      'rate_id':request.get('rate_id'),
@@ -28,7 +28,7 @@ def execute_transaction_code(request):
     try:
         object.save()
     except Exception as e:
-        print("Exception in deleting feedback", e)
+        raise HTTPException(status_code=500, detail = 'Error while deleting feedback')
 
     create_audit_for_customs_feedback(request, object.id, data)
     update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')

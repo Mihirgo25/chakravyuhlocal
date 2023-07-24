@@ -2,7 +2,7 @@ import sentry_sdk, traceback
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import  get_eligible_orgs
-from configs.global_constants import PREDICTED_RATES_SERVICE_PROVIDER_IDS,AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
 from configs.definitions import AIR_CUSTOMS_CHARGES
 from micro_services.client import common
 
@@ -21,7 +21,7 @@ def get_air_customs_rate_cards(request):
     except Exception as e:
         traceback.print_exc()
         sentry_sdk.capture_exception(e)
-        print(e, 'Error In Fcl Customs Rate Cards')
+        print(e, 'Error In Air Customs Rate Cards')
         return {
             "list": []
         }
@@ -81,11 +81,11 @@ def build_response_object(result,request):
     return response_object
 
 def add_customs_clearance(result,response_object,request):
-    total_price = 0
-    total_price_currency = result['line_items'][0]['currency']
-
     if not result.get('line_items'):
         return False
+
+    total_price = 0
+    total_price_currency = result['line_items'][0]['currency']
 
     for line_item in (result.get('line_items') or []):
         line_item = build_line_item_object(line_item,request)

@@ -10,7 +10,7 @@ def delete_air_customs_rate(request):
 def execute_transaction_code(request):
     rate_object = find_rate_object(request)
     if not rate_object:
-        raise HTTPException(status_code=400, detail='Rate Not Found')
+        raise HTTPException(status_code=404, detail='Rate Not Found')
 
     delete_params = get_params_for_deletion()
 
@@ -20,7 +20,7 @@ def execute_transaction_code(request):
     try:
         rate_object.save()
     except Exception as e:
-         print("Exception in deleting rate", e)
+        raise HTTPException(status_code=500, detail = 'Error while deleting rate')
 
     create_audit_for_delete_rates(request, rate_object.id, delete_params)
 

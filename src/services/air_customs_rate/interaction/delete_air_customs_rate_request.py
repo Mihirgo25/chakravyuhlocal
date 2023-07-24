@@ -11,7 +11,7 @@ def delete_air_customs_rate_request(request):
 def execute_transaction_code(request):
   request_objects = find_request_objects(request)
   if not request_objects:
-    raise HTTPException(status_code=500, detail = 'Requests Not Found')
+    raise HTTPException(status_code=404, detail = 'Requests Not Found')
 
   data = {key:value for key,value in request.items() if key != 'air_customs_rate_request_ids'}
   for object in request_objects:
@@ -22,7 +22,7 @@ def execute_transaction_code(request):
     try:
         object.save()
     except Exception as e:
-        print("Exception in deleting request", e)
+        raise HTTPException(status_code=500, detail = 'Error while deleting request')
 
     update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
     create_audit_for_customs_request(request, object, data)
