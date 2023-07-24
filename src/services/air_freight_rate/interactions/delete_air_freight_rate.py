@@ -12,7 +12,7 @@ def delete_air_freight_rate_data(request):
     air_freight_rate=find_object(request)
 
     if not air_freight_rate:
-        raise HTTPException(status_code=400,detail="is invalid")
+        raise HTTPException(status_code=404,detail="Air Freight Rate Not Found")
 
     for t in air_freight_rate.validities:
         if t.get("id") == request.get("validity_id"):

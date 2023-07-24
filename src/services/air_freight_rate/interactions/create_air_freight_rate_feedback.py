@@ -81,9 +81,9 @@ def execute_transaction_code(request):
     if request['feedback_type']=='disliked':
         if CARGOAI_ACTIVE_ON_DISLIKE_RATE:
             get_rate_from_cargo_ai_in_delay.apply_async(kwargs={'air_freight_rate':rate,'feedback':feedback,'performed_by_id':request.get('performed_by_id')},queue='critical')
-            airports = get_locations(rate)
-            if airports:
-                send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
+        airports = get_locations(rate)
+        if airports:
+            send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
 
     return {'id': request['rate_id']}
 

@@ -25,9 +25,9 @@ def get_fcl_freight_rates_from_clusters(request):
     destination_main_port_ids = []
 
     for loc in location_data:
-        if loc['country_id'] == request['origin_country_id']:
+        if loc['icd_port_id'] == request['origin_port_id']:
             origin_main_port_ids.append(loc['id'])
-        elif loc['country_id'] == request['destination_country_id']:
+        elif loc['icd_port_id'] == request['destination_port_id']:
             destination_main_port_ids.append(loc['id'])
             
     if len(origin_main_port_ids) == 0:
@@ -49,7 +49,8 @@ def get_fcl_freight_rates_from_clusters(request):
     
     create_params = [sublist for list in create_params for sublist in list if sublist]
     
-    rates = Parallel(n_jobs=2)(delayed(create_fcl_freight_rate_data)(param) for param in create_params)
+    with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+        futures = [executor.submit(create_fcl_freight_rate_data, param) for param in create_params]
 
 def get_create_params(origin_port_id, destination_port_id, request, ff_mlo):
     is_origin_base_port = FclFreightLocationCluster.select().where(FclFreightLocationCluster.base_port_id == origin_port_id).exists()
