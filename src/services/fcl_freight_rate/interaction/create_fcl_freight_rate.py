@@ -10,6 +10,7 @@ from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 from configs.env import DEFAULT_USER_ID
+from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -44,10 +45,10 @@ def create_audit(request, freight_id):
     audit_data["is_extended"] = request.get("is_extended")
     audit_data["fcl_freight_rate_request_id"] = request.get("fcl_freight_rate_request_id")
     audit_data['validities'] = jsonable_encoder(request.get("validities") or {}) if rate_type == 'cogo_assured' else None
-    audit_data['sourced_by_id'] = request.get("sourced_by_id")
+    audit_data['sourced_by_id'] = str(request.get("sourced_by_id"))
     audit_data['payment_term'] = request.get("payment_term")
     audit_data['schedule_type'] = request.get("schedule_type")
-    audit_data['procured_by_id'] = request.get("procured_by_id")
+    audit_data['procured_by_id'] = str(request.get("procured_by_id"))
 
     id = FclFreightRateAudit.create(
         bulk_operation_id=request.get("bulk_operation_id"),
@@ -194,13 +195,12 @@ def create_fcl_freight_rate(request):
     
     freight.update_platform_prices_for_other_service_providers()
 
-    if request.get("source") == "flash_booking":
-        id = create_fcl_freight_rate_bulk_operation_func(request)
+    is_rate_extended_via_bo = rate_extension_via_bulk_operation(request)
 
     delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
      
     current_validities = freight.validities
-    adjust_dynamic_pricing(request, row, freight, current_validities)
+    adjust_dynamic_pricing(request, row, freight, current_validities, is_rate_extended_via_bo)
 
     if request.get('fcl_freight_rate_request_id'):
         update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': request.get('fcl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')})
@@ -210,7 +210,7 @@ def create_fcl_freight_rate(request):
 
     return {"id": freight.id}
 
-def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validities):
+def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validities, is_rate_extended_via_bo):
     from celery_worker import extend_fcl_freight_rates, adjust_fcl_freight_dynamic_pricing
     rate_obj = request | row | { 
         'origin_location_ids': freight.origin_location_ids,
@@ -223,7 +223,7 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'service_provider_id': freight.service_provider_id,
         'extend_rates_for_existing_system_rates': True
     }
-    if row["mode"] == 'manual' and not request.get("is_extended") and row['rate_type'] == "market_place":
+    if row["mode"] == 'manual' and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
 
     adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
@@ -296,36 +296,6 @@ def validate_value_props(v_props):
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
-
-def create_fcl_freight_rate_bulk_operation_func(request):
-    from services.fcl_freight_rate.interaction.create_fcl_freight_rate_bulk_operation import create_fcl_freight_rate_bulk_operation
-    return create_fcl_freight_rate_bulk_operation(get_bulk_operation_params(request))
-
-def get_bulk_operation_params(request):
-    data = {}
-    data["filters"] = {
-        "origin_port_id": request.get("origin_port_id"),
-        "origin_main_port_id": request.get("origin_main_port_id"),
-        "destination_port_id": request.get("destination_port_id"),
-        "destination_main_port_id": request.get("destination_main_port_id"),
-        "container_size": request.get("container_size"),
-        "container_type": request.get("container_type"),
-        "commodity": request.get("commodity"),
-        "shipping_line_id": request.get("shipping_line_id")
-    }
-    data["line_item_code"] = "BAS"
-    data["markup_type"] = "absolute"
-    data["markup"] = [val["price"] for val in request.get("line_items") if val["code"] == "BAS"][0]
-    data["extend_for_flash_booking"] = True
-    
-    params = {}
-    params["performed_by_type"] = "agent"
-    params["performed_by_id"] = DEFAULT_USER_ID
-    params["procured_by_id"] = DEFAULT_USER_ID
-    params["sourced_by_id"] = DEFAULT_USER_ID
-    params["extend_freight_rate"] = data
-    
-    return params
 
 
     
