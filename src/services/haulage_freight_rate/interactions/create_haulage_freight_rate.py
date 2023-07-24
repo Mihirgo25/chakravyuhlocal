@@ -9,6 +9,7 @@ def create_audit(request, freight_id):
     audit_data["validity_start"] = request.get("validity_start")
     audit_data["validity_end"] = request.get("validity_end")
     audit_data["line_items"] = request.get("line_items")
+    audit_data["transport_modes"] = request.get("transport_modes")
     audit_data["haulage_freight_rate_request_id"] = request.get("haulage_freight_rate_request_id")
     audit_data["performed_by_id"] = request.get("performed_by_id")
     audit_data["procured_by_id"] = request.get("procured_by_id")
