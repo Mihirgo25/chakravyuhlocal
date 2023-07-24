@@ -38,7 +38,7 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     {f"'{rate['origin_country_id']}'" if rate['origin_country_id'] is not None else 'NULL'},
     {f"'{rate['destination_country_id']}'" if rate['destination_country_id'] is not None else 'NULL'},
     {f"'{rate['origin_continent_id']}'" if rate['origin_continent_id'] is not None else 'NULL'},
-    {f"'{rate['origin_continent_id']}'" if rate['origin_continent_id'] is not None else 'NULL'},
+    {f"'{rate['destination_continent_id']}'" if rate['destination_continent_id'] is not None else 'NULL'},
     {f"'{rate['origin_region_id']}'" if rate['origin_region_id'] is not None else 'NULL'},
     {f"'{rate['destination_region_id']}'" if rate['destination_region_id'] is not None else 'NULL'},
     {f"'{rate['origin_trade_id']}'" if rate['origin_trade_id'] is not None else 'NULL'},
@@ -100,6 +100,7 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     '{rate['status']}',
     '{rate['last_action']}',
     {rate['rate_deviation_from_booking_rate']},
+    {rate['rate_deviation_from_cluster_base_rate']},
     {rate['rate_deviation_from_booking_on_cluster_base_rate']},
     {rate['rate_deviation_from_latest_booking']},
     {rate['average_booking_rate']}
