@@ -143,9 +143,9 @@ def group_by_key(customs_rates, request):
     result = {}
     for item in customs_rates:
         if request.get('port_id'):
-            key = (item['service_provider_id'], item['rate_type'])
+            key = f'{str(item["service_provider_id"] or "")}:{str(item["rate_type"])}'
         else:
-            key = (item['service_provider_id'], item['location_id'], item['rate_type'])
+            key = f'{str(item["service_provider_id"] or "")}:{str(item["location_id"] or "")}:{str(item["rate_type"])}'
         try: 
             result[key].append(item)
         except KeyError:
