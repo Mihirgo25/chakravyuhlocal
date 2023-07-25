@@ -36,7 +36,7 @@ def delay_haulage_functions(self,haulage_object,request):
             raise self.retry(exc= exc)
 
 
-@celery.task(bind = True, retry_backoff=True, max_retries=3)
+@celery.task(bind = True, max_retries=3, retry_backoff=True)
 def create_haulage_freight_rate_delay(self, request):
     try:
         return create_haulage_freight_rate(request)

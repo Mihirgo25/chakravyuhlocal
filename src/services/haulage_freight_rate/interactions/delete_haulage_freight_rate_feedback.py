@@ -22,7 +22,6 @@ def execute_transaction_code(request):
 
     from celery_worker import (
         update_multiple_service_objects,
-        send_closed_notifications_to_sales_agent_feedback,
     )
 
     objects = find_objects(request)
@@ -47,10 +46,6 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={"object": obj}, queue="low")
-
-        send_closed_notifications_to_sales_agent_feedback.apply_async(
-            kwargs={"object": obj}, queue="low"
-        )
 
     return {"ids": request["haulage_freight_rate_feedback_ids"]}
 
