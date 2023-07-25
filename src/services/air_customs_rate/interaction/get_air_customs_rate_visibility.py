@@ -1,5 +1,5 @@
 
-from database.rails_db import get_organization, get_eligible_orgs
+from database.rails_db import get_organization, get_eligible_org_services
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 
 def get_air_customs_rate_visibility(request):
@@ -8,7 +8,7 @@ def get_air_customs_rate_visibility(request):
     org_details = get_organization(id=request.get('service_provider_id'), account_type = 'service_provider')
     if org_details:
         org_details = org_details[0]
-        org_services = get_eligible_orgs(None, str(org_details.get('id') or ''))
+        org_services = get_eligible_org_services(str(org_details.get('id') or ''))
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
     if kyc_and_service_status:
