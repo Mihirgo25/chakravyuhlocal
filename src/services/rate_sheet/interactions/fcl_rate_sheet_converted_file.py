@@ -25,62 +25,6 @@ csv_options = {
     ),
 }
 
-
-def processed_percent_key(params):
-    return f"rate_sheet_converted_file_processed_percent_{params['id']}"
-
-def set_processed_percent(processed_percent, params):
-    if rd:
-        rd.hset(processed_percent_hash, processed_percent_key(params), processed_percent)
-
-
-def get_processed_percent(params):
-    if rd:
-        try:
-            cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
-            return parse_numeric(cached_response)
-        except:
-            return 0
-
-def get_port_id(port_code):
-    try:
-        port_code = port_code.strip()
-    except:
-        port_code = port_code
-    filters =  {"filters":{"type": "seaport", "port_code": port_code, "status": "active"}}
-    try:
-        port_id =  maps.list_locations(filters)['list'][0]["id"]
-    except:
-        port_id = None
-    return port_id
-
-def valid_hash(hash, present_fields=None, blank_fields=None):
-    if present_fields:
-        for field in present_fields:
-            if field not in hash:
-                return False
-            if not hash[field]:
-                return False
-    if blank_fields: 
-        all_blank = True
-        for field in blank_fields:
-            if field in hash and hash[field]:
-                all_blank = False
-        return all_blank
-    return True 
-
-
-
-def get_airport_id(port_code, country_code):
-    try:
-        port_code = port_code.strip()
-    except:
-        port_code = port_code
-    filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
-    airport_id = maps.list_locations(filters)['list'][0]["id"]
-    return airport_id
-
-
 def get_shipping_line_id(shipping_line_name):
     try:
         shipping_line_name = shipping_line_name.strip()

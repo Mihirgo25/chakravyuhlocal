@@ -4,6 +4,7 @@ from database.db_session import rd
 from datetime import datetime
 import dateutil.parser as parser
 from libs.parse_numeric import parse_numeric
+from database.rails_db import get_operators
 from micro_services.client import maps
 
 client = httpx.Client()
@@ -156,3 +157,22 @@ def get_port_id(port_code):
     except:
         port_id = None
     return port_id
+
+
+def get_airport_id(port_code, country_code):
+    input = {"filters": {"type": "airport", "port_code": port_code, "status": "active"}}
+    try:
+        locations_data = maps.list_locations(input)
+        airport_ids = locations_data["list"][0]["id"]
+    except:
+        airport_ids = None
+    return airport_ids
+
+
+def get_airline_id(airline_name):
+    try:
+        airline_name = airline_name.strip()
+        airline_id = get_operators(short_name=airline_name, operator_type = 'airline')[0]['id']
+    except:
+        airline_id = None
+    return airline_id
