@@ -53,7 +53,7 @@ app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=[
 app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
 app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
 
-app.include_router(prefix = "/fcl_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
+app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
 
 
 app.add_middleware(

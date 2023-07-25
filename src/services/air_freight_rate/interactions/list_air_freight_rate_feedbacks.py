@@ -13,10 +13,10 @@ from math import ceil
 from configs.global_constants import RATE_ENTITY_MAPPING
 from micro_services.client import spot_search
 from database.rails_db import get_organization
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status','trade_type']
-possible_indirect_filters = ['relevant_supply_agent','origin_airport_id', 'destination_airport_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id']
+possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status','trade_type','origin_airport_id', 'destination_airport_id','origin_trade_id', 'destination_trade_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id','airline_id']
+possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
 def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
     query = AirFreightRateFeedback.select()
@@ -36,7 +36,7 @@ def list_air_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     query = get_page(query, page, page_limit)
     data = get_data(query,spot_search_details_required,booking_details_required) 
 
-    return {'list': jsonable_encoder(data) } | (pagination_data) | (stats)
+    return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
 def get_page(query, page, page_limit):
     query = query.order_by(AirFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
@@ -64,15 +64,6 @@ def apply_relevant_supply_agent_filter(query, filters):
     return query
 
 
-def apply_cogo_entity_id_filter(query, filters):
-    filter_entity_id = filters['cogo_entity_id']
-    query = query.where((AirFreightRateFeedback.cogo_entity_id == filter_entity_id) | (AirFreightRateFeedback.cogo_entity_id.is_null(True)))
-    return query
-
-def apply_service_provider_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedback.service_provider_id == filters['service_provider_id'])
-    return query
-
 def apply_validity_start_greater_than_filter(query, filters):
     query = query.where(AirFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
 
@@ -83,24 +74,6 @@ def apply_validity_end_less_than_filter(query, filters):
 
     return query
 
-def apply_origin_airport_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedback.origin_airport_id == filters['origin_airport_id'])
-    return query
-
-def apply_destination_airport_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedback.destination_airport_id == filters['destination_airport_id'])
-    return query
-
-def apply_origin_country_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedback.origin_country_id == filters['origin_country_id'])
-    return query
-
-def apply_destination_country_id_filter(query, filters):
-    query = query.where(AirFreightRateFeedback.destination_country_id == filters['destination_country_id'])
-    return query
-
-def apply_airline_id_filter(query,filters):
-    query = query.where(AirFreightRateFeedback.airline_id == filters['airline_id'])
 
 def apply_similar_id_filter(query, filters):
     feedback_data = (AirFreightRateFeedback.select(AirFreightRateFeedback.origin_airport_id, AirFreightRateFeedback.destination_airport_id, AirFreightRateFeedback.operation_type , AirFreightRateFeedback.commodity).where(AirFreightRateFeedback.id == filters['similar_id'])).first()
@@ -110,7 +83,7 @@ def apply_similar_id_filter(query, filters):
     return query
 
 def get_data(query, spot_search_details_required, booking_details_required):
-    data =jsonable_encoder(list(query.dicts()))
+    data =json_encoder(list(query.dicts()))
     air_freight_rate_ids = []
     for rate in data:
         if rate['air_freight_rate_id']:
@@ -132,7 +105,7 @@ def get_data(query, spot_search_details_required, booking_details_required):
                                             AirFreightRate.service_provider
             ).where(AirFreightRate.id.in_(air_freight_rate_ids))
     
-    air_freight_rates = jsonable_encoder(list(air_freight_rates.dicts()))
+    air_freight_rates = json_encoder(list(air_freight_rates.dicts()))
     air_freight_rate_mappings = {k['id']: k for k in air_freight_rates}
     spot_search_hash = {}
     new_data = []
@@ -176,9 +149,11 @@ def get_data(query, spot_search_details_required, booking_details_required):
             object['reverted_rate_data']['stacking_type'] = reverted_rate['stacking_type']
             object['reverted_rate_data']['shipment_type'] = reverted_rate['shipment_type']
             object['reverted_rate_data']['price_type'] = reverted_rate.get('price_type')
-            reverted_validity_data=None
+            reverted_validity_data= {
+                'weight_slabs': []
+            }
             for validity_data in reverted_rate['validities']:
-                if validity_data['id']==object['reverted_rate']['validity_id']:
+                if validity_data['id']== (object.get('reverted_rate') or {}).get('validity_id'):
                     reverted_validity_data=validity_data
                     break
             object['reverted_rate_data']['min_price'] = reverted_validity_data.get('min_price') 

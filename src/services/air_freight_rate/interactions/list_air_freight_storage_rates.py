@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime ,timedelta
 from services.air_freight_rate.models.air_freight_storage_rate import AirFreightStorageRates
 from services.fcl_freight_rate.helpers.direct_filters import apply_direct_filters
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_applicable_filters import get_applicable_filters
 from libs.get_filters import get_filters
 import json
@@ -27,14 +27,14 @@ def list_air_freight_storage_rates(filters={},page=1,page_limit=10,pagination_da
     if return_query:
         query=query.paginate(page,page_limit)
         return {
-            'list':jsonable_encoder(list(query.dicts()))
+            'list':json_encoder(list(query.dicts()))
     }
     pagination_data={}
     if pagination_data_required:
         pagination_data=get_pagination_data(query)
     query=query.paginate(page,page_limit)
 
-    return { 'list': jsonable_encoder(list(query.dicts())) } | (pagination_data)
+    return { 'list': json_encoder(list(query.dicts())) } | (pagination_data)
 
 def apply_indirect_filters(query, filters):
     for key in filters:

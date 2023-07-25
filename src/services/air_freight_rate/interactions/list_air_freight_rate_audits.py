@@ -2,7 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRa
 from libs.get_applicable_filters import get_applicable_filters
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from libs.get_filters import get_filters
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 import json
 from math import ceil
 from peewee import *
@@ -25,7 +25,7 @@ def list_air_freight_rate_audits(filters={},page_limit=10,page=1,sort_by = 'crea
     query=query.paginate(page,page_limit)
     data=get_data(query)
     return{
-        'list':jsonable_encoder(data)
+        'list':json_encoder(data)
     } | (pagination_data)
 
 def get_query(sort_by, sort_type):
@@ -71,7 +71,7 @@ def apply_hash_direct_filter(query,key,value):
     )
 
 def get_data(query):
-    data = jsonable_encoder(query.dicts())
+    data = json_encoder(query.dicts())
     return data
     
 

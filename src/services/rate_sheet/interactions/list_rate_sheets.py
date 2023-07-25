@@ -1,7 +1,7 @@
 from services.rate_sheet.models.rate_sheet import RateSheet
 from services.rate_sheet.models.rate_sheet_audits import RateSheetAudit
 from libs.get_filters import get_filters
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 import services.rate_sheet.interactions.list_rate_sheets as list_rate_sheet
 import json, uuid, math
 import concurrent.futures
@@ -147,7 +147,9 @@ def add_service_objects(data):
         for id in user_ids:
             if is_valid_uuid(id):
                 objects_user.append(id)
-        list_user = get_user(objects_user)
+        list_user = []
+        if len(objects_user) > 0:
+            list_user = get_user(objects_user)
         for user_obj in list_user:
             objects_user_hash[user_obj['id']] =user_obj
     for object in data:
@@ -165,28 +167,36 @@ def add_service_objects(data):
 
 def get_final_data(query):
     data = list(query.dicts())
-    final_data = jsonable_encoder(data)
+    final_data = json_encoder(data)
     final_data = detail(final_data)
     audit_ids = []
     audit_ids = [data['id'] for data in final_data]
-    rate_sheet_audits = RateSheetAudit.select().where(RateSheetAudit.object_id << audit_ids)
+    valid_audit_ids = []
+    for audit_id in audit_ids:
+        if is_valid_uuid(audit_id):
+            valid_audit_ids.append(audit_id)
+
+    rate_sheet_audits = RateSheetAudit.select().where(RateSheetAudit.object_id << valid_audit_ids)
 
     for object in final_data:
         # assumption here
         rates_count_sum=0
-        object['updated_at'] = datetime.fromisoformat(object['updated_at']) +timedelta(hours=5, minutes=30)
 
         if 'converted_files' in object:
             if object.get('converted_files'):
                 for obj in object.get('converted_files'):
                     rates_count_sum+=obj.get('rates_count')
             object['rates_count'] = rates_count_sum
-        rate_sheet_audit = rate_sheet_audits.where(RateSheetAudit.object_id == object['id']).order_by(RateSheetAudit.created_at.desc()).limit(1).dicts().get()
+        rate_sheet_audits = rate_sheet_audits.where(RateSheetAudit.object_id == object['id']).order_by(RateSheetAudit.created_at.desc()).limit(1)
+        rate_sheet_audit_list = list(rate_sheet_audits.dicts())
+        rate_sheet_audit = {}
+        if rate_sheet_audit_list:
+            rate_sheet_audit = rate_sheet_audit_list[0]
         object['sourced_by_id'] = rate_sheet_audit.get('sourced_by_id')
         object['procured_by_id'] = rate_sheet_audit.get('procured_by_id')
         object['performed_by_id'] = rate_sheet_audit.get('performed_by_id')
     final_data = add_service_objects(final_data)
-    final_data = jsonable_encoder(final_data)
+    final_data = json_encoder(final_data)
     return final_data
 
 

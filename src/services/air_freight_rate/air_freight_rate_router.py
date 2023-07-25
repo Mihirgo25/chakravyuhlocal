@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from rms_utils.auth import authorize_token
 from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from services.air_freight_rate.air_freight_rate_params import *
 from params import CreateRateSheet, UpdateRateSheet
 import sentry_sdk
@@ -74,7 +74,7 @@ def create_air_freight_rate_api(request: CreateAirFreightRateParams, resp: dict 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         create_rate=create_air_freight_rate(request.dict())
-        return JSONResponse(status_code=200,content=jsonable_encoder(create_rate))
+        return JSONResponse(status_code=200,content=json_encoder(create_rate))
     except HTTPException as e :
         raise
     except Exception as e:
@@ -90,7 +90,7 @@ def delete_air_freight_rate_api(request: DeleteAirFreightRateParams, resp: dict 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate=delete_air_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200,content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200,content=json_encoder(delete_rate))
     except HTTPException as e :
         raise
     except Exception as e:
@@ -109,7 +109,7 @@ def update_air_freight_rate_api(
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_air_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -168,7 +168,7 @@ def get_air_freight_rate_api(
 
     try:
         data = get_air_freight_rate(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -200,7 +200,7 @@ def get_air_freight_rate_local_api(
 
     try:
         data = get_air_freight_rate_local(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -239,7 +239,7 @@ def get_air_freight_rate_visibility_api(
 
     try:
         data = get_air_freight_rate_visibility(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -262,7 +262,7 @@ def get_air_freight_rate_addition_frequency_api(
     
     try:
         data = get_air_freight_rate_addition_frequency(group_by= group_by,filters = filters,sort_type = sort_type)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -284,7 +284,7 @@ def update_air_freight_rate_local_api(
 
     try:
         data = update_air_freight_rate_local(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -302,7 +302,7 @@ def create_air_freight_rate_not_available_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = create_air_freight_rate_not_available(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     
     except Exception as e:
         sentry_sdk.capture_exception(e)
@@ -322,7 +322,7 @@ def create_air_freight_rate_local_api(
 
     try:
         data = create_air_freight_rate_local(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -343,7 +343,7 @@ def create_air_freight_rate_surcharge_api(
 
     try:
         data = create_air_freight_rate_surcharge(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -372,7 +372,7 @@ def list_air_freight_rate_locals_api(
                                             sort_by= sort_by,
                                             sort_type= sort_type, 
                                             return_query= return_query)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -391,7 +391,7 @@ def update_air_freight_rate_surcharge_api(
 
     try:
         data = update_air_freight_rate_surcharge(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -424,7 +424,7 @@ def get_air_freight_rate_surcharge_api(
 
     try:
         data = get_air_freight_rate_surcharge(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -444,7 +444,7 @@ def create_air_freight_rate_task_api(
     
     try:
         data = create_air_freight_rate_task(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -460,7 +460,7 @@ def list_air_freight_rate_surcharges_api(
     page_limit: int = 10,
     page: int = 1,
     pagination_data_required: bool = True,
-    return_query: bool = True,
+    return_query: bool = False,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -472,7 +472,7 @@ def list_air_freight_rate_surcharges_api(
                                                 page=page, 
                                                 pagination_data_required=pagination_data_required,
                                                 return_query=return_query)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -517,8 +517,8 @@ def get_air_freight_rate_cards_api(
     volume: float,
     commodity: str = "general",
     commodity_type: str = "all",
-    commodity_sub_type: str = None,
-    commodity_sub_type_code: str = None,
+    commodity_subtype: str = None,
+    commodity_subtype_code: str = None,
     airline_id: str = None,
     packing_type: str = "box",
     handling_type: str = "stackable",
@@ -542,8 +542,8 @@ def get_air_freight_rate_cards_api(
         "commodity_type": commodity_type,
         "cogo_entity_id": cogo_entity_id,
         "additional_services": additional_services,
-        "commodity_sub_type": commodity_sub_type,
-        "commodity_sub_type_code": commodity_sub_type_code,
+        "commodity_subtype": commodity_subtype,
+        "commodity_subtype_code": commodity_subtype_code,
         "price_type": price_type,
         "packages_count": packages_count,
         "trade_type": trade_type,
@@ -555,7 +555,7 @@ def get_air_freight_rate_cards_api(
         if additional_services:
             request['additional_services'] = json.loads(additional_services)
         data = get_air_freight_rate_cards(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -578,6 +578,7 @@ def create_air_freight_rate_request_api(
     except HTTPException as h:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
@@ -600,7 +601,7 @@ def get_air_freight_rate_stats_api(
     }
     try:
         data = get_air_freight_rate_stats(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -624,6 +625,7 @@ def create_air_freight_warehouse_rate_api(
     except HTTPException:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
@@ -653,7 +655,7 @@ def list_air_freight_rate_feedbacks_api(
             is_stats_required,
             booking_details_required,
         )
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -673,7 +675,7 @@ def list_air_freight_rate_dislikes_api(
     
     try:
         data = list_air_freight_rate_dislikes(filters, page_limit, page)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     
     except HTTPException as e:
         raise
@@ -699,7 +701,7 @@ def list_air_freight_rate_requests_api(
         data = list_air_freight_rate_requests(
             filters, page_limit, page, performed_by_id, is_stats_required
         )
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -730,7 +732,7 @@ def list_air_freight_charge_codes_api(
 
     try:
         data = list_air_freight_charge_codes(request)
-        data = jsonable_encoder(data)
+        data = json_encoder(data)
         return JSONResponse(status_code=200, content=data)
     except HTTPException as e:
         raise
@@ -753,7 +755,7 @@ def list_air_freight_warehouse_rates_api(
 
     try:
         data = list_air_freight_warehouse_rates(filters, page_limit, page)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     
     except HTTPException as e:
         raise
@@ -780,6 +782,7 @@ def update_air_freight_storage_rate_api(
     except HTTPException as h:
         raise
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(
             status_code=500, content={"success": False, "error": str(e)}
         )
@@ -805,7 +808,7 @@ def get_air_freight_rate_suggestions_api(
             searched_destination_airport_id,
             filters,
         )
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -824,10 +827,11 @@ def create_air_freight_rate_feedback_api(request: CreateAirFreightRateFeedbackPa
         request.performed_by_type = resp['setters']['performed_by_type']
     try:
         data=create_air_freight_rate_feedback(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+        return JSONResponse(status_code=200,content=json_encoder(data))
     except HTTPException as e:
         raise 
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500,content={"success":False,'error':str(e)})
     
 
@@ -841,7 +845,7 @@ def update_air_freight_rate_markup_api(
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         data = update_air_freight_rate_markup(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -862,7 +866,7 @@ def create_air_freight_rate_bulk_operation_api(request: CreateBulkOperationParam
     try:
 
         data = create_air_freight_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(content=jsonable_encoder(data))
+        return JSONResponse(content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -880,7 +884,7 @@ def delete_air_freight_rate_feedback_api(
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         data = delete_air_freight_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -901,7 +905,7 @@ def create_air_freight_storage_rate_api(
 
     try:
         data = create_air_freight_storage_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -931,7 +935,7 @@ def get_air_freight_storage_rate_api(
     }
     try:
         data = get_air_freight_storage_rate(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -959,7 +963,7 @@ def get_air_freight_warehouse_rate_api(
     }
     try:
         data = get_air_freight_warehouse_rate(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -975,7 +979,7 @@ def update_air_freight_warehouse_rate_api(
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         data = update_air_freight_warehouse_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -992,7 +996,7 @@ def get_air_freight_rate_audit_api(id: str, resp: dict = Depends(authorize_token
     request = {"id": id}
     try:
         data = get_air_freight_rate_audit(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1007,7 +1011,7 @@ def update_air_freight_rate_request_api(request:UpdateAirFreightRateRequestParam
         return JSONResponse(status_code=resp['status_code'],content=resp)
     try:
         data = update_air_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1024,17 +1028,23 @@ def list_air_freight_rates_api(
     all_rates_for_cogo_assured: bool = False,
     sort_by: str = 'updated_at',
     sort_type: str = 'desc',
+    revenue_desk_data_required: str = None,
     resp: dict = Depends(authorize_token)
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
-        data = list_air_freight_rates(filters= filters, 
-                                      page_limit =page_limit,
-                                      page= page, return_query=return_query,
-                                      older_rates_required= older_rates_required,
-                                      all_rates_for_cogo_assured= all_rates_for_cogo_assured,
-                                      sort_by=sort_by,sort_type=sort_type)
+        data = list_air_freight_rates(
+            revenue_desk_data_required=revenue_desk_data_required,
+            filters= filters,
+            page_limit =page_limit,
+            page= page,
+            return_query=return_query,
+            older_rates_required= older_rates_required,
+            all_rates_for_cogo_assured= all_rates_for_cogo_assured,
+            sort_by=sort_by,
+            sort_type=sort_type
+        )
         return JSONResponse(status_code=200, content=data)
     
     except HTTPException as e:
@@ -1047,7 +1057,7 @@ def list_air_freight_rates_api(
 def get_weight_slabs_for_airline_api(
     airline_id:str,
     chargeable_weight: float = 0,
-    overweight_upper_limit:float =0.0,
+    overweight_upper_limit:float = 100.0,
     resp: dict = Depends(authorize_token)
     ):
     if resp["status_code"] != 200:
@@ -1136,7 +1146,7 @@ def delete_air_freight_rate_request_api(request:DeleteAirFreightRateRequestParam
 
     try:
         data=delete_air_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+        return JSONResponse(status_code=200,content=json_encoder(data))
     
     except HTTPException as e:
         raise
@@ -1152,7 +1162,7 @@ def delete_air_freight_rate_surcharge_api(request:DeleteAirFreightRateSurchargeP
         request.performed_by_id=resp["setters"]["performed_by_id"]
     try:
         data=delete_air_freight_rate_surcharge(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+        return JSONResponse(status_code=200,content=json_encoder(data))
     except HTTPException as e:
         raise 
     except Exception as e :
@@ -1167,7 +1177,7 @@ def delete_air_freight_rate_local_api(request:DeleteAirFreightRateLocalParams, r
         request.performed_by_id=resp["setters"]["performed_by_id"]
     try:
         data=delete_air_freight_rate_local(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200,content=jsonable_encoder(data))
+        return JSONResponse(status_code=200,content=json_encoder(data))
     except HTTPException as e:
         raise 
     except Exception as e :
@@ -1184,7 +1194,7 @@ def create_draft_air_freight_rate_api(request: CreateDraftAirFreightRateParams, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_draft_air_freight_rate(request.dict(exclude_none=False))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1201,7 +1211,7 @@ def create_rate_sheets(request: CreateRateSheet, resp: dict = Depends(authorize_
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -1220,7 +1230,7 @@ def update_rate_sheets(request: UpdateRateSheet, resp: dict = Depends(authorize_
 
     try:
         rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:

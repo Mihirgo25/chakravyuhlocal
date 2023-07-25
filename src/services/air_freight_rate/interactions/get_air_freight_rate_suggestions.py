@@ -4,8 +4,7 @@ import json
 from micro_services.client import *
 from itertools import groupby
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from fastapi.encoders import jsonable_encoder
-
+from libs.json_encoder import json_encoder
 def get_air_freight_rate_suggestions(validity_start,validity_end,searched_origin_airport_id,searched_destination_airport_id,filters={}):
     validity_start = validity_start.date()
     validity_end = validity_end.date()
@@ -21,12 +20,12 @@ def get_air_freight_rate_suggestions(validity_start,validity_end,searched_origin
     return { 'list': list(filter(None,grouped_rates.values())) }
 
 def get_air_freight_rates(filters,searched_origin_airport_id,searched_destination_airport_id,validity_start):
-    query = AirFreightRate.select()
+    query = AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id)
     if filters:
         for key in filters:
             query = query.where(attrgetter(key)(AirFreightRate) == filters[key])
-    air_freight_query = query.where(~AirFreightRate.rate_not_available_entry, AirFreightRate.origin_airport_id != searched_origin_airport_id, AirFreightRate.destination_airport_id != searched_destination_airport_id, AirFreightRate.last_rate_available_date >= max([validity_start, datetime.now().date()]))
-    air_freight_rates = jsonable_encoder(list(air_freight_query.dicts()))
+    air_freight_query = query.where(~AirFreightRate.rate_not_available_entry, AirFreightRate.origin_airport_id != searched_origin_airport_id, AirFreightRate.destination_airport_id != searched_destination_airport_id, AirFreightRate.last_rate_available_date >= max([validity_start, datetime.now().date()])).limit(1000)
+    air_freight_rates = json_encoder(list(air_freight_query.dicts()))
     return air_freight_rates
 
 def get_grouped_rates(air_freight_rates,validity_start,validity_end):

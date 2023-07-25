@@ -53,6 +53,8 @@ def execute_transaction_code(request):
         surcharge.set_origin_location_ids()
     else:
         old_line_items= surcharge.line_items
+        if not old_line_items:
+            old_line_items = []
         for line_item in request.get('line_items'):
             old_line_items = add_line_item(old_line_items, line_item)
         surcharge.line_items = old_line_items
@@ -70,7 +72,7 @@ def execute_transaction_code(request):
     try:
         surcharge.save()
     except Exception:
-        raise HTTPException(status_code=400, detail="rate did not save")
+        raise HTTPException(status_code=400, detail="Rate Did Not Save")
     
     create_audit(request,surcharge.id)
     update_multiple_service_objects.apply_async(kwargs={'object':surcharge},queue='low')

@@ -1,14 +1,14 @@
-from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
-from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
-from services.air_freight_rate.models.air_freight_location_cluster_factor import AirFreightLocationClusterFactor
+from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFreightLocationCluster
+from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
+from services.fcl_freight_rate.models.fcl_freight_location_cluster_factor import FclFreightLocationClusterFactor
 from fastapi.encoders import jsonable_encoder
 from database.db_session import db
 
 
 def create_cluster_factor_mapping():
-    cluster_data = AirFreightLocationClusters.select(AirFreightLocationClusters.id).execute()
+    cluster_data = FclFreightLocationCluster.select(FclFreightLocationCluster.id).execute()
     data_list = [row.id for row in cluster_data]
-    location_data=AirFreightLocationClusterMapping.select(AirFreightLocationClusterMapping.location_id,AirFreightLocationClusterMapping.cluster_id)
+    location_data=FclFreightLocationClusterMapping.select(FclFreightLocationClusterMapping.location_id,FclFreightLocationClusterMapping.cluster_id)
     location_data = jsonable_encoder(list(location_data.dicts()))
     cluster_wise_locs = {}
     for loc in location_data:
@@ -45,7 +45,7 @@ def create_cluster_factor_mapping():
                     'location_id': destination_loc
                 }
                 factor_list.append(object)
-            AirFreightLocationClusterFactor.insert_many(factor_list).execute()
+            FclFreightLocationClusterFactor.insert_many(factor_list).execute()
         
         
 

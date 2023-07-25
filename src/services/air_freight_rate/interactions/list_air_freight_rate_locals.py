@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate_local import AirFreightRateLocal
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from math import ceil
@@ -26,11 +26,11 @@ sort_by='updated_at',pagination_data_required=True,sort_type='desc',return_query
         query = apply_indirect_filters(query, indirect_filters)
         
     if return_query: 
-        return { 'list': jsonable_encoder(list(query.dicts())) }
+        return { 'list': json_encoder(list(query.dicts())) }
 
     pagination_data=get_pagination_data(query,page,page_limit,pagination_data_required)
     query = query.paginate(page, page_limit)
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
 
     return { 'list': data } | (pagination_data)
 
