@@ -16,7 +16,6 @@ from micro_services.client import common
 import urllib
 import json
 import nltk
-nltk.download('punkt')
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 

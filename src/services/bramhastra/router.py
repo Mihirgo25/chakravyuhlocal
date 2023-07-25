@@ -76,7 +76,7 @@ def get_fcl_freight_rate_drilldown_func(
     return JSONResponse(content=response)
 
 
-@bramhastra.get("/get_fcl_freight_map_view")
+@bramhastra.get("/get_fcl_freight_map_view_statistics")
 def get_fcl_freight_map_view_statistics_func(
     filters: Annotated[Json, Query()] = {},
 ):

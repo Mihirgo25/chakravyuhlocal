@@ -69,7 +69,7 @@ async def get_deviation(filters, where):
 
     response = clickhouse.execute(" ".join(queries), filters)
 
-    return [i for i in response if i["range"] or i["range"] == 0]  # remove this later
+    return [i for i in response if i["range"] or i["range"] == 0]
 
 
 async def get_spot_search_to_checkout_count(filters, where):

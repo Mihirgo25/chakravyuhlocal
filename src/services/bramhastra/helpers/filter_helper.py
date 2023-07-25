@@ -22,6 +22,8 @@ POSSIBLE_DIRECT_FILTERS = {
     "mode",
     "sourced_by_id",
     "procured_by_id",
+    "origin_region_id",
+    "destination_region_id"
 }
 
 POSSIBLE_INDIRECT_FILTERS = {}
@@ -53,5 +55,5 @@ def get_direct_indirect_filters(filters):
 
 def get_date_range_filter(where):
     where.append(
-        "(validity_end <= %(end_date)s AND validity_end >= %(start_date)s) OR (validity_start >= %(start_date)s AND validity_start <= %(end_date)s)"
+        "((validity_end <= %(end_date)s AND validity_end >= %(start_date)s) OR (validity_start >= %(start_date)s AND validity_start <= %(end_date)s))"
     )
