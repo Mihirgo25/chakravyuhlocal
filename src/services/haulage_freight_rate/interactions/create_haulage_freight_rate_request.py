@@ -65,12 +65,16 @@ def get_create_params(request):
 def create_audit(request, request_object_id):
     performed_by_id = request.get('performed_by_id')
     del request['performed_by_id']
+    if request.get("transport_mode") == 'trailer':
+        object_type="TrailerFreightRateRequest"
+    else:
+        object_type="HaulageFreightRateRequest"
     
     HaulageFreightRateAudit.create(
         action_name = 'create',
         performed_by_id = performed_by_id,
         data = request,
-        object_type = 'HaulageFreightRateRequest',
+        object_type = object_type,
         object_id = request_object_id,
         sourced_by_id = request.get('sourced_by_id'),
         procured_by_id = request.get('procured_by_id')
