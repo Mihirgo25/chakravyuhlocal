@@ -13,13 +13,38 @@ from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from database.rails_db import (
     get_user,
-    get_eligible_orgs,
+    get_eligible_org_ids,
     list_organization_users,
 )
 from micro_services.client import common, maps
 from libs.json_encoder import json_encoder
 from fastapi import HTTPException
 from database.rails_db import get_operators
+
+
+def select_fields():
+    freight_query = HaulageFreightRate.select(
+        HaulageFreightRate.id,
+        HaulageFreightRate.commodity,
+        HaulageFreightRate.line_items,
+        HaulageFreightRate.service_provider_id,
+        HaulageFreightRate.shipping_line_id,
+        HaulageFreightRate.importer_exporter_id,
+        HaulageFreightRate.transport_modes,
+        HaulageFreightRate.haulage_type,
+        HaulageFreightRate.transport_modes_keyword,
+        HaulageFreightRate.origin_location_id,
+        HaulageFreightRate.destination_location_id,
+        HaulageFreightRate.origin_destination_location_type,
+        HaulageFreightRate.updated_at,
+        HaulageFreightRate.transit_time,
+        HaulageFreightRate.detention_free_time,
+        HaulageFreightRate.validity_start,
+        HaulageFreightRate.validity_end,
+        HaulageFreightRate.service_provider,
+        HaulageFreightRate.sourced_by_id
+    )
+    return freight_query
 
 
 def initialize_query(requirements, query):
@@ -76,41 +101,16 @@ def initialize_query(requirements, query):
             HaulageFreightRate.transport_modes_keyword
             == requirements.get("transport_mode")
         )
-    if requirements.get("transport_mode") == "trailer":
-        freight_query = freight_query.where(
-            HaulageFreightRate.validity_start <= datetime.now()
-            and HaulageFreightRate.validity_end >= datetime.now()
-        )
+    freight_query = freight_query.where(
+        HaulageFreightRate.validity_start <= datetime.now()
+        and HaulageFreightRate.validity_end >= datetime.now()
+    )
     freight_query = freight_query.where(
         HaulageFreightRate.updated_at >= (datetime.now() - timedelta(days=90)).date()
     )
 
     return freight_query
 
-
-def select_fields():
-    freight_query = HaulageFreightRate.select(
-        HaulageFreightRate.id,
-        HaulageFreightRate.commodity,
-        HaulageFreightRate.line_items,
-        HaulageFreightRate.service_provider_id,
-        HaulageFreightRate.shipping_line_id,
-        HaulageFreightRate.importer_exporter_id,
-        HaulageFreightRate.transport_modes,
-        HaulageFreightRate.haulage_type,
-        HaulageFreightRate.transport_modes_keyword,
-        HaulageFreightRate.origin_location_id,
-        HaulageFreightRate.destination_location_id,
-        HaulageFreightRate.origin_destination_location_type,
-        HaulageFreightRate.updated_at,
-        HaulageFreightRate.transit_time,
-        HaulageFreightRate.detention_free_time,
-        HaulageFreightRate.validity_start,
-        HaulageFreightRate.validity_end,
-        HaulageFreightRate.service_provider,
-        HaulageFreightRate.sourced_by_id
-    )
-    return freight_query
 
 
 def get_query_results(query):
@@ -285,11 +285,14 @@ def build_response_list(requirements, query_results):
 
     return list(grouping.values())
 
-
 def ignore_non_eligible_service_providers(requirements, data):
-    ids = get_eligible_orgs("haulage_freight")
-
+    ids = get_eligible_org_ids("haulage_freight")
     data = [rate for rate in data if rate.get("service_provider_id") in ids]
+    return data
+
+
+def get_predicted_rate(requirements, data):
+
     if (
         not data
         and requirements.get("predicted_rate")
@@ -429,12 +432,14 @@ def get_haulage_freight_rate_cards(requirements):
         # ignore non active shipping lines
         list = ignore_non_active_shipping_lines(query_results)
 
-        # process and organize query results
-        list = build_response_list(requirements, list)
-
         # ignore non eligible service providers
         list = ignore_non_eligible_service_providers(requirements, list)
 
+        # process and organize query results
+        list = build_response_list(requirements, list)
+
+        # get predicted rate in case of not rates
+        list = get_predicted_rate(requirements, list)
 
         # adding additional response data
         if requirements.get("include_additional_response_data"):
