@@ -48,17 +48,15 @@ def get_page(query, page, page_limit):
     return query.select().order_by(FtlFreightRateRequest.created_at.desc()).paginate(page, page_limit)
 
 
-def get_pagination_data(query, page, page_limit, pagination_data_required, total_count):
-    if not pagination_data_required:
-        return {}
-
-    params = {
-      'page': page,
-      'total': ceil(total_count/page_limit),
-      'total_count': total_count,
-      'page_limit': page_limit
-    }
-    return params
+def get_pagination_data(query, page, page_limit):
+    total_count = query.count()
+    pagination_data = {
+        'page': page,
+        'total': ceil(total_count/page_limit),
+        'total_count': total_count,
+        'page_limit': page_limit
+        }
+    return pagination_data
 
 def apply_indirect_filters(query, filters):
     for key in filters:

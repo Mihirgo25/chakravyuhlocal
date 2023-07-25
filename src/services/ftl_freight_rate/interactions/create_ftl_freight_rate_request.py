@@ -76,26 +76,27 @@ def get_relevant_supply_agents(service, origin_locations, destination_locations)
     return supply_agents_user_ids
 
 
-def set_relevant_supply_agents(request, fcl_freight_rate_request_id):
+def set_relevant_supply_agents(request, ftl_freight_rate_request_id):
     locations_data = FtlFreightRateRequest.select(FtlFreightRateRequest.origin_location_id, FtlFreightRateRequest.origin_country_id, FtlFreightRateRequest.origin_city_id, FtlFreightRateRequest.destination_location_id, FtlFreightRateRequest.destination_country_id, FtlFreightRateRequest.destination_city_id).where(FtlFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
     origin_locations = list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['origin_location_id', 'origin_country_id', 'origin_city_id']]))
     destination_locations =   list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['destination_location_id', 'destination_country_id', 'destination_city_id']]))
 
     supply_agents_user_ids = get_relevant_supply_agents('fcl_freight', origin_locations, destination_locations)
 
-    update_ftl_freight_rate_request_in_delay({'ftl_freight_rate_request_id': fcl_freight_rate_request_id, 'relevant_supply_agent_ids': supply_agents_user_ids, 'performed_by_id': request.get('performed_by_id')})
+    update_ftl_freight_rate_request_in_delay({'ftl_freight_rate_request_id': ftl_freight_rate_request_id, 'relevant_supply_agent_ids': supply_agents_user_ids, 'performed_by_id': request.get('performed_by_id')})
 
     try:
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}})['list']
-    except Exception as e:
-        print(e)
+    except Exception as error_message:
+        raise HTTPException(status_code=400, detail=error_message)
+    
 
     route = {key['id']:key['display_name'] for key in route_data}
     try:
         request_info = { 'user_ids': supply_agents_user_ids, 'origin_location': route[str(locations_data['origin_location_id'])], 'destination_location': route[str(locations_data['destination_location_id'])]}
         send_notifications_to_supply_agents(request, request_info)
-    except Exception as e:
-        print(e)
+    except Exception as error_message:
+        raise HTTPException(status_code=400, detail=error_message)
 
 
 

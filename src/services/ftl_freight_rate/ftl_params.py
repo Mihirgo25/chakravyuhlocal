@@ -125,9 +125,11 @@ class Package(BaseModel):
 class CreateFtlFreightRateRequest(BaseModel):
      source: str
      source_id: str
-     performed_by_id: str
+     performed_by_id: str = None
      performed_by_org_id: str
-     performed_by_type: str
+     performed_by_type: str = "user"
+     origin_location_id: str
+     destination_location_id: str
      preferred_freight_rate: float = None
      preferred_freight_rate_currency: str = None
      preferred_detention_free_days: int = None
@@ -141,12 +143,10 @@ class CreateFtlFreightRateRequest(BaseModel):
      commodity: str = None
      destination_city_id: str = None
      destination_country_id: str = None
-     destination_location_id: str = None
      destination_cluster_id: str = None
      origin_cluster_id: str = None
      origin_country_id: str = None
      origin_city_id: str = None
-     origin_location_id: str = None
      load_selection_type: str = None
      free_detention_hours: int = None
      trade_type: str = None
@@ -155,6 +155,8 @@ class CreateFtlFreightRateRequest(BaseModel):
 class UpdateFtlFreightRateRequest(BaseModel):
     ftl_freight_rate_request_id: str
     closing_remarks: List[str]
+    performed_by_id: str = None
+    performed_by_type: str = None
     status: str = None
     remarks: str = None
     performed_by_id: str = None
