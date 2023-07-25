@@ -769,4 +769,4 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
         if type(exc).__name__ == 'HTTPException':
             pass
         else:
-            raise self.retry(exc= exc)@celery.task(bind = True, max_retries=5, retry_backoff = True)
+            raise self.retry(exc= exc)
