@@ -19,6 +19,7 @@ from database.rails_db import (
 from micro_services.client import common, maps
 from libs.json_encoder import json_encoder
 from fastapi import HTTPException
+from database.rails_db import get_operators
 
 
 def initialize_query(requirements, query):
@@ -327,15 +328,7 @@ def ignore_non_active_shipping_lines(data):
     shipping_line_ids = [id for id in shipping_line_ids if id is not None]
     if not shipping_line_ids:
         return data
-    shipping_line = maps.list_operators(
-        {
-            "filters": {
-                "id": shipping_line_ids,
-                "operator_type": "shipping_line",
-                "status": "active",
-            }
-        }
-    )["list"]
+    shipping_line = get_operators(id=shipping_line_ids, operator_type = 'shipping_line')
     shipping_line_ids = list(map(lambda x: x["id"], shipping_line))
     final_data = [
         addon_data
@@ -433,14 +426,15 @@ def get_haulage_freight_rate_cards(requirements):
         # get data from generated query
         query_results = get_query_results(query)
 
+        # ignore non active shipping lines
+        list = ignore_non_active_shipping_lines(query_results)
+
         # process and organize query results
-        list = build_response_list(requirements, query_results)
+        list = build_response_list(requirements, list)
 
         # ignore non eligible service providers
         list = ignore_non_eligible_service_providers(requirements, list)
 
-        # ignore non active shipping lines
-        list = ignore_non_active_shipping_lines(list)
 
         # adding additional response data
         if requirements.get("include_additional_response_data"):

@@ -187,8 +187,8 @@ def get_final_data(query):
                 for obj in object.get('converted_files'):
                     rates_count_sum+=obj.get('rates_count')
             object['rates_count'] = rates_count_sum
-        rate_sheet_audit = rate_sheet_audits.where(RateSheetAudit.object_id == object['id']).order_by(RateSheetAudit.created_at.desc()).limit(1)
-        rate_sheet_audit_list = list(rate_sheet_audit.dicts())
+        rate_sheet_audits = rate_sheet_audits.where(RateSheetAudit.object_id == object['id']).order_by(RateSheetAudit.created_at.desc()).limit(1)
+        rate_sheet_audit_list = list(rate_sheet_audits.dicts())
         rate_sheet_audit = {}
         if rate_sheet_audit_list:
             rate_sheet_audit = rate_sheet_audit_list[0]

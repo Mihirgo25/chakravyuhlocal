@@ -40,7 +40,8 @@ def create_haulage_freight_rate(request):
         {"id": created_haulage_freight_rate_id}
     """
 
-    from celery_worker import delay_haulage_functions, update_haulage_freight_rate_request_delay
+    from services.haulage_freight_rate.haulage_celery_worker import delay_haulage_functions, update_haulage_freight_rate_request_delay
+
 
     transport_modes = request.get('transport_modes',[])
     transport_modes = list(set(transport_modes))
