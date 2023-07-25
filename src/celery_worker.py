@@ -358,16 +358,6 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=3, retry_backoff = True)    
-def bulk_operation_perform_action_functions_haulage(self, action_name,object,sourced_by_id,procured_by_id):
-    try:
-        eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def update_freight_objects_for_commodity_surcharge(self, surcharge_object):
@@ -704,17 +694,6 @@ def create_air_freight_rate_surcharge_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-    
-
-@celery.task(bind = True, max_retries=3, retry_backoff = True)
-def update_haulage_freight_rate_request_delay(self, request):
-    try:
-        update_haulage_freight_rate_request(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def extend_air_freight_rates(self, rate, source = 'rate_extension'):
@@ -796,24 +775,3 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
             pass
         else:
             raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=3, retry_backoff = True)
-def delay_haulage_functions(self,haulage_object,request):
-    try:
-       adding_multiple_service_object(haulage_object, request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-        
-
-@celery.task(bind = True, retry_backoff=True, max_retries=3)
-def create_haulage_freight_rate_delay(self, request):
-    try:
-        return create_haulage_freight_rate(request)
-    except Exception as e:
-        if type(e).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= e)
