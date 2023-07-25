@@ -32,7 +32,6 @@ from services.air_freight_rate.interactions.create_draft_air_freight_rate import
 from database.rails_db import get_past_cost_booking_data
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_feedback import update_fcl_freight_rate_feedback
 from services.fcl_customs_rate.interaction.create_fcl_customs_rate import create_fcl_customs_rate
-from services.haulage_freight_rate.interactions.create_haulage_freight_rate import create_haulage_freight_rate
 from services.fcl_customs_rate.helpers import update_organization_fcl_customs
 from services.fcl_cfs_rate.helpers import update_organization_fcl_cfs
 from services.air_freight_rate.interactions.update_air_freight_rate_request import update_air_freight_rate_request
@@ -46,8 +45,6 @@ from services.air_freight_rate.workers.send_air_freight_local_charges_update_rem
 from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
-from services.haulage_freight_rate.interactions.update_haulage_freight_rate_request import update_haulage_freight_rate_request
-from services.haulage_freight_rate.helpers.haulage_freight_rate_helpers import adding_multiple_service_object
 
 
 # Rate Producers
@@ -138,6 +135,8 @@ celery.conf.beat_schedule = {
     }
 
 }
+celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_cost_booking_estimation(self):
@@ -357,6 +356,16 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
+    try:
+        eval(f"object.perform_{action_name}_action()")
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
@@ -519,15 +528,6 @@ def update_air_freight_rate_details_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
-    try:
-        eval(f"object.perform_{action_name}_action()")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_electricity_data_delays(self):
