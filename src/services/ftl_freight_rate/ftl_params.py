@@ -154,9 +154,10 @@ class CreateFtlFreightRateRequest(BaseModel):
 
 class UpdateFtlFreightRateRequest(BaseModel):
     ftl_freight_rate_request_id: str
-    closing_remarks: str
+    closing_remarks: List[str]
     status: str = None
     remarks: str = None
+    performed_by_id: str = None
 
 
 class DeleteFtlFreightRateRequest(BaseModel):
