@@ -45,8 +45,6 @@ from services.air_freight_rate.workers.send_air_freight_local_charges_update_rem
 from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
-from services.air_customs_rate.helpers import update_organization_air_customs
-from services.air_customs_rate.interaction.create_air_customs_rate import create_air_customs_rate
 
 # Rate Producers
 
@@ -692,16 +690,6 @@ def create_air_freight_rate_surcharge_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, retry_backoff=True, max_retries=5)       
-def create_air_customs_rate_delay(self, request):
-    try:
-        return create_air_customs_rate(request)
-    except Exception as e:
-        if type(e).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= e)
-
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def extend_air_freight_rates(self, rate, source = 'rate_extension'):
     try:
@@ -782,25 +770,3 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
             pass
         else:
             raise self.retry(exc= exc)@celery.task(bind = True, max_retries=5, retry_backoff = True)
-
-@celery.task(bind = True, retry_backoff=True, max_retries=5) 
-def air_customs_functions_delay(self,air_customs_object,request):
-    try:
-        update_organization_air_customs(request)
-        get_multiple_service_objects(air_customs_object)
-
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def bulk_operation_perform_action_functions_air_customs_delay(self, action_name, object):
-    try:
-        eval(f"object.perform_{action_name}_action()")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)

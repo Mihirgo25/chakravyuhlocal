@@ -130,9 +130,6 @@ class AirCustomsRate(BaseModel):
                 if not grouped_charge_codes.get(code):
                     self.line_items_info_messages[code] = ['can be added for more conversion']
                     self.is_line_items_info_messages_present = True
-        
-        self.save()
-
 
     def detail(self):
         return {

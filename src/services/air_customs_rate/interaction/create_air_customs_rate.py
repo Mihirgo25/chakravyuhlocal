@@ -9,7 +9,7 @@ def create_air_customs_rate(request):
       return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-  from celery_worker import air_customs_functions_delay
+  from services.air_customs_rate.celery_worker.air_customs_celery import air_customs_functions_delay
 
   request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
@@ -18,6 +18,8 @@ def execute_transaction_code(request):
         AirCustomsRate.trade_type ==request.get('trade_type'),
         AirCustomsRate.service_provider_id == request.get('service_provider_id'),
         AirCustomsRate.commodity == request.get('commodity'),
+        AirCustomsRate.commodity_type == request.get('commodity_type'),
+        AirCustomsRate.commodity_sub_type == request.get('commodity_sub_type'),
         AirCustomsRate.rate_type == request.get('rate_type')
     ).first()
 
@@ -51,12 +53,16 @@ def get_create_object_params(request):
       'trade_type' : request.get('trade_type'),
       'service_provider_id': request.get('service_provider_id'),
       'commodity' : request.get('commodity'),
+      'commodity_type' : request.get('commodity_type'),
+      'commodity_sub_type' : request.get('commodity_sub_type'),
       'rate_type' : request.get('rate_type',DEFAULT_RATE_TYPE)
     }
 
 def create_audit(request, customs_rate_id):
   audit_data = {
-      'line_items': request.get('line_items')
+      'line_items': request.get('line_items'),
+      'sourced_by_id':request.get('sourced_by_id'),
+      'procured_by_id':request.get('procured_by_id')
   }
 
   AirCustomsRateAudit.create(

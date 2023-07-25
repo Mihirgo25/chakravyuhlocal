@@ -1,6 +1,5 @@
 from services.air_customs_rate.models.air_customs_rate_bulk_operation import AirCustomsRateBulkOperation
-from fastapi import HTTPException
-from celery_worker import bulk_operation_perform_action_functions_air_customs_delay
+from services.air_customs_rate.celery_worker.air_customs_celery import bulk_operation_perform_action_functions_air_customs_delay
 
 def create_air_customs_rate_bulk_operation(request):
     action_name = [key for key in request if key not in ['performed_by_id', 'service_provider_id', 'procured_by_id', 'sourced_by_id', 'performed_by_type']]
