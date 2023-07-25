@@ -4,6 +4,7 @@ from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
 from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRateStatistic
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import FeedbackFclFreightRateStatistic
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import CheckoutFclFreightRateStatistic
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFreightLocationCluster
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
@@ -110,7 +111,20 @@ class MigrationHelpers:
             print('Error from railsDb', e)
             return all_result
     
-        
+    def get_imp_ext_id_from_spot_search_rates(self,source_id):
+        total_result=[]
+        newconnection = get_connection()
+        with newconnection:
+            with newconnection.cursor() as cursor:
+                sql = 'SELECT importer_exporter_id AS imp_ext_id FROM spot_searches WHERE id = %s'
+                cursor.execute(sql,source_id)
+                result=cursor.fetchall()
+                for res in result:
+                    total_result.append(
+                    res
+                    )
+        cursor.close()
+        return total_result       
 class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
@@ -213,7 +227,53 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             if len(row_data) >= 10 or len(feedback) == count:
                 FclFreightRateStatistic.insert_many(row_data).execute()
                 row_data = []
-                
+
+    def populate_feedback_fcl_freight_rate_statistic(self):
+        query = FclFreightRateFeedback.select()
+        feedbacks = jsonable_encoder(list(query.dicts()))
+        count = 0    
+        row_data = []
+               
+        for feedback in feedbacks: 
+            count+= 1
+            
+            identifier = '{}_{}'.format(feedback['rate_id'], feedback['validity_id'])
+
+            statistics_obj = self.find_statistics_object(identifier)
+            
+            if statistics_obj:
+                if (feedback['feedback_type']=='liked'):
+                    setattr(statistics_obj, 'likes_count', statistics_obj.likes_count+1)
+                elif(feedback['feedback_type']=='disliked'):
+                    setattr(statistics_obj, 'dislikes_count', statistics_obj.dislikes_count+1)
+                saved_status = statistics_obj.save()
+                if not saved_status:
+                    print("! Error: Couldn't save statistics_obj", statistics_obj.id)
+                else:
+                    print('Saved ...',statistics_obj.id)
+                continue
+            
+        
+            row = {
+                "feedback_id": feedback.get('id'),
+                "validity_id" : feedback.get('validity_id'),
+                "rate_id" : feedback.get('fcl_freight_rate_id'),
+                "source" : feedback.get('source'),
+                "source_id" : feedback.get('source_id'),
+                "performed_by_id" : feedback.get('performed_by_id'),
+                "performed_by_org_id" : feedback.get('performed_by_org_id'),
+                "created_at": feedback.get('created_at'),
+                "updated_at": feedback.get('updated_at'),
+                "importer_exporter_id": feedback.get('importer_exporter_id'),
+                "service_provider_id": feedback.get('service_provider_id'),
+                "feedback_type":feedback.get('feedback_type'),
+                "closed_by_id":feedback.get('closed_by_id'),
+                "serial_id":feedback.get('serial_id'),
+            }
+            row_data.append(row)
+            if len(row_data) >= 10 or len(feedback) == count:
+                FeedbackFclFreightRateStatistic.insert_many(row_data).execute()
+                row_data = []       
                 
     def populate_from_spot_search(self):
         total_count = self.get_spot_search_rates(return_count=True) or 0
