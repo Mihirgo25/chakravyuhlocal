@@ -31,6 +31,7 @@ celery.conf.broker_transport_options = {
 
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
           queue_arguments={'x-max-priority': 6})]
+celery.conf.update(**CELERY_CONFIG)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
 def air_customs_functions_delay(self,air_customs_object,request):

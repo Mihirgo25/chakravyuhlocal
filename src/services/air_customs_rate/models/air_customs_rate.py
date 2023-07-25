@@ -192,9 +192,9 @@ class AirCustomsRate(BaseModel):
         if self.trade_type and self.trade_type not in TRADE_TYPES:
             raise HTTPException(status_code = 400, detail = 'Invalid Trade Type')
         
-    def validate_commodity(self):
-        if self.commodity not in COMMODITIES:
-            raise HTTPException(status_code = 400, detail = 'Invalid Commodity')
+    # def validate_commodity(self):
+    #     if self.commodity not in COMMODITIES:
+    #         raise HTTPException(status_code = 400, detail = 'Invalid Commodity')
     
     def validate_rate_type(self):
         if self.rate_type not in RATE_TYPES:
@@ -219,6 +219,6 @@ class AirCustomsRate(BaseModel):
         self.validate_duplicate_line_items()
         self.validate_service_provider_id()
         self.validate_trade_type()
-        self.validate_commodity()
+        # self.validate_commodity()
         self.validate_rate_type()
         self.validate_uniqueness()

@@ -26,7 +26,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=500, detail = 'Error while deleting feedback')
 
     create_audit_for_customs_feedback(request, object.id, data)
-    update_multiple_service_objects.apply_async(kwargs={'object':object.closed_by_id},queue='low')
+    update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
 
   return {'air_customs_rate_feedback_ids' : request.get('air_customs_rate_feedback_ids')}
 
