@@ -507,7 +507,7 @@ def get_haulage_freight_rate_cards_api(
     include_confirmed_inventory_rates: bool = False,
     include_additional_response_data: bool = False,
     trip_type: str = None,
-    predicted_rate: bool = False,
+    predicted_rate: bool = True,
     resp: dict = Depends(authorize_token),
 ):
     if additional_services:

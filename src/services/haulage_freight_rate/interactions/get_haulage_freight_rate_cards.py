@@ -1,9 +1,6 @@
 import sentry_sdk
 import traceback
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from services.haulage_freight_rate.models.haulage_freight_rate_audit import (
-    HaulageFreightRateAudit,
-)
 from services.haulage_freight_rate.interactions.get_trailer_freight_rate_estimations import (
     get_trailer_freight_rate_estimation,
 )
@@ -20,8 +17,8 @@ from database.rails_db import (
     list_organization_users,
 )
 from micro_services.client import common, maps
-from itertools import groupby
 from libs.json_encoder import json_encoder
+from fastapi import HTTPException
 
 
 def initialize_query(requirements, query):
@@ -110,6 +107,7 @@ def select_fields():
         HaulageFreightRate.validity_start,
         HaulageFreightRate.validity_end,
         HaulageFreightRate.service_provider,
+        HaulageFreightRate.sourced_by_id
     )
     return freight_query
 
@@ -192,6 +190,8 @@ def build_response_object(result, requirements):
         "detention_free_time": result["detention_free_time"],
         "trailer_type": result.get("trailer_type"),
         "trailer_count": requirements.get("containers_count"),
+        "sourced_by_id": result.get("sourced_by_id"),
+        "updated_at": result["updated_at"]
     }
 
     # appeding tags for specific service_provider_id
@@ -199,7 +199,7 @@ def build_response_object(result, requirements):
         response_object["service_provider_id"]
         in CONFIRMED_INVENTORY["service_provider_ids"]
     ):
-        response_object["tags"].append(CONFIRMED_INVENTORY["tags"])
+        response_object["tags"].append(CONFIRMED_INVENTORY["tag"])
 
     # additional_services and charge code comparison
     additional_services = requirements["additional_services"]
@@ -349,46 +349,34 @@ def ignore_non_active_shipping_lines(data):
 
 def additional_response_data(data):
     # adding org users
-    audit_object_ids = list(map(lambda ids: ids["id"], data))
-    audits = json_encoder(
-        list(
-            HaulageFreightRateAudit.select()
-            .where(HaulageFreightRateAudit.object_id << audit_object_ids)
-            .dicts()
-        )
-    )
-    audit_sourced_by_id = []
-    for audit_data in audits:
-        audit_sourced_by_id.append(str(audit_data["sourced_by_id"]))
-    org_users = list_organization_users(audit_sourced_by_id)
+    audit_sourced_by_id = list(map(lambda ids: ids["sourced_by_id"], data))
+    org_users = list_organization_users(id=audit_sourced_by_id)
 
     # adding users
-    sourced_by_ids = list(
-        map(lambda sourced_by_id: sourced_by_id["sourced_by_id"], audits)
-    )
-    users = get_user(id=sourced_by_ids)
+    users = get_user(id=audit_sourced_by_id)
+
     for addon_data in data:
         if "service_provider" in addon_data:
             addon_data["service_provider_name"] = addon_data["service_provider"].get(
                 "short_name"
             )
 
-        audits_object = next(
-            filter(lambda t: t["object_id"] == addon_data["id"], audits), None
-        )
-        if not audits_object:
-            continue
         user = next(
-            filter(lambda t: t["id"] == audits_object["sourced_by_id"], org_users), None
+            filter(lambda t: t["id"] == addon_data["sourced_by_id"], org_users), None
         ) or next(
-            filter(lambda t: t["id"] == audits_object["sourced_by_id"], users), None
+            filter(lambda t: t["id"] == addon_data["sourced_by_id"], users), None
         )
+        
+        try:
+            addon_data["user_name"] = user.get("name")
+            addon_data["user_contact"] = user.get("mobile_number") or user.get(
+                "mobile_number_eformat"
+            )
+        except:
+            raise HTTPException(status_code=400,detail='Invalid source')
+        
+        addon_data["last_updated_at"] = addon_data.get("updated_at")
 
-        addon_data["user_name"] = user.get("name")
-        addon_data["user_contact"] = user.get("mobile_number") or user.get(
-            "mobile_number_eformat"
-        )
-        addon_data["last_updated_at"] = audits_object["updated_at"]
         addon_data["buy_rate_currency"] = "INR"
         total_price = 0
         for line_item in addon_data["line_items"]:
