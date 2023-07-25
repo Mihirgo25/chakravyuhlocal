@@ -13,17 +13,12 @@ def execute_transaction_code(request):
   if not air_feedback_objects:
     raise HTTPException(status_code=404, detail = 'Feedbacks Not Found')
 
-  reverted_rate = {
-     'rate_id':request.get('rate_id'),
-     'line_items':request.get('customs_line_items')
-  }
-
   data = {key:value for key,value in request.items() if key != 'air_customs_rate_feedback_ids'}
   for object in air_feedback_objects:
     object.status = 'inactive'
     object.closed_by_id = request.get('performed_by_id')
     object.closing_remarks = request.get('closing_remarks')
-    object.reverted_rate = reverted_rate
+    object.reverted_rate = request.get('reverted_rate')
 
     try:
         object.save()

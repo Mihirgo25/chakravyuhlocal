@@ -100,8 +100,7 @@ class DeleteAirCustomsRateFeedback(BaseModel):
  closing_remarks: list[str] = []
  performed_by_id: str = None
  performed_by_type: str = None
- rate_id: str = None
- customs_line_items: List[AirCustomsLineItems] = None
+ reverted_rate: dict = {}
 
 class DeleteAirCustomsRateRequest(BaseModel):
  air_customs_rate_request_ids: list[str]
