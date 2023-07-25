@@ -69,11 +69,11 @@ def initialize_query(requirements, query):
         HaulageFreightRate.container_size == requirements["container_size"],
         HaulageFreightRate.commodity == requirements["commodity"],
         HaulageFreightRate.haulage_type == requirements.get("haulage_type"),
-        (
+        ((
             HaulageFreightRate.importer_exporter_id
             == requirements.get("importer_exporter_id")
         )
-        | (HaulageFreightRate.importer_exporter_id.is_null(True)),
+        | (HaulageFreightRate.importer_exporter_id.is_null(True))),
         HaulageFreightRate.is_line_items_error_messages_present == False,
         HaulageFreightRate.rate_not_available_entry == False,
     )

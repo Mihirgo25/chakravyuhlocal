@@ -165,9 +165,16 @@ def adding_multiple_service_object(haulage_object,request):
     get_multiple_service_objects(haulage_object)
 
     
-def processed_percent_key(self, id):
-    return f"haulage_rate_bulk_operation_{id}"
+def processed_percent_key(id):
+    return f"haulage_bulk_operation_{id}"
 
-def set_processed_percent_haulage_operation(processed_percent, id):
+def total_affected_rates_key(id):
+    return f"haulage_bulk_operations_affected_{id}"
+
+def set_progress_percent(processed_percent, id):
     if rd:
         rd.hset(processed_percent_hash, processed_percent_key(id), processed_percent)
+
+def set_total_affected_rates(total_affected_rates, id):
+    if rd:
+        rd.hset(processed_percent_hash, total_affected_rates_key(id), total_affected_rates)

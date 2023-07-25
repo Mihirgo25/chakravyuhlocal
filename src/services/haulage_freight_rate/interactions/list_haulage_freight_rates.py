@@ -178,7 +178,7 @@ def get_query(sort_by, sort_type, includes):
     return query
 
 def list_haulage_freight_rates(
-    filters={}, includes = {}, page_limit=10, page=1, sort_by= 'updated_at', sort_type = 'desc',  pagination_data_required=True
+    filters={}, includes = {}, page_limit=10, page=1, sort_by= 'updated_at', sort_type = 'desc',  pagination_data_required=True, return_query = False
 ):
     response = {"success": False, "status_code": 200}
 
@@ -203,6 +203,9 @@ def list_haulage_freight_rates(
 
     # get final data
     final_data = get_final_data(query)
+
+    if return_query:
+        return {'list': query} 
 
     # add service objects
     final_data = add_service_objects(final_data)
