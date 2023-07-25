@@ -109,7 +109,6 @@ class FclFreightRateStatistic(BaseModel):
         for k, v in params.items():
             setattr(self, k, v)
         self.save()
-        pass
 
     class Meta:
         table_name = "fcl_freight_rate_statistics"
