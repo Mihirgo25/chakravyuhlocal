@@ -15,6 +15,7 @@ def update_haulage_freight_rate_platform_prices(request):
     )
     
     for freight in freight_objects:
+        freight.set_locations()
         freight.set_platform_price()
         freight.set_is_best_price()
         freight.save()
