@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 from micro_services.client import common
 from fastapi.encoders import jsonable_encoder
 
-POSSIBLE_DIRECT_FILTERS = ['id','origin_location_id','origin_cluster_id','origin_city_id','destination_location_id','destination_cluster_id','destination_city_id','service_provider_id','importer_exporter_id','truck_type','truck_body_type','commodity','is_line_items_info_messages_present','is_line_items_error_messages_present']
+POSSIBLE_DIRECT_FILTERS = ['id','origin_location_id','origin_cluster_id','origin_city_id','destination_location_id','destination_cluster_id','destination_city_id','service_provider_id','importer_exporter_id','truck_type','truck_body_type','commodity','is_line_items_info_messages_present','is_line_items_error_messages_present','trip_type', 'rate_not_available_entry']
 
-POSSIBLE_INDIRECT_FILTERS = ['origin_location_ids','destination_location_ids','importer_exporter_present','is_rate_available','procured_by_id']
+POSSIBLE_INDIRECT_FILTERS = ['origin_location_ids','destination_location_ids','importer_exporter_present','is_rate_available','procured_by_id','updated_at','validity_till']
 
 def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, return_query = False, pagination_data_required = False, all_rates_for_cogo_assured = False):
     query = get_query(all_rates_for_cogo_assured)
@@ -109,4 +109,12 @@ def apply_is_rate_available_filter(query, filters):
 
 def apply_procured_by_id_filter(query, filters):
   query = query.where(FtlFreightRate.procured_by_id == filters['procured_by_id'])
+  return query
+
+def apply_updated_at_filter(query, filters):
+  query = query.where(FtlFreightRate.updated_at > filters['updated_at'])
+  return query
+
+def apply_validity_till_filter(query, filters):
+  query = query.where((FtlFreightRate.validity_start <= filters['validity_till']) & (FtlFreightRate.validity_end >= filters['validity_till']))
   return query
