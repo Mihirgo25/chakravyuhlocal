@@ -20,20 +20,20 @@ CELERY_CONFIG = {
 if APP_ENV == 'development':
     CELERY_REDIS_URL = 'redis://@127.0.0.1:6379/0'
 
-celery = Celery(__name__)
+air_customs_celery = Celery(__name__)
 registry.enable("pickle")
-celery.conf.broker_url = CELERY_REDIS_URL
-celery.conf.result_backend = CELERY_REDIS_URL
-celery.conf.broker_transport_options = {
+air_customs_celery.conf.broker_url = CELERY_REDIS_URL
+air_customs_celery.conf.result_backend = CELERY_REDIS_URL
+air_customs_celery.conf.broker_transport_options = {
     'queue_order_strategy': 'priority',
     'visibility_timeout': 14400
 }
 
-celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
+air_customs_celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
           queue_arguments={'x-max-priority': 6})]
-celery.conf.update(**CELERY_CONFIG)
+air_customs_celery.conf.update(**CELERY_CONFIG)
 
-@celery.task(bind = True, retry_backoff=True, max_retries=5)
+@air_customs_celery.task(bind = True, retry_backoff=True, max_retries=5)
 def air_customs_functions_delay(self,air_customs_object,request):
     try:
         update_organization_air_customs(request)
@@ -45,7 +45,7 @@ def air_customs_functions_delay(self,air_customs_object,request):
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
+@air_customs_celery.task(bind = True, max_retries=5, retry_backoff = True)
 def bulk_operation_perform_action_functions_air_customs_delay(self, action_name, object):
     try:
         eval(f"object.perform_{action_name}_action()")
@@ -55,7 +55,7 @@ def bulk_operation_perform_action_functions_air_customs_delay(self, action_name,
         else:
             raise self.retry(exc= exc)
 
-@celery.task(bind = True, retry_backoff=True, max_retries=5)
+@air_customs_celery.task(bind = True, retry_backoff=True, max_retries=5)
 def create_air_customs_rate_delay(self, request):
     try:
         return create_air_customs_rate(request)

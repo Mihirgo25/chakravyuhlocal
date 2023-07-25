@@ -59,11 +59,7 @@ def get_create_object_params(request):
     }
 
 def create_audit(request, customs_rate_id):
-  audit_data = {
-      'line_items': request.get('line_items'),
-      'sourced_by_id':request.get('sourced_by_id'),
-      'procured_by_id':request.get('procured_by_id')
-  }
+  audit_data = {key:value for key, value in request.items() if key not in ['performed_by_id','rate_sheet_id','bulk_operation_id']}
 
   AirCustomsRateAudit.create(
     object_id = customs_rate_id,
