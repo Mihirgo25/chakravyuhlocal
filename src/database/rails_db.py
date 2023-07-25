@@ -559,12 +559,12 @@ def list_shipment_flash_booking_rates(shipment_id, currency):
         conn = get_connection()
         with conn:
             with conn.cursor() as cur:
-                sql = 'select shipment_flash_booking_rates.validity_end from shipment_flash_booking_rates where shipment_id = %s and currency = %s'
+                sql = 'select * from shipment_flash_booking_rates where shipment_id = %s and currency = %s'
                 cur.execute(sql, (shipment_id, currency))
                 result = cur.fetchall()
                 for res in result:
                     new_obj = {
-                        "validity_end": str(res[0]),
+                        "validity_end": str(res[27]),
                     }
                     all_result.append(new_obj)
                 cur.close()

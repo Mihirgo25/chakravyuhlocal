@@ -330,7 +330,9 @@ def delete_ftl_freight_rates_feedback_api(request: DeleteFtlFreightRateFeedback,
         raise
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })@ftl_freight_router.get("list_ftl_freight_rate_requests")
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@ftl_freight_router.get("list_ftl_freight_rate_requests")
 def list_ftl_freight_rate_request_api(
     filters: str = None,
     page_limit: int = 10,
@@ -580,9 +582,7 @@ def get_ftl_freight_rate_min_max_validity_dates_api(
     origin_location_id: str = None,
     destination_location_id: str = None,
     commodity: str = None,
-    trucks_count: int = None,
     cargo_readiness_date: datetime = None,
-    load_selection_type: str = None,
     preferred_currency: str = "USD",
     resp: dict = Depends(authorize_token)
 ):
@@ -595,9 +595,7 @@ def get_ftl_freight_rate_min_max_validity_dates_api(
         'trip_type': trip_type,
         'commodity': commodity,
         'importer_exporter_id': importer_exporter_id,
-        'trucks_count': trucks_count,
         'cargo_readiness_date': cargo_readiness_date,
-        'load_selection_type': load_selection_type,
         'preferred_currency': preferred_currency
     }
     try:
