@@ -537,8 +537,8 @@ def process_electricity_data_delays(self):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def create_air_freight_rate_delay(self, request):
     try:
-        return create_draft_air_freight_rate(request)
-        # return common.create_air_freight_rate(request)
+        # return create_draft_air_freight_rate(request)
+        return create_air_freight_rate(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

@@ -7,10 +7,7 @@ from micro_services.client import maps
 from services.air_freight_rate.air_freight_rate_params import WeightSlab
 from pydantic import BaseModel
 from uuid import UUID
-class BaseModel(Model):
-    class Meta:
-        database = db
-        only_save_dirty = True
+from pydantic import BaseModel
 
 class AirFreightRateValidity(BaseModel):
     validity_start: datetime.date

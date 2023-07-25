@@ -1,6 +1,7 @@
 from fastapi.encoders import jsonable_encoder
 from configs.env import DEFAULT_USER_ID
 from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
+from datetime import datetime
 from configs.transformation_constants import HANDLING_TYPE_FACTORS, PACKING_TYPE_FACTORS, OPERATION_TYPE_FACTORS
 class AirFreightVyuh():
     def __init__(self, rate:dict={}):
@@ -31,7 +32,9 @@ class AirFreightVyuh():
 
         # queue need to change to air_freight_rate
         for rate_to_create in rates_to_create:
-            rate_to_create = rate_to_create | { 'source': source, 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
+            rate_to_create = rate_to_create | { 'source': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
+            rate_to_create['validity_start'] = datetime.strptime(rate_to_create['validity_start'],'%Y-%m-%d')
+            rate_to_create['validity_end'] = datetime.strptime(rate_to_create['validity_end'],'%Y-%m-%d')
             create_air_freight_rate_delay.apply_async(kwargs={ 'request':rate_to_create }, queue='fcl_freight_rate')
 
         return True
