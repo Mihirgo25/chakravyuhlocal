@@ -9,7 +9,7 @@ def create_air_customs_rate(request):
       return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-  from services.air_customs_rate.celery_worker.air_customs_celery_worker import air_customs_functions_delay
+  from services.air_customs_rate.air_customs_celery_worker import air_customs_functions_delay
 
   request = {key: value for key, value in request.items() if value is not None}
   params = get_create_object_params(request)
