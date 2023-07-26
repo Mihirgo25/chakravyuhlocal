@@ -44,7 +44,7 @@ def execute_transaction_code(request):
                 status_code=400, detail="Freight rate local deletion failed"
             )
 
-        create_audit(request, obj.id)
+        create_audit(request, obj.id, obj.transport_mode)
         update_multiple_service_objects.apply_async(kwargs={"object": obj}, queue="low")
 
     return {"ids": request["haulage_freight_rate_feedback_ids"]}
@@ -63,7 +63,13 @@ def find_objects(request):
         )
 
 
-def create_audit(request, freight_rate_feedback_id):
+def create_audit(request, freight_rate_feedback_id, transport_mode):
+
+    if 'trailer' in transport_mode:
+        object_type="TrailerFreightRateFeedback"
+    else:
+        object_type="HaulageFreightRateFeedback"
+
     HaulageFreightRateAudit.create(
         action_name="delete",
         performed_by_id=request["performed_by_id"],
@@ -72,7 +78,5 @@ def create_audit(request, freight_rate_feedback_id):
             "performed_by_id": request["performed_by_id"],
         },
         object_id=freight_rate_feedback_id,
-        object_type="HaulageFreightRateFeedback",
-        sourced_by_id = request.get('sourced_by_id'),
-        procured_by_id = request.get('procured_by_id')
+        object_type=object_type,
     )

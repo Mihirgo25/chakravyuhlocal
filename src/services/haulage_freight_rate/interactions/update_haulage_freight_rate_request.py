@@ -40,7 +40,7 @@ def execute_transaction_code(request):
             status_code=400, detail= "Freight rate request updation failed"
         )
 
-    create_audit(request, object.id)
+    create_audit(request, object.id, object.transport_mode)
 
     return {"haulage_freight_rate_request_id": request.get('haulage_freight_rate_request_id')}
 
@@ -53,7 +53,12 @@ def find_object(request):
         raise HTTPException(status_code=400, detail=" Haulage Freight rate request id not found")
 
 
-def create_audit(request, freight_rate_request_id):
+def create_audit(request, freight_rate_request_id, transport_mode):
+    if transport_mode == 'trailer':
+        object_type = 'TrailerFreightRateRequest'
+    else:
+        object_type = "HaulageFreightRateRequest"
+    
     HaulageFreightRateAudit.create(
         action_name="update",
         performed_by_id=request["performed_by_id"],
@@ -62,7 +67,5 @@ def create_audit(request, freight_rate_request_id):
             "performed_by_id": request["performed_by_id"],
         },
         object_id=freight_rate_request_id,
-        object_type="HaulageFreightRateRequest",
-        sourced_by_id = request.get('sourced_by_id'),
-        procured_by_id = request.get('procured_by_id')
+        object_type=object_type,
     )

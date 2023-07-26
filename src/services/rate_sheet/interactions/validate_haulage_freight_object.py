@@ -31,10 +31,15 @@ def get_freight_object(object):
     except HTTPException as e:
          validation['error']+=' ' + ' Invalid Locations'
 
+    if validation['error'].strip():
+        return validation
     try:
         rate_object.validate_before_save()
     except HTTPException as e:
         validation['error']+=' ' + str(e.detail)
+
+    if validation['error'].strip():
+        return validation
 
     try:
         rate_object.validate_validity_object(object['validity_start'], object['validity_end'])

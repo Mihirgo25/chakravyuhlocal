@@ -207,10 +207,7 @@ def create_haulage_freight_freight_rate(
     csv_writer,
     last_row,
 ):
-    from celery_worker import (
-        create_haulage_freight_rate_delay,
-    )
-
+    from services.haulage_freight_rate.haulage_celery_worker import create_haulage_freight_rate_delay
     keys_to_extract =  ["origin_location", "destination_location", "container_size", "container_type", "commodity", "haulage_type", "trailer_type", "shipping_line", "transport_modes", "transit_time", "detention_free_time", "validity_start", "validity_end", "trip_type"]
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
 
@@ -246,6 +243,7 @@ def create_haulage_freight_freight_rate(
     object["procured_by_id"] = procured_by_id
     object["sourced_by_id"] = sourced_by_id
     object["cogo_entity_id"] = params.get("cogo_entity_id")
+    object["haulage_type"] = object["haulage_type"].lower()
 
     request_params = object
     validation = write_haulage_freight_freight_object(

@@ -76,7 +76,6 @@ DEFAULT_PARAMS = [
     "updated_at",
     "validity_end",
     "validity_start",
-    "weight_slabs",
     "sourced_by",
     "procured_by",
     "service_provider",

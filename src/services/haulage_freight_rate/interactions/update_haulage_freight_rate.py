@@ -3,20 +3,22 @@ from database.db_session import db
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 
-def create_audit(haulage_id, request):
+def create_audit(haulage_id, request, transport_modes):
     audit_data = {
         'line_items': request.get('line_items')
     }
+    if 'trailer' in transport_modes:
+        object_type = 'TrailerFreightRate'
+    else:
+        object_type = 'HaulageFreightRate'
 
     HaulageFreightRateAudit.create(
         action_name = 'update',
         object_id = haulage_id,
-        object_type = 'HaulageFreightRate',
+        object_type = object_type,
         performed_by_id = request.get("performed_by_id"),
         bulk_operation_id = request.get("bulk_operation_id"),
         data = audit_data,
-        sourced_by_id = request.get('sourced_by_id'),
-        procured_by_id = request.get('procured_by_id')
     )
 
 def update_haulage_freight_rate(request):
@@ -40,7 +42,7 @@ def execute_transaction_code(request):
     haulage.set_is_best_price()
     haulage.update_platform_prices_for_other_service_providers()
 
-    create_audit(haulage.id, request)
+    create_audit(haulage.id, request, haulage.transport_modes)
 
     try:
         haulage.save()

@@ -32,7 +32,7 @@ def execute_transaction_code(request):
         except:
             raise HTTPException(status_code=400, detail="Freight rate request deletion failed")
 
-        create_audit(request, obj.id)
+        create_audit(request, obj.id, obj.transport_mode)
 
     send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
     return {'haulage_freight_rate_request_ids' : request['haulage_freight_rate_request_ids']}
@@ -46,13 +46,16 @@ def find_objects(request):
         raise HTTPException(status_code=404, detail="Haulage Freight rate request id not found")
 
 
-def create_audit(request, freight_rate_request_id):
+def create_audit(request, freight_rate_request_id, transport_mode):
+    if 'trailer' in transport_mode:
+        object_type="TrailerFreightRateRequest"
+    else:
+        object_type="HaulageFreightRateRequest"
+    
     HaulageFreightRateAudit.create(
     action_name = 'delete',
     performed_by_id = request['performed_by_id'],
     data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},
     object_id = freight_rate_request_id,
-    object_type = 'HaulageFreightRateRequest',
-    sourced_by_id = request.get('sourced_by_id'),
-    procured_by_id = request.get('procured_by_id')
+    object_type = object_type,
     )

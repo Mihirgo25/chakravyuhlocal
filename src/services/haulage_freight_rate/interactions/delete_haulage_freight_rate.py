@@ -26,7 +26,7 @@ def execute_transaction_code(request):
     except Exception as e:
         raise HTTPException(status_code=400, detail="Exception in saving haulage freight rate")
 
-    create_audit(request, object.id, delete_params)
+    create_audit(request, object.id, delete_params, object.transport_modes)
 
     object.update_platform_prices_for_other_service_providers()
 
@@ -34,16 +34,18 @@ def execute_transaction_code(request):
       'id': object.id
     }
 
-def create_audit(request, freight_id,audit_data):
+def create_audit(request, freight_id, audit_data, transport_modes):
+    if 'trailer' in transport_modes:
+        object_type="TrailerFreightRate"
+    else:
+        object_type="HaulageFreightRate"
     HaulageFreightRateAudit.create(
         action_name = 'delete',
         performed_by_id = request['performed_by_id'],
         bulk_operation_id = request.get('bulk_operation_id'),
         data = audit_data,
         object_id = freight_id,
-        object_type = 'HaulageFreightRate',
-        sourced_by_id = request['sourced_by_id'],
-        procured_by_id = request['procured_by_id']
+        object_type = object_type,
     )
 
 def find_object(request):

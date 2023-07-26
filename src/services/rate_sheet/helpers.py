@@ -200,6 +200,9 @@ def get_location_id(q, country_code=None, service_provider_id=None):
     country_code_filters = {"type": "country", "country_code": q, "status": "active"}
     if not locations:
         locations = maps.list_locations({"filters": country_code_filters})["list"]
+    if not locations and country_code is not None:
+        country_code_filters["country_code"] = country_code
+        locations = maps.list_locations({"filters": country_code_filters})["list"]
 
     # seaport filter with country code
     seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
@@ -230,7 +233,7 @@ def get_location_id(q, country_code=None, service_provider_id=None):
     }
     if country_code is not None:
         display_name_filters["country_code"] = country_code
-    if country_code is not None:
+    if not locations:
         locations = maps.list_locations({"filters": display_name_filters})["list"]
 
     return locations[0]["id"] if locations else None
