@@ -70,10 +70,10 @@ def get_fcl_freight_rate_distribution_func(
 
 
 @bramhastra.get("/get_fcl_freight_rate_lifecycle")
-def get_fcl_freight_rate_drilldown_func(
+async def get_fcl_freight_rate_drilldown_func(
     filters: Annotated[Json, Query()] = {},
 ) -> FclFreightRateDrillDownResponse:
-    response = get_fcl_freight_rate_lifecycle(filters)
+    response = await get_fcl_freight_rate_lifecycle(filters)
     return JSONResponse(content=response)
 
 
