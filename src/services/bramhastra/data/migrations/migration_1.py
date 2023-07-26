@@ -111,21 +111,24 @@ class MigrationHelpers:
         except Exception as e:
             print('Error from railsDb', e)
             return all_result
-    
-    def get_imp_ext_id_from_spot_search_rates(self,source_id):
-        total_result=[]
+        
+    def get_imp_ext_id_from_spot_search_rates(self, source_id):
         newconnection = get_connection()
         with newconnection:
             with newconnection.cursor() as cursor:
                 sql = 'SELECT importer_exporter_id AS imp_ext_id FROM spot_searches WHERE id = %s'
-                cursor.execute(sql,source_id)
-                result=cursor.fetchall()
-                for res in result:
-                    total_result.append(
-                    res
-                    )
-        cursor.close()
-        return total_result       
+                cursor.execute(sql, (source_id,))
+                result = cursor.fetchone()
+        return result  
+    
+    def get_imp_ext_id_from_checkouts_rates(self, source_id):
+        newconnection = get_connection()
+        with newconnection:
+            with newconnection.cursor() as cursor:
+                sql = 'SELECT importer_exporter_id AS imp_ext_id FROM checkouts WHERE id = %s'
+                cursor.execute(sql, (source_id,))
+                result = cursor.fetchone()
+        return result 
 class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
@@ -177,7 +180,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
     def populate_from_feedback(self):
         query = FclFreightRateFeedback.select(FclFreightRateFeedback.booking_params).distinct(FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.validity_id).where(FclFreightRateFeedback.booking_params['rate_card']['price'].is_null(False))
         feedbacks = jsonable_encoder(list(query.dicts()))
-        breakpoint()
+        # breakpoint()
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
@@ -225,22 +228,19 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             
             row_data.append(row)
             actual_count+= 1
-            if len(row_data) >= 10 or len(feedback) == count:
-                FclFreightRateStatistic.insert_many(row_data).execute()
-                row_data = []
+        FclFreightRateStatistic.insert_many(row_data).execute()
 
     def populate_feedback_fcl_freight_rate_statistic(self):
         query = FclFreightRateFeedback.select()
         feedbacks = jsonable_encoder(list(query.dicts()))
         count = 0    
-        row_data = []
-               
+        row_data = []    
         for feedback in feedbacks: 
             count+= 1
-            
-            identifier = '{}_{}'.format(feedback['rate_id'], feedback['validity_id'])
+            identifier = '{}_{}'.format(feedback['fcl_freight_rate_id'], feedback['validity_id'])
 
             statistics_obj = self.find_statistics_object(identifier)
+
             
             if statistics_obj:
                 if (feedback['feedback_type']=='liked'):
@@ -252,29 +252,33 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     print("! Error: Couldn't save statistics_obj", statistics_obj.id)
                 else:
                     print('Saved ...',statistics_obj.id)
-                continue
             
-        
-            row = {
-                "feedback_id": feedback.get('id'),
-                "validity_id" : feedback.get('validity_id'),
-                "rate_id" : feedback.get('fcl_freight_rate_id'),
-                "source" : feedback.get('source'),
-                "source_id" : feedback.get('source_id'),
-                "performed_by_id" : feedback.get('performed_by_id'),
-                "performed_by_org_id" : feedback.get('performed_by_org_id'),
-                "created_at": feedback.get('created_at'),
-                "updated_at": feedback.get('updated_at'),
-                "importer_exporter_id": feedback.get('importer_exporter_id'),
-                "service_provider_id": feedback.get('service_provider_id'),
-                "feedback_type":feedback.get('feedback_type'),
-                "closed_by_id":feedback.get('closed_by_id'),
-                "serial_id":feedback.get('serial_id'),
-            }
-            row_data.append(row)
-            if len(row_data) >= 10 or len(feedback) == count:
-                FeedbackFclFreightRateStatistic.insert_many(row_data).execute()
-                row_data = []       
+                if (feedback['source']=='spot_rates'or feedback['source']=='spot_search' or feedback['source']=='spot_booking'):
+                    imp_exp_id = self.get_imp_ext_id_from_spot_search_rates(feedback['source_id'])
+                elif(feedback['source']=='checkout'):
+                    imp_exp_id = self.get_imp_ext_id_from_checkouts_rates(feedback['source_id'])
+                elif(feedback['source']=='promotional' or feedback['source']=='predicted'):
+                    imp_exp_id = None
+                row = {
+                    "fcl_freight_rate_statistic_id":statistics_obj.id,
+                    "feedback_id": feedback.get('id'),
+                    "validity_id" : feedback.get('validity_id'),
+                    "rate_id" : feedback.get('fcl_freight_rate_id'),
+                    "source" : feedback.get('source'),
+                    "source_id" : feedback.get('source_id'),
+                    "performed_by_id" : feedback.get('performed_by_id'),
+                    "performed_by_org_id" : feedback.get('performed_by_org_id'),
+                    "created_at": feedback.get('created_at'),
+                    "updated_at": feedback.get('updated_at'),
+                    "importer_exporter_id": imp_exp_id,
+                    "service_provider_id": feedback.get('service_provider_id'),
+                    "feedback_type":feedback.get('feedback_type'),
+                    "closed_by_id":feedback.get('closed_by_id'),
+                    "serial_id":feedback.get('serial_id'),
+                }
+                row_data.append(row)
+        FeedbackFclFreightRateStatistic.insert_many(row_data).execute()
+    
                 
     def populate_from_spot_search(self):
         total_count = self.get_spot_search_rates(return_count=True) or 0
@@ -544,7 +548,8 @@ def main():
     # populate_from_rates.populate_active_rate_ids()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search()
-    populate_from_rates.populate_fcl_request_statistics()
+    populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
+    # populate_from_rates.populate_fcl_request_statistics()
 
 if __name__ == '__main__':   
     main()
