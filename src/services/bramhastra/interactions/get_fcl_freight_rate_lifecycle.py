@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.filter_helper import get_direct_indirect_filters
 
 
-def get_fcl_freight_rate_drilldown(filters):
+def get_fcl_freight_rate_lifecycle(filters):
     where = get_direct_indirect_filters(filters)
     search_to_book_statistics = get_search_to_book_and_feedback_statistics(
         filters, where
@@ -41,9 +41,6 @@ def get_missing_rates(filters, where):
              spot_search AS (SELECT count(id) as count from brahamstra.fcl_freight_rate_statistics WHERE)
              SELECT * from missing_rates,rate_reverted,spot_search
              """]
-    
-    
-    
     
 
 

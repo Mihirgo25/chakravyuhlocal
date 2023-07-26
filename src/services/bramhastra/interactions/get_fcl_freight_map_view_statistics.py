@@ -2,6 +2,7 @@ from services.bramhastra.helpers.get_fcl_freight_rate_helper import ClickHouse
 from services.bramhastra.helpers.filter_helper import get_direct_indirect_filters
 from fastapi.encoders import jsonable_encoder
 from math import ceil
+from micro_services.client import maps
 
 HEIRARCHY = ["continent", "country", "region", "port"]
 
@@ -27,7 +28,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},abs(AVG(accuracy)) as accuracy FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy FROM brahmastra.fcl_freight_rate_statistics'
     ]
 
     if where := get_direct_indirect_filters(filters):
@@ -40,10 +41,12 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
         clickhouse, queries, filters, page, page_limit
     )
 
-    statistics = clickhouse.execute(" ".join(queries), filters)
+    statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
+    
+    add_location_objects(statistics)
 
     return dict(
-        list=jsonable_encoder(statistics),
+        list = statistics,
         page=page,
         page_limit=page_limit,
         total_pages=total_pages,
@@ -87,3 +90,27 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
     total_pages = ceil(total_count / page_limit)
 
     return total_count, total_pages
+
+
+def add_location_objects(statistics):
+    
+    location_ids = list({v for statistic in statistics for k, v in statistic.items() if k in LOCATION_KEYS})
+    
+    locations = {
+        location["id"]: location
+        for location in maps.list_locations(
+            dict(
+                filters=dict(id=location_ids),
+                includes=dict(id=True, name=True,type = True,latitude = True,longitude = True),
+                page_limit=len(location_ids),
+            )
+        )["list"]
+    }
+
+    for statistic in statistics:
+        update_statistic = dict()
+        for k, v in statistic.items():
+            if k in LOCATION_KEYS:
+                update_statistic[k[:-3]] = locations.get(v)
+
+        statistic.update(update_statistic)

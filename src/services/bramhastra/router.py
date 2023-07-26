@@ -11,8 +11,8 @@ from services.bramhastra.interactions.get_fcl_freight_rate_charts import (
 from services.bramhastra.interactions.get_fcl_freight_rate_distribution import (
     get_fcl_freight_rate_distribution,
 )
-from services.bramhastra.interactions.get_fcl_freight_rate_drilldown import (
-    get_fcl_freight_rate_drilldown,
+from services.bramhastra.interactions.get_fcl_freight_rate_lifecycle import (
+    get_fcl_freight_rate_lifecycle,
 )
 from services.bramhastra.interactions.get_fcl_freight_map_view_statistics import (
     get_fcl_freight_map_view_statistics,
@@ -69,7 +69,7 @@ def get_fcl_freight_rate_distribution_func(
 def get_fcl_freight_rate_drilldown_func(
     filters: Annotated[Json, Query()] = {},
 ) -> FclFreightRateDrillDownResponse:
-    response = get_fcl_freight_rate_drilldown(filters)
+    response = get_fcl_freight_rate_lifecycle(filters)
     return JSONResponse(content=response)
 
 
