@@ -77,7 +77,7 @@ def create_fcl_cfs_rate_not_available_api(request: CreateFclCfsRateNotAvailable,
 
 
 @fcl_cfs_router.post('/create_fcl_cfs_rate_bulk_operation')
-def create_fcl_cfs_rate_bulk_operation_api(request: CreateFclCfsRateBulkOperation, resp: dict = Depends(authorize_token)):
+def create_fcl_customs_rate_bulk_operation_api(request: CreateFclCfsRateBulkOperation, resp: dict = Depends(authorize_token)):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
@@ -290,7 +290,7 @@ def create_rate_sheet_api(request: CreateRateSheet, resp: dict = Depends(authori
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_sheet = create_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -307,7 +307,7 @@ def update_rate_sheet_api(request: UpdateRateSheet, resp: dict = Depends(authori
 
     try:
         rate_sheet =update_rate_sheet(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_sheet))
+        return JSONResponse(status_code=200, content=json_encoder(rate_sheet))
     except HTTPException as e:
         raise
     except Exception as e:
