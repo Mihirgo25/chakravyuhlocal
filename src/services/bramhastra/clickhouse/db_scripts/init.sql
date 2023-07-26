@@ -98,8 +98,6 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
     id UInt256,
     origin_port_id UUID,
     destination_port_id UUID,
-    origin_main_port_id UUID,
-    destination_main_port_id UUID,
     origin_region_id UUID,
     destination_region_id UUID,
     origin_country_id UUID,
@@ -116,20 +114,22 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
     source_id UUID,
     performed_by_id UUID,
     performed_by_org_id UUID,
-    created_at DateTime DEFAULT now(),
-    updated_at DateTime DEFAULT now(),
     importer_exporter_id UUID,
     closing_remarks Array(String),
     closed_by_id UUID,
-    service_provider_id UUID,
     request_type FixedString(256),
+    container_size FixedString(256),
+    commodity FixedString(256),
+    containers_count UInt32,
+    is_rate_reverted Bool DEFAULT true,
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
     sign Int8 DEFAULT 1,
-    rate_reverted_count INT8 DEFAULT 0,
     version UInt32 DEFAULT 1,
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (rate_id)
-ORDER BY (rate_id,version);
+PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id)
+ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,updated_at);
 
 CREATE TABLE brahmastra.checkout_fcl_freight_rate_statistics
 (
