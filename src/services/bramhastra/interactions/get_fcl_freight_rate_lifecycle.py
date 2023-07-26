@@ -73,9 +73,8 @@ async def get_fcl_freight_rate_lifecycle(filters):
 
 async def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
-    queries = [
-        """SELECT count(id) as stale_rates FROM brahmastra.fcl_freight_rate_statistics WHERE sign = -1"""
-    ]
+    
+    queries = ["""SELECT count(id) as stale_rates FROM brahmastra.fcl_freight_rate_statistics WHERE spot_search_count = 0"""]
 
     if where:
         queries.append(" AND ")

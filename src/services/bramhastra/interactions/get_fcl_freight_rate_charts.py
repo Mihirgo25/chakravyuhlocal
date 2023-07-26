@@ -8,13 +8,13 @@ from services.bramhastra.helpers.filter_helper import (
 
 async def get_fcl_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters)
-    accuracy = await get_accuracy(filters, where)
-    deviation = await get_deviation(filters, where)
+    accuracy = await get_accuracy(filters.copy(), where)
+    deviation = await get_deviation(filters.copy(), where)
     spot_search_to_checkout_count = await get_spot_search_to_checkout_count(
-        filters, where
+        filters.copy(), where
     )
     rate_count_with_deviation_more_than_30 = (
-        await get_rate_count_with_deviation_more_than_30(filters, where)
+        await get_rate_count_with_deviation_more_than_30(filters.copy(), where)
     )
 
     return dict(

@@ -51,6 +51,7 @@ class Connection:
         self.rails_db = get_connection()
         self.clickhouse_client = get_clickhouse_client()
 
+
 class FclFreightValidity(Connection):
     def __init__(self, rate_id, validity_id) -> None:
         super().__init__()
@@ -357,7 +358,7 @@ class Feedback:
             self.params["fcl_freight_rate_statistic_id"] = (
                 new_row["id"] if isinstance(new_row, dict) else new_row.id
             )
-            self.increment_feeback_rate_stats(fcl_freight_validity,new_row)
+            self.increment_feeback_rate_stats(fcl_freight_validity, new_row)
 
     def set_new_stats(self) -> int:
         return FeedbackFclFreightRateStatistic.insert_many(self.params).execute()
@@ -367,7 +368,10 @@ class Feedback:
         EXCLUDE_UPDATE_PARAMS = {"feedback_id", "serial_id"}
         feedback = (
             FeedbackFclFreightRateStatistic.select()
-            .where(FeedbackFclFreightRateStatistic.feedback_id == self.params["feedback_id"])
+            .where(
+                FeedbackFclFreightRateStatistic.feedback_id
+                == self.params["feedback_id"]
+            )
             .first()
         )
         if not feedback:
@@ -393,7 +397,7 @@ class Feedback:
             if rows := get_clickhouse_rows_with_column_names(row):
                 return rows[0]
 
-    def increment_feeback_rate_stats(self, fcl_freight_validity ,row):
+    def increment_feeback_rate_stats(self, fcl_freight_validity, row):
         if isinstance(row, Model):
             for key in self.increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
@@ -436,7 +440,8 @@ class Checkout(FclFreightValidity):
             )
             if new_row:
                 self.params["fcl_freight_rate_statistic_id"] = (
-                new_row["id"] if isinstance(new_row, dict) else new_row.id)
+                    new_row["id"] if isinstance(new_row, dict) else new_row.id
+                )
                 self.indirect_increment_keys(new_row)
                 fcl_freight_validity.update_stats(new_row)
 
