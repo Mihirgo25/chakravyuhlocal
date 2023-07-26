@@ -48,6 +48,14 @@ def select_fields():
 
 
 def initialize_query(requirements, query):
+    if requirements.get("origin_location_id") and requirements.get("destination_location_id"):
+        origin_location = maps.list_locations({'filters': {'id': requirements.get("origin_location_id")}, "includes": {"default_params_required": 1, "city_id": 1}})['list'][0]
+        destination_location = maps.list_locations({'filters': {'id': requirements.get("destination_location_id")},  "includes": {"default_params_required": 1, "city_id": 1}})['list'][0]
+        requirements["origin_city_id"] = origin_location['city_id']
+        requirements["origin_country_id"] = origin_location['country_id']
+        requirements["destination_city_id"] = destination_location['city_id']
+        requirements["destination_country_id"] = destination_location['country_id']
+
     origin_location_ids = [
         requirements.get("origin_location_id"),
         requirements.get("origin_city_id"),
