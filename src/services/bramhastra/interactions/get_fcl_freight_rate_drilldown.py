@@ -33,8 +33,14 @@ def get_stale_rate_statistics(filters, where):
 def get_missing_rates(filters, where):
     clickhouse = ClickHouse()
     
-    query = ["""SELECT count(id),SUM(reverted_rates_count) from brahamstra.fcl_freight_rate_request_statistics"""]
-    
+    query = ["""
+             WITH
+             missing_rates AS (SELECT count(id) as count from brahamstra.fcl_freight_rate_request_statistics WHERE 
+             ),
+             rate_reverted AS (SELECT count(id) as count from brahamstra.fcl_freight_rate_request_statistics WHERE ),
+             spot_search AS (SELECT count(id) as count from brahamstra.fcl_freight_rate_statistics WHERE)
+             SELECT * from missing_rates,rate_reverted,spot_search
+             """]
     
     
     

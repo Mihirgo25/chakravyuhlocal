@@ -5,7 +5,10 @@ class ClickHouse:
         self.clickhouse_client = get_clickhouse_client()
         
     def execute(self,query,parameters):
+        import time
+        s = time.time()
         if result:= self.clickhouse_client.execute(query,parameters,with_column_types=True):
             column_names = [column[0] for column in result[1]]
             data = [row for row in result[0]]
+            print('total', time.time() - s)
             return [dict(zip(column_names, row)) for row in data]

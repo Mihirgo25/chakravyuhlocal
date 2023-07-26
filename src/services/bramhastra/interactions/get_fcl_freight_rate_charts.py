@@ -27,9 +27,7 @@ async def get_fcl_freight_rate_charts(filters):
 
 async def get_accuracy(filters, where):
     clickhouse = ClickHouse()
-    queries = [
-        """SELECT mode,toDate(day) AS day,AVG(accuracy) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode FROM brahmastra.fcl_freight_rate_statistics"""
-    ]
+    queries = ["""SELECT mode,toDate(day) AS day,AVG(accuracy) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode FROM brahmastra.fcl_freight_rate_statistics"""]
 
     if where:
         queries.append(" WHERE ")
