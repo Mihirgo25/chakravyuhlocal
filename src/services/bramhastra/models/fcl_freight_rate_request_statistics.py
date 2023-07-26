@@ -40,6 +40,7 @@ class FclFreightRateRequestStatistic(BaseModel):
     service_provider_id = UUIDField(null=True)
     request_type = CharField()
     sign = IntegerField(default=1)
+    rate_reverted_count = IntegerField(default=0)
     version = IntegerField(default=1)
 
     class Meta:

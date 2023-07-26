@@ -75,9 +75,7 @@ async def get_deviation(filters, where):
 async def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
-    queries = [
-        """SELECT FLOOR(AVG(1 - checkout_count/spot_search_count),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
-    ]
+    queries = ["""SELECT FLOOR(AVG(1 - checkout_count/spot_search_count),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""]
 
     if where:
         queries.append(" WHERE ")
@@ -89,9 +87,7 @@ async def get_spot_search_to_checkout_count(filters, where):
 async def get_rate_count_with_deviation_more_than_30(filters, where):
     clickhouse = ClickHouse()
 
-    queries = [
-        """SELECT count(id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE rate_deviation_from_booking_rate > 30"""
-    ]
+    queries = ["""SELECT count(id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE rate_deviation_from_booking_rate > 30"""]
 
     if where:
         queries.append(" AND ")

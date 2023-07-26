@@ -9,6 +9,8 @@ POSSIBLE_DIRECT_FILTERS = {
     "destination_country_id",
     "destination_trade_id",
     "destination_continent_id",
+    "origin_region_id",
+    "destination_region_id",
     "shipping_line_id",
     "service_provider_id",
     "importer_exporter_id",
@@ -22,8 +24,6 @@ POSSIBLE_DIRECT_FILTERS = {
     "mode",
     "sourced_by_id",
     "procured_by_id",
-    "origin_region_id",
-    "destination_region_id"
 }
 
 POSSIBLE_INDIRECT_FILTERS = {}
