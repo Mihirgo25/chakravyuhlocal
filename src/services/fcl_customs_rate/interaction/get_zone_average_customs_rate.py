@@ -73,6 +73,8 @@ def get_zone_average_customs_rate(request):
         predicted_customs_rate['customs_line_items'] = average_items
         predicted_customs_rate['importer_exporter_id'] = None
         predicted_customs_rate['location_id'] = request.get('port_id')
+        predicted_customs_rate['mode'] = 'predicted'
+        predicted_customs_rate['rate_type'] = DEFAULT_RATE_TYPE
         create_params = get_create_params(request, predicted_customs_rate['customs_line_items'])
 
         create_fcl_customs_rate_delay.apply_async(kwargs = {'request':create_params}, queue = 'low')
