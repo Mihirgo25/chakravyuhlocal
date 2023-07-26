@@ -45,7 +45,6 @@ from services.air_freight_rate.workers.send_air_freight_local_charges_update_rem
 from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
-
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -134,6 +133,8 @@ celery.conf.beat_schedule = {
     }
 
 }
+
+celery.autodiscover_tasks(['services.air_customs_rate.air_customs_celery_worker'], force=True)
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_cost_booking_estimation(self):

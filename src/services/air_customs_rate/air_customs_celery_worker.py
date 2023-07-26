@@ -3,8 +3,6 @@ from services.air_customs_rate.helpers import update_organization_air_customs
 from services.air_customs_rate.interaction.create_air_customs_rate import create_air_customs_rate
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
-celery.autodiscover_tasks(['services.air_customs_rate.air_customs_celery_worker'], force=True)
-
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
 def air_customs_functions_delay(self,air_customs_object,request):
     try:
