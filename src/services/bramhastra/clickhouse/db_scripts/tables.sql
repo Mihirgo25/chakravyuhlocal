@@ -93,6 +93,7 @@ ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id)
 ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);
 
+
 CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
 (
     id UInt256,
