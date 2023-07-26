@@ -633,14 +633,14 @@ def get_ftl_freight_rate_cards_api(
     predicted_rate: bool = True,
     resp: dict = Depends(authorize_token)):
 
-        try:
-            cargo_readiness_date = datetime.fromisoformat(cargo_readiness_date).date()
-        except:
-           cargo_readiness_date = datetime.now().date()
+    try:
+        cargo_readiness_date = datetime.fromisoformat(cargo_readiness_date).date()
+    except:
+        cargo_readiness_date = datetime.now().date()
 
-    # if resp["status_code"] != 200:
-    #     return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
+    if resp["status_code"] != 200:
+        return JSONResponse(status_code=resp["status_code"], content=resp)
+    try:
         request = {
                         'trip_type':trip_type,
                         'origin_location_id': origin_location_id,
@@ -667,12 +667,11 @@ def get_ftl_freight_rate_cards_api(
         }
         list = get_ftl_freight_rate_cards(request)
         return JSONResponse(status_code=200, content=jsonable_encoder(list))
-    # except HTTPException as e:
-    #     print(e)
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @ftl_freight_router.post("/extend_ftl_freight_rates")
