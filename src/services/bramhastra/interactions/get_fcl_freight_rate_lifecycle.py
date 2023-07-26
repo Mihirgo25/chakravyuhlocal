@@ -10,11 +10,41 @@ def get_fcl_freight_rate_lifecycle(filters):
     )
     missing_rates_statistics = get_missing_rates(filters, where)
     stale_rate_statistics = get_stale_rate_statistics(filters, where)
-    return dict(
-        search_to_book_statistics=search_to_book_statistics,
-        missing_rates_statistics=missing_rates_statistics,
-        stale_rate_statistics=stale_rate_statistics,
-    )
+    result1 = [
+    [
+
+        { 'action_type': 'checkout', 'rates_count': search_to_book_statistics[0]['checkout'], 'drop': search_to_book_statistics[0]['checkoout_percentage']},
+        { 'action_type': 'booking_confirm', 'rates_count': search_to_book_statistics[0]['shipment_confirmed_by_service_provider'], 'drop': search_to_book_statistics[0]['confirmed_booking_percentage']},
+        { 'action_type': 'revenue_desk', 'rates_count':search_to_book_statistics[0]['revenue_desk_visit'], 'drop': search_to_book_statistics[0]['revenue_desk_visit_percentage']},
+        { 'action_type': 'so1', 'rates_count': search_to_book_statistics[0]['so1_visit'], 'drop': search_to_book_statistics[0]['so1_visit_percentage']},
+
+    ],
+    [
+
+        { 'action_type': 'missing_rates', 'rates_count': 4323, 'drop': 71},
+        { 'action_type': 'rates_triggered', 'rates_count': 1200, 'drop': 71  },
+        { 'action_type': 'rates_updated', 'rates_count': 540, 'drop': 71},
+
+    ],
+    [
+
+        { 'action_type': 'disliked_rates', 'rates_count': search_to_book_statistics[0]['dislikes'], 'drop': search_to_book_statistics[0]['dislikes_percentage']},
+        { 'action_type': 'feedback_received', 'rates_count': search_to_book_statistics[0]['feedback_recieved'], 'drop': search_to_book_statistics[0]['feedback_recieved_percentage']},
+        { 'action_type': 'rates_reverted', 'rates_count': search_to_book_statistics[0]['dislikes_rate_reverted'], 'drop': search_to_book_statistics[0]['dislikes_rate_reverted_percentage']},
+    ],
+    [
+        { 'action_type': 'stale_rates', 'rates_count':stale_rate_statistics[0]['stale_rates'] },
+    ]]
+    result = {
+        'searches':search_to_book_statistics[0]['spot_search'],
+        'cards':result1,
+    }
+    return result
+    # return dict(
+    #     search_to_book_statistics=search_to_book_statistics,
+    #     missing_rates_statistics=missing_rates_statistics,
+    #     stale_rate_statistics=stale_rate_statistics,
+    # )
 
 
 def get_stale_rate_statistics(filters, where):
