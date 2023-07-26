@@ -35,11 +35,19 @@ def execute_transaction_code(request):
         create_audit(request, obj.id, obj.transport_mode)
 
     send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
-    return {'haulage_freight_rate_request_ids' : request['haulage_freight_rate_request_ids']}
+    if request.get('haulage_freight_rate_request_ids'):
+        return {'haulage_freight_rate_request_ids' : request['haulage_freight_rate_request_ids']}
+    else:
+        return {'trailer_freight_rate_request_ids' : request['trailer_freight_rate_request_ids']}
+
 
 
 def find_objects(request):
-    object =  HaulageFreightRateRequest.select().where(HaulageFreightRateRequest.id << request['haulage_freight_rate_request_ids'] & (HaulageFreightRateRequest.status == 'active'))
+    if request.get('haulage_freight_rate_request_ids'):
+        object =  HaulageFreightRateRequest.select().where(HaulageFreightRateRequest.id << request['haulage_freight_rate_request_ids'] & (HaulageFreightRateRequest.status == 'active'))
+    else:
+        object =  HaulageFreightRateRequest.select().where(HaulageFreightRateRequest.id << request['trailer_freight_rate_request_ids'] & (HaulageFreightRateRequest.status == 'active'))
+
     if object.count() > 0:
         return object
     else:

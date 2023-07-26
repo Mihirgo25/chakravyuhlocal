@@ -52,7 +52,7 @@ def list_haulage_freight_rate_requests(
     query = apply_indirect_filters(query, indirect_filters)
 
     # getting closed by and other stats
-    stats = get_stats(filters, is_stats_required, performed_by_id) or {}
+    stats = get_stats(filters, is_stats_required, performed_by_id, transport_mode) or {}
 
     # getting pagination data and pagination
     pagination_data = get_pagination_data(query, page, page_limit)
@@ -155,7 +155,7 @@ def get_pagination_data(query, page, page_limit):
     return pagination_data
 
 
-def get_stats(filters, is_stats_required, performed_by_id):
+def get_stats(filters, is_stats_required, performed_by_id, transport_mode):
     if not is_stats_required:
         return {}
     query = HaulageFreightRateRequest.select()
@@ -166,7 +166,7 @@ def get_stats(filters, is_stats_required, performed_by_id):
             del filters['closed_by_id']
         
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-  
+        direct_filters["transport_mode"] = transport_mode
         query = get_filters(direct_filters, query, HaulageFreightRateRequest)
         query = apply_indirect_filters(query, indirect_filters)
     

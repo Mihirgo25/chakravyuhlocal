@@ -46,15 +46,23 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id, obj.transport_mode)
         update_multiple_service_objects.apply_async(kwargs={"object": obj}, queue="low")
-
-    return {"ids": request["haulage_freight_rate_feedback_ids"]}
+    if request.get('haulage_freight_rate_feedback_ids'):
+        return {"ids": request["haulage_freight_rate_feedback_ids"]}
+    else:
+        return {"ids": request["trailer_freight_rate_feedback_ids"]}
 
 
 def find_objects(request):
-    object = HaulageFreightRateFeedback.select().where(
-        HaulageFreightRateFeedback.id << request["haulage_freight_rate_feedback_ids"],
-        HaulageFreightRateFeedback.status == "active",
-    )
+    if request.get('haulage_freight_rate_feedback_ids'):
+        object = HaulageFreightRateFeedback.select().where(
+            HaulageFreightRateFeedback.id << request["haulage_freight_rate_feedback_ids"],
+            HaulageFreightRateFeedback.status == "active",
+        )
+    else:
+        object = HaulageFreightRateFeedback.select().where(
+            HaulageFreightRateFeedback.id << request["trailer_freight_rate_feedback_ids"],
+            HaulageFreightRateFeedback.status == "active",
+        )
     if object.count() > 0:
         return object
     else:
