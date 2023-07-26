@@ -174,7 +174,7 @@ class CreateFtlFreightRateNotAvailable(BaseModel):
     destination_location_id: str
     destination_cluster_id: str = None
     truck_type: str
-    commodity: str = None
+    commodity: str
     performed_by_id: str = None
     performed_by_type: str = None
 
