@@ -1,4 +1,4 @@
-from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField, BooleanField
+from peewee import Model, UUIDField, CharField, IntegerField, BigIntegerField, BooleanField, TextField
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField, ArrayField
@@ -31,12 +31,12 @@ class FclFreightRateRequestStatistic(BaseModel):
     performed_by_id = UUIDField(null=True)
     performed_by_org_id = UUIDField(null=True)
     importer_exporter_id = UUIDField(null=True)
-    closing_remarks = ArrayField(CharField,null = True)
+    closing_remarks = ArrayField(TextField,null = True)
     closed_by_id = UUIDField(null=True)
-    request_type = CharField()
-    container_size = IntegerField(null=True)
+    request_type = CharField(null=True)
+    container_size = CharField(null=True)
     commodity = CharField(null=True)
-    container_count = IntegerField(null=True)
+    containers_count = IntegerField(null=True)
     is_rate_reverted = BooleanField(default=True)
     created_at = DateTimeTZField(default=datetime.utcnow())
     updated_at = DateTimeTZField(default=datetime.utcnow())

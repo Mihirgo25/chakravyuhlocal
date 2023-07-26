@@ -13,6 +13,9 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
 from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
     SpotSearchFclFreightRateStatistic,
 )
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+    FclFreightRateRequestStatistic,
+)
 from services.bramhastra.clickhouse.connect import get_clickhouse_client
 from services.bramhastra.helpers.post_fcl_freight_helper import json_encoder_for_clickhouse
 
@@ -246,3 +249,51 @@ def send_spot_search_stats_to_clickhouse(client=get_clickhouse_client):
     client.command(query)
     
     SpotSearchFclFreightRateStatistic.delete().execute()
+
+
+def send_rate_request_statistics_stats_to_clickhouse(client=get_clickhouse_client):
+    query = (
+        "INSERT INTO  brahmastra.fcl_freight_rate_request_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
+    )
+
+    values = []
+    for rate in json_encoder_for_clickhouse(list(FclFreightRateRequestStatistic.select().dicts())):
+        value = value = f"""(
+        {rate['id']},
+        '{rate['origin_port_id']}',
+        '{rate['destination_port_id']}',
+        '{rate['origin_region_id']}',{f"'{rate['origin_region_id']}'" if rate['origin_region_id'] is not None else 'NULL'},
+        '{rate['destination_region_id']}',{f"'{rate['destination_region_id']}'" if rate['destination_region_id'] is not None else 'NULL'},
+        '{rate['origin_country_id']}',{f"'{rate['origin_country_id']}'" if rate['origin_country_id'] is not None else 'NULL'},
+        '{rate['destination_country_id']}',{f"'{rate['destination_country_id']}'" if rate['destination_country_id'] is not None else 'NULL'},
+        '{rate['origin_continent_id']}',{f"'{rate['origin_continent_id']}'" if rate['origin_continent_id'] is not None else 'NULL'},
+        '{rate['destination_continent_id']}',{f"'{rate['destination_continent_id']}'" if rate['destination_continent_id'] is not None else 'NULL'},
+        '{rate['origin_trade_id']}',{f"'{rate['origin_trade_id']}'" if rate['origin_trade_id'] is not None else 'NULL'},
+        '{rate['destination_trade_id']}',{f"'{rate['destination_trade_id']}'" if rate['destination_trade_id'] is not None else 'NULL'},
+        '{rate['origin_pricing_zone_map_id']}',{f"'{rate['origin_pricing_zone_map_id']}'" if rate['origin_pricing_zone_map_id'] is not None else 'NULL'},
+        '{rate['destination_pricing_zone_map_id']}',{f"'{rate['destination_pricing_zone_map_id']}'" if rate['destination_pricing_zone_map_id'] is not None else 'NULL'},
+        '{rate['rate_request_id']}',
+        {rate['validity_ids']},{f"{rate['validity_ids']}" if rate['validity_ids'] is not None else 'NULL'},
+        {rate['source']},{f"{rate['source']}" if rate['source'] is not None else 'NULL'},
+        '{rate['source_id']}',{f"'{rate['source_id']}'" if rate['source_id'] is not None else 'NULL'},
+        '{rate['performed_by_id']}',{f"'{rate['performed_by_id']}'" if rate['performed_by_id'] is not None else 'NULL'},
+        '{rate['performed_by_org_id']}',{f"'{rate['performed_by_org_id']}'" if rate['performed_by_org_id'] is not None else 'NULL'},
+        '{rate['importer_exporter_id']}',{f"'{rate['importer_exporter_id']}'" if rate['importer_exporter_id'] is not None else 'NULL'},
+        {rate['closing_remarks']},{f"{rate['closing_remarks']}" if rate['closing_remarks'] is not None else 'NULL'},
+        '{rate['closed_by_id']}',{f"'{rate['closed_by_id']}'" if rate['closed_by_id'] is not None else 'NULL'},
+        {rate['request_type']},{f"{rate['request_type']}" if rate['request_type'] is not None else 'NULL'},
+        {rate['container_size']},{f"{rate['container_size']}" if rate['container_size'] is not None else 'NULL'},
+        {rate['commodity']},{f"{rate['commodity']}" if rate['commodity'] is not None else 'NULL'},
+        {rate['containers_count']},{f"{rate['containers_count']}" if rate['containers_count'] is not None else 'NULL'},
+        {rate['is_rate_reverted']},{f"{rate['is_rate_reverted']}" if rate['is_rate_reverted'] is not None else 'NULL'},
+        '{rate['created_at']}',
+        '{rate['updated_at']}',
+        {rate['sign']},
+        {rate['version']}
+)"""
+        values.append(value)
+        
+    query += ", ".join(values)
+    client.command(query)
+    
+    FclFreightRateRequestStatistic.delete().execute()
