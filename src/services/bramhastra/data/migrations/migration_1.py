@@ -544,11 +544,11 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 
 def main():
-    populate_from_rates = PopulateFclFreightRateStatistics()
+    # populate_from_rates = PopulateFclFreightRateStatistics()
     # populate_from_rates.populate_active_rate_ids()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search()
-    populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
+    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
     # populate_from_rates.populate_fcl_request_statistics()
 
 if __name__ == '__main__':   
