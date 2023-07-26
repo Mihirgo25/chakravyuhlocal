@@ -123,8 +123,11 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
     closed_by_id UUID,
     service_provider_id UUID,
     request_type FixedString(256),
+    container_size UInt32,
+    commodity FixedString(256),
+    container_count UInt32,
     sign Int8 DEFAULT 1,
-    rate_reverted_count INT8 DEFAULT 0,
+    is_rate_reverted Bool DEFAULT true,
     version UInt32 DEFAULT 1,
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
