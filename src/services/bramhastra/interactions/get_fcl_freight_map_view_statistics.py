@@ -7,18 +7,8 @@ from micro_services.client import maps
 HEIRARCHY = ["continent", "country", "region", "port"]
 
 LOCATION_KEYS = {
-    "origin_port_id",
-    "origin_country_id",
-    "origin_trade_id",
-    "origin_continent_id",
-    "destination_port_id",
-    "destination_country_id",
-    "destination_trade_id",
-    "destination_continent_id",
-    "origin_region_id",
-    "destination_region_id",
+    "destination_port_id"
 }
-
 
 def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     clickhouse = ClickHouse()
@@ -28,7 +18,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
     ]
 
     if where := get_direct_indirect_filters(filters):
@@ -95,6 +85,9 @@ def add_pagination_data(clickhouse, queries, filters, page, page_limit):
 def add_location_objects(statistics):
     
     location_ids = list({v for statistic in statistics for k, v in statistic.items() if k in LOCATION_KEYS})
+    
+    if not location_ids:
+        return
     
     locations = {
         location["id"]: location
