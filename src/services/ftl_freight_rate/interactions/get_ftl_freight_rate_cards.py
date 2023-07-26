@@ -43,14 +43,14 @@ def get_ftl_freight_rate_cards(request):
         return {"list":[]}  
     query = select_fields()
     query = initialize_query(query,request)
-    list = build_response_list(query,request)
-    list = ignore_non_eligible_service_providers(request,list)
+    rate_list = build_response_list(query,request)
+    rate_list = ignore_non_eligible_service_providers(request,rate_list)
     if request.get('include_additional_response_data'):
-        list = additional_response_data(list) 
+        rate_list = additional_response_data(rate_list) 
     
-    list = remove_unnecessary_fields(list)
+    rate_list = remove_unnecessary_fields(rate_list)
     
-    return {'list': list }
+    return {'list': rate_list }
 
 
 
