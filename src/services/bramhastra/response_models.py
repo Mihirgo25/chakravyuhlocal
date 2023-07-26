@@ -82,3 +82,13 @@ class FclFreightMapViewResponse(BaseModel):
     page_limit: int
     total_pages: int
     total_count: int
+    
+    
+
+class World(BaseModel):
+    country_id: str
+    rates_count: int
+    country_name: str
+    
+class FclFreightRateWorldResponse(BaseModel):
+    world_statistics: list[World]

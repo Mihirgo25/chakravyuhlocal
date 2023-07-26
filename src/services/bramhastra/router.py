@@ -17,6 +17,9 @@ from services.bramhastra.interactions.get_fcl_freight_rate_lifecycle import (
 from services.bramhastra.interactions.get_fcl_freight_map_view_statistics import (
     get_fcl_freight_map_view_statistics,
 )
+from services.bramhastra.interactions.get_fcl_freight_rate_world import (
+    get_fcl_freight_rate_world,
+)
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
     ApplyCheckoutFclFreightRateStatistic,
@@ -28,6 +31,7 @@ from services.bramhastra.response_models import (
     FclFreightRateDistribution,
     FclFreightRateDrillDownResponse,
     FclFreightMapViewResponse,
+    FclFreightRateWorldResponse
 )
 from fastapi.responses import JSONResponse
 from services.bramhastra.constants import INDIA_LOCATION_ID
@@ -82,4 +86,10 @@ def get_fcl_freight_map_view_statistics_func(
     page: int = 1,
 ) -> FclFreightMapViewResponse:
     response = get_fcl_freight_map_view_statistics(filters, page_limit, page)
+    return JSONResponse(content=response)
+
+
+@bramhastra.get("/get_fcl_freight_rate_world",response_model=FclFreightRateWorldResponse)
+def get_fcl_freight_rate_world_func():
+    response = get_fcl_freight_rate_world()
     return JSONResponse(content=response)

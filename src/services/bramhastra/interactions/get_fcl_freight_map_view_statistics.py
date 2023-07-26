@@ -7,7 +7,10 @@ from micro_services.client import maps
 HEIRARCHY = ["continent", "country", "region", "port"]
 
 LOCATION_KEYS = {
-    "destination_port_id"
+    "destination_port_id",
+    "destination_country_id",
+    "destination_continent_id",
+    "destination_region_id",
 }
 
 def get_fcl_freight_map_view_statistics(filters, page_limit, page):
@@ -47,7 +50,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
 def get_add_group_and_order_by(queries, grouping):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append("ORDER BY accuracy")
+    queries.append("ORDER BY accuracy DESC")
 
 
 def alter_filters_for_map_view(filters, grouping):
@@ -102,8 +105,12 @@ def add_location_objects(statistics):
 
     for statistic in statistics:
         update_statistic = dict()
+        remove = None
         for k, v in statistic.items():
             if k in LOCATION_KEYS:
-                update_statistic[k[:-3]] = locations.get(v)
-
+                remove = k
+                location = locations.get(v)
+                for key,value in location.items():
+                    update_statistic[f"{k[:12]}{key}"] = value
+        statistic.pop(remove)
         statistic.update(update_statistic)
