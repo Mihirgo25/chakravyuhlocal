@@ -5,8 +5,7 @@ from playhouse.postgres_ext import *
 from fastapi import HTTPException
 from micro_services.client import maps
 from services.air_freight_rate.air_freight_rate_params import WeightSlab
-from pydantic import BaseModel
-from uuid import UUID
+
 class BaseModel(Model):
     class Meta:
         database = db
@@ -16,7 +15,7 @@ class AirFreightRateValidity(BaseModel):
     validity_start: datetime.date
     validity_end: datetime.date
     min_price: float
-    id: UUID
+    id: str
     currency: str
     status: bool = True
     likes_count: int = None
@@ -69,13 +68,13 @@ class AirFreightRateValidity(BaseModel):
         upper_limits = []
         check = False
         for slab in self.weight_slabs:
-            if float(slab.upper_limit) <= float(slab.lower_limit):
+            if float(slab.get('upper_limit')) <= float(slab.get('lower_limit')):
                 check = True
-            lower_limits.append(slab.lower_limit)
-            upper_limits.append(slab.upper_limit)
+            lower_limits.append(slab.get('lower_limit'))
+            upper_limits.append(slab.ge('upper_limit'))
         if check:
-            raise HTTPException(status_code = 400,detail = 'Invalid Weight Slabs')
+            raise HTTPException(status_code = 400,details = 'Invalid Weight Slabs')
         
         for i in range(len(upper_limits) - 1):
             if upper_limits[i] >= lower_limits[i + 1]:
-                raise HTTPException(status_code = 400,detail = 'Weight Slabs OverLapping')
+                raise HTTPException(status_code = 400,details = 'Weight Slabs OverLapping')
