@@ -69,6 +69,7 @@ HAZ_CLASSES = [
 ]
 
 STANDARD_COMMODITIES = [
+    "general",
     "white_goods",
     "pta",
     "agro",
