@@ -20,9 +20,7 @@ def create_audit(request, freight_id, audit_data):
         bulk_operation_id = request.get('bulk_operation_id'),
         data = audit_data,
         object_id = freight_id,
-        object_type = 'FtlFreightRate',
-        sourced_by_id = request.get('sourced_by_id'),
-        procured_by_id = request.get('procured_by_id')
+        object_type = 'FtlFreightRate'
     )
 
 def delete_ftl_freight_rate(request):
