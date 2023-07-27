@@ -1004,7 +1004,7 @@ def list_fcl_freight_rate_free_days_data(
 def list_public_fcl_freight_rate_data(
     request: Request,
     filters: str = None,
-    page_limit: int = None,
+    page_limit: int = 10,
     page: int = 1,
     pagination_data_required: bool = False,
     return_query: bool = False,
