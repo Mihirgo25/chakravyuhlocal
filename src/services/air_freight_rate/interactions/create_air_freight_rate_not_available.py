@@ -11,7 +11,7 @@ def create_air_freight_rate_not_available(request):
     )
     present_service_provider_ids = [model_to_dict(item)['service_provider_id'] for item in present_service_provider_query.execute()]
 
-    for service_provider_id in set(present_service_provider_ids)-set(find_service_providers()):
+    for service_provider_id in list(set(present_service_provider_ids)-set(find_service_providers())):
         AirFreightRate.create(
             origin_airport_id = request['origin_airport_id'],
             destination_airport_id = request['destination_airport_id'],

@@ -13,6 +13,11 @@ def create_audit(request, freight_id,validity_id):
     audit_data["procured_by_id"] = request.get("procured_by_id")
     audit_data["sourced_by_id"] = request.get("sourced_by_id")
     audit_data["currency"] = request.get("currency")
+    audit_data["maximum_weight"] = request.get("maximum_weight")
+    audit_data["length"] = request.get("length")
+    audit_data["breadth"] = request.get("breadth")
+    audit_data["height"] = request.get("height")
+    audit_data["weight_slabs"] = request.get("weight_slabs")
     audit_data["price_type"] = request.get("price_type")
     audit_data["air_freight_rate_request_id"] = request.get("air_freight_rate_request_id")
 
@@ -37,12 +42,19 @@ def create_air_freight_rate(request):
 def create_air_freight_rate_data(request):
     from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
 
+    if request['rate_type'] == 'general':
+        request['rate_type'] = 'market_place'
+
     if request['commodity']=='general':
-        request['commodity_sub_type']='all'
+        if request.get('commodity_sub_type'):
+            request['commodity_sub_type']= request.get('commodity_sub_type')
+        else:
+            request['commodity_sub_type']='all'
     if request['density_category']=='general':
         request['density_ratio']='1:1'
-    if request['commodity'] == 'special_consideration' and not request.get('commodity_subtype'):
-        raise HTTPException(status_code=400, detail="Commodity Sub Type is required for Special Consideration")
+    if request['commodity'] in ['dangerous goods','temperature control','special_consideration'] and not request.get('commodity_sub_type'):
+        raise HTTPException(status_code=400, detail="Commodity Sub Type is required for {}".format(request['commodity']))
+    
     if request.get('density_ratio') and request['density_ratio'].split(':')[0]!= '1':
         raise HTTPException(status_code=400,detail='Ratio should be in the form of 1:x')
     if len(set(slab['currency'] for slab in request['weight_slabs']))!=1 or request['weight_slabs'][0]['currency'] != request['currency']:
@@ -70,14 +82,14 @@ def create_air_freight_rate_data(request):
         "stacking_type":request.get("stacking_type"),
         "shipment_type":request.get("shipment_type"),
         "operation_type":request.get("operation_type"),
-        "mode": request.get("mode", DEFAULT_MODE),
+        "source": request.get("source", DEFAULT_MODE),
         "accuracy":request.get("accuracy", 100),
         "cogo_entity_id":request.get("cogo_entity_id"),
         "rate_type":request.get("rate_type", DEFAULT_RATE_TYPE),
         "price_type":price_type
     }
 
-    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["mode"])}'
+    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["source"])}'
 
     freight = (AirFreightRate.select().where(AirFreightRate.init_key == init_key).first())
    
@@ -97,8 +109,7 @@ def create_air_freight_rate_data(request):
     if 'rate_sheet_validation' not in request:
         freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
 
-    validity_id,weight_slabs = freight.set_validities(
-        
+    validity_id,weight_slabs = freight.set_validities(  
         request.get("validity_start").date(),
         request.get("validity_end").date(),
         request.get("min_price"),
@@ -114,7 +125,7 @@ def create_air_freight_rate_data(request):
         request.get("available_gross_weight"),
         request.get("rate_type")
     )
-    if request.get("mode") == 'cargo_ai':   
+    if request.get("source") == 'cargo_ai':   
         freight.add_flight_and_external_uuid(validity_id,request.get("flight_uuid"),request.get("external_rate_id"))
 
     freight.set_last_rate_available_date()
@@ -146,8 +157,6 @@ def create_air_freight_rate_data(request):
         "id": freight.id,
         "validity_id":validity_id
     }
-    if request.get('is_weight_slabs_required'):
-        freight_object['weight_slabs'] = weight_slabs
     return freight_object
     
 def set_object_parameters(freight, request):

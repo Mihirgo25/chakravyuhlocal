@@ -2,7 +2,7 @@ from playhouse.postgres_ext import *
 from peewee import *
 
 from services.ftl_freight_rate.models.truck import Truck
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from math import ceil
 import json
 from libs.get_filters import get_filters
@@ -70,7 +70,7 @@ def list_trucks_data(
         query, page, page_limit, pagination_data_required, total_count
     )
 
-    data = jsonable_encoder(list(query.dicts()))
+    data = json_encoder(list(query.dicts()))
 
     return {"list": data} | (pagination_data)
 

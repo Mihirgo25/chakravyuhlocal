@@ -26,10 +26,10 @@ class AirFreightRateRequest(BaseModel):
     cogo_entity_id = UUIDField(null=True,index=True)
     cargo_stacking_type = CharField(null=True)
     closed_by_id = UUIDField(null=True,index=True)
-    closing_remarks = ArrayField(field_class=CharField, null=True)
+    closing_remarks = ArrayField(field_class=TextField, null=True)
     commodity = CharField(null=True,index=True)
-    commodity_sub_type = CharField(null=True,index=True)
-    commodity_type = CharField(null=True,index=True)
+    commodity_sub_type = TextField(null=True,index=True)
+    commodity_type = TextField(null=True,index=True)
     created_at = DateTimeField(index=True, default=datetime.datetime.now)
     destination_airport_id = UUIDField(null=True,index=True)
     destination_airport = BinaryJSONField(null=True)
@@ -54,7 +54,6 @@ class AirFreightRateRequest(BaseModel):
     airline_id = UUIDField(null=True,index=True)
     service_provider_id = UUIDField(null=True,index=True)
     service_provider = BinaryJSONField(null=True)
-    airline_id = BinaryJSONField(null=True,index=True)
     price_type = CharField(null=True)
     operation_type = CharField(null=True)
     preferred_airlines = BinaryJSONField(null=True)
@@ -63,7 +62,7 @@ class AirFreightRateRequest(BaseModel):
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = CharField(null=True)
     preferred_storage_free_days = IntegerField(null=True)
-    remarks = ArrayField(field_class=CharField, null=True)
+    remarks = ArrayField(field_class=TextField, null=True)
     request_type = CharField(null=True)
     serial_id = BigIntegerField(
         constraints=[
@@ -106,12 +105,14 @@ class AirFreightRateRequest(BaseModel):
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
 
     def validate_performed_by_id(self):
-        data = get_user(str(self.performed_by_id))
+        if self.performed_by_id:
+            data = get_user(str(self.performed_by_id))
 
-        if data:
-            pass
-        else:
-            raise HTTPException(status_code=400, detail="Invalid Performed by ID")
+            if data:
+                pass
+            else:
+                raise HTTPException(status_code=400, detail="Invalid Performed by ID")
+        return True
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
@@ -163,7 +164,7 @@ class AirFreightRateRequest(BaseModel):
             importer_exporter_id = None
         origin_location = location_pair_name[str(location_pair.origin_airport_id)]
         destination_location = location_pair_name[
-            str(location_pair.destination_airport)
+            str(location_pair.destination_airport_id)
         ]
 
         data = {
@@ -199,7 +200,7 @@ class AirFreightRateRequest(BaseModel):
         else:
             subject ='Freight Rate Request Closed'
             remarks = f"Reason: #{self.closing_remarks[0]}."
-            body = f"Your rate request has been closed for Request No: {self.serial_id}, air freight from {location_pair_name[str(location_pair.origin_airport_id)]} to {location_pair_name[(location_pair.destination_airport_id)]}. #{remarks}"
+            body = f"Your rate request has been closed for Request No: {self.serial_id}, air freight from {location_pair_name[str(location_pair.origin_airport_id)]} to {location_pair_name[str(location_pair.destination_airport_id)]}. #{remarks}"
 
         return {
             'type':'push_notification',

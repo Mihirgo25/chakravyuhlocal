@@ -78,7 +78,7 @@ def execute(request):
     }
 
 def create_audit(request,object_id):
-    update_data={key:value for key,value in request.items() if key not in ['performed_by_id','id','bulk_operation_id','procured_by_id','sourced_by_id']}
+    update_data={key:value for key,value in request.items() if key not in ['performed_by_id','id','bulk_operation_id']}
 
     AirFreightRateAudit.create(
         bulk_operation_id=request.get('bulk_operation_id'),

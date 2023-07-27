@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from rms_utils.auth import authorize_token
 from fastapi.responses import JSONResponse
 import sentry_sdk
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from fastapi import HTTPException
 from datetime import datetime
 from services.ftl_freight_rate.interactions.get_estimated_ftl_freight_rate import (
@@ -73,7 +73,7 @@ def get_estimated_ftl_freight_rate_api(
         truck_type,
         truck_body_type
     )
-    data = jsonable_encoder(data)
+    data = json_encoder(data)
     return JSONResponse(status_code=200, content=data)
 
 
@@ -129,7 +129,7 @@ def create_ftl_rule_set(
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         data = create_ftl_rule_set_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -151,7 +151,7 @@ def update_ftl_rule_set(
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_ftl_rule_set_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -192,7 +192,7 @@ def create_truck(request: CreateTruck, resp: dict = Depends(authorize_token)):
         request.performed_by_id = resp["setters"]["performed_by_id"]
     try:
         data = create_truck_data(request.dict())
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -211,7 +211,7 @@ def update_truck(request: UpdateTruck, resp: dict = Depends(authorize_token)):
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_truck_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:

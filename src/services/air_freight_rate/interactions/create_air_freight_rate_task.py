@@ -2,13 +2,13 @@ from database.db_session import db
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from fastapi import HTTPException
 from micro_services.client import *
-from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import update_multiple_service_objects,send_air_freight_rate_task_notification_in_delay
 
 
 def create_audit(request,task_id):
 
-    AirFreightRateAudit.create(
+    AirServiceAudit.create(
         action_name='create',
         data=request,
         performed_by_id=request.get('performed_by_id'),
@@ -17,6 +17,9 @@ def create_audit(request,task_id):
     )
 
 def execute(request):
+    object_type = 'Air_Freight_Rate_Task'
+    query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
+    db.execute_sql(query)
     with db.atomic():
         return  create_air_freight_rate_task(request)
     

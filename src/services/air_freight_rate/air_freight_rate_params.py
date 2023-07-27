@@ -413,10 +413,9 @@ class CreateAirFreightRateParams(BaseModel):
     validity_start: datetime
     validity_end: datetime
     external_rate_id: str = None
-    mode: str = 'manual'
+    source: str = 'manual'
     flight_uuid: str = None
     air_freight_rate_request_id: str = None
-    is_weight_slabs_required:bool = False
 
 class LineItem(BaseModel):
     code: str

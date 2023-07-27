@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from params import *
 from fastapi.responses import JSONResponse
 
-# from database.create_tables import create_table
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
 # from database.db_migration import run_migration
@@ -53,7 +52,7 @@ app.include_router(prefix = "/fcl_freight_rate", router=extension_router, tags=[
 app.include_router(prefix = "/fcl_customs_rate", router=fcl_customs_router, tags = ['Fcl Customs Rate'])
 app.include_router(prefix = "/fcl_cfs_rate", router=fcl_cfs_router, tags = ['Fcl Cfs Rate'])
 
-app.include_router(prefix = "/fcl_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
+app.include_router(prefix = "/air_freight_rate",router = air_freight_router, tags = ['Air Freight Rate'])
 
 
 app.add_middleware(
