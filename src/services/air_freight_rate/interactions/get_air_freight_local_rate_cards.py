@@ -42,10 +42,12 @@ def initialize_local_query(request):
     return query
 
 def discard_noneligible_airlines(local_rates):
-    airline_ids = [rate["airline_id"] for rate in local_rates]
-    airlines = get_operators(id=airline_ids,operator_type = 'airline')
-    active_airline_ids = [airline["id"] for airline in airlines if airline["status"] == "active"]
-    local_rates = [rate for rate in local_rates if rate["airline_id"] in active_airline_ids]
+    if len(local_rates):
+        airline_ids = [rate["airline_id"] for rate in local_rates]
+        airlines = get_operators(id=airline_ids,operator_type = 'airline')
+        active_airline_ids = [airline["id"] for airline in airlines if airline["status"] == "active"]
+        local_rates = [rate for rate in local_rates if rate["airline_id"] in active_airline_ids]
+        return local_rates
     return local_rates
 
 def local_query_results(local_query):
@@ -90,7 +92,7 @@ def build_local_line_items(request,query_result, response_object):
 
 def build_local_line_item_object(request,line_item):
     chargeable_weight = get_chargeable_weight(request)
-    code_config = AIR_FREIGHT_LOCAL_CHARGES[line_item['code']]
+    code_config = AIR_FREIGHT_LOCAL_CHARGES.get(line_item['code'])
     if not code_config:
         return
     if code_config.get('inco_terms') and request.get('inco_term') and request.get('inco_term') not in code_config.get('inco_terms'):
@@ -113,7 +115,7 @@ def build_local_line_item_object(request,line_item):
     if is_additional_service and line_item['code'] not in request.get('additional_services'):
         return
     
-    line_item = {key:value for key,value in line_item.items() if key in ['code','unti','price','currency','min_price','remarks']}
+    line_item = {key:value for key,value in line_item.items() if key in ['code','unit','price','currency','min_price','remarks']}
     if line_item.get('unit') == 'per_package':
         line_item['quantity'] = request.get('packages_count')
     elif line_item.get('unit') == 'per_kg':

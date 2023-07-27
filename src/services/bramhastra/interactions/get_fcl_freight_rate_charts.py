@@ -2,21 +2,20 @@ from services.bramhastra.helpers.get_fcl_freight_rate_helper import ClickHouse
 from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.filter_helper import (
     get_direct_indirect_filters,
-    NEEDED_MODES,
 )
+import math
 
 
-async def get_fcl_freight_rate_charts(filters):
+def get_fcl_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters)
-    accuracy = await get_accuracy(filters.copy(), where)
-    deviation = await get_deviation(filters.copy(), where)
-    spot_search_to_checkout_count = await get_spot_search_to_checkout_count(
+    accuracy = get_accuracy(filters.copy(), where)
+    deviation = get_deviation(filters.copy(), where)
+    spot_search_to_checkout_count = get_spot_search_to_checkout_count(
         filters.copy(), where
     )
-    rate_count_with_deviation_more_than_30 = (
-        await get_rate_count_with_deviation_more_than_30(filters.copy(), where)
+    rate_count_with_deviation_more_than_30 = get_rate_count_with_deviation_more_than_30(
+        filters.copy(), where
     )
-
     return dict(
         accuracy=accuracy,
         deviation=deviation,
@@ -25,22 +24,24 @@ async def get_fcl_freight_rate_charts(filters):
     )
 
 
-async def get_accuracy(filters, where):
+def get_accuracy(filters, where):
     clickhouse = ClickHouse()
-    queries = ["""SELECT mode,toDate(day) AS day,AVG(abs(accuracy)) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode FROM brahmastra.fcl_freight_rate_statistics"""]
+    queries = [
+        """SELECT mode,toDate(day) AS day,AVG(abs(accuracy)) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode FROM brahmastra.fcl_freight_rate_statistics"""
+    ]
 
     if where:
         queries.append(" WHERE ")
         queries.append(where)
 
-    queries.append(""") GROUP BY mode,day ORDER BY day,mode;""")
+    queries.append(""") WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY mode,day ORDER BY day,mode;""")
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
-    return format_charts(charts)
+    return format_charts(charts, filters.get("mode"))
 
 
-async def get_deviation(filters, where):
+def get_deviation(filters, where):
     clickhouse = ClickHouse()
     queries = [
         """SELECT CASE
@@ -70,22 +71,31 @@ async def get_deviation(filters, where):
     return [i for i in response if i["range"] or i["range"] == 0]
 
 
-async def get_spot_search_to_checkout_count(filters, where):
+def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
-    queries = ["""SELECT FLOOR(AVG(1 - checkout_count/spot_search_count),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""]
+    queries = [
+        """SELECT FLOOR(AVG(1 - checkout_count/spot_search_count),2)*100 as spot_search_to_checkout_count from brahmastra.fcl_freight_rate_statistics"""
+    ]
 
     if where:
         queries.append(" WHERE ")
         queries.append(where)
 
-    return clickhouse.execute(" ".join(queries), filters)[0]
+    statistics = clickhouse.execute(" ".join(queries), filters)[0]
+
+    if math.isnan(statistics["spot_search_to_checkout_count"]):
+        statistics["spot_search_to_checkout_count"] = 0
+
+    return statistics
 
 
-async def get_rate_count_with_deviation_more_than_30(filters, where):
+def get_rate_count_with_deviation_more_than_30(filters, where):
     clickhouse = ClickHouse()
 
-    queries = ["""SELECT count(id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE rate_deviation_from_booking_rate > 30"""]
+    queries = [
+        """SELECT count(id) as rate_count_with_deviation_more_than_30 from brahmastra.fcl_freight_rate_statistics WHERE rate_deviation_from_booking_rate > 30"""
+    ]
 
     if where:
         queries.append(" AND ")
@@ -94,9 +104,19 @@ async def get_rate_count_with_deviation_more_than_30(filters, where):
     return clickhouse.execute(" ".join(queries), filters)[0]
 
 
-def format_charts(charts):
+def format_charts(charts, mode=None):
+    if mode:
+        NEEDED_MODES = {mode}
+    else:
+        NEEDED_MODES = {
+            "rate_extension",
+            "cluster_extension",
+            "predicted",
+            "supply_rates",
+        }
+
     formatted_charts = dict(
-        manual={"id": "supply_rates", "data": []},
+        supply_rates={"id": "supply_rates", "data": []},
         rate_extension={"id": "rate_extension", "data": []},
         cluster_extension={"id": "cluster_extension", "data": []},
         predicted={"id": "predicted", "data": []},

@@ -32,7 +32,7 @@ def get_fcl_freight_rate_distribution(filters):
         from rate_distribution group by mode)
            SELECT * from mode_count"""
     )
-
+    
     response = clickhouse.execute(" ".join(queries), filters)
     
     return format_distribution(response)

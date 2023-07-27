@@ -15,7 +15,7 @@ def get_connection():
     return conn
 
 
-def get_operators(id=None, short_name=None, operator_type='shipping_line'):
+def get_operators(id=None, short_name=None,iata_code = None, operator_type='shipping_line'):
     all_result = []
     try:
         newconnection = get_connection()  
@@ -24,7 +24,10 @@ def get_operators(id=None, short_name=None, operator_type='shipping_line'):
                 if short_name:
                     sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.short_name = %s and operators.status = %s and operators.operator_type = %s'
                     cur.execute(sql, (short_name,'active',operator_type,))
-                else:
+                elif iata_code:
+                    sql = 'select operators.id, operators.business_name, operators.short_name, operators.logo_url,operators.operator_type, operators.status from operators where operators.iata_code = %s and operators.status = %s and operators.operator_type = %s'
+                    cur.execute(sql, (iata_code,'active',operator_type,))
+                else :
                     if not isinstance(id, list):
                         id = (id,)
                     else:
@@ -91,6 +94,8 @@ def get_organization(id=None, short_name=None,account_type = 'importer_exporter'
 
 def get_user(id):
     all_result = []
+    if not id:
+        return []
     try:
         conn = get_connection()
         with conn:
@@ -517,6 +522,58 @@ def get_supply_agents():
                         'user_id':str(res[0])
                     }
                     all_result.append(new_obj)
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
+    
+
+def list_organization_users(id):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+               
+                if not isinstance(id, list):
+                    id = (id,)
+                else:
+                    id = tuple(id)
+                sql = 'select organization_users.id, users.name, users.email, users.mobile_number_eformat from organization_users join users on organization_users.user_id = users.id where organization_users.id in %s'
+                cur.execute(sql, (id,))
+
+                result = cur.fetchall()
+
+                for res in result:
+                    all_result.append(
+                        {
+                            "id": str(res[0]),
+                            "name": str(res[1]),
+                            "email": str(res[2]),
+                            "mobile_number_eformat":str(res[3])
+                        }
+                    )
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
+
+def get_eligible_org_ids( id = None):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur = conn.cursor()
+                sql = 'select organization_services.service from organization_services where status = %s and organization_id = %s'
+                cur.execute(sql, ('active',id))
+                result = cur.fetchall()
+                for res in result:
+                    all_result.append(str(res[0]))
                 cur.close()
         conn.close()
         return all_result

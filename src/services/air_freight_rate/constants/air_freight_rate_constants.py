@@ -154,6 +154,17 @@ DEFAULT_WEIGHT_SLABS = [
     },
 ]
 
+RATE_SOURCE_PRIORITIES = {
+    "cargo_ai": 1,
+    "manual": 1,
+    "rate_sheet": 1,
+    "freight_look": 10,
+    "predicted": 11,
+    "default": 100
+}
+
 DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
 
 CARGOAI_ACTIVE_ON_DISLIKE_RATE = False
+
+PROCURE_NON_AVAILABLE_RATE_FROM_CARGOAI = True

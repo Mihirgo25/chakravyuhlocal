@@ -1,4 +1,5 @@
 from datetime import date, timedelta, datetime
+from math import ceil
 
 POSSIBLE_DIRECT_FILTERS = {
     "origin_port_id",
@@ -33,8 +34,6 @@ REQUIRED_FILTERS = {
     "end_date": date.today() + timedelta(days=30),
 }
 
-NEEDED_MODES = {"rate_extension", "cluster_extension", "predicted", "manual"}
-
 
 def get_direct_indirect_filters(filters):
     for k, v in REQUIRED_FILTERS.items():
@@ -43,10 +42,10 @@ def get_direct_indirect_filters(filters):
     where = []
     get_date_range_filter(where)
 
-    for key in filters.keys():
-        if key in POSSIBLE_DIRECT_FILTERS:
+    for key,value in filters.items():
+        if key in POSSIBLE_DIRECT_FILTERS and value:
             where.append(f"{key} = %({key})s")
-        if key in POSSIBLE_INDIRECT_FILTERS:
+        if key in POSSIBLE_INDIRECT_FILTERS and value:
             eval(f"get_{key}_filter(where)")
 
     if where:
@@ -57,3 +56,15 @@ def get_date_range_filter(where):
     where.append(
         "((validity_end <= %(end_date)s AND validity_end >= %(start_date)s) OR (validity_start >= %(start_date)s AND validity_start <= %(end_date)s))"
     )
+    
+
+def add_pagination_data(clickhouse, queries, filters, page, page_limit):
+    total_count = clickhouse.execute(
+        f"SELECT COUNT() as count FROM ({' '.join(queries)})", filters
+    )[0]["count"]
+
+    offset = (page - 1) * page_limit
+    queries.append(f"LIMIT {page_limit} OFFSET {offset}")
+    total_pages = ceil(total_count / page_limit)
+
+    return total_count, total_pages

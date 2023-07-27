@@ -53,8 +53,8 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     '{rate['validity_start']}',
     '{rate['validity_end']}',
     '{rate['currency']}',
-    '{rate['shipping_line_id']}',
-    '{rate['service_provider_id']}',
+    {f"'{rate['shipping_line_id']}'" if rate['shipping_line_id'] is not None else 'NULL'},
+    {f"'{rate['service_provider_id']}'" if rate['service_provider_id'] is not None else 'NULL'},
     {rate['accuracy']},
     '{rate['mode']}',
     {rate['likes_count']},
@@ -72,22 +72,22 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     '{rate['container_size']}',
     '{rate['container_type']}',
     {rate['containers_count']},
-    '{rate['origin_local_id']}',
-    '{rate['destination_local_id']}',
+    {f"'{rate['origin_local_id']}'" if rate['origin_local_id'] is not None else 'NULL'},
+    {f"'{rate['destination_local_id']}'" if rate['destination_local_id'] is not None else 'NULL'},
     {rate['applicable_origin_local_count']},
     {rate['applicable_destination_local_count']},
-    '{rate['origin_detention_id']}',
-    '{rate['destination_detention_id']}',
-    '{rate['origin_demurrage_id']}',
-    '{rate['destination_demurrage_id']}',
-    '{rate['cogo_entity_id']}',
+    {f"'{rate['origin_detention_id']}'" if rate['origin_detention_id'] is not None else 'NULL'},
+    {f"'{rate['destination_detention_id']}'" if rate['destination_detention_id'] is not None else 'NULL'},
+    {f"'{rate['origin_demurrage_id']}'" if rate['origin_demurrage_id'] is not None else 'NULL'},
+    {f"'{rate['destination_demurrage_id']}'" if rate['destination_demurrage_id'] is not None else 'NULL'},
+    {f"'{rate['cogo_entity_id']}'" if rate['cogo_entity_id'] is not None else 'NULL'},
     '{rate['rate_type']}',
-    '{rate['sourced_by_id']}',
-    '{rate['procured_by_id']}',
+    {f"'{rate['sourced_by_id']}'" if rate['sourced_by_id'] is not None else 'NULL'},
+    {f"'{rate['procured_by_id']}'" if rate['procured_by_id'] is not None else 'NULL'},
     {rate['shipment_aborted_count']},
     {rate['shipment_cancelled_count']},
     {rate['shipment_completed_count']},
-    {rate['shipment_confirmed_by_service_provider_countb']},
+    {rate['shipment_confirmed_by_service_provider_count']},
     {rate['shipment_awaited_service_provider_confirmation_count']},
     {rate['shipment_init_count']},
     {rate['shipment_containers_gated_in_count']},
@@ -100,19 +100,19 @@ def send_stats_to_clickhouse(client = get_clickhouse_client()):
     '{rate['updated_at']}',
     {rate['version']},
     {rate['sign']},
-    '{rate['status']}',
-    '{rate['last_action']}',
+    {rate['status']},{f"{rate['status']}" if rate['status'] is not None else 'NULL'},'{rate['status']}',
     {rate['rate_deviation_from_booking_rate']},
     {rate['rate_deviation_from_cluster_base_rate']},
     {rate['rate_deviation_from_booking_on_cluster_base_rate']},
     {rate['rate_deviation_from_latest_booking']},
-    {rate['average_booking_rate']}
+    {rate['average_booking_rate']},
+    {f"'{rate['rate_request_id']}'" if rate['rate_request_id'] is not None else 'NULL'}
 )"""
 
         values.append(value)
 
     query += ", ".join(values)
-    client.command(query)
+    client.execute(query)
     
     FclFreightRateStatistic.delete().execute()
 
@@ -150,7 +150,6 @@ def send_feedback_stats_to_clickhouse(client = get_clickhouse_client()):
     client.command(query)
     
     FeedbackFclFreightRateStatistic.delete().execute()
-breakpoint()
 def send_quotation_stats_to_clickhouse(client=get_clickhouse_client):
     query = (
         "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
