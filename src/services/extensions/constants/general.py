@@ -35,9 +35,9 @@ surcharge_charges_mappings = {
     'MISC/MIN':'MSC',
     'CTG/MIN':'CTS',
     'AMS-M/AWB':'AMS',
-    'AMS-M/HAWB':'HAWB',
-    'AMS-E/AWB':'AMSE',
-    'AMS-E/HAWB':'EHAWB'
+    'AMS-M/HAWB':'HAMS',
+    'AMS-E/AWB':'EAMS',
+    'AMS-E/HAWB':'EHAMS'
 }
 
 airline_ids =[
