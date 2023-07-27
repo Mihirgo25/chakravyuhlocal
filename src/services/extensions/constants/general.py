@@ -33,7 +33,11 @@ surcharge_charges_mappings = {
     'FSC/MIN':'FSC',
     'XRAY/MIN':'XRAY',
     'MISC/MIN':'MSC',
-    'CTG/MIN':'CTS'
+    'CTG/MIN':'CTS',
+    'AMS-M/AWB':'AMS',
+    'AMS-M/HAWB':'HAWB',
+    'AMS-E/AWB':'AMSE',
+    'AMS-E/HAWB':'EHAWB'
 }
 
 airline_ids =[

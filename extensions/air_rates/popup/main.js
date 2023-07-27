@@ -1,5 +1,5 @@
 const sendRatesToRMS = async (data={}, endpoint)=> {
-  const url = `https://api.cogoport.com/fcl_freight_rate/${endpoint}`
+  const url = `http://127.0.0.1:8000/fcl_freight_rate/${endpoint}`
   const response = await fetch(url, {
     method: "POST",
     headers: {

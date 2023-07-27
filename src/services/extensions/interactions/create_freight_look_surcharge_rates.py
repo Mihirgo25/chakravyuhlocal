@@ -9,6 +9,7 @@ from database.rails_db import get_operators
 airline_hash = {}
 def create_freight_look_surcharge_rate(request):
     rates = request['rates']
+    print(rates)
     destination = request.get('destination')
     new_rates = rates
     proper_json_rates = create_proper_json(new_rates)
@@ -112,6 +113,12 @@ def build_line_item(line_item_price,code):
         price = line_item_price.strip()
         price = float(price)
         unit = 'per_package'
+    if code == 'CTS':
+        unit = 'per_gross_weight'
+    
+    if code in ['AMS','HAWB','AMSE','EHAWB']:
+        unit = 'per_document'
+    
 
     
     line_item = {'code':code,'unit':unit,'price':price,'min_price':min_price,'currency':'INR','remarks':[]}
