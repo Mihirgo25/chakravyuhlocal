@@ -103,11 +103,11 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=00,hour=21),
         'options': {'queue' : 'fcl_freight_rate'}
         },
-    'adjust_air_freight_dynamic_pricing':{
-        'task': 'celery_worker.adjust_air_freight_dynamic_pricing',
-        'schedule': crontab(minute=00,hour=00),
-        'options': {'queue' : 'fcl_freight_rate'}
-    },
+    # 'adjust_air_freight_dynamic_pricing':{
+    #     'task': 'celery_worker.adjust_air_freight_dynamic_pricing',
+    #     'schedule': crontab(minute=00,hour=00),
+    #     'options': {'queue' : 'fcl_freight_rate'}
+    # },
     'process_electricity_data_delays': {
         'task': 'celery_worker.process_electricity_data_delays',
         'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
@@ -117,24 +117,26 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.fcl_cost_booking_estimation',
         'schedule': crontab(minute=30,hour=18),
         'options': {'queue' : 'fcl_freight_rate'}
+    },
+    'send_near_expiry_air_freight_rate_notification':{
+        'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5),
+        'options': {'queue' : 'low'}
+    },
+    'send_expired_air_freight_rate_notification':{
+        'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5),
+        'options': {'queue' : 'low'}
+    },
+    'send_air_freight_local_charges_update_reminder_notification':{
+        'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
+        'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
+        'options': {'queue': 'low'}
     }
-    # 'send_near_expiry_air_freight_rate_notification':{
-    #     'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
-    #     'schedule': crontab(minute=30,hour=5),
-    #     'options': {'queue' : 'air_freight_rate'}
-    # },
-    # 'send_expired_air_freight_rate_notification':{
-    #     'task': 'celery_worker.send_expired_air_freight_rate_notification_in_delay',
-    #     'schedule': crontab(minute=30,hour=5),
-    #     'options': {'queue' : 'air_freight_rate'}
-    # },
-    # 'send_air_freight_local_charges_update_reminder_notification':{
-    #     'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
-    #     'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
-    #     'options': {'queue': 'air_freight_rate'}
-    # }
 
 }
+celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_cost_booking_estimation(self):
@@ -347,15 +349,18 @@ def celery_create_fcl_freight_rate_local(self, request):
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id,cogo_entity_id):
+    eval_string = f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')"
+    if cogo_entity_id:
+        eval_string = f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')"
     try:
-        eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}',cogo_entity_id='{cogo_entity_id}')")
+        eval(eval_string)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
         else:
             raise self.retry(exc= exc)
+        
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-
 def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action()")
@@ -691,7 +696,6 @@ def create_air_freight_rate_surcharge_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-    
 
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def extend_air_freight_rates(self, rate, source = 'rate_extension'):

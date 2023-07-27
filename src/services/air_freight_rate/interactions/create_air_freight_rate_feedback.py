@@ -15,14 +15,14 @@ def create_audit(request,feedback_id):
         updated_at=datetime.now(),
         data={key:value for key , value in request.items() if key != 'performed_by_id'},
         object_id=feedback_id,
-        object_type='AirFreightRateFeedbacks',
+        object_type='AirFreightRateFeedback',
         action_name='create',
         performed_by_id=request['performed_by_id']
         )
 
 def create_air_freight_rate_feedback(request):
-    object_type='Air_Freight_Rate_Feedbacks'
-    query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+    object_type='Air_Freight_Rate_Feedback'
+    query="create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
     db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
@@ -81,9 +81,9 @@ def execute_transaction_code(request):
     if request['feedback_type']=='disliked':
         if CARGOAI_ACTIVE_ON_DISLIKE_RATE:
             get_rate_from_cargo_ai_in_delay.apply_async(kwargs={'air_freight_rate':rate,'feedback':feedback,'performed_by_id':request.get('performed_by_id')},queue='critical')
-            airports = get_locations(rate)
-            if airports:
-                send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
+        airports = get_locations(rate)
+        if airports:
+            send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
 
     return {'id': request['rate_id']}
 

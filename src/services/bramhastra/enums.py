@@ -7,6 +7,7 @@ class Bramhastra(Enum):
 class Table(Bramhastra):
     fcl_freight_rate_statistics = 'fcl_freight_rate_statistics'
     feedback_fcl_freight_rate_statistics = 'feedback_fcl_freight_rate_statistics'
+    air_freight_rate_statistics = 'air_freight_rate_statistics'
     
     
 class ValidityAction(Bramhastra):

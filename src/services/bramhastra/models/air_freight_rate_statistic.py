@@ -1,5 +1,5 @@
 from peewee import Model, UUIDField, FloatField, BigIntegerField, CharField, TextField, DateField,IntegerField
-import datetime
+from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField
 

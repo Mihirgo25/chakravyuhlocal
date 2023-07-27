@@ -15,6 +15,10 @@ def create_audit(request, freight_id):
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
     audit_data['is_extended'] = request.get("is_extended")
+    audit_data['sourced_by_id'] = request.get("sourced_by_id")
+    audit_data['procured_by_id'] = request.get("procured_by_id")
+    audit_data['payment_term'] = request.get("payment_term")
+    audit_data['schedule_type'] = request.get("schedule_type")
 
     FclFreightRateAudit.create(
         bulk_operation_id = request.get('bulk_operation_id'),

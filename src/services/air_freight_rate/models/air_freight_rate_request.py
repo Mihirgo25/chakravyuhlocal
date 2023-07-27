@@ -105,12 +105,14 @@ class AirFreightRateRequest(BaseModel):
                 raise HTTPException(status_code=400, detail="Invalid Source ID")
 
     def validate_performed_by_id(self):
-        data = get_user(str(self.performed_by_id))
+        if self.performed_by_id:
+            data = get_user(str(self.performed_by_id))
 
-        if data:
-            pass
-        else:
-            raise HTTPException(status_code=400, detail="Invalid Performed by ID")
+            if data:
+                pass
+            else:
+                raise HTTPException(status_code=400, detail="Invalid Performed by ID")
+        return True
 
     def validate_performed_by_org_id(self):
         performed_by_org_data = get_organization(id=str(self.performed_by_org_id))
@@ -162,7 +164,7 @@ class AirFreightRateRequest(BaseModel):
             importer_exporter_id = None
         origin_location = location_pair_name[str(location_pair.origin_airport_id)]
         destination_location = location_pair_name[
-            str(location_pair.destination_airport)
+            str(location_pair.destination_airport_id)
         ]
 
         data = {
@@ -198,7 +200,7 @@ class AirFreightRateRequest(BaseModel):
         else:
             subject ='Freight Rate Request Closed'
             remarks = f"Reason: #{self.closing_remarks[0]}."
-            body = f"Your rate request has been closed for Request No: {self.serial_id}, air freight from {location_pair_name[str(location_pair.origin_airport_id)]} to {location_pair_name[(location_pair.destination_airport_id)]}. #{remarks}"
+            body = f"Your rate request has been closed for Request No: {self.serial_id}, air freight from {location_pair_name[str(location_pair.origin_airport_id)]} to {location_pair_name[str(location_pair.destination_airport_id)]}. #{remarks}"
 
         return {
             'type':'push_notification',

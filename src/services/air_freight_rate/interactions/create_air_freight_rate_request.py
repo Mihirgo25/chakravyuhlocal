@@ -16,7 +16,7 @@ from celery_worker import (
 
 def create_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
-    query = "create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(
+    query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(
         object_type.lower(), object_type.replace("_", "")
     )
     db.execute_sql(query)
@@ -48,6 +48,7 @@ def execute_transaction_code(request):
             AirFreightRateRequest.performed_by_type == request.get("performed_by_type"),
             AirFreightRateRequest.performed_by_org_id
             == request.get("performed_by_org_id"),
+            AirFreightRateRequest.status == 'active'
         )
         .first()
     )
@@ -77,43 +78,32 @@ def execute_transaction_code(request):
     update_multiple_service_objects.apply_async(
         kwargs={"object": request_object}, queue="low"
     )
-    air_freight_rate_request = (
-        AirFreightRateRequest.select(
-            AirFreightRateRequest.origin_airport_id,
-            AirFreightRateRequest.destination_airport_id,
-            AirFreightRateRequest.commodity,
-            AirFreightRateRequest.weight,
-        )
-        .where(AirFreightRateRequest.id == request_object.id,
-               AirFreightRateRequest.status == "active")
-        .first()
-    )
 
-    if air_freight_rate_request:
-        airports = get_locations(air_freight_rate_request)
+    if request_object.id:
+        airports = get_locations(request_object)
         if airports:
             send_notification_for_rates_not_found(
-                request, request_object, air_freight_rate_request, airports
+                request, request_object, airports
             )
             send_notification_to_supply_agents(
-                 request_object, air_freight_rate_request, airports
+                 request_object, airports
             )
 
     return {"id": str(request_object.id)}
 
 
-def get_locations(air_freight_rate_request):
+def get_locations(request_object):
     location_ids = list(
         set(
             [
-                str(air_freight_rate_request.origin_airport_id),
-                str(air_freight_rate_request.destination_airport_id),
+                str(request_object.origin_airport_id),
+                str(request_object.destination_airport_id),
             ]
         )
     )
     locations = maps.list_locations({"filters": {"id": location_ids}})['list']
     for location in locations:
-        if str(air_freight_rate_request.origin_airport_id) == str(location.get('id')):
+        if str(request_object.origin_airport_id) == str(location.get('id')):
             origin_location = location
         else:
             destination_location = location
@@ -152,28 +142,35 @@ def create_audit(request, request_object_id):
     )
 
 
-def send_notification_for_rates_not_found(request, request_object, air_freight_rate_request, airports):
-    commodity = air_freight_rate_request.commodity
+def send_notification_for_rates_not_found(request, request_object, airports):
+    commodity = request_object.commodity
+    if len(airports) < 2:
+        return
+    origin_airport = airports[0]
+    destination_airport = airports[1]
     
     notification_data = {
         "type": "platform_notification",
         "user_id": request.get("performed_by_id"),
-        "service": "air_freight_rate_request",
-        "service_id": request_object.id,
+        "service": "spot_search",
+        "service_id": str(request_object.source_id),
         "template_name": "air_freight_rates_not_found_on_any_sales_channel",
         "variables": {
-            "origin_port": airports[0],
-            "destination_port": airports[1],
+            "origin_port": origin_airport.get('display_name'),
+            "destination_port": destination_airport.get('display_name'),
             "commodity": commodity,
-            "weight": air_freight_rate_request.weight,
+            "weight": request_object.weight,
         },
     }
     create_communication_background.apply_async(kwargs={"data": notification_data}, queue="communication")
 
 
-def send_notification_to_supply_agents( request_object, air_freight_rate_request, airports):
+def send_notification_to_supply_agents(request_object, airports):
 
-    supply_agents_data = get_partner_users_by_expertise("air_freight", airports[0], airports[1])
+    origin_location_ids = [str(t) for t in [request_object.origin_airport_id, request_object.origin_continent_id, request_object.origin_country_id] if t ]
+    destination_location_ids = [str(t) for t in [request_object.destination_airport_id, request_object.destination_continent_id, request_object.destination_country_id] if t]
+
+    supply_agents_data = get_partner_users_by_expertise("air_freight", origin_location_ids, destination_location_ids)
 
     supply_agents_list = list(set([item["partner_user_id"] for item in supply_agents_data]))
 
@@ -186,21 +183,25 @@ def send_notification_to_supply_agents( request_object, air_freight_rate_request
     else:
         supply_agents_user_ids = []
     for supply_agents_user_id in supply_agents_user_ids:
-        send_notification_for_new_search_made_for_rates(request_object, air_freight_rate_request, airports, supply_agents_user_id)
+        send_notification_for_new_search_made_for_rates(request_object, airports, supply_agents_user_id)
 
 
-def send_notification_for_new_search_made_for_rates(request_object, air_freight_rate_request, airports, supply_agents_user_id):
+def send_notification_for_new_search_made_for_rates(request_object, airports, supply_agents_user_id):
 
-    commodity = air_freight_rate_request["commodity"]
+    commodity = request_object.commodity
+    if len(airports) < 2:
+        return
+    origin_airport = airports[0]
+    destination_airport = airports[1]
     notification_data = {
         "type": "platform_notification",
         "user_id": supply_agents_user_id,
-        "service": "air_freight_rate_request",
-        "service_id": request_object.id,
+        "service": "spot_search",
+        "service_id": str(request_object.source_id),
         "template_name": "air_freight_rates_not_available_for_new_search",
         "variables": {
-            "origin_port": airports[0],
-            "destination_port": airports[1],
+            "origin_port": origin_airport.get('display_name'),
+            "destination_port": destination_airport.get('display_name'),
             "commodity": commodity,
         },
     }

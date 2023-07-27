@@ -3,6 +3,8 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from database.db_session import db
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_MODE
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from fastapi.encoders import jsonable_encoder
+from playhouse.shortcuts import model_to_dict
 
 def create_audit(request, freight_id,validity_id):
     request = { key: value for key, value in request.items() if value }
@@ -13,6 +15,11 @@ def create_audit(request, freight_id,validity_id):
     audit_data["procured_by_id"] = request.get("procured_by_id")
     audit_data["sourced_by_id"] = request.get("sourced_by_id")
     audit_data["currency"] = request.get("currency")
+    audit_data["maximum_weight"] = request.get("maximum_weight")
+    audit_data["length"] = request.get("length")
+    audit_data["breadth"] = request.get("breadth")
+    audit_data["height"] = request.get("height")
+    audit_data["weight_slabs"] = request.get("weight_slabs")
     audit_data["price_type"] = request.get("price_type")
     audit_data["air_freight_rate_request_id"] = request.get("air_freight_rate_request_id")
 
@@ -36,10 +43,13 @@ def create_air_freight_rate(request):
     
 def create_air_freight_rate_data(request):
     from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
+    action = 'update'
+    if request['rate_type'] == 'general':
+        request['rate_type'] = 'market_place'
 
     if request['commodity']=='general':
         if request.get('commodity_sub_type'):
-            request['commodity_sub_type']='commodity_sub_type'
+            request['commodity_sub_type']= request.get('commodity_sub_type')
         else:
             request['commodity_sub_type']='all'
     if request['density_category']=='general':
@@ -89,6 +99,7 @@ def create_air_freight_rate_data(request):
         freight = AirFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
+        action = 'create'
 
         freight.set_locations()
 
@@ -101,8 +112,7 @@ def create_air_freight_rate_data(request):
     if 'rate_sheet_validation' not in request:
         freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
 
-    validity_id,weight_slabs = freight.set_validities(
-        
+    validity_id,weight_slabs = freight.set_validities(  
         request.get("validity_start").date(),
         request.get("validity_end").date(),
         request.get("min_price"),
@@ -150,8 +160,7 @@ def create_air_freight_rate_data(request):
         "id": freight.id,
         "validity_id":validity_id
     }
-    if request.get('is_weight_slabs_required'):
-        freight_object['weight_slabs'] = weight_slabs
+    send_freight_rate_stats(action,freight)
     return freight_object
     
 def set_object_parameters(freight, request):
@@ -162,3 +171,47 @@ def set_object_parameters(freight, request):
     freight.weight_slabs = request.get('weight_slabs')
     freight.rate_not_available_entry = False
     freight.currency = request.get('currency')
+
+def send_freight_rate_stats(action,freight):
+    from services.bramhastra.interactions.apply_air_freight_rate_statistic import (
+        apply_air_freight_rate_statistic,
+    )
+    from services.bramhastra.request_params import ApplyAirFreightRateStatistic
+
+    freight = model_to_dict(
+        freight,
+        only=[
+            AirFreightRate.id,
+            AirFreightRate.origin_airport_id,
+            AirFreightRate.destination_airport_id,
+            AirFreightRate.origin_country_id,
+            AirFreightRate.destination_country_id,
+            AirFreightRate.origin_continent_id,
+            AirFreightRate.destination_continent_id,
+            AirFreightRate.origin_trade_id,
+            AirFreightRate.destination_trade_id,
+            AirFreightRate.airline_id,
+            AirFreightRate.service_provider_id,
+            AirFreightRate.accuracy,
+            AirFreightRate.validities,
+            AirFreightRate.source,
+            AirFreightRate.commodity,
+            AirFreightRate.commodity_type,
+            AirFreightRate.commodity_sub_type,
+            AirFreightRate.operation_type,
+            AirFreightRate.origin_local_id,
+            AirFreightRate.destination_local_id,
+            AirFreightRate.surcharge_id,
+            AirFreightRate.price_type,
+            AirFreightRate.rate_type,
+            AirFreightRate.shipment_type,
+            AirFreightRate.stacking_type,
+            AirFreightRate.cogo_entity_id,
+            AirFreightRate.sourced_by_id,
+            AirFreightRate.procured_by_id,
+            AirFreightRate.created_at,
+            AirFreightRate.updated_at
+        ],
+    )
+    
+    apply_air_freight_rate_statistic(ApplyAirFreightRateStatistic(action = action,create_params=jsonable_encoder({'freight': freight})))

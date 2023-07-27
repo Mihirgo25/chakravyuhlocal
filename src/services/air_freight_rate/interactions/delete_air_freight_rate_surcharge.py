@@ -17,7 +17,7 @@ def update_air_freight_rate_surcharge(request):
     )
 
     if not air_freight_rate_surcharge:
-        raise HTTPException(status_code=400, detail="not found")
+        raise HTTPException(status_code=404, detail="Surcharge Not Found")
 
     air_freight_rate_surcharge.rate_not_available_entry = True
 
