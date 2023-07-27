@@ -96,7 +96,6 @@ def create_air_freight_rate_data(request):
     freight = (AirFreightRate.select().where(AirFreightRate.init_key == init_key).first())
    
     if not freight:
-        print('not freight okie')
         freight = AirFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
