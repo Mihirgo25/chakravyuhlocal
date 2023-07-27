@@ -144,7 +144,7 @@ def get_data(query, spot_search_details_required):
 
     service_provider_ids = []
     for item in data:
-        if 'booking_params' in item and 'rate_card' in item['booking_params'] and item['booking_params']['rate_card'] and 'service_rates' in item['booking_params']['rate_card']:
+        if item.get('booking_params') and item.get('booking_pramas').get('rate_card') and 'service_rates' in item.get('booking_params').get('rate_card').keys():
             service_rates = item['booking_params']['rate_card']['service_rates'] or {}
             rates = service_rates.values()
             for rate in rates:
@@ -165,7 +165,7 @@ def get_data(query, spot_search_details_required):
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for object in data:
-        if 'booking_params' in object:
+        if object.get('booking_params'):
             object['containers_count'] = object['booking_params'].get('containers_count', None)
             object['bls_count'] = object['booking_params'].get('bls_count', None)
             object['inco_term'] = object['booking_params'].get('inco_term', None)
