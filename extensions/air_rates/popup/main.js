@@ -1,5 +1,5 @@
-const sendRatesToRMS = async (data={}, url)=> {
-  const url = `https://api.cogoport.com/fcl_freight_rate/${url}`
+const sendRatesToRMS = async (data={}, endpoint)=> {
+  const url = `http://127.0.0.1:8000/fcl_freight_rate/${endpoint}`
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -59,7 +59,22 @@ const getWebCargoRates = async ()=> {
   }
 }
 
+const getFreightLookSurchargeRates = async ()=> {
+  const statusEle = document.getElementById('status')
+  statusEle.innerText = 'Adding Freight Look Surcharge Rates Please wait....'
+  try {
+    const response = await getFromWebPage('freight_look')
+    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination }, 'create_freight_look_surcharge_rates')
+    statusEle.style.color = 'green'
+    statusEle.innerText = 'Surcharge Rates Added Successfully....'
+  } catch(err){
+    statusEle.style.color = 'red'
+    statusEle.innerText = 'Some Error Occured Please try again after sometime....'
+  }
+}
+
 document.getElementById("get_freight_look_rates").addEventListener("click", getFreightLookRates);
 document.getElementById("get_new_max_rates").addEventListener("click", getNewMaxRates);
 document.getElementById("get_web_cargo_rates").addEventListener("click", getWebCargoRates);
+document.getElementById("freight_look_surcharge_rates").addEventListener("click",getFreightLookSurchargeRates)
 

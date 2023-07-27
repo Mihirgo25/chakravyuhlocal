@@ -4,7 +4,7 @@ from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCU
 from services.extensions.constants.general import commodity_mappings, commodity_type_mappings
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID
-
+from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
 airline_hash = {}
 
 def create_weight_slabs(rate):
@@ -110,18 +110,7 @@ def format_air_freight_rate(rate, locations):
 #     f.close()
 #     return data
 
-def create_proper_json(rates):
-    headers = rates[0]
-    new_rates_obj = rates[1: len(rates)]
-    final_rates = []
-    for rate in new_rates_obj:
-        obj = {}
-        for i, item in enumerate(rate):
-            key = headers[i]
-            obj[key] = item
-        final_rates.append(obj)
 
-    return final_rates
 
 def create_air_freight_rate_api(rate, locations):
     airline = None
@@ -148,21 +137,6 @@ def create_air_freight_rate_api(rate, locations):
     res = create_draft_air_freight_rate(rate_obj)
     # res = common.create_air_freight_rate(rate_obj)
     return res
-
-def get_locations(destination, all_port_codes: list = []):
-    all_locations = maps.list_locations({ 'filters': { 'port_code': all_port_codes, 'country_code': 'IN', 'type': 'airport' }, 'includes': {'port_code': True, 'id': True, 'name': True },'page_limit': 50 })
-    all_locations_destination = maps.list_locations({ 'filters': { 'q': destination, 'type': 'airport' }, 'includes': {'port_code': True, 'id': True, 'name': True },'page_limit': 50 })
-    all_locations_hash = {}
-    if 'list' in all_locations and len(all_locations['list']):
-        for location in all_locations['list']:
-            all_locations_hash[location['port_code']] = location
-    
-    if 'list' in all_locations_destination and len(all_locations_destination['list']):
-        for location in all_locations_destination['list']:
-            all_locations_hash[location['port_code']] = location
-    
-    return all_locations_hash
-
 
 
 def create_freight_look_rates(request):

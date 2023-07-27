@@ -27,3 +27,11 @@ commodity_type_mappings = {
     'Perishable': 'other_special',
     '': 'all'
 }
+
+surcharge_charges_mappings = {
+    'SSC':'SSC',
+    'FSC/MIN':'FSC',
+    'XRAY/MIN':'XRAY',
+    'MISC/MIN':'MSC',
+    'CTG/MIN':'CTS'
+}
