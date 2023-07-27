@@ -48,7 +48,7 @@ XRAY:
   sac_code: '996713'
 PCA:
   name: "Code not in use"
-  units: ['per_kg' ,'per_gross_weight', 'per_shipment']
+  units: ['per_kg' , 'per_shipment']
   condition: true
   tags: ['additional_service', 'deleted']
   sac_code: '996799'
