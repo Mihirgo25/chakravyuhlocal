@@ -11,23 +11,30 @@ from services.bramhastra.interactions.get_fcl_freight_rate_charts import (
 from services.bramhastra.interactions.get_fcl_freight_rate_distribution import (
     get_fcl_freight_rate_distribution,
 )
-from services.bramhastra.interactions.get_fcl_freight_rate_drilldown import get_fcl_freight_rate_drilldown
-from services.bramhastra.interactions.get_fcl_freight_map_view_statistics import get_fcl_freight_map_view_statistics
+from services.bramhastra.interactions.get_fcl_freight_rate_lifecycle import (
+    get_fcl_freight_rate_lifecycle,
+)
+from services.bramhastra.interactions.get_fcl_freight_map_view_statistics import (
+    get_fcl_freight_map_view_statistics,
+)
+from services.bramhastra.interactions.get_fcl_freight_rate_world import (
+    get_fcl_freight_rate_world,
+)
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
     ApplyCheckoutFclFreightRateStatistic,
 )
-from rms_utils.auth import authorize_token
 from pydantic.types import Json
 from typing import Annotated
-from datetime import date
 from services.bramhastra.response_models import (
     FclFreightRateCharts,
     FclFreightRateDistribution,
-    FclFreightRateDrillDownResponse
+    FclFreightRateDrillDownResponse,
+    FclFreightMapViewResponse,
+    FclFreightRateWorldResponse
 )
 from fastapi.responses import JSONResponse
-import time
+from services.bramhastra.constants import INDIA_LOCATION_ID
 
 bramhastra = APIRouter()
 
@@ -50,9 +57,7 @@ def apply_checkout_fcl_freight_rate_statistic_func(
 async def get_fcl_freight_rate_charts_func(
     filters: Annotated[Json, Query()] = {},
 ) -> FclFreightRateCharts:
-    start = time.time()
     response = await get_fcl_freight_rate_charts(filters)
-    print(time.time() - start)
     return JSONResponse(content=response)
 
 
@@ -60,27 +65,31 @@ async def get_fcl_freight_rate_charts_func(
 def get_fcl_freight_rate_distribution_func(
     filters: Annotated[Json, Query()] = {},
 ) -> FclFreightRateDistribution:
-    start = time.time()
     response = get_fcl_freight_rate_distribution(filters)
-    print(time.time() - start)
     return JSONResponse(content=response)
 
 
-@bramhastra.get("/get_fcl_freight_rate_drilldown")
-def get_fcl_freight_rate_drilldown_func(
+@bramhastra.get("/get_fcl_freight_rate_lifecycle")
+async def get_fcl_freight_rate_drilldown_func(
     filters: Annotated[Json, Query()] = {},
 ) -> FclFreightRateDrillDownResponse:
-    start = time.time()
-    response = get_fcl_freight_rate_drilldown(filters)
-    print(time.time() - start)
+    response = await get_fcl_freight_rate_lifecycle(filters)
     return JSONResponse(content=response)
 
 
 @bramhastra.get("/get_fcl_freight_map_view_statistics")
 def get_fcl_freight_map_view_statistics_func(
-    filters: Annotated[Json, Query()] = {},
-):
-    start = time.time()
-    response = get_fcl_freight_map_view_statistics(filters)
-    print(time.time() - start)
+    filters: Annotated[Json, Query()] = {
+        "origin": {"type": "country", "id": INDIA_LOCATION_ID}
+    },
+    page_limit: int = 30,
+    page: int = 1,
+) -> FclFreightMapViewResponse:
+    response = get_fcl_freight_map_view_statistics(filters, page_limit, page)
+    return JSONResponse(content=response)
+
+
+@bramhastra.get("/get_fcl_freight_rate_world",response_model=FclFreightRateWorldResponse)
+def get_fcl_freight_rate_world_func():
+    response = get_fcl_freight_rate_world()
     return JSONResponse(content=response)
