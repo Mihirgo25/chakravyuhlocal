@@ -132,6 +132,8 @@ def build_surcharge_line_item_object(line_item,requirements):
         line_item['quantity'] = requirements.get('packages_count')
     elif line_item.get('unit') == 'per_kg':
         line_item['quantity'] = get_chargeable_weight(requirements)
+    elif line_item.get('unit') == 'per_gross_weight':
+        line_item['quantity'] = requirements.get('weight')
     else:
         line_item['quantity'] = 1
     
