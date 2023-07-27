@@ -425,6 +425,8 @@ class AirFreightRate(BaseModel):
         min_density_weight = 0.01  
         max_density_weight = MAX_CARGO_LIMIT
         new_weight_slabs = weight_slabs
+        index_to_pop = None
+        old_validity_id = None
 
         if density_category =='low_density':
             if density_ratio:
@@ -434,11 +436,12 @@ class AirFreightRate(BaseModel):
             if density_ratio:
                 min_density_weight=float(density_ratio.replace(' ','').split(':')[-1])
                 max_density_weight=MAX_CARGO_LIMIT
-        for validity_object in self.validities:
+        for index, validity_object in enumerate(self.validities):
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
             validity_start = validity_start
             validity_end = validity_end
+            validity_object['action'] = 'unchanged'
             if not validity_object.get("density_category"):
                 validity_object['density_category'] = 'general'
 
@@ -452,6 +455,10 @@ class AirFreightRate(BaseModel):
                 continue
             
             if (validity_object.get('density_category') == density_category and max_density_weight == validity_object.get("max_density_weight") and min_density_weight == validity_object.get("min_density_weight")) or (rate_type in ["promotional", "consolidated"]):
+                if not deleted and validity_object['validity_start'] == validity_start.strftime('%Y-%m-%d') and validity_object['validity_end'] == validity_end.strftime('%Y-%m-%d'):
+                    old_validity_id = validity_object['id']
+                    index_to_pop = index
+
                 if validity_object_validity_start > validity_end:
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
@@ -463,20 +470,25 @@ class AirFreightRate(BaseModel):
 
                 if validity_object_validity_start >= validity_start and validity_object_validity_end <= validity_end and validity_id != validity_object.get('id'):
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    validity_object['action'] = 'update'
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
+                    validity_object['action'] = 'update'
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end: 
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
                     validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
+                    validity_object['action'] = 'update'
                     new_validities.append(AirFreightRateValidity(**validity_object))
                     continue
                 if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
                     new_weight_slabs = self.merging_weight_slabs(validity_object.get('weight_slabs'), new_weight_slabs)
+                    validity_object['action'] = 'update'
                     old_validity1 = AirFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)})
+                    validity_object['action'] = 'create'
                     old_validity2 = AirFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)})
                     new_validities.append(old_validity1)
                     new_validities.append(old_validity2)
@@ -491,6 +503,9 @@ class AirFreightRate(BaseModel):
             #     new_validities.append(AirFreightRateValidity(**validity_object))
             #     self.min_price = validity_object.get("min_price")
             #     continue
+        if index_to_pop: # pop old validity
+          self.validities.pop(index_to_pop) 
+
         if not deleted :
             new_validity_object = {
             "validity_start": validity_start,
@@ -507,10 +522,12 @@ class AirFreightRate(BaseModel):
             "initial_volume": available_volume,
             "available_volume": available_volume,
             "initial_gross_weight": available_gross_weight,
-            "available_gross_weight": available_gross_weight
+            "available_gross_weight": available_gross_weight,
+            "action": "create"
             }
-            if validity_id:
-                new_validity_object['id'] = validity_id
+            if validity_id or old_validity_id:
+                new_validity_object['action'] = 'update'
+                new_validity_object['id'] = validity_id or old_validity_id
             else:
                 new_validity_object['id'] = uuid.uuid1()
             

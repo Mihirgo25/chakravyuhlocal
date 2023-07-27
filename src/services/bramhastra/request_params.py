@@ -184,3 +184,72 @@ class ApplyQuotationFclFreightRateStatistics(BaseModel):
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
     create_params: CreateShipmentFclFreightRateStatistic = None
     update_params: UpdateShipmentFclFreightRateStatistic = None
+
+
+class WeightSlab(BaseModel):
+    lower_limit: float
+    upper_limit: float
+    tariff_price: float
+    currency: str
+    unit: str = "per_kg"
+
+class AirValidities(BaseModel):
+    validity_start: date
+    validity_end: date
+    validity_id: str = Field(alias="id")
+    last_action: str = Field(alias="action")
+    currency: str
+    status: bool = True
+    likes_count: int = None
+    dislikes_count: int = None
+    weight_slabs: list[WeightSlab] = []
+    density_category: str = 'general'
+    min_density_weight: float = None
+    max_density_weight: float = None
+
+
+class AirFreight(BaseModel):
+    rate_id: str = Field(alias="id")
+    airline_id: str
+    commodity: str
+    commodity_type: str
+    commodity_sub_type: str
+    destination_airport_id: str = None
+    destination_continent_id: str = None
+    destination_country_id: str = None
+    destination_local_id: str = None
+    destination_trade_id: str = None
+    operation_type: str = None
+    origin_airport_id: str = None
+    origin_continent_id: str = None
+    origin_country_id: str = None
+    origin_local_id: str = None
+    origin_trade_id: str = None
+    price_type: str = None
+    rate_type: str
+    service_provider_id: str
+    shipment_type: str = None
+    stacking_type: str = None
+    surcharge_id: str = None
+    validities: list[AirValidities]
+    source: str
+    accuracy: float
+    cogo_entity_id: str = None
+    sourced_by_id: str = None
+    procured_by_id: str = None
+    rate_created_at: datetime = Field(alias="created_at")
+    rate_updated_at: datetime = Field(alias="updated_at")
+
+
+class CreateAirFreightRateStatistic(BaseModel):
+    freight: AirFreight
+
+
+class UpdateAirFreightRateStatistic(BaseModel):
+    pass
+
+
+class ApplyAirFreightRateStatistic(BaseModel):
+    action: str
+    create_params: CreateAirFreightRateStatistic = None
+    update_params: UpdateAirFreightRateStatistic = None
