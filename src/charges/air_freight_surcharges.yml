@@ -95,7 +95,7 @@ HAWB:
   tags: ['additional_service']
   sac_code: ''
 AMSE:
-  name: "Electronic"
+  name: "Electronic Automated Manifest System"
   units: ['per_document']
   condition: true 
   tags: ['additional_service']
