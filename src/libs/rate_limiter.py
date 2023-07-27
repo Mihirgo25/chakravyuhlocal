@@ -1,4 +1,4 @@
-from database.db_session import redis
+from database.db_session import rd
 from fastapi.responses import PlainTextResponse
 from fastapi import Request
 from functools import wraps
@@ -9,19 +9,20 @@ class RateLimiter:
     def add(self, time_window: int, max_requests: int):
         def decorator(func):
             @wraps(func)
-            async def wrap_func(request, *args, **kwargs):
-                if APP_ENV == 'development':
-                    return await func(request, *args, **kwargs)
+            def wrap_func(request, *args, **kwargs):
                 
+                if APP_ENV == 'development':
+                    return func(request, *args, **kwargs)
+
                 ip_address = self.get_ip_address(request)
                 key = f"{func.__name__}:{ip_address}"
-                count = redis.incr(key)
+                count = rd.incr(key)
 
                 if count == 1:
-                    redis.expire(key, time_window)
+                    rd.expire(key, time_window)
                 if count > max_requests:
                     return PlainTextResponse("Too many Requests", status_code=429)
-                return await func(request, *args, **kwargs)
+                return func(request, *args, **kwargs)
 
             return wrap_func
 
