@@ -876,13 +876,11 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
-        print('pre_discard_noneligible_rates',freight_rates)
         is_predicted = False
 
         are_all_rates_predicted = all_rates_predicted(freight_rates)
         if len(freight_rates) == 0 or are_all_rates_predicted:
             freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted)
-            print(freight_rates)
             
         freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
         
