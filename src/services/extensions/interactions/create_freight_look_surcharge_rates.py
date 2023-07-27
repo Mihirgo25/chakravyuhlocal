@@ -108,13 +108,13 @@ def build_line_item(line_item_price,code):
         price = line_item_price[0:index]
         price = price.strip()
         price = float(price)
-        unit = 'per_gross_weight'
+        unit = 'per_kg_gross'
     else:
         price = line_item_price.strip()
         price = float(price)
         unit = 'per_package'
     if code == 'CTS':
-        unit = 'per_gross_weight'
+        unit = 'per_kg_gross'
     
     if code in ['AMS','HAWB','AMSE','EHAWB']:
         unit = 'per_document'
