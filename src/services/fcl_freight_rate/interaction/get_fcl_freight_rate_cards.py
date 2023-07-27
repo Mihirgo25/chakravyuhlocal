@@ -67,6 +67,9 @@ def initialize_freight_query(requirements, prediction_required = False):
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
 
+    if prediction_required:
+        freight_query = freight_query.where(FclFreightRate.mode=='predicted')
+
     return freight_query
 
 def is_rate_missing_locals(local_type, rate):
@@ -702,6 +705,7 @@ def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted):
         pass
     initial_query = initialize_freight_query(requirements)
     cluster_freight_rates = jsonable_encoder(list(initial_query.dicts()))
+    cluster_freight_rates = pre_discard_noneligible_rates(cluster_freight_rates, requirements)
     
     if cluster_freight_rates:
         freight_rates = cluster_freight_rates
@@ -872,11 +876,13 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
 
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+        print('pre_discard_noneligible_rates',freight_rates)
         is_predicted = False
 
         are_all_rates_predicted = all_rates_predicted(freight_rates)
         if len(freight_rates) == 0 or are_all_rates_predicted:
             freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted)
+            print(freight_rates)
             
         freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
         
