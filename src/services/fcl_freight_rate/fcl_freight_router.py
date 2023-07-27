@@ -984,13 +984,14 @@ def list_fcl_freight_rate_free_days_data(
     page: int = 1,
     pagination_data_required: bool = True,
     return_query: bool = False,
-    resp: dict = Depends(authorize_token)
+    includes: str = None,
+    resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
+        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -999,36 +1000,18 @@ def list_fcl_freight_rate_free_days_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_public_fcl_freight_rate_free_days")
-@rate_limiter.add(max_requests=30, time_window=86400)
+@rate_limiter.add(max_requests=10, time_window=86400)
 def list_public_fcl_freight_rate_data(
     request: Request,
     filters: str = None,
-    page_limit: int = 10,
+    page_limit: int = None,
     page: int = 1,
-    pagination_data_required: bool = True,
+    pagination_data_required: bool = False,
     return_query: bool = False,
+    includes: str = None
 ):
     try:
-        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
-        return JSONResponse(status_code=200, content=json_encoder(data))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
-
-@fcl_freight_router.get("/list_public_fcl_freight_rate_free_days")
-@rate_limiter.add(max_requests=30, time_window=86400)
-def list_public_fcl_freight_rate_data(
-    request: Request,
-    filters: str = None,
-    page_limit: int = 10,
-    page: int = 1,
-    pagination_data_required: bool = True,
-    return_query: bool = False,
-):
-    try:
-        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
+        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
