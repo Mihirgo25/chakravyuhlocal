@@ -280,28 +280,28 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
         "validity_start": datetime.now().date()
     }
     origin_detention_filters = common_filters | {
-        "location_id": requirements["origin_port_id"],
+        "location_id": [requirements["origin_port_id"], requirements["origin_country_id"]],
         "trade_type": "export",
         "free_days_type": "detention",
         "local_service_provider_ids": origin_local_service_providers
     }
 
     destination_detention_filters = common_filters | {
-        "location_id": requirements["destination_port_id"],
+        "location_id": [requirements["destination_port_id"], requirements["destination_country_id"]],
         "trade_type": "import",
         "free_days_type": "detention",
         "local_service_provider_ids": destination_local_service_providers
     }
 
     origin_demurrage_filters = common_filters | {
-        "location_id": requirements["origin_port_id"],
+        "location_id": [requirements["origin_port_id"], requirements["origin_country_id"]],
         "trade_type": "export",
         "free_days_type": "demurrage",
         "local_service_provider_ids": origin_local_service_providers
     }
 
     destination_demurrage_filters = common_filters | {
-        "location_id": requirements["destination_port_id"],
+        "location_id": [requirements["destination_port_id"], requirements["destination_country_id"]],
         "trade_type": "import",
         "free_days_type": "demurrage",
         "local_service_provider_ids": destination_local_service_providers
