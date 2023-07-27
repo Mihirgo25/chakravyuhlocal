@@ -88,20 +88,20 @@ AMSNO:
   condition: commodity == "special_consideration"
   tags: ['additional_service']
   sac_code: '996531'
-HAWB:
-  name: "AMS Masters House Air Waybill"
+HAMS:
+  name: "House Automated Manifest System"
   units: ['per_document']
   condition: true 
   tags: ['additional_service']
   sac_code: ''
-AMSE:
+EAMS:
   name: "Electronic Automated Manifest System"
   units: ['per_document']
   condition: true 
   tags: ['additional_service']
   sac_code: ''
-EHAWB:
-  name: "Electronic House Air Waybill"
+EHAMS:
+  name: "Electronic House Automated Manifest System"
   units: ['per_document']
   condition: true 
   tags: ['additional_service']
