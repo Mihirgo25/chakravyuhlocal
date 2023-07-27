@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 from micro_services.client import common, maps
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
-from services.extensions.constants.general import commodity_mappings, commodity_type_mappings
+from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, airline_ids, airline_margins
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID
 from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
 airline_hash = {}
 
-def create_weight_slabs(rate):
+def create_weight_slabs(rate,airline_id):
     currency = rate['Crny'] or 'INR'
     rate['NORMAL'] = float(rate.get('NORMAL').strip() or 0) or ''
     rate['+45'] = float((rate.get('+45') or '').strip() or 0) or ''
@@ -28,7 +28,7 @@ def create_weight_slabs(rate):
             'lower_limit': 0,
             'currency': currency,
             'unit': 'per_kg',
-            'tariff_price': price_0_45
+            'tariff_price': price_0_45 + (price_0_45*airline_margins[airline_id])
         },
         {
             'upper_limit': 100,
@@ -68,8 +68,8 @@ def create_weight_slabs(rate):
     ]
     return weight_slabs
 
-def format_air_freight_rate(rate, locations):
-    weight_slabs = create_weight_slabs(rate=rate)
+def format_air_freight_rate(rate, locations,airline_id):
+    weight_slabs = create_weight_slabs(rate=rate,airline_id=airline_id)
     minimum_rate = 0
     if rate['MIN.'].strip():
         minimum_rate = float(rate['MIN.'].strip())
@@ -129,7 +129,9 @@ def create_air_freight_rate_api(rate, locations):
         airline_id = airline['id']
         airline_name = airline['short_name']
 
-    rate_obj = format_air_freight_rate(rate=rate, locations=locations)
+    if airline_id not in airline_ids:
+        return rate
+    rate_obj = format_air_freight_rate(rate=rate, locations=locations,airline_id=airline_id)
     if not rate_obj:
         return rate
     rate_obj['airline_id'] = airline_id
