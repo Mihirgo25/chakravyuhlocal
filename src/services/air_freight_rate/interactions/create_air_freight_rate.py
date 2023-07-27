@@ -15,6 +15,11 @@ def create_audit(request, freight_id,validity_id):
     audit_data["procured_by_id"] = request.get("procured_by_id")
     audit_data["sourced_by_id"] = request.get("sourced_by_id")
     audit_data["currency"] = request.get("currency")
+    audit_data["maximum_weight"] = request.get("maximum_weight")
+    audit_data["length"] = request.get("length")
+    audit_data["breadth"] = request.get("breadth")
+    audit_data["height"] = request.get("height")
+    audit_data["weight_slabs"] = request.get("weight_slabs")
     audit_data["price_type"] = request.get("price_type")
     audit_data["air_freight_rate_request_id"] = request.get("air_freight_rate_request_id")
 
@@ -39,9 +44,12 @@ def create_air_freight_rate(request):
 def create_air_freight_rate_data(request):
     from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
     action = 'update'
+    if request['rate_type'] == 'general':
+        request['rate_type'] = 'market_place'
+
     if request['commodity']=='general':
         if request.get('commodity_sub_type'):
-            request['commodity_sub_type']='commodity_sub_type'
+            request['commodity_sub_type']= request.get('commodity_sub_type')
         else:
             request['commodity_sub_type']='all'
     if request['density_category']=='general':
@@ -105,8 +113,7 @@ def create_air_freight_rate_data(request):
     if 'rate_sheet_validation' not in request:
         freight.validate_validity_object(request.get('validity_start'),request.get('validity_end'))
 
-    validity_id,weight_slabs = freight.set_validities(
-        
+    validity_id,weight_slabs = freight.set_validities(  
         request.get("validity_start").date(),
         request.get("validity_end").date(),
         request.get("min_price"),
@@ -154,9 +161,6 @@ def create_air_freight_rate_data(request):
         "id": freight.id,
         "validity_id":validity_id
     }
-    if request.get('is_weight_slabs_required'):
-        freight_object['weight_slabs'] = weight_slabs
-    print('freight id', freight.id)
     send_freight_rate_stats(action,freight)
     return freight_object
     

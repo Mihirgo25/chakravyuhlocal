@@ -40,6 +40,9 @@ def get_freight_object(object):
         rate_object.set_destination_location_ids()
     except:
         validation["error"] += " Invalid location"
+    
+    if validation['error'].strip():
+        return validation
 
     try:
         rate_object.validate_validity_object(
@@ -47,6 +50,9 @@ def get_freight_object(object):
         )
     except HTTPException as e:
         validation["error"] += " " + str(e.detail)
+
+    if validation['error'].strip():
+        return validation
 
     try:
         validity_id = rate_object.set_validities(
@@ -74,13 +80,22 @@ def get_freight_object(object):
     except HTTPException as e:
         validation["error"] += " " + str(e.detail)
 
+    if validation['error'].strip():
+        return validation
+
     try:
         rate_object.validate_before_save()
     except HTTPException as e:
         validation["error"] += " " + str(e.detail)
+    
+    if validation['error'].strip():
+        return validation
 
     if not is_float(object.get("min_price")):
         validation["error"] += " min_price is invalid"
+    
+    if validation['error'].strip():
+        return validation
 
     for weight_slab in object["weight_slabs"]:
         if not is_float(weight_slab.get("lower_limit")):
@@ -114,6 +129,10 @@ def get_local_object(object):
         rate_object.line_items = object.get("line_items")
     except:
         validation["error"] += " Invalid location"
+    
+    if validation['error'].strip():
+        return validation
+
     try:
         rate_object.validate()
     except HTTPException as e:
@@ -137,7 +156,10 @@ def get_surcharge_object(object):
         rate_object.set_locations()
     except:
         validation["error"] += " Invalid location"
-        
+    
+    if validation['error'].strip():
+        return validation
+    
     try:
         rate_object.update_freight_objects()
         rate_object.update_line_item_messages()

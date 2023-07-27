@@ -81,7 +81,7 @@ def execute_transaction_code(request):
     task.status = 'pending'
 
     if not task.validate():
-        raise HTTPException(status_code=500, detail="Unable to create task")
+        raise HTTPException(status_code=400, detail="Unable to create task")
     else:
         task.save()
 

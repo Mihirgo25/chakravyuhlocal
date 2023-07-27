@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 
 def delete_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
-    query = "create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(
+    query = "create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(
         object_type.lower(), object_type.replace("_", "")
     )
     db.execute_sql(query)
@@ -32,7 +32,7 @@ def execute_transaction_code(request):
 
     if not request_objects:
         raise HTTPException(
-            status_code=400, detail="air_freight_rate_request_ids are invalid"
+            status_code=404, detail="Invalid Rate Request"
         )
 
     air_freight_rate = None
@@ -40,18 +40,22 @@ def execute_transaction_code(request):
     for request_object in request_objects:
         if request_object.source == 'shipment' and request_object.source_id:
             shipment_source = True
-            air_freight_rate = (
+            air_freight_rates = (
                 AirFreightRate.select(AirFreightRate.validities,AirFreightRate.airline_id,AirFreightRate.service_provider_id,
                                         AirFreightRate.price_type,AirFreightRate.operation_type)
                 .where(AirFreightRate.id == request.get("rate_id"))
             )
-            air_freight_rate =jsonable_encoder(list(air_freight_rate.dicts()))[0]
-            validities = air_freight_rate['validities']
-            air_freight_rate['validities'] = []
-            for validity in validities:
-                validity = {key:value for key,value in validity.items() if key in ["id","validity_end","weight_slabs","validity_start","min_price"] }
-                air_freight_rate['validities'].append(validity)
-            break
+            air_freight_rates =jsonable_encoder(list(air_freight_rates.dicts()))
+            if len(air_freight_rates):
+                air_freight_rate = air_freight_rates[0]
+                validities = air_freight_rate['validities']
+                air_freight_rate['validities'] = []
+                for validity in validities:
+                    validity = {key:value for key,value in validity.items() if key in ["id","validity_end","weight_slabs","validity_start","min_price"] }
+                    air_freight_rate['validities'].append(validity)
+                break
+    requests_objects = jsonable_encoder(list(request_objects.dicts()))
+
     for request_object in request_objects:
         request_object.status = "inactive"
         request_object.closed_by_id = request.get("performed_by_id")
@@ -68,11 +72,10 @@ def execute_transaction_code(request):
         send_closed_notifications_to_sales_agent_function.apply_async(
             kwargs={"object": request_object}, queue="low"
         )
-    request_object = jsonable_encoder(list(request_objects.dicts()))
 
     if shipment_source:
         data = {
-        'air_freight_rate_requests': request_object,
+        'air_freight_rate_requests': requests_objects,
         }
         if air_freight_rate:
             data['air_freight_rate'] = air_freight_rate

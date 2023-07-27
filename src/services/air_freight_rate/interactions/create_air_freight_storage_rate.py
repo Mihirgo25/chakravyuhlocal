@@ -6,8 +6,8 @@ from services.air_freight_rate.models.air_freight_storage_rate import AirFreight
 from celery_worker import update_multiple_service_objects,get_multiple_service_objects
 
 def create_air_freight_storage_rate(request):
-    object_type='Air_Freight_Storage_Rates'
-    query="create table if not exists air_services_audits{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
+    object_type='Air_Freight_Storage_Rate'
+    query="create table if not exists air_services_audits_{} partition of air_services_audits for values in ('{}')".format(object_type.lower(),object_type.replace("_",""))
     db.execute_sql(query)
     with db.atomic():
         return execute_transaction_code(request)
