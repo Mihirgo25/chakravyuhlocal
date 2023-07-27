@@ -1,24 +1,24 @@
 FSC:
   name: "Fuel Surcharge"
-  units: ['per_kg','per_gross_weight']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
 CTS:
   name: "Carting Surcharge"
-  units: ['per_kg','per_gross_weight']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
 MSC:
   name: "Miscellaneous Surcharge"
-  units: ['per_kg','per_gross_weight']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
 PSS:
   name: "Peak Season Surcharge"
-  units: ['per_kg','per_gross_weight']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
@@ -30,7 +30,7 @@ AMS:
   sac_code: '996531'
 SSC:
   name: "Security Surcharge"
-  units: ['per_kg' , 'per_gross_weight','per_shipment']
+  units: ['per_kg' , 'per_kg_gross','per_shipment']
   condition: true
   tags: ['additional_service']
   sac_code: ''
@@ -42,7 +42,7 @@ AEDEM:
   sac_code: '996531'
 AEDC:
   name: "Airline Due Carrier"
-  units: ['per_kg','per_gross_weight']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: '996531'
