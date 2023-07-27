@@ -20,6 +20,7 @@ from services.bramhastra.interactions.get_fcl_freight_map_view_statistics import
 from services.bramhastra.interactions.get_fcl_freight_rate_world import (
     get_fcl_freight_rate_world,
 )
+from services.bramhastra.interactions.list_fcl_freight_rate_statistics import list_fcl_freight_rate_statistics
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
     ApplyCheckoutFclFreightRateStatistic,
@@ -54,10 +55,10 @@ def apply_checkout_fcl_freight_rate_statistic_func(
 
 
 @bramhastra.get("/get_fcl_freight_rate_charts")
-async def get_fcl_freight_rate_charts_func(
+def get_fcl_freight_rate_charts_func(
     filters: Annotated[Json, Query()] = {},
-) -> FclFreightRateCharts:
-    response = await get_fcl_freight_rate_charts(filters)
+):
+    response = get_fcl_freight_rate_charts(filters)
     return JSONResponse(content=response)
 
 
@@ -92,4 +93,14 @@ def get_fcl_freight_map_view_statistics_func(
 @bramhastra.get("/get_fcl_freight_rate_world",response_model=FclFreightRateWorldResponse)
 def get_fcl_freight_rate_world_func():
     response = get_fcl_freight_rate_world()
+    return JSONResponse(content=response)
+
+
+@bramhastra.get("/list_fcl_freight_rate_statistics")
+async def list_fcl_freight_rate_statistics_func(
+    filters: Annotated[Json, Query()] = {},
+    page_limit: int = 10,
+    page: int = 1,
+    ):
+    response = await list_fcl_freight_rate_statistics(filters,page_limit,page)
     return JSONResponse(content=response)
