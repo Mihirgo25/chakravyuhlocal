@@ -11,6 +11,7 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFre
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
 from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreightRateRequest
+from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from services.fcl_freight_rate.interaction.get_fcl_freight_local_rate_cards import get_fcl_freight_local_rate_cards
 from database.rails_db import get_connection
 from playhouse.shortcuts import model_to_dict
@@ -20,6 +21,8 @@ import json
 import nltk
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
+from micro_services.client import maps
+from database.db_session import db
 
 BATCH_SIZE = 1000
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
@@ -176,7 +179,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             FclFreightRateStatistic.insert_many(row_data).execute()
             
                 
-                
+
     def populate_from_feedback(self):
         query = FclFreightRateFeedback.select(FclFreightRateFeedback.booking_params).distinct(FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.validity_id).where(FclFreightRateFeedback.booking_params['rate_card']['price'].is_null(False))
         feedbacks = jsonable_encoder(list(query.dicts()))
@@ -500,28 +503,97 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
         except Exception as e:
             print('! Exception:',e)
+
+    def get_pricing_map_zone_ids(self, origin_port_id, destination_port_id) -> list:
+        query = (
+            FclFreightLocationCluster.select(
+                FclFreightLocationClusterMapping.location_id,
+                FclFreightLocationCluster.map_zone_id,
+            )
+            .join(FclFreightLocationClusterMapping)
+            .where(
+                FclFreightLocationClusterMapping.location_id.in_(
+                    [origin_port_id, destination_port_id]
+                )
+            )
+        )
+        map_zone_location_mapping = jsonable_encoder(
+            {item["location_id"]: item["map_zone_id"] for item in query.dicts()}
+        )
+        return map_zone_location_mapping.get(
+            origin_port_id
+        ), map_zone_location_mapping.get(destination_port_id)
         
 
     def populate_fcl_request_statistics(self):
         try:
-            rate_stats = FclFreightRateRequest.select().limit(1000)
+            rate_stats = FclFreightRateRequest.select().limit(5)
             for rate_stat in rate_stats:
                 print('id', rate_stat.id)
+                
+                origin_region_id = None
+                destination_region_id = None
+                locations_list = maps.list_locations({ 'filters': { 'id': [str(rate_stat.origin_port_id), str(rate_stat.destination_port_id)] }, 'page_limit': 50 })
+                if 'list' in locations_list:
+                    locations = locations_list['list']
+                    for location in locations:
+                        if str(location['id']) == str(rate_stat.origin_port_id):
+                            origin_region_id = location['region_id']
+                        else:
+                            destination_region_id = location['region_id']
+                
+                zone_map_ids = self.get_pricing_map_zone_ids(str(rate_stat.origin_port_id), str(rate_stat.destination_port_id))
+
+                importer_exporter_id = None
+                if('spot' in rate_stat.source):
+                    try:
+                        with self.cogoback_connection.cursor() as cur:
+                            sql = f"SELECT importer_exporter_id from spot_searches where id = '{rate_stat.source_id}'"
+                            cur.execute(sql)
+                            result = cur.fetchone()
+                            if result:
+                                importer_exporter_id = result[0]
+                    except Exception as e:
+                        print('!Exception', e)
+                    
+                validity_ids = None
+                if (rate_stat.status=='inactive') and rate_stat.closing_remarks and ('rate_added' in rate_stat.closing_remarks):
+                    try:
+                        sql = "with main_table as ( with outer_cte as ( with cte as (  SELECT updated_at FROM fcl_freight_rate_audits where object_id = %s and data @> %s ) SELECT object_id FROM fcl_freight_rate_audits,cte WHERE object_type= %s and source = %s and CAST(created_at AS timestamp) <= CAST(cte.updated_at AS timestamp) ORDER BY created_at DESC limit 5 ) Select * from fcl_freight_rates_temp  where id in (select object_id from outer_cte) and origin_port_id = %s and destination_port_id = %s and commodity = %s  and container_type = %s and container_size= %s order by created_at limit 1 ) Select validities from main_table "
+                        cursor = db.execute_sql(sql, (
+                            rate_stat.id,
+                            '{"closing_remarks": ["rate_added"]}',
+                            'FclFreightRate',
+                            'missing_rate',
+                            rate_stat.origin_port_id,
+                            rate_stat.destination_port_id,
+                            rate_stat.commodity,
+                            rate_stat.container_type,
+                            rate_stat.container_size,
+                        ))
+                        result = cursor.fetchone()
+                        if result:
+                            validity_ids = [item['id'] for item in result[0]]
+
+                    except Exception as e:
+                        print('!Exception', e)
+                
                 params = {
                     'origin_port_id':rate_stat.origin_port_id,
                     'destination_port_id':rate_stat.destination_port_id,
-                    # 'origin_region_id':,
-                    # 'destination_region_id':, ?? location api
+                    'origin_region_id': origin_region_id,
+                    'destination_region_id': destination_region_id,
                     'origin_country_id':rate_stat.origin_country_id,
                     'destination_country_id':rate_stat.destination_country_id,
                     'origin_continent_id':rate_stat.origin_continent_id,
                     'destination_continent_id':rate_stat.destination_continent_id,
                     'origin_trade_id':rate_stat.origin_trade_id,
                     'destination_trade_id':rate_stat.destination_trade_id,
-                    # 'origin_pricing_zone_map_id':, ?? post_fcl_freight_helper ... get_pricing_map_zone_ids ?? fcl_frieght_location_cluster / mapping tables 
-                    # 'destination_pricing_zone_map_id':, ?? use them to take map_zone_id 
+                    'origin_pricing_zone_map_id': zone_map_ids[0],
+                    'destination_pricing_zone_map_id': zone_map_ids[1], 
                     'rate_request_id': rate_stat.id,
                     # 'validity_ids':, ?? MS TEAMS
+                    'validity_ids': validity_ids,
                     'source': rate_stat.source,
                     'source_id': rate_stat.source_id,
                     'performed_by_id': rate_stat.performed_by_id,
@@ -532,6 +604,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     'commodity':rate_stat.commodity,
                     'containers_count':rate_stat.containers_count,
                     # 'importer_exporter_id': ?? if(source='%spot%) then soruce_id = spot_search_id (foreign key) {spot_searches, spot_searches_fcl_freight_rate_Service} somewhere there is importteer-exporter-id ,
+                    'importer_exporter_id': importer_exporter_id,
                     'closing_remarks': rate_stat.closing_remarks,
                     'closed_by_id': rate_stat.closed_by_id,
                     'request_type': rate_stat.request_type,
@@ -544,12 +617,12 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 
 def main():
-    # populate_from_rates = PopulateFclFreightRateStatistics()
+    populate_from_rates = PopulateFclFreightRateStatistics()
     # populate_from_rates.populate_active_rate_ids()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search()
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
-    # populate_from_rates.populate_fcl_request_statistics()
+    populate_from_rates.populate_fcl_request_statistics()
 
 if __name__ == '__main__':   
     main()
