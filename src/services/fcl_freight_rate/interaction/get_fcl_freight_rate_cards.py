@@ -740,7 +740,7 @@ def all_rates_predicted(freight_rates):
         if rate["mode"] == "predicted":
             predicted_rates_length += 1
             
-    if predicted_rates_length == freight_rates_length:
+    if predicted_rates_length == freight_rates_length != 0:
         return True
     else:
         return False
