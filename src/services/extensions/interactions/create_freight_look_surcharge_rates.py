@@ -107,6 +107,7 @@ def build_line_item(line_item_price,code):
         price = line_item_price[0:index]
         price = price.strip()
         price = float(price)
+        unit = 'per_gross_weight'
     else:
         price = line_item_price.strip()
         price = float(price)
