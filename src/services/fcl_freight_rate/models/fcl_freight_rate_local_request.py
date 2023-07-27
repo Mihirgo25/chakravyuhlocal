@@ -8,7 +8,7 @@ import datetime
 from configs.global_constants import PROD_DATA_OPERATIONS_ASSOCIATE_ROLE_ID
 from micro_services.client import *
 from database.rails_db import *
-from database.rails_db import get_shipping_line
+from database.rails_db import get_operators
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
 class BaseModel(Model):
@@ -108,7 +108,7 @@ class FclFreightRateLocalRequest(BaseModel):
         if self.preferred_shipping_line_ids:
             preferred_shipping_lines = []
             for shipping_line_id in self.preferred_shipping_line_ids:
-                shipping_line_data = get_shipping_line(id=shipping_line_id)
+                shipping_line_data = get_operators(id=shipping_line_id)
                 if len(shipping_line_data) == 0:
                     raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
                 preferred_shipping_lines.append(shipping_line_data[0])

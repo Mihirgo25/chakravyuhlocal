@@ -108,7 +108,7 @@ class FclFreightRateFreeDayRequest(BaseModel):
       if not self.shipping_line_id:
         return True
 
-      data = get_shipping_line(id=self.shipping_line_id)
+      data = get_operators(id=self.shipping_line_id)
       if len(data) > 0:
         data = data[0]
         if data.get('operator_type',None) == 'shipping_line':

@@ -9,10 +9,7 @@ from services.rate_sheet.interactions.validate_fcl_freight_object import validat
 from database.db_session import rd
 
 from fastapi.encoders import jsonable_encoder
-
-from datetime import datetime
-import dateutil.parser as parser
-from database.rails_db import get_shipping_line, get_organization
+from database.rails_db import get_organization
 from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
@@ -28,126 +25,10 @@ csv_options = {
     ),
 }
 
-processed_percent_hash = "process_percent"
-
-def processed_percent_key(params):
-    return f"rate_sheet_converted_file_processed_percent_{params['id']}"
-
-def set_processed_percent(processed_percent, params):
-    if rd:
-        rd.hset(processed_percent_hash, processed_percent_key(params), processed_percent)
-
-
-def get_processed_percent(params):
-    if rd:
-        try:
-            cached_response = rd.hget(processed_percent_hash, processed_percent_key(params))
-            return parse_numeric(cached_response)
-        except:
-            return 0
-
-
-def valid_hash(hash, present_fields=None, blank_fields=None):
-    if present_fields:
-        for field in present_fields:
-            if field not in hash:
-                return False
-            if not hash[field]:
-                return False
-    if blank_fields:
-        all_blank = True
-        for field in blank_fields:
-            if field in hash and hash[field]:
-                all_blank = False
-        return all_blank
-    return True
-
-def get_port_id(port_code):
-    try:
-        port_code = port_code.strip()
-    except:
-        port_code = port_code
-    filters =  {"filters":{"type": "seaport", "port_code": port_code, "status": "active"}}
-    try:
-        port_id =  maps.list_locations(filters)['list'][0]["id"]
-    except:
-        port_id = None
-    return port_id
-
-
-def get_airport_id(port_code, country_code):
-    try:
-        port_code = port_code.strip()
-    except:
-        port_code = port_code
-    filters =  {"filters":{"type": "airport", "port_code": port_code, "status": "active", "country_code": country_code}}
-    airport_id = maps.list_locations({'filters': str(filters)})['list'][0]["id"]
-    return airport_id
-
-
-def get_shipping_line_id(shipping_line_name):
-    try:
-        shipping_line_name = shipping_line_name.strip()
-        shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
-    except:
-        shipping_line_id = None
-    return shipping_line_id
-
-
-def convert_date_format(date):
-    if not date:
-        return date
-    parsed_date = parser.parse(date, dayfirst=True)
-    return datetime.strptime(str(parsed_date.date()), '%Y-%m-%d')
-
-
 
 def append_in_final_csv(csv, row):
     list_opt = list(row.values())
     csv.writerow(list_opt)
-
-
-def get_location_id(q, country_code = None, service_provider_id = None):
-    if not q:
-        return None
-    
-    pincode_filters =  {"type": "pincode", "postal_code": q, "status": "active"}
-    if country_code is not None:
-        pincode_filters['country_code'] = country_code
-    locations = maps.list_locations({'filters': pincode_filters})['list']
-    filters = {"type": "country", "country_code": q, "status": "active"}
-    if not locations:
-        locations = maps.list_locations({"filters": filters})['list']
-
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if not locations:
-        country_filters = {"type": "country", "country_code": q, "status": "active"}
-        if country_code is not None:
-            country_filters["country_code"]= country_code
-        locations = maps.list_locations({"filters": country_filters})['list']
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        seaport_filters['country_code'] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters":seaport_filters})['list']
-    airport_filters = {"type": "airport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        airport_filters['country_code'] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters":airport_filters})['list']
-    name_filters = {"name": q, "status": "active"}
-    if country_code is not None:
-        name_filters["country_code"] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters": name_filters})['list']
-    display_name_filters = {"display_name": q, "status": "active"}
-    if country_code is not None:
-        display_name_filters = maps.list_locations({"filters": display_name_filters})
-    # if not locations:
-    #     locations = common.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
-    #     return locations[0] if locations else None
-    return locations[0]["id"] if locations else None
-
 
 
 def get_location(location_code, type):
@@ -178,7 +59,7 @@ def get_importer_exporter_id(importer_exporter_name):
 
 
 def process_fcl_freight_local(params, converted_file, update):
-    valid_headers = ["trade_type", "port", "main_port", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency", "remark1", "remark2", "remark3"]
+    valid_headers = ["trade_type", "port", "main_port", "container_size", "container_type", "commodity", "shipping_line", "location", "code", "unit", "lower_limit", "upper_limit", "price", "currency","market_price", "remark1", "remark2", "remark3"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
 
@@ -202,7 +83,7 @@ def process_fcl_freight_local(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -219,7 +100,7 @@ def process_fcl_freight_local(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
@@ -250,12 +131,12 @@ def process_fcl_freight_local(params, converted_file, update):
                         (valid_hash(
                             row,
                             ["code", "unit", "price", "currency"],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit']
+                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'lower_limit', 'upper_limit', 'market_price']
                         )
                         or valid_hash(
                             row,
                             ['lower_limit', 'upper_limit', 'price', 'currency'],
-                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit']
+                            ['trade_type', 'port', 'main_port', 'container_type', 'container_size', 'commodity', 'shipping_line', 'location', 'code', 'unit','market_price']
                         )
                     )):
                 rows.append(row)
@@ -330,6 +211,7 @@ def create_fcl_freight_local_rate(
             'code': t.get('code'),
             'unit': t.get('unit'),
             'price': parse_numeric(t.get('price')),
+            'market_price': parse_numeric(t.get('market_price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []
@@ -428,7 +310,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers)&set(headers))!=len(headers):
+        if len(set(valid_headers)&set(headers))!=len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -445,7 +327,7 @@ def process_fcl_freight_free_day(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
@@ -877,7 +759,7 @@ def write_fcl_freight_freight_object(rows, csv, params,  converted_file, last_ro
     return object_validity
 
 def process_fcl_freight_freight(params, converted_file, update):
-    valid_headers = ["origin_port", "origin_main_port", "destination_port", "destination_main_port", "container_size", "container_type", "commodity", "shipping_line", "validity_start", "validity_end", "code", "unit", "price", "currency", "extend_rates", "weight_free_limit", "weight_lower_limit", "weight_upper_limit", "weight_limit_price", "weight_limit_currency", "destination_detention_free_limit", "destination_detention_lower_limit", "destination_detention_upper_limit", "destination_detention_price", "destination_detention_currency", "schedule_type", "remark1", "remark2", "remark3", "payment_term", "rate_type"]
+    valid_headers = ["origin_port", "origin_main_port", "destination_port", "destination_main_port", "container_size", "container_type", "commodity", "shipping_line", "validity_start", "validity_end", "code", "unit", "price", "currency", "market_price", "extend_rates", "weight_free_limit", "weight_lower_limit", "weight_upper_limit", "weight_limit_price", "weight_limit_currency", "destination_detention_free_limit", "destination_detention_lower_limit", "destination_detention_upper_limit", "destination_detention_price", "destination_detention_currency", "schedule_type", "remark1", "remark2", "remark3", "payment_term", "rate_type"]
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -902,7 +784,7 @@ def process_fcl_freight_freight(params, converted_file, update):
         input_file = csv.DictReader(file)
         headers = input_file.fieldnames
 
-        if len(set(valid_headers) & set(headers)) != len(headers):
+        if len(set(valid_headers) & set(headers)) != len(valid_headers):
             error_file = ['invalid header']
             csv_writer.writerow(error_file)
             invalidated = True
@@ -920,7 +802,7 @@ def process_fcl_freight_freight(params, converted_file, update):
             if invalidated:
                 break
             index += 1
-            if not ''.join(list(row.values())).strip():
+            if not ''.join([str(value) for value in row.values() if value is not None]).strip():
                 continue
             for k, v in row.items():
                 if v == '':
@@ -935,7 +817,6 @@ def process_fcl_freight_freight(params, converted_file, update):
             if valid_hash(row, present_field, blank_field):
                 if rows:
                     last_row = list(row.values())
-                    print(is_previous_rate_valid, '1', params)
                     # Create previous rate if previous rate was valid
                     if is_previous_rate_valid:
                         create_fcl_freight_freight_rate(
@@ -978,7 +859,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1010,7 +892,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1044,7 +927,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1078,7 +962,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1110,7 +995,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1144,7 +1030,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "weight_limit_currency",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
                 or valid_hash(
@@ -1178,7 +1065,8 @@ def process_fcl_freight_freight(params, converted_file, update):
                         "destination_detention_free_limit",
                         "schedule_type",
                         "payment_term",
-                        "rate_type"
+                        "rate_type",
+                        "market_price"
                     ],
                 )
             ):
@@ -1187,7 +1075,6 @@ def process_fcl_freight_freight(params, converted_file, update):
                 csv_writer.writerow(list_opt)
             else:
                 list_opt = []
-                print(is_previous_rate_valid, '2', params)
                 if rows and is_previous_rate_valid and is_main_rate_row:
                     last_row = list(row.values())
                     create_fcl_freight_freight_rate(
@@ -1230,7 +1117,6 @@ def process_fcl_freight_freight(params, converted_file, update):
         update.status = 'partially_complete'
         converted_file['status'] = 'partially_complete'
     
-    print(update.status,converted_file, '3')
 
     set_processed_percent(percent_completed, params)
     try:
@@ -1245,7 +1131,6 @@ def create_fcl_freight_freight_rate(
     from celery_worker import create_fcl_freight_rate_delay, celery_extend_create_fcl_freight_rate_data
     keys_to_extract = ['container_size', 'container_type', 'commodity', 'validity_start', 'validity_end', 'schedule_type', 'payment_term', 'rate_type']
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
-    print(object, '4')
     object['validity_start'] = convert_date_format(object.get('validity_start'))
     object['validity_end'] = convert_date_format(object.get('validity_end'))
     for port in [
@@ -1265,6 +1150,7 @@ def create_fcl_freight_freight_rate(
             'code': t.get('code'),
             'unit': t.get('unit'),
             'price': parse_numeric(t.get('price')),
+            'market_price': parse_numeric(t.get('market_price')),
             'currency': t.get('currency'),
             'remarks': [t.get('remark1'), t.get('remark2'), t.get('remark3')] if any([t.get('remark1'), t.get('remark2'), t.get('remark3')]) else None,
             'slabs': []

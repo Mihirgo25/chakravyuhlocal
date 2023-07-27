@@ -99,7 +99,7 @@ class FclFreightRateRequest(BaseModel):
         if self.preferred_shipping_line_ids:
             # preferred_shipping_lines = []
             # for shipping_line_id in self.preferred_shipping_line_ids:
-            shipping_line_data = get_shipping_line(id=self.preferred_shipping_line_ids)
+            shipping_line_data = get_operators(id=self.preferred_shipping_line_ids)
             if len(shipping_line_data) != len(self.preferred_shipping_line_ids):
                 raise HTTPException(status_code=400, detail='Invalid Shipping Line ID')
             self.preferred_shipping_lines = shipping_line_data

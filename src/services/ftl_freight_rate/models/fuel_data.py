@@ -13,7 +13,7 @@ class FuelData(BaseModel):
     currency = CharField(null=False)
     fuel_unit = CharField(null=False)
     fuel_type = CharField(null=False, index=True)
-    fuel_price = DecimalField(null=False,max_digits = 10, decimal_places= 6)
+    fuel_price = DecimalField(null=False,max_digits = 20, decimal_places= 10)
     created_at = DateTimeField(null=False, default=datetime.datetime.now())
     updated_at = DateTimeField(null=False, default=datetime.datetime.now())
 

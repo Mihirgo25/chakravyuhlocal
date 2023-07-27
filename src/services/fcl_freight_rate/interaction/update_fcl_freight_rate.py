@@ -1,6 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from database.db_session import db
 from datetime import datetime
 def create_audit(request, freight_id):
@@ -14,9 +15,11 @@ def create_audit(request, freight_id):
     audit_data['origin_local'] = request.get('origin_local')
     audit_data['destination_local'] = request.get('destination_local')
     audit_data['is_extended'] = request.get("is_extended")
-    ## remove this during prodution for testing I am taking some constant value for performed_by_id
-    request['performed_ by_id'] = '515a7d68-3527-422d-9fce-f63bec350d78'
-    #########
+    audit_data['sourced_by_id'] = request.get("sourced_by_id")
+    audit_data['procured_by_id'] = request.get("procured_by_id")
+    audit_data['payment_term'] = request.get("payment_term")
+    audit_data['schedule_type'] = request.get("schedule_type")
+
     FclFreightRateAudit.create(
         bulk_operation_id = request.get('bulk_operation_id'),
         action_name = 'update',
@@ -43,6 +46,8 @@ def execute_transaction_code(request):
   from celery_worker import update_multiple_service_objects
 
   validate_freight_params(request)
+  
+  request['line_items'] = get_normalized_line_items(request['line_items'])
 
   freight_object = FclFreightRate.select().where(FclFreightRate.id == request["id"]).first()
 
@@ -64,13 +69,13 @@ def execute_transaction_code(request):
 
   if request.get("origin_local") and "line_items" in request["origin_local"]:
     freight_object.origin_local = {
-        "line_items": request["origin_local"]["line_items"]
+        "line_items": get_normalized_line_items(request["origin_local"]["line_items"])
     }
   else:
     freight_object.origin_local = { "line_items": [] }
   if request.get("destination_local") and "line_items" in request["destination_local"]:
     freight_object.destination_local = {
-        "line_items": request["destination_local"]["line_items"]
+        "line_items": get_normalized_line_items(request["destination_local"]["line_items"])
     }
   else:
     freight_object.destination_local = { "line_items": [] }
@@ -90,6 +95,7 @@ def execute_transaction_code(request):
 
   freight_object.sourced_by_id = request.get("sourced_by_id")
   freight_object.procured_by_id = request.get("procured_by_id")
+  freight_object.rate_not_available_entry = request.get("rate_not_available_entry")
   
   freight_object.validate_before_save()
 
