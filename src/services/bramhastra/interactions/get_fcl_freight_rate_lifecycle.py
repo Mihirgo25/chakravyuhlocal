@@ -107,17 +107,17 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
         SUM(checkout_count) as checkout,
         FLOOR((1-SUM(checkout_count)/SUM(spot_search_count)),2)*100 AS checkoout_percentage,
         SUM(shipment_confirmed_by_service_provider_count) AS shipment_confirmed_by_service_provider,
-        FLOOR((1-SUM(shipment_confirmed_by_service_provider_count)/SUM(checkout_count)),2) AS confirmed_booking_percentage,
+        FLOOR((1-SUM(shipment_confirmed_by_service_provider_count)/SUM(checkout_count)),2)*100 AS confirmed_booking_percentage,
         SUM(revenue_desk_visit_count) AS revenue_desk_visit,
-        FLOOR((1-SUM(revenue_desk_visit_count)/SUM(shipment_confirmed_by_service_provider_count)),2) AS revenue_desk_visit_percentage,
+        FLOOR((1-SUM(revenue_desk_visit_count)/SUM(shipment_confirmed_by_service_provider_count)),2)*100 AS revenue_desk_visit_percentage,
         SUM(so1_visit_count) AS so1_visit,
-        FLOOR((1-SUM(so1_visit_count)/SUM(revenue_desk_visit_count)),2) AS so1_visit_percentage,
+        FLOOR((1-SUM(so1_visit_count)/SUM(revenue_desk_visit_count)),2)*100 AS so1_visit_percentage,
         SUM(dislikes_count) as dislikes,
-        FLOOR((1-SUM(dislikes_count)/SUM(spot_search_count)),2) AS dislikes_percentage,
+        FLOOR((1-SUM(dislikes_count)/SUM(spot_search_count)),2)*100 AS dislikes_percentage,
         SUM(feedback_recieved_count) AS feedback_recieved,
-        FLOOR((1-SUM(feedback_recieved_count)/SUM(dislikes_count)),2) AS feedback_recieved_percentage,
+        FLOOR((1-SUM(feedback_recieved_count)/SUM(dislikes_count)),2)*100 AS feedback_recieved_percentage,
         SUM(dislikes_rate_reverted_count) as dislikes_rate_reverted,
-        FLOOR((1-SUM(dislikes_rate_reverted_count)/SUM(feedback_recieved_count)),2) AS dislikes_rate_reverted_percentage
+        FLOOR((1-SUM(dislikes_rate_reverted_count)/SUM(feedback_recieved_count)),2)*100 AS dislikes_rate_reverted_percentage
         FROM brahmastra.fcl_freight_rate_statistics
         """
     ]

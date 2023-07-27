@@ -34,7 +34,7 @@ def get_accuracy(filters, where):
         queries.append(" WHERE ")
         queries.append(where)
 
-    queries.append(""") GROUP BY mode,day ORDER BY day,mode;""")
+    queries.append(""") WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY mode,day ORDER BY day,mode;""")
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
