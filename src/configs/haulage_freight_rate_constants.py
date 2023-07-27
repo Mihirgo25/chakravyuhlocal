@@ -1,3 +1,5 @@
+
+from configs.global_constants import HAZ_CLASSES
 DEFAULT_PERMISSIBLE_CARRYING_CAPACITY = 54.90
 
 DESTINATION_TERMINAL_CHARGES_INDIA = 15
@@ -54,6 +56,8 @@ DEFAULT_MAX_WEIGHT_LIMIT = {"20": 18, "40": 30, "40HC": 32.5, "45HC": 32.68}
 DEFAULT_HAULAGE_TYPE = "merchant"
 
 DEFAULT_TRIP_TYPE = "one_way"
+
+DEFAULT_RATE_TYPE = 'market_place'
 
 CONTAINER_SIZE_FACTORS = {"20": 1, "40": 1.1, "40HC": 1.15, "45HC": 1.2}
 
@@ -153,4 +157,82 @@ GENERALIZED_WEIGHT_OF_ECONOMY = 0.25
 
 EUROPE_INFLATION_RATES = [0.0018,0.0103,0.0185,0.0111,0.0048,0.0164,0.0522]
 
+LOCATION_PAIR_HIERARCHY = {
+    'pincode:pincode' : 1,
+    'seaport:seaport' : 2,
+    'pincode:seaport' : 3,
+    'seaport:pincode' : 4,
+    'pincode:city' : 5,
+    'seaport:city' : 6,
+    'city:pincode' : 7,
+    'city:seaport' : 8,
+    'city:city' : 9,
+    'pincode:country' : 10,
+    'seaport:country' : 11,
+    'country:pincode' : 12,
+    'country:seaport' : 13,
+    'city:country' : 14,
+    'country:city' : 15,
+    'country:country' : 16,
+
+}
+HAULAGE_FREIGHT_TYPES = ['carrier', 'merchant']
+
+TRANSPORT_MODES = ['rail', 'barge', 'trailer']
+
+TRAILER_TYPES = ['flat_bed', 'semi_flat_bed', 'xl_bed']
+
+TRIP_TYPES = ['one_way', 'round_trip']
+
+COMMODITY = ['general', 'dangerous', 'temp_controlled']
+
+HAULAGE_CONTAINER_TYPE_COMMODITY_MAPPINGS = {
+    'standard':  [None] + HAZ_CLASSES + COMMODITY,
+    'refer':  [None] + COMMODITY,
+    'open_top':  [None] + COMMODITY,
+    'open_side':  [None] + COMMODITY,
+    'flat_rack':  [None] + COMMODITY,
+    'iso_tank':  [None] + HAZ_CLASSES + COMMODITY,
+    'conventional_end_opening':  COMMODITY,
+    'high_cube_end_opening':  COMMODITY,
+    'side_access':  COMMODITY,
+    'refrigerated':  COMMODITY,
+    'flat_rack_collapsible':  COMMODITY,
+    'platform':  COMMODITY,
+    'tank':  COMMODITY,
+    'high_cube_refrigerated':  COMMODITY,
+    'ss_tank':  COMMODITY,
+    'ms_tank':  COMMODITY,
+    'ss_volve_tank':  COMMODITY,
+    'ms_volve_tank':  COMMODITY,
+    'ss_blank_tank':  COMMODITY,
+    'ms_blank_tank':  COMMODITY,
+    'ss_hc_tank':  COMMODITY,
+    'ms_hc_tank':  COMMODITY,
+    'ss_blank_hc_tank':  COMMODITY,
+    'ms_blank_hc_tank':  COMMODITY,
+    'ss_normal_tank':  COMMODITY,
+    'ms_normal_tank':  COMMODITY
+  }
+
+RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
+
+FEEDBACK_SOURCES = ['spot_search', 'checkout']
+
+POSSIBLE_FEEDBACKS = ['unsatisfactory_rate']
+
+FEEDBACK_TYPES = ['liked', 'disliked']
+
+REQUEST_SOURCES = ['spot_search']
+
 SOUTH_AMERICA_INFLATION_FACTOR = 0.89
+
+PREDICTED_PRICE_SERVICE_PROVIDER = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
+
+PREDICTION_HAULAGE_TYPE = 'merchant'
+
+HAULAGE_PREDICTION_TRANSPORT_MODES = ['rail']
+
+TRAILER_PREDICTION_TRANSPORT_MODES = ['trailer']
+
+PREDICTION_TRAILER_TYPE = 'flat_bed'
