@@ -256,6 +256,41 @@ ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (rate_id)
 ORDER BY (rate_id,version);
 
+CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
+(
+    id UInt256,
+    origin_port_id UUID,
+    destination_port_id UUID,
+    origin_region_id UUID,
+    destination_region_id UUID,
+    origin_continent_id UUID,
+    destination_continent_id UUID,
+    origin_trade_id UUID,
+    destination_trade_id  UUID,
+    origin_pricing_zone_map_id  UUID,
+    destination_pricing_zone_map_id  UUID,
+    rate_request_id  UUID,
+    validity_ids  Array(String),
+    source  FixedString(256),
+    source_id  UUID,
+    performed_by_id  UUID,
+    performed_by_org_id  UUID,
+    importer_exporter_id  UUID,
+    closing_remarks  Array(String),
+    closed_by_id  UUID,
+    request_type  FixedString(256),
+    container_size  FixedString(256),
+    commodity  FixedString(256),
+    containers_count  Int8,
+    is_rate_reverted  Bool,
+    created_at  DateTime DEFAULT now(),
+    updated_at  DateTime DEFAULT now(),
+    sign  Int8 DEFAULT 1,
+    version Int8 DEFAULT 1
+)
+ENGINE = VersionedCollapsingMergeTree(sign, version)
+PRIMARY KEY ()
+ORDER BY (version);
 
 CREATE TABLE brahmastra.air_freight_rate_statistics
 (
