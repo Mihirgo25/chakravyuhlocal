@@ -98,7 +98,9 @@ class FclFreightRateStatistic(BaseModel):
     rate_deviation_from_booking_on_cluster_base_rate = FloatField(default=0)
     rate_deviation_from_latest_booking = FloatField(default=0)
     average_booking_rate = FloatField(default=-1)
-    rate_request_id = UUIDField(null=True)
+    parent_rate_id = UUIDField(null=True)
+    source = UUIDField(null=True)
+    source_id = UUIDField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.utcnow()

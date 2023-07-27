@@ -87,7 +87,9 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     rate_deviation_from_booking_on_cluster_base_rate Float32 DEFAULT 0,
     rate_deviation_from_latest_booking Float32 DEFAULT 0,
     average_booking_rate Float64 DEFAULT -1,
-    rate_request_id UUID
+    parent_rate_id UUID
+    source String
+    source_id UUID
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id)

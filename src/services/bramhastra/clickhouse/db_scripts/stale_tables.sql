@@ -85,7 +85,9 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
     rate_deviation_from_booking_on_cluster_base_rate Float32 DEFAULT 0,
     rate_deviation_from_latest_booking Float32 DEFAULT 0,
     average_booking_rate Float64 DEFAULT -1,
-    rate_request_id UUID
+    parent_rate_id UUID
+    source String
+    source_id UUID
 )
 ENGINE = File(CSV);
 
