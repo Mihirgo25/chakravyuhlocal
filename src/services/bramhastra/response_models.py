@@ -20,16 +20,15 @@ class RateAccuracyChart(BaseModel):
 
 
 class RateDeviationChart(BaseModel):
-    id: str
-    date: datetime
-    value: float
+    range: int
+    count: int
 
 
 class FclFreightRateCharts(BaseModel):
-    deviation: list[RateDeviationChart]
-    rate_count_with_deviation_more_than_30: int
     accuracy: list[RateAccuracyChart]
-    drilldown: float
+    deviation: list[RateDeviationChart]
+    rate_count_with_deviation_more_than_30: float
+    spot_search_to_checkout_count: int
 
 
 class FclFreightRateBooking(BaseModel):
@@ -59,36 +58,30 @@ class FclFreightRates(BaseModel):
     counts_with_deviation_more_than_x: int
 
 
-class DrillDown(BaseModel):
-    key: str
-    count: int
-    drop_off: float
-
-    @validator("drop_off")
-    def validate_drop_off(cls, v):
-        check_percentages(v)
-        return v
+class LifeCycle(BaseModel):
+    action_type: str
+    rates_count: int
+    drop: float
 
 
-class FclFreightRateDrillDownResponse(BaseModel):
-    spot_searches_count: int
-    array_1: list[DrillDown]
-    array_2: list[DrillDown]
-    array_3: list[DrillDown]
+class FclFreightRateLifeCycleResponse(BaseModel):
+    searches: int
+    cards: list[LifeCycle]
 
-class FclFreightMapViewResponse(BaseModel):
+
+class DefaultList(BaseModel):
     list: list[dict]
     page: int
     page_limit: int
     total_pages: int
     total_count: int
-    
-    
+
 
 class World(BaseModel):
     country_id: str
     rates_count: int
     country_name: str
-    
+
+
 class FclFreightRateWorldResponse(BaseModel):
     world_statistics: list[World]
