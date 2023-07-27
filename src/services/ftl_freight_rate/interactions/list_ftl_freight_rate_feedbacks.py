@@ -4,6 +4,7 @@ from playhouse.shortcuts import model_to_dict
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from database.rails_db import get_partner_user_experties, get_organization_service_experties
 from datetime import datetime
 import concurrent.futures, json
@@ -12,7 +13,7 @@ from math import ceil
 from micro_services.client import spot_search, partner
 from database.rails_db import get_organization
 
-possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by_id', 'closed_by_id', 'status', 'origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id']
+possible_direct_filters = ['feedback_type', 'performed_by_id', 'closed_by_id', 'status', 'origin_location_id', 'destination_location_id', 'origin_country_id', 'destination_country_id', 'service_provider_id']
 possible_indirect_filters = ['relevant_supply_agent', 'validity_start_greater_than', 'validity_end_less_than', 'similar_id']
 
 def list_ftl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True):
@@ -60,12 +61,10 @@ def apply_relevant_supply_agent_filter(query, filters):
 
 def apply_validity_start_greater_than_filter(query, filters):
     query = query.where(FtlFreightRateFeedback.created_at.cast('date') >= datetime.fromisoformat(filters['validity_start_greater_than']).date())
-
     return query
 
 def apply_validity_end_less_than_filter(query, filters):
     query = query.where(FtlFreightRateFeedback.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
-
     return query
 
 def apply_similar_id_filter(query, filters):
@@ -78,8 +77,23 @@ def apply_similar_id_filter(query, filters):
 
 def get_data(query, spot_search_details_required):
     query = query.select()
-    data = jsonable_encoder(list(query.dicts()))
-
+    data = json_encoder(list(query.dicts()))
+    
+    ftl_freight_rate_ids = []
+    for rate in data:
+        if rate['ftl_freight_rate_id']:
+            ftl_freight_rate_ids.append((rate['ftl_freight_rate_id']))
+        if rate.get('reverted_rate_id'):
+            ftl_freight_rate_ids.append((rate['reverted_rate_id']))
+    ftl_freight_rates = FtlFreightRate.select(FtlFreightRate.id,
+                                            FtlFreightRate.origin_location,
+                                            FtlFreightRate.destination_location,
+                                            FtlFreightRate.commodity,
+                                            FtlFreightRate.line_items,
+            ).where(FtlFreightRate.id.in_(ftl_freight_rate_ids))
+    ftl_freight_rates = json_encoder(list(ftl_freight_rates.dicts()))
+    ftl_freight_rate_mappings = {k['id']: k for k in ftl_freight_rates}
+    
     service_provider_ids = []
     for object in data:
         service_provider_ids.append(object.get('service_provider_id'))
@@ -100,6 +114,14 @@ def get_data(query, spot_search_details_required):
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
     for object in data:
+        rate = ftl_freight_rate_mappings.get((object.get('ftl_freight_rate_id')))
+        if rate:
+            object["origin_location"] = rate.get("origin_location")
+            object["destination_location"] = rate.get("destination_location")
+            object["commodity"] = rate.get("commodity")
+            object["price"] = sum(p['price'] for p in rate.get("line_items")) if rate.get("line_items") else None
+            object["currency"] = rate["line_items"][0].get('currency') if rate["line_items"] else None
+
         service_provider = object.get('service_provider_id', None)
         if service_provider:
             object['service_provider'] = service_providers_hash.get(service_provider)
@@ -109,6 +131,7 @@ def get_data(query, spot_search_details_required):
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
         new_data.append(object)
+    
     return new_data
 
 def get_pagination_data(query, page, page_limit):

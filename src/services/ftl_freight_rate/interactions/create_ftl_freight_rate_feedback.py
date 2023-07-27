@@ -19,22 +19,22 @@ def execute_transaction_code(request):
     
     row = {
         'status': 'active',
-        'ftl_freight_rate_id': request['rate_id'],
-        'source': request['source'],
-        'source_id': request['source_id'],
-        'performed_by_id': request['performed_by_id'],
-        'performed_by_type': request['performed_by_type'],
-        'performed_by_org_id': request['performed_by_org_id']
+        'ftl_freight_rate_id': request.get('rate_id'),
+        'source': request.get('source'),
+        'source_id': request.get('source_id'),
+        'performed_by_id': request.get('performed_by_id'),
+        'performed_by_type': request.get('performed_by_type'),
+        'performed_by_org_id': request.get('performed_by_org_id')
     }
 
     feedback = FtlFreightRateFeedback.select().where(
         FtlFreightRateFeedback.status == 'active',
-        FtlFreightRateFeedback.ftl_freight_rate_id == request['rate_id'],
-        FtlFreightRateFeedback.source == request['source'],
-        FtlFreightRateFeedback.source_id == request['source_id'],
-        FtlFreightRateFeedback.performed_by_id == request['performed_by_id'],
-        FtlFreightRateFeedback.performed_by_type == request['performed_by_type'],
-        FtlFreightRateFeedback.performed_by_org_id == request['performed_by_org_id']).first()
+        FtlFreightRateFeedback.ftl_freight_rate_id == request.get('rate_id'),
+        FtlFreightRateFeedback.source == request.get('source'),
+        FtlFreightRateFeedback.source_id == request.get('source_id'),
+        FtlFreightRateFeedback.performed_by_id == request.get('performed_by_id'),
+        FtlFreightRateFeedback.performed_by_type == request.get('performed_by_type'),
+        FtlFreightRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
     
     if not feedback:
         feedback = FtlFreightRateFeedback(**row)
@@ -45,7 +45,7 @@ def execute_transaction_code(request):
     try:
         feedback.save()
     except:
-        raise
+        raise HTTPException(status_code=400, detail='Feedback could not be saved')
 
     create_audit(request, feedback)
 
@@ -59,7 +59,6 @@ def get_create_params(request):
         'preferred_freight_rate_currency': request.get('preferred_freight_rate_currency'),
         'feedback_type': request.get('feedback_type'),
         'booking_params': request.get('booking_params'),
-        'status': 'active',
         'origin_location_id':request.get('origin_location_id'),
         'origin_country_id': request.get('origin_country_id'),
         'destination_location_id': request.get('destination_location_id'),
@@ -77,6 +76,6 @@ def create_audit(request, feedback):
         object_type = 'FtlFreightRateFeedback',
         object_id = feedback.id,
         action_name = 'create',
-        performed_by_id = request['performed_by_id'],
+        performed_by_id = request.get('performed_by_id'),
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
     )

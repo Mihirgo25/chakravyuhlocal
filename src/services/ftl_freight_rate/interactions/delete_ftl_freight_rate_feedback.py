@@ -11,17 +11,17 @@ def execute_transaction_code(request):
     objects = find_objects(request)
 
     if not objects:
-      raise HTTPException(status_code=400, detail="Freight rate feedback id not found")
+      raise HTTPException(status_code=400, detail="Ftl Freight rate feedback id not found")
 
     for obj in objects:
         obj.status = 'inactive'
-        obj.closed_by_id = request['performed_by_id']
+        obj.closed_by_id = request.get('performed_by_id')
         obj.closing_remarks = request.get('closing_remarks')
 
         try:
             obj.save()
         except:
-            raise HTTPException(status_code=500, detail="Freight rate local deletion failed")
+            raise HTTPException(status_code=500, detail="Ftl Freight rate Feedback deletion failed")
 
         create_audit(request, obj.id)
 
@@ -38,7 +38,7 @@ def find_objects(request):
 def create_audit(request, freight_rate_feedback_id):
     FtlFreightRateAudit.create(
     action_name = 'delete',
-    performed_by_id = request['performed_by_id'],
+    performed_by_id = request.get('performed_by_id'),
     data = {key:value for key,value in request.items() if key != freight_rate_feedback_id},    
     object_id = freight_rate_feedback_id,
     object_type = 'FtlFreightRateFeedback'

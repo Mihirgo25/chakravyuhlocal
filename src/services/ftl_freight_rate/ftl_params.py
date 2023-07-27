@@ -230,14 +230,14 @@ class CreateFtlFreightRateFeedback(BaseModel):
     destination_location_id: str = None
     destination_country_id: str = None
     service_provider_id: str = None
+    origin_location: dict = None
+    destination_location: dict = None
 
 
 class DeleteFtlFreightRateFeedback(BaseModel):
     ftl_freight_rate_feedback_ids: List[str]
     closing_remarks: List[str] = []
     performed_by_id: str = None
-    performed_by_type: str = None
-
 
 class DeleteRate(BaseModel):
     filters: dict = {}

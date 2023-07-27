@@ -5,6 +5,7 @@ from datetime import datetime
 from database.rails_db import list_shipment_flash_booking_rates
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from fastapi.encoders import jsonable_encoder
+import json
 
 def get_ftl_freight_rate_min_max_validity_dates(request): 
     ftl_frieght_rates = list_ftl_freight_rates(filters = get_ftl_freight_rate_params(request), page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT)['list']
@@ -35,6 +36,13 @@ def get_ftl_freight_rate_params(request):
         'rate_not_available_entry': False,
         'is_line_items_error_messages_present': False
     }
+    
+    if request.get('truck_type'):
+        truck_type = request.get('truck_type')
+        if type(truck_type) != list:
+            truck_type = json.loads(truck_type)
+        ftl_freight_rate_params['truck_type'] = truck_type
+
     origin_location_id = request.get('origin_location_id')
     destination_location_id = request.get('destination_location_id')
     

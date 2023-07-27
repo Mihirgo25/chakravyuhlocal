@@ -322,7 +322,6 @@ def delete_ftl_freight_rates_feedback_api(request: DeleteFtlFreightRateFeedback,
         return JSONResponse(status_code=resp["status_code"], content=resp)
     if resp["isAuthorized"]:
         request.performed_by_id = resp["setters"]["performed_by_id"]
-        request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_ftl_freight_rate_feedback(request.dict(exclude_none=True))
         return JSONResponse(status_code=200, content=json_encoder(delete_rate))
@@ -579,6 +578,7 @@ def get_ftl_freight_rate_min_max_validity_dates_api(
     shipment_id: str,
     importer_exporter_id: str,
     trip_type: str,
+    truck_type: str,
     origin_location_id: str = None,
     destination_location_id: str = None,
     commodity: str = None,
@@ -596,7 +596,8 @@ def get_ftl_freight_rate_min_max_validity_dates_api(
         'commodity': commodity,
         'importer_exporter_id': importer_exporter_id,
         'cargo_readiness_date': cargo_readiness_date,
-        'preferred_currency': preferred_currency
+        'preferred_currency': preferred_currency,
+        'truck_type': truck_type
     }
     try:
         data = get_ftl_freight_rate_min_max_validity_dates(request)
