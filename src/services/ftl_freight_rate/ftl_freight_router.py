@@ -250,7 +250,7 @@ def create_ftl_freight_rate_api(request: CreateFtlFreightRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_ftl_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -270,7 +270,7 @@ def create_ftl_freight_rate_request_api(
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = create_ftl_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -291,7 +291,7 @@ def update_ftl_freight_rate_request_api(
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data = update_ftl_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -309,7 +309,7 @@ def create_ftl_freight_rate_feedback_api(request: CreateFtlFreightRateFeedback, 
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate_id = create_ftl_freight_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate_id))
+        return JSONResponse(status_code=200, content=json_encoder(rate_id))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -325,7 +325,7 @@ def delete_ftl_freight_rates_feedback_api(request: DeleteFtlFreightRateFeedback,
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_ftl_freight_rate_feedback(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -389,7 +389,7 @@ def update_ftl_freight_rate_api(request: UpdateFtlFreightRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = update_ftl_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -405,7 +405,7 @@ def delete_ftl_freight_rate_request_api(request: DeleteFtlFreightRateRequest, re
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_ftl_freight_rate_request(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -421,7 +421,7 @@ def create_ftl_freight_rate_not_available_data(request: CreateFtlFreightRateNotA
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         rate = create_ftl_freight_rate_not_available(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -434,7 +434,7 @@ def update_ftl_freight_rate_platform_prices_api(request:UpdateFtlFreightRatePlat
         return JSONResponse(status_code=resp["status_code"], content=resp)
     try:
         rate = update_ftl_freight_rate_platform_prices(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -450,7 +450,7 @@ def delete_ftl_freight_rate_api(request: DeleteFtlFreightRate, resp: dict = Depe
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         delete_rate = delete_ftl_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(delete_rate))
+        return JSONResponse(status_code=200, content=json_encoder(delete_rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -501,7 +501,7 @@ def get_ftl_freight_rate_visibility_api(
     }
     try:
         data = get_ftl_freight_rate_visibility(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -527,7 +527,7 @@ def get_ftl_freight_rate_api(origin_location_id: str = None,destination_location
             'truck_body_type': truck_body_type
         }
         rate = get_ftl_freight_rate(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(rate))
+        return JSONResponse(status_code=200, content=json_encoder(rate))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -549,7 +549,7 @@ def list_ftl_freight_rate_feedbacks_api(
 
     try:
         data = list_ftl_freight_rate_feedbacks(filters, spot_search_details_required, page_limit, page, performed_by_id, is_stats_required)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -567,7 +567,7 @@ def create_ftl_freight_rate_bulk_operation_data(request:CreateBulkOperation, res
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data=create_ftl_freight_rate_bulk_operation(request.dict(exclude_none=True))
-        return JSONResponse(content=jsonable_encoder(data))
+        return JSONResponse(content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -600,7 +600,7 @@ def get_ftl_freight_rate_min_max_validity_dates_api(
     }
     try:
         data = get_ftl_freight_rate_min_max_validity_dates(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(data))
+        return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -666,7 +666,7 @@ def get_ftl_freight_rate_cards_api(
                         'predicted_rate':predicted_rate
         }
         list = get_ftl_freight_rate_cards(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(list))
+        return JSONResponse(status_code=200, content=json_encoder(list))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -683,7 +683,7 @@ def extend_ftl_freight_rates_data(request:ExtendFtlFreightRates, resp: dict = De
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         data=extend_ftl_freight_rate(request.dict(exclude_none=True))
-        return JSONResponse(content=jsonable_encoder(data))
+        return JSONResponse(content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
