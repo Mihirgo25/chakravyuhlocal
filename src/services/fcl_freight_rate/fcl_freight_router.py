@@ -973,7 +973,6 @@ def list_fcl_freight_local_suggestions_data(
 
 @fcl_freight_router.get("/list_fcl_freight_rate_free_days")
 def list_fcl_freight_rate_free_days_data(
-    request: Request,
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
