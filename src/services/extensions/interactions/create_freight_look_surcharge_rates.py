@@ -13,7 +13,6 @@ def create_freight_look_surcharge_rate(request):
     new_rates = rates
     proper_json_rates = create_proper_json(new_rates)
     all_port_codes_hash = {}
-    surcharge_list = []
     destination_port_code = None
     if destination:
         destination_port_code = destination.split('-')[0].strip()
@@ -29,13 +28,12 @@ def create_freight_look_surcharge_rate(request):
     locations = get_locations(destination, all_port_codes=all_port_codes)
     for rate in proper_json_rates:
         rate['destination_airport_id'] = locations[destination_port_code]['id']
-        # try:
-        create_surcharge_rate_api(rate=rate, locations=locations,surcharge_list=surcharge_list)
-        # except Exception as e:
-            # print(e)
-    print(surcharge_list)
+        try:
+            create_surcharge_rate_api(rate=rate, locations=locations)
+        except Exception as e:
+            print(e)
 
-def create_surcharge_rate_api(rate,locations,surcharge_list):
+def create_surcharge_rate_api(rate,locations):
     airline = None
     airline_id = DEFAULT_AIRLINE_ID
     airline_name = 'deafult'
@@ -46,7 +44,6 @@ def create_surcharge_rate_api(rate,locations,surcharge_list):
             airline = maps.list_operators({'filters': {'q': rate['A. Name'], 'operator_type': 'airline' }})['list'][0]
             airline_hash[rate['A. Name'].lower()] = airline
         except Exception as e:
-            print(rate['A. Name'])
             print(e)
        
     if airline and 'id' in airline:
@@ -54,7 +51,6 @@ def create_surcharge_rate_api(rate,locations,surcharge_list):
     surcharge_params = format_surcharge_rate(rate,locations,airline_id)
     if surcharge_params and surcharge_params.get('line_items'):
         surcharge = create_air_freight_rate_surcharge(surcharge_params)
-        surcharge_list.append(surcharge['id'])
 
 
 

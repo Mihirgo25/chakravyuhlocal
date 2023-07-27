@@ -1,4 +1,4 @@
-from configs.env import RUBY_AUTHTOKEN,RUBY_AUTHSCOPE,RUBY_AUTHSCOPEID,RUBY_ADDRESS_URL
+from configs.env import RUBY_AUTHTOKEN,RUBY_AUTHSCOPE,RUBY_AUTHSCOPEID
 from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from configs.env import APP_ENV
@@ -14,16 +14,13 @@ class MapsApiClient:
         })
 
     def list_locations(self, data={}):
-        if True:
+        if APP_ENV == "production":
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
-
-            self.client.url.set('https://api.cogoport.com/location')
-            t = self.client.request('GET', 'list_locations', {},data)
-            self.client.url.set(RUBY_ADDRESS_URL)
-            return t
+            return self.client.request('GET', 'list_locations', {}, data)
+        return self.client.request('GET', 'list_locations', data, {})
 
     def list_location_cluster(self,data={}):
         if APP_ENV == "production":
