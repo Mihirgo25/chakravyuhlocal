@@ -95,7 +95,7 @@ class AirFreightWeightSlab(Connection):
         self.validity_id = validity_id
         self.lower_limit = lower_limit
         self.upper_limit = upper_limit
-        self.fcl_freight_rate_statistics_identifier = "_".join([rate_id, validity_id, str(lower_limit), str(upper_limit)])
+        self.air_freight_rate_statistics_identifier = "_".join([rate_id, validity_id, str(lower_limit), str(upper_limit)])
 
 
 
