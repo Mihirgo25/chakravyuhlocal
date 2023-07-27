@@ -133,6 +133,8 @@ celery.conf.beat_schedule = {
     }
 
 }
+celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_cost_booking_estimation(self):
@@ -355,8 +357,8 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             pass
         else:
             raise self.retry(exc= exc)
+        
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-
 def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action()")
@@ -692,7 +694,6 @@ def create_air_freight_rate_surcharge_delay(self, request):
         else:
             raise self.retry(exc= exc)
 
-    
 
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
 def extend_air_freight_rates(self, rate, source = 'rate_extension'):
