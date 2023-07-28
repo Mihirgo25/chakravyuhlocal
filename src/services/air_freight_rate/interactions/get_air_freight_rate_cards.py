@@ -337,7 +337,7 @@ def discard_noneligible_airlines(freight_rates):
 def get_matching_surchages(freight_rate,surcharges):
     cogo_express = None
     for surcharge in surcharges:
-        if surcharge['service_provider_id'] == COGOXPRESS:
+        if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == COGOXPRESS:
             cogo_express = surcharge['line_items']
         if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == freight_rate['service_provider_id']:
             return {'line_items':surcharge['line_items']}
