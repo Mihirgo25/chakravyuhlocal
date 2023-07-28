@@ -6,6 +6,7 @@ from fastapi import HTTPException
 import datetime
 from database.rails_db import *
 from micro_services.client import common, maps, spot_search
+from fastapi.encoders import jsonable_encoder
 from configs.fcl_freight_rate_constants import RATE_FEEDBACK_RELEVANT_ROLE_ID
 
 class UnknownField(object):
@@ -270,6 +271,21 @@ class FclFreightRateFeedback(BaseModel):
         self.send_create_notifications_to_supply_agents(supply_agent_notification_params)
 
         return supply_agents_user_ids
+    
+    def send_closed_notifications_to_user(self,request):
+
+        feedback_ids=request.get('fcl_freight_rate_feedback_ids')
+
+        for id in feedback_ids:
+            freight_query=FclFreightRateFeedback.select().where(FclFreightRateFeedback.id==id)
+            feedback_rate = jsonable_encoder(list(freight_query.dicts()))
+            params={
+                'spot_search_id': feedback_rate[0]['source_id'],
+                'update_to_id': request['performed_by_id'],
+                'update_to_type': request['performed_by_type']
+            }
+            print(params)
+            common.send_spot_search_rate_update(params)
 
 
     def send_closed_notifications_to_sales_agent(self):

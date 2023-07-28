@@ -313,6 +313,16 @@ def send_closed_notifications_to_sales_agent_feedback(self, object):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_closed_notifications_to_user(self, request, object):
+    try:
+        object.send_closed_notifications_to_user(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
