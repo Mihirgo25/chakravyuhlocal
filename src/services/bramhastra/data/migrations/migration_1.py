@@ -154,7 +154,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             for rate in rates: 
                 for validity in rate['validities']:
                     count+= 1
-                    rate = json.loads(rate)['rate_obj']
+                    
                     identifier = '{}_{}'.format(rate['id'], validity['id'])
                           
                     rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
@@ -618,11 +618,11 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    # populate_from_rates.populate_active_rate_ids()
+    populate_from_rates.populate_active_rate_ids()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search()
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
-    populate_from_rates.populate_fcl_request_statistics()
+    # populate_from_rates.populate_fcl_request_statistics()
 
 if __name__ == '__main__':   
     main()

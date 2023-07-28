@@ -11,13 +11,13 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     origin_port_id UUID,
     destination_port_id UUID,
     origin_main_port_id UUID  ,
-    destination_main_port_id UUID  ,
+    destination_main_port_id UUID ,
+    origin_region_id UUID ,
+    destination_region_id UUID,
     origin_country_id UUID,
     destination_country_id UUID,
     origin_continent_id UUID,
     destination_continent_id UUID,
-    origin_region_id UUID ,
-    destination_region_id UUID,
     origin_trade_id UUID,
     destination_trade_id UUID ,
     origin_pricing_zone_map_id UUID  ,
@@ -87,13 +87,13 @@ CREATE TABLE brahmastra.fcl_freight_rate_statistics
     rate_deviation_from_booking_on_cluster_base_rate Float32 DEFAULT 0,
     rate_deviation_from_latest_booking Float32 DEFAULT 0,
     average_booking_rate Float64 DEFAULT -1,
-    parent_rate_id UUID
-    source String
+    parent_rate_id UUID,
+    source String,
     source_id UUID
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id)
-ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id,rate_deviation_from_booking_rate,updated_at);
+ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id,rate_id,validity_id,rate_deviation_from_booking_rate);
 
 
 CREATE TABLE brahmastra.fcl_freight_rate_request_statistics

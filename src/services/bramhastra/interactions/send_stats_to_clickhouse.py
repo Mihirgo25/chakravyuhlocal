@@ -18,281 +18,49 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
 )
 from services.bramhastra.clickhouse.connect import get_clickhouse_client
 from services.bramhastra.helpers.post_fcl_freight_helper import json_encoder_for_clickhouse
-
-
-def send_stats_to_clickhouse(client = get_clickhouse_client()):
-    query = (
-        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
-    )
-
-    values = []
-    for rate in json_encoder_for_clickhouse(list(FclFreightRateStatistic.select().dicts())):
-        value = value = f"""(
-    {rate['id']},
-    '{rate['identifier']}',
-    '{rate['validity_id']}',
-    '{rate['rate_id']}',
-    '{rate['payment_term']}',
-    '{rate['schedule_type']}',
-    {f"'{rate['origin_port_id']}'" if rate['origin_port_id'] is not None else 'NULL'},
-    {f"'{rate['destination_port_id']}'" if rate['destination_port_id'] is not None else 'NULL'},
-    {f"'{rate['origin_main_port_id']}'" if rate['origin_main_port_id'] is not None else 'NULL'},
-    {f"'{rate['destination_main_port_id']}'" if rate['destination_main_port_id'] is not None else 'NULL'},
-    {f"'{rate['origin_country_id']}'" if rate['origin_country_id'] is not None else 'NULL'},
-    {f"'{rate['destination_country_id']}'" if rate['destination_country_id'] is not None else 'NULL'},
-    {f"'{rate['origin_continent_id']}'" if rate['origin_continent_id'] is not None else 'NULL'},
-    {f"'{rate['destination_continent_id']}'" if rate['destination_continent_id'] is not None else 'NULL'},
-    {f"'{rate['origin_region_id']}'" if rate['origin_region_id'] is not None else 'NULL'},
-    {f"'{rate['destination_region_id']}'" if rate['destination_region_id'] is not None else 'NULL'},
-    {f"'{rate['origin_trade_id']}'" if rate['origin_trade_id'] is not None else 'NULL'},
-    {f"'{rate['destination_trade_id']}'" if rate['destination_trade_id'] is not None else 'NULL'},
-    {f"'{rate['origin_pricing_zone_map_id']}'" if rate['origin_pricing_zone_map_id'] is not None else 'NULL'},
-    {f"'{rate['destination_pricing_zone_map_id']}'" if rate['destination_pricing_zone_map_id'] is not None else 'NULL'},
-    {rate['price']},
-    {rate['market_price']},
-    '{rate['validity_start']}',
-    '{rate['validity_end']}',
-    '{rate['currency']}',
-    {f"'{rate['shipping_line_id']}'" if rate['shipping_line_id'] is not None else 'NULL'},
-    {f"'{rate['service_provider_id']}'" if rate['service_provider_id'] is not None else 'NULL'},
-    {rate['accuracy']},
-    '{rate['mode']}',
-    {rate['likes_count']},
-    {rate['dislikes_count']},
-    {rate['spot_search_count']},
-    {rate['buy_quotations_created']},
-    {rate['sell_quotations_created']},
-    {rate['checkout_count']},
-    {rate['bookings_created']},
-    '{rate['rate_created_at']}',
-    '{rate['rate_updated_at']}',
-    '{rate['validity_created_at']}',
-    '{rate['validity_updated_at']}',
-    '{rate['commodity']}',
-    '{rate['container_size']}',
-    '{rate['container_type']}',
-    {rate['containers_count']},
-    {f"'{rate['origin_local_id']}'" if rate['origin_local_id'] is not None else 'NULL'},
-    {f"'{rate['destination_local_id']}'" if rate['destination_local_id'] is not None else 'NULL'},
-    {rate['applicable_origin_local_count']},
-    {rate['applicable_destination_local_count']},
-    {f"'{rate['origin_detention_id']}'" if rate['origin_detention_id'] is not None else 'NULL'},
-    {f"'{rate['destination_detention_id']}'" if rate['destination_detention_id'] is not None else 'NULL'},
-    {f"'{rate['origin_demurrage_id']}'" if rate['origin_demurrage_id'] is not None else 'NULL'},
-    {f"'{rate['destination_demurrage_id']}'" if rate['destination_demurrage_id'] is not None else 'NULL'},
-    {f"'{rate['cogo_entity_id']}'" if rate['cogo_entity_id'] is not None else 'NULL'},
-    '{rate['rate_type']}',
-    {f"'{rate['sourced_by_id']}'" if rate['sourced_by_id'] is not None else 'NULL'},
-    {f"'{rate['procured_by_id']}'" if rate['procured_by_id'] is not None else 'NULL'},
-    {rate['shipment_aborted_count']},
-    {rate['shipment_cancelled_count']},
-    {rate['shipment_completed_count']},
-    {rate['shipment_confirmed_by_service_provider_count']},
-    {rate['shipment_awaited_service_provider_confirmation_count']},
-    {rate['shipment_init_count']},
-    {rate['shipment_containers_gated_in_count']},
-    {rate['shipment_containers_gated_out_count']},
-    {rate['shipment_vessel_arrived_count']},
-    {rate['shipment_is_active_count']},
-    {rate['shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count']},
-    {rate['shipment_booking_rate_is_too_low_count']},
-    '{rate['created_at']}',
-    '{rate['updated_at']}',
-    {rate['version']},
-    {rate['sign']},
-    {rate['status']},{f"{rate['status']}" if rate['status'] is not None else 'NULL'},'{rate['status']}',
-    {rate['rate_deviation_from_booking_rate']},
-    {rate['rate_deviation_from_cluster_base_rate']},
-    {rate['rate_deviation_from_booking_on_cluster_base_rate']},
-    {rate['rate_deviation_from_latest_booking']},
-    {rate['average_booking_rate']},
-    {f"'{rate['rate_request_id']}'" if rate['rate_request_id'] is not None else 'NULL'}
-)"""
-
-        values.append(value)
-
-    query += ", ".join(values)
-    client.execute(query)
+import peewee
     
-    FclFreightRateStatistic.delete().execute()
-
-
-def send_feedback_stats_to_clickhouse(client = get_clickhouse_client()):
-    query = (
-        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
-    )
-
-    values = []
-    for rate in json_encoder_for_clickhouse(list(FeedbackFclFreightRateStatistic.select().dicts())):
-        value = value = f"""(
-        {rate['id']},
-        '{rate['fcl_freight_rate_statistic_id']}',
-        '{rate['feedback_id']}',
-        '{rate['validity_id']}',
-        '{rate['rate_id']}',
-        {f"'{rate['source']}'" if rate['source'] is not None else 'NULL'},
-        {f"'{rate['source_id']}'" if rate['source_id'] is not None else 'NULL'},
-        {f"'{rate['performed_by_id']}'" if rate['performed_by_id'] is not None else 'NULL'},
-        {f"'{rate['performed_by_org_id']}'" if rate['performed_by_org_id'] is not None else 'NULL'},
-        '{rate['created_at']}',
-        '{rate['updated_at']},
-        {f"'{rate['importer_exporter_id']}'" if rate['importer_exporter_id'] is not None else 'NULL'},
-        {f"'{rate['service_provider_id']}'" if rate['service_provider_id'] is not None else 'NULL'},
-        '{rate['feedback_type']}',
-        {f"'{rate['closed_by_id']}'" if rate['closed_by_id'] is not None else 'NULL'},
-        {rate['serial_id']},
-        {rate['sign']},
-        {rate['version']}
-)"""
-        values.append(value)
+class Send():
+    def __init__(self) -> None:
+        self.models = {
+            FclFreightRateRequestStatistic,
+            FeedbackFclFreightRateStatistic,
+            QuotationFclFreightRateStatistic,
+            ShipmentFclFreightRateStatistic,
+            SpotSearchFclFreightRateStatistic,
+            FclFreightRateStatistic,
+        }
         
-    query += ", ".join(values)
-    client.command(query)
-    
-    FeedbackFclFreightRateStatistic.delete().execute()
-def send_quotation_stats_to_clickhouse(client=get_clickhouse_client):
-    query = (
-        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
-    )
-
-    values = []
-    for rate in json_encoder_for_clickhouse(list(QuotationFclFreightRateStatistic.select().dicts())):
-        value = value = f"""(
-        {rate['id']},
-        '{rate['validity_id']}',
-        '{rate['rate_id']}',
-        '{rate['spot_search_id']}',
-        '{rate['spot_search_fcl_customs_services_id']}',
-        '{rate['checkout_id']}',
-        {f"'{rate['checkout_fcl_freight_rate_services_id']}'" if rate['checkout_fcl_freight_rate_services_id'] is not None else 'NULL'},
-        '{rate['sell_quotation_id']}',
-        '{rate['buy_quotation_id']}',
-        {f"'{rate['shipment_id']}'" if rate['shipment_id'] is not None else 'NULL'},
-        {f"'{rate['shipment_fcl_freight_rate_services_id']}'" if rate['shipment_fcl_freight_rate_services_id'] is not None else 'NULL'},
-        '{rate['cancellation_reason']}',
-        '{rate['is_active']}',
-        '{rate['created_at']}',
-        '{rate['updated_at']}',
-        '{rate['status']}',
-        {rate['sign']},
-        {rate['version']},
-)"""
-        values.append(value)
+    async def build_query_and_insert_to_clickhouse(self,model: peewee.Model):
+        self.client = get_clickhouse_client()
         
-    query += ", ".join(values)
-    client.command(query)
-    
-    QuotationFclFreightRateStatistic.delete().execute()
-
-def send_shipment_stats_to_clickhouse(client=get_clickhouse_client):
-    query = (
-        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
-    )
-
-    values = []
-    for rate in json_encoder_for_clickhouse(list(ShipmentFclFreightRateStatistic.select().dicts())):
-        value = value = f"""(
-        {rate['id']},
-        '{rate['spot_search_id']}',
-        '{rate['spot_search_fcl_customs_services_id']}',
-        '{rate['checkout_id']}',
-        {f"'{rate['checkout_fcl_freight_rate_services_id']}'" if rate['checkout_fcl_freight_rate_services_id'] is not None else 'NULL'},
-        '{rate['sell_quotation_id']}',
-        '{rate['buy_quotation_id']}',
-        '{rate['validity_id']}',
-        '{rate['rate_id']}',
-        {f"'{rate['shipment_id']}'" if rate['shipment_id'] is not None else 'NULL'},
-        {f"'{rate['shipment_fcl_freight_rate_services_id']}'" if rate['shipment_fcl_freight_rate_services_id'] is not None else 'NULL'},
-        '{rate['cancellation_reason']}',
-        '{rate['is_active']}',
-        '{rate['created_at']}',
-        '{rate['updated_at']}',
-        '{rate['status']}',
-        {rate['sign']},
-        {rate['version']}
-)"""
-        values.append(value)
+        data = json_encoder_for_clickhouse(list(model.select().dicts()))
         
-    query += ", ".join(values)
-    client.command(query)
-    
-    ShipmentFclFreightRateStatistic.delete().execute()
-
-def send_spot_search_stats_to_clickhouse(client=get_clickhouse_client):
-    query = (
-        "INSERT INTO  brahmastra.fcl_freight_rate_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
-    )
-
-    values = []
-    for rate in json_encoder_for_clickhouse(list(SpotSearchFclFreightRateStatistic.select().dicts())):
-        value = value = f"""(
-        {rate['id']},
-        {rate['fcl_freight_rate_statistic_id']},
-        '{rate['spot_search_id']}',
-        '{rate['spot_search_fcl_freight_services_id']}',
-        {f"'{rate['checkout_id']}'" if rate['checkout_id'] is not None else 'NULL'},
-        {f"'{rate['checkout_fcl_freight_rate_services_id']}'" if rate['checkout_fcl_freight_rate_services_id'] is not None else 'NULL'},
-        {f"'{rate['validity_id']}'" if rate['validity_id'] is not None else 'NULL'},
-        {f"'{rate['rate_id']}'" if rate['rate_id'] is not None else 'NULL'},
-        {f"'{rate['sell_quotation_id']}'" if rate['sell_quotation_id'] is not None else 'NULL'},
-        {f"'{rate['buy_quotation_id']}'" if rate['buy_quotation_id'] is not None else 'NULL'},
-        {f"'{rate['shipment_id']}'" if rate['shipment_id'] is not None else 'NULL'},
-        '{rate['created_at']}',
-        '{rate['updated_at']}',
-        {rate['sign']},
-        {rate['version']}
-)"""
-        values.append(value)
+        query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
         
-    query += ", ".join(values)
-    client.command(query)
-    
-    SpotSearchFclFreightRateStatistic.delete().execute()
-
-
-def send_rate_request_statistics_stats_to_clickhouse(client=get_clickhouse_client):
-    query = (
-        "INSERT INTO  brahmastra.fcl_freight_rate_request_statistics SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
-    )
-
-    values = []
-    for rate in json_encoder_for_clickhouse(list(FclFreightRateRequestStatistic.select().dicts())):
-        value = value = f"""(
-        {rate['id']},
-        '{rate['origin_port_id']}',
-        '{rate['destination_port_id']}',
-        '{rate['origin_region_id']}',{f"'{rate['origin_region_id']}'" if rate['origin_region_id'] is not None else 'NULL'},
-        '{rate['destination_region_id']}',{f"'{rate['destination_region_id']}'" if rate['destination_region_id'] is not None else 'NULL'},
-        '{rate['origin_country_id']}',{f"'{rate['origin_country_id']}'" if rate['origin_country_id'] is not None else 'NULL'},
-        '{rate['destination_country_id']}',{f"'{rate['destination_country_id']}'" if rate['destination_country_id'] is not None else 'NULL'},
-        '{rate['origin_continent_id']}',{f"'{rate['origin_continent_id']}'" if rate['origin_continent_id'] is not None else 'NULL'},
-        '{rate['destination_continent_id']}',{f"'{rate['destination_continent_id']}'" if rate['destination_continent_id'] is not None else 'NULL'},
-        '{rate['origin_trade_id']}',{f"'{rate['origin_trade_id']}'" if rate['origin_trade_id'] is not None else 'NULL'},
-        '{rate['destination_trade_id']}',{f"'{rate['destination_trade_id']}'" if rate['destination_trade_id'] is not None else 'NULL'},
-        '{rate['origin_pricing_zone_map_id']}',{f"'{rate['origin_pricing_zone_map_id']}'" if rate['origin_pricing_zone_map_id'] is not None else 'NULL'},
-        '{rate['destination_pricing_zone_map_id']}',{f"'{rate['destination_pricing_zone_map_id']}'" if rate['destination_pricing_zone_map_id'] is not None else 'NULL'},
-        '{rate['rate_request_id']}',
-        {rate['validity_ids']},{f"{rate['validity_ids']}" if rate['validity_ids'] is not None else 'NULL'},
-        {rate['source']},{f"{rate['source']}" if rate['source'] is not None else 'NULL'},
-        '{rate['source_id']}',{f"'{rate['source_id']}'" if rate['source_id'] is not None else 'NULL'},
-        '{rate['performed_by_id']}',{f"'{rate['performed_by_id']}'" if rate['performed_by_id'] is not None else 'NULL'},
-        '{rate['performed_by_org_id']}',{f"'{rate['performed_by_org_id']}'" if rate['performed_by_org_id'] is not None else 'NULL'},
-        '{rate['importer_exporter_id']}',{f"'{rate['importer_exporter_id']}'" if rate['importer_exporter_id'] is not None else 'NULL'},
-        {rate['closing_remarks']},{f"{rate['closing_remarks']}" if rate['closing_remarks'] is not None else 'NULL'},
-        '{rate['closed_by_id']}',{f"'{rate['closed_by_id']}'" if rate['closed_by_id'] is not None else 'NULL'},
-        {rate['request_type']},{f"{rate['request_type']}" if rate['request_type'] is not None else 'NULL'},
-        {rate['container_size']},{f"{rate['container_size']}" if rate['container_size'] is not None else 'NULL'},
-        {rate['commodity']},{f"{rate['commodity']}" if rate['commodity'] is not None else 'NULL'},
-        {rate['containers_count']},{f"{rate['containers_count']}" if rate['containers_count'] is not None else 'NULL'},
-        {rate['is_rate_reverted']},{f"{rate['is_rate_reverted']}" if rate['is_rate_reverted'] is not None else 'NULL'},
-        '{rate['created_at']}',
-        '{rate['updated_at']}',
-        {rate['sign']},
-        {rate['version']}
-)"""
-        values.append(value)
+        columns = model._meta.fields
         
-    query += ", ".join(values)
-    client.command(query)
+        values = []
     
-    FclFreightRateRequestStatistic.delete().execute()
+        for  d in data:
+            value = []
+            for k,v in d.items():
+                if v is None:
+                    value.append('DEFAULT')
+                elif isinstance(columns[k],peewee.UUIDField) or isinstance(columns[k],peewee.TextField) or isinstance(columns[k],peewee.CharField) or isinstance(columns[k],peewee.DateTimeField):
+                    value.append(f"'{v}'")
+                else:
+                    value.append(f'{v}')
+            values.append(f"({','.join(value)})")
+        
+        self.client.execute(query + ','.join(values))
+        
+        model.delete().execute()
+        
+        
+    async def execute(self):
+        for model in self.models:
+            await self.build_query_and_insert_to_clickhouse(model)
+        
+        
+    

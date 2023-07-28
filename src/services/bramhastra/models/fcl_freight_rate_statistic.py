@@ -99,7 +99,7 @@ class FclFreightRateStatistic(BaseModel):
     rate_deviation_from_latest_booking = FloatField(default=0)
     average_booking_rate = FloatField(default=-1)
     parent_rate_id = UUIDField(null=True)
-    source = UUIDField(null=True)
+    source = CharField(null=True)
     source_id = UUIDField(null=True)
 
     def save(self, *args, **kwargs):
