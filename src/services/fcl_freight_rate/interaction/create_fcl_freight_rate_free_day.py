@@ -70,6 +70,10 @@ def get_free_day_object(request):
     free_day.procured_by_id = request.get("procured_by_id")
 
     extra_fields = ['previous_days_applicable','free_limit','remarks','slabs','validity_start','validity_end']
+
+    if 'rate_sheet_validation' in request:
+        extra_fields.extend(['location_type','location','continent_id','country_id','trade_id'])
+
     for field in extra_fields:
         if field in request:
             setattr(free_day, field, request[field])
