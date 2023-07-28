@@ -363,7 +363,7 @@ def create_air_freight_freight_rate(
                 if validation.get("valid"):
                     object["rate_sheet_validation"] = True
                     create_air_freight_rate_freight_delay.apply_async(
-                        kwargs={"request": object}, queue="low"
+                        kwargs={"request": object}, queue="fcl_freight_rate"
                     )
                 else:
                     print(validation.get("error"))
@@ -710,7 +710,7 @@ def create_air_freight_local_rate(
         object["sourced_by_id"] = sourced_by_id
 
         create_air_freight_rate_local_delay.apply_async(
-            kwargs={"request": object}, queue="low"
+            kwargs={"request": object}, queue="fcl_freight_rate"
         )
     else:
         print(validation.get("error"))
@@ -1005,7 +1005,7 @@ def create_air_freight_surcharge_rate(
             object["procured_by_id"] = procured_by_id
             object["sourced_by_id"] = sourced_by_id
             create_air_freight_rate_surcharge_delay.apply_async(
-                kwargs={"request": object}, queue="low"
+                kwargs={"request": object}, queue="fcl_freight_rate"
             )
         else:
             print(validation.get("error"))
