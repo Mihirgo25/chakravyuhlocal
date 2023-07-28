@@ -388,7 +388,7 @@ class FclFreightRate(BaseModel):
             (FclFreightRate.shipping_line_id == self.shipping_line_id) &
             (FclFreightRate.service_provider_id != self.service_provider_id) &
             (FclFreightRate.rate_type == rate_type)
-            ).where(FclFreightRate.importer_exporter_id.is_null(True) | FclFreightRate.importer_exporter_id == self.importer_exporter_id).execute()
+            ).where(FclFreightRate.importer_exporter_id.in_([None, self.importer_exporter_id])).execute()
 
       result = price
       if freight_rates:
