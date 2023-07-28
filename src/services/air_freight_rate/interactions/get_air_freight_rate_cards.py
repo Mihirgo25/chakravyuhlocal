@@ -123,7 +123,7 @@ def add_surcharge_object(freight_rate,response_object,requirements):
 
 def build_surcharge_line_item_object(line_item,requirements):
     surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
-    if not surcharge_charges or line_item['code'] in ['EAMS','EHAMS']:
+    if not surcharge_charges or line_item['code'] in ['EAMS','EHAMS','HAMS']:
         return
 
     line_item = {key:val for key,val in line_item.items() if key in ['code','price','min_price','currency','remarks','unit']}
