@@ -5,11 +5,10 @@ from micro_services.client import maps
 from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, surcharge_charges_mappings
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
-from database.rails_db import get_operators
 airline_hash = {}
 def create_freight_look_surcharge_rate(request):
+    from celery_worker import process_freight_look_surcharge_rate_in_delay
     rates = request['rates']
-    print(rates)
     destination = request.get('destination')
     new_rates = rates
     proper_json_rates = create_proper_json(new_rates)
@@ -30,7 +29,7 @@ def create_freight_look_surcharge_rate(request):
     for rate in proper_json_rates:
         rate['destination_airport_id'] = locations[destination_port_code]['id']
         try:
-            create_surcharge_rate_api(rate=rate, locations=locations)
+            process_freight_look_surcharge_rate_in_delay.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
         except Exception as e:
             print(e)
 
@@ -51,7 +50,7 @@ def create_surcharge_rate_api(rate,locations):
         airline_id = airline['id']
     surcharge_params = format_surcharge_rate(rate,locations,airline_id)
     if surcharge_params and surcharge_params.get('line_items'):
-        surcharge = create_air_freight_rate_surcharge(surcharge_params)
+        create_air_freight_rate_surcharge(surcharge_params)
 
 
 

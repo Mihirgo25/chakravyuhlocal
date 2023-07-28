@@ -106,9 +106,4 @@ EHAMS:
   condition: true 
   tags: ['additional_service']
   sac_code: ''
-MAMS:
-  name: "Master Automated Manifest System"
-  units: ['per_document']
-  condition: true 
-  tags: ['additional_service']
-  sac_code: ''
+
