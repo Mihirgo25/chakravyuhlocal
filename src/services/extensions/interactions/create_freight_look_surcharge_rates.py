@@ -2,7 +2,7 @@
 from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID, SURCHARGE_SERVICE_PROVIDERS
 from micro_services.client import maps
-from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, surcharge_charges_mappings
+from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, surcharge_charges_mappings, surcharge_performed_by_id
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 airline_hash = {}
@@ -29,7 +29,7 @@ def create_freight_look_surcharge_rate(request):
     for rate in proper_json_rates:
         rate['destination_airport_id'] = locations[destination_port_code]['id']
         try:
-            process_freight_look_surcharge_rate_in_delay.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='fcl_freight_rate')
+            process_freight_look_surcharge_rate_in_delay.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
         except Exception as e:
             print(e)
 
@@ -77,9 +77,9 @@ def format_surcharge_rate(rate,locations,airline_id):
         'commodity_type': commodity_type,
         'operation_type': 'passenger',
         'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
-        'performed_by_id': DEFAULT_PROCURED_BY_ID,
-        'procured_by_id': DEFAULT_PROCURED_BY_ID,
-        'sourced_by_id': DEFAULT_PROCURED_BY_ID,
+        'performed_by_id': surcharge_performed_by_id,
+        'procured_by_id': surcharge_performed_by_id,
+        'sourced_by_id': surcharge_performed_by_id,
         'line_items':line_items,
         'airline_id':airline_id
     }
