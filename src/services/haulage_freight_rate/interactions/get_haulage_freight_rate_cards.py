@@ -13,7 +13,7 @@ from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from database.rails_db import (
     get_user,
-    get_eligible_org_ids,
+    get_eligible_orgs,
     list_organization_users,
 )
 from micro_services.client import common, maps
@@ -294,7 +294,7 @@ def build_response_list(requirements, query_results):
     return list(grouping.values())
 
 def ignore_non_eligible_service_providers(requirements, data):
-    ids = get_eligible_org_ids("haulage_freight")
+    ids = get_eligible_orgs("haulage_freight")
     data = [rate for rate in data if rate.get("service_provider_id") in ids]
     return data
 
