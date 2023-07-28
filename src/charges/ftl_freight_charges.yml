@@ -22,7 +22,7 @@ FSC:
   name: "Fuel Surcharge"
   units: ["per_truck", "percentage_of_freight"]
   condition: true
-  tags: ["mandatory"]
+  tags: []
 ODC:
   name: "Over Dimensional Charge"
   units: ["per_truck"]
