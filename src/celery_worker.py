@@ -314,6 +314,15 @@ def send_closed_notifications_to_sales_agent_feedback(self, object):
         else:
             raise self.retry(exc= exc)
 
+def send_closed_notifications_to_user(self, object,request):
+    try:
+        object.send_closed_notifications_to_user(request)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
 
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
 def celery_create_fcl_freight_rate_free_day(self, request):

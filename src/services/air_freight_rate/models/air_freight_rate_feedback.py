@@ -328,3 +328,16 @@ class AirFreightRateFeedback(BaseModel):
             }
             common.create_communication(notification_data)
 
+
+    def send_closed_notifications_to_user(self,request):
+         freight_ids = request['air_freight_rate_feedback_ids']
+         for id in freight_ids:
+           freight_query = AirFreightRateFeedback.select().where(AirFreightRateFeedback.id ==id).first()
+           feedback_rate = jsonable_encoder(list(freight_query.dicts()))
+           params = {
+               'spot_search_id': feedback_rate[0]['source_id'],
+               'update_to_id':request['performed_by_id'],
+               'update_to_type':request['performed_by_type']
+            } 
+           common.send_spot_search_rate_update(params)
+
