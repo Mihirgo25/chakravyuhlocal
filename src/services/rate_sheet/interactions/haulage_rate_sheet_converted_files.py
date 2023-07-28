@@ -252,7 +252,7 @@ def create_haulage_freight_freight_rate(
     if validation.get("valid"):
         object["rate_sheet_validation"] = True
         create_haulage_freight_rate_delay.apply_async(
-            kwargs={"request": object}, queue="low"
+            kwargs={"request": object}, queue="fcl_freight_rate"
         )
     else:
         print(validation.get("error"))
