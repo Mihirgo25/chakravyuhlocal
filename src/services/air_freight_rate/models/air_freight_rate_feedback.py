@@ -336,8 +336,8 @@ class AirFreightRateFeedback(BaseModel):
            feedback_rate = jsonable_encoder(list(freight_query.dicts()))
            params = {
                'spot_search_id': feedback_rate[0]['source_id'],
-               'update_to_id':request['performed_by_id'],
-               'update_to_type':request['performed_by_type']
+               'update_to_id':feedback_rate[0]['performed_by_id'],
+               'update_to_type':feedback_rate[0]['performed_by_type']
             } 
            common.send_spot_search_rate_update(params)
 
