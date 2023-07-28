@@ -67,11 +67,11 @@ def create_freight_look_surcharge_rate_api(request: CreateFreightLookSurchargePa
     # if resp["isAuthorized"]:
     #     request.performed_by_id = resp["setters"]["performed_by_id"]
     #     request.performed_by_type = resp["setters"]["performed_by_type"]
-    # try:
-    data = create_freight_look_surcharge_rate(request.dict(exclude_none=False))
-    return JSONResponse(status_code=200, content=json_encoder(data))
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+    try:
+        data = create_freight_look_surcharge_rate(request.dict(exclude_none=False))
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
