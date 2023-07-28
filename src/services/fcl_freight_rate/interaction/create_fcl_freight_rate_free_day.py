@@ -31,7 +31,8 @@ def execute_transaction_code(request):
     create_audit(request, free_day.id)
 
     update_multiple_service_objects.apply_async(kwargs={'object':free_day},queue='low')
-    if request.get('specificity_type') != 'cogoport':
+
+    if request.get('specificity_type') == 'shipping_line':
         request['specificity_type'] = 'cogoport'
         create_fcl_freight_rate_free_day(request)
 
