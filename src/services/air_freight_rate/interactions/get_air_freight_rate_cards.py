@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_surcharge import AirFreightRateSurcharge
-from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES
+from services.air_freight_rate.constants.air_freight_rate_constants import AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO,MAX_CARGO_LIMIT,DEFAULT_SERVICE_PROVIDER_ID, RATE_SOURCE_PRIORITIES, COGOXPRESS
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_operators
 from database.rails_db import get_eligible_orgs
@@ -308,6 +308,7 @@ def get_surcharges(requirements,rates):
             service_provider_ids.append(rate['service_provider_id'])
         airline_ids.append(rate['airline_id'])
     
+    service_provider_ids.append(COGOXPRESS)
     surcharges_query = AirFreightRateSurcharge.select(
         AirFreightRateSurcharge.line_items,
         AirFreightRateSurcharge.airline_id,
@@ -334,9 +335,14 @@ def discard_noneligible_airlines(freight_rates):
     return freight_rates
 
 def get_matching_surchages(freight_rate,surcharges):
+    cogo_express = None
     for surcharge in surcharges:
+        if surcharge['service_provider_id'] == COGOXPRESS:
+            cogo_express = surcharge['line_items']
         if surcharge['airline_id'] == freight_rate['airline_id'] and surcharge['service_provider_id'] == freight_rate['service_provider_id']:
-            return {'line_items':surcharge['line_items']}  
+            return {'line_items':surcharge['line_items']}
+    if cogo_express:
+        return {'line_items':cogo_express}
     return {'line_items':[]}
 
 def fill_missing_surcharges(freight_rates,surcharges):

@@ -59,10 +59,20 @@ class AirFreightRateSurcharge(BaseModel):
         table_name = 'air_freight_rate_surcharges'
 
     def detail(self):
+        air_freight_surcharges_dict = AIR_FREIGHT_SURCHARGES
+        new_line_items = []
+        for line_item in self.line_items:
+            code_config = air_freight_surcharges_dict.get(line_item['code'])
+            if not code_config:
+                new_line_items.append(line_item)
+                continue
+            line_item['name'] = code_config['name']
+            new_line_items.append(line_item)
+
         return {
         'surcharge': {
             'id': self.id,
-            'line_items': self.line_items,
+            'line_items': new_line_items,
             'line_items_info_messages': self.line_items_info_messages,
             'is_line_items_info_messages_present': self.is_line_items_info_messages_present,
             'line_items_error_messages': self.line_items_error_messages,
