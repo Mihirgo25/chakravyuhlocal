@@ -68,7 +68,7 @@ def apply_validity_end_less_than_filter(query, filters):
     return query
 
 def apply_similar_id_filter(query, filters):
-    feedback_data = (FtlFreightRateFeedback.select(FtlFreightRateFeedback.origin_location_id, FtlFreightRateFeedback.destination_location_id).where(FtlFreightRateFeedback.id==filters['similar_id'])).first()
+    feedback_data = (FtlFreightRateFeedback.select().where(FtlFreightRateFeedback.id==filters['similar_id'])).first()
     if feedback_data:
         query = query.where(FtlFreightRateFeedback.id != filters.get('similar_id'))
         query = query.where(FtlFreightRateFeedback.origin_location_id == feedback_data.origin_location_id, FtlFreightRateFeedback.destination_location_id == feedback_data.destination_location_id)
@@ -108,7 +108,7 @@ def get_data(query, spot_search_details_required):
     spot_search_hash = {}
     new_data = []
     if spot_search_details_required:
-        spot_search_ids = list(set([str(row['source_id']) for row in data]))
+        spot_search_ids = list(set([str(row.get('source_id')) for row in data]))
         spot_search_data = spot_search.list_spot_searches({'filters':{'id': spot_search_ids}})['list']
         for search in spot_search_data:
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
@@ -173,7 +173,6 @@ def get_stats(filters, is_stats_required, performed_by_id):
          )
     ).limit(1)
 
-
     result = query.execute()
     if len(result)>0:
         result = result[0]
@@ -187,35 +186,3 @@ def get_stats(filters, is_stats_required, performed_by_id):
     else:
         stats = {}
     return { 'stats': stats }
-
-def get_total(query, performed_by_id):
-    try:
-        query = query.select(FtlFreightRateFeedback.id)
-        return {'get_total':query.count()}
-    except:
-        return {'get_total' : 0}
-
-def get_total_closed_by_user(query, performed_by_id):
-    try:
-        query = query.select(FtlFreightRateFeedback.id)
-        return {'get_total_closed_by_user':query.where(FtlFreightRateFeedback.status == 'inactive', FtlFreightRateFeedback.closed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_closed_by_user':0}
-
-def get_total_opened_by_user(query, performed_by_id):
-    try:
-        query = query.select(FtlFreightRateFeedback.id)
-        return {'get_total_opened_by_user' : query.where(FtlFreightRateFeedback.status == 'active', FtlFreightRateFeedback.performed_by_id == performed_by_id).count() }
-    except:
-        return {'get_total_opened_by_user' : 0}
-
-def get_status_count(query, performed_by_id):
-    try:
-        query = query.select(FtlFreightRateFeedback.status, fn.COUNT(SQL('*')).alias('count_all')).group_by(FtlFreightRateFeedback.status)
-        result = {}
-        for row in query.execute():
-            result[row.status] = row.count_all
-        return {'get_status_count' : result}
-    except:
-        return {'get_status_count' : 0}
-
