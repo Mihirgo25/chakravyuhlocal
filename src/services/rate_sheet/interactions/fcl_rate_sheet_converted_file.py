@@ -459,8 +459,9 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
             if key in keys_to_float:
                 if val:
                     slab[key] = parse_numeric(val)
-                filtered_slab = dict((key, value) for key, value in slab.items() if value is not None)
-        slabs.append(filtered_slab)
+            filtered_slab = dict((key, value) for key, value in slab.items() if value is not None)
+        if filtered_slab:
+            slabs.append(filtered_slab)
 
     object['slabs'] = list(filter(None, slabs))
     object['rate_sheet_id'] = params['rate_sheet_id']
