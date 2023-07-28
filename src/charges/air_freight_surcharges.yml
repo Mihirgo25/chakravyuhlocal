@@ -1,33 +1,27 @@
 FSC:
   name: "Fuel Surcharge"
-  units: ['per_kg']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
 CTS:
   name: "Carting Surcharge"
-  units: ['per_kg']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
 MSC:
   name: "Miscellaneous Surcharge"
-  units: ['per_kg']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
 PSS:
   name: "Peak Season Surcharge"
-  units: ['per_kg']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: ''
-AWC:
-  name: "Code not in use"
-  units: ['per_shipment','per_awb']
-  condition: true
-  tags: ['additional_service', 'deleted']
-  sac_code: '996531'
 AMS:
   name: "Automated Manifest System"
   units: ['per_shipment','per_awb']
@@ -36,39 +30,9 @@ AMS:
   sac_code: '996531'
 SSC:
   name: "Security Surcharge"
-  units: ['per_kg' , 'per_shipment']
+  units: ['per_kg' , 'per_kg_gross','per_shipment']
   condition: true
   tags: ['additional_service']
-  sac_code: ''
-XRAY:
-  name: "X Ray Machine Charges"
-  units: ['per_kg' , 'per_shipment']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996713'
-PCA:
-  name: "Code not in use"
-  units: ['per_kg' , 'per_shipment']
-  condition: true
-  tags: ['additional_service', 'deleted']
-  sac_code: '996799'
-HAZ:
-  name: "Hazardous Cargo Surcharge"
-  units: ['per_kg' , 'per_shipment']
-  condition: (commodity in [ "gases-2.1","gases-2.2","gases-2.3","flammable_liquids-3","flammable_solids-4.1","flammable_solids_self_heat-4.2","emit_flammable_gases_with_water-4.3","imo_classes-5.1","toxic_substances-6.1", "infectious_substances-6.2","radioactive_material-7","corrosives-8","miscellaneous_dangerous_goods-9"]) or commodity_type =='dangerous'
-  tags: ['additional_service']
-  sac_code: '996799'
-SULD:
-  name: "Special equipment (ULD) Surcharge"
-  units: ['per_kg' , 'per_shipment']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996531'
-ADEM:
-  name: "Code not in use"
-  units: ['per_kg_per_day']
-  condition: true
-  tags: ['additional_service', 'deleted']
   sac_code: ''
 AEDEM:
   name: "Airline Demurrage Charge"
@@ -78,7 +42,7 @@ AEDEM:
   sac_code: '996531'
 AEDC:
   name: "Airline Due Carrier"
-  units: ['per_kg']
+  units: ['per_kg','per_kg_gross']
   condition: true
   tags: ['additional_service']
   sac_code: '996531'
