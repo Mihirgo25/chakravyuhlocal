@@ -484,7 +484,6 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     return
 
 
-
 def write_fcl_freight_commodity_surcharge_object(rows, csv, params, converted_file):
     object_validity = validate_fcl_freight_object(converted_file.get('module'), rows)
     if object_validity.get("valid"):
