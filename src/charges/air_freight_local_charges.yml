@@ -5,13 +5,6 @@ THC:
   condition: true
   tags: ['additional_service']
   sac_code: ''
-XRAY:
-  name: "X Ray Machine Charges"
-  units: ['per_kg', 'per_package', 'per_shipment']
-  trade_types: ['export', 'import']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996713'
 XRAYC:
   name: "X Ray Screening & Certification"
   units: ['per_kg', 'per_shipment']
