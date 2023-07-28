@@ -214,8 +214,8 @@ class FtlFreightRate(BaseModel):
         currency = line_items[0].get('currency')
         result = 0
 
-        # for line_item in line_items:
-        #     result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
+        for line_item in line_items:
+            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
 
         return result
 

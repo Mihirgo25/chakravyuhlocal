@@ -160,7 +160,11 @@ def get_data(query, spot_search_details_required):
     new_data = []
     if spot_search_details_required:
         spot_search_ids = list(set([str(row['source_id']) for row in data]))
-        spot_search_data = spot_search.list_spot_searches({'filters':{'id': spot_search_ids}})['list']
+        try:
+            spot_search_data = spot_search.list_spot_searches({'filters':{'id': spot_search_ids}})['list']    
+        except:
+            spot_search_data = []
+            
         for search in spot_search_data:
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
