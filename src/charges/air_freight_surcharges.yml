@@ -52,4 +52,22 @@ AMSNO:
   condition: commodity == "special_consideration"
   tags: ['additional_service']
   sac_code: '996531'
+HAMS:
+  name: "House Automated Manifest System"
+  units: ['per_document']
+  condition: true 
+  tags: ['additional_service']
+  sac_code: ''
+EAMS:
+  name: "Electronic Automated Manifest System"
+  units: ['per_document']
+  condition: true 
+  tags: ['additional_service']
+  sac_code: ''
+EHAMS:
+  name: "Electronic House Automated Manifest System"
+  units: ['per_document']
+  condition: true 
+  tags: ['additional_service']
+  sac_code: ''
 

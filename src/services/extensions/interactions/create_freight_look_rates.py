@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 from micro_services.client import common, maps
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
-from services.extensions.constants.general import commodity_mappings, commodity_type_mappings
+from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, airline_ids, airline_margins
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID
-
+from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
 airline_hash = {}
 
-def create_weight_slabs(rate):
+def create_weight_slabs(rate,airline_id):
     currency = rate['Crny'] or 'INR'
     rate['NORMAL'] = float(rate.get('NORMAL').strip() or 0) or ''
     rate['+45'] = float((rate.get('+45') or '').strip() or 0) or ''
@@ -28,48 +28,48 @@ def create_weight_slabs(rate):
             'lower_limit': 0,
             'currency': currency,
             'unit': 'per_kg',
-            'tariff_price': price_0_45
+            'tariff_price': price_0_45 + (price_0_45*airline_margins[airline_id])
         },
         {
             'upper_limit': 100,
             'lower_limit': 45.1,
             'currency': currency,
             'unit': 'per_kg',
-            'tariff_price': price_45_100
+            'tariff_price': price_45_100 + (price_45_100*airline_margins[airline_id])
         },
         {
             'upper_limit': 250,
             'lower_limit': 100.1,
             'currency': currency,
             'unit': 'per_kg',
-            'tariff_price': price_100_250
+            'tariff_price': price_100_250 + (price_100_250*airline_margins[airline_id])
         },
         {
             'upper_limit': 300,
             'lower_limit': 250.1,
             'currency': currency,
             'unit': 'per_kg',
-            'tariff_price': price_250_300
+            'tariff_price': price_250_300 + (price_250_300*airline_margins[airline_id])
         },
         {
             'lower_limit': 300.1,
             'upper_limit': 500,
             'currency': currency,
             'unit': 'per_kg',
-            'tariff_price': price_300_500
+            'tariff_price': price_300_500 + (price_300_500*airline_margins[airline_id])
         },
         {
             'lower_limit': 500.1,
             'upper_limit': 5000,
             'currency': currency,
             'unit': 'per_kg',
-            'tariff_price': price_500_1000
+            'tariff_price': price_500_1000 + (price_500_1000*airline_margins[airline_id])
         }
     ]
     return weight_slabs
 
-def format_air_freight_rate(rate, locations):
-    weight_slabs = create_weight_slabs(rate=rate)
+def format_air_freight_rate(rate, locations,airline_id):
+    weight_slabs = create_weight_slabs(rate=rate,airline_id=airline_id)
     minimum_rate = 0
     if rate['MIN.'].strip():
         minimum_rate = float(rate['MIN.'].strip())
@@ -110,18 +110,7 @@ def format_air_freight_rate(rate, locations):
 #     f.close()
 #     return data
 
-def create_proper_json(rates):
-    headers = rates[0]
-    new_rates_obj = rates[1: len(rates)]
-    final_rates = []
-    for rate in new_rates_obj:
-        obj = {}
-        for i, item in enumerate(rate):
-            key = headers[i]
-            obj[key] = item
-        final_rates.append(obj)
 
-    return final_rates
 
 def create_air_freight_rate_api(rate, locations):
     airline = None
@@ -140,7 +129,9 @@ def create_air_freight_rate_api(rate, locations):
         airline_id = airline['id']
         airline_name = airline['short_name']
 
-    rate_obj = format_air_freight_rate(rate=rate, locations=locations)
+    if airline_id not in airline_ids:
+        return rate
+    rate_obj = format_air_freight_rate(rate=rate, locations=locations,airline_id=airline_id)
     if not rate_obj:
         return rate
     rate_obj['airline_id'] = airline_id
@@ -148,21 +139,6 @@ def create_air_freight_rate_api(rate, locations):
     res = create_draft_air_freight_rate(rate_obj)
     # res = common.create_air_freight_rate(rate_obj)
     return res
-
-def get_locations(destination, all_port_codes: list = []):
-    all_locations = maps.list_locations({ 'filters': { 'port_code': all_port_codes, 'country_code': 'IN', 'type': 'airport' }, 'includes': {'port_code': True, 'id': True, 'name': True },'page_limit': 50 })
-    all_locations_destination = maps.list_locations({ 'filters': { 'q': destination, 'type': 'airport' }, 'includes': {'port_code': True, 'id': True, 'name': True },'page_limit': 50 })
-    all_locations_hash = {}
-    if 'list' in all_locations and len(all_locations['list']):
-        for location in all_locations['list']:
-            all_locations_hash[location['port_code']] = location
-    
-    if 'list' in all_locations_destination and len(all_locations_destination['list']):
-        for location in all_locations_destination['list']:
-            all_locations_hash[location['port_code']] = location
-    
-    return all_locations_hash
-
 
 
 def create_freight_look_rates(request):
