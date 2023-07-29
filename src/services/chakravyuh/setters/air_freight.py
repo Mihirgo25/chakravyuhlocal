@@ -5,7 +5,7 @@ from micro_services.client import common
 from services.chakravyuh.models.air_freight_rate_estimation import AirFreightRateEstimation
 from services.chakravyuh.models.air_freight_rate_estimation_audit import AirFreightRateEstimationAudit
 from database.rails_db import get_past_air_invoices
-from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
+from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_FACTORS_WEIGHT_SLABS
 from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as AirProducerVyuh
@@ -378,12 +378,12 @@ class AirFreightVyuh():
         origin_airport_id = self.new_rate['origin_airport_id']
         destination_airport_id = self.new_rate['destination_airport_id']
 
-        clusters_query  = AirFreightLocationClusters.select(
-                AirFreightLocationClusters.id,
-                AirFreightLocationClusters.base_airport_id
+        clusters_query  = AirFreightLocationCluster.select(
+                AirFreightLocationCluster.id,
+                AirFreightLocationCluster.base_airport_id
             ).where(
-                AirFreightLocationClusters.base_airport_id in [origin_airport_id, destination_airport_id],
-                AirFreightLocationClusters.status == 'active'
+                AirFreightLocationCluster.base_airport_id in [origin_airport_id, destination_airport_id],
+                AirFreightLocationCluster.status == 'active'
             )
         clusters = jsonable_encoder(list(clusters_query.dicts()))
         

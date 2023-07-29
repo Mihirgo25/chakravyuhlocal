@@ -1,6 +1,6 @@
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetters
 from database.rails_db import get_invoices
-from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
+from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from database.rails_db import get_past_air_invoices
@@ -35,8 +35,8 @@ def invoice_rates_updation():
 
 
 def critical_rates():
-    cluster_data = AirFreightLocationClusters.select(
-        AirFreightLocationClusters.id, AirFreightLocationClusters.base_airport_id
+    cluster_data = AirFreightLocationCluster.select(
+        AirFreightLocationCluster.id, AirFreightLocationCluster.base_airport_id
     )
     data_list = jsonable_encoder(list(cluster_data.dicts()))
     for origin_cluster in data_list:

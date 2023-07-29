@@ -1,5 +1,5 @@
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
+from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_rate_airline_factors import AirFreightAirlineFactors
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from fastapi.encoders import jsonable_encoder
@@ -98,8 +98,8 @@ class RelateAirline:
         return prime_airline_id, airline_dictionary,critical_rate
 
     def relate_airlines(self):
-        cluster_data = AirFreightLocationClusters.select(
-            AirFreightLocationClusters.id, AirFreightLocationClusters.base_airport_id
+        cluster_data = AirFreightLocationCluster.select(
+            AirFreightLocationCluster.id, AirFreightLocationCluster.base_airport_id
         )
         location_mappings = AirFreightLocationClusterMapping.select(AirFreightLocationClusterMapping.cluster_id,AirFreightLocationClusterMapping.location_id)
         location_mappings = jsonable_encoder(list(location_mappings.dicts()))
