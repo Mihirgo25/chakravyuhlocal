@@ -29,7 +29,7 @@ def execute_transaction_code(request):
             AirFreightRateRequest.status == "active",
         )
     )
-    
+
     if not request_objects:
         raise HTTPException(
             status_code=404, detail="Invalid Rate Request"
@@ -78,7 +78,7 @@ def execute_transaction_code(request):
         else:
            send_closed_notifications_to_sales_agent_function.apply_async(
             kwargs={"object": request_object}, queue="low"
-        ) 
+        )
 
     if shipment_source:
         data = {
