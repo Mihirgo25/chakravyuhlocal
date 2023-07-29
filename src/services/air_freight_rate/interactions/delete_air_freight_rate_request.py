@@ -77,7 +77,7 @@ def execute_transaction_code(request):
 
         else:
            send_closed_notifications_to_sales_agent_function.apply_async(
-            kwargs={"object": request_object}, queue="low"
+            kwargs={"object": request_object}, queue="critical"
         )
 
     if shipment_source:
