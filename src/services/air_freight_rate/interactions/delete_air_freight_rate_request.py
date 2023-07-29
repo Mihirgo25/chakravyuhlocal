@@ -72,7 +72,7 @@ def execute_transaction_code(request):
         
         if request_object.source =='spot_search' and request_object.performed_by_type =='user':
           send_closed_notifications_to_user_request.apply_async(
-            kwargs={"object": request_object}, queue="low"
+            kwargs={"object": request_object}, queue="critical"
         ) 
 
         else:
