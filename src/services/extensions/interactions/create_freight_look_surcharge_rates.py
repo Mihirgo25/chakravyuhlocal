@@ -29,7 +29,7 @@ def create_freight_look_surcharge_rate(request):
     for rate in proper_json_rates:
         rate['destination_airport_id'] = locations[destination_port_code]['id']
         try:
-            process_freight_look_surcharge_rate_in_delay.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
+            process_freight_look_surcharge_rate_in_delay.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='fcl_freight_rate')
         except Exception as e:
             print(e)
 
