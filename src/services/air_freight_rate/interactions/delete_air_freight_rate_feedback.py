@@ -38,7 +38,7 @@ def execute_transaction_code(request):
          send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue="critical") 
 
         else:
-          send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')    
+          send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')    
 
 
     return {"id":request['air_freight_rate_feedback_ids']}      
