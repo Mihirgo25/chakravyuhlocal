@@ -36,9 +36,11 @@ async def get_fcl_freight_rate_charts(filters):
 
     accuracy = await get_accuracy(filters, where)
     deviation = await get_deviation(filters, where)
-    spot_search_to_checkout_count = await get_spot_search_to_checkout_count(filters, where)
-    rate_count_with_deviation_more_than_30 = await get_rate_count_with_deviation_more_than_30(
+    spot_search_to_checkout_count = await get_spot_search_to_checkout_count(
         filters, where
+    )
+    rate_count_with_deviation_more_than_30 = (
+        await get_rate_count_with_deviation_more_than_30(filters, where)
     )
 
     return dict(
@@ -65,7 +67,7 @@ async def get_accuracy(filters, where):
     queries.append(
         """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY mode,day ORDER BY day,mode;"""
     )
-    
+
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
     return format_charts(charts, filters.get("mode"))
