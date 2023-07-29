@@ -59,6 +59,22 @@ def execute_transaction_code(request):
 def get_create_params(request):
     if request.get('cargo_readiness_date'):
         request['cargo_readiness_date'] = request.get('cargo_readiness_date')
+    loc_ids = []
+
+    if request.get('origin_location_id'):
+        loc_ids.append(request.get('origin_location_id'))
+    if request.get('destination_location_id'):
+        loc_ids.append(request.get('destination_location_id'))
+    
+    obj = {'filters':{"id": loc_ids }, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name': True, 'default_params_required': True}}
+    locations = maps.list_locations(obj)['list']
+    locations_hash = {}
+    for loc in locations:
+        locations_hash[loc['id']] = loc
+    if request.get('origin_location_id'):
+        request['origin_location'] = locations_hash[request.get('origin_location_id')]
+    if request.get('destination_location_id'):
+        request['destination_location'] = locations_hash[request.get('destination_location_id')]
         
     return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id','origin_location_id', 'destination_location_id']} | ({'status': 'active'})
 

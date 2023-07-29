@@ -46,7 +46,7 @@ def list_haulage_freight_rate_feedbacks(filters = {},spot_search_details_require
     query = get_page(query, page, page_limit)
 
     # get data
-    data = get_data(query,spot_search_details_required,booking_details_required) 
+    data = get_data(query,spot_search_details_required,booking_details_required, transport_mode) 
 
     return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
@@ -91,7 +91,7 @@ def apply_similar_id_filter(query, filters):
         query = query.where(HaulageFreightRateFeedback.origin_location_id == feedback_data.origin_location_id, HaulageFreightRateFeedback.destination_location_id == feedback_data.destination_location_id, HaulageFreightRateFeedback.container_size == feedback_data.container_size, HaulageFreightRateFeedback.container_type == feedback_data.container_type, HaulageFreightRateFeedback.commodity == feedback_data.commodity)
     return query
 
-def get_data(query, spot_search_details_required, booking_details_required):
+def get_data(query, spot_search_details_required, booking_details_required, transport_mode):
     if not booking_details_required:
         query = query.select()
     data = json_encoder(list(query.dicts()))
@@ -143,7 +143,11 @@ def get_data(query, spot_search_details_required, booking_details_required):
             object['organization'] = service_providers_hash.get(organization_id)
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
+        if transport_mode != 'trailer':
+            object['origin_port'] = object['origin_location']
+            object['destination_port'] = object['destination_location']
         new_data.append(object)
+
     return new_data
 
 def get_pagination_data(query, page, page_limit):
