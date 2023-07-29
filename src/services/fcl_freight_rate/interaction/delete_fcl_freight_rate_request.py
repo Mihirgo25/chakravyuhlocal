@@ -8,7 +8,7 @@ def delete_fcl_freight_rate_request(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    from celery_worker import send_closed_notifications_to_sales_agent_function
+    from celery_worker import send_closed_notifications_to_sales_agent_function,send_closed_notifications_to_user_request
     objects = find_objects(request)
 
     if not objects:
@@ -27,7 +27,8 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
 
-    send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
+        send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
+        send_closed_notifications_to_user_request.apply_async(kwargs={'object':obj},queue='low')
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
 
