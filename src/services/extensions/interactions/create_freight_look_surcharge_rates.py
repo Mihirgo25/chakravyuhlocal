@@ -1,8 +1,8 @@
 
 from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
-from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID, SURCHARGE_SERVICE_PROVIDERS
 from micro_services.client import maps
-from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, surcharge_charges_mappings
+from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, surcharge_charges_mappings, surcharge_performed_by_id
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
 airline_hash = {}
@@ -50,7 +50,9 @@ def create_surcharge_rate_api(rate,locations):
         airline_id = airline['id']
     surcharge_params = format_surcharge_rate(rate,locations,airline_id)
     if surcharge_params and surcharge_params.get('line_items'):
-        create_air_freight_rate_surcharge(surcharge_params)
+        for sp in SURCHARGE_SERVICE_PROVIDERS:
+            surcharge_params['service_provider_id'] = sp
+            create_air_freight_rate_surcharge(surcharge_params)
 
 
 
@@ -62,7 +64,7 @@ def format_surcharge_rate(rate,locations,airline_id):
     line_items = []
 
     for key, value in rate.items():
-        if key in ['SSC','FSC/MIN','XRAY/MIN','MISC/MIN','CTG/MIN']:
+        if key in ['SSC','FSC/MIN','XRAY/MIN','MISC/MIN','CTG/MIN','AMS-M/AWB','AMS-M/HAWB','AMS-E/AWB','AMS-E/HAWB']:
             line_item = build_line_item(value,key)
             if line_item:
                 line_items.append(line_item)
@@ -75,9 +77,9 @@ def format_surcharge_rate(rate,locations,airline_id):
         'commodity_type': commodity_type,
         'operation_type': 'passenger',
         'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
-        'performed_by_id': DEFAULT_PROCURED_BY_ID,
-        'procured_by_id': DEFAULT_PROCURED_BY_ID,
-        'sourced_by_id': DEFAULT_PROCURED_BY_ID,
+        'performed_by_id': surcharge_performed_by_id,
+        'procured_by_id': surcharge_performed_by_id,
+        'sourced_by_id': surcharge_performed_by_id,
         'line_items':line_items,
         'airline_id':airline_id
     }
@@ -115,11 +117,12 @@ def build_line_item(line_item_price,code):
     if code == 'CTS':
         unit = 'per_kg_gross'
     
-    if code in ['AMS','HAWB','AMSE','EHAWB']:
-        unit = 'per_document'
+    if code in ['HAMS','EAMS','EHAMS']:
+        unit = 'per_document' 
     
+    if code == 'AMS':
+        unit = 'per_awb'
 
-    
     line_item = {'code':code,'unit':unit,'price':price,'min_price':min_price,'currency':'INR','remarks':[]}
     return line_item
     
