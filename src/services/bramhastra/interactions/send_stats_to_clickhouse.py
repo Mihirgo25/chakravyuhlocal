@@ -31,7 +31,7 @@ class Send():
             FclFreightRateStatistic,
         }
         
-    async def build_query_and_insert_to_clickhouse(self,model: peewee.Model):
+    def build_query_and_insert_to_clickhouse(self,model: peewee.Model):
         self.client = get_clickhouse_client()
         
         data = json_encoder_for_clickhouse(list(model.select().dicts()))
@@ -49,18 +49,20 @@ class Send():
                     value.append('DEFAULT')
                 elif isinstance(columns[k],peewee.UUIDField) or isinstance(columns[k],peewee.TextField) or isinstance(columns[k],peewee.CharField) or isinstance(columns[k],peewee.DateTimeField):
                     value.append(f"'{v}'")
+                elif isinstance(columns[k],peewee.BooleanField):
+                    value.append('true' if v else 'false')
                 else:
                     value.append(f'{v}')
             values.append(f"({','.join(value)})")
+            
+        if values:
+            self.client.execute(query + ','.join(values))
+            model.delete().execute()
         
-        self.client.execute(query + ','.join(values))
         
-        model.delete().execute()
-        
-        
-    async def execute(self):
+    def execute(self):
         for model in self.models:
-            await self.build_query_and_insert_to_clickhouse(model)
+            self.build_query_and_insert_to_clickhouse(model)
         
         
     

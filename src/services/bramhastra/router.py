@@ -23,6 +23,10 @@ from services.bramhastra.interactions.get_fcl_freight_rate_world import (
 from services.bramhastra.interactions.list_fcl_freight_rate_statistics import (
     list_fcl_freight_rate_statistics,
 )
+from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics import (
+    list_fcl_freight_rate_request_statistics,
+)
+
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
     ApplyCheckoutFclFreightRateStatistic,
@@ -57,10 +61,10 @@ def apply_checkout_fcl_freight_rate_statistic_func(
 
 
 @bramhastra.get("/get_fcl_freight_rate_charts", response_model=FclFreightRateCharts)
-def get_fcl_freight_rate_charts_func(
+async def get_fcl_freight_rate_charts_func(
     filters: Annotated[Json, Query()] = {},
 ):
-    response = get_fcl_freight_rate_charts(filters)
+    response = await get_fcl_freight_rate_charts(filters)
     return JSONResponse(content=response)
 
 
@@ -111,4 +115,14 @@ async def list_fcl_freight_rate_statistics_func(
     page: int = 1,
 ):
     response = await list_fcl_freight_rate_statistics(filters, page_limit, page)
+    return JSONResponse(content=response)
+
+
+@bramhastra.get("/list_fcl_freight_rate_request_statistics", response_model=DefaultList)
+def list_fcl_freight_rate_request_statistics_func(
+    filters: Annotated[Json, Query()] = {},
+    page_limit: int = 10,
+    page: int = 1,
+):
+    response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
     return JSONResponse(content=response)

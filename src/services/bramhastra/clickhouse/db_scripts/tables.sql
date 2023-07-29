@@ -242,13 +242,13 @@ CREATE TABLE brahmastra.spot_search_fcl_freight_rate_statistics
     fcl_freight_rate_statistic_id UInt256,
     spot_search_id UUID,
     spot_search_fcl_freight_services_id UUID,
-    checkout_id UUID  ,
-    checkout_fcl_freight_rate_services_id UUID  ,
-    validity_id UUID  ,
-    rate_id UUID  ,
-    sell_quotation_id UUID  ,
-    buy_quotation_id UUID  ,
-    shipment_id UUID  ,
+    checkout_id UUID,
+    checkout_fcl_freight_rate_services_id UUID ,
+    validity_id UUID,
+    rate_id UUID,
+    sell_quotation_id UUID,
+    buy_quotation_id UUID,
+    shipment_id UUID,
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     sign Int8 DEFAULT 1,
@@ -265,6 +265,8 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
     destination_port_id UUID,
     origin_region_id UUID,
     destination_region_id UUID,
+    origin_country_id UUID,
+    destination_country_id UUID,
     origin_continent_id UUID,
     destination_continent_id UUID,
     origin_trade_id UUID,
@@ -291,8 +293,8 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
     version Int8 DEFAULT 1
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY ()
-ORDER BY (version);
+PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,version)
+ORDER BY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,version);
 
 CREATE TABLE brahmastra.air_freight_rate_statistics
 (

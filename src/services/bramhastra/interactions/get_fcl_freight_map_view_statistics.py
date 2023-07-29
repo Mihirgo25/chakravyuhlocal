@@ -33,7 +33,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
-
+    
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
     
     add_location_objects(statistics)

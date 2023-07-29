@@ -527,7 +527,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
     def populate_fcl_request_statistics(self):
         try:
-            rate_stats = FclFreightRateRequest.select().limit(5)
+            rate_stats = FclFreightRateRequest.select()
             for rate_stat in rate_stats:
                 print('id', rate_stat.id)
                 
@@ -618,11 +618,11 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    populate_from_rates.populate_active_rate_ids()
+    # populate_from_rates.populate_active_rate_ids()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search()
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
-    # populate_from_rates.populate_fcl_request_statistics()
+    populate_from_rates.populate_fcl_request_statistics()
 
 if __name__ == '__main__':   
     main()
