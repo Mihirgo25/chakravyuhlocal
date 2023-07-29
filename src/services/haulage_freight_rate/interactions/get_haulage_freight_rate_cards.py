@@ -371,13 +371,10 @@ def additional_response_data(data):
             filter(lambda t: t["id"] == addon_data["sourced_by_id"], users), None
         )
         
-        try:
-            addon_data["user_name"] = user.get("name")
-            addon_data["user_contact"] = user.get("mobile_number") or user.get(
-                "mobile_number_eformat"
-            )
-        except:
-            raise HTTPException(status_code=400,detail='Invalid source')
+        addon_data["user_name"] = user.get("name")
+        addon_data["user_contact"] = user.get("mobile_number") or user.get(
+            "mobile_number_eformat"
+        )
         
         addon_data["last_updated_at"] = addon_data.get("updated_at")
 
