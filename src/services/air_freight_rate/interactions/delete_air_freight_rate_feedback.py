@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import HTTPException
 from database.db_session import db 
 from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
-from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user
+from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 
 def delete_air_freight_rate_feedback(request):
@@ -32,9 +32,15 @@ def execute_transaction_code(request):
     
 
         create_audit(request,obj.id)
-        update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
-        send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')  
-        send_closed_notifications_to_user(request,obj) 
+        update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low') 
+         
+        if obj.source =='spot_search' and obj.performed_by_type =='user':
+         send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='low') 
+
+        else:
+          send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')    
+
+
     return {"id":request['air_freight_rate_feedback_ids']}      
 
 def create_audit(request,id):
