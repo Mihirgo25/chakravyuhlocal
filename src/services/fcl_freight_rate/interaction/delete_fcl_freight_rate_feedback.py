@@ -29,9 +29,9 @@ def execute_transaction_code(request):
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
 
         if obj.source == 'spot_search' and obj.performed_by_type == 'user':
-            send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='low')
+            send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='critical')
         else:
-            send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
+            send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')
 
     return request['fcl_freight_rate_feedback_ids']
 
