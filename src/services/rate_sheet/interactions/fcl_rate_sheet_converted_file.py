@@ -9,7 +9,7 @@ from services.rate_sheet.interactions.validate_fcl_freight_object import validat
 from database.db_session import rd
 
 from fastapi.encoders import jsonable_encoder
-from database.rails_db import get_operators, get_organization
+from database.rails_db import get_organization
 from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
@@ -26,61 +26,9 @@ csv_options = {
 }
 
 
-def get_shipping_line_id(shipping_line_name):
-    try:
-        shipping_line_name = shipping_line_name.strip()
-        shipping_line_id = get_operators(short_name=shipping_line_name)[0]['id']
-    except:
-        shipping_line_id = None
-    return shipping_line_id
-
-
 def append_in_final_csv(csv, row):
     list_opt = list(row.values())
     csv.writerow(list_opt)
-
-
-def get_location_id(q, country_code = None, service_provider_id = None):
-    if not q:
-        return None
-    
-    pincode_filters =  {"type": "pincode", "postal_code": q, "status": "active"}
-    if country_code is not None:
-        pincode_filters['country_code'] = country_code
-    locations = maps.list_locations({'filters': pincode_filters})['list']
-    filters = {"type": "country", "country_code": q, "status": "active"}
-    if not locations:
-        locations = maps.list_locations({"filters": filters})['list']
-
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if not locations:
-        country_filters = {"type": "country", "country_code": q, "status": "active"}
-        if country_code is not None:
-            country_filters["country_code"]= country_code
-        locations = maps.list_locations({"filters": country_filters})['list']
-    seaport_filters = {"type": "seaport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        seaport_filters['country_code'] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters":seaport_filters})['list']
-    airport_filters = {"type": "airport", "port_code": q, "status": "active"}
-    if country_code is not None:
-        airport_filters['country_code'] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters":airport_filters})['list']
-    name_filters = {"name": q, "status": "active"}
-    if country_code is not None:
-        name_filters["country_code"] = country_code
-    if not locations:
-        locations = maps.list_locations({"filters": name_filters})['list']
-    display_name_filters = {"display_name": q, "status": "active"}
-    if country_code is not None:
-        display_name_filters = maps.list_locations({"filters": display_name_filters})
-    # if not locations:
-    #     locations = common.list_ltl_freight_rate_zones(name=q, service_provider_id=service_provider_id).values_list('id', flat=True)
-    #     return locations[0] if locations else None
-    return locations[0]["id"] if locations else None
-
 
 
 def get_location(location_code, type):
@@ -95,7 +43,7 @@ def get_location(location_code, type):
             location = location_list['list'][0]
     else:
         location_list = maps.list_locations(
-            {"filters": {"type": type, "name": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+            {"filters": {"type": type, "country_code": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )
         if 'list' in location_list and len(location_list['list']) > 0:
             location = location_list['list'][0]
@@ -502,7 +450,7 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     object['remarks'] = [rows[0]['remark1'], rows[0]['remark2'], rows[0]['remark3']]
     object['validity_start'] = convert_date_format(object['validity_start'])
     object['validity_end'] = convert_date_format(object['validity_end'])
-    object['slabs'] = []
+    slabs = []
     for t in rows:
         keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']
         slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
@@ -511,14 +459,21 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
             if key in keys_to_float:
                 if val:
                     slab[key] = parse_numeric(val)
-        if object['slabs']:
-            object['slabs'].append(slab)
+            filtered_slab = dict((key, value) for key, value in slab.items() if value is not None)
+        if filtered_slab:
+            slabs.append(filtered_slab)
+
+    object['slabs'] = list(filter(None, slabs))
     object['rate_sheet_id'] = params['rate_sheet_id']
     object['performed_by_id'] = created_by_id
     object['service_provider_id'] = params['service_provider_id']
     object['procured_by_id'] = procured_by_id
     object['sourced_by_id'] = sourced_by_id
     object["source"] = "rate_sheet"
+    if object['previous_days_applicable'].strip().lower() == 'false':
+        object['previous_days_applicable'] = False
+    else:
+        object['previous_days_applicable'] = True
     request_params = object
     validation = write_fcl_freight_free_day_object(request_params.copy(), csv_writer, params,  converted_file, last_row)
     if validation.get('valid'):
@@ -527,7 +482,6 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     else:
         print(validation.get('error'))
     return
-
 
 
 def write_fcl_freight_commodity_surcharge_object(rows, csv, params, converted_file):

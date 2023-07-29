@@ -534,6 +534,58 @@ def get_supply_agents():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+    
+
+def list_organization_users(id):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+               
+                if not isinstance(id, list):
+                    id = (id,)
+                else:
+                    id = tuple(id)
+                sql = 'select organization_users.id, users.name, users.email, users.mobile_number_eformat from organization_users join users on organization_users.user_id = users.id where organization_users.id in %s'
+                cur.execute(sql, (id,))
+
+                result = cur.fetchall()
+
+                for res in result:
+                    all_result.append(
+                        {
+                            "id": str(res[0]),
+                            "name": str(res[1]),
+                            "email": str(res[2]),
+                            "mobile_number_eformat":str(res[3])
+                        }
+                    )
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
+
+def get_eligible_org_ids( id = None):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur = conn.cursor()
+                sql = 'select organization_services.service from organization_services where status = %s and organization_id = %s'
+                cur.execute(sql, ('active',id))
+                result = cur.fetchall()
+                for res in result:
+                    all_result.append(str(res[0]))
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
 
 def get_spot_search_count(origin_airport_id,destination_airport_id):
     count = 0
@@ -559,5 +611,3 @@ def get_spot_search_count(origin_airport_id,destination_airport_id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return count
-
-

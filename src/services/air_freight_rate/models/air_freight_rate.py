@@ -521,7 +521,8 @@ class AirFreightRate(BaseModel):
 
         
         for validity in new_validities:
-            validity.validations()
+            validity_instance = AirFreightRateValidity(validity)
+            validity_instance.validations()
 
         main_validities=[]
         for new_validity in new_validities:
@@ -529,7 +530,10 @@ class AirFreightRate(BaseModel):
           new_validity.validity_start = datetime.datetime.strptime(str(new_validity.validity_start).split(' ')[0], '%Y-%m-%d').date().isoformat()
           new_validity.validity_end = datetime.datetime.strptime(str(new_validity.validity_end).split(' ')[0], '%Y-%m-%d').date().isoformat()
           new_validity = vars(new_validity)
-          new_validity['id'] = str(new_validity['id'])
+          new_validity['id'] = str(new_validity['__data__']['id'])
+          new_validity.pop('__data__')
+          new_validity.pop('__rel__')
+          new_validity.pop('_dirty')
           main_validities.append(new_validity)
         self.validities = main_validities
         if not deleted:
@@ -566,14 +570,17 @@ class AirFreightRate(BaseModel):
                 old_weight_slab['upper_limit'] = int(new_weight_slab['lower_limit'])
                 new_weight_slab['lower_limit'] = int(new_weight_slab['lower_limit']) + 0.1
                 final_old_weight_slabs.append(old_weight_slab)
+                continue
             if int(old_weight_slab['lower_limit']) >= int(new_weight_slab['lower_limit']) and old_weight_slab['upper_limit'] > int(new_weight_slab['upper_limit']):
                 old_weight_slab['lower_limit'] = int(new_weight_slab['upper_limit']) + 0.1
                 new_weight_slab['upper_limit'] = int(new_weight_slab['upper_limit'])
                 final_old_weight_slabs.append(old_weight_slab)
+                continue
             if int(old_weight_slab['lower_limit']) < new_weight_slab['lower_limit'] and int(old_weight_slab['upper_limit'])> new_weight_slab['upper_limit']:
-                final_old_weight_slabs.append(WeightSlab(**{**old_weight_slab, 'upper_limit': int(new_weight_slab['lower_limit'])}))
-                final_old_weight_slabs.append(WeightSlab(**{**old_weight_slab, 'lower_limit': int(new_weight_slab['upper_limit']) + 0.1}))
-
+                weight_slab1 = WeightSlab(**{**old_weight_slab, 'upper_limit': int(new_weight_slab['lower_limit'])})
+                weight_slab2 = WeightSlab(**{**old_weight_slab, 'lower_limit': int(new_weight_slab['upper_limit']) + 0.1})
+                final_old_weight_slabs.append(vars(weight_slab1))
+                final_old_weight_slabs.append(vars(weight_slab2))
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue
