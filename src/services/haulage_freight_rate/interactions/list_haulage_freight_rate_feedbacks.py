@@ -106,7 +106,9 @@ def get_data(query, spot_search_details_required, booking_details_required, tran
                                             HaulageFreightRate.destination_location,
                                             HaulageFreightRate.commodity,
                                             HaulageFreightRate.line_items,
-            ).where(HaulageFreightRate.id.in_(haulage_freight_rate_ids))
+                                            HaulageFreightRate.container_size,
+                                            HaulageFreightRate.container_type
+            ).where(HaulageFreightRate.id << haulage_freight_rate_ids)
     haulage_freight_rates = json_encoder(list(haulage_freight_rates.dicts()))
     haulage_freight_rate_mappings = {k['id']: k for k in haulage_freight_rates}
 
@@ -133,6 +135,8 @@ def get_data(query, spot_search_details_required, booking_details_required, tran
             object["origin_location"] = rate.get("origin_location")
             object["destination_location"] = rate.get("destination_location")
             object["commodity"] = rate.get("commodity")
+            object["container_size"] = rate.get("container_size")
+            object["container_type"] = rate.get("container_type")
             object["price"] = sum(p['price'] for p in rate.get("line_items")) if rate.get("line_items") else None
             object["currency"] = rate["line_items"][0].get('currency') if rate["line_items"] else None
         service_provider = object.get('service_provider_id', None)

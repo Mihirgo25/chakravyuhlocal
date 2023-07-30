@@ -72,11 +72,16 @@ def initialize_query(requirements, query):
     )
     if requirements.get("trip_type") == "round":
         requirements["trip_type"] = "round_trip"
+    if requirements.get("haulage_type"):
+        haulage_type = [requirements.get("haulage_type")]
+    else:
+        haulage_type = ['carrier', 'merchant']
+
     freight_query = query.where(
         HaulageFreightRate.container_type == requirements["container_type"],
         HaulageFreightRate.container_size == requirements["container_size"],
         HaulageFreightRate.commodity == requirements["commodity"],
-        HaulageFreightRate.haulage_type == requirements.get("haulage_type"),
+        HaulageFreightRate.haulage_type << haulage_type,
         ((
             HaulageFreightRate.importer_exporter_id
             == requirements.get("importer_exporter_id")
