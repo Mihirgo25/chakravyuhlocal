@@ -1,5 +1,5 @@
 from services.haulage_freight_rate.models.haulage_freight_rate import HaulageFreightRate
-from database.rails_db import get_organization,get_eligible_orgs
+from database.rails_db import get_organization,get_eligible_org_ids
 
 def get_haulage_freight_rate_visibility(request):
     """
@@ -18,7 +18,7 @@ def get_haulage_freight_rate_visibility(request):
     organizations = get_organization(id=request.get('service_provider_id'))
     if organizations:
         org_details = organizations[0]
-        org_services = get_eligible_orgs(None, str(org_details.get('id') or ''))
+        org_services = get_eligible_org_ids(str(org_details.get('id') or ''))
 
     kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
     if kyc_and_service_status:
