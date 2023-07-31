@@ -119,8 +119,8 @@ class RelateAirline:
                     air_freight_rates = self.get_available_rates(origin_locations, destination_locations)
                     if not air_freight_rates:
                         continue
-                    origin_locations.append(location_mappings_dict[origin_cluster['cluster_id']])
-                    destination_locations.append(location_mappings_dict[destination_cluster['cluster_id']])
+                    origin_locations.extend(location_mappings_dict[origin_cluster['id']])
+                    destination_locations.extend(location_mappings_dict[destination_cluster['id']])
                     invoice_rates = get_past_air_invoices(
                         origin_location_id=origin_locations,
                         destination_location_id=destination_locations,
@@ -132,9 +132,7 @@ class RelateAirline:
                     if not invoice_rates or not air_freight_rates:
                         continue
                     prime_airline_id, airline_dict, critical_rate= self.create_airline_dictionary(invoice_rates, air_freight_rates,origin_cluster['base_airport_id'],destination_cluster['base_airport_id'])
-                    origin_locations = location_mappings_dict[origin_cluster['id']]
-                    destination_locations = location_mappings_dict[destination_cluster['id']]
-                    self.generate_ratios(prime_airline_id,airline_dict,origin_cluster['base_airport_id'],destination_cluster['base_airport_id'],origin_locations,destination_locations,critical_rate)
+                    self.generate_ratios(prime_airline_id,airline_dict,origin_cluster,destination_cluster,origin_locations,destination_locations,critical_rate)
 
 
     def get_airlines_for_airport_pair(self,origin_airport_id,destination_airport_id):
@@ -146,7 +144,9 @@ class RelateAirline:
 
         return airlines
 
-    def generate_ratios(self,prime_arline_id,airline_dict,origin_base_airport_id,destination_base_airport_id,origin_locations,destination_locations,critical_rate):
+    def generate_ratios(self,prime_arline_id,airline_dict,origin_cluster,destination_cluster,origin_locations,destination_locations,critical_rate):
+        origin_base_airport_id = origin_cluster['base_airport_id']
+        destination_base_airport_id = destination_cluster['base_airport_id']
         key = ":".join([origin_base_airport_id,destination_base_airport_id,prime_arline_id])
         origin_locations.append(origin_base_airport_id)
         destination_locations.append(destination_base_airport_id)
@@ -162,10 +162,10 @@ class RelateAirline:
                         slab_wise_ratio = {}
                         if key in airline_dict:
                             slab_wise_ratio = self.get_ratio(critical_rate,airline_dict[key])
-                        self.airline_factors_insertion(slab_wise_ratio,origin,destination,prime_arline_id,airline)
+                        self.airline_factors_insertion(slab_wise_ratio,origin,destination,prime_arline_id,airline,origin_cluster['id'],destination_cluster['id'])
                         
 
-    def airline_factors_insertion(self,slab_wise_ratio,origin,destination,prime_airline_id,airline):
+    def airline_factors_insertion(self,slab_wise_ratio,origin,destination,prime_airline_id,airline,origin_cluster_id,destination_cluster_id):
         slabs = {
             "0.0-45":1,
             "45-100":1,
@@ -179,9 +179,10 @@ class RelateAirline:
         airline_factor = AirFreightAirlineFactor.select().where(
             AirFreightAirlineFactor.origin_airport_id == origin,
             AirFreightAirlineFactor.destination_airport_id == destination,
+            AirFreightAirlineFactor.derive_airline_id == airline
         ).first()
         if not airline_factor:
-            airline_factor = AirFreightAirlineFactor(**{'origin_airport_id':origin,'destination_airport_id':destination})
+            airline_factor = AirFreightAirlineFactor(**{'origin_airport_id':origin,'destination_airport_id':destination,'origin_cluster_id':origin_cluster_id,'destination_cluster_id':destination_cluster_id})
 
         airline_factor.derive_airline_id = airline
         airline_factor.base_airline_id = prime_airline_id
@@ -196,7 +197,7 @@ class RelateAirline:
         for slab in criticl_weight_slabs:
             key = get_matching_slab(slab["lower_limit"])
             if key in weight_slabs:
-                slab_wise_ratio[key] = slab['tariff_price']/mean(weight_slabs[key])
+                slab_wise_ratio[key] = mean(weight_slabs[key]/slab['tariff_price'])
         
         return slab_wise_ratio
     

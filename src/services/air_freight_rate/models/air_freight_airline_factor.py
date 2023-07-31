@@ -24,4 +24,4 @@ class AirFreightAirlineFactor(BaseModel):
     class Meta:
         table_name = 'air_freight_airline_factors'
         indexes = (
-        (("origin_airport_id","destination_airport_id"), True),)
+        (("origin_airport_id","destination_airport_id","derive_airline_id","base_airline_id"), True),)
