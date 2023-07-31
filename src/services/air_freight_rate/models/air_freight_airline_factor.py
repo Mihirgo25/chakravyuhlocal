@@ -8,7 +8,7 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class AirFreightAirlineFactors(BaseModel):
+class AirFreightAirlineFactor(BaseModel):
     id = BigAutoField(primary_key=True)
     base_airline_id = UUIDField(index=True)
     derive_airline_id = UUIDField(index=True)

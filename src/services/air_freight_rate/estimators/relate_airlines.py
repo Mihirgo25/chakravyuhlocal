@@ -1,6 +1,6 @@
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
-from services.air_freight_rate.models.air_freight_rate_airline_factors import AirFreightAirlineFactors
+from services.air_freight_rate.models.air_freight_airline_factor import AirFreightAirlineFactor
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import get_past_air_invoices,get_spot_search_count
@@ -176,12 +176,12 @@ class RelateAirline:
         for key,value in slab_wise_ratio.items():
             slabs[key] = value
         
-        airline_factor = AirFreightAirlineFactors.select().where(
-            AirFreightAirlineFactors.origin_airport_id == origin,
-            AirFreightAirlineFactors.destination_airport_id == destination,
+        airline_factor = AirFreightAirlineFactor.select().where(
+            AirFreightAirlineFactor.origin_airport_id == origin,
+            AirFreightAirlineFactor.destination_airport_id == destination,
         ).first()
         if not airline_factor:
-            airline_factor = AirFreightAirlineFactors(**{'origin_airport_id':origin,'destination_airport_id':destination})
+            airline_factor = AirFreightAirlineFactor(**{'origin_airport_id':origin,'destination_airport_id':destination})
 
         airline_factor.derive_airline_id = airline
         airline_factor.base_airline_id = prime_airline_id

@@ -5,7 +5,7 @@ from datetime import datetime
 from configs.transformation_constants import HANDLING_TYPE_FACTORS, PACKING_TYPE_FACTORS, OPERATION_TYPE_FACTORS
 from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
-from services.air_freight_rate.models.air_freight_rate_airline_factors import AirFreightAirlineFactors
+from services.air_freight_rate.models.air_freight_airline_factor import AirFreightAirlineFactor
 from micro_services.client import maps
 from services.air_freight_rate.helpers.get_matching_weight_slab import get_matching_slab
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
@@ -242,11 +242,11 @@ class AirFreightVyuh():
         return new_weight_slabs
     
     def get_airline_factor(self,rate_to_rate):
-        airline_factors = AirFreightAirlineFactors.select(AirFreightAirlineFactors.slab_wise_factor).where(
-            AirFreightAirlineFactors.origin_airport_id == rate_to_rate['origin_airport_id'],
-            AirFreightAirlineFactors.destination_airport_id == rate_to_rate['destination_airport_id'],
-            AirFreightAirlineFactors.derive_airline_id == rate_to_rate['airline_id'],
-            AirFreightAirlineFactors.base_airline_id == self.rate.get('airline_id')
+        airline_factors = AirFreightAirlineFactor.select(AirFreightAirlineFactor.slab_wise_factor).where(
+            AirFreightAirlineFactor.origin_airport_id == rate_to_rate['origin_airport_id'],
+            AirFreightAirlineFactor.destination_airport_id == rate_to_rate['destination_airport_id'],
+            AirFreightAirlineFactor.derive_airline_id == rate_to_rate['airline_id'],
+            AirFreightAirlineFactor.base_airline_id == self.rate.get('airline_id')
         ).first()
         if not airline_factors:
             airline_factors = {
