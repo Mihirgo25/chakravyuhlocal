@@ -74,7 +74,7 @@ class MigrationHelpers:
             if len(set(currency_lists)) != 1:
                 price = float(sum(common.get_money_exchange_for_fcl({"price": item.get('price') or item.get('buy_price'), "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             else:
-                price = float(sum(item.get('price') or item.get('buy_price') or 0 for item in line_items))   
+                price = float(sum(item.get('price') or item.get('buy_price',0) for item in line_items))   
             pass
             
         validity_details =  {
