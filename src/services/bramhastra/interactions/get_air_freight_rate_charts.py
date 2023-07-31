@@ -1,6 +1,6 @@
 from services.bramhastra.clickhouse.client import Clickhouse
 from fastapi.encoders import jsonable_encoder
-from services.bramhastra.helpers.filter_helper import (
+from services.bramhastra.helpers.air_freight_filter_helper import (
     get_direct_indirect_filters,
 )
 import math
