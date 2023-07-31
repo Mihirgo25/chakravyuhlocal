@@ -32,8 +32,8 @@ POSSIBLE_INDIRECT_FILTERS = {"stale_rate"}
 COUNT_FILTERS = {"dislikes_count", "checkout_count"}
 
 REQUIRED_FILTERS = {
-    "start_date": datetime(2016, 5, 3).date(),
-    "end_date": date.today() + timedelta(days=30),
+    "start_date": datetime(1990, 5, 3).date(),
+    "end_date": date.today() + timedelta(days=365),
 }
 
 

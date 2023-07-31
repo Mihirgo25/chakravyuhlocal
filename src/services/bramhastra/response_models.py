@@ -84,4 +84,5 @@ class World(BaseModel):
 
 
 class FclFreightRateWorldResponse(BaseModel):
-    world_statistics: list[World]
+    statistics: list[World]
+    total_rates: int

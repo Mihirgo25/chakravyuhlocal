@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.get_fcl_freight_rate_helper import ClickHouse
+from services.bramhastra.helpers.clickhouse_helper import ClickHouse
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import maps
 
@@ -18,7 +18,12 @@ def get_fcl_freight_rate_world():
 
     add_location_objects(statistics)
 
-    return dict(world_statistics = statistics)
+    total_rates = 0
+
+    for statistic in statistics:
+        total_rates += statistic["rate_count"]
+
+    return {"total_rates": total_rates, "statistics": statistics}
 
 
 def add_location_objects(statistics):
