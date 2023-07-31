@@ -561,22 +561,3 @@ def list_organization_users(id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
-
-def get_eligible_org_ids( id = None):
-    all_result = []
-    try:
-        conn = get_connection()
-        with conn:
-            with conn.cursor() as cur:
-                cur = conn.cursor()
-                sql = 'select organization_services.service from organization_services where status = %s and organization_id = %s'
-                cur.execute(sql, ('active',id))
-                result = cur.fetchall()
-                for res in result:
-                    all_result.append(str(res[0]))
-                cur.close()
-        conn.close()
-        return all_result
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return all_result

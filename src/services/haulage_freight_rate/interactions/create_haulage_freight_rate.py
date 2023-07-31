@@ -62,7 +62,7 @@ def create_haulage_freight_rate(request):
         'accuracy': request.get('accuracy', 100),
         'rate_type': request.get("rate_type", DEFAULT_RATE_TYPE)
     }   
-    init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["shipping_line_id"] or "")}:{str(params["haulage_type"])}:{str(params["trailer_type"] or "")}:{str(params["trip_type"] or "")}:{str(params["importer_exporter_id"] or "")}:{str(params["rate_type"])}'
+    init_key = f'{str(params["origin_location_id"])}:{str(params["destination_location_id"])}:{str(params["container_size"])}:{str(params["container_type"])}:{str(params["commodity"] or "")}:{str(params["service_provider_id"])}:{str(params["shipping_line_id"] or "")}:{str(params["haulage_type"])}:{str(params["trailer_type"] or "")}:{str(params["trip_type"] or "")}:{str(params["importer_exporter_id"] or "")}:{str(params["rate_type"])}:{str(params["transport_modes_keyword"])}'
     haulage_freight_rate = (
         HaulageFreightRate.select().where(
         HaulageFreightRate.init_key == init_key

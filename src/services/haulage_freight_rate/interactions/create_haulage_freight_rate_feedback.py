@@ -5,6 +5,8 @@ from fastapi import HTTPException
 from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from celery_worker import update_multiple_service_objects
+from micro_services.client import maps
+
 
 
 def create_haulage_freight_rate_feedback(request):
@@ -89,6 +91,22 @@ def get_create_params(request):
         'trip_type': request.get('trip_type'),
         'transport_mode': request.get('transport_mode')
     }
+    loc_ids = []
+
+    if request.get('origin_location_id'):
+        loc_ids.append(request.get('origin_location_id'))
+    if request.get('destination_location_id'):
+        loc_ids.append(request.get('destination_location_id'))
+    
+    obj = {'filters':{"id": loc_ids }, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name': True, 'default_params_required': True}}
+    locations = maps.list_locations(obj)['list']
+    locations_hash = {}
+    for loc in locations:
+        locations_hash[loc['id']] = loc
+    if request.get('origin_location_id'):
+        params['origin_location'] = locations_hash[request.get('origin_location_id')]
+    if request.get('destination_location_id'):
+        params['destination_location'] = locations_hash[request.get('destination_location_id')]
     return params
     
 def create_audit(request):
