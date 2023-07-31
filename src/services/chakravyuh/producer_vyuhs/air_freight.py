@@ -190,7 +190,6 @@ class AirFreightVyuh():
         return validities_to_create
     
     def create_air_freight_rate_to_validities(self,rate_to_create):
-        from celery_worker import create_air_freight_rate_delay
 
         validity_start = self.rate['validity_start']
         validity_end = self.rate['validity_end']
@@ -201,7 +200,10 @@ class AirFreightVyuh():
         for validity in validities_to_create:
             rate_to_create = rate_to_create | validity
             rate_to_create['extension_not_required'] = True
-            create_air_freight_rate(rate_to_create)
+            try:
+                create_air_freight_rate(rate_to_create)
+            except:
+                raise
 
 
     def extend_rate(self, source = 'rate_extension'):
