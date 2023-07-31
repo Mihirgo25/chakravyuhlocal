@@ -55,7 +55,6 @@ class FtlFreightRateRequest(BaseModel):
     free_detention_hours = IntegerField(null= True)
     load_selection_type = TextField(null= True)
     trade_type = TextField(null=True)
-    relevant_supply_agent_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
 
 
     def save(self, *args, **kwargs):

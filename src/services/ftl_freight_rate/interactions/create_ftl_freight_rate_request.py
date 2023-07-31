@@ -49,7 +49,7 @@ def execute_transaction_code(request):
     request_object.set_location()
     request_object.save()
     
-    set_relevant_supply_agents(request, request_object.id)
+    send_notification_to_relevant_supply_agents(request)
 
     create_audit(request, request_object.id)
 
@@ -76,14 +76,12 @@ def get_relevant_supply_agents(service, origin_locations, destination_locations)
     return supply_agents_user_ids
 
 
-def set_relevant_supply_agents(request, ftl_freight_rate_request_id):
+def send_notification_to_relevant_supply_agents(request):
     locations_data = FtlFreightRateRequest.select(FtlFreightRateRequest.origin_location_id, FtlFreightRateRequest.origin_country_id, FtlFreightRateRequest.origin_city_id, FtlFreightRateRequest.destination_location_id, FtlFreightRateRequest.destination_country_id, FtlFreightRateRequest.destination_city_id).where(FtlFreightRateRequest.source_id == request['source_id']).limit(1).dicts().get()
     origin_locations = list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['origin_location_id', 'origin_country_id', 'origin_city_id']]))
     destination_locations =   list(filter(None,[str(value or "") for key,value in locations_data.items() if key in ['destination_location_id', 'destination_country_id', 'destination_city_id']]))
 
-    supply_agents_user_ids = get_relevant_supply_agents('fcl_freight', origin_locations, destination_locations)
-
-    update_ftl_freight_rate_request_in_delay({'ftl_freight_rate_request_id': ftl_freight_rate_request_id, 'relevant_supply_agent_ids': supply_agents_user_ids, 'performed_by_id': request.get('performed_by_id')})
+    supply_agents_user_ids = get_relevant_supply_agents('ftl_freight', origin_locations, destination_locations)
 
     try:
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}})['list']
@@ -108,7 +106,7 @@ def send_notifications_to_supply_agents(request, request_info):
         'service': 'spot_search',
         'service_id': request['source_id'],
         'template_name': 'missing_freight_rate_request_notification',
-        'variables': { 'service_type': 'fcl freight',
+        'variables': { 'service_type': 'ftl freight',
                     'origin_location': request_info['origin_location'],
                     'destination_location': request_info['destination_location'] }
         }
