@@ -103,8 +103,8 @@ def get_fcl_freight_map_view_statistics_func(
 @bramhastra.get(
     "/get_fcl_freight_rate_world", response_model=FclFreightRateWorldResponse
 )
-def get_fcl_freight_rate_world_func():
-    response = get_fcl_freight_rate_world()
+async def get_fcl_freight_rate_world_func():
+    response = await get_fcl_freight_rate_world()
     return JSONResponse(content=response)
 
 
