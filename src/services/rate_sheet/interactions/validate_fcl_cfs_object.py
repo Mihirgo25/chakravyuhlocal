@@ -31,17 +31,17 @@ def get_cfs_object(object):
     }
     validation = {}
     validation['error'] = ''
-    custom = FclCfsRate(**res)
+    cfs_rate = FclCfsRate(**res)
 
     if 'rate_type' in object and object['rate_type'] and object['rate_type'] not in RATE_TYPES:
         validation['error']+=  ' ' + f"{object['rate_type']} is invalid, valid rate types are {RATE_TYPES}"
 
-    custom.line_items = object.get('line_items')
-    custom.free_days = object.get('free_days')
+    cfs_rate.line_items = object.get('line_items')
+    cfs_rate.free_days = object.get('free_days')
 
     try:
-        custom.validate_before_save()
-        custom.validate_mandatory_free_days()
+        cfs_rate.validate_before_save()
+        cfs_rate.validate_mandatory_free_days()
     except HTTPException as e:
         validation['error']+=' ' + str(e.detail)
 
