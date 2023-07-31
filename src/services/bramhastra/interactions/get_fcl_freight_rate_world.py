@@ -6,22 +6,18 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 from peewee import fn
 from collections import defaultdict
+import time
 
 
 async def get_fcl_freight_rate_world():
     past_statistics = await get_past_count()
     live_statistics = await get_live_count()
+    
+    statistics = merge(past_statistics, live_statistics)
 
-    merge(past_statistics, live_statistics)
+    add_location_objects(statistics)
 
-    add_location_objects(live_statistics)
-
-    total_rates = 0
-
-    for statistic in live_statistics:
-        total_rates += statistic["rate_count"]
-
-    return {"total_rates": total_rates, "statistics": live_statistics}
+    return {"total_rates": sum(statistic["rate_count"] for statistic in statistics), "statistics": statistics}
 
 
 def add_location_objects(statistics):
