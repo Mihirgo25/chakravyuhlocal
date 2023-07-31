@@ -120,12 +120,12 @@ def apply_relevant_supply_agent_filter(query, filters):
     origin_location_id = [t["origin_location_id"] for t in expertises]
     destination_location_id = [t["destination_location_id"] for t in expertises]
     query = query.where(
-        (HaulageFreightRateRequest.origin_location_id << origin_location_id)
-        | (HaulageFreightRateRequest.origin_country_id << origin_location_id)
+        ((HaulageFreightRateRequest.origin_location_id << origin_location_id)
+        | (HaulageFreightRateRequest.origin_country_id << origin_location_id))
     )
     query = query.where(
-        (HaulageFreightRateRequest.destination_location_id << destination_location_id)
-        | (HaulageFreightRateRequest.destination_country_id << destination_location_id)
+        ((HaulageFreightRateRequest.destination_location_id << destination_location_id)
+        | (HaulageFreightRateRequest.destination_country_id << destination_location_id))
     )
     return query
 

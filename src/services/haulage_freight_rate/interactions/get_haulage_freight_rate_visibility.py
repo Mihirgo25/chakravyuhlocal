@@ -24,8 +24,8 @@ def get_haulage_freight_rate_visibility(request):
         org_services_data = org_services_data['list']
     else:
         org_services_data = []
-
-    kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services_data)
+    org_services = [service['service'] for service in org_services_data]
+    kyc_and_service_status = is_kyc_verified_and_service_validation_status(org_details, org_services)
 
     if kyc_and_service_status:
         response_object['reason'] += kyc_and_service_status

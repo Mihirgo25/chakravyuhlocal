@@ -4,6 +4,7 @@ from celery_worker import create_communication_background, update_multiple_servi
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from database.db_session import db
+import uuid
 
 def create_haulage_freight_rate_request(request):
     with db.atomic():
@@ -25,6 +26,8 @@ def execute_transaction_code(request):
         'origin_location_id': request.get('origin_location_id'),
         'destination_location_id': request.get('destination_location_id'),
     }
+    if request.get('preferred_shipping_line_ids'):
+        request['preferred_shipping_line_ids'] = [uuid.UUID(str_id) for str_id in request['preferred_shipping_line_ids']]
 
     request_object = HaulageFreightRateRequest.select().where(
         HaulageFreightRateRequest.source == request.get('source'),
@@ -43,7 +46,6 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
     for attr, value in create_params.items():
         setattr(request_object, attr, value)
-
     request_object.save()
 
     create_audit(request,request_object.id)
@@ -85,6 +87,9 @@ def create_audit(request, request_object_id):
         object_type="TrailerFreightRateRequest"
     else:
         object_type="HaulageFreightRateRequest"
+
+    if request.get('preferred_shipping_line_ids'):
+        request['preferred_shipping_line_ids'] = [str(str_id) for str_id in request['preferred_shipping_line_ids']]
     
     HaulageFreightRateAudit.create(
         action_name = 'create',
