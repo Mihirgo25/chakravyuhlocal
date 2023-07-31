@@ -8,7 +8,7 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-class AirFreightLocationClusters(BaseModel):
+class AirFreightLocationCluster(BaseModel):
     id = BigAutoField(primary_key=True)
     base_airport_id = UUIDField(index=True)
     base_airport = BinaryJSONField(null=True)

@@ -46,6 +46,7 @@ from services.air_freight_rate.workers.send_expired_air_freight_rate_notificatio
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
 from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
+from services.air_freight_rate.estimators.relate_airlines import RelateAirline
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -130,6 +131,11 @@ celery.conf.beat_schedule = {
     'send_air_freight_local_charges_update_reminder_notification':{
         'task': 'celery_worker.send_air_freight_local_charges_update_reminder_notification_in_delay',
         'schedule': crontab(minute=30,hour=5,day_of_month = '1'),
+        'options': {'queue': 'low'}
+    },
+    'air_freight_rate_airline_factors':{
+        'task': 'celery_worker.air_freight_rate_factors_in_delay',
+        'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     }
 
@@ -543,8 +549,8 @@ def process_electricity_data_delays(self):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def create_air_freight_rate_delay(self, request):
     try:
-        return create_draft_air_freight_rate(request)
-        # return common.create_air_freight_rate(request)
+        # return create_draft_air_freight_rate(request)
+        return create_air_freight_rate(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -786,3 +792,25 @@ def process_freight_look_surcharge_rate_in_delay(self,rate, locations):
             pass
         else:
             raise self.retry(exc= exc)
+
+@celery.task(bind = True,retry_backoff=True,max_retries=3)
+def extend_air_freight_rates_in_delay(self, rate):
+    try:
+        air_freight_vyuh = AirFreightVyuhProducer(rate=rate)
+        air_freight_vyuh.extend_rate()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc) 
+
+@celery.task(bind = True,retry_backoff=True,max_retries=3)
+def air_freight_airline_factors_in_delay(self):
+    try:
+        relate_ailine = RelateAirline()
+        relate_ailine.relate_airlines()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc) 
