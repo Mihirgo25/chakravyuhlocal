@@ -170,7 +170,7 @@ class Rate:
             if new_row["last_action"] == ValidityAction.create.value:
                 fcl_freight_validity.create_stats(new_row)
             elif new_row["last_action"] == ValidityAction.update.value:
-                fcl_freight_validity.update_stats(new_row)
+                fcl_freight_validity.update_stats(new_row,False)
             elif new_row["last_action"] == ValidityAction.unchanged.value:
                 continue
 
