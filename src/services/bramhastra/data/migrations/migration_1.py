@@ -7,6 +7,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRate
 from services.bramhastra.models.feedback_fcl_freight_rate_statistic import FeedbackFclFreightRateStatistic
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import CheckoutFclFreightRateStatistic
 from services.bramhastra.models.fcl_freight_rate_request_statistics import FclFreightRateRequestStatistic
+from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import SpotSearchFclFreightRateStatistic
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import FclFreightLocationCluster
 from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping import FclFreightLocationClusterMapping
 from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreightRateFeedback
@@ -575,10 +576,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             setattr(statistic, 'spot_search_count', statistic.spot_search_count+1)
 
                             saved_status = statistic.save()
-                                if not saved_status:
-                                    print("! Error: Couldn't save statistics", statistic.id)
-                                else:
-                                    print('Saved ...',statistic.id)
+                            if not saved_status:
+                                print("! Error: Couldn't save statistics", statistic.id)
+                            else:
+                                print('Saved ...',statistic.id)
                         
 
                             statistic = model_to_dict(statistic)
