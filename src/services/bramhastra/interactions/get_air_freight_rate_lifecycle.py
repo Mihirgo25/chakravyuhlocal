@@ -57,7 +57,7 @@ def get_date_range_filter(where):
     )
 
 
-async def get_fcl_freight_rate_lifecycle(filters):
+async def get_air_freight_rate_lifecycle(filters):
     where = get_direct_indirect_filters_for_rate(filters)
 
     search_to_book_statistics = await get_search_to_book_and_feedback_statistics(
@@ -139,7 +139,7 @@ async def get_stale_rate_statistics(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
-        """SELECT count(id) as stale_rates FROM brahmastra.fcl_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
+        """SELECT count(id) as stale_rates FROM brahmastra.air_freight_rate_statistics WHERE checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0"""
     ]
 
     if where:
@@ -156,14 +156,14 @@ async def get_missing_rates(filters, rate_where):
     where = get_direct_indirect_filters(filters)
 
     query1 = [
-        """WITH spot_search AS (SELECT SUM(spot_search_count) AS count FROM brahmastra.fcl_freight_rate_statistics"""
+        """WITH spot_search AS (SELECT SUM(spot_search_count) AS count FROM brahmastra.air_freight_rate_statistics"""
     ]
 
     query2 = [
-        """),missing_rates AS (SELECT count(id) AS count FROM brahmastra.fcl_freight_rate_request_statistics WHERE source = 'spot_search'"""
+        """),missing_rates AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE source = 'spot_search'"""
     ]
     query3 = [
-        """),rate_reverted AS (SELECT count(id) AS count FROM brahmastra.fcl_freight_rate_request_statistics WHERE is_rate_reverted = true """
+        """),rate_reverted AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE is_rate_reverted = true """
     ]
 
     query4 = """) SELECT missing_rates.count as missing_rates,(1-missing_rates/spot_search.count)*100 as missing_rates_percentage,rate_reverted.count as rate_reverted,(1 - rate_reverted.count/missing_rates)*100 as rate_reverted_percentage FROM missing_rates, rate_reverted, spot_search"""
@@ -200,7 +200,7 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
         FLOOR((1-SUM(feedback_recieved_count)/dislikes),2)*100 AS feedback_recieved_percentage,
         SUM(dislikes_rate_reverted_count) as dislikes_rate_reverted,
         FLOOR((1-SUM(dislikes_rate_reverted_count)/feedback_recieved),2)*100 AS dislikes_rate_reverted_percentage
-        FROM brahmastra.fcl_freight_rate_statistics
+        FROM brahmastra.air_freight_rate_statistics
         """
     ]
 
