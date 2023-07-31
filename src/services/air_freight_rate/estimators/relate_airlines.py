@@ -118,6 +118,8 @@ class RelateAirline:
                     air_freight_rates = self.get_available_rates(origin_locations, destination_locations)
                     if not air_freight_rates:
                         continue
+                    origin_locations.append(location_mappings_dict[origin_cluster['cluster_id']])
+                    destination_locations.append(location_mappings_dict[destination_cluster['cluster_id']])
                     invoice_rates = get_past_air_invoices(
                         origin_location_id=origin_locations,
                         destination_location_id=destination_locations,

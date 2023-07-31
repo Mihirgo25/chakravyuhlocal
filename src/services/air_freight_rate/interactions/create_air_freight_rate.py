@@ -40,7 +40,7 @@ def create_air_freight_rate(request):
 
     
 def create_air_freight_rate_data(request):
-    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects
+    from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,update_multiple_service_objects,extend_air_freight_rates_in_delay
 
     if request['rate_type'] == 'general':
         request['rate_type'] = 'market_place'
@@ -150,8 +150,11 @@ def create_air_freight_rate_data(request):
 
     freight.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
 
+
     if request.get('air_freight_rate_request_id'):
         update_air_freight_rate_details_delay.apply_async(kwargs={ 'request':request }, queue='fcl_freight_rate')
+    if not request.get('extension_not_required'):
+        extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request }, queue='low')
 
     freight_object = {
         "id": freight.id,

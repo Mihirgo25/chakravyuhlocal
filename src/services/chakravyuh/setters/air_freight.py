@@ -13,24 +13,19 @@ from statistics import mean
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_SERVICE_PROVIDER_ID,DEFAULT_FACTOR
 from configs.env import DEFAULT_USER_ID
 from services.air_freight_rate.models.air_freight_location_cluster_factor import AirFreightLocationClusterFactor
-from services.air_freight_rate.models.air_freight_rate_airline_factors import AirFreightAirlineFactors
-from services.air_freight_rate.helpers.get_matching_weight_slab import get_matching_slab
-from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 class AirFreightVyuh():
     def __init__(self,
                 new_rate: dict = {},  
                 what_to_create: dict = {
                 'country': True,
-                },
-                csr:bool = False
+                }
                 
             ):
         self.new_rate = jsonable_encoder(new_rate)
-        self.weight = new_rate.get('weight')
+        self.weight = new_rate['weight']
         self.what_to_create = what_to_create
         self.weight_slabs = []
         self.months = 3
-        self.csr = csr
     
     def create_audits(self, data= {}):
         AirFreightRateEstimationAudit.create(**data)
@@ -439,30 +434,25 @@ class AirFreightVyuh():
         from celery_worker import extend_air_freight_rates
         origin_airport_id = self.new_rate['origin_airport_id']
         destination_airport_id = self.new_rate['destination_airport_id']
-        if self.csr:
-            weight_slabs = self.new_rate.get('weight_slabs')
-        else:
-            weight_slabs = self.create_weight_slabs(origin_airport_id,destination_airport_id,'airport')
+        weight_slabs = self.create_weight_slabs(origin_airport_id,destination_airport_id,'airport')
         rates_to_extend = self.get_cluster_rate_combinations(weight_slabs)
         for rate in rates_to_extend:
-            from services.chakravyuh.producer_vyuhs.air_freight import AirFreightVyuh as Producer
-            t = Producer(rate=rate)
-            t.extend_rate(source='rate_extension')
-            # extend_air_freight_rates.apply_async(kwargs={ 'rate': rate, 'source': 'invoice' }, queue='low')
+            extend_air_freight_rates.apply_async(kwargs={ 'rate': rate, 'source': 'invoice' }, queue='low')
     
     def get_rate_param(self,origin_airport_id,destination_airport_id,weight_slabs,factor=1 ):
+        # weight_slabs = self.get_rms_weight_slabs(weight_slabs,factor)
         params = {
             'origin_airport_id':origin_airport_id,
             'destination_airport_id':destination_airport_id,
             'commodity':self.new_rate.get('commodity'),
             'commodity_type': 'all' if self.new_rate.get('commodity') == 'general' else 'other_special',
             'commodity_sub_type': 'all' if self.new_rate.get('commodity') == 'general' else 'others',
-            'weight_slabs':self.get_rms_weight_slabs(weight_slabs=weight_slabs,factor=factor,origin_airport_id=origin_airport_id,destination_airport_id=destination_airport_id,airline=self.new_rate.get('airline_id')),
+            'weight_slabs':self.get_rms_weight_slabs(weight_slabs=weight_slabs,factor=factor),
             'airline_id':self.new_rate.get('airline_id'),
             'operation_type':self.new_rate.get('operation_type'),
             'stacking_type': 'stackable' if (self.new_rate.get('is_stackable') or self.new_rate.get('is_stackable') == None) else 'non_stackable',
             'shipment_type':self.new_rate['shipment_type'],
-            'currency':weight_slabs[0]['currency'],
+            'currency':'INR',
             'price_type':'net_net',
             'min_price' : weight_slabs[0]['tariff_price'],
             'service_provider_id':DEFAULT_SERVICE_PROVIDER_ID,
@@ -470,46 +460,17 @@ class AirFreightVyuh():
             'procured_by_id':DEFAULT_USER_ID,
             'sourced_by_id':DEFAULT_USER_ID,
             'validity_start': datetime.now().date(),
-            'validity_end': datetime.now().date() + timedelta(days=7),
-            'rate_type': 'market_place',
-            'density_category': 'general',
-            'density_ratio':'1:1',
-            'length':300,
-            'breadth':300,
-            'height':300
+            'validity_end': datetime.now().date() + timedelta(days=7)
         }
-        if self.csr:
-            params['commodity_sub_type'] = self.new_rate.get('commodity_sub_type')
-            params['commodity_type'] = self.new_rate.get('commodity_type')
-            params['stacking_type'] = self.new_rate.get('stacking_type')
-
-
-
         return params
     
-    def get_rms_weight_slabs(self,weight_slabs,factor,origin_airport_id,destination_airport_id,airline):
+    def get_rms_weight_slabs(self,weight_slabs,factor):
         new_weight_slabs = jsonable_encoder(weight_slabs)
-        airline_factors = AirFreightAirlineFactors.select(AirFreightAirlineFactors.slab_wise_factor).where(
-            AirFreightAirlineFactors.origin_airport_id == origin_airport_id,
-            AirFreightAirlineFactors.destination_airport_id == destination_airport_id,
-            AirFreightAirlineFactors.derive_airline_id == airline,
-            AirFreightAirlineFactors.base_airline_id == self.new_rate.get('airline_id')
-        ).first()
-        if not airline_factors:
-            airline_factors = {
-            "0.0-45":1,
-            "45-100":1,
-            "100-300":1,
-            "300-500":1,
-            "500-5000":1,
-        }
-
         for weight_slab in new_weight_slabs:
-            matching_slab = get_matching_slab(weight_slab['lower_limit'])
-            weight_slab['tariff_price'] = factor*weight_slab['tariff_price']*airline_factors[matching_slab]
+            weight_slab['tariff_price'] = factor*weight_slab['tariff_price']
         return new_weight_slabs
     
     def set_dynamic_pricing(self):
         self.set_estimations()
-        # self.insert_rates_to_rms()
+        self.insert_rates_to_rms()
         return True

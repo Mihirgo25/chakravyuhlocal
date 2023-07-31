@@ -19,4 +19,4 @@ class AirFreightLocationCluster(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     
     class Meta:
-        table_name = 'air_freight_location_cluster'
+        table_name = 'air_freight_location_clusters'
