@@ -51,7 +51,6 @@ class FtlFreightRateRequest(BaseModel):
     trucks_count = IntegerField(null=True)
     truck_type = TextField(null=True)
     destination_city_id = UUIDField(null= True)
-    truck_count = IntegerField(null=True)
     packages = BinaryJSONField(null=True)
     free_detention_hours = IntegerField(null= True)
     load_selection_type = TextField(null= True)
