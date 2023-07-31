@@ -596,7 +596,7 @@ def get_spot_search_count(origin_airport_id,destination_airport_id):
             with conn.cursor() as cur:
                 sql_query = '''
                         SELECT 
-                            count(*) from spot_search_air_freight_services
+                            count(id) from spot_search_air_freight_services
                         WHERE 
                             spot_search_air_freight_services.origin_airport_id = %s
                             AND

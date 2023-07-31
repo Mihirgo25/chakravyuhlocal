@@ -135,7 +135,7 @@ celery.conf.beat_schedule = {
     },
     'air_freight_rate_airline_factors':{
         'task': 'celery_worker.air_freight_rate_factors_in_delay',
-        'schedule': crontab(hour=30, minute=5, day_of_week='sun'),
+        'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     }
 
@@ -549,8 +549,8 @@ def process_electricity_data_delays(self):
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
 def create_air_freight_rate_delay(self, request):
     try:
-        return create_draft_air_freight_rate(request)
-        # return create_air_freight_rate(request)
+        # return create_draft_air_freight_rate(request)
+        return create_air_freight_rate(request)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
