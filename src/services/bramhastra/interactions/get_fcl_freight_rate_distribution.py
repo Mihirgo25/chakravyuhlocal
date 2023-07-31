@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.clickhouse_helper import ClickHouse
+from services.bramhastra.clickhouse.client import Clickhouse
 from services.bramhastra.helpers.fcl_freight_filter_helper import get_direct_indirect_filters
 
 
