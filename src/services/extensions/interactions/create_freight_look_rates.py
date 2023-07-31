@@ -172,8 +172,8 @@ def create_freight_look_rates(request):
         rate['meta_data'] = {}
         rate['meta_data']['destination'] = locations[destination_port_code]['name']
         try:
-            # process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
-            new_rate = create_air_freight_rate_api(rate=rate, locations=locations)
+            process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
+            # new_rate = create_air_freight_rate_api(rate=rate, locations=locations)
         except Exception as e:
             print(e)
         
