@@ -71,10 +71,12 @@ def get_air_freight_rate_prediction(request):
                 'length': 300,
                 'breadth': 300,
                 'height': 300,
-                'source' : 'predicted'}
+                'source' : 'predicted',
+                'rate_type': 'market_place'
+                }
             )
-        except Exception as e:
-            pass
+        except:
+            raise
 
     return True
         
