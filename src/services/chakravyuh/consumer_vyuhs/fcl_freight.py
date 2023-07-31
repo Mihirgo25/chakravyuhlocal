@@ -297,7 +297,7 @@ class FclFreightVyuh():
             new_rate = self.apply_default_transformation(rate=rate)
         
         if not is_shipping_line and len(probable_booking_data_transformations)>0:
-            new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
+            # new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
             return new_rate
             
         if len(probable_customer_transformations) > 0:
