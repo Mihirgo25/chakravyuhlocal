@@ -1,5 +1,5 @@
-from services.bramhastra.helpers.clickhouse_helper import ClickHouse
-from services.bramhastra.helpers.filter_helper import get_direct_indirect_filters
+from services.bramhastra.clickhouse.client import Clickhouse
+from services.bramhastra.helpers.air_freight_filter_helper import get_direct_indirect_filters
 
 
 def get_air_freight_rate_distribution(filters):

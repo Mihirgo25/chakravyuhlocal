@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.clickhouse_helper import ClickHouse
+from services.bramhastra.clickhouse.client import Clickhouse
 from services.bramhastra.helpers.fcl_freight_filter_helper import get_direct_indirect_filters
 
 
@@ -8,7 +8,7 @@ def get_fcl_freight_rate_distribution(filters):
     queries = [
         """WITH rate_distribution as 
                (SELECT mode,shipment_cancelled_count,shipment_completed_count,shipment_confirmed_by_service_provider_count,bookings_created,
-               shipment_aborted_count,shipment_recieved_count,shipment_recieved_count,shipment_in_progress_count
+               shipment_aborted_count,shipment_recieved_count,shipment_in_progress_count
                from brahmastra.fcl_freight_rate_statistics"""
     ]
 

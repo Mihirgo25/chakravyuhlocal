@@ -1,6 +1,6 @@
-from services.bramhastra.helpers.clickhouse_helper import ClickHouse
+from services.bramhastra.clickhouse.client import Clickhouse
 from fastapi.encoders import jsonable_encoder
-from services.bramhastra.helpers.fcl_freight_filter_helper import (
+from services.bramhastra.helpers.air_freight_filter_helper import (
     get_direct_indirect_filters as get_direct_indirect_filters_for_rate,
 )
 from datetime import date, timedelta, datetime
