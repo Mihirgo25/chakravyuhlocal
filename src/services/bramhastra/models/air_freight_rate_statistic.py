@@ -58,12 +58,6 @@ class AirFreightRateStatistic(BaseModel):
     operation_type = CharField()
     shipment_type = CharField()
     stacking_type = CharField()
-    # volume = FloatField()
-    # weight = FloatField()
-    # breadth = FloatField()
-    # height = FloatField()
-    # length = FloatField()
-    # maximum_weight = FloatField()
     origin_local_id = UUIDField(null=True)
     destination_local_id = UUIDField(null=True)
     # applicable_origin_local_count = IntegerField(default=0)
@@ -89,6 +83,8 @@ class AirFreightRateStatistic(BaseModel):
     updated_at = DateTimeTZField(default = datetime.utcnow())
     version = IntegerField(default=1)
     sign = IntegerField(default=1)
+    revenue_desk_visit_count = IntegerField(default=0)
+    so1_visit_count = IntegerField(default=0)
     status = CharField(default = 'active')
     last_action = CharField(default = 'create')
     rate_deviation_from_booking_rate = FloatField(default=0)
@@ -96,17 +92,18 @@ class AirFreightRateStatistic(BaseModel):
     rate_deviation_from_booking_on_cluster_base_rate = FloatField(default=0)
     rate_deviation_from_latest_booking = FloatField(default=0)
     average_booking_rate = FloatField(default=-1)
+    parent_rate_id = UUIDField(null=True)
+
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.utcnow()
         self.validity_updated_at = datetime.utcnow()
         return super(AirFreightRateStatistic, self).save(*args, **kwargs)
 
-    def update(self, params):
+    def update_force(self, params):
         for k, v in params.items():
             setattr(self, k, v)
         self.save()
-        pass
 
     class Meta:
         table_name = "air_freight_rate_statistics"
