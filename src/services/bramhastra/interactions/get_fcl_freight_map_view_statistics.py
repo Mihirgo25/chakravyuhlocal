@@ -1,5 +1,5 @@
 from services.bramhastra.helpers.clickhouse_helper import ClickHouse
-from services.bramhastra.helpers.filter_helper import get_direct_indirect_filters
+from services.bramhastra.helpers.fcl_freight_filter_helper import get_direct_indirect_filters
 from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
