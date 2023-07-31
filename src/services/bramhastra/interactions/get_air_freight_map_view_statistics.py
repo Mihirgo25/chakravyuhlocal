@@ -1,19 +1,19 @@
 from services.bramhastra.helpers.clickhouse_helper import ClickHouse
-from services.bramhastra.helpers.fcl_freight_filter_helper import get_direct_indirect_filters
+from services.bramhastra.helpers.air_freight_filter_helper import get_direct_indirect_filters
 from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
 
-HEIRARCHY = ["continent", "country", "region", "port"]
+HEIRARCHY = ["continent", "country", "region", "airport"]
 
 LOCATION_KEYS = {
-    "destination_port_id",
+    "destination_airport_id",
     "destination_country_id",
     "destination_continent_id",
     "destination_region_id",
 }
 
-def get_fcl_freight_map_view_statistics(filters, page_limit, page):
+def get_air_freight_map_view_statistics(filters, page_limit, page):
     clickhouse = ClickHouse()
 
     grouping = set()
@@ -21,7 +21,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     alter_filters_for_map_view(filters, grouping)
 
     queries = [
-        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(rate_id) as total_rates FROM brahmastra.fcl_freight_rate_statistics'
+        f'SELECT {",".join(grouping)},floor(abs(AVG(accuracy)),2) as accuracy,count(rate_id) as total_rates FROM brahmastra.air_freight_rate_statistics'
     ]
 
     if where := get_direct_indirect_filters(filters):
@@ -33,7 +33,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
-    
+
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
     
     add_location_objects(statistics)
