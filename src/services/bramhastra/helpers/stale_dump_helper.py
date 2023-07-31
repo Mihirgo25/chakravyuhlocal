@@ -1,4 +1,4 @@
-from services.bramhastra.clickhouse.connect import get_clickhouse_client
+from services.bramhastra.clickhouse.client import ClickHouse
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
@@ -20,7 +20,7 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
 
 class StaleDump:
     def __init__(self) -> None:
-        self.clickhouse = get_clickhouse_client()
+        self.clickhouse = ClickHouse().client
         self.models = [FclFreightRateStatistic]
     
     def send_data_to_stale_tables(self,model):

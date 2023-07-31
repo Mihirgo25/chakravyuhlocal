@@ -16,23 +16,23 @@ from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
-from services.bramhastra.clickhouse.connect import get_clickhouse_client
+from services.bramhastra.clickhouse.client import ClickHouse
 from services.bramhastra.helpers.post_fcl_freight_helper import json_encoder_for_clickhouse
 import peewee
     
 class Send():
     def __init__(self) -> None:
         self.models = {
-            FclFreightRateRequestStatistic,
-            FeedbackFclFreightRateStatistic,
-            QuotationFclFreightRateStatistic,
-            ShipmentFclFreightRateStatistic,
-            SpotSearchFclFreightRateStatistic,
+            # FclFreightRateRequestStatistic,
+            # FeedbackFclFreightRateStatistic,
+            # QuotationFclFreightRateStatistic,
+            # ShipmentFclFreightRateStatistic,
+            # SpotSearchFclFreightRateStatistic,
             FclFreightRateStatistic,
         }
         
     def build_query_and_insert_to_clickhouse(self,model: peewee.Model):
-        self.client = get_clickhouse_client()
+        self.client = ClickHouse().client
         
         data = json_encoder_for_clickhouse(list(model.select().dicts()))
         

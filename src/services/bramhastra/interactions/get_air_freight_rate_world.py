@@ -1,4 +1,4 @@
-from services.bramhastra.clickhouse.client import Clickhouse
+from services.bramhastra.clickhouse.client import ClickHouse
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import maps
 

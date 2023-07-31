@@ -1,6 +1,6 @@
-from services.bramhastra.clickhouse.connect import get_clickhouse_client
+from services.bramhastra.clickhouse.client import ClickHouse
 
-def main(client = get_clickhouse_client()):
+def main(client = ClickHouse().client):
     client.command("")
 
 if __name__ == "__main__":

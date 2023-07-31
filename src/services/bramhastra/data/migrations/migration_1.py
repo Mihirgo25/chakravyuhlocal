@@ -73,7 +73,7 @@ class MigrationHelpers:
             if len(set(currency_lists)) != 1:
                 price = float(sum(common.get_money_exchange_for_fcl({"price": item.get('price') or item.get('buy_price'), "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             else:
-                price = float(sum(item.get('price') or item.get('buy_price') for item in line_items))   
+                price = float(sum(item.get('price') or item.get('buy_price') or 0 for item in line_items))   
             pass
             
         validity_details =  {
@@ -575,10 +575,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             setattr(statistic, 'spot_search_count', statistic.spot_search_count+1)
 
                             saved_status = statistic.save()
-                                if not saved_status:
-                                    print("! Error: Couldn't save statistics", statistic.id)
-                                else:
-                                    print('Saved ...',statistic.id)
+                            if not saved_status:
+                                print("! Error: Couldn't save statistics", statistic.id)
+                            else:
+                                print('Saved ...',statistic.id)
                         
 
                             statistic = model_to_dict(statistic)
@@ -702,7 +702,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    # populate_from_rates.populate_active_rate_ids()
+    populate_from_rates.populate_active_rate_ids()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search()
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
