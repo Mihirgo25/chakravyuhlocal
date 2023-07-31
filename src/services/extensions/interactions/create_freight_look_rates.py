@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 from micro_services.client import common, maps
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
-from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, airline_ids, airline_margins
+from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, airline_ids, airline_margins, surcharge_performed_by_id
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
-from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID, COGOXPRESS
 from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
 airline_hash = {}
 
@@ -89,11 +89,11 @@ def format_air_freight_rate(rate, locations,airline_id):
         'currency': weight_slabs[0]['currency'],
         'price_type': 'net_net',
         'rate_type': 'general',
-        'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
+        'service_provider_id': COGOXPRESS,
         'density_category': 'general',
-        'performed_by_id': DEFAULT_PROCURED_BY_ID,
-        'procured_by_id': DEFAULT_PROCURED_BY_ID,
-        'sourced_by_id': DEFAULT_PROCURED_BY_ID,
+        'performed_by_id': surcharge_performed_by_id,
+        'procured_by_id': surcharge_performed_by_id,
+        'sourced_by_id': surcharge_performed_by_id,
         'shipment_type': 'box',
         'stacking_type': 'stackable',
         'validity_start': datetime.now(),
