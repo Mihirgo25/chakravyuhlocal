@@ -587,14 +587,17 @@ class AirFreightRate(BaseModel):
                 old_weight_slab['upper_limit'] = int(new_weight_slab['lower_limit'])
                 new_weight_slab['lower_limit'] = int(new_weight_slab['lower_limit']) + 0.1
                 final_old_weight_slabs.append(old_weight_slab)
+                continue
             if int(old_weight_slab['lower_limit']) >= int(new_weight_slab['lower_limit']) and old_weight_slab['upper_limit'] > int(new_weight_slab['upper_limit']):
                 old_weight_slab['lower_limit'] = int(new_weight_slab['upper_limit']) + 0.1
                 new_weight_slab['upper_limit'] = int(new_weight_slab['upper_limit'])
                 final_old_weight_slabs.append(old_weight_slab)
+                continue
             if int(old_weight_slab['lower_limit']) < new_weight_slab['lower_limit'] and int(old_weight_slab['upper_limit'])> new_weight_slab['upper_limit']:
-                final_old_weight_slabs.append(WeightSlab(**{**old_weight_slab, 'upper_limit': int(new_weight_slab['lower_limit'])}))
-                final_old_weight_slabs.append(WeightSlab(**{**old_weight_slab, 'lower_limit': int(new_weight_slab['upper_limit']) + 0.1}))
-
+                weight_slab1 = WeightSlab(**{**old_weight_slab, 'upper_limit': int(new_weight_slab['lower_limit'])})
+                weight_slab2 = WeightSlab(**{**old_weight_slab, 'lower_limit': int(new_weight_slab['upper_limit']) + 0.1})
+                final_old_weight_slabs.append(vars(weight_slab1))
+                final_old_weight_slabs.append(vars(weight_slab2))
                 new_weight_slab['lower_limit'] = new_weight_slab['lower_limit'] + 0.1
                 new_weight_slab['upper_limit'] = new_weight_slab['upper_limit']
                 continue

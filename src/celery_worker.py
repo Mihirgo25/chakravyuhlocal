@@ -45,6 +45,7 @@ from services.air_freight_rate.workers.send_air_freight_local_charges_update_rem
 from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
+from services.extensions.interactions.create_freight_look_surcharge_rates import create_surcharge_rate_api
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -772,6 +773,16 @@ def send_near_expiry_air_freight_rate_notification_in_delay(self):
 def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight_rate,airports):
     try:
         object.send_notification_to_supply_agents(air_freight_rate,airports)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=3)
+def process_freight_look_surcharge_rate_in_delay(self,rate, locations):
+    try:
+        create_surcharge_rate_api(rate, locations)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
