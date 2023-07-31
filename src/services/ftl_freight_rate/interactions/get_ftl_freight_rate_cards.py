@@ -92,7 +92,7 @@ def initialize_query(query,request):
     return query
 
 def select_fields():
-    return FtlFreightRate.select(FtlFreightRate.id, FtlFreightRate.commodity, FtlFreightRate.line_items, FtlFreightRate.service_provider_id, FtlFreightRate.importer_exporter_id, FtlFreightRate.origin_location_id, FtlFreightRate.destination_location_id, FtlFreightRate.origin_destination_location_type, FtlFreightRate.transit_time, FtlFreightRate.detention_free_time, FtlFreightRate.truck_type, FtlFreightRate.minimum_chargeable_weight, FtlFreightRate.unit, FtlFreightRate.validity_start, FtlFreightRate.validity_end,FtlFreightRate.service_provider,FtlFreightRate.sourced_by)
+    return FtlFreightRate.select(FtlFreightRate.id, FtlFreightRate.commodity, FtlFreightRate.line_items, FtlFreightRate.service_provider_id, FtlFreightRate.importer_exporter_id, FtlFreightRate.origin_location_id, FtlFreightRate.destination_location_id, FtlFreightRate.origin_destination_location_type, FtlFreightRate.transit_time, FtlFreightRate.detention_free_time, FtlFreightRate.truck_type, FtlFreightRate.minimum_chargeable_weight, FtlFreightRate.unit, FtlFreightRate.validity_start, FtlFreightRate.validity_end,FtlFreightRate.service_provider,FtlFreightRate.sourced_by,FtlFreightRate.updated_at,FtlFreightRate.created_at)
 
 def build_response_list(query_result,request):
     ftl_rates = list(query_result.dicts())
@@ -241,29 +241,17 @@ def ignore_non_eligible_service_providers(request,list):
         final_list  = get_ftl_freight_rate_cards(request)['list']
     return final_list
 
-def additional_response_data(list_of_data):
-    audit_object_ids = list(map(lambda obj: obj['id'], list_of_data))
-    ftl_audit_data = json_encoder(list(FtlFreightRateAudit.select().where(FtlFreightRateAudit.object_id << audit_object_ids).dicts()))
-    
-    audit_sourced_by_id = []
-
-    for audit_data in ftl_audit_data:
-        audit_sourced_by_id.append(str(audit_data['sourced_by_id']))
-        
+def additional_response_data(list_of_data):    
     for data in list_of_data:
         if data['service_provider'] is not None:
             data['service_provider_name'] = data['service_provider'].get('short_name')
-        audit = list(filter(lambda audit_data:str(audit_data.get('object_id')) == str(data['id']), ftl_audit_data))
-        print(audit)
         user = data.get('sourced_by')
         if user is not None:
-            data['user_name'] = user['name']
-            data['user_contact'] = user['mobile_number']
-            if audit is not None:
-                data['last_updated_at'] = audit[0]['updated_at']
+            data['user_name'] = user.get('name')
+            data['user_contact'] = user.get('mobile_number')
+            data['last_updated_at'] = data['updated_at']
             data['buy_rate_currency'] = 'INR' 
             data['buy_rate'] = get_buy_rate(data['line_items'])
-    
     return list_of_data
 
 
