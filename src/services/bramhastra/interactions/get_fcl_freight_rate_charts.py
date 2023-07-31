@@ -1,4 +1,4 @@
-from services.bramhastra.helpers.get_fcl_freight_rate_helper import ClickHouse
+from services.bramhastra.helpers.clickhouse_helper import ClickHouse
 from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.filter_helper import (
     get_direct_indirect_filters,
@@ -6,29 +6,10 @@ from services.bramhastra.helpers.filter_helper import (
 import math
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-import csv
-import json
-import time
+from database.db_session import rd
+from services.bramhastra.enums import RedisKeys
 
 ALLOWED_TIME_PERIOD = 6
-
-
-def prepare_all_time_accuracy_csv(data):
-    csv_file = "all_time_accuracy.csv"
-
-    field_names = data[0].keys()
-
-    with open(csv_file, mode="w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=field_names)
-        writer.writeheader()
-        writer.writerows(data)
-
-
-def prepare_all_time_accuracy_json(data):
-    json_object = json.dumps(data, indent=4)
-
-    with open("all_time_accuracy.json", "w") as outfile:
-        outfile.write(json_object)
 
 
 async def get_fcl_freight_rate_charts(filters):
@@ -52,8 +33,8 @@ async def get_fcl_freight_rate_charts(filters):
 
 
 async def get_accuracy(filters, where):
-    if is_csv_needed(filters):
-        return get_csv_link()
+    if is_json_needed(filters):
+        return get_link()
 
     clickhouse = ClickHouse()
     queries = [
@@ -168,9 +149,7 @@ def format_response(response, needed_modes):
         response_dict[day].update({entry["mode"]: entry["average_accuracy"]})
 
     for day, values in sorted(response_dict.items()):
-        data_object = {
-            "day": day.timestamp() * 1000
-        }  # Convert to Unix epoch in milliseconds
+        data_object = {"day": day.timestamp() * 1000}
         for mode in needed_modes:
             if mode in values:
                 data_object[mode] = values[mode]
@@ -193,7 +172,7 @@ def format_response(response, needed_modes):
     return formatted_response
 
 
-def is_csv_needed(filters):
+def is_json_needed(filters):
     start_date = (
         datetime.strptime(filters.get("start_date"), "%Y-%m-%d")
         if isinstance(filters.get("start_date"), str)
@@ -208,6 +187,5 @@ def is_csv_needed(filters):
     return duration.months > 6
 
 
-def get_csv_link():
-    return "https://cogoport-testing.sgp1.digitaloceanspaces.com/82e7ae0ac83dd3eda4d501285f06d3fa/all_time_accuracy.json"
-    return "https://cogoport-testing.sgp1.digitaloceanspaces.com/53fa79fadc07d6065d4b248af2acd43c/all_time_accuracy.csv"
+def get_link():
+    return rd.get(RedisKeys.fcl_freight_rate_all_time_accuracy_chart.value)

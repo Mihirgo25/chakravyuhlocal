@@ -210,4 +210,8 @@ DEFAULT_RATE_TYPE = 'market_place'
 
 VN_ENTITY_ID = 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'
 
-REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}
+SPECIFICITY_TYPE_HIERARCHY = {
+    'rate_specific':1,
+    'shipping_line':2,
+    'cogoport':3
+}
