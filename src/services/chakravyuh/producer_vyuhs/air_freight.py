@@ -8,6 +8,7 @@ from services.air_freight_rate.models.air_freight_location_cluster_mapping impor
 from services.air_freight_rate.models.air_freight_rate_airline_factors import AirFreightAirlineFactors
 from micro_services.client import maps
 from services.air_freight_rate.helpers.get_matching_weight_slab import get_matching_slab
+from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 
 class AirFreightVyuh():
     def __init__(self, rate:dict={}):
@@ -66,23 +67,17 @@ class AirFreightVyuh():
 
         return airlines
     def get_rate_combinations_to_extend(self):
-        HANDLING_TYPES = ['stackable','non_stackable']
-        PACKING_TYPES = ["pallet", "box", "crate", "loose"]
-        OPERATION_TYPES = ["passenger","freighter"]
+        HANDLING_TYPES = []
+        PACKING_TYPES = []
+        OPERATION_TYPES = []
         extended_rates = []
         origin_locations,destination_locations = self.get_cluster_combination()
         for origin_airport_id in origin_locations:
             for destination_airport_id in destination_locations:
-                for handling_type in HANDLING_TYPES:
-                    for packing_type in PACKING_TYPES:
-                        for operation_type in OPERATION_TYPES:
-                            rate = jsonable_encoder(self.rate)
-                            rate['stacking_type'] = handling_type
-                            rate['shipment_type'] = packing_type
-                            rate['operation_type'] = operation_type
-                            rate['origin_airport_id'] = origin_airport_id
-                            rate['destination_airport_id'] = destination_airport_id
-                            extended_rates.append(rate)
+                rate = jsonable_encoder(self.rate)
+                rate['origin_airport_id'] = origin_airport_id
+                rate['destination_airport_id'] = destination_airport_id
+                extended_rates.append(rate)
         
         return extended_rates
     
@@ -194,7 +189,7 @@ class AirFreightVyuh():
                 break 
         return validities_to_create
     
-    def create_air_freight_rate(self,rate_to_create):
+    def create_air_freight_rate_to_validities(self,rate_to_create):
         from celery_worker import create_air_freight_rate_delay
 
         validity_start = self.rate['validity_start']
@@ -206,7 +201,7 @@ class AirFreightVyuh():
         for validity in validities_to_create:
             rate_to_create = rate_to_create | validity
             rate_to_create['extension_not_required'] = True
-            create_air_freight_rate_delay.apply_async(kwargs = {'request':rate_to_create},queue = 'low')
+            create_air_freight_rate(rate_to_create)
 
 
     def extend_rate(self, source = 'rate_extension'):
@@ -215,7 +210,7 @@ class AirFreightVyuh():
         # queue need to change to air_freight_rate
         for rate_to_create in rates_to_create:
             rate_to_create = rate_to_create | { 'source': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
-            self.create_air_freight_rate(rate_to_create)
+            self.create_air_freight_rate_to_validities(rate_to_create)
 
         return True
 
@@ -259,4 +254,6 @@ class AirFreightVyuh():
             "300-500":1,
             "500-5000":1,
         }
-        return airline_factors
+        else:
+            airline_factors = airline_factors.slab_wise_factor
+        return jsonable_encoder(airline_factors)
