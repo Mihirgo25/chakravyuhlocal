@@ -133,7 +133,7 @@ def build_line_item(line_item_price,code):
     if code == 'AMS':
         unit = 'per_awb'
 
-    line_item = {'code':code,'unit':unit,'price':price,'min_price':min_price,'currency':'INR','remarks':[]}
+    line_item = {'code':code,'unit':unit,'price':round(price,2),'min_price':min_price,'currency':'INR','remarks':[]}
     return line_item
     
     
