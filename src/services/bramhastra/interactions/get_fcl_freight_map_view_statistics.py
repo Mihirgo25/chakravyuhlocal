@@ -50,7 +50,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
 def get_add_group_and_order_by(queries, grouping):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append("ORDER BY accuracy DESC")
+    queries.append("HAVING sum(sign) > 0 ORDER BY accuracy DESC")
 
 
 def alter_filters_for_map_view(filters, grouping):
