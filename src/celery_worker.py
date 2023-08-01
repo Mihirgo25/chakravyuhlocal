@@ -778,9 +778,9 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
-def process_freight_look_surcharge_rate_in_delay(self,rate, locations):
+def process_freight_look_surcharge_rate_in_delay(self,rate, locations,commodity):
     try:
-        create_surcharge_rate_api(rate, locations)
+        create_surcharge_rate_api(rate, locations,commodity)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
