@@ -15,3 +15,4 @@ class CreateNewMaxRatesParams(BaseModel):
 class CreateFreightLookSurchargeParams(BaseModel):
   rates: list = [],
   destination:str = None
+  commodity:str = None
