@@ -11,6 +11,7 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 
 BATCH_SIZE = 1000
+AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
 RATE_PARAMS = [ "commodity", "container_size","container_type", "destination_country_id", "destination_local_id", "destination_detention_id", "destination_main_port_id", "destination_port_id", "destination_trade_id", "origin_country_id", "origin_local_id", "origin_detention_id", "origin_demurrage_id", "destination_demurrage_id", "origin_main_port_id", "origin_port_id", "origin_trade_id", "service_provider_id", "shipping_line_id", "mode", "accuracy", "cogo_entity_id", "sourced_by_id", "procured_by_id"]
 CANCELLATION_REASON_CHEAPER_RATE = [
@@ -23,6 +24,16 @@ CANCELLATION_REASON_LOW_RATE = [
     ['rate','profit']
 ]
 class MigrationHelpers:
+    def get_chargeable_weight(volume, weight):
+        volumetric_weight = volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+        if volumetric_weight > weight:
+            chargeable_weight = volumetric_weight
+        else:
+            chargeable_weight = weight
+
+        return chargeable_weight
+    
+
     def stem_words_using_nltk(self, sentence):
         words = word_tokenize(sentence)
         stemmer = PorterStemmer()
