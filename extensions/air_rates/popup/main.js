@@ -64,7 +64,7 @@ const getFreightLookSurchargeRates = async ()=> {
   statusEle.innerText = 'Adding Freight Look Surcharge Rates Please wait....'
   try {
     const response = await getFromWebPage('freight_look')
-    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination }, 'create_freight_look_surcharge_rates')
+    await sendRatesToRMS({ rates: (response || {}).rates || [], destination: (response || {}).destination, commodity:(response || {}).commodity }, 'create_freight_look_surcharge_rates')
     statusEle.style.color = 'green'
     statusEle.innerText = 'Surcharge Rates Added Successfully....'
   } catch(err){

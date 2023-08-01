@@ -58,13 +58,6 @@ def create_weight_slabs(rate,airline_id):
             'currency': currency,
             'unit': 'per_kg',
             'tariff_price': price_300_500 + (price_300_500*airline_margins[airline_id])
-        },
-        {
-            'lower_limit': 500.1,
-            'upper_limit': 5000,
-            'currency': currency,
-            'unit': 'per_kg',
-            'tariff_price': price_500_1000 + (price_500_1000*airline_margins[airline_id])
         }
     ]
     return weight_slabs
