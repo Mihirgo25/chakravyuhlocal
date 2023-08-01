@@ -1,4 +1,3 @@
-from services.bramhastra.clickhouse.connect import get_clickhouse_client
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
@@ -22,34 +21,13 @@ from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
-
-
-def json_encoder_for_clickhouse(data):
-    return jsonable_encoder(
-        data, custom_encoder={datetime: lambda dt: dt.strftime("%Y-%m-%d %H:%M:%S")}
-    )
-
-
-def get_clickhouse_rows_with_column_names(result):
-    rows = result.result_rows
-    columns = result.column_names
-    data = []
-    for row in rows:
-        decoded_row = []
-        for value in row:
-            if isinstance(value, bytes):
-                decoded_value = value.decode("utf-8").replace("\x00", "")
-            else:
-                decoded_value = value
-            decoded_row.append(decoded_value)
-        data.append(dict(zip(columns, decoded_row)))
-    return data
+from services.bramhastra.clickhouse.client import ClickHouse,json_encoder_for_clickhouse,get_clickhouse_rows_with_column_names
 
 
 class Connection:
     def __init__(self) -> None:
         self.rails_db = get_connection()
-        self.clickhouse_client = get_clickhouse_client()
+        self.clickhouse_client = ClickHouse().client
 
 
 class FclFreightValidity(Connection):
@@ -192,7 +170,7 @@ class Rate:
             if new_row["last_action"] == ValidityAction.create.value:
                 fcl_freight_validity.create_stats(new_row)
             elif new_row["last_action"] == ValidityAction.update.value:
-                fcl_freight_validity.update_stats(new_row)
+                fcl_freight_validity.update_stats(new_row,False)
             elif new_row["last_action"] == ValidityAction.unchanged.value:
                 continue
 
