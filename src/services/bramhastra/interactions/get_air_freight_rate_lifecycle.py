@@ -7,23 +7,22 @@ from datetime import date, timedelta, datetime
 import math
 
 POSSIBLE_DIRECT_FILTERS = {
-    "origin_port_id",
+    "origin_airport_id",
     "origin_country_id",
     "origin_trade_id",
     "origin_continent_id",
-    "destination_port_id",
+    "destination_airport_id",
     "destination_country_id",
     "destination_trade_id",
     "destination_continent_id",
     "origin_region_id",
     "destination_region_id",
-    "shipping_line_id",
+    "airline_id",
     "importer_exporter_id",
     "container_size",
+    "commmodity_sub_type"
     "container_type",
-    "commodity",
-    "origin_main_port_id",
-    "destination_main_port_id",
+    "commodity"
 }
 
 POSSIBLE_INDIRECT_FILTERS = {}
@@ -32,7 +31,6 @@ REQUIRED_FILTERS = {
     "start_date": datetime(2016, 5, 3).date(),
     "end_date": date.today() + timedelta(days=30),
 }
-
 
 def get_direct_indirect_filters(filters):
     for k, v in REQUIRED_FILTERS.items():
@@ -64,7 +62,7 @@ async def get_air_freight_rate_lifecycle(filters):
         filters.copy(), where
     )
 
-    missing_rates_statistics = await get_missing_rates(filters.copy(), where)
+    # missing_rates_statistics = await get_missing_rates(filters.copy(), where)
 
     stale_rate_statistics = await get_stale_rate_statistics(filters.copy(), where)
 
@@ -91,20 +89,6 @@ async def get_air_freight_rate_lifecycle(filters):
                 "action_type": "so1",
                 "rates_count": search_to_book_statistics["so1_visit"],
                 "drop": search_to_book_statistics["so1_visit_percentage"],
-            },
-        ],
-        [
-            {
-                "action_type": "missing_rates",
-                "rates_count": missing_rates_statistics["missing_rates"],
-                "drop": missing_rates_statistics["missing_rates_percentage"],
-            },
-            {
-                "action_type": "rates_triggered",
-                "rates_count": missing_rates_statistics["rate_reverted"],
-                "drop": 0
-                if math.isnan(missing_rates_statistics["rate_reverted_percentage"])
-                else missing_rates_statistics["rate_reverted_percentage"],
             },
         ],
         [
@@ -150,36 +134,50 @@ async def get_stale_rate_statistics(filters, where):
         return charts[0]
 
 
-async def get_missing_rates(filters, rate_where):
-    clickhouse = ClickHouse()
+# async def get_missing_rates(filters, rate_where):
+    # clickhouse = ClickHouse()
 
-    where = get_direct_indirect_filters(filters)
+#     where = get_direct_indirect_filters(filters)
 
-    query1 = [
-        """WITH spot_search AS (SELECT SUM(spot_search_count) AS count FROM brahmastra.air_freight_rate_statistics"""
-    ]
+#     query1 = [
+#         """WITH spot_search AS (SELECT SUM(spot_search_count) AS count FROM brahmastra.air_freight_rate_statistics"""
+#     ]
 
-    query2 = [
-        """),missing_rates AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE source = 'spot_search'"""
-    ]
-    query3 = [
-        """),rate_reverted AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE is_rate_reverted = true """
-    ]
+#     query2 = [
+#         """),missing_rates AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE source = 'spot_search'"""
+#     ]
+#     query3 = [
+#         """),rate_reverted AS (SELECT count(id) AS count FROM brahmastra.air_freight_rate_request_statistics WHERE is_rate_reverted = true """
+#     ]
 
-    query4 = """) SELECT missing_rates.count as missing_rates,(1-missing_rates/spot_search.count)*100 as missing_rates_percentage,rate_reverted.count as rate_reverted,(1 - rate_reverted.count/missing_rates)*100 as rate_reverted_percentage FROM missing_rates, rate_reverted, spot_search"""
+#     query4 = """) SELECT missing_rates.count as missing_rates,(1-missing_rates/spot_search.count)*100 as missing_rates_percentage,rate_reverted.count as rate_reverted,(1 - rate_reverted.count/missing_rates)*100 as rate_reverted_percentage FROM missing_rates, rate_reverted, spot_search"""
 
-    if where:
-        query1.append(f"WHERE {rate_where}")
-        query2.append(f"AND {where}")
-        query3.append(f"AND {where}")
+#     if where:
+#         query1.append(f"WHERE {rate_where}")
+#         query2.append(f"AND {where}")
+#         query3.append(f"AND {where}")
 
-    if missing_rates := jsonable_encoder(
-        clickhouse.execute(
-            "".join([" ".join(query1), " ".join(query2), " ".join(query3), query4]),
-            filters,
-        )
-    ):
-        return missing_rates[0]
+#     if missing_rates := jsonable_encoder(
+#         clickhouse.execute(
+#             "".join([" ".join(query1), " ".join(query2), " ".join(query3), query4]),
+#             filters,
+#         )
+#     ):
+#         return missing_rates[0]
+# [
+#             {
+#                 "action_type": "missing_rates",
+#                 "rates_count": missing_rates_statistics["missing_rates"],
+#                 "drop": missing_rates_statistics["missing_rates_percentage"],
+#             },
+#             {
+#                 "action_type": "rates_triggered",
+#                 "rates_count": missing_rates_statistics["rate_reverted"],
+#                 "drop": 0
+#                 if math.isnan(missing_rates_statistics["rate_reverted_percentage"])
+#                 else missing_rates_statistics["rate_reverted_percentage"],
+#             },
+#         ],
 
 
 async def get_search_to_book_and_feedback_statistics(filters, where):

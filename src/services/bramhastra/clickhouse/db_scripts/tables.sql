@@ -329,6 +329,8 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     source FixedString(256),
     likes_count UInt16 DEFAULT 0,
     dislikes_count UInt16 DEFAULT 0,
+    feedback_recieved_count UInt16 DEFAULT 0,
+    dislikes_rate_reverted_count UInt16 DEFAULT 0,
     spot_search_count UInt16 DEFAULT 0,
     buy_quotations_created UInt16 DEFAULT 0,
     sell_quotations_created UInt16 DEFAULT 0,
@@ -366,12 +368,15 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     updated_at DateTime DEFAULT now(),
     version UInt32 DEFAULT 1,
     sign Int8 DEFAULT 1,
+    revenue_desk_visit_count UInt16 DEFAULT 0,
+    so1_visit_count UInt16 DEFAULT 0,
     status FixedString(10) DEFAULT 'active',
     last_action FixedString(10) DEFAULT 'create',
     rate_deviation_from_booking_rate Float32 DEFAULT 0,
     rate_deviation_from_booking_on_cluster_base_rate Float32 DEFAULT 0,
     rate_deviation_from_latest_booking Float32 DEFAULT 0,
-    average_booking_rate Float64 DEFAULT -1
+    average_booking_rate Float64 DEFAULT -1,
+    parent_rate_id UUID
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_airport_id,destination_airport_id,rate_id,validity_id)
