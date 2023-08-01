@@ -4,7 +4,7 @@ from math import ceil
 from datetime import datetime
 from peewee import fn
 import json
-from database.rails_db import get_organization_service_experties,get_organization
+from database.rails_db import get_organization_service_experties,get_organization, get_partner_user_experties
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 from micro_services.client import spot_search
@@ -72,7 +72,17 @@ def apply_validity_end_less_than_filter(query, filters):
     return query.where(FtlFreightRateRequest.created_at.cast('date') <= datetime.fromisoformat(filters['validity_end_less_than']).date())
 
 def apply_relevant_supply_agent_filter(query, filters):
-    query = query.where(FtlFreightRateRequest.relevant_supply_agent_ids.contains(filters['relevant_supply_agent']))
+    expertises = get_partner_user_experties('ftl_freight', filters['relevant_supply_agent'])
+    origin_location_id = [t['origin_location_id'] for t in expertises]
+    destination_location_id = [t['destination_location_id'] for t in expertises]
+
+    query = query.where((FtlFreightRateRequest.origin_location_id << origin_location_id)|
+                        (FtlFreightRateRequest.origin_country_id << origin_location_id)|
+                        (FtlFreightRateRequest.origin_city_id << origin_location_id))
+
+    query = query.where((FtlFreightRateRequest.destination_location_id <<destination_location_id)|
+                        (FtlFreightRateRequest.destination_country_id << destination_location_id)|
+                        (FtlFreightRateRequest.destination_city_id << destination_location_id))
     return query
 
 def apply_supply_agent_id_filter(query, filters):
