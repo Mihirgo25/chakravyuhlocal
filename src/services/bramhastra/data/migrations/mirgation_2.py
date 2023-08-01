@@ -1,4 +1,5 @@
 from database.rails_db import get_connection
+from configs.global_constants import DEFAULT_WEIGHT_SLABS
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
@@ -31,7 +32,9 @@ class MigrationHelpers:
         else:
             chargeable_weight = weight
 
-        return chargeable_weight
+        for item in DEFAULT_WEIGHT_SLABS:
+            if (item['lower_limit']<=chargeable_weight) and (item['upper_limit']<=chargeable_weight):
+                return [item['lower_limit'],item['upper_limit']]
     
 
     def stem_words_using_nltk(self, sentence):
