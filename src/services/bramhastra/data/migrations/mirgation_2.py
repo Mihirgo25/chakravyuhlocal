@@ -1,4 +1,5 @@
 from database.rails_db import get_connection
+from configs.global_constants import DEFAULT_WEIGHT_SLABS
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
@@ -11,6 +12,7 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 
 BATCH_SIZE = 1000
+AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
 RATE_PARAMS = [ "commodity", "commodity_type", "commodity_sub_type", "destination_continent_id", "destination_country_id", "destination_local_id", "destination_airport_id", "destination_trade_id", "origin_country_id", "origin_local_id", "origin_continent_id", "origin_airport_id", "origin_trade_id", "service_provider_id", "shipping_line_id", "mode", "accuracy", "cogo_entity_id", "sourced_by_id", "procured_by_id"]
 CANCELLATION_REASON_CHEAPER_RATE = [
@@ -24,6 +26,18 @@ CANCELLATION_REASON_LOW_RATE = [
     ['rate','profit']
 ]
 class MigrationHelpers:
+    def get_chargeable_weight(volume, weight):
+        volumetric_weight = volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+        if volumetric_weight > weight:
+            chargeable_weight = volumetric_weight
+        else:
+            chargeable_weight = weight
+
+        for item in DEFAULT_WEIGHT_SLABS:
+            if (item['lower_limit']<=chargeable_weight) and (item['upper_limit']<=chargeable_weight):
+                return [item['lower_limit'],item['upper_limit']]
+    
+
     def stem_words_using_nltk(self, sentence):
         words = word_tokenize(sentence)
         stemmer = PorterStemmer()

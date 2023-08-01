@@ -38,7 +38,7 @@ async def get_accuracy(filters, where):
 
     clickhouse = ClickHouse()
     queries = [
-        """SELECT mode,toDate(day) AS day,AVG(abs(accuracy)) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode FROM brahmastra.fcl_freight_rate_statistics"""
+        """SELECT mode,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
     ]
 
     if where:
@@ -46,7 +46,7 @@ async def get_accuracy(filters, where):
         queries.append(where)
 
     queries.append(
-        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY mode,day ORDER BY day,mode;"""
+        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY mode,day HAVING sum(sign)>0 ORDER BY day,mode;"""
     )
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))

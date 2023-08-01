@@ -42,6 +42,8 @@ class AirFreightRateStatistic(BaseModel):
     source = CharField()
     likes_count = IntegerField(default=0)
     dislikes_count = IntegerField(default=0)
+    feedback_recieved_count = IntegerField(default=0),
+    dislikes_rate_reverted_count = IntegerField(default=0),
     spot_search_count = IntegerField(default=0)
     buy_quotations_created = IntegerField(default=0)
     sell_quotations_created = IntegerField(default=0)
