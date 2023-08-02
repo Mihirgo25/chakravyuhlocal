@@ -163,9 +163,49 @@ RATE_SOURCE_PRIORITIES = {
     "default": 100
 }
 
+DEFAULT_FACTORS_WEIGHT_SLABS=[
+    {
+        'lower_limit':0.0,
+        'upper_limit':45,
+        'tariff_price':0,
+        'currency':'INR',
+        'unit':'per_kg'
+    },
+    {
+        'lower_limit':45.1,
+        'upper_limit':100.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+        },
+    {
+        'lower_limit':100.1,
+        'upper_limit':300.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },
+    {
+        'lower_limit':300.1,
+        'upper_limit':500.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },{
+        'lower_limit':500.1,
+        'upper_limit':1000.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    }
+]
+
 DEFAULT_AIRLINE_ID = '853f3c4c-af7f-4912-98a8-1515000bcd20'
 
-CARGOAI_ACTIVE_ON_DISLIKE_RATE = False
+CARGOAI_ACTIVE_ON_DISLIKE_RATE = True
 
 PROCURE_NON_AVAILABLE_RATE_FROM_CARGOAI = True
 
