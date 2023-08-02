@@ -234,10 +234,11 @@ class AirFreightVyuh():
         airline_factor = self.get_airline_factor(rate)
         new_weight_slabs = []
         for weight_slab in weight_slabs:
-            new_weight_slab = jsonable_encoder(weight_slab)
-            matching_slab = get_matching_slab(new_weight_slab['lower_limit'])
-            new_weight_slab['tariff_price'] = weight_slab['tariff_price'] * handling_type_factor * packing_type_factor * operation_type_factor * airline_factor[matching_slab]
-            new_weight_slabs.append(new_weight_slab)
+            if weight_slab['lower_limit'] < 500:
+                new_weight_slab = jsonable_encoder(weight_slab)
+                matching_slab = get_matching_slab(new_weight_slab['lower_limit'])
+                new_weight_slab['tariff_price'] = weight_slab['tariff_price'] * handling_type_factor * packing_type_factor * operation_type_factor * airline_factor[matching_slab]
+                new_weight_slabs.append(new_weight_slab)
         
         return new_weight_slabs
     

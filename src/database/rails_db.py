@@ -303,7 +303,7 @@ def get_ff_mlo():
         sentry_sdk.capture_exception(e)
         return result
 
-def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval,interval_type, interval_types, offset=0, limit=50):
+def get_past_air_invoices(origin_location_id,destination_location_id,location_type, interval, interval_type = 'months', offset=0, limit=50):
         all_results =[]
         try:
             conn = get_connection()
@@ -336,14 +336,14 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                             shipment_collection_parties
                             INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
                         WHERE
-                            shipment_collection_parties.invoice_date > date_trunc('{}', CURRENT_DATE - INTERVAL '%s {}')::DATE
+                            shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '%s months')::DATE
                             AND shipment_air_freight_services.origin_{}_id in %s
                             AND shipment_air_freight_services.destination_{}_id in %s
                             AND shipment_collection_parties.status IN ('locked', 'coe_approved', 'finance_rejected')
                             AND shipment_air_freight_services.operation_type ='passenger'
                             AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
                         OFFSET %s LIMIT %s;   
-                        """.format(interval_type,interval_types,location_type,location_type)
+                        """.format(location_type,location_type)
                     cur.execute(sql_query,(interval, origin_location_id,destination_location_id, offset, limit))
                     result = cur.fetchall()
                     cur.close()
@@ -561,22 +561,6 @@ def list_organization_users(id):
                             "mobile_number_eformat":str(res[3])
                         }
                     )
-                cur.close()
-        conn.close()
-        return all_result
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return all_result
-
-        conn = get_connection()
-        with conn:
-            with conn.cursor() as cur:
-                cur = conn.cursor()
-                sql = 'select organization_services.service from organization_services where status = %s and organization_id = %s'
-                cur.execute(sql, ('active',id))
-                result = cur.fetchall()
-                for res in result:
-                    all_result.append(str(res[0]))
                 cur.close()
         conn.close()
         return all_result
