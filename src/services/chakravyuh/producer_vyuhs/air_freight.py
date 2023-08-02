@@ -1,6 +1,6 @@
 from fastapi.encoders import jsonable_encoder
 from configs.env import DEFAULT_USER_ID
-from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import COGOXPRESS
 from datetime import datetime
 from configs.transformation_constants import HANDLING_TYPE_FACTORS, PACKING_TYPE_FACTORS, OPERATION_TYPE_FACTORS
 from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
@@ -175,7 +175,7 @@ class AirFreightVyuh():
 
         for esr in existing_system_rates:
             rate_validities = esr['validities'] or []
-            if rate_validities and esr['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID and esr['airline_id'] == requirement['airline_id'] and not esr['cogo_entity_id']:
+            if rate_validities and esr['service_provider_id'] == COGOXPRESS and esr['airline_id'] == requirement['airline_id'] and not esr['cogo_entity_id']:
                 
                 cogo_freight_rates_for_current_sl.append(esr)
 
@@ -211,7 +211,7 @@ class AirFreightVyuh():
         rates_to_create = self.get_rate_combinations_to_extend()
         # queue need to change to air_freight_rate
         for rate_to_create in rates_to_create:
-            rate_to_create = rate_to_create | { 'source': 'rate_extension', 'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
+            rate_to_create = rate_to_create | { 'source': 'rate_extension', 'service_provider_id': COGOXPRESS, "sourced_by_id": DEFAULT_USER_ID, "procured_by_id": DEFAULT_USER_ID, "performed_by_id": DEFAULT_USER_ID }
             self.create_air_freight_rate_to_validities(rate_to_create)
 
         return True
