@@ -113,11 +113,11 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=4, minute=0, day_of_week='sat'),
         'options': {'queue' : 'fcl_freight_rate'}
     },
-    'fcl_cost_booking_estimation':{
-        'task': 'celery_worker.fcl_cost_booking_estimation',
-        'schedule': crontab(minute=30,hour=18),
-        'options': {'queue' : 'fcl_freight_rate'}
-    },
+    # 'fcl_cost_booking_estimation':{
+    #     'task': 'celery_worker.fcl_cost_booking_estimation',
+    #     'schedule': crontab(minute=30,hour=18),
+    #     'options': {'queue' : 'fcl_freight_rate'}
+    # },
     'send_near_expiry_air_freight_rate_notification':{
         'task': 'celery_worker.send_near_expiry_air_freight_rate_notification_in_delay',
         'schedule': crontab(minute=30,hour=5),
@@ -784,9 +784,9 @@ def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True,max_retries=3)
-def process_freight_look_surcharge_rate_in_delay(self,rate, locations):
+def process_freight_look_surcharge_rate_in_delay(self,rate, locations,commodity):
     try:
-        create_surcharge_rate_api(rate, locations)
+        create_surcharge_rate_api(rate, locations,commodity)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

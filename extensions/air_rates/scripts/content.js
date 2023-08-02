@@ -2041,7 +2041,8 @@ chrome.runtime.onMessage.addListener(
     if (request.rates === 'freight_look') {
       const rates = getFreightLookRatesData()
       destination = document.getElementById('ctl00_CP1_txtCity').value
-      sendResponse({ rates: rates, destination: destination });
+      commodity = document.getElementById('ctl00_CP1_cbSCR').value
+      sendResponse({ rates: rates, destination: destination,commodity:commodity });
     } 
     if (request.rates === 'new_max') {
       const rates = getNewMaxRatesData()

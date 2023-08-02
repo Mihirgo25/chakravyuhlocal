@@ -46,7 +46,7 @@ def list_haulage_freight_rate_feedbacks(filters = {},spot_search_details_require
     query = get_page(query, page, page_limit)
 
     # get data
-    data = get_data(query,spot_search_details_required,booking_details_required) 
+    data = get_data(query,spot_search_details_required,booking_details_required, transport_mode) 
 
     return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
@@ -91,7 +91,7 @@ def apply_similar_id_filter(query, filters):
         query = query.where(HaulageFreightRateFeedback.origin_location_id == feedback_data.origin_location_id, HaulageFreightRateFeedback.destination_location_id == feedback_data.destination_location_id, HaulageFreightRateFeedback.container_size == feedback_data.container_size, HaulageFreightRateFeedback.container_type == feedback_data.container_type, HaulageFreightRateFeedback.commodity == feedback_data.commodity)
     return query
 
-def get_data(query, spot_search_details_required, booking_details_required):
+def get_data(query, spot_search_details_required, booking_details_required, transport_mode):
     if not booking_details_required:
         query = query.select()
     data = json_encoder(list(query.dicts()))
@@ -106,7 +106,9 @@ def get_data(query, spot_search_details_required, booking_details_required):
                                             HaulageFreightRate.destination_location,
                                             HaulageFreightRate.commodity,
                                             HaulageFreightRate.line_items,
-            ).where(HaulageFreightRate.id.in_(haulage_freight_rate_ids))
+                                            HaulageFreightRate.container_size,
+                                            HaulageFreightRate.container_type
+            ).where(HaulageFreightRate.id << haulage_freight_rate_ids)
     haulage_freight_rates = json_encoder(list(haulage_freight_rates.dicts()))
     haulage_freight_rate_mappings = {k['id']: k for k in haulage_freight_rates}
 
@@ -133,6 +135,8 @@ def get_data(query, spot_search_details_required, booking_details_required):
             object["origin_location"] = rate.get("origin_location")
             object["destination_location"] = rate.get("destination_location")
             object["commodity"] = rate.get("commodity")
+            object["container_size"] = rate.get("container_size")
+            object["container_type"] = rate.get("container_type")
             object["price"] = sum(p['price'] for p in rate.get("line_items")) if rate.get("line_items") else None
             object["currency"] = rate["line_items"][0].get('currency') if rate["line_items"] else None
         service_provider = object.get('service_provider_id', None)
@@ -143,7 +147,11 @@ def get_data(query, spot_search_details_required, booking_details_required):
             object['organization'] = service_providers_hash.get(organization_id)
         if spot_search_details_required:
             object['spot_search'] = spot_search_hash.get(str(object['source_id']), {})
+        if transport_mode != 'trailer':
+            object['origin_port'] = object['origin_location']
+            object['destination_port'] = object['destination_location']
         new_data.append(object)
+
     return new_data
 
 def get_pagination_data(query, page, page_limit):

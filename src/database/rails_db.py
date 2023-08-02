@@ -568,9 +568,6 @@ def list_organization_users(id):
         sentry_sdk.capture_exception(e)
         return all_result
 
-def get_eligible_org_ids( id = None):
-    all_result = []
-    try:
         conn = get_connection()
         with conn:
             with conn.cursor() as cur:

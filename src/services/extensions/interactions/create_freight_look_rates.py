@@ -58,13 +58,6 @@ def create_weight_slabs(rate,airline_id):
             'currency': currency,
             'unit': 'per_kg',
             'tariff_price': price_300_500 + (price_300_500*airline_margins[airline_id])
-        },
-        {
-            'lower_limit': 500.1,
-            'upper_limit': 5000,
-            'currency': currency,
-            'unit': 'per_kg',
-            'tariff_price': price_500_1000 + (price_500_1000*airline_margins[airline_id])
         }
     ]
     return weight_slabs
@@ -74,6 +67,9 @@ def format_air_freight_rate(rate, locations,airline_id):
     minimum_rate = 0
     if rate['MIN.'].strip():
         minimum_rate = float(rate['MIN.'].strip())
+    if airline_id =='dbd3feb3-007a-4e24-873a-bc6e5e43254d' and (rate['SCR'] or '').strip()!='XPS':
+        return None
+
     commodity = commodity_mappings.get((rate['SCR'] or '').strip())
     commodity_type = commodity_type_mappings.get((rate['SCR'] or '').strip())
     if not commodity or not commodity_type:
@@ -172,7 +168,7 @@ def create_freight_look_rates(request):
         rate['meta_data'] = {}
         rate['meta_data']['destination'] = locations[destination_port_code]['name']
         try:
-            process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
+            process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='fcl_freight_rate')
             # new_rate = create_air_freight_rate_api(rate=rate, locations=locations)
         except Exception as e:
             print(e)
