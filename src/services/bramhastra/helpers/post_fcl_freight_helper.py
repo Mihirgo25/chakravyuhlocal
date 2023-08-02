@@ -21,7 +21,14 @@ from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
-from services.bramhastra.clickhouse.client import ClickHouse,json_encoder_for_clickhouse,get_clickhouse_rows_with_column_names
+from services.bramhastra.clickhouse.client import (
+    ClickHouse,
+    json_encoder_for_clickhouse,
+    get_clickhouse_rows_with_column_names,
+)
+from services.bramhastra.models.fcl_freight_rate_statistic import (
+    FclFreightRateStatistic,
+)
 
 
 class Connection:
@@ -65,12 +72,11 @@ class FclFreightValidity(Connection):
 
     def get_clickhouse_statistics_current_row_by_identifier(self) -> dict:
         parameters = {
-            "table": Table.fcl_freight_rate_statistics.value,
             "identifier": self.fcl_freight_rate_statistics_identifier,
             "sign": 1,
         }
-        if row := self.clickhouse_client.query(
-            "SELECT * FROM brahmastra.{table:Identifier} WHERE identifier = {identifier:FixedString(256)} and sign = {sign:Int8}",
+        if row := self.clickhouse_client.execute(
+            f"SELECT * FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE identifier = %(identifier)s and sign = %(sign)s",
             parameters,
         ):
             if rows := get_clickhouse_rows_with_column_names(row):
@@ -78,11 +84,10 @@ class FclFreightValidity(Connection):
 
     def get_clickhouse_statistics_rows_by_rate_id(self) -> dict:
         parameters = {
-            "table": Table.fcl_freight_rate_statistics,
             "identifier": self.rate_id,
         }
-        if row := self.clickhouse_client.command(
-            "SELECT * FROM {table:Identifier} WHERE rate_id = {identifier:UUID} FINAL",
+        if row := self.clickhouse_client.execute(
+            f"SELECT * FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE rate_id = %(identifier)s",
             parameters,
         ):
             return get_clickhouse_rows_with_column_names(row)
@@ -170,7 +175,7 @@ class Rate:
             if new_row["last_action"] == ValidityAction.create.value:
                 fcl_freight_validity.create_stats(new_row)
             elif new_row["last_action"] == ValidityAction.update.value:
-                fcl_freight_validity.update_stats(new_row,False)
+                fcl_freight_validity.update_stats(new_row, False)
             elif new_row["last_action"] == ValidityAction.unchanged.value:
                 continue
 
@@ -368,8 +373,8 @@ class Feedback:
             "identifier": self.feedback_id,
             "sign": 1,
         }
-        if row := self.clickhouse_client.query(
-            "SELECT * FROM brahmastra.{table:Identifier} WHERE identifier = {identifier:UUID} and sign = {sign:Int8}",
+        if row := self.clickhouse_client.execute(
+            "SELECT * FROM brahmastra.%(table)s WHERE identifier = %(identifier)s} and sign = %(sign)s",
             parameters,
         ):
             if rows := get_clickhouse_rows_with_column_names(row):
@@ -396,23 +401,27 @@ class Checkout(FclFreightValidity):
         self.checkout_params = []
         self.rates = []
         self.increment_keys = {"checkout_count"}
-        self.set_params(params)
-        
-    def set_params(self,params):
-        self.common_params = params.dict(include  = {'source','source_id','created_at','updated_at'})
-        
-        for param in params.checkout_fcl_freight_services:
-            self.rates.append(param.rates.dict(include = {'rate_id','validity_id'}))
-            self.checkout_params['total_buy_price'] = 0
-            for rate in param.rates:
-                for line_item in rate.line_items:
-                    self.checkout_params['total_buy_price']+=line_item['total_buy_price']
-            self.checkout_params.append(self.common_params.update(param.dict(exclude = ['rates'])))
+        self.params = params
 
-    def set_existing_rate_stats(self):
-        fcl_freight_validity = None
-        for rate in self.rates:
-            if not fcl_freight_validity:
+    def set_format_and_existing_rate_stats(self):
+        self.common_params = self.params.dict(exclude={"checkout_fcl_freight_services"})
+
+        for param in self.params.checkout_fcl_freight_services:
+            rate = param.rate.dict(include={"rate_id", "validity_id"})
+            self.rates.append(rate)
+            total_buy_price = 0
+            for line_item in param.rate.line_items:
+                total_buy_price += line_item["total_buy_price"]
+            checkout_param = self.common_params.copy()
+            checkout_param.update(param.dict(exclude={"rate"}))
+            checkout_param["total_buy_price"] = total_buy_price
+            checkout_param["currency"] = param.rate.line_items[0]["currency"]
+            checkout_param.update(rate)
+            self.checkout_params.append(checkout_param)
+
+            fcl_freight_validity = None
+
+            if fcl_freight_validity is None:
                 fcl_freight_validity = FclFreightValidity(**rate)
                 self.clickhouse_client = fcl_freight_validity.clickhouse_client
             else:
@@ -421,11 +430,13 @@ class Checkout(FclFreightValidity):
             new_row = fcl_freight_validity.update_stats(
                 return_new_row_without_updating=True
             )
+
             if new_row:
-                self.params["fcl_freight_rate_statistic_id"] = (
+                param["fcl_freight_rate_statistic_id"] = (
                     new_row["id"] if isinstance(new_row, dict) else new_row.id
                 )
-                fcl_freight_validity.update_stats(new_row)
+                self.increment_checkout_rate_stats(fcl_freight_validity, new_row)
+                self.checkout_params.append(checkout_param)
 
     def set_new_stats(self) -> int:
         return CheckoutFclFreightRateStatistic.insert_many(

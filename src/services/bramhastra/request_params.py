@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from pydantic import BaseModel, validator, Field
+from typing import Optional
 
 
 class LineItems(BaseModel):
@@ -117,8 +118,9 @@ class ApplySpotSearchFclFreightRateStatistic(BaseModel):
 
 class CheckoutRates(BaseModel):
     rate_id: str
+    source: str
     validity_id: str
-    line_items: list[dict] = None
+    line_items: list[dict]
     
 
 class CheckoutFclFreightService(BaseModel):
@@ -130,8 +132,9 @@ class CheckoutFclFreightService(BaseModel):
 class FclFreightCheckoutParams(BaseModel):
     source: str
     source_id: str
-    created_at: str
-    updated_at: str
+    importer_exporter_id: str
+    created_at: datetime
+    updated_at: datetime
     checkout_fcl_freight_services: list[CheckoutFclFreightService]
 
 
