@@ -333,7 +333,7 @@ def create_air_freight_freight_rate(
         weight_slab["upper_limit"] = parse_numeric(slab["upper_limit"].strip())
         weight_slab["tariff_price"] = parse_numeric(slab["tariff_price"].strip())
         weight_slab["currency"] = object["currency"]
-        weight_slab["unit"] = object.get("unit")
+        weight_slab["unit"] = object.get("unit") or 'per_kg'
         object["weight_slabs"].append(weight_slab)
 
     object["service_provider_id"] = params.get("service_provider_id")
