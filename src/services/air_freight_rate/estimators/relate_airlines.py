@@ -27,7 +27,7 @@ class RelateAirline:
             AirFreightRate.commodity == "general",
             AirFreightRate.updated_at
             >= SQL("date_trunc('week', CURRENT_DATE - INTERVAL '1 weeks')::DATE"),
-            AirFreightRate.source << ['manual','rate_sheets',''],
+            AirFreightRate.source << ['manual','rate_sheets','cargo_ai'],
             ~(AirFreightRate.rate_not_available_entry)
         )
         air_freight_rates = jsonable_encoder(list(air_freight_rates.dicts()))
