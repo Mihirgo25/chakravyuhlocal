@@ -2,6 +2,9 @@ from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
 # from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import SpotSearchFclFreightRateStatistic
+from services.bramhastra.models.feedback_air_freight_rate_statistic import (
+    FeedbackAirFreightRateStatistic,
+)
 from database.rails_db import get_connection
 from services.bramhastra.enums import Table, ValidityAction
 from peewee import Model
@@ -13,7 +16,7 @@ from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
-from services.bramhastra.clickhouse.client import json_encoder_for_clickhouse,ClickHouse
+from services.bramhastra.clickhouse.client import json_encoder_for_clickhouse,ClickHouse,get_clickhouse_rows_with_column_names
 
 
 class Connection:
@@ -21,6 +24,46 @@ class Connection:
         self.rails_db = get_connection()
         self.clickhouse_client = ClickHouse().client
 
+
+class AirFreightValidity(Connection):
+    def __init__(self, rate_id, validity_id) -> None:
+        super().__init__()
+        self.rate_id = None
+        self.validity_id = None
+
+    def get_postgres_statistics_current_row_by_rate_id_validity_id(self) -> Model:
+        return (
+            AirFreightRateStatistic.select()
+            .where(
+                AirFreightRateStatistic.rate_id == self.rate_id,
+                AirFreightRateStatistic.validity_id == self.validity_id,
+                AirFreightRateStatistic.sign == 1,
+            )
+        )
+
+    def create_stats(self, create_param) -> Model:
+        return AirFreightRateStatistic.create(**create_param)
+
+    def update_stats(self, new_params=dict(), return_new_row_without_updating=True):
+        old_rows = self.get_postgres_statistics_current_row_by_rate_id_validity_id()
+
+        if old_rows:
+            if return_new_row_without_updating:
+                return old_rows
+            # for k, v in new_params.items():
+            #     setattr(old_row, k, v)
+            #     old_row.save()
+        # else:
+        #     old_row = self.get_clickhouse_statistics_current_row_by_identifier()
+        #     if not old_row:
+        #         return
+        #     row = self.update_row_status_to_stale_and_return_new_row(old_row)
+        #     if return_new_row_without_updating:
+        #         return row
+
+        #     if new_params:
+        #         new_params["id"] = row["id"]
+        #         self.create_stats(new_params)
 
 class AirFreightWeightSlab(Connection):
     def __init__(self, rate_id, validity_id, lower_limit, upper_limit) -> None:
@@ -137,7 +180,7 @@ class Rate:
             if new_row["last_action"] == ValidityAction.create.value:
                 air_freight_weight_slab.create_stats(new_row)
             elif new_row["last_action"] == ValidityAction.update.value:
-                air_freight_weight_slab.update_stats(new_row)
+                air_freight_weight_slab.update_stats(new_row, return_new_row_without_updating=False)
             elif new_row["last_action"] == ValidityAction.unchanged.value:
                 continue
 
@@ -217,3 +260,123 @@ class Rate:
                 destination_airport_id
             )
         return None, None
+
+class SpotSearch:
+    def __init__(self, params) -> None:
+        self.common_param = params.dict(exclude={"rates"})
+        self.spot_search_id = params.spot_search_id
+        self.spot_search_params = []
+        self.rates = params.rates
+        self.increment_keys = {"spot_search_count"}
+        self.clickhouse_client = None
+
+    def set_format_and_existing_rate_stats(self):
+        air_freight_validity = None
+        for rate in self.rates:
+            param = self.common_param.copy()
+            rate_dict = rate.dict(exclude={"payment_term", "schedule_type"})
+            param.update(rate_dict)
+
+            if air_freight_validity is None:
+                air_freight_validity = AirFreightValidity(**rate_dict)
+                self.clickhouse_client = air_freight_validity.clickhouse_client
+            else:
+                air_freight_validity.set_identifier_details(**rate_dict)
+
+            new_row = air_freight_validity.update_stats(
+                return_new_row_without_updating=True
+            )
+            if new_row:
+                param["fcl_freight_rate_statistic_id"] = (
+                    new_row["id"] if isinstance(new_row, dict) else new_row.id
+                )
+                self.increment_spot_search_rate_stats(air_freight_validity, new_row)
+                self.spot_search_params.append(param)
+
+    def increment_spot_search_rate_stats(self, air_freight_validity, row):
+        if isinstance(row, Model):
+            for key in self.increment_keys:
+                setattr(row, key, getattr(row, key) + 1)
+            row.save()
+        else:
+            for key in self.increment_keys:
+                row[key] += 1
+            air_freight_validity.create_stats(row)
+
+class Feedback:
+    def __init__(self, params) -> None:
+        self.params = params.dict(exclude={"likes_count", "dislikes_count"})
+        self.rate_id = params.rate_id
+        self.validity_id = params.validity_id
+        self.rate_stats_update_params = params.dict(
+            include={"likes_count", "dislikes_count"}
+        )
+        self.increment_keys = {}
+        self.feedback_id = params.feedback_id
+        self.clickhouse_client = None
+
+    def set_format_and_existing_rate_stats(self):
+        air_freight_validity = AirFreightValidity(
+            rate_id=self.rate_id, validity_id=self.validity_id
+        )
+        self.clickhouse_client = air_freight_validity.clickhouse_client
+        new_rows = air_freight_validity.update_stats(
+            return_new_row_without_updating=True
+        )
+        if new_rows:
+            for row in new_rows:
+                self.params["air_freight_rate_statistic_id"] = (
+                    row["id"] if isinstance(row, dict) else row.id
+                )
+                self.increment_feeback_rate_stats(air_freight_validity, row)
+
+    def set_new_stats(self) -> int:
+        return FeedbackAirFreightRateStatistic.insert_many(self.params).execute()
+
+    def set_existing_stats(self) -> None:
+        force_insert = False
+        EXCLUDE_UPDATE_PARAMS = {"feedback_id", "serial_id"}
+        feedback = (
+            FeedbackAirFreightRateStatistic.select()
+            .where(
+                FeedbackAirFreightRateStatistic.feedback_id
+                == self.params["feedback_id"]
+            )
+            .first()
+        )
+        if not feedback:
+            row = self.get_clickhouse_feedback_current_row_by_identifier()
+            feedback = FeedbackAirFreightRateStatistic(**row)
+            force_insert = True
+        if feedback:
+            for k, v in self.params.items():
+                if k not in EXCLUDE_UPDATE_PARAMS:
+                    setattr(feedback, k, v)
+            feedback.save(force_insert=force_insert)
+
+    def get_clickhouse_feedback_current_row_by_identifier(self) -> dict:
+        parameters = {
+            "table": Table.feedback_air_freight_rate_statistics.value,
+            "identifier": self.feedback_id,
+            "sign": 1,
+        }
+        if row := self.clickhouse_client.query(
+            "SELECT * FROM brahmastra.{table:Identifier} WHERE identifier = {identifier:UUID} and sign = {sign:Int8}",
+            parameters,
+        ):
+            if rows := get_clickhouse_rows_with_column_names(row):
+                return rows[0]
+
+    def increment_feeback_rate_stats(self, air_freight_validity, row):
+        if isinstance(row, Model):
+            for key in self.increment_keys:
+                setattr(row, key, getattr(row, key) + 1)
+            for key, value in self.rate_stats_update_params.items():
+                setattr(row, key, value)
+            row.save()
+        else:
+            for key in self.increment_keys:
+                row[key] += 1
+            for key, value in self.rate_stats_update_params.items():
+                row[key] = value
+            air_freight_validity.create_stats(row)

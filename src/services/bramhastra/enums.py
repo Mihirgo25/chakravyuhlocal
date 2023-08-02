@@ -8,7 +8,7 @@ class Table(Bramhastra):
     fcl_freight_rate_statistics = 'fcl_freight_rate_statistics'
     feedback_fcl_freight_rate_statistics = 'feedback_fcl_freight_rate_statistics'
     air_freight_rate_statistics = 'air_freight_rate_statistics'
-    
+    feedback_air_freight_rate_statistics = 'feedback_air_freight_rate_statistics'
     
 class ValidityAction(Bramhastra):
     create = 'create'
@@ -19,6 +19,9 @@ class FeedbackAction(Bramhastra):
     create = 'create'
     update = 'update'
     
+class CheckoutAction(Bramhastra):
+    create = 'create'
+    update = 'update'
     
 class RedisKeys(Bramhastra):
     fcl_freight_rate_all_time_accuracy_chart = 'fcl_freight_rate_all_time_accuracy_chart'
