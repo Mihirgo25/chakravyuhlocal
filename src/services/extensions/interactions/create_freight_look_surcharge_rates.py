@@ -69,7 +69,7 @@ def format_surcharge_rate(rate,locations,airline_id,commodity):
     line_items = []
 
     for key, value in rate.items():
-        if key in ['SSC','FSC/MIN','XRAY/MIN','MISC/MIN','CTG/MIN','AMS-M/AWB','AMS-M/HAWB','AMS-E/AWB','AMS-E/HAWB']:
+        if key in ['SSC','FSC/MIN','XRAY/MIN','MISC/MIN','CTG/MIN','AMS-M/AWB','AMS-M/HAWB','AMS-E/AWB','AMS-E/HAWB','FSC','SSC/MIN']:
             line_item = build_line_item(value,key)
             if line_item:
                 line_items.append(line_item)
