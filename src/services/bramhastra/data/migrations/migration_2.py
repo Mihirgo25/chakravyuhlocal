@@ -1,24 +1,15 @@
 from database.rails_db import get_connection
+# from configs.global_constants import DEFAULT_WEIGHT_SLABS
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
-from services.air_freight_rate.models.air_freight_rate_feedback import (
-    AirFreightRateFeedback,
-)
-from services.bramhastra.models.air_freight_rate_statistic import (
-    AirFreightRateStatistic,
-)
-from services.bramhastra.models.checkout_air_freight_rate_statistic import (
-    CheckoutAirFreightRateStatistic,
-)
-from services.bramhastra.models.feedback_air_freight_rate_statistic import (
-    FeedbackAirFreightRateStatistic,
-)
-from configs.fcl_freight_rate_constants import (
-    DEFAULT_RATE_TYPE,
-    DEFAULT_SCHEDULE_TYPES,
-    DEFAULT_PAYMENT_TERM,
-)
+from services.air_freight_rate.models.air_freight_rate_feedback import AirFreightRateFeedback
+from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
+from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
+from services.bramhastra.models.feedback_air_freight_rate_statistic import FeedbackAirFreightRateStatistic
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
 from fastapi.encoders import jsonable_encoder
+from micro_services.client import common
 from playhouse.shortcuts import model_to_dict
+from micro_services.client import common
 import urllib
 import json
 import nltk
@@ -26,33 +17,8 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 
 BATCH_SIZE = 1000
-REGION_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json"
-RATE_PARAMS = [
-    "commodity",
-    "container_size",
-    "container_type",
-    "destination_country_id",
-    "destination_local_id",
-    "destination_detention_id",
-    "destination_main_port_id",
-    "destination_port_id",
-    "destination_trade_id",
-    "origin_country_id",
-    "origin_local_id",
-    "origin_detention_id",
-    "origin_demurrage_id",
-    "destination_demurrage_id",
-    "origin_main_port_id",
-    "origin_port_id",
-    "origin_trade_id",
-    "service_provider_id",
-    "shipping_line_id",
-    "mode",
-    "accuracy",
-    "cogo_entity_id",
-    "sourced_by_id",
-    "procured_by_id",
-]
+REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
+RATE_PARAMS = [ "commodity", "container_size","container_type", "destination_country_id", "destination_local_id", "destination_detention_id", "destination_main_port_id", "destination_port_id", "destination_trade_id", "origin_country_id", "origin_local_id", "origin_detention_id", "origin_demurrage_id", "destination_demurrage_id", "origin_main_port_id", "origin_port_id", "origin_trade_id", "service_provider_id", "shipping_line_id", "mode", "accuracy", "cogo_entity_id", "sourced_by_id", "procured_by_id"]
 CANCELLATION_REASON_CHEAPER_RATE = [
     ["low", "lower", "cheap", "cheaper", "less", "lesser", "better", "issue"],
     ["quot", "price", "amount", "cost", "offer"],
@@ -83,11 +49,12 @@ class MigrationHelpers:
         if flag > 1:
             return True
         return False
-
     def find_statistics_object(self, identifier):
         freight = (
             AirFreightRateStatistic.select()
-            .where(AirFreightRateStatistic.identifier == identifier)
+            .where(
+                AirFreightRateStatistic.identifier == identifier
+            )
             .first()
         )
         return freight
@@ -95,35 +62,32 @@ class MigrationHelpers:
     def find_rate_object(self, id):
         freight = AirFreightRate.select().where(AirFreightRate.id == id).first()
         return freight
-
+    
     def get_imp_ext_id_from_spot_search_rates(self, source_id):
         newconnection = get_connection()
         with newconnection:
             with newconnection.cursor() as cursor:
-                sql = "SELECT importer_exporter_id AS imp_ext_id FROM spot_searches WHERE id = %s"
+                sql = 'SELECT importer_exporter_id AS imp_ext_id FROM spot_searches WHERE id = %s'
                 cursor.execute(sql, (source_id,))
                 result = cursor.fetchone()
-        return result
-
+        return result  
+    
     def get_imp_ext_id_from_checkouts_rates(self, source_id):
         newconnection = get_connection()
         with newconnection:
             with newconnection.cursor() as cursor:
-                sql = "SELECT importer_exporter_id AS imp_ext_id FROM checkouts WHERE id = %s"
+                sql = 'SELECT importer_exporter_id AS imp_ext_id FROM checkouts WHERE id = %s'
                 cursor.execute(sql, (source_id,))
                 result = cursor.fetchone()
         return result
-
-    def get_chargeable_weight(volume, weight):
+    
+    def get_chargeable_weight(volume,weight):
         volumetric_weight = volume * 166.67
         if volumetric_weight > weight:
-            chargeable_weight = volumetric_weight
+            chargeable_weight = round(volumetric_weight)
         else:
-            chargeable_weight = weight
-
+            chargeable_weight = round(weight)
         return chargeable_weight
-
-
 class PopulateAirFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
@@ -150,60 +114,48 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
             rates = jsonable_encoder(list(cur_query.dicts()))
             offset += BATCH_SIZE
             row_data = []
-            for rate in rates:
-                for validity in rate["validities"]:
-                    for ws in validity["weight_slabs"]:
-                        count += 1
-
-                        identifier = "{}_{}_{}_{}".format(
-                            rate["id"],
-                            validity["id"],
-                            ws["lower_limit"],
-                            ws["upper_limit"],
-                        )
-
-                        rate_params = {
-                            key: value
-                            for key, value in rate.items()
-                            if key in RATE_PARAMS
-                        }
+            for rate in rates: 
+                for validity in rate['validities']:
+                    for ws in validity['weight_slabs']:
+                        count+= 1
+                        
+                        identifier = '{}_{}_{}_{}'.format(rate['id'], validity['id'],ws['lower_limit'],ws['upper_limit'])
+                            
+                        rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
                         validity_params = self.get_validity_params(validity)
-
+                        
                         row = {
-                            **rate_params,
+                            **rate_params, 
                             **validity_params,
                             "containers_count": rate.get("containers_count") or 0,
-                            "identifier": identifier,
-                            "rate_id": rate.get("id"),
+                            'identifier' : identifier,
+                            'rate_id' : rate.get('id'),
                             "lower_limit": ws.get("lower_limit"),
                             "upper_limit": ws.get("upper_limit"),
-                            "rate_created_at": rate.get("created_at"),
-                            "rate_updated_at": rate.get("updated_at"),
-                            "rate_type": rate.get("rate_type") or DEFAULT_RATE_TYPE,
-                            "origin_region_id": REGION_MAPPING.get(
-                                rate.get("origin_port_id")
-                            ),
-                            "destination_region_id": REGION_MAPPING.get(
-                                rate.get("destination_port_id")
-                            ),
+                            "rate_created_at": rate.get('created_at'),
+                            "rate_updated_at": rate.get('updated_at'),
+                            "rate_type": rate.get('rate_type') or DEFAULT_RATE_TYPE,
+                            "origin_region_id": REGION_MAPPING.get(rate.get('origin_port_id')),
+                            "destination_region_id": REGION_MAPPING.get(rate.get('destination_port_id')),
                             # "market_price": validity.get('market_price') or validity.get('price'),
-                            "validity_id": validity.get("id"),
+                            'validity_id' : validity.get('id'),
                         }
                         row_data.append(row)
                         print(count)
                 AirFreightRateStatistic.insert_many(row_data).execute()
-
+    
+    
     def populate_feedback_air_freight_rate_statistic(self):
         query = AirFreightRateFeedback.select()
 
         feedbacks = jsonable_encoder(list(query.dicts))
-        count = 0
-        row_data = []
+        count =0;
+        row_data=[]
         for feedback in feedbacks:
-            count += 1
-            identifier = "{}_{}".format(feedback["air_freight_rate_id"], feedback["id"])
+            count+=1
+            identifier = '{}_{}'.format(feedback['air_freight_rate_id'], feedback['id'])
             statistics_obj = self.find_statistics_object(identifier)
-
+           
             if statistics_obj:
                 if feedback["feedback_type"] == "liked":
                     setattr(
@@ -256,6 +208,11 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                     "serial_id": feedback.get("serial_id"),
                 }
                 row_data.append(row)
+        # importer_exporter_ids = self.get_imp_ext_id_from_checkouts_rates([row['source_id'] for row in feedbacks if row['source'] == 'checkout'])
+        importer_exporter_ids=self.get_imp_ext_id_from_spot_search_rates([row['source_id'] for row in feedbacks if row['source'] == ['spot_search']])
+
+        for row in row_data:
+            row['importer_exporter_id'] = importer_exporter_ids.get(row['source_id'], None)
         FeedbackAirFreightRateStatistic.insert_many(row_data).execute()
 
     def update_air_freight_rate_checkout_count(self):
@@ -486,11 +443,14 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                 cur.close()
 
         except Exception as e:
-            print("! Exception occured while populating shipment stats:", e)
+            print('! Exception occured while populating shipment stats:',e)
+
+
 
 
 def main():
-    # populate_from_rates = PopulateFclFreightRateStatistics()
+    populate_from_rates = PopulateAirFreightRateStatistics()
+    populate_from_rates.populate_feedback_air_freight_rate_statistic()
     pass
 
 
