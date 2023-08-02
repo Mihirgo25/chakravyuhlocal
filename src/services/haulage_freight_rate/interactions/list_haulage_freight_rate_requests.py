@@ -59,7 +59,7 @@ def list_haulage_freight_rate_requests(
     query = get_page(query, page, page_limit)
 
     # adding data object
-    data = get_data(query)
+    data = get_data(query, transport_mode)
 
     return {"list": json_encoder(data)} | (pagination_data) | (stats)
 
@@ -120,12 +120,12 @@ def apply_relevant_supply_agent_filter(query, filters):
     origin_location_id = [t["origin_location_id"] for t in expertises]
     destination_location_id = [t["destination_location_id"] for t in expertises]
     query = query.where(
-        (HaulageFreightRateRequest.origin_location_id << origin_location_id)
-        | (HaulageFreightRateRequest.origin_country_id << origin_location_id)
+        ((HaulageFreightRateRequest.origin_location_id << origin_location_id)
+        | (HaulageFreightRateRequest.origin_country_id << origin_location_id))
     )
     query = query.where(
-        (HaulageFreightRateRequest.destination_location_id << destination_location_id)
-        | (HaulageFreightRateRequest.destination_country_id << destination_location_id)
+        ((HaulageFreightRateRequest.destination_location_id << destination_location_id)
+        | (HaulageFreightRateRequest.destination_country_id << destination_location_id))
     )
     return query
 
@@ -213,7 +213,7 @@ def get_stats(filters, is_stats_required, performed_by_id, transport_mode):
     return {"stats": stats}
 
 
-def get_data(query):
+def get_data(query, transport_mode):
     spot_search_hash = {}
     data = list(query.dicts())
     haulage_freight_rate_ids = []
@@ -258,4 +258,7 @@ def get_data(query):
             object["spot_search"] = spot_search_hash[str(object["source_id"])]
         else:
             object["spot_search"] = {}
+        if transport_mode != 'trailer':
+            object['origin_port'] = object['origin_location']
+            object['destination_port'] = object['destination_location']
     return data

@@ -1,8 +1,6 @@
 from datetime import datetime, date
 from pydantic import BaseModel, validator, Field
-
-
-# Apply Fcl Freight Statistics
+from typing import Optional
 
 
 class LineItems(BaseModel):
@@ -118,20 +116,30 @@ class ApplySpotSearchFclFreightRateStatistic(BaseModel):
     
 # Apply Checkout Fcl Freight Statistics
 
-class CheckoutFclFreightRateStatistic(BaseModel):
+class CheckoutRates(BaseModel):
+    rate_id: str
+    source: str
+    validity_id: str
+    line_items: list[dict]
+    
+
+class CheckoutFclFreightService(BaseModel):
     checkout_id: str
-    checkout_fcl_freight_services_id: str
-    rates: list[Rates]
-    created_at: datetime = datetime.utcnow()
-    updated_at: datetime = datetime.utcnow()
+    checkout_fcl_freight_service_id: str = Field(alias='id')
+    rate: CheckoutRates
+    
 
-
-class UpdateCheckoutFclFreightRateStatistic(BaseModel):
-    pass
+class FclFreightCheckoutParams(BaseModel):
+    source: str
+    source_id: str
+    importer_exporter_id: str
+    created_at: datetime
+    updated_at: datetime
+    checkout_fcl_freight_services: list[CheckoutFclFreightService]
 
 
 class ApplyCheckoutFclFreightRateStatistic(BaseModel):
-    params: CheckoutFclFreightRateStatistic = None
+    params: FclFreightCheckoutParams = None
     action: str
     
     
@@ -160,30 +168,12 @@ class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     params: FeedbackFclFreightRateStatistic = None
 
 
-class CreateQuotationFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class UpdateQuotationFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class CreateShipmentFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class UpdateShipmentFclFreightRateStatistic(BaseModel):
-    pass
-
-
 class ApplyQuotationFclFreightRateStatistics(BaseModel):
-    create_params: CreateQuotationFclFreightRateStatistic = None
-    update_params: UpdateQuotationFclFreightRateStatistic = None
+    pass
 
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
-    create_params: CreateShipmentFclFreightRateStatistic = None
-    update_params: UpdateShipmentFclFreightRateStatistic = None
+    pass
 
 
 class WeightSlab(BaseModel):
@@ -253,3 +243,29 @@ class ApplyAirFreightRateStatistic(BaseModel):
     action: str
     create_params: CreateAirFreightRateStatistic = None
     update_params: UpdateAirFreightRateStatistic = None
+
+
+
+# Apply Feedback Air Freight Statistics
+
+class FeedbackAirFreightRateStatistic(BaseModel):
+    feedback_id: str = Field(alias='id')
+    validity_id: str
+    rate_id: str = Field(alias='air_freight_rate_id')
+    feedback_type: str
+    source: str
+    source_id: str
+    serial_id: str = None
+    importer_exporter_id: str = None
+    service_provider_id: str = None
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    performed_by_id: str
+    performed_by_org_id: str
+    closed_by_id: str = None
+    likes_count: int
+    dislikes_count: int
+
+class ApplyFeedbackAirFreightRateStatistics(BaseModel):
+    action: str
+    params: FeedbackAirFreightRateStatistic = None

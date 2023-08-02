@@ -1,7 +1,7 @@
 from peewee import Model, BigAutoField, UUIDField, CharField, IntegerField
 from datetime import datetime
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField
+from playhouse.postgres_ext import DateTimeTZField, FloatField
 
 
 class BaseModel(Model):
@@ -11,9 +11,10 @@ class BaseModel(Model):
 
 class CheckoutFclFreightRateStatistic(BaseModel):
     id = BigAutoField()
-    spot_search_id = UUIDField()
+    source = CharField()
+    source_id = UUIDField()
     checkout_id = UUIDField()
-    checkout_fcl_freight_rate_services_id = UUIDField(null=True)
+    checkout_fcl_freight_service_id = UUIDField(null=True)
     validity_id = UUIDField()
     rate_id = UUIDField()
     sell_quotation_id = UUIDField(null=True)
@@ -21,6 +22,9 @@ class CheckoutFclFreightRateStatistic(BaseModel):
     shipment_id = UUIDField(null=True)
     created_at = DateTimeTZField(default = datetime.utcnow())
     updated_at = DateTimeTZField(default = datetime.utcnow())
+    total_buy_price = FloatField(null = True)
+    currency = CharField(null = True)
+    importer_exporter_id = UUIDField(null=True)
     status = CharField(default = 'active')
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
