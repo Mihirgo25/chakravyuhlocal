@@ -10,7 +10,8 @@ commodity_mappings = {
     'Dimension': 'general',
     'EquHeavy': 'special_consideration',
     'Perishable': 'special_consideration',
-    '': 'general'
+    '': 'general',
+    'XPS':'general'
 }
 
 commodity_type_mappings = {
@@ -25,7 +26,8 @@ commodity_type_mappings = {
     'Dimension': 'all',
     'EquHeavy': 'other_special',
     'Perishable': 'other_special',
-    '': 'all'
+    '': 'all',
+    'XPS':'all'
 }
 
 surcharge_charges_mappings = {
@@ -37,7 +39,9 @@ surcharge_charges_mappings = {
     'AMS-M/AWB':'AMS',
     'AMS-M/HAWB':'HAMS',
     'AMS-E/AWB':'EAMS',
-    'AMS-E/HAWB':'EHAMS'
+    'AMS-E/HAWB':'EHAMS',
+    'FSC':'FSC',
+    'SSC/MIN':'SSC'
 }
 
 airline_ids =[
@@ -50,7 +54,8 @@ airline_ids =[
     '63c8381e-b879-46c0-a908-49e4dad25867',
     'b6ee9f34-d04e-47c5-b6c7-cb348eafdbbc',
     'e422bb59-3074-422d-bf9c-51afe93cc968',
-    'eddc9ad8-62f6-4445-bb37-4fce5d284ed1'
+    'eddc9ad8-62f6-4445-bb37-4fce5d284ed1',
+    'dbd3feb3-007a-4e24-873a-bc6e5e43254d'
 ]
 
 airline_margins = {
@@ -63,7 +68,8 @@ airline_margins = {
     '63c8381e-b879-46c0-a908-49e4dad25867':0.05,
     'b6ee9f34-d04e-47c5-b6c7-cb348eafdbbc':-0.25,
     'e422bb59-3074-422d-bf9c-51afe93cc968':-0.3,
-    'eddc9ad8-62f6-4445-bb37-4fce5d284ed1':-0.1
+    'eddc9ad8-62f6-4445-bb37-4fce5d284ed1':-0.1,
+    'dbd3feb3-007a-4e24-873a-bc6e5e43254d':-0.2875
 }
 
 surcharge_performed_by_id = '1a0d178d-c2b9-473c-87e7-1ed0d750aff9'
