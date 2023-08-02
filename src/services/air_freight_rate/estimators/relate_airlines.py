@@ -125,9 +125,7 @@ class RelateAirline:
                         origin_location_id=origin_locations,
                         destination_location_id=destination_locations,
                         location_type="airport",
-                        interval=1,
-                        interval_type = 'month',
-                        interval_types = 'months'
+                        interval=1
                     )
                     if not invoice_rates or not air_freight_rates:
                         continue
