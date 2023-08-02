@@ -539,7 +539,7 @@ class AirFreightRate(BaseModel):
     def merging_weight_slabs(self,old_weight_slabs,new_weight_slabs):
         final_old_weight_slabs = old_weight_slabs
         
-        if new_weight_slabs[0]['currency'] != final_old_weight_slabs[0]['currency']:
+        if  (len(final_old_weight_slabs)==0) or (new_weight_slabs[0]['currency'] != final_old_weight_slabs[0]['currency']):
             return new_weight_slabs
 
         for new_weight_slab in new_weight_slabs:
