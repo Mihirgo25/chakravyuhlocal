@@ -263,6 +263,10 @@ class AirFreightRateBulkOperation(BaseModel):
 
         query = list_air_freight_rates(filters=filters,return_query=True)['list']
         total_count = query.count()
+        if total_count ==0:
+            self.progress ==100
+            self.save()
+            return
         count =0
         offset =0
         while count < total_count:
@@ -348,6 +352,10 @@ class AirFreightRateBulkOperation(BaseModel):
 
         query = list_air_freight_rates(filters=filters,return_query=True)['list']
         total_count = query.count()
+        if total_count ==0:
+            self.progress ==100
+            self.save()
+            return
         count =0
         offset =0
         while count < total_count:
@@ -373,6 +381,10 @@ class AirFreightRateBulkOperation(BaseModel):
         )["list"]
 
         total_count = len(air_freight_rates)
+        if total_count ==0:
+            self.progress ==100
+            self.save()
+            return
         count = 0
 
         for freight in air_freight_rates:
@@ -436,6 +448,10 @@ class AirFreightRateBulkOperation(BaseModel):
             filters=filters, return_query=True, page_limit=page_limit
         )["list"]
         total_count = len(local_rates)
+        if total_count ==0:
+            self.progress ==100
+            self.save()
+            return
         count = 0
 
         for local in local_rates:
