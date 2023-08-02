@@ -13,7 +13,7 @@ class BaseModel(Model):
 class ShipmentAirFreightRateStatistic(BaseModel):
     id = BigAutoField()
     spot_search_id = UUIDField()
-    spot_search_air_customs_services_id = UUIDField()
+    spot_search_air_freight_services_id = UUIDField()
     checkout_id = UUIDField()
     checkout_air_freight_rate_services_id = UUIDField(null=True)
     sell_quotation_id = UUIDField()

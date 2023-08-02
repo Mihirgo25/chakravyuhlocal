@@ -13,7 +13,7 @@ class BaseModel(Model):
 class ShipmentFclFreightRateStatistic(BaseModel):
     id = BigAutoField()
     spot_search_id = UUIDField()
-    spot_search_fcl_customs_services_id = UUIDField()
+    spot_search_fcl_freight_services_id = UUIDField()
     checkout_id = UUIDField()
     checkout_fcl_freight_rate_services_id = UUIDField(null=True)
     sell_quotation_id = UUIDField()
@@ -26,7 +26,7 @@ class ShipmentFclFreightRateStatistic(BaseModel):
     is_active = CharField()
     created_at = DateTimeTZField(default = datetime.utcnow())
     updated_at = DateTimeTZField(default = datetime.utcnow())
-    status = CharField(default = 'active')
+    status = CharField()
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
 
