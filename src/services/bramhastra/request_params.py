@@ -2,9 +2,6 @@ from datetime import datetime, date
 from pydantic import BaseModel, validator, Field
 
 
-# Apply Fcl Freight Statistics
-
-
 class LineItems(BaseModel):
     price: str
     market_price: str
@@ -118,20 +115,28 @@ class ApplySpotSearchFclFreightRateStatistic(BaseModel):
     
 # Apply Checkout Fcl Freight Statistics
 
-class CheckoutFclFreightRateStatistic(BaseModel):
+class CheckoutRates(BaseModel):
+    rate_id: str
+    validity_id: str
+    line_items: list[dict] = None
+    
+
+class CheckoutFclFreightService(BaseModel):
     checkout_id: str
-    checkout_fcl_freight_services_id: str
-    rates: list[Rates]
-    created_at: datetime = datetime.utcnow()
-    updated_at: datetime = datetime.utcnow()
+    checkout_fcl_freight_service_id: str = Field(alias='id')
+    rate: CheckoutRates
+    
 
-
-class UpdateCheckoutFclFreightRateStatistic(BaseModel):
-    pass
+class FclFreightCheckoutParams(BaseModel):
+    source: str
+    source_id: str
+    created_at: str
+    updated_at: str
+    checkout_fcl_freight_services: list[CheckoutFclFreightService]
 
 
 class ApplyCheckoutFclFreightRateStatistic(BaseModel):
-    params: CheckoutFclFreightRateStatistic = None
+    params: FclFreightCheckoutParams = None
     action: str
     
     
@@ -160,30 +165,12 @@ class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     params: FeedbackFclFreightRateStatistic = None
 
 
-class CreateQuotationFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class UpdateQuotationFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class CreateShipmentFclFreightRateStatistic(BaseModel):
-    pass
-
-
-class UpdateShipmentFclFreightRateStatistic(BaseModel):
-    pass
-
-
 class ApplyQuotationFclFreightRateStatistics(BaseModel):
-    create_params: CreateQuotationFclFreightRateStatistic = None
-    update_params: UpdateQuotationFclFreightRateStatistic = None
+    pass
 
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
-    create_params: CreateShipmentFclFreightRateStatistic = None
-    update_params: UpdateShipmentFclFreightRateStatistic = None
+    pass
 
 
 class WeightSlab(BaseModel):

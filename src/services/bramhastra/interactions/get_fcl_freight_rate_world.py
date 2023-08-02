@@ -6,7 +6,6 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 )
 from peewee import fn
 from collections import defaultdict
-import time
 
 
 def get_fcl_freight_rate_world():
@@ -39,12 +38,17 @@ def add_location_objects(statistics):
 def get_past_count():
     clickhouse = ClickHouse()
 
-    query = """SELECT country_id, dictGet('country_rate_count', 'rate_count', country_id) + SUM(sign)/2 AS rate_count FROM 
-    (SELECT sign, origin_country_id AS country_id
-    FROM brahmastra.fcl_freight_rate_statistics
+    query = """
+    WITH clean_rates AS (
+        SELECT origin_country_id,destination_country_id,sum(sign) from brahmastra.fcl_freight_rate_statistics
+        GROUP BY origin_country_id,destination_country_id HAVING sum(sign) > 0 ORDER BY id ASC
+    )
+    SELECT country_id, dictGet('country_rate_count', 'rate_count', country_id) + COUNT(*) AS rate_count FROM 
+    (SELECT origin_country_id AS country_id
+    FROM clean_rates
     UNION ALL
-    SELECT sign, destination_country_id AS country_id
-    FROM brahmastra.fcl_freight_rate_statistics) AS combined_countries
+    SELECT destination_country_id AS country_id
+    FROM clean_rates) AS combined_countries
     GROUP BY country_id"""
 
     return jsonable_encoder(clickhouse.execute(query))

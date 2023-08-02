@@ -19,6 +19,9 @@ class FeedbackAction(Bramhastra):
     create = 'create'
     update = 'update'
     
+class CheckoutAction(Bramhastra):
+    create = 'create'
+    update = 'update'
     
 class RedisKeys(Bramhastra):
     fcl_freight_rate_all_time_accuracy_chart = 'fcl_freight_rate_all_time_accuracy_chart'

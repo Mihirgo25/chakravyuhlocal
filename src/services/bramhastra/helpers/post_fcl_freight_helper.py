@@ -392,26 +392,31 @@ class Feedback:
 
 class Checkout(FclFreightValidity):
     def __init__(self, params) -> None:
-        self.common_param = params.dict(exclude={"rates"})
+        self.common_params = None
         self.checkout_params = []
-        self.rates = params.rates
+        self.rates = []
         self.increment_keys = {"checkout_count"}
-        self.indirect_increment_keys = {"shipment_count"}
-        self.clickhouse_client = None
+        self.set_params(params)
+        
+    def set_params(self,params):
+        self.common_params = params.dict(include  = {'source','source_id','created_at','updated_at'})
+        
+        for param in params.checkout_fcl_freight_services:
+            self.rates.append(param.rates.dict(include = {'rate_id','validity_id'}))
+            self.checkout_params['total_buy_price'] = 0
+            for rate in param.rates:
+                for line_item in rate.line_items:
+                    self.checkout_params['total_buy_price']+=line_item['total_buy_price']
+            self.checkout_params.append(self.common_params.update(param.dict(exclude = ['rates'])))
 
-    def set_format_and_existing_rate_stats(self):
+    def set_existing_rate_stats(self):
         fcl_freight_validity = None
         for rate in self.rates:
-            param = self.common_param.copy()
-            rate_dict = rate.dict(exclude={"payment_term", "schedule_type"})
-            param.update(rate_dict)
-            self.checkout_params.append(param)
-
             if not fcl_freight_validity:
-                fcl_freight_validity = FclFreightValidity(**rate_dict)
+                fcl_freight_validity = FclFreightValidity(**rate)
                 self.clickhouse_client = fcl_freight_validity.clickhouse_client
             else:
-                fcl_freight_validity.set_identifier_details(**rate_dict)
+                fcl_freight_validity.set_identifier_details(**rate)
 
             new_row = fcl_freight_validity.update_stats(
                 return_new_row_without_updating=True
@@ -420,7 +425,6 @@ class Checkout(FclFreightValidity):
                 self.params["fcl_freight_rate_statistic_id"] = (
                     new_row["id"] if isinstance(new_row, dict) else new_row.id
                 )
-                self.indirect_increment_keys(new_row)
                 fcl_freight_validity.update_stats(new_row)
 
     def set_new_stats(self) -> int:
