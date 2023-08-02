@@ -240,3 +240,29 @@ class ApplyAirFreightRateStatistic(BaseModel):
     action: str
     create_params: CreateAirFreightRateStatistic = None
     update_params: UpdateAirFreightRateStatistic = None
+
+
+
+# Apply Feedback Air Freight Statistics
+
+class FeedbackAirFreightRateStatistic(BaseModel):
+    feedback_id: str = Field(alias='id')
+    validity_id: str
+    rate_id: str = Field(alias='air_freight_rate_id')
+    feedback_type: str
+    source: str
+    source_id: str
+    serial_id: str = None
+    importer_exporter_id: str = None
+    service_provider_id: str = None
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    performed_by_id: str
+    performed_by_org_id: str
+    closed_by_id: str = None
+    likes_count: int
+    dislikes_count: int
+
+class ApplyFeedbackAirFreightRateStatistics(BaseModel):
+    action: str
+    params: FeedbackAirFreightRateStatistic = None
