@@ -162,10 +162,7 @@ class HaulageFreightRate(BaseModel):
 
         if validity_end < validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
-    
-        if self.transport_modes[0] == 'rail' and self.trailer_type is not None:
-            raise  HTTPException(status_code=400, detail="trailer type not required in rail freight rate")
-
+            
     
     def validate_container_size(self):
       if self.container_size and self.container_size not in CONTAINER_SIZES:
