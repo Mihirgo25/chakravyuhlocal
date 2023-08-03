@@ -98,7 +98,7 @@ class CreateFtlFreightRate(BaseModel):
     commodity: str = None
     importer_exporter_id: str = None
     service_provider_id: str
-    performed_by_id: str
+    performed_by_id: str = None
     procured_by_id: str
     sourced_by_id: str
     validity_start: datetime

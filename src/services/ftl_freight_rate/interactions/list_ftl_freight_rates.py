@@ -104,8 +104,9 @@ def apply_importer_exporter_present_filter(query, filters):
     return query.where(FtlFreightRate.importer_exporter_id != None)
 
 def apply_is_rate_available_filter(query, filters):
-  query = query.where(FtlFreightRate.last_rate_available_date >= datetime.now().date())
-  return query
+    rate_not_available_entry = not filters.get('is_rate_available')
+    query = query.where(FtlFreightRate.rate_not_available_entry == rate_not_available_entry)
+    return query
 
 def apply_procured_by_id_filter(query, filters):
   query = query.where(FtlFreightRate.procured_by_id == filters['procured_by_id'])
