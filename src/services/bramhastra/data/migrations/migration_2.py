@@ -83,6 +83,16 @@ class MigrationHelpers:
             return True
         return False
     def find_statistics_object(self,rate_id,validity_id,chargeable_weight):
+
+    def get_chargeable_weight(self, weight, volume):
+        volumetric_weight = volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+        if volumetric_weight > weight:
+            chargeable_weight = round(volumetric_weight)
+        else:
+            chargeable_weight = round(weight)
+        return chargeable_weight
+    
+    def find_statistics_object(self, rate_id, validity_id, chargeable_weight):
         freight = (
             AirFreightRateStatistic.select()
             .where(
@@ -94,10 +104,18 @@ class MigrationHelpers:
             .first()
         )
         return freight
-
+    
+    def find_statistics_object_by_wav(self, rate_id, validity_id, weight, volume):
+        chargeable_weight = self.get_chargeable_weight(weight, volume)
+        return self.find_statistics_object(rate_id, validity_id, chargeable_weight)
+    
     def find_rate_object(self, id):
         freight = AirFreightRate.select().where(AirFreightRate.id == id).first()
         return freight
+    
+    def get_identifier(self,rate_id, validity_id, lower_limit, upper_limit):
+        return f'{rate_id}{validity_id}{lower_limit}{upper_limit}'.replace('-','')
+    
     
     def get_validity_params(self, validity):
         price = validity.get("price")
@@ -238,7 +256,12 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
             row_data = []
             for rate in rates: 
                 for validity in rate['validities']:
-                    if validity and len(validity)>0 and 'id' in validity and validity['id']:
+                    for ws in validity['weight_slabs']:
+                        count+= 1
+                        
+                        identifier = self.get_identifier(rate['id'], validity['id'],ws['lower_limit'],ws['upper_limit'])
+                            
+                        rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
                         validity_params = self.get_validity_params(validity)
                     for weight_slab in validity.get('weight_slabs'):
                             count+= 1
@@ -410,32 +433,23 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                         cs.checkout_id, cs.created_at, cs.updated_at, cs.status,
                         co.shipment_id, co.source_id
                         FROM checkout_air_freight_services AS cs
-                        LEFT JOIN checkouts AS co 
+                        JOIN checkouts AS co 
                         ON cs.checkout_id = co.id
                         WHERE cs.rate ? 'rate_id' and cs.rate ? 'validity_id' 
                     '''
                 cur.execute(sql)
 
                 for row in cur:
-                    limits = self.get_chargeable_weight(row[1], row[2])
                     rate_card = row[3]
                     if(
                         'rate_id' in rate_card and 'validity_id' in rate_card and 
                         rate_card['rate_id'] and rate_card['validity_id']
                     ):
-                        identifier = '{}_{}_{}_{}'.format(rate_card['rate_id'], rate_card['validity_id'], limits[0], limits[1])
 
-                        statistics = (
-                            AirFreightRateStatistic.select()
-                            .where(
-                                AirFreightRateStatistic.identifier == identifier,
-                                AirFreightRateStatistic.sign == 1,
-                            )
-                            .first()
-                        )
+                        statistics = self.find_statistics_object_by_wav(rate_card['rate_id'], rate_card['validity_id'],row[1], row[2])
 
                         if not statistics:
-                            print("! Error: Identifier not present", identifier)
+                            print("! Error: Identifier not present")
                         else:
                             setattr(
                                 statistics,
@@ -447,157 +461,121 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                                 print(
                                     "! Error: Couldn't save statistics", statistics.id
                                 )
-                            else:
-                                self.populate_checkout_air_freight_statistics(row,rate_card['rate_id'],rate_card['validity_id'], identifier)
 
                 cur.close()
         except Exception as e:
             print('! Exception:',e)
     
-    def populate_checkout_air_freight_statistics( self, checkout_stats, rate_id, validity_id, identifier ):  
-        try:
-            params = {
-                'checkout_air_freight_rate_services_id':checkout_stats[0],
-                'checkout_id':checkout_stats[4],
-                'created_at':checkout_stats[5],
-                'updated_at':checkout_stats[6],
-                'status':checkout_stats[7],
-                'shipment_id':checkout_stats[8],
-                'spot_search_id':checkout_stats[9],
-                'rate_id':rate_id,
-                'validity_id':validity_id,
-            }
-
-            if params["shipment_id"]:
-                try:
-                    self.populate_shipment_stats_in_air_freight_stats(rate_id, validity_id, params['shipment_id'], identifier)
-
-                    quotation_ids = [None, None]
-                    with self.cogoback_connection.cursor() as cur:
-                        sql = f"SELECT id FROM shipment_buy_quotations where shipment_id = '{params['shipment_id']}'"
-                        cur.execute(sql)
-                        result = cur.fetchone()
-                        if(result):
-                            params['buy_quotation_id'] = result[0]
-                            quotation_ids[0] = result[0]
-
-                        sql = f"SELECT id FROM shipment_sell_quotations where shipment_id = '{params['shipment_id']}'"
-                        cur.execute(sql)
-                        result = cur.fetchone()
-                        if(result):
-                            params['sell_quotation_id'] = result[0]
-                            quotation_ids[1] = result[0]
-                        cur.close()
-
-                        shipment_params = {
-                            'shipment_id': params['shipment_id'],
-                            'checkout_id': params['checkout_id'],
-                            'spot_search_id': params['spot_search_id'],
-                            'checkout_air_freight_rate_services_id': params['checkout_air_freight_rate_services_id'],
-                            'buy_quotation_id': quotation_ids[0],
-                            'sell_quotation_id': quotation_ids[1],
-                            'rate_id':rate_id,
-                            'validity_id':validity_id,
-                        }
-
-                except Exception as e:
-                    print("! Exception occured while fetching shipment_quotations:", e)
-
-            CheckoutAirFreightRateStatistic.create(**params)
-            print("Saved ...")
-
-        except Exception as e:
-            print("! Exception occured while populating checkout stats:", e)
-
-    def update_shipment_stats_in_air_freight_stats( self, rate_id, validity_id, shipment_id, identifier ):
+    def update_shipment_stats_in_air_freight_stats( self ):
         try:
             with self.cogoback_connection.cursor() as cur:
-                sql = f"""SELECT 
-                        ss.state AS shipment_state, ss.cancellation_reason,
-                        sf.state AS container_state, sf.packages_count
-                        FROM shipments AS ss
-                        LEFT JOIN shipment_air_freight_services AS sf 
-                        ON ss.id = sf.shipment_id
-                        WHERE ss.id = '{shipment_id}'
-                    """
+                sql = """
+                        WITH valid_checkouts AS 
+                            (
+                                SELECT co.shipment_id AS shipment_id, 
+                                cs.weight AS weight, cs.volume AS volume, 
+                                cs.rate ->> 'rate_id' AS rate_id, cs.rate ->> 'validity_id' AS validity_id
+                                    FROM checkout_air_freight_services AS cs
+                                            JOIN checkouts AS co 
+                                                ON cs.checkout_id = co.id
+                                                    WHERE cs.rate ? 'rate_id' and cs.rate ? 'validity_id' 
+                                                    and cs.rate ->> 'rate_id' is not null
+                                                    and cs.rate ->> 'validity_id' is not null
+                            )
+                        SELECT 
+                        valid_checkouts.weight, valid_checkouts.volume, valid_checkouts.rate_id, valid_checkouts.validity_id,
+                        shipments.state AS shipment_state,
+                        shipment_services.state AS package_state, shipment_services.packages_count
+                            FROM shipments
+                                JOIN shipment_air_freight_services AS shipment_services 
+                                    ON shipments.id = shipment_services.shipment_id
+                                JOIN valid_checkouts
+                                    ON shipments.id = valid_checkouts.shipment_id
+                """
                 cur.execute(sql)
-                result = cur.fetchone()
-                shipment_state = result[0]
-                cancellation_reason = result[1]
-                container_state = result[2]
-                packages_count = result[3]
-
-                statistic = AirFreightRateStatistic.select().where(
-                    AirFreightRateStatistic.identifier == identifier,
-                    AirFreightRateStatistic.sign == 1
-                ).first()
-                
-                setattr(statistic, 'packages_count', statistic.packages_count+packages_count)
-                
-                if(shipment_state=='completed'):
-                    setattr(statistic, 'shipment_completed_count', statistic.shipment_completed_count+1)
-                elif(shipment_state=='aborted'):
-                    setattr(statistic, 'shipment_aborted_count', statistic.shipment_aborted_count+1)  
-                elif(shipment_state=='in_progress'):
-                    setattr(statistic, 'shipment_is_active_count', statistic.shipment_is_active_count+1)  
-                elif(shipment_state=='shipment_received'):
-                    setattr(statistic, 'shipment_received_count', statistic.shipment_received_count+1)
-                elif(shipment_state=='confirmed_by_importer_exporter'):
-                    setattr(statistic, 'shipment_confirmed_by_importer_exporter_count', statistic.shipment_confirmed_by_importer_exporter_count+1)
-                elif(shipment_state=='cancelled'):
-                    setattr(statistic, 'shipment_cancelled_count', statistic.shipment_cancelled_count+1) 
-
-                if container_state == "confirmed_by_service_provider":
-                    setattr(
-                        statistic,
-                        "shipment_confirmed_by_service_provider_count",
-                        statistic.shipment_confirmed_by_service_provider_count + 1,
-                    )
-                elif container_state == "awaiting_service_provider_confirmation":
-                    setattr(
-                        statistic,
-                        "shipment_awaited_service_provider_confirmation_count",
-                        statistic.shipment_awaited_service_provider_confirmation_count
-                        + 1,
-                    )
-                elif container_state == "init":
-                    setattr(
-                        statistic,
-                        "shipment_init_count",
-                        statistic.shipment_init_count + 1,
-                    )
-                elif container_state == "flight_arrived":
-                    setattr(
-                        statistic,
-                        "shipment_flight_arrived_count",
-                        statistic.shipment_flight_arrived_count + 1,
-                    )
-                elif container_state == "flight_departed":
-                    setattr(
-                        statistic,
-                        "shipment_flight_departed_count",
-                        statistic.shipment_flight_departed_count + 1,
-                    )
-                elif container_state == "cargo_handed_over_at_origin":
-                    setattr(
-                        statistic,
-                        "shipment_cargo_handed_over_at_origin_count",
-                        statistic.shipment_cargo_handed_over_at_origin_count + 1,
-                    )
-                elif container_state == "cargo_handed_over_at_destination":
-                    setattr(
-                        statistic,
-                        "shipment_cargo_handed_over_at_destination_count",
-                        statistic.shipment_cargo_handed_over_at_destination_count + 1,
-                    )
-
-                saved_status = statistic.save()
-                if not saved_status:
-                    print("! Error: Couldn't save statistics", statistic.id)
-                else:
-                    print("Saved ...", statistic.id)
-
+                results = cur.fetchall()
                 cur.close()
+
+                cntr = 0
+                for row in results:
+                    weight = row[0]
+                    volume = row[1]
+                    rate_id = row[2]
+                    validity_id = row[3]
+                    shipment_state = row[4]
+                    container_state = row[5]
+                    packages_count = row[6]
+                    print('_', end='')
+
+                    statistic = self.find_statistics_object_by_wav(rate_id, validity_id, weight, volume)
+                    
+                    if statistic:
+                        cntr += 1
+                        print(cntr,end='')
+                        setattr(statistic, 'packages_count', statistic.packages_count+packages_count)
+                        
+                        if(shipment_state=='completed'):
+                            setattr(statistic, 'shipment_completed_count', statistic.shipment_completed_count+1)
+                        elif(shipment_state=='aborted'):
+                            setattr(statistic, 'shipment_aborted_count', statistic.shipment_aborted_count+1)  
+                        elif(shipment_state=='in_progress'):
+                            setattr(statistic, 'shipment_is_active_count', statistic.shipment_is_active_count+1)  
+                        elif(shipment_state=='shipment_received'):
+                            setattr(statistic, 'shipment_received_count', statistic.shipment_received_count+1)
+                        elif(shipment_state=='confirmed_by_importer_exporter'):
+                            setattr(statistic, 'shipment_confirmed_by_importer_exporter_count', statistic.shipment_confirmed_by_importer_exporter_count+1)
+                        elif(shipment_state=='cancelled'):
+                            setattr(statistic, 'shipment_cancelled_count', statistic.shipment_cancelled_count+1) 
+
+                        if container_state == "confirmed_by_service_provider":
+                            setattr(
+                                statistic,
+                                "shipment_confirmed_by_service_provider_count",
+                                statistic.shipment_confirmed_by_service_provider_count + 1,
+                            )
+                        elif container_state == "awaiting_service_provider_confirmation":
+                            setattr(
+                                statistic,
+                                "shipment_awaited_service_provider_confirmation_count",
+                                statistic.shipment_awaited_service_provider_confirmation_count
+                                + 1,
+                            )
+                        elif container_state == "init":
+                            setattr(
+                                statistic,
+                                "shipment_init_count",
+                                statistic.shipment_init_count + 1,
+                            )
+                        elif container_state == "flight_arrived":
+                            setattr(
+                                statistic,
+                                "shipment_flight_arrived_count",
+                                statistic.shipment_flight_arrived_count + 1,
+                            )
+                        elif container_state == "flight_departed":
+                            setattr(
+                                statistic,
+                                "shipment_flight_departed_count",
+                                statistic.shipment_flight_departed_count + 1,
+                            )
+                        elif container_state == "cargo_handed_over_at_origin":
+                            setattr(
+                                statistic,
+                                "shipment_cargo_handed_over_at_origin_count",
+                                statistic.shipment_cargo_handed_over_at_origin_count + 1,
+                            )
+                        elif container_state == "cargo_handed_over_at_destination":
+                            setattr(
+                                statistic,
+                                "shipment_cargo_handed_over_at_destination_count",
+                                statistic.shipment_cargo_handed_over_at_destination_count + 1,
+                            )
+
+                        saved_status = statistic.save()
+                        if not saved_status:
+                            print("! Error: Couldn't save statistics", statistic.id)
+                        else:
+                            print("Saved ...", statistic.id)
 
         except Exception as e:
             print('! Exception occured while populating shipment stats:',e)
@@ -699,31 +677,76 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         except Exception as e:
             print('! Exception:',e)
             
-    def populate_shipment_statistics(self, shipment_params):
-        shipment_id = shipment_params['shipment_id']
+    def populate_shipment_statistics( self ):
         try:
             with self.cogoback_connection.cursor() as cur:
-                sql = '''SELECT sp.state, ssffs.id, 
-                        sff.id, sff.cancellation_reason, sff.is_active,
-                        sff.created_at, sff.updated_at
-                        FROM shipments AS sp 
-                        LEFT JOIN checkouts AS co ON co.shipment_id = sp.id 
-                        LEFT JOIN spot_search_air_freight_services AS ssffs ON ssffs.spot_search_id = co.source_id
-                        LEFT JOIN shipment_fcl_freight_services AS sff ON sff.shipment_id = sp.id 
-                        WHERE sp.id = %s 
-                    '''
-                cur.execute(sql,(shipment_id))
-                result = cur.fetchone()
+                sql = '''
+                    SELECT 
+                        checkouts.shipment_id AS shipment_id,
+                        checkouts.id AS checkout_id,
+                        checkouts.source_id AS spot_search_id,
+                        spot_search_services.id AS spot_search_air_freight_services_id,
+                        checkout_air_freight_services.id AS checkout_air_freight_rate_services_id,
+                        buy_qoute.id AS buy_quotation_id,
+                        sell_qoute.id AS sell_quotation_id,
+                        checkout_air_freight_services.rate ->> 'rate_id' AS rate_id,
+                        checkout_air_freight_services.rate ->> 'validity_id' AS validity_id,
+                        shipments.state AS status,
+                        shipment_services.id AS shipment_air_freight_rate_services_id,
+                        shipment_services.cancellation_reason AS cancellation_reason,
+                        shipment_services.is_active AS is_active,
+                        shipment_services.created_at AS created_at,
+                        shipment_services.updated_at AS updated_at
+                            FROM checkouts 
+                                JOIN checkout_air_freight_services AS checkout_air_freight_services
+                                    ON checkouts.id = checkout_air_freight_services.checkout_id
+                                JOIN shipments
+                                    ON checkouts.shipment_id = shipments.id
+                                LEFT JOIN spot_search_air_freight_services AS spot_search_services
+                                    ON spot_search_services.spot_search_id = checkouts.source_id
+                                LEFT JOIN shipment_air_freight_services AS shipment_services 
+                                    ON shipment_services.shipment_id = shipments.id 
+                                LEFT JOIN shipment_sell_quotations AS sell_qoute
+                                    ON sell_qoute.shipment_id = checkouts.shipment_id
+                                LEFT JOIN shipment_buy_quotations AS buy_qoute
+                                    ON buy_qoute.shipment_id = checkouts.shipment_id
+                                    
+                                WHERE checkout_air_freight_services.rate ? 'rate_id' and checkout_air_freight_services.rate ? 'validity_id' 
+                                    and checkout_air_freight_services.rate ->> 'rate_id' is not null
+                                    and checkout_air_freight_services.rate ->> 'validity_id' is not null
 
-                shipment_params['status'] = result[0]
-                shipment_params['spot_search_air_freight_services_id'] = result[1]
-                shipment_params['shipment_air_freight_rate_services_id'] = result[2]
-                shipment_params['cancellation_reason'] = result[3]
-                shipment_params['is_active'] = result[4]
-                shipment_params['created_at'] = result[5]
-                shipment_params['updated_at'] = result[6]
-                
-                ShipmentAirFreightRateStatistic.create(**shipment_params)
+                                ORDER BY checkouts.shipment_id
+                                limit %s offset %s
+                    '''
+                BATCH_SIZE = 1000
+                OFFSET = 0
+                cur.execute(sql, (BATCH_SIZE, OFFSET))
+                result = cur.fetchall()
+                while len(result) > 0:
+                    print(OFFSET)
+                    OFFSET+=BATCH_SIZE
+                    row_data = []
+                    for row in result:
+                        row_data.append({
+                            'shipment_id':row[0],
+                            'checkout_id':row[1],
+                            'spot_search_id':row[2],
+                            'spot_search_air_freight_services_id':row[3],
+                            'checkout_air_freight_rate_services_id':row[4],
+                            'buy_quotation_id':row[5],
+                            'sell_quotation_id':row[6],
+                            'rate_id':row[7],
+                            'validity_id':row[8],
+                            'status':row[9],
+                            'shipment_air_freight_rate_services_id':row[10],
+                            'cancellation_reason':row[11],
+                            'is_active':row[12],
+                            'created_at':row[13],
+                            'updated_at':row[14],
+                        })
+                    ShipmentAirFreightRateStatistic.insert_many(row_data).execute()
+                    cur.execute(sql, (BATCH_SIZE, OFFSET))
+                    result = cur.fetchall()
 
         except Exception as e:
             print('Exception:',e)
@@ -735,10 +758,11 @@ def main():
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search_rates()
     # populate_from_rates.populate_from_checkout_fcl_freight_rate_services()
-    # populate_from_rates.update_shipment_stats_in_air_freight_stats()
+    populate_from_rates.update_shipment_stats_in_air_freight_stats()
     # populate_from_rates.update_air_freight_rate_checkout_count() 
     # populate_from_rates.populate_air_feedback_freight_rate_statistic()
     # populate_from_rates.populate_fcl_request_statistics()
+    # populate_from_rates.populate_shipment_statistics()
     # populate_from_rates.update_accuracy()
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     # populate_from_rates.update_pricing_map_zone_ids()

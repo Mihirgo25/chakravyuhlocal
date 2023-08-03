@@ -2,6 +2,7 @@ from database.rails_db import get_connection
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
+from datetime import datetime,timedelta
 from configs.fcl_freight_rate_constants import (
     DEFAULT_RATE_TYPE,
     DEFAULT_SCHEDULE_TYPES,
@@ -19,8 +20,14 @@ from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic
+)
 from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
     SpotSearchFclFreightRateStatistic,
+)
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic
 )
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
     FclFreightLocationCluster,
@@ -87,6 +94,7 @@ RATE_PARAMS = [
     "procured_by_id",
 ]
 
+STANDARD_CURRENCY = "USD"
 
 class MigrationHelpers:
     def get_pricing_map_zone_ids(self, origin_port_id, destination_port_id) -> list:
@@ -120,10 +128,15 @@ class MigrationHelpers:
     def find_rate_object(self, id):
         freight = FclFreightRate.select().where(FclFreightRate.id == id).first()
         return freight
+    
+    def get_identifier(self, rate_id, validity_id):
+        return f'{rate_id}{validity_id}'.replace('-', '')
 
     def get_validity_params(self, validity):
         price = validity.get("price")
         line_items = validity.get("line_items")
+        currency = validity.get("currency") or validity.get("freight_price_currency") or validity.get("freight_price_currency") or STANDARD_CURRENCY
+        
         if not price and line_items:
             currency_lists = [
                 item["currency"] for item in line_items if item["code"] == "BAS"
@@ -150,14 +163,20 @@ class MigrationHelpers:
                     )
                 )
             pass
-
+        
+        standard_price = price if currency == STANDARD_CURRENCY else common.get_money_exchange_for_fcl(
+                            {
+                                "price": price,
+                                "from_currency": currency,
+                                "to_currency": STANDARD_CURRENCY,
+                            }
+                        ).get("price", price)
         validity_details = {
             "validity_created_at": validity.get("validity_start"),
             "validity_updated_at": validity.get("validity_start"),
             "price": price,
-            "currency": validity.get("currency")
-            or validity.get("freight_price_currency")
-            or validity.get("freight_price_currency"),
+            "standard_price": standard_price,
+            "currency": currency,
             "payment_term": validity.get("payment_term") or DEFAULT_PAYMENT_TERM,
             "schedule_type": validity.get("schedule_type") or DEFAULT_SCHEDULE_TYPES,
             "validity_start": validity.get("validity_start"),
@@ -204,26 +223,98 @@ class MigrationHelpers:
             print("Error from railsDb", e)
             return all_result
         
-    def get_shipment_data_for_accuracy(self, offset =0, limit = BATCH_SIZE, return_count = False):
+    def get_shipment_data_for_accuracy(self):
         all_result = []
         try:
             newconnection = get_connection()  
             with newconnection:
                 with newconnection.cursor() as cur:
-                    if return_count:
-                        sql = 'SELECT COUNT(*) FROM shipments RIGHT JOIN shipment_buy_quotations where shipments.state = %s and shipments.shipment_type = %s and shipment_buy_quotations.is_deleted != %s'
-                        cur.execute(sql, ('completed', 'fcl_freight', True))
-                        all_result = cur.fetchone()[0]
-                    else:
-                        sql = '''
-                            WITH subquery AS (
+                    sql = '''
+                        WITH subquery AS (
+                        SELECT 
+                            shipment_buy_quotations.shipment_id,
+                            shipment_buy_quotations.total_price,
+                            shipment_buy_quotations.currency, 
+                            shipment_fcl_freight_services.container_size,
+                            shipment_fcl_freight_services.container_type, 
+                            shipment_fcl_freight_services.commodity 
+                        FROM 
+                            shipment_buy_quotations 
+                        RIGHT JOIN 
+                            shipment_fcl_freight_services 
+                            ON shipment_fcl_freight_services.id = shipment_buy_quotations.service_id 
+                        WHERE 
+                            shipment_buy_quotations.service_type= %s 
+                            AND shipment_buy_quotations.is_deleted != %s  
+                        ORDER BY 
+                            shipment_buy_quotations.created_at
+                        )
+                        SELECT 
+                            sh.id AS shipment_id, 
+                            ch_services.rate-> %s AS rate_id,
+                            ch_services.rate-> %s AS validity_id,
+                            subquery.total_price,
+                            subquery.currency
+                        FROM 
+                            shipments sh 
+                        RIGHT JOIN 
+                            checkouts ch 
+                        ON sh.id = ch.shipment_id 
+                        RIGHT JOIN 
+                            checkout_fcl_freight_services ch_services 
+                        ON ch.id =  ch_services.checkout_id 
+                        LEFT JOIN 
+                            subquery 
+                        ON sh.id = subquery.shipment_id
+                        WHERE 
+                            sh.state = %s 
+                        AND sh.shipment_type = %s  
+                        AND ch_services.container_size = subquery.container_size 
+                        AND ch_services.container_type = subquery.container_type
+                        AND ch_services.commodity = subquery.commodity
+                        AND ch_services.rate->%s is not null
+                        AND ch_services.rate->%s != %s
+                        ORDER BY 
+                            sh.created_at
+                    '''
+                    
+                    cur.execute(sql, ('fcl_freight_service',True,'rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
+                    result = cur.fetchall()
+                    for res in result:
+                        all_result.append( {'shipment_id' : res[0],'rate_id': res[1], 'validity_id': res[2], 'total_price': res[3], 'currency': res[4]})
+                    cur.close()
+            newconnection.close()
+            return all_result
+        except Exception as e:
+            print('Error from railsDb', e)
+            return  []
+        
+    def get_shipment_service_fcl_freight_data_for_accuracy(self, exclude_shipment_ids=[None]):
+        all_result = []
+        try:
+            newconnection = get_connection()
+            with newconnection:
+                with newconnection.cursor() as cur:
+                    exclude_shipment_ids = tuple(exclude_shipment_ids)
+                    sql = '''
+                        WITH subquery AS (
                             SELECT 
                                 shipment_buy_quotations.shipment_id,
-                                shipment_buy_quotations.tax_total_price,
+                                shipment_buy_quotations.total_price,
                                 shipment_buy_quotations.currency, 
+                                shipment_fcl_freight_services.origin_port_id,
+                                shipment_fcl_freight_services.destination_port_id,
+                                shipment_fcl_freight_services.origin_main_port_id,
+                                shipment_fcl_freight_services.destination_main_port_id,
+                                shipment_fcl_freight_services.origin_country_id,
+                                shipment_fcl_freight_services.destination_country_id,
+                                shipment_fcl_freight_services.origin_continent_id,
+                                shipment_fcl_freight_services.destination_continent_id,
                                 shipment_fcl_freight_services.container_size,
                                 shipment_fcl_freight_services.container_type, 
-                                shipment_fcl_freight_services.commodity 
+                                shipment_fcl_freight_services.commodity,
+                                shipment_fcl_freight_services.shipping_line_id,
+                                shipment_fcl_freight_services.service_provider_id
                             FROM 
                                 shipment_buy_quotations 
                             RIGHT JOIN 
@@ -236,44 +327,63 @@ class MigrationHelpers:
                                 shipment_buy_quotations.created_at
                             )
                             SELECT 
-                                sh.id AS shipment_id, 
-                                ch_services.rate-> %s AS rate_id,
-                                ch_services.rate-> %s AS validity_id,
-                                subquery.tax_total_price,
-                                subquery.currency
+                                sh.created_at AS created_at,
+                                subquery.total_price,
+                                subquery.currency, 
+                                subquery.origin_port_id,
+                                subquery.destination_port_id,
+                                subquery.origin_main_port_id,
+                                subquery.destination_main_port_id,
+                                subquery.origin_country_id,
+                                subquery.destination_country_id,
+                                subquery.origin_continent_id,
+                                subquery.destination_continent_id,
+                                subquery.container_size,
+                                subquery.container_type, 
+                                subquery.commodity,
+                                subquery.shipping_line_id,
+                                subquery.service_provider_id
                             FROM 
                                 shipments sh 
-                            RIGHT JOIN 
-                                checkouts ch 
-                            ON sh.id = ch.shipment_id 
-                            RIGHT JOIN 
-                                checkout_fcl_freight_services ch_services 
-                            ON ch.id =  ch_services.checkout_id 
                             LEFT JOIN 
                                 subquery 
                             ON sh.id = subquery.shipment_id
                             WHERE 
-                                sh.state = %s 
-                            AND sh.shipment_type = %s  
-                            AND ch_services.container_size = subquery.container_size 
-                            AND ch_services.container_type = subquery.container_type
-                            AND ch_services.commodity = subquery.commodity
+                                sh.state =  %s
+                            AND sh.id not in %s
+                            AND sh.shipment_type = %s 
+                            AND subquery.total_price is not null 
+                            AND total_price != 0
                             ORDER BY 
-                                sh.created_at DESC
-                            LIMIT %s
-                            OFFSET %s
-                        '''
-                        
-                        cur.execute(sql, ('fcl_freight_service',True,'rate_id', 'validity_id','completed','fcl_freight', limit , offset))
-                        result = cur.fetchall()
-                        for res in result:
-                            all_result.append(res)
+                                sh.created_at
+                    '''
+                    cur.execute(sql, ('fcl_freight_service',True,'completed',exclude_shipment_ids, 'fcl_freight'))
+                    result = cur.fetchall()
+                    for res in result:
+                        all_result.append({
+                            'created_at': res[0],
+                            'total_price': res[1],
+                            'currency': res[2],
+                            'origin_port_id': res[3],
+                            'destination_port_id': res[4],
+                            'origin_main_port_id': res[5],
+                            'destination_main_port_id': res[6],
+                            'origin_country_id': res[7],
+                            'destination_country_id': res[8],
+                            'origin_continent_id': res[9],
+                            'destination_continent_id': res[10],
+                            'container_size': res[11],
+                            'container_type': res[12],
+                            'commodity': res[13],
+                            'shipping_line_id': res[14],
+                            'service_provider_id': res[15]
+                        })
                     cur.close()
             newconnection.close()
             return all_result
         except Exception as e:
-            print('Error from railsDb', e)
-            return  0 if return_count else []
+            print("Error from railsDb", e)
+            return all_result
         
     def get_imp_ext_id_from_spot_search_rates(self, source_id):
         newconnection = get_connection()
@@ -324,7 +434,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 for validity in rate["validities"]:
                     count += 1
 
-                    identifier = "{}_{}".format(rate["id"], validity["id"])
+                    identifier = self.get_identifier(rate["id"], validity["id"])
 
                     rate_params = {
                         key: value for key, value in rate.items() if key in RATE_PARAMS
@@ -382,7 +492,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             print(count)
 
             rate_card = feedback["booking_params"]["rate_card"]
-            identifier = "{}_{}".format(rate_card["rate_id"], rate_card["validity_id"])
+            identifier = self.get_identifier(rate_card["rate_id"], rate_card["validity_id"])
 
             statistics_obj = self.find_statistics_object(identifier)
 
@@ -453,7 +563,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         row_data = []
         for feedback in feedbacks:
             count += 1
-            identifier = "{}_{}".format(
+            identifier = self.get_identifier(
                 feedback["fcl_freight_rate_id"], feedback["validity_id"]
             )
 
@@ -529,7 +639,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             offset += BATCH_SIZE
 
             for rate_card in rate_cards:
-                identifier = "{}_{}".format(
+                identifier = self.get_identifier(
                     rate_card["rate_id"], rate_card["validity_id"]
                 )
                 statistics_obj = self.find_statistics_object(identifier)
@@ -608,7 +718,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 container_state = result[2]
                 containers_count = result[3]
 
-                identifier = rate_id + "_" + validity_id
+                identifier = self.get_identifier(rate_id, validity_id)
                 statistic = (
                     FclFreightRateStatistic.select()
                     .where(
@@ -797,8 +907,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         and rate_card["rate_id"]
                         and rate_card["validity_id"]
                     ):
-                        identifier = (
-                            rate_card["rate_id"] + "_" + rate_card["validity_id"]
+                        identifier = self.get_identifier(
+                            rate_card["rate_id"], rate_card["validity_id"]
                         )
 
                         statistics = (
@@ -876,7 +986,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         rate_id = service_rate["rate_id"]
                         validity_id = service_rate["validity_id"]
 
-                        identifier = rate_id + "_" + validity_id
+                        identifier = self.get_identifier(rate_id, validity_id)
                         statistic = self.find_statistics_object(identifier)
 
                         if statistic:
@@ -1017,58 +1127,167 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         except Exception as e:
             print("! Exception:", e)
 
-    def populate_shipment_statistics(self, shipment_params):
-        shipment_id = shipment_params['shipment_id']
+    def populate_shipment_statistics(self):
         try:
             with self.cogoback_connection.cursor() as cur:
-                sql = '''SELECT sp.state, ssffs.id, 
-                        sff.id, sff.cancellation_reason, sff.is_active,
-                        sff.created_at, sff.updated_at
-                        FROM shipments AS sp 
-                        LEFT JOIN checkouts AS co ON co.shipment_id = sp.id 
-                        LEFT JOIN spot_search_fcl_freight_services AS ssffs ON ssffs.spot_search_id = co.source_id
-                        LEFT JOIN shipment_fcl_freight_services AS sff ON sff.shipment_id = sp.id 
-                        WHERE sp.id = %s 
+                sql = '''
+                    SELECT 
+                        checkouts.shipment_id AS shipment_id,
+                        checkouts.id AS checkout_id,
+                        checkouts.source_id AS spot_search_id,
+                        spot_search_services.id AS spot_search_fcl_freight_services_id,
+                        checkout_fcl_freight_services.id AS checkout_fcl_freight_rate_services_id,
+                        buy_qoute.id AS buy_quotation_id,
+                        sell_qoute.id AS sell_quotation_id,
+                        checkout_fcl_freight_services.rate ->> 'rate_id' AS rate_id,
+                        checkout_fcl_freight_services.rate ->> 'validity_id' AS validity_id,
+                        shipments.state AS status,
+                        shipment_services.id AS shipment_fcl_freight_rate_services_id,
+                        shipment_services.cancellation_reason AS cancellation_reason,
+                        shipment_services.is_active AS is_active,
+                        shipment_services.created_at AS created_at,
+                        shipment_services.updated_at AS updated_at
+                            FROM checkouts 
+                                JOIN checkout_fcl_freight_services AS checkout_fcl_freight_services
+                                    ON checkouts.id = checkout_fcl_freight_services.checkout_id
+                                JOIN shipments
+                                    ON checkouts.shipment_id = shipments.id
+                                JOIN spot_search_fcl_freight_services AS spot_search_services
+                                    ON spot_search_services.spot_search_id = checkouts.source_id
+                                JOIN shipment_fcl_freight_services AS shipment_services 
+                                    ON shipment_services.shipment_id = shipments.id 
+                                LEFT JOIN shipment_sell_quotations AS sell_qoute
+                                    ON sell_qoute.shipment_id = checkouts.shipment_id
+                                LEFT JOIN shipment_buy_quotations AS buy_qoute
+                                    ON buy_qoute.shipment_id = checkouts.shipment_id
+                                    
+                                WHERE checkout_fcl_freight_services.rate ? 'rate_id' and checkout_fcl_freight_services.rate ? 'validity_id' 
+                                    and checkout_fcl_freight_services.rate ->> 'rate_id' is not null
+                                    and checkout_fcl_freight_services.rate ->> 'validity_id' is not null
+
+                                ORDER BY checkouts.shipment_id
+                                limit %s offset %s
                     '''
-                cur.execute(sql,(shipment_id))
-                result = cur.fetchone()
-
-                shipment_params['status'] = result[0]
-                shipment_params['spot_search_fcl_freight_services_id'] = result[1]
-                shipment_params['shipment_fcl_freight_rate_services_id'] = result[2]
-                shipment_params['cancellation_reason'] = result[3]
-                shipment_params['is_active'] = result[4]
-                shipment_params['created_at'] = result[5]
-                shipment_params['updated_at'] = result[6]
-                ShipmentFclFreightRateStatistic.create(**shipment_params)
-
+                OFFSET = 0
+                cur.execute(sql, (BATCH_SIZE, OFFSET))
+                result = cur.fetchall()
+                while len(result) > 0:
+                    print(OFFSET)
+                    OFFSET+=BATCH_SIZE
+                    row_data = []
+                    for row in result:
+                        row_data.append({
+                            'shipment_id':row[0],
+                            'checkout_id':row[1],
+                            'spot_search_id':row[2],
+                            'spot_search_fcl_freight_services_id':row[3],
+                            'checkout_fcl_freight_rate_services_id':row[4],
+                            'buy_quotation_id':row[5],
+                            'sell_quotation_id':row[6],
+                            'rate_id':row[7],
+                            'validity_id':row[8],
+                            'status':row[9],
+                            'shipment_fcl_freight_rate_services_id':row[10],
+                            'cancellation_reason':row[11],
+                            'is_active':row[12],
+                            'created_at':row[13],
+                            'updated_at':row[14],
+                        })
+                    ShipmentFclFreightRateStatistic.insert_many(row_data).execute()
+                    cur.execute(sql, (BATCH_SIZE, OFFSET))
+                    result = cur.fetchall()
         except Exception as e:
             print('Exception:',e)
 
     def update_accuracy(self):
-        total_count = self.get_shipment_data_for_accuracy(return_count = True)
-        offset = 0
-        while(offset < total_count):
-            results = self.get_shipment_data_for_accuracy(offset=offset)
-            for data in results:
+        data = jsonable_encoder(self.get_shipment_data_for_accuracy())
+        statistics_ids = []
+        count = 0
+        for row in data:
+            identifier = self.get_identifier(row["rate_id"], row["validity_id"])
+            statistics_obj = self.find_statistics_object(identifier)
+            count+= 1
+            print(count)
+            if not statistics_obj:
+                continue
+            if not row['currency'] or row['currency'] == STANDARD_CURRENCY:
+                total_price = row['total_price'] 
+            else:
+                total_price = common.get_money_exchange_for_fcl(
+                            {
+                                "price": row['total_price'] ,
+                                "from_currency": row['currency'],
+                                "to_currency": STANDARD_CURRENCY,
+                            }).get("price", row['total_price'])
                 
-                pass
-                
-            offset += BATCH_SIZE
+            statistics_ids.append(str(statistics_obj.id))
+            statistics_obj.booking_rate_count += 1
+            statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
+            statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
+            statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
+            statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
+            statistics_obj.save()
+            
         
-        pass
+        shipment_ids = [str(row['shipment_id']) for row in data]
+        
+        # data = jsonable_encoder(self.get_shipment_service_fcl_freight_data_for_accuracy(exclude_shipment_ids=shipment_ids))
+        # query = FclFreightRateStatistic.select().where(FclFreightRateStatistic.id.not_in(statistics_ids))
+        
+        # for row in data:
+        #     created_at =  datetime.strptime(row['created_at'], '%Y-%m-%d')
+        #     price = row['total_price']
+        #     currency= row['currency']
+        #     del row['created_at']
+        #     del row['currency']
+        #     del row['total_price']
+            
+        #     rate_query = query.where(**row)
+        #     rate_query = rate_query.where(FclFreightRateStatistic.validity_start >= created_at,FclFreightRateStatistic.validity_end <= created_at )
+            
+        #     for statistics_obj in rate_query:
+        #         if not currency or currency == STANDARD_CURRENCY:
+        #             total_price = price 
+        #         else:
+        #             total_price = common.get_money_exchange_for_fcl(
+        #                         {
+        #                             "price": price ,
+        #                             "from_currency": currency,
+        #                             "to_currency": STANDARD_CURRENCY,
+        #                         }).get("price", price)
+                    
+        #         statistics_ids.append(str(statistics_obj.id))
+        #         statistics_obj.booking_rate_count += 1
+        #         statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
+        #         statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
+        #         statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
+        #         statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
+        #         statistics_obj.save()
+                
+            
+            
+            
+            
+            
+            
+        
+        
+        
+            
+        
+        
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     # populate_from_rates.populate_from_active_rates()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search_rates()
-    # populate_from_rates.populate_from_checkout_fcl_freight_rate_services()
     # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats()
     # populate_from_rates.update_fcl_freight_rate_checkout_count() 
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
     # populate_from_rates.populate_fcl_request_statistics()
-    # populate_from_rates.update_accuracy()
+    populate_from_rates.populate_shipment_statistics()
+    populate_from_rates.update_accuracy()
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     # populate_from_rates.update_pricing_map_zone_ids()
 
