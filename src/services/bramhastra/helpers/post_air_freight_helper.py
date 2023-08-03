@@ -1,7 +1,7 @@
 from services.bramhastra.models.air_freight_rate_statistic import (
     AirFreightRateStatistic,
 )
-# from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import SpotSearchFclFreightRateStatistic
+from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import SpotSearchFclFreightRateStatistic
 from services.bramhastra.models.feedback_air_freight_rate_statistic import (
     FeedbackAirFreightRateStatistic,
 )
@@ -16,7 +16,7 @@ from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
-from services.bramhastra.clickhouse.client import json_encoder_for_clickhouse,ClickHouse,get_clickhouse_rows_with_column_names
+from services.bramhastra.client import json_encoder_for_clickhouse,ClickHouse,get_clickhouse_rows_with_column_names
 
 
 class Connection:
