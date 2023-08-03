@@ -56,10 +56,13 @@ def get_ftl_freight_rate_cards(request):
 
 def initialize_query(query,request):
 
-    filters = {'commodity': request.get('commodity'),'trip_type': request.get('trip_type'),'importer_exporter': request.get('importer_exporter_id'),'rate_not_available_entry': False, 'is_line_items_error_messages_present': False, 'truck_type': request.get('truck_type')}
+    filters = {'commodity': request.get('commodity'),'trip_type': request.get('trip_type'),'rate_not_available_entry': False, 'is_line_items_error_messages_present': False, 'truck_type': request.get('truck_type')}
+    
     for key in filters.keys():
-            if filters.get(key) is not None:
-                query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
+        if filters.get(key) is not None:
+            query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
+
+    query = query.where((FtlFreightRate.importer_exporter_id == request.get("importer_exporter_id")) | (FtlFreightRate.importer_exporter_id.is_null(True)))
     if request.get('load_selection_type') in ['cargo_per_package', 'cargo_gross']:
         query = query.where(FtlFreightRate.unit == 'ton')
     elif request.get('load_selection_type')  == 'truck':
@@ -105,7 +108,7 @@ def build_response_list(query_result,request):
         if response_object:
             grouping[key] = response_object
 
-    return grouping.values()
+    return list(grouping.values())
 
 
 
@@ -221,14 +224,14 @@ def get_chargeable_weight(minimum_chargeable_weight,request):
      chargeable_rate = max([request.get('weight'), minimum_chargeable_weight])
      return chargeable_rate
 
-def ignore_non_eligible_service_providers(request,list):
+def ignore_non_eligible_service_providers(request,rate_list):
     ids = get_eligible_orgs('ftl_freight')
     final_list = []
-    for data in list:
-        if data['service_provider_id'] in ids:
+    for data in rate_list:
+        if str(data.get('service_provider_id')) in ids:
             final_list.append(data)
     response = None
-    if len(final_list) == 0 and request.get('predicted_rate') and request.get('predicted_rate') and request.get('origin_location_id') and request.get('destination_location_id'):
+    if len(final_list) == 0 and request.get('predicted_rate') is True and request.get('origin_location_id') is not None and request.get('destination_location_id') is not None:
         rate_estimation_params = {
         'origin_location_id': request.get('origin_location_id'),
         'destination_location_id': request.get('destination_location_id'),
@@ -237,8 +240,8 @@ def ignore_non_eligible_service_providers(request,list):
         'commodity': request.get('commodity'),
         'weight': request.get('weight'),
         }
-        response = get_ftl_freight_rate_estimation(rate_estimation_params)
-    if response:
+        response = get_ftl_freight_rate_estimation(rate_estimation_params)        
+    if response is not None:
         request['predicted_rate'] = False
         final_list  = get_ftl_freight_rate_cards(request)['list']
     return final_list
