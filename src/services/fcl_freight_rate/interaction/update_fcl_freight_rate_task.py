@@ -69,9 +69,23 @@ def execute_transaction_code(request):
         "rate": request.get("rate")
     }
 
+    rate = task.completion_data['rate']
+    formatted_line_items = []
+    for line_item in rate['line_items']:
+        new_object={}
+        new_object['code'] = line_item['code']
+        new_object['unit'] = line_item['unit']
+        new_object['currency'] = line_item['currency']
+        new_object['price'] = line_item['price']
+        formatted_line_items.append(new_object)
+    
+    formatted_detention = rate['detention']
+    formatted_detention['unit'] = 'per_container'
+    del formatted_detention['remarks']
+        
     rfq_object = {
         'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
-        'fcl_freight_local_rate_id': str(result["id"])
+        'destination_local': { 'line_items': formatted_line_items, 'destination_detention': formatted_detention}
     }
     
     if task.source == "contract":
