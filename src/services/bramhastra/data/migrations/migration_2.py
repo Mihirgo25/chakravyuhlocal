@@ -53,6 +53,10 @@ class MigrationHelpers:
         freight = AirFreightRate.select().where(AirFreightRate.id == id).first()
         return freight
     
+    def get_identifier(self,rate_id, validity_id, lower_limit, upper_limit):
+        return f'{rate_id}{validity_id}{lower_limit}{upper_limit}'.replace('-','')
+    
+    
     def get_imp_ext_id_from_spot_search_rates(self, source_id):
         newconnection = get_connection()
         with newconnection:
@@ -103,7 +107,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                     for ws in validity['weight_slabs']:
                         count+= 1
                         
-                        identifier = '{}_{}_{}_{}'.format(rate['id'], validity['id'],ws['lower_limit'],ws['upper_limit'])
+                        identifier = self.get_identifier(rate['id'], validity['id'],ws['lower_limit'],ws['upper_limit'])
                             
                         rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
                         validity_params = self.get_validity_params(validity)

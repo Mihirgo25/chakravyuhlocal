@@ -2,6 +2,7 @@ from database.rails_db import get_connection
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
+from datetime import datetime,timedelta
 from configs.fcl_freight_rate_constants import (
     DEFAULT_RATE_TYPE,
     DEFAULT_SCHEDULE_TYPES,
@@ -93,6 +94,7 @@ RATE_PARAMS = [
     "procured_by_id",
 ]
 
+STANDARD_CURRENCY = "USD"
 
 class MigrationHelpers:
     def get_pricing_map_zone_ids(self, origin_port_id, destination_port_id) -> list:
@@ -133,6 +135,8 @@ class MigrationHelpers:
     def get_validity_params(self, validity):
         price = validity.get("price")
         line_items = validity.get("line_items")
+        currency = validity.get("currency") or validity.get("freight_price_currency") or validity.get("freight_price_currency") or STANDARD_CURRENCY
+        
         if not price and line_items:
             currency_lists = [
                 item["currency"] for item in line_items if item["code"] == "BAS"
@@ -159,14 +163,20 @@ class MigrationHelpers:
                     )
                 )
             pass
-
+        
+        standard_price = price if currency == STANDARD_CURRENCY else common.get_money_exchange_for_fcl(
+                            {
+                                "price": price,
+                                "from_currency": currency,
+                                "to_currency": STANDARD_CURRENCY,
+                            }
+                        ).get("price", price)
         validity_details = {
             "validity_created_at": validity.get("validity_start"),
             "validity_updated_at": validity.get("validity_start"),
             "price": price,
-            "currency": validity.get("currency")
-            or validity.get("freight_price_currency")
-            or validity.get("freight_price_currency"),
+            "standard_price": standard_price,
+            "currency": currency,
             "payment_term": validity.get("payment_term") or DEFAULT_PAYMENT_TERM,
             "schedule_type": validity.get("schedule_type") or DEFAULT_SCHEDULE_TYPES,
             "validity_start": validity.get("validity_start"),
@@ -213,7 +223,7 @@ class MigrationHelpers:
             print("Error from railsDb", e)
             return all_result
         
-    def get_shipment_data_for_accuracy(self, return_shipment_ids= False):
+    def get_shipment_data_for_accuracy(self):
         all_result = []
         try:
             newconnection = get_connection()  
@@ -265,19 +275,115 @@ class MigrationHelpers:
                         AND ch_services.rate->%s is not null
                         AND ch_services.rate->%s != %s
                         ORDER BY 
-                            sh.created_at DESC
+                            sh.created_at
                     '''
                     
                     cur.execute(sql, ('fcl_freight_service',True,'rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
                     result = cur.fetchall()
                     for res in result:
-                        all_result.append(res[0] if return_shipment_ids else res)
+                        all_result.append( {'shipment_id' : res[0],'rate_id': res[1], 'validity_id': res[2], 'total_price': res[3], 'currency': res[4]})
                     cur.close()
             newconnection.close()
             return all_result
         except Exception as e:
             print('Error from railsDb', e)
             return  []
+        
+    def get_shipment_service_fcl_freight_data_for_accuracy(self, exclude_shipment_ids=[None]):
+        all_result = []
+        try:
+            newconnection = get_connection()
+            with newconnection:
+                with newconnection.cursor() as cur:
+                    exclude_shipment_ids = tuple(exclude_shipment_ids)
+                    sql = '''
+                        WITH subquery AS (
+                            SELECT 
+                                shipment_buy_quotations.shipment_id,
+                                shipment_buy_quotations.total_price,
+                                shipment_buy_quotations.currency, 
+                                shipment_fcl_freight_services.origin_port_id,
+                                shipment_fcl_freight_services.destination_port_id,
+                                shipment_fcl_freight_services.origin_main_port_id,
+                                shipment_fcl_freight_services.destination_main_port_id,
+                                shipment_fcl_freight_services.origin_country_id,
+                                shipment_fcl_freight_services.destination_country_id,
+                                shipment_fcl_freight_services.origin_continent_id,
+                                shipment_fcl_freight_services.destination_continent_id,
+                                shipment_fcl_freight_services.container_size,
+                                shipment_fcl_freight_services.container_type, 
+                                shipment_fcl_freight_services.commodity,
+                                shipment_fcl_freight_services.shipping_line_id,
+                                shipment_fcl_freight_services.service_provider_id
+                            FROM 
+                                shipment_buy_quotations 
+                            RIGHT JOIN 
+                                shipment_fcl_freight_services 
+                                ON shipment_fcl_freight_services.id = shipment_buy_quotations.service_id 
+                            WHERE 
+                                shipment_buy_quotations.service_type= %s 
+                                AND shipment_buy_quotations.is_deleted != %s  
+                            ORDER BY 
+                                shipment_buy_quotations.created_at
+                            )
+                            SELECT 
+                                sh.created_at AS created_at,
+                                subquery.total_price,
+                                subquery.currency, 
+                                subquery.origin_port_id,
+                                subquery.destination_port_id,
+                                subquery.origin_main_port_id,
+                                subquery.destination_main_port_id,
+                                subquery.origin_country_id,
+                                subquery.destination_country_id,
+                                subquery.origin_continent_id,
+                                subquery.destination_continent_id,
+                                subquery.container_size,
+                                subquery.container_type, 
+                                subquery.commodity,
+                                subquery.shipping_line_id,
+                                subquery.service_provider_id
+                            FROM 
+                                shipments sh 
+                            LEFT JOIN 
+                                subquery 
+                            ON sh.id = subquery.shipment_id
+                            WHERE 
+                                sh.state =  %s
+                            AND sh.id not in %s
+                            AND sh.shipment_type = %s 
+                            AND subquery.total_price is not null 
+                            AND total_price != 0
+                            ORDER BY 
+                                sh.created_at
+                    '''
+                    cur.execute(sql, ('fcl_freight_service',True,'completed',exclude_shipment_ids, 'fcl_freight'))
+                    result = cur.fetchall()
+                    for res in result:
+                        all_result.append({
+                            'created_at': res[0],
+                            'total_price': res[1],
+                            'currency': res[2],
+                            'origin_port_id': res[3],
+                            'destination_port_id': res[4],
+                            'origin_main_port_id': res[5],
+                            'destination_main_port_id': res[6],
+                            'origin_country_id': res[7],
+                            'destination_country_id': res[8],
+                            'origin_continent_id': res[9],
+                            'destination_continent_id': res[10],
+                            'container_size': res[11],
+                            'container_type': res[12],
+                            'commodity': res[13],
+                            'shipping_line_id': res[14],
+                            'service_provider_id': res[15]
+                        })
+                    cur.close()
+            newconnection.close()
+            return all_result
+        except Exception as e:
+            print("Error from railsDb", e)
+            return all_result
         
     def get_imp_ext_id_from_spot_search_rates(self, source_id):
         newconnection = get_connection()
@@ -1094,24 +1200,94 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             print('Exception:',e)
 
     def update_accuracy(self):
-        data = self.get_shipment_data_for_accuracy()
+        data = jsonable_encoder(self.get_shipment_data_for_accuracy())
+        statistics_ids = []
+        count = 0
         for row in data:
             identifier = self.get_identifier(row["rate_id"], row["validity_id"])
-    
-        pass
+            statistics_obj = self.find_statistics_object(identifier)
+            count+= 1
+            print(count)
+            if not statistics_obj:
+                continue
+            if not row['currency'] or row['currency'] == STANDARD_CURRENCY:
+                total_price = row['total_price'] 
+            else:
+                total_price = common.get_money_exchange_for_fcl(
+                            {
+                                "price": row['total_price'] ,
+                                "from_currency": row['currency'],
+                                "to_currency": STANDARD_CURRENCY,
+                            }).get("price", row['total_price'])
+                
+            statistics_ids.append(str(statistics_obj.id))
+            statistics_obj.booking_rate_count += 1
+            statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
+            statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
+            statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
+            statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
+            statistics_obj.save()
+            
+        
+        shipment_ids = [str(row['shipment_id']) for row in data]
+        
+        # data = jsonable_encoder(self.get_shipment_service_fcl_freight_data_for_accuracy(exclude_shipment_ids=shipment_ids))
+        # query = FclFreightRateStatistic.select().where(FclFreightRateStatistic.id.not_in(statistics_ids))
+        
+        # for row in data:
+        #     created_at =  datetime.strptime(row['created_at'], '%Y-%m-%d')
+        #     price = row['total_price']
+        #     currency= row['currency']
+        #     del row['created_at']
+        #     del row['currency']
+        #     del row['total_price']
+            
+        #     rate_query = query.where(**row)
+        #     rate_query = rate_query.where(FclFreightRateStatistic.validity_start >= created_at,FclFreightRateStatistic.validity_end <= created_at )
+            
+        #     for statistics_obj in rate_query:
+        #         if not currency or currency == STANDARD_CURRENCY:
+        #             total_price = price 
+        #         else:
+        #             total_price = common.get_money_exchange_for_fcl(
+        #                         {
+        #                             "price": price ,
+        #                             "from_currency": currency,
+        #                             "to_currency": STANDARD_CURRENCY,
+        #                         }).get("price", price)
+                    
+        #         statistics_ids.append(str(statistics_obj.id))
+        #         statistics_obj.booking_rate_count += 1
+        #         statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
+        #         statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
+        #         statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
+        #         statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
+        #         statistics_obj.save()
+                
+            
+            
+            
+            
+            
+            
+        
+        
+        
+            
+        
+        
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     # populate_from_rates.populate_from_active_rates()
     # populate_from_rates.populate_from_feedback()
     # populate_from_rates.populate_from_spot_search_rates()
-    # populate_from_rates.populate_from_checkout_fcl_freight_rate_services()
     # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats()
     # populate_from_rates.update_fcl_freight_rate_checkout_count() 
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
     # populate_from_rates.populate_fcl_request_statistics()
     populate_from_rates.populate_shipment_statistics()
-    # populate_from_rates.update_accuracy()
+    populate_from_rates.update_accuracy()
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     # populate_from_rates.update_pricing_map_zone_ids()
 
