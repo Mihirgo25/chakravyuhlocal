@@ -476,6 +476,7 @@ class CreateFclFreightRateTask(BaseModel):
     shipment_id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    spot_negotiation_rate_id: str = None
     rate: LocalData = None
 
 

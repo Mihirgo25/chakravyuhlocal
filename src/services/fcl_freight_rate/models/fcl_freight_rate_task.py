@@ -43,6 +43,7 @@ class FclFreightRateTask(BaseModel):
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
+    spot_negotiation_rate_id = UUIDField(null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -107,7 +108,7 @@ class FclFreightRateTask(BaseModel):
         raise HTTPException(status_code=400, detail="Invalid commodity")
 
     def validate_source(self):
-        if self.source not in ['shipment', 'purchase_invoice', 'contract']:
+        if self.source not in ['shipment', 'purchase_invoice', 'contract', 'rfq']:
             raise HTTPException(status_code=400, detail="Invalid source")
 
     def validate_status(self):

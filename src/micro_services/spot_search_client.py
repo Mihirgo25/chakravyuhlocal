@@ -17,4 +17,7 @@ class SpotSearchApiClient:
     
     def list_spot_searches(self, data = {}):
         return self.client.request('GET', 'list_spot_searches', data)
+    
+    def update_spot_negotiation_locals_rate(self,data = {}):
+        return self.client.request('POST','update_spot_negotiation_locals_rate',data)
 

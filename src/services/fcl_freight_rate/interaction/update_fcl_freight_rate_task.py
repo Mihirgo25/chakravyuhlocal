@@ -5,7 +5,7 @@ from micro_services.client import *
 from configs.global_constants import HAZ_CLASSES
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRateTask
-from celery_worker import update_multiple_service_objects, update_contract_service_task_delay
+from celery_worker import update_multiple_service_objects, update_contract_service_task_delay, update_spot_negotiation_locals_rate_task_delay
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from fastapi import HTTPException
 
@@ -68,9 +68,17 @@ def execute_transaction_code(request):
         "service_type": "fcl_freight",
         "rate": request.get("rate")
     }
+
+    rfq_object = {
+        'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
+        'fcl_freight_local_rate_id': str(result["id"])
+    }
     
     if task.source == "contract":
         update_contract_service_task_delay.apply_async(kwargs = {"object": contract_object}, queue='low')
+
+    if task.source == "rfq" and task.status == 'completed':
+        update_spot_negotiation_locals_rate_task_delay.apply_async(kwargs = {"object": rfq_object}, queue='low')
     
     return {'id': str(task.id)}
 
