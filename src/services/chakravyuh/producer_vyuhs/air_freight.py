@@ -162,10 +162,8 @@ class AirFreightVyuh():
     def get_eligible_validities_to_create(self, requirement,validities_to_create):
 
         existing_system_rates = self.get_existing_system_rates(requirement)
-
-        to_add_validity_start = self.rate['validity_start']
-        to_add_validity_end = self.rate['validity_end']
-
+        to_add_validity_start = self.rate['validity_start'].date()
+        to_add_validity_end = self.rate['validity_end'].date()
         if len(existing_system_rates) == 0:
             return validities_to_create
 
