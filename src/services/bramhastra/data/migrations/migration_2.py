@@ -17,12 +17,71 @@ from database.db_session import db
 import urllib
 import json
 
+STANDARD_WEIGHT_SLABS=[
+    {
+        'lower_limit':0.0,
+        'upper_limit':45,
+        'tariff_price':0,
+        'currency':'INR',
+        'unit':'per_kg'
+    },
+    {
+        'lower_limit':45.1,
+        'upper_limit':100.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+        },
+    {
+        'lower_limit':100.1,
+        'upper_limit':300.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },
+    {
+        'lower_limit':300.1,
+        'upper_limit':500.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+
+    },{
+        'lower_limit':500.1,
+        'upper_limit':1000.0,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    },{
+        'lower_limit':1000.1,
+        'upper_limit':10000,
+        'currency':'INR',
+        'tariff_price':0,
+        'unit':'per_kg'
+    }
+
+]
 BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
-RATE_PARAMS = [ "commodity", "container_size","container_type", "destination_country_id", "destination_local_id", "destination_detention_id", "destination_main_port_id", "destination_port_id", "destination_trade_id", "origin_country_id", "origin_local_id", "origin_detention_id", "origin_demurrage_id", "destination_demurrage_id", "origin_main_port_id", "origin_port_id", "origin_trade_id", "service_provider_id", "shipping_line_id", "mode", "accuracy", "cogo_entity_id", "sourced_by_id", "procured_by_id"]
-STANDARD_WEIGHT_SLABS = []
+RATE_PARAMS = ["commodity","destination_continent_id", "destination_country_id", "destination_airport_id", "destination_trade_id", "origin_country_id", "origin_continent_id", "origin_airport_id", "origin_trade_id", "service_provider_id", "airline_id", "accuracy", "cogo_entity_id", "sourced_by_id", "procured_by_id", "stacking_type", "shipment_type", "operation_type","rate_type","price_type"]
 class MigrationHelpers:
+ 
+
+    def cancellation_reason_matching(self, stemmed_words, arr):
+        flag = 0
+        for word in arr[0]:
+            if(word in stemmed_words):
+                flag = 1
+        if(flag == 1):
+            for word in arr[1]:
+                if(word in stemmed_words):
+                    flag += 1
+        if(flag > 1):
+            return True
+        return False
 
     def get_chargeable_weight(self, weight, volume):
         volumetric_weight = volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
@@ -63,13 +122,104 @@ class MigrationHelpers:
         return f'{rate_id}{validity_id}{lower_limit}{upper_limit}'.replace('-','')
     
     
-    def get_imp_ext_id_from_spot_search_rates(self, source_id):
-        newconnection = get_connection()
-        with newconnection:
-            with newconnection.cursor() as cursor:
-                sql = 'SELECT importer_exporter_id AS imp_ext_id FROM spot_searches WHERE id = %s'
-                cursor.execute(sql, (source_id,))
-                result = cursor.fetchone()
+    def get_validity_params(self, validity):
+        price = validity.get("price")
+        line_items = validity.get("line_items")
+        if not price and line_items:
+            currency_lists = [
+                item["currency"] for item in line_items if item["code"] == "BAS"
+            ]
+            currency = currency_lists[0]
+            if len(set(currency_lists)) != 1:
+                price = float(
+                    sum(
+                        common.get_money_exchange_for_fcl(
+                            {
+                                "price": item.get("price") or item.get("buy_price"),
+                                "from_currency": item["currency"],
+                                "to_currency": currency,
+                            }
+                        ).get("price", 100)
+                        for item in line_items
+                    )
+                )
+            else:
+                price = float(
+                    sum(
+                        item.get("price") or item.get("buy_price", 0)
+                        for item in line_items
+                    )
+                )
+            pass
+
+        validity_details = {
+            "validity_created_at": validity.get("validity_start"),
+            "validity_updated_at": validity.get("validity_start"),
+            "price": price,
+            "currency": validity.get("currency"),
+            "validity_start": validity.get("validity_start"),
+            "validity_end": validity.get("validity_end"),
+        }
+        return validity_details
+
+    
+    def get_spot_search_rates_join(
+        self,
+        offset=0,
+        limit=10,
+        return_count=False,
+    ):
+        all_result = []
+        try:
+            newconnection = get_connection()
+            with newconnection:
+                with newconnection.cursor() as cur:
+                    if return_count:
+                        sql = 'WITH subq as (SELECT spot_search_id,service_rates.value AS rate_obj FROM spot_search_rates,jsonb_array_elements(rate_cards) AS element,jsonb_each(element -> %s) AS service_rates WHERE service_rates.value ->> %s IS NOT NULL AND service_rates.value ->> %s = %s ) SELECT COUNT(*) FROM subq JOIN spot_search_air_freight_services ON subq.spot_search_id = spot_search_air_freight_services.spot_search_id'
+                        cur.execute(sql, ('service_rates','rate_id','service_type','air_freight'))
+                        all_result = cur.fetchone()[0]
+                    else:
+                        sql = 'WITH subq as (SELECT spot_search_id,service_rates.value AS rate_obj FROM spot_search_rates,jsonb_array_elements(rate_cards) AS element,jsonb_each(element -> %s) AS service_rates WHERE service_rates.value ->> %s IS NOT NULL AND service_rates.value ->> %s = %s )select subq.rate_obj, spot_search_air_freight_services.volume, spot_search_air_freight_services.weight from subq join spot_search_air_freight_services on subq.spot_search_id = spot_search_air_freight_services.spot_search_id order by spot_search_air_freight_services.id limit %s offset %s'
+                        cur.execute(
+                            sql,
+                            (
+                                "service_rates",
+                                "rate_id",
+                                "service_type",
+                                "air_freight",
+                                limit,
+                                offset,
+                            ),
+                        )
+
+                        result = cur.fetchall()
+                        for res in result:
+                            all_result.append({'rate_obj':res[0],'volume':res[1],'weight':res[2]})
+                    cur.close()
+            newconnection.close()
+            return all_result
+        except Exception as e:
+            print("Error from railsDb", e)
+            return all_result
+
+    def get_imp_ext_id_from_spot_search_rates(self, source_ids):
+        result=[]
+        try:
+            newconnection = get_connection()
+            with newconnection:
+                with newconnection.cursor() as cursor:
+                    source_ids = tuple(source_ids)
+                    sql = 'SELECT importer_exporter_id AS imp_ext_id, id as source_id FROM spot_searches WHERE id in %s'
+                    cursor.execute(sql, (source_ids,))
+                    result = cursor.fetchall()
+                    result = {row[1]: row[0] for row in result}
+                    print(result)
+                    cursor.close()
+            newconnection.close()
+        except Exception as e:
+            print('Error from railsDB',e)
+            return result    
+                
         return result  
     
     def get_imp_ext_id_from_checkouts_rates(self, source_id):
@@ -81,32 +231,33 @@ class MigrationHelpers:
                 result = cursor.fetchone()
         return result
     
+    def get_chargeable_weight(self,weight, volume):
+        volumetric_weight = volume * AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO
+        if volumetric_weight > weight:
+            chargeable_weight = round(volumetric_weight)
+        else:
+            chargeable_weight = round(weight)
+        return chargeable_weight
+    
 
 class PopulateAirFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
 
-    def populate_from_active_rates(self):
-        query = (
-            AirFreightRate.select()
-            .where(
-                AirFreightRate.validities.is_null(False)
-                and AirFreightRate.validities != "[]"
-            )
-            .order_by(AirFreightRate.id)
-        )
+    def populate_active_rate_ids(self):
+        query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]').order_by(AirFreightRate.id)
         total_count = query.count()
-
+        
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
         count = 0
         offset = 0
-
+   
         while offset < total_count:
             cur_query = query.offset(offset).limit(BATCH_SIZE)
-            rates = jsonable_encoder(list(cur_query.dicts()))
-            offset += BATCH_SIZE
+            rates = jsonable_encoder(list(cur_query .dicts()))
+            offset+= BATCH_SIZE
             row_data = []
             for rate in rates: 
                 for validity in rate['validities']:
@@ -117,27 +268,90 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                             
                         rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
                         validity_params = self.get_validity_params(validity)
-                        
-                        row = {
-                            **rate_params, 
-                            **validity_params,
-                            "containers_count": rate.get("containers_count") or 0,
-                            'identifier' : identifier,
-                            'rate_id' : rate.get('id'),
-                            "lower_limit": ws.get("lower_limit"),
-                            "upper_limit": ws.get("upper_limit"),
-                            "rate_created_at": rate.get('created_at'),
-                            "rate_updated_at": rate.get('updated_at'),
-                            "rate_type": rate.get('rate_type') or DEFAULT_RATE_TYPE,
-                            "origin_region_id": REGION_MAPPING.get(rate.get('origin_port_id')),
-                            "destination_region_id": REGION_MAPPING.get(rate.get('destination_port_id')),
-                            # "market_price": validity.get('market_price') or validity.get('price'),
-                            'validity_id' : validity.get('id'),
-                        }
-                        row_data.append(row)
-                        print(count)
-                AirFreightRateStatistic.insert_many(row_data).execute()
+                    for weight_slab in validity.get('weight_slabs'):
+                            count+= 1
+                            # breakpoint()
+                            if weight_slab['lower_limit'] and weight_slab['upper_limit']: 
+
+                                identifier = '{}_{}_{}_{}'.format(rate['id'], validity['id'], weight_slab['lower_limit'], weight_slab['upper_limit'])
+
+                                rate_params = {key: value for key, value in rate.items() if key in RATE_PARAMS} 
+                                price = weight_slab.get('tariff_price')
+                                row = {
+                                    **rate_params, 
+                                    **validity_params,
+                                    'identifier' : identifier,
+                                    'rate_id' : rate.get('id'),
+                                    "rate_created_at": rate.get('created_at'),
+                                    "rate_updated_at": rate.get('updated_at'),
+                                    "price": price,
+                                    "rate_type": rate.get('rate_type') or DEFAULT_RATE_TYPE,
+                                    "origin_region_id": REGION_MAPPING.get(rate.get('origin_airport_id')),
+                                    "destination_region_id": REGION_MAPPING.get(rate.get('destination_airport_id')),
+                                    "validity_id" : validity.get('id'),
+                                    "lower_limit": weight_slab['lower_limit'],
+                                    "upper_limit": weight_slab['upper_limit']
+
+                                }
+                                row_data.append(row)
+                                print(count)
+            AirFreightRateStatistic.insert_many(row_data).execute()
     
+    def populate_from_spot_search_rates(self):
+        total_count = self.get_spot_search_rates_join(return_count=True) or 0
+        print(total_count)
+        REGION_MAPPING = {}
+        with urllib.request.urlopen(REGION_MAPPING_URL) as url:
+            REGION_MAPPING = json.loads(url.read().decode())
+
+        offset = 0
+        count = 0
+        while offset < total_count:
+            row_data = []
+            rate_cards = self.get_spot_search_rates_join(offset=offset, limit=100)
+            # breakpoint()
+            print(rate_cards)
+            offset += 100
+
+            for rate_card in rate_cards:
+                weight = self.get_chargeable_weight(rate_card.get('volume', 0),rate_card.get('weight', 0))
+                # breakpoint()
+                statistics_obj = self.find_statistics_object(rate_card['rate_obj'].get('rate_id',0),rate_card['rate_obj'].get('validity_id',0),weight)
+                print(statistics_obj)
+                if statistics_obj:
+                    continue
+
+                rate = self.find_rate_object(rate_card["rate_obj"]["rate_id"])
+
+                if not rate:
+                    continue
+
+                rate = model_to_dict(rate)
+
+                rate_params = {key: rate.get(key) for key in RATE_PARAMS}
+                validity_params = self.get_validity_params(rate_card['rate_obj'])
+
+                row = {
+                    **rate_params,
+                    **validity_params,
+                    "identifier": "",
+                    "rate_id": rate.get("id"),
+                    "rate_type": rate.get("rate_type") or DEFAULT_RATE_TYPE,
+                    "origin_region_id": REGION_MAPPING.get(rate.get("origin_airport_id")),
+                    "destination_region_id": REGION_MAPPING.get(
+                        rate.get("destination_airport_id")
+                    ),
+                    "rate_created_at": rate.get("created_at"),
+                    "rate_updated_at": rate.get("updated_at"),
+                    "validity_id": rate.get("validity_id"),
+                    "price": rate.get("market_price")
+                    or validity_params.get("price"),
+                }
+                count += 1
+                row_data.append(row)
+                print(count)
+            AirFreightRateStatistic.insert_many(row_data).execute()
+
     def populate_air_feedback_freight_rate_statistic( self ):
         query = AirFreightRateFeedback.select()
 
@@ -146,8 +360,8 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         row_data=[]
         for feedback in feedbacks:
             count+=1
-            identifier = '{}_{}'.format(feedback['air_freight_rate_id'], feedback['id'])
-            statistics_obj = self.find_statistics_object(identifier)
+            weight = self.get_chargeable_weight(feedback.get('booking_params', {}).get('volume', 0),feedback.get('booking_params',{}).get('weight', 0))
+            statistics_obj = self.find_statistics_object(feedback.get('air_freight_rate_id'),feedback.get('validity_id'),weight)
            
             if statistics_obj:
                 if feedback["feedback_type"] == "liked":
@@ -201,11 +415,6 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                     "serial_id": feedback.get("serial_id"),
                 }
                 row_data.append(row)
-        # importer_exporter_ids = self.get_imp_ext_id_from_checkouts_rates([row['source_id'] for row in feedbacks if row['source'] == 'checkout'])
-        importer_exporter_ids=self.get_imp_ext_id_from_spot_search_rates([row['source_id'] for row in feedbacks if row['source'] == ['spot_search']])
-
-        for row in row_data:
-            row['importer_exporter_id'] = importer_exporter_ids.get(row['source_id'], None)
         FeedbackAirFreightRateStatistic.insert_many(row_data).execute()
         
     
