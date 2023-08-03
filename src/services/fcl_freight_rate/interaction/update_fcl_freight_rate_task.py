@@ -55,19 +55,14 @@ def execute_transaction_code(request):
     if request['status']:
         return {'id': str(task.id)}
     
-    result = create_fcl_freight_local_rate(task,request) 
+    if request['add_rate_in_rms']:
+        result = create_fcl_freight_local_rate(task,request) 
     
     update_shipment_local_charges(task,request)
     
     create_audit(request)
     
     update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-    
-    contract_object = {
-        "task_id": task.id,
-        "service_type": "fcl_freight",
-        "rate": request.get("rate")
-    }
 
     rate = task.completion_data['rate']
     formatted_line_items = []
