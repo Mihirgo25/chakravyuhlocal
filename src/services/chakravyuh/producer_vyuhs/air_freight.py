@@ -119,8 +119,8 @@ class AirFreightVyuh():
                 ----------
             """
             validities_to_create.append({
-                'validity_start': to_add_validity_start,
-                'validity_end': to_add_validity_end
+                'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
+                'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
             })
         if validity_start > to_add_validity_start and validity_end < to_add_validity_end:
             """
@@ -129,12 +129,12 @@ class AirFreightVyuh():
             New Validity     :  ---------------------
             """
             start_validity = {
-                'validity_start': to_add_validity_start,
-                'validity_end': validity_start
+                'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
+                'validity_end': datetime.combine(validity_start,datetime.min.time())
             }
             end_validity = {
-                'validity_start': validity_end,
-                'validity_end': to_add_validity_end
+                'validity_start': datetime.combine(validity_end,datetime.min.time()),
+                'validity_end': datetime.combine(to_add_validity_end,datetime.min.time())
             }
             validities_to_create =  validities_to_create + [start_validity, end_validity]
         elif validity_start > to_add_validity_start and validity_end > to_add_validity_end:
@@ -143,9 +143,9 @@ class AirFreightVyuh():
             Current Validity :     -------------
             New Validity     :  ---------
             """
-            validities_to_create.append(                                    {
-                'validity_start': to_add_validity_start,
-                'validity_end': validity_start
+            validities_to_create.append({
+                'validity_start': datetime.combine(to_add_validity_start,datetime.min.time()),
+                'validity_end': datetime.combine(validity_start,datetime.min.time()),
                 })
         elif validity_end > to_add_validity_start and validity_end < to_add_validity_end:
             """
@@ -154,8 +154,8 @@ class AirFreightVyuh():
             New Validity     :           ---------------
             """
             validities_to_create.append({
-                'validity_start': validity_end,
-                'validity_end': to_add_validity_end
+                'validity_start': datetime.combine(validity_end,datetime.min.time()),
+                'validity_end': datetime.combine(to_add_validity_end,datetime.min.time()),
             })
         return validities_to_create
 
