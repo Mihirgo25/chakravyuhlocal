@@ -63,7 +63,7 @@ class HaulageFreightRate(BaseModel):
     trailer_type = TextField(index=True, null=True)
     platform_price = FloatField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
-    updated_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     source = TextField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
     sourced_by_id = UUIDField(null=True)
@@ -306,8 +306,7 @@ class HaulageFreightRate(BaseModel):
         result = 0
 
         for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
-
+            result = result + line_item["price"]
         return result
     
     def update_platform_prices_for_other_service_providers(self):
