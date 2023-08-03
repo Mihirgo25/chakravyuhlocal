@@ -22,6 +22,9 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
 from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
     SpotSearchFclFreightRateStatistic,
 )
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic
+)
 from services.fcl_freight_rate.models.fcl_freight_location_cluster import (
     FclFreightLocationCluster,
 )
@@ -1017,31 +1020,75 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         except Exception as e:
             print("! Exception:", e)
 
-    def populate_shipment_statistics(self, shipment_params):
-        shipment_id = shipment_params['shipment_id']
+    def populate_shipment_statistics(self):
         try:
             with self.cogoback_connection.cursor() as cur:
-                sql = '''SELECT sp.state, ssffs.id, 
-                        sff.id, sff.cancellation_reason, sff.is_active,
-                        sff.created_at, sff.updated_at
-                        FROM shipments AS sp 
-                        LEFT JOIN checkouts AS co ON co.shipment_id = sp.id 
-                        LEFT JOIN spot_search_fcl_freight_services AS ssffs ON ssffs.spot_search_id = co.source_id
-                        LEFT JOIN shipment_fcl_freight_services AS sff ON sff.shipment_id = sp.id 
-                        WHERE sp.id = %s 
+                sql = '''
+                    SELECT 
+                        checkouts.shipment_id AS shipment_id,
+                        checkouts.id AS checkout_id,
+                        checkouts.source_id AS spot_search_id,
+                        spot_search_services.id AS spot_search_fcl_freight_services_id,
+                        checkout_fcl_freight_services.id AS checkout_fcl_freight_rate_services_id,
+                        buy_qoute.id AS buy_quotation_id,
+                        sell_qoute.id AS sell_quotation_id,
+                        checkout_fcl_freight_services.rate ->> 'rate_id' AS rate_id,
+                        checkout_fcl_freight_services.rate ->> 'validity_id' AS validity_id,
+                        shipments.state AS status,
+                        shipment_services.id AS shipment_fcl_freight_rate_services_id,
+                        shipment_services.cancellation_reason AS cancellation_reason,
+                        shipment_services.is_active AS is_active,
+                        shipment_services.created_at AS created_at,
+                        shipment_services.updated_at AS updated_at
+                            FROM checkouts 
+                                JOIN checkout_fcl_freight_services AS checkout_fcl_freight_services
+                                    ON checkouts.id = checkout_fcl_freight_services.checkout_id
+                                JOIN shipments
+                                    ON checkouts.shipment_id = shipments.id
+                                JOIN spot_search_fcl_freight_services AS spot_search_services
+                                    ON spot_search_services.spot_search_id = checkouts.source_id
+                                JOIN shipment_fcl_freight_services AS shipment_services 
+                                    ON shipment_services.shipment_id = shipments.id 
+                                LEFT JOIN shipment_sell_quotations AS sell_qoute
+                                    ON sell_qoute.shipment_id = checkouts.shipment_id
+                                LEFT JOIN shipment_buy_quotations AS buy_qoute
+                                    ON buy_qoute.shipment_id = checkouts.shipment_id
+                                    
+                                WHERE checkout_fcl_freight_services.rate ? 'rate_id' and checkout_fcl_freight_services.rate ? 'validity_id' 
+                                    and checkout_fcl_freight_services.rate ->> 'rate_id' is not null
+                                    and checkout_fcl_freight_services.rate ->> 'validity_id' is not null
+
+                                ORDER BY checkouts.shipment_id
+                                limit %s offset %s
                     '''
-                cur.execute(sql,(shipment_id))
-                result = cur.fetchone()
-
-                shipment_params['status'] = result[0]
-                shipment_params['spot_search_fcl_freight_services_id'] = result[1]
-                shipment_params['shipment_fcl_freight_rate_services_id'] = result[2]
-                shipment_params['cancellation_reason'] = result[3]
-                shipment_params['is_active'] = result[4]
-                shipment_params['created_at'] = result[5]
-                shipment_params['updated_at'] = result[6]
-                ShipmentFclFreightRateStatistic.create(**shipment_params)
-
+                OFFSET = 0
+                cur.execute(sql, (BATCH_SIZE, OFFSET))
+                result = cur.fetchall()
+                while len(result) > 0:
+                    print(OFFSET)
+                    OFFSET+=BATCH_SIZE
+                    row_data = []
+                    for row in result:
+                        row_data.append({
+                            'shipment_id':row[0],
+                            'checkout_id':row[1],
+                            'spot_search_id':row[2],
+                            'spot_search_fcl_freight_services_id':row[3],
+                            'checkout_fcl_freight_rate_services_id':row[4],
+                            'buy_quotation_id':row[5],
+                            'sell_quotation_id':row[6],
+                            'rate_id':row[7],
+                            'validity_id':row[8],
+                            'status':row[9],
+                            'shipment_fcl_freight_rate_services_id':row[10],
+                            'cancellation_reason':row[11],
+                            'is_active':row[12],
+                            'created_at':row[13],
+                            'updated_at':row[14],
+                        })
+                    ShipmentFclFreightRateStatistic.insert_many(row_data).execute()
+                    cur.execute(sql, (BATCH_SIZE, OFFSET))
+                    result = cur.fetchall()
         except Exception as e:
             print('Exception:',e)
 
@@ -1068,6 +1115,7 @@ def main():
     # populate_from_rates.update_fcl_freight_rate_checkout_count() 
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
     # populate_from_rates.populate_fcl_request_statistics()
+    populate_from_rates.populate_shipment_statistics()
     # populate_from_rates.update_accuracy()
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
     # populate_from_rates.update_pricing_map_zone_ids()
