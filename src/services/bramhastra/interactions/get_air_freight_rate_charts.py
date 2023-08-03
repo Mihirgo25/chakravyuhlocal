@@ -4,18 +4,26 @@ from services.bramhastra.helpers.air_freight_filter_helper import (
     get_direct_indirect_filters,
 )
 import math
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from database.db_session import rd
+from services.bramhastra.enums import RedisKeys
+
+ALLOWED_TIME_PERIOD = 6
 
 
-def get_air_freight_rate_charts(filters):
+async def get_air_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters)
-    accuracy = get_accuracy(filters.copy(), where)
-    deviation = get_deviation(filters.copy(), where)
-    spot_search_to_checkout_count = get_spot_search_to_checkout_count(
-        filters.copy(), where
+
+    accuracy = await get_accuracy(filters, where)
+    deviation = await get_deviation(filters, where)
+    spot_search_to_checkout_count = await get_spot_search_to_checkout_count(
+        filters, where
     )
-    rate_count_with_deviation_more_than_30 = get_rate_count_with_deviation_more_than_30(
-        filters.copy(), where
+    rate_count_with_deviation_more_than_30 = (
+        await get_rate_count_with_deviation_more_than_30(filters, where)
     )
+
     return dict(
         accuracy=accuracy,
         deviation=deviation,
@@ -24,24 +32,29 @@ def get_air_freight_rate_charts(filters):
     )
 
 
-def get_accuracy(filters, where):
+async def get_accuracy(filters, where):
+    if is_json_needed(filters):
+        return get_link()
+
     clickhouse = ClickHouse()
     queries = [
-        """SELECT source,toDate(day) AS day,AVG(abs(accuracy)) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,source FROM brahmastra.air_freight_rate_statistics"""
+        """SELECT source,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,source,sign FROM brahmastra.air_freight_rate_statistics"""
     ]
 
     if where:
         queries.append(" WHERE ")
         queries.append(where)
 
-    queries.append(""") WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY source,day ORDER BY day,source;""")
+    queries.append(
+        """) WHERE (day <= %(end_date)s) AND (day >= %(start_date)s) GROUP BY source,day HAVING sum(sign)>0 ORDER BY day,source;"""
+    )
 
     charts = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
 
-    return format_charts(charts, filters.get("mode"))
+    return format_charts(charts, filters.get("source"))
 
 
-def get_deviation(filters, where):
+async def get_deviation(filters, where):
     clickhouse = ClickHouse()
     queries = [
         """SELECT CASE
@@ -71,7 +84,7 @@ def get_deviation(filters, where):
     return [i for i in response if i["range"] or i["range"] == 0]
 
 
-def get_spot_search_to_checkout_count(filters, where):
+async def get_spot_search_to_checkout_count(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
@@ -90,7 +103,7 @@ def get_spot_search_to_checkout_count(filters, where):
     return statistics
 
 
-def get_rate_count_with_deviation_more_than_30(filters, where):
+async def get_rate_count_with_deviation_more_than_30(filters, where):
     clickhouse = ClickHouse()
 
     queries = [
@@ -108,34 +121,71 @@ def format_charts(charts, source=None):
     if source:
         NEEDED_SOURCES = {source}
     else:
-        NEEDED_SOURCES = ["cargo_ai", "freight_look", "manual", "predicted", "rate_sheet"]
+        NEEDED_SOURCES = {
+            "freight_look",
+            "rate_sheet",
+            "predicted",
+            "cargo_ai",
+        }
 
-    formatted_charts = dict(
-        cargo_ai={"id": "cargo_ai", "data": []},
-        freight_look={"id": "freight_look", "data": []},
-        manual={"id": "manual", "data": []},
-        predicted={"id": "predicted", "data": []},
-        rate_sheet={"id": "rate_sheet", "data": []},
+    return format_response(charts, NEEDED_SOURCES)
+
+
+def format_response(response, needed_sources):
+    def get_average_for_source(response, day, source):
+        valid_values = [
+            entry["average_accuracy"] for entry in response if entry["source"] == source
+        ]
+        if not valid_values:
+            return None
+
+        return sum(valid_values) / len(valid_values)
+
+    formatted_response = []
+    response_dict = {}
+    for entry in response:
+        day = datetime.strptime(entry["day"], "%Y-%m-%d")
+        response_dict[day] = response_dict.get(day, {})
+        response_dict[day].update({entry["source"]: entry["average_accuracy"]})
+
+    for day, values in sorted(response_dict.items()):
+        data_object = {"day": day.timestamp() * 1000}
+        for source in needed_sources:
+            if source in values:
+                data_object[source] = values[source]
+            else:
+                prev_day = day - timedelta(days=1)
+                next_day = day + timedelta(days=1)
+
+                prev_value = get_average_for_source(response, prev_day, source)
+                next_value = get_average_for_source(response, next_day, source)
+
+                if prev_value is not None and next_value is not None:
+                    data_object[source] = (prev_value + next_value) / 2
+                elif prev_value is not None:
+                    data_object[source] = prev_value
+                elif next_value is not None:
+                    data_object[source] = next_value
+
+        formatted_response.append(data_object)
+
+    return formatted_response
+
+
+def is_json_needed(filters):
+    start_date = (
+        datetime.strptime(filters.get("start_date"), "%Y-%m-%d")
+        if isinstance(filters.get("start_date"), str)
+        else filters.get("start_date")
     )
+    end_date = (
+        datetime.strptime(filters.get("end_date"), "%Y-%m-%d")
+        if isinstance(filters.get("end_date"), str)
+        else filters.get("end_date")
+    )
+    duration = relativedelta(end_date, start_date)
+    return duration.months > 6
 
-    previous_day = None
-    for chart in charts:
-        if not previous_day:
-            previous_day = chart["day"]
-            needed_sources = NEEDED_SOURCES.copy()
-        elif previous_day != chart["day"]:
-            for source in needed_sources:
-                formatted_charts[source]["data"].append(dict(x=previous_day, y=0))
-            previous_day = chart["day"]
-            needed_sources = NEEDED_SOURCES.copy()
 
-        if chart["average_accuracy"]:
-            formatted_charts[chart["source"]]["data"].append(
-                dict(x=chart["day"], y=round(chart["average_accuracy"], 3))
-            )
-            needed_sources.remove(chart["source"])
-        else:
-            for source in needed_sources:
-                formatted_charts[source]["data"].append(dict(x=chart["day"], y=0))
-
-    return list(formatted_charts.values())
+def get_link():
+    return rd.get(RedisKeys.air_freight_rate_all_time_accuracy_chart.value)

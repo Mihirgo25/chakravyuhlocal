@@ -8,7 +8,7 @@ def get_air_freight_rate_distribution(filters):
     queries = [
         """WITH rate_distribution as 
                (SELECT source,shipment_cancelled_count,shipment_completed_count,shipment_confirmed_by_service_provider_count,bookings_created,
-               shipment_aborted_count
+               shipment_aborted_count,shipment_recieved_count,shipment_in_progress_count
                from brahmastra.air_freight_rate_statistics"""
     ]
 
@@ -23,8 +23,12 @@ def get_air_freight_rate_distribution(filters):
         floor((shipment_cancelled_count/bookings_created)*100,2) as shipment_cancelled_percentage,
         sum(shipment_completed_count) as shipment_completed_count,
         floor((shipment_completed_count/bookings_created)*100,2) as shipment_completed_percentage,
+        sum(shipment_in_progress_count)  as shipment_in_progress_count,
+        floor((shipment_in_progress_count/bookings_created)*100,2) as shipment_in_progress_percentage,
         sum(shipment_confirmed_by_service_provider_count)  as shipment_confirmed_by_service_provider_count, 
-        floor((shipment_confirmed_by_service_provider_count/bookings_created)*100,2) as shipment_confirmed_by_service_provider_percentage
+        floor((shipment_confirmed_by_service_provider_count/bookings_created)*100,2) as shipment_confirmed_by_service_provider_percentage,  
+        sum(shipment_recieved_count)  as shipment_recieved_count,
+        floor((shipment_recieved_count/bookings_created)*100,2) as shipment_recieved_percentage
         from rate_distribution group by source)
            SELECT * from source_count"""
     )
