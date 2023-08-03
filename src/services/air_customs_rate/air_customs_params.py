@@ -24,6 +24,7 @@ class CreateAirCustomsRateBulkOperation(BaseModel):
   performed_by_type: str = None
   delete_rate: List[DeleteRate] = None
   add_markup: List[AddMarkup] = None
+  service_provider_id: str = None
 
 class CreateAirCustomsRateFeedback(BaseModel):
   source: str
