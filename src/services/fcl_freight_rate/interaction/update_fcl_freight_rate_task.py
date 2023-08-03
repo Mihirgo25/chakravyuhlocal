@@ -87,9 +87,6 @@ def execute_transaction_code(request):
         'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
         'destination_local': { 'line_items': formatted_line_items, 'destination_detention': formatted_detention}
     }
-    
-    if task.source == "contract":
-        update_contract_service_task_delay.apply_async(kwargs = {"object": contract_object}, queue='low')
 
     if task.source == "rfq" and task.status == 'completed':
         update_spot_negotiation_locals_rate_task_delay.apply_async(kwargs = {"object": rfq_object}, queue='low')
