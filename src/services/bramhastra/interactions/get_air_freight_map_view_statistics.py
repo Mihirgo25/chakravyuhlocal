@@ -4,7 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from math import ceil
 from micro_services.client import maps
 
-HEIRARCHY = ["continent", "country", "region", "airport"]
+HEIRARCHY = ["continent", "country", "region", "port"]
 
 LOCATION_KEYS = {
     "destination_airport_id",
@@ -33,7 +33,7 @@ def get_air_freight_map_view_statistics(filters, page_limit, page):
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
     )
-
+    
     statistics = jsonable_encoder(clickhouse.execute(" ".join(queries), filters))
     
     add_location_objects(statistics)
@@ -50,7 +50,7 @@ def get_air_freight_map_view_statistics(filters, page_limit, page):
 def get_add_group_and_order_by(queries, grouping):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append("ORDER BY accuracy DESC")
+    queries.append("HAVING sum(sign) > 0 ORDER BY accuracy DESC")
 
 
 def alter_filters_for_map_view(filters, grouping):

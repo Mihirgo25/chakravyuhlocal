@@ -1,9 +1,9 @@
 from services.bramhastra.client import ClickHouse
 from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.air_freight_filter_helper import add_pagination_data
-# from services.bramhastra.models.air_freight_rate_request_statistics import (
-#     AirFreightRateRequestStatistic,
-# )
+from services.bramhastra.models.air_freight_rate_request_statistics import (
+    AirFreightRateRequestStatistic,
+)
 from micro_services.client import maps
 
 from datetime import date, timedelta, datetime
@@ -100,7 +100,7 @@ def get_locations(ids):
     }
 
 
-def list_fcl_freight_rate_request_statistics(filters={}, page_limit=10, page=1):
+def list_air_freight_rate_request_statistics(filters={}, page_limit=10, page=1):
     clickhouse = ClickHouse()
 
     select = ",".join(DEFAULT_INCUDE_PARAMS)

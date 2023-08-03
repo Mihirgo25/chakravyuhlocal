@@ -1220,13 +1220,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         query = FclFreightRateStatistic.select().where(FclFreightRateStatistic.id.not_in(statistics_ids))
         
         for row in data:
-            created_at =  datetime.strptime(row['created_at'], '%Y-%m-%d')
-            price = row['total_price']
-            currency= row['currency']
-            del row['created_at']
-            del row['currency']
-            del row['total_price']
-            
+            created_at = datetime.strptime(row.pop('created_at', None), '%Y-%m-%d')
+            price = row.pop('total_price', None)
+            currency = row.pop('currency', None)
             rate_query = query.where(**row)
             rate_query = rate_query.where(FclFreightRateStatistic.validity_start >= created_at,FclFreightRateStatistic.validity_end <= created_at )
             
@@ -1242,8 +1238,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 }).get("price", price)
                     
                 statistics_ids.append(str(statistics_obj.id))
+                statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate * statistics_obj.booking_rate_count + total_price)/ (statistics_obj.booking_rate_count + 1)
                 statistics_obj.booking_rate_count += 1
-                statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
                 statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
                 statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
                 statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
