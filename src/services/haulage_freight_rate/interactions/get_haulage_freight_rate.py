@@ -40,7 +40,7 @@ def get_object_params(requirement):
       'trip_type': requirement.get('trip_type'),
       'trailer_type': requirement.get('trailer_type'),
       'haulage_type': requirement.get('haulage_type'),
-      'transport_modes_keyword': requirement.get('transport_modes'),
+      'transport_modes_keyword': '_'.join(requirement.get('transport_modes')),
       'service_provider_id': requirement.get('service_provider_id'),
       'importer_exporter_id': requirement.get('importer_exporter_id'),
       'shipping_line_id': requirement.get('shipping_line_id'),
