@@ -4,6 +4,8 @@ from services.air_freight_rate.models.air_freight_rate_feedback import AirFreigh
 from services.bramhastra.models.air_freight_rate_statistic import AirFreightRateStatistic
 from services.bramhastra.models.checkout_air_freight_rate_statistic import CheckoutAirFreightRateStatistic
 from services.bramhastra.models.feedback_air_freight_rate_statistic import FeedbackAirFreightRateStatistic
+from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
+from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from services.bramhastra.models.air_freight_rate_request_statistics import AirFreightRateRequestStatistic
 from services.bramhastra.models.shipment_air_freight_rate_statistic import ShipmentAirFreightRateStatistic
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
@@ -84,7 +86,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
 
-    def populate_active_rate_ids(self):
+    def populate_from_active_rates(self):
         query = (
             AirFreightRate.select()
             .where(
@@ -140,7 +142,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         query = AirFreightRateFeedback.select()
 
         feedbacks = jsonable_encoder(list(query.dicts))
-        count =0;
+        count =0
         row_data=[]
         for feedback in feedbacks:
             count+=1
@@ -205,8 +207,21 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         for row in row_data:
             row['importer_exporter_id'] = importer_exporter_ids.get(row['source_id'], None)
         FeedbackAirFreightRateStatistic.insert_many(row_data).execute()
+        
+    
+    def update_pricing_map_zone_ids(self):
+        query  = AirFreightLocationClusters.select(AirFreightLocationClusterMapping.location_id,AirFreightLocationClusters.map_zone_id).join(AirFreightLocationClusterMapping)
+        zone_ids = jsonable_encoder(list(query.dicts()))
+        zone_ids = {row['location_id']: row['map_zone_id'] for row in zone_ids}
+        
+        query = AirFreightRateStatistic.select()
+        
+        for stat in query:
+            stat.origin_pricing_zone_map_id = zone_ids[str(stat.origin_airport_port_id)]
+            stat.destination_pricing_zone_map_id = zone_ids[str(stat.destination_airport_port_id)]
+            stat.save()
 
-    def update_air_freight_rate_checkout_count( self ):
+    def update_air_freight_rate_checkout_count(self):
         try:
             with self.cogoback_connection.cursor() as cur:
                 sql = '''SELECT 
@@ -313,7 +328,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         except Exception as e:
             print("! Exception occured while populating checkout stats:", e)
 
-    def populate_shipment_stats_in_air_freight_stats( self, rate_id, validity_id, shipment_id, identifier ):
+    def update_shipment_stats_in_air_freight_stats( self, rate_id, validity_id, shipment_id, identifier ):
         try:
             with self.cogoback_connection.cursor() as cur:
                 sql = f"""SELECT 
@@ -411,7 +426,17 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
             
 def main():
     populate_from_rates = PopulateAirFreightRateStatistics()
-    populate_from_rates.populate_feedback_air_freight_rate_statistic()
+    # populate_from_rates.populate_from_active_rates()
+    # populate_from_rates.populate_from_feedback()
+    # populate_from_rates.populate_from_spot_search_rates()
+    # populate_from_rates.populate_from_checkout_fcl_freight_rate_services()
+    # populate_from_rates.update_shipment_stats_in_air_freight_stats()
+    # populate_from_rates.update_air_freight_rate_checkout_count() 
+    # populate_from_rates.populate_air_feedback_freight_rate_statistic()
+    # populate_from_rates.populate_fcl_request_statistics()
+    # populate_from_rates.update_accuracy()
+    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
+    # populate_from_rates.update_pricing_map_zone_ids()
     pass
 
 
