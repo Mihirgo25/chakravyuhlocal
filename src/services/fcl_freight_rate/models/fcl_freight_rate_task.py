@@ -43,7 +43,7 @@ class FclFreightRateTask(BaseModel):
     trade_id = UUIDField(null=True)
     trade_type = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    spot_negotiation_rate_id = UUIDField(null=True)
+    spot_negotiation_rate_id = UUIDField(index=True, null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

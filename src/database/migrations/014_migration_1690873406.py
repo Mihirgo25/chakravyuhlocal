@@ -15,7 +15,7 @@ SQL = pw.SQL
 
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
-    migrator.add_fields(FclFreightRateTask, spot_negotiation_rate_id=UUIDField(null=True))
+    migrator.add_fields(FclFreightRateTask, spot_negotiation_rate_id = UUIDField(index=True, null=True))
 
 def rollback(migrator: Migrator, database, fake=False, **kwargs):
     pass
