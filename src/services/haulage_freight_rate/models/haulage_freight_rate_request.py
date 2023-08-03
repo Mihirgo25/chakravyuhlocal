@@ -35,7 +35,7 @@ class HaulageFreightRateRequest(BaseModel):
     container_size = TextField(index=True, null=True)
     container_type = TextField(index=True, null=True)
     containers_count = IntegerField(null=True)
-    created_at = DateTimeField(default = datetime.datetime.now)
+    created_at = DateTimeField(index=True, default = datetime.datetime.now)
     destination_city_id = UUIDField( null=True)
     destination_country_id = UUIDField( null=True)
     destination_location_id = UUIDField(index=True, null=True)

@@ -33,7 +33,7 @@ class HaulageFreightRateFeedback(BaseModel):
     closed_by = BinaryJSONField(null=True)
     closed_by_id = UUIDField(index=True, null=True)
     serial_id = BigIntegerField(constraints=[SQL("DEFAULT nextval('haulage_freight_rate_feedback_serial_id_seq'::regclass)")])
-    created_at = DateTimeField( default = datetime.datetime.now)
+    created_at = DateTimeField(index=True, default = datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
     origin_location_id = UUIDField(index=True,null=True)
     origin_city_id = UUIDField(null=True)
