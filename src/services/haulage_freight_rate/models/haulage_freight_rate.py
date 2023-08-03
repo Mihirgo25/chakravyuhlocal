@@ -153,9 +153,6 @@ class HaulageFreightRate(BaseModel):
     def validate_validity_object(self, validity_start, validity_end):
         if not self.transport_modes:
             raise HTTPException(status_code=400, detail="transport mode can't be empty")
-
-        if self.transport_modes[0] != 'trailer' :
-            return
         
         if not validity_start:
             raise HTTPException(status_code=400, detail="validity_start is invalid")
@@ -165,6 +162,10 @@ class HaulageFreightRate(BaseModel):
 
         if validity_end < validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
+    
+        if self.transport_modes[0] == 'rail' and self.trailer_type is not None:
+            raise  HTTPException(status_code=400, detail="trailer type not required in rail freight rate")
+
     
     def validate_container_size(self):
       if self.container_size and self.container_size not in CONTAINER_SIZES:
@@ -306,7 +307,7 @@ class HaulageFreightRate(BaseModel):
         result = 0
 
         for line_item in line_items:
-            result = result + line_item["price"]
+            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
         return result
     
     def update_platform_prices_for_other_service_providers(self):
