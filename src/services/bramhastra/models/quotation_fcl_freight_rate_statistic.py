@@ -15,7 +15,7 @@ class QuotationFclFreightRateStatistic(BaseModel):
     validity_id = UUIDField()
     rate_id = UUIDField()
     spot_search_id = UUIDField()
-    spot_search_fcl_customs_services_id = UUIDField()
+    spot_search_fcl_freight_services_id = UUIDField()
     checkout_id = UUIDField()
     checkout_fcl_freight_rate_services_id = UUIDField(null=True)
     sell_quotation_id = UUIDField()

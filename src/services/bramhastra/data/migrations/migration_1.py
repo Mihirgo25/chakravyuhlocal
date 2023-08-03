@@ -177,13 +177,9 @@ class MigrationHelpers:
             with newconnection:
                 with newconnection.cursor() as cur:
                     if return_count:
-                        sql = "SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s"
-                        cur.execute(
-                            sql,
-                            ("service_rates", "rate_id", "service_type", "fcl_freight"),
-                        )
-                        result = cur.fetchone()[0]
-                        return result
+                        sql = 'SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s'
+                        cur.execute(sql, ('service_rates','rate_id','service_type','fcl_freight'))
+                        all_result = cur.fetchone()[0]
                     else:
                         sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
                         cur.execute(
@@ -201,13 +197,84 @@ class MigrationHelpers:
                         result = cur.fetchall()
                         for res in result:
                             all_result.append(res)
-                        cur.close()
+                    cur.close()
             newconnection.close()
             return all_result
         except Exception as e:
             print("Error from railsDb", e)
             return all_result
-
+        
+    def get_shipment_data_for_accuracy(self, offset =0, limit = BATCH_SIZE, return_count = False):
+        all_result = []
+        try:
+            newconnection = get_connection()  
+            with newconnection:
+                with newconnection.cursor() as cur:
+                    if return_count:
+                        sql = 'SELECT COUNT(*) FROM shipments RIGHT JOIN shipment_buy_quotations where shipments.state = %s and shipments.shipment_type = %s and shipment_buy_quotations.is_deleted != %s'
+                        cur.execute(sql, ('completed', 'fcl_freight', True))
+                        all_result = cur.fetchone()[0]
+                    else:
+                        sql = '''
+                            WITH subquery AS (
+                            SELECT 
+                                shipment_buy_quotations.shipment_id,
+                                shipment_buy_quotations.tax_total_price,
+                                shipment_buy_quotations.currency, 
+                                shipment_fcl_freight_services.container_size,
+                                shipment_fcl_freight_services.container_type, 
+                                shipment_fcl_freight_services.commodity 
+                            FROM 
+                                shipment_buy_quotations 
+                            RIGHT JOIN 
+                                shipment_fcl_freight_services 
+                                ON shipment_fcl_freight_services.id = shipment_buy_quotations.service_id 
+                            WHERE 
+                                shipment_buy_quotations.service_type= %s 
+                                AND shipment_buy_quotations.is_deleted != %s  
+                            ORDER BY 
+                                shipment_buy_quotations.created_at
+                            )
+                            SELECT 
+                                sh.id AS shipment_id, 
+                                ch_services.rate-> %s AS rate_id,
+                                ch_services.rate-> %s AS validity_id,
+                                subquery.tax_total_price,
+                                subquery.currency
+                            FROM 
+                                shipments sh 
+                            RIGHT JOIN 
+                                checkouts ch 
+                            ON sh.id = ch.shipment_id 
+                            RIGHT JOIN 
+                                checkout_fcl_freight_services ch_services 
+                            ON ch.id =  ch_services.checkout_id 
+                            LEFT JOIN 
+                                subquery 
+                            ON sh.id = subquery.shipment_id
+                            WHERE 
+                                sh.state = %s 
+                            AND sh.shipment_type = %s  
+                            AND ch_services.container_size = subquery.container_size 
+                            AND ch_services.container_type = subquery.container_type
+                            AND ch_services.commodity = subquery.commodity
+                            ORDER BY 
+                                sh.created_at DESC
+                            LIMIT %s
+                            OFFSET %s
+                        '''
+                        
+                        cur.execute(sql, ('fcl_freight_service',True,'rate_id', 'validity_id','completed','fcl_freight', limit , offset))
+                        result = cur.fetchall()
+                        for res in result:
+                            all_result.append(res)
+                    cur.close()
+            newconnection.close()
+            return all_result
+        except Exception as e:
+            print('Error from railsDb', e)
+            return  0 if return_count else []
+        
     def get_imp_ext_id_from_spot_search_rates(self, source_id):
         newconnection = get_connection()
         with newconnection:
@@ -231,7 +298,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
 
-    def populate_active_rate_ids(self):
+    def populate_from_active_rates(self):
         query = (
             FclFreightRate.select()
             .where(
@@ -353,7 +420,32 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             row_data.append(row)
             actual_count += 1
         FclFreightRateStatistic.insert_many(row_data).execute()
-
+    
+    def update_pricing_map_zone_ids(self):
+        query  = FclFreightLocationCluster.select(FclFreightLocationClusterMapping.location_id,FclFreightLocationCluster.map_zone_id).join(FclFreightLocationClusterMapping)
+        zone_ids = jsonable_encoder(list(query.dicts()))
+        zone_ids = {row['location_id']: row['map_zone_id'] for row in zone_ids}
+        print(query.count())
+        query = FclFreightRateStatistic.select()
+        count = 0
+        for stat in query:
+            count +=1
+            stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_main_port_id or stat.origin_port_id))
+            stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_main_port_id or stat.destination_port_id))
+            stat.save()
+            print(count)
+            
+        print('statistics done, updating request...')
+        count = 0
+        query = FclFreightRateRequestStatistic.select()
+        for stat in query:
+            count +=1
+            stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_main_port_id or stat.origin_port_id))
+            stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_main_port_id or stat.destination_port_id))
+            stat.save()
+            print(count)
+            
+        
     def populate_feedback_fcl_freight_rate_statistic(self):
         query = FclFreightRateFeedback.select()
         feedbacks = jsonable_encoder(list(query.dicts()))
@@ -366,6 +458,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             )
 
             statistics_obj = self.find_statistics_object(identifier)
+
 
             if statistics_obj:
                 if feedback["feedback_type"] == "liked":
@@ -420,8 +513,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 }
                 row_data.append(row)
         FeedbackFclFreightRateStatistic.insert_many(row_data).execute()
-
-    def populate_from_spot_search(self):
+    
+                
+    def populate_from_spot_search_rates(self):
         total_count = self.get_spot_search_rates(return_count=True) or 0
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
@@ -758,8 +852,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             left join shipment_sell_quotations AS ssq ON ssq.shipment_id = sh.id
                             left join shipment_buy_quotations AS sbq ON sbq.shipment_id = sh.id 
                             left join spot_search_fcl_freight_services AS ssffs ON ssffs.spot_search_id = subq.spot_search_id
-
-                            
                             """
 
                     cur.execute(
@@ -854,12 +946,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         if str(location["id"]) == str(rate_stat.origin_port_id):
                             origin_region_id = location["region_id"]
                         else:
-                            destination_region_id = location["region_id"]
-
-                zone_map_ids = self.get_pricing_map_zone_ids(
-                    str(rate_stat.origin_port_id), str(rate_stat.destination_port_id)
-                )
-
+                            destination_region_id = location['region_id']
+                
                 importer_exporter_id = None
                 if "spot" in rate_stat.source:
                     try:
@@ -907,8 +995,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     'destination_continent_id':rate_stat.destination_continent_id,
                     'origin_trade_id':rate_stat.origin_trade_id,
                     'destination_trade_id':rate_stat.destination_trade_id,
-                    'origin_pricing_zone_map_id': zone_map_ids[0],
-                    'destination_pricing_zone_map_id': zone_map_ids[1], 
                     'rate_request_id': rate_stat.id,
                     'validity_ids': validity_ids,
                     'source': rate_stat.source,
@@ -959,15 +1045,32 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         except Exception as e:
             print('Exception:',e)
 
+    def update_accuracy(self):
+        total_count = self.get_shipment_data_for_accuracy(return_count = True)
+        offset = 0
+        while(offset < total_count):
+            results = self.get_shipment_data_for_accuracy(offset=offset)
+            for data in results:
+                
+                pass
+                
+            offset += BATCH_SIZE
+        
+        pass
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    # populate_from_rates.populate_active_rate_ids()
+    # populate_from_rates.populate_from_active_rates()
     # populate_from_rates.populate_from_feedback()
-    # populate_from_rates.populate_from_spot_search()
+    # populate_from_rates.populate_from_spot_search_rates()
+    # populate_from_rates.populate_from_checkout_fcl_freight_rate_services()
+    # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats()
+    # populate_from_rates.update_fcl_freight_rate_checkout_count() 
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
     # populate_from_rates.populate_fcl_request_statistics()
-    # populate_from_rates.update_fcl_freight_rate_checkout_count()
+    # populate_from_rates.update_accuracy()
+    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
+    # populate_from_rates.update_pricing_map_zone_ids()
 
 
 if __name__ == "__main__":
