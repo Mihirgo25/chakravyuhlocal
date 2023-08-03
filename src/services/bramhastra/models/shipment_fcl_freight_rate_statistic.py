@@ -32,10 +32,10 @@ class ShipmentFclFreightRateStatistic(BaseModel):
     validity_id = UUIDField()
     rate_id = UUIDField()
     shipment_id = UUIDField(null=True)
-    cancellation_reason = CharField(default = '')
+    cancellation_reason = CharField(null=True)
     created_at = DateTimeTZField(default = datetime.utcnow())
     updated_at = DateTimeTZField(default = datetime.utcnow())
-    status = CharField(default = 'active')
+    status = CharField()
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
 
