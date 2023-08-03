@@ -21,24 +21,7 @@ REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/08
 RATE_PARAMS = [ "commodity", "container_size","container_type", "destination_country_id", "destination_local_id", "destination_detention_id", "destination_main_port_id", "destination_port_id", "destination_trade_id", "origin_country_id", "origin_local_id", "origin_detention_id", "origin_demurrage_id", "destination_demurrage_id", "origin_main_port_id", "origin_port_id", "origin_trade_id", "service_provider_id", "shipping_line_id", "mode", "accuracy", "cogo_entity_id", "sourced_by_id", "procured_by_id"]
 
 class MigrationHelpers:
-    def stem_words_using_nltk(self, sentence):
-        words = word_tokenize(sentence)
-        stemmer = PorterStemmer()
-        stemmed_words = [stemmer.stem(word) for word in words]
-        return stemmed_words
     
-    def cancellation_reason_matching(self, stemmed_words, arr):
-        flag = 0
-        for word in arr[0]:
-            if(word in stemmed_words):
-                flag = 1
-        if(flag == 1):
-            for word in arr[1]:
-                if(word in stemmed_words):
-                    flag += 1
-        if(flag > 1):
-            return True
-        return False
     def find_statistics_object(self, identifier):
         freight = (
             AirFreightRateStatistic.select()
@@ -140,7 +123,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         query = AirFreightRateFeedback.select()
 
         feedbacks = jsonable_encoder(list(query.dicts))
-        count =0;
+        count = 0 
         row_data=[]
         for feedback in feedbacks:
             count+=1
@@ -406,7 +389,131 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
         except Exception as e:
             print('! Exception occured while populating shipment stats:',e)
 
+    def populate_air_request_statistics( self ):
+        try:
+            rate_stats = AirFreightRateRequest.select()
 
+            REGION_MAPPING = {}
+            with urllib.request.urlopen(REGION_MAPPING_URL) as url:
+                REGION_MAPPING = json.loads(url.read().decode())
+
+            for rate_stat in rate_stats:
+                print('id', rate_stat.id)
+                
+                zone_map_ids = self.get_pricing_map_zone_ids(str(rate_stat.origin_port_id), str(rate_stat.destination_port_id))
+
+                importer_exporter_id = None
+                if('spot' in rate_stat.source):
+                    try:
+                        with self.cogoback_connection.cursor() as cur:
+                            sql = f"SELECT importer_exporter_id from spot_searches where id = '{rate_stat.source_id}'"
+                            cur.execute(sql)
+                            result = cur.fetchone()
+                            if result:
+                                importer_exporter_id = result[0]
+                    except Exception as e:
+                        print('!Exception', e)
+                    
+                validity_ids = None
+                if (rate_stat.status=='inactive') and rate_stat.closing_remarks and ('rate_added' in rate_stat.closing_remarks):
+                    try:
+                        sql = """
+                            with main_table as (
+                                with outer_cte as (
+                                    with cte as ( SELECT updated_at FROM air_freight_rate_audits where object_id = %s and data @> %s )
+                                    SELECT object_id FROM air_freight_rate_audits, cte WHERE object_type = %s and CAST(created_at AS timestamp) <= CAST(cte.updated_at AS timestamp) 
+                                    ORDER BY created_at DESC limit 5
+                                )
+                                Select * from air_freight_rates where id in ( select object_id from outer_cte ) 
+                                and origin_airport_id = % s 
+                                and destination_airport_id = % s 
+                                and commodity = % s 
+                                order by created_at 
+                                limit 1
+                            ) 
+                            Select validities from main_table
+                        """
+                        cursor = db.execute_sql(sql, (
+                            rate_stat.id,
+                            '{"closing_remarks": ["rate_added"]}',
+                            'AirFreightRate',
+                            'missing_rate',
+                            rate_stat.origin_airport_id,
+                            rate_stat.destination_airport_id,
+                            rate_stat.commodity,
+                        ))
+                        result = cursor.fetchone()
+                        if result:
+                            validity_ids = [item['id'] for item in result[0]]
+
+                    except Exception as e:
+                        print('!Exception', e)
+                
+                params = {
+                    'origin_airport_id':rate_stat.origin_port_id,
+                    'destination_airport_id':rate_stat.destination_port_id,
+                    'origin_region_id': REGION_MAPPING.get(rate_stat.origin_port_id),
+                    'destination_region_id': REGION_MAPPING.get(rate_stat.destination_port_id),
+                    'origin_country_id':rate_stat.origin_country_id,
+                    'destination_country_id':rate_stat.destination_country_id,
+                    'origin_continent_id':rate_stat.origin_continent_id,
+                    'destination_continent_id':rate_stat.destination_continent_id,
+                    'origin_trade_id':rate_stat.origin_trade_id,
+                    'destination_trade_id':rate_stat.destination_trade_id,
+                    'origin_pricing_zone_map_id': zone_map_ids[0],
+                    'destination_pricing_zone_map_id': zone_map_ids[1], 
+                    'rate_request_id': rate_stat.id,
+                    'validity_ids': validity_ids,
+                    'source': rate_stat.source,
+                    'source_id': rate_stat.source_id,
+                    'performed_by_id': rate_stat.performed_by_id,
+                    'performed_by_org_id': rate_stat.performed_by_org_id,
+                    'importer_exporter_id': importer_exporter_id,
+                    'closing_remarks': rate_stat.closing_remarks,
+                    'closed_by_id': rate_stat.closed_by_id,
+                    'request_type': rate_stat.request_type,
+                    'commodity':rate_stat.commodity,
+                    'commodity_type':rate_stat.commodity_type,
+                    'commodity_sub_type':rate_stat.commodity_sub_type,
+                    'created_at': rate_stat.created_at,
+                    'updated_at': rate_stat.updated_at,
+                    'container_size':rate_stat.container_size,
+                    'containers_count':rate_stat.containers_count,
+                }
+
+                AirFreightRateRequestStatistic.create(**params)
+
+        except Exception as e:
+            print('! Exception:',e)
+            
+    def populate_shipment_statistics(self, shipment_params):
+        shipment_id = shipment_params['shipment_id']
+        try:
+            with self.cogoback_connection.cursor() as cur:
+                sql = '''SELECT sp.state, ssffs.id, 
+                        sff.id, sff.cancellation_reason, sff.is_active,
+                        sff.created_at, sff.updated_at
+                        FROM shipments AS sp 
+                        LEFT JOIN checkouts AS co ON co.shipment_id = sp.id 
+                        LEFT JOIN spot_search_air_freight_services AS ssffs ON ssffs.spot_search_id = co.source_id
+                        LEFT JOIN shipment_fcl_freight_services AS sff ON sff.shipment_id = sp.id 
+                        WHERE sp.id = %s 
+                    '''
+                cur.execute(sql,(shipment_id))
+                result = cur.fetchone()
+
+                shipment_params['status'] = result[0]
+                shipment_params['spot_search_air_freight_services_id'] = result[1]
+                shipment_params['shipment_air_freight_rate_services_id'] = result[2]
+                shipment_params['cancellation_reason'] = result[3]
+                shipment_params['is_active'] = result[4]
+                shipment_params['created_at'] = result[5]
+                shipment_params['updated_at'] = result[6]
+                
+                ShipmentAirFreightRateStatistic.create(**shipment_params)
+
+        except Exception as e:
+            print('Exception:',e)
 
             
 def main():
