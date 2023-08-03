@@ -489,7 +489,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             )
         )
         feedbacks = jsonable_encoder(list(query.dicts()))
-        # breakpoint()
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())

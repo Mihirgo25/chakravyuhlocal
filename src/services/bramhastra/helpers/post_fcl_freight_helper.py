@@ -376,12 +376,11 @@ class Feedback:
 
     def get_clickhouse_feedback_current_row_by_identifier(self) -> dict:
         parameters = {
-            "table": Table.feedback_fcl_freight_rate_statistics.value,
-            "identifier": self.feedback_id,
+            "feedback_id": self.feedback_id,
             "sign": 1,
         }
         if row := self.clickhouse_client.execute(
-            "SELECT * FROM brahmastra.%(table)s WHERE identifier = %(identifier)s} and sign = %(sign)s",
+            f"SELECT * FROM brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE feedback_id = %(feedback_id)s and sign = %(sign)s",
             parameters,
         ):
             return row[0]
