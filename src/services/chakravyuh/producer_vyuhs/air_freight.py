@@ -63,7 +63,7 @@ class AirFreightVyuh():
             'origin_airport_id': origin_airport_id,
             'destination_airport_id': destination_airport_id
         }
-        airlines = maps.get_airlines_for_route(data)
+        airlines = maps.get_airlines_for_route(data)['airline_ids']
 
         return airlines
     def get_rate_combinations_to_extend(self):
@@ -74,10 +74,11 @@ class AirFreightVyuh():
         origin_locations,destination_locations = self.get_cluster_combination()
         for origin_airport_id in origin_locations:
             for destination_airport_id in destination_locations:
-                rate = jsonable_encoder(self.rate)
-                rate['origin_airport_id'] = origin_airport_id
-                rate['destination_airport_id'] = destination_airport_id
-                extended_rates.append(rate)
+                if self.rate['airline_id'] in self.get_airlines_for_airport_pair(origin_airport_id,destination_airport_id):
+                    rate = jsonable_encoder(self.rate)
+                    rate['origin_airport_id'] = origin_airport_id
+                    rate['destination_airport_id'] = destination_airport_id
+                    extended_rates.append(rate)
         
         return extended_rates
     
