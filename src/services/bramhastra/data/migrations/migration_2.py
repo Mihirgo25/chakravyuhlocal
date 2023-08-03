@@ -9,7 +9,8 @@ from services.air_freight_rate.models.air_freight_location_cluster_mapping impor
 from services.bramhastra.models.air_freight_rate_request_statistics import AirFreightRateRequestStatistic
 from services.bramhastra.models.shipment_air_freight_rate_statistic import ShipmentAirFreightRateStatistic
 from services.air_freight_rate.models.air_freight_rate_request import AirFreightRateRequest
-from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
+from services.bramhastra.constants import STANDARD_WEIGHT_SLABS
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
 from playhouse.shortcuts import model_to_dict
@@ -17,52 +18,6 @@ from database.db_session import db
 import urllib
 import json
 
-STANDARD_WEIGHT_SLABS=[
-    {
-        'lower_limit':0.0,
-        'upper_limit':45,
-        'tariff_price':0,
-        'currency':'INR',
-        'unit':'per_kg'
-    },
-    {
-        'lower_limit':45.1,
-        'upper_limit':100.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-
-        },
-    {
-        'lower_limit':100.1,
-        'upper_limit':300.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-
-    },
-    {
-        'lower_limit':300.1,
-        'upper_limit':500.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-
-    },{
-        'lower_limit':500.1,
-        'upper_limit':1000.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-    },{
-        'lower_limit':1000.1,
-        'upper_limit':10000,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-    }
-
-]
 BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
@@ -244,7 +199,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
 
-    def populate_active_rate_ids(self):
+    def populate_from_active_rates(self):
         query = AirFreightRate.select().where(AirFreightRate.validities.is_null(False) and AirFreightRate.validities != '[]').order_by(AirFreightRate.id)
         total_count = query.count()
         
@@ -759,18 +714,17 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
             
 def main():
     populate_from_rates = PopulateAirFreightRateStatistics()
-    # populate_from_rates.populate_from_active_rates()
-    # populate_from_rates.populate_from_feedback()
-    # populate_from_rates.populate_from_spot_search_rates()
-    # populate_from_rates.populate_from_checkout_fcl_freight_rate_services()
-    populate_from_rates.update_shipment_stats_in_air_freight_stats()
-    # populate_from_rates.update_air_freight_rate_checkout_count() 
-    # populate_from_rates.populate_air_feedback_freight_rate_statistic()
-    # populate_from_rates.populate_fcl_request_statistics()
-    # populate_from_rates.populate_shipment_statistics()
-    # populate_from_rates.update_accuracy()
-    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
-    # populate_from_rates.update_pricing_map_zone_ids()
+    populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
+    #X populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
+    populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
+    populate_from_rates.update_shipment_stats_in_air_freight_stats() # data from shipment_air_freight_services to main_statistics
+    populate_from_rates.update_air_freight_rate_checkout_count()  # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
+    populate_from_rates.populate_air_feedback_freight_rate_statistic() # like dislike count in main_statistics and populate feedback_statistics
+    populate_from_rates.populate_air_request_statistics() # populate request_air_statistics table
+    populate_from_rates.populate_shipment_statistics() # shipment_statistics data population
+    #X populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
+    #X populate_from_rates.update_air_freight_rate_statistics_spot_search_count() # populate SpotSearchAirFreightRateStatistic table and increase spot_search_count
+    populate_from_rates.update_pricing_map_zone_ids()  # update map_zone_ids for main_statistics and missing_requests
     pass
 
 
