@@ -189,7 +189,7 @@ class UpdateFtlFreightRatePlatformPrices(BaseModel):
 
 class UpdateFtlFreightRate(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     procured_by_id: str
     sourced_by_id: str
@@ -204,7 +204,7 @@ class UpdateFtlFreightRate(BaseModel):
 
 class DeleteFtlFreightRate(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     sourced_by_id: str
     procured_by_id: str
