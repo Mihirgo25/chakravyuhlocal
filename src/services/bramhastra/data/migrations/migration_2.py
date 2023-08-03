@@ -270,7 +270,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
 
             for rate_card in rate_cards:
                 weight = self.get_chargeable_weight(rate_card.get('volume', 0),rate_card.get('weight', 0))
-                # breakpoint()
+                weight_slab = self.get_weight_slabs_from_chargeable_weight(weight)
                 statistics_obj = self.find_statistics_object(rate_card['rate_obj'].get('rate_id',0),rate_card['rate_obj'].get('validity_id',0),weight)
                 print(statistics_obj)
                 if statistics_obj:
@@ -280,16 +280,17 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
 
                 if not rate:
                     continue
-
+                # breakpoint()            
                 rate = model_to_dict(rate)
-
+                identifier = self.get_identifier(rate_card['rate_obj']['rate_id'],rate_card['rate_obj']['validity_id'],weight_slab[0],weight_slab[1])
+                print (identifier)
                 rate_params = {key: rate.get(key) for key in RATE_PARAMS}
                 validity_params = self.get_validity_params(rate_card['rate_obj'])
 
                 row = {
                     **rate_params,
                     **validity_params,
-                    "identifier": "",
+                    "identifier": identifier,
                     "rate_id": rate.get("id"),
                     "rate_type": rate.get("rate_type") or DEFAULT_RATE_TYPE,
                     "origin_region_id": REGION_MAPPING.get(rate.get("origin_airport_id")),
@@ -298,9 +299,11 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                     ),
                     "rate_created_at": rate.get("created_at"),
                     "rate_updated_at": rate.get("updated_at"),
-                    "validity_id": rate.get("validity_id"),
+                    "validity_id": rate_card['rate_obj'].get("validity_id"),
                     "price": rate.get("market_price")
                     or validity_params.get("price"),
+                    "lower_limit":weight_slab[0],
+                    "upper_limit":weight_slab[1]
                 }
                 count += 1
                 row_data.append(row)
