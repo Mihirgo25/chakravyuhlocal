@@ -17,7 +17,7 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping impor
     FclFreightLocationClusterMapping,
     FclFreightLocationCluster,
 )
-from micro_services.client import maps
+from micro_services.client import maps,common
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
@@ -104,7 +104,7 @@ class FclFreightValidity(Connection):
     def set_identifier_details(self, rate_id, validity_id) -> None:
         self.rate_id = rate_id
         self.validity_id = validity_id
-        self.fcl_freight_rate_statistics_identifier = "_".join([rate_id, validity_id])
+        self.fcl_freight_rate_statistics_identifier = "".join([rate_id, validity_id]).replace('-','')
 
     def get_or_create_statistics_current_row(self) -> Model:
         row = self.get_postgres_statistics_current_row_by_identifier()
@@ -203,7 +203,7 @@ class Rate:
                     param["rate_id"],
                     param["validity_id"],
                 ]
-            )
+            ).replace('-','')
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id
             param[
                 "destination_pricing_zone_map_id"
@@ -212,6 +212,7 @@ class Rate:
             param["destination_region_id"] = self.destination_region_id
             param["origin_continent_id"] = self.origin_continent_id
             param["destination_continent_id"] = self.destination_continent_id
+            param['standard_price'] = common.get_money_exchange_for_fcl({'from_currency': 'USD', 'to_currency': param['currency'], 'price': param['price']})
             self.params.append(param)
 
     def set_pricing_map_zone_ids(self) -> list:
@@ -410,7 +411,6 @@ class Checkout(FclFreightValidity):
 
     def set_format_and_existing_rate_stats(self):
         self.common_params = self.params.dict(exclude={"checkout_fcl_freight_services"})
-
         for param in self.params.checkout_fcl_freight_services:
             rate = param.rate.dict(include={"rate_id", "validity_id"})
             self.rates.append(rate)
@@ -422,7 +422,6 @@ class Checkout(FclFreightValidity):
             checkout_param["total_buy_price"] = total_buy_price
             checkout_param["currency"] = param.rate.line_items[0]["currency"]
             checkout_param.update(rate)
-            self.checkout_params.append(checkout_param)
 
             fcl_freight_validity = None
 
@@ -437,7 +436,7 @@ class Checkout(FclFreightValidity):
             )
 
             if new_row:
-                param["fcl_freight_rate_statistic_id"] = (
+                checkout_param["fcl_freight_rate_statistic_id"] = (
                     new_row["id"] if isinstance(new_row, dict) else new_row.id
                 )
                 self.increment_checkout_rate_stats(fcl_freight_validity, new_row)
