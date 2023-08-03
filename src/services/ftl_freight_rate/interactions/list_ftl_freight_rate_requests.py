@@ -87,24 +87,24 @@ def apply_relevant_supply_agent_filter(query, filters):
 
 def apply_supply_agent_id_filter(query, filters):
     expertises = get_organization_service_experties('ftl_freight', filters['supply_agent_id'])
-    origin_port_id = [t['origin_location_id'] for t in expertises]
-    destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((FtlFreightRateRequest.origin_port_id << origin_port_id) | (FtlFreightRateRequest.origin_country_id << origin_port_id) | (FtlFreightRateRequest.origin_continent_id << origin_port_id) | (FtlFreightRateRequest.origin_trade_id << origin_port_id))
-    query = query.where((FtlFreightRateRequest.destination_port_id << destination_port_id) | (FtlFreightRateRequest.destination_country_id << destination_port_id) | (FtlFreightRateRequest.destination_continent_id << destination_port_id) | (FtlFreightRateRequest.destination_trade_id << destination_port_id))
+    origin_location_id = [t['origin_location_id'] for t in expertises]
+    destination_location_id =  [t['destination_location_id'] for t in expertises]
+    query = query.where((FtlFreightRateRequest.origin_location_id << origin_location_id) | (FtlFreightRateRequest.origin_country_id << origin_location_id) | (FtlFreightRateRequest.origin_continent_id << origin_location_id) | (FtlFreightRateRequest.origin_trade_id << origin_location_id))
+    query = query.where((FtlFreightRateRequest.destination_location_id << destination_location_id) | (FtlFreightRateRequest.destination_country_id << destination_location_id) | (FtlFreightRateRequest.destination_continent_id << destination_location_id) | (FtlFreightRateRequest.destination_trade_id << destination_location_id))
     return query
 
 def apply_service_provider_id_filter(query, filters):
     expertises = get_organization_service_experties('ftl_freight', filters['service_provider_id'], account_type='organization')
-    origin_port_id = [t['origin_location_id'] for t in expertises]
-    destination_port_id =  [t['destination_location_id'] for t in expertises]
-    query = query.where((FtlFreightRateRequest.origin_port_id << origin_port_id) | (FtlFreightRateRequest.origin_country_id << origin_port_id) | (FtlFreightRateRequest.origin_continent_id << origin_port_id) | (FtlFreightRateRequest.origin_trade_id << origin_port_id))
-    query = query.where((FtlFreightRateRequest.destination_port_id << destination_port_id) | (FtlFreightRateRequest.destination_country_id << destination_port_id) | (FtlFreightRateRequest.destination_continent_id << destination_port_id) | (FtlFreightRateRequest.destination_trade_id << destination_port_id))
+    origin_location_id = [t['origin_location_id'] for t in expertises]
+    destination_location_id =  [t['destination_location_id'] for t in expertises]
+    query = query.where((FtlFreightRateRequest.origin_location_id << origin_location_id) | (FtlFreightRateRequest.origin_country_id << origin_location_id) | (FtlFreightRateRequest.origin_continent_id << origin_location_id) | (FtlFreightRateRequest.origin_trade_id << origin_location_id))
+    query = query.where((FtlFreightRateRequest.destination_location_id << destination_location_id) | (FtlFreightRateRequest.destination_country_id << destination_location_id) | (FtlFreightRateRequest.destination_continent_id << destination_location_id) | (FtlFreightRateRequest.destination_trade_id << destination_location_id))
     return query
 
 def apply_similar_id_filter(query,filters):
-    rate_request_obj = FtlFreightRateRequest.select().where(FtlFreightRateRequest.id == filters['similar_id']).dicts().get()
+    rate_request_obj = FtlFreightRateRequest.select(FtlFreightRateRequest.origin_location_id, FtlFreightRateRequest.destination_location_id, FtlFreightRateRequest.truck_type, FtlFreightRateRequest.commodity).where(FtlFreightRateRequest.id == filters['similar_id']).dicts().get()
     query = query.where(FtlFreightRateRequest.id != filters['similar_id'])
-    return query.where(FtlFreightRateRequest.origin_port_id == rate_request_obj['origin_port_id'], FtlFreightRateRequest.destination_port_id == rate_request_obj['destination_port_id'], FtlFreightRateRequest.container_size == rate_request_obj['container_size'], FtlFreightRateRequest.container_type == rate_request_obj['container_type'], FtlFreightRateRequest.commodity == rate_request_obj['commodity'], FtlFreightRateRequest.inco_term == rate_request_obj['inco_term'])
+    return query.where(FtlFreightRateRequest.origin_location_id == rate_request_obj['origin_location_id'], FtlFreightRateRequest.destination_location_id == rate_request_obj['destination_location_id'], FtlFreightRateRequest.truck_type == rate_request_obj['truck_type'], FtlFreightRateRequest.commodity == rate_request_obj['commodity'])
 
 def get_stats(filters, is_stats_required, performed_by_id):
     if not is_stats_required:
@@ -171,10 +171,10 @@ def get_data(query, spot_search_details_required):
     if spot_search_details_required:
         spot_search_ids = list(set([str(row['source_id']) for row in data]))
         try:
-            spot_search_data = spot_search.list_spot_searches({'filters':{'id': spot_search_ids}})['list']    
+            spot_search_data = spot_search.list_spot_searches({'filters':{'id': spot_search_ids}})['list']
         except:
             spot_search_data = []
-            
+
         for search in spot_search_data:
             spot_search_hash[search['id']] = {'id':search.get('id'), 'importer_exporter_id':search.get('importer_exporter_id'), 'importer_exporter':search.get('importer_exporter'), 'service_details':search.get('service_details')}
 
