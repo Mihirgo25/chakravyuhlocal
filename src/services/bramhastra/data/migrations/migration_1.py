@@ -1227,8 +1227,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 }).get("price", price)
                     
                 statistics_ids.append(str(statistics_obj.id))
+                statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate * statistics_obj.booking_rate_count + total_price)/ (statistics_obj.booking_rate_count + 1)
                 statistics_obj.booking_rate_count += 1
-                statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
                 statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
                 statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
                 statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
