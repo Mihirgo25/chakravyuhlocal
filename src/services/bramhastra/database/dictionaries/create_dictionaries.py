@@ -1,4 +1,4 @@
-from services.bramhastra.clickhouse.client import ClickHouse
+from services.bramhastra.client import ClickHouse
 from configs.env import *
 
 LIFETIME = 60

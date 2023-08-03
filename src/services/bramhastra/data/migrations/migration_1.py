@@ -865,18 +865,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             quotation_ids[1] = result[0]
                         cur.close()
 
-                    shipment_params = {
-                        'shipment_id': checkout_stats[6],
-                        'checkout_id': checkout_stats[2],
-                        'spot_search_id': checkout_stats[7],
-                        'checkout_fcl_freight_rate_services_id': checkout_stats[0],
-                        'buy_quotation_id': quotation_ids[0],
-                        'sell_quotation_id': quotation_ids[1],
-                        'rate_id':rate_id,
-                        'validity_id':validity_id,
-                    }
-                    self.populate_shipment_statistics(shipment_params)
-
                 except Exception as e:
                     print("! Exception occured while fetching shipment_quotations:", e)
 
@@ -1033,31 +1021,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             REGION_MAPPING = {}
             with urllib.request.urlopen(REGION_MAPPING_URL) as url:
                 REGION_MAPPING = json.loads(url.read().decode())
-
+                
+            count = 0
+            total_count = rate_stats.count()
+            row_data = []
             for rate_stat in rate_stats:
                 print("id", rate_stat.id)
-
-                origin_region_id = None
-                destination_region_id = None
-                locations_list = maps.list_locations(
-                    {
-                        "filters": {
-                            "id": [
-                                str(rate_stat.origin_port_id),
-                                str(rate_stat.destination_port_id),
-                            ]
-                        },
-                        "page_limit": 50,
-                    }
-                )
-                if "list" in locations_list:
-                    locations = locations_list["list"]
-                    for location in locations:
-                        if str(location["id"]) == str(rate_stat.origin_port_id):
-                            origin_region_id = location["region_id"]
-                        else:
-                            destination_region_id = location['region_id']
-                
+                count+= 1
                 importer_exporter_id = None
                 if "spot" in rate_stat.source:
                     try:
@@ -1121,8 +1091,12 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     'closed_by_id': rate_stat.closed_by_id,
                     'request_type': rate_stat.request_type,
                 }
-
-                FclFreightRateRequestStatistic.create(**params)
+                row_data.append(params)
+                
+                print(count)
+                if count == total_count or len(row_data) > BATCH_SIZE:
+                    FclFreightRateRequestStatistic.insert_many(row_data).execute()
+                    row_data = []
 
         except Exception as e:
             print("! Exception:", e)
@@ -1231,65 +1205,54 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         
         shipment_ids = [str(row['shipment_id']) for row in data]
         
-        # data = jsonable_encoder(self.get_shipment_service_fcl_freight_data_for_accuracy(exclude_shipment_ids=shipment_ids))
-        # query = FclFreightRateStatistic.select().where(FclFreightRateStatistic.id.not_in(statistics_ids))
+        data = jsonable_encoder(self.get_shipment_service_fcl_freight_data_for_accuracy(exclude_shipment_ids=shipment_ids))
+        query = FclFreightRateStatistic.select().where(FclFreightRateStatistic.id.not_in(statistics_ids))
         
-        # for row in data:
-        #     created_at =  datetime.strptime(row['created_at'], '%Y-%m-%d')
-        #     price = row['total_price']
-        #     currency= row['currency']
-        #     del row['created_at']
-        #     del row['currency']
-        #     del row['total_price']
+        for row in data:
+            created_at =  datetime.strptime(row['created_at'], '%Y-%m-%d')
+            price = row['total_price']
+            currency= row['currency']
+            del row['created_at']
+            del row['currency']
+            del row['total_price']
             
-        #     rate_query = query.where(**row)
-        #     rate_query = rate_query.where(FclFreightRateStatistic.validity_start >= created_at,FclFreightRateStatistic.validity_end <= created_at )
+            rate_query = query.where(**row)
+            rate_query = rate_query.where(FclFreightRateStatistic.validity_start >= created_at,FclFreightRateStatistic.validity_end <= created_at )
             
-        #     for statistics_obj in rate_query:
-        #         if not currency or currency == STANDARD_CURRENCY:
-        #             total_price = price 
-        #         else:
-        #             total_price = common.get_money_exchange_for_fcl(
-        #                         {
-        #                             "price": price ,
-        #                             "from_currency": currency,
-        #                             "to_currency": STANDARD_CURRENCY,
-        #                         }).get("price", price)
+            for statistics_obj in rate_query:
+                if not currency or currency == STANDARD_CURRENCY:
+                    total_price = price 
+                else:
+                    total_price = common.get_money_exchange_for_fcl(
+                                {
+                                    "price": price ,
+                                    "from_currency": currency,
+                                    "to_currency": STANDARD_CURRENCY,
+                                }).get("price", price)
                     
-        #         statistics_ids.append(str(statistics_obj.id))
-        #         statistics_obj.booking_rate_count += 1
-        #         statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
-        #         statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
-        #         statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
-        #         statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
-        #         statistics_obj.save()
+                statistics_ids.append(str(statistics_obj.id))
+                statistics_obj.booking_rate_count += 1
+                statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate + total_price)/ statistics_obj.booking_rate_count
+                statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
+                statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
+                statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
+                statistics_obj.save()
                 
             
-            
-            
-            
-            
-            
-        
-        
-        
-            
-        
-        
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    # populate_from_rates.populate_from_active_rates()
-    # populate_from_rates.populate_from_feedback()
-    # populate_from_rates.populate_from_spot_search_rates()
-    # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats()
-    # populate_from_rates.update_fcl_freight_rate_checkout_count() 
-    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic()
-    # populate_from_rates.populate_fcl_request_statistics()
-    populate_from_rates.populate_shipment_statistics()
-    populate_from_rates.update_accuracy()
-    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count()
-    # populate_from_rates.update_pricing_map_zone_ids()
+    populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
+    populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
+    populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
+    populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() # data from shipment_fcl_freight_services to main_statistics
+    populate_from_rates.update_fcl_freight_rate_checkout_count() # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
+    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() #like dislike count in main_statistics and populate feedback_statistics
+    populate_from_rates.populate_fcl_request_statistics() #populate request_fcl_statistics table
+    populate_from_rates.populate_shipment_statistics() #shipment_statistics data population
+    populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
+    populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() # populate SpotSearchFclFreightRateStatistic table and increase spot_search_count
+    populate_from_rates.update_pricing_map_zone_ids() # update map_zone_ids for main_statistics and missing_requests
 
 
 if __name__ == "__main__":

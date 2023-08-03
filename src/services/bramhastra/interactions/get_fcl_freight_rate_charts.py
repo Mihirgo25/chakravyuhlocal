@@ -1,4 +1,4 @@
-from services.bramhastra.clickhouse.client import ClickHouse
+from services.bramhastra.client import ClickHouse
 from fastapi.encoders import jsonable_encoder
 from services.bramhastra.helpers.fcl_freight_filter_helper import (
     get_direct_indirect_filters,
