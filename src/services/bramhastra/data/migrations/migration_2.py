@@ -21,7 +21,7 @@ BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
 REGION_MAPPING_URL = 'https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json'
 RATE_PARAMS = [ "commodity", "container_size","container_type", "destination_country_id", "destination_local_id", "destination_detention_id", "destination_main_port_id", "destination_port_id", "destination_trade_id", "origin_country_id", "origin_local_id", "origin_detention_id", "origin_demurrage_id", "destination_demurrage_id", "origin_main_port_id", "origin_port_id", "origin_trade_id", "service_provider_id", "shipping_line_id", "mode", "accuracy", "cogo_entity_id", "sourced_by_id", "procured_by_id"]
-
+STANDARD_WEIGHT_SLABS = []
 class MigrationHelpers:
 
     def get_chargeable_weight(self, weight, volume):
@@ -45,6 +45,12 @@ class MigrationHelpers:
         )
         return freight
     
+    def get_weight_slabs_from_chargeable_weight(self, chargeable_weight):
+        for item in STANDARD_WEIGHT_SLABS:
+            if item['lower_limit'] <= chargeable_weight <= item['upper_limit']:
+                return item['lower_limit'], item['upper_limit']
+        return STANDARD_WEIGHT_SLABS[-1]['lower_limit'], STANDARD_WEIGHT_SLABS[-1]['upper_limit']
+
     def find_statistics_object_by_wav(self, rate_id, validity_id, weight, volume):
         chargeable_weight = self.get_chargeable_weight(weight, volume)
         return self.find_statistics_object(rate_id, validity_id, chargeable_weight)
