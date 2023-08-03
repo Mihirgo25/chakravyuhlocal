@@ -21,10 +21,8 @@ from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
-from services.bramhastra.clickhouse.client import (
+from services.bramhastra.client import (
     ClickHouse,
-    json_encoder_for_clickhouse,
-    get_clickhouse_rows_with_column_names,
 )
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
@@ -34,7 +32,7 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 class Connection:
     def __init__(self) -> None:
         self.rails_db = get_connection()
-        self.clickhouse_client = ClickHouse().client
+        self.clickhouse_client = ClickHouse()
 
 
 class FclFreightValidity(Connection):
@@ -79,8 +77,7 @@ class FclFreightValidity(Connection):
             f"SELECT * FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE identifier = %(identifier)s and sign = %(sign)s",
             parameters,
         ):
-            if rows := get_clickhouse_rows_with_column_names(row):
-                return rows[0]
+            return row[0]
 
     def get_clickhouse_statistics_rows_by_rate_id(self) -> dict:
         parameters = {
@@ -90,7 +87,7 @@ class FclFreightValidity(Connection):
             f"SELECT * FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE rate_id = %(identifier)s",
             parameters,
         ):
-            return get_clickhouse_rows_with_column_names(row)
+            return row[0]
 
     def get_postgres_statistics_rows_by_rate_id(self, sign=1, version=None) -> Model:
         fcl_freight_rate_statistic_query = FclFreightRateStatistic.select().where(
@@ -138,6 +135,7 @@ class FclFreightValidity(Connection):
 
             if new_params:
                 new_params["id"] = row["id"]
+                new_params["version"] = row["version"]
                 self.create_stats(new_params)
 
 
@@ -166,7 +164,6 @@ class Rate:
                 validity_id=self.params[0]["validity_id"],
             )
         for i, new_row in enumerate(self.params):
-            # we dont want to run this in async so we just make one connection for one rate
             if i:
                 fcl_freight_validity.set_identifier_details(
                     rate_id=new_row["rate_id"],
@@ -191,25 +188,16 @@ class Rate:
             else self.freight.destination_main_port_id
         )
 
-        (
-            self.origin_pricing_zone_map_id,
-            self.destination_pricing_zone_map_id,
-        ) = self.get_pricing_map_zone_ids(self.origin_port_id, self.destination_port_id)
-        origin, destination = self.get_missing_location_ids(
-            self.origin_port_id, self.destination_port_id
-        )
+        self.set_pricing_map_zone_ids()
 
-        self.origin_region_id = origin.get("region_id")
-        self.destination_region_id = destination.get("region_id")
-        self.origin_continent_id = origin.get("continent_id")
-        self.destination_continent_id = destination.get("continent_id")
+        self.set_missing_location_ids()
 
     def set_formatted_data(self) -> None:
         freight = self.freight.dict(exclude={"validities"})
 
         for validity in self.freight.validities:
             param = freight.copy()
-            param.update(validity.dict())
+            param.update(validity.dict(exclude={"line_items"}))
             param["identifier"] = "_".join(
                 [
                     param["rate_id"],
@@ -226,30 +214,43 @@ class Rate:
             param["destination_continent_id"] = self.destination_continent_id
             self.params.append(param)
 
-    def get_pricing_map_zone_ids(self, origin_port_id, destination_port_id) -> list:
+    def set_pricing_map_zone_ids(self) -> list:
+        ids = [self.origin_port_id, self.destination_port_id]
         query = (
             FclFreightLocationCluster.select(
                 FclFreightLocationClusterMapping.location_id,
                 FclFreightLocationCluster.map_zone_id,
             )
             .join(FclFreightLocationClusterMapping)
-            .where(
-                FclFreightLocationClusterMapping.location_id.in_(
-                    [origin_port_id, destination_port_id]
-                )
-            )
+            .where(FclFreightLocationClusterMapping.location_id.in_(ids))
         )
         map_zone_location_mapping = jsonable_encoder(
             {item["location_id"]: item["map_zone_id"] for item in query.dicts()}
         )
-        return map_zone_location_mapping.get(
-            origin_port_id
-        ), map_zone_location_mapping.get(destination_port_id)
 
-    def get_missing_location_ids(self, origin_port_id, destination_port_id):
+        if len(map_zone_location_mapping) < 2:
+            query = FclFreightLocationCluster.select(
+                FclFreightLocationCluster.base_port_id.alias("location_id"),
+                FclFreightLocationCluster.map_zone_id,
+            ).where(FclFreightLocationCluster.base_port_id.in_(ids))
+            map_zone_location_mapping.update(
+                jsonable_encoder(
+                    {item["location_id"]: item["map_zone_id"] for item in query.dicts()}
+                )
+            )
+
+        self.origin_pricing_zone_map_id = map_zone_location_mapping.get(
+            self.origin_port_id
+        )
+
+        self.destination_pricing_zone_map_id = map_zone_location_mapping.get(
+            self.destination_port_id
+        )
+
+    def set_missing_location_ids(self):
         response = maps.list_locations(
             data={
-                "filters": {"id": [origin_port_id, destination_port_id]},
+                "filters": {"id": [self.origin_port_id, self.destination_port_id]},
                 "includes": {"continent_id": True, "region_id": True, "id": True},
             }
         )
@@ -260,10 +261,15 @@ class Rate:
                 )
                 for item in response["list"]
             }
-            return region_id_mapping.get(origin_port_id), region_id_mapping.get(
-                destination_port_id
-            )
-        return None, None
+            origin = region_id_mapping.get(self.origin_port_id)
+
+            destination = region_id_mapping.get(self.destination_port_id)
+
+            self.origin_region_id = origin.get("region_id")
+            self.destination_region_id = destination.get("region_id")
+
+            self.origin_continent_id = origin.get("continent_id")
+            self.destination_continent_id = origin.get("continent_id")
 
 
 class SpotSearch:
@@ -377,8 +383,7 @@ class Feedback:
             "SELECT * FROM brahmastra.%(table)s WHERE identifier = %(identifier)s} and sign = %(sign)s",
             parameters,
         ):
-            if rows := get_clickhouse_rows_with_column_names(row):
-                return rows[0]
+            return row[0]
 
     def increment_feeback_rate_stats(self, fcl_freight_validity, row):
         if isinstance(row, Model):
