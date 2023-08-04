@@ -58,6 +58,8 @@ from services.chakravyuh.setters.fcl_freight import FclFreightVyuh as FclFreight
 from services.chakravyuh.setters.fcl_booking_invoice import FclBookingVyuh as FclBookingVyuhSetters
 from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreightVyuhSetter
 
+# Brahmastra
+from services.bramhastra.brahmastra import Brahmastra
 # Monitoring
 
 CELERY_CONFIG = {
@@ -138,6 +140,11 @@ celery.conf.beat_schedule = {
     'adjust_air_freight_rate_airline_factors':{
         'task': 'celery_worker.air_freight_rate_factors_in_delay',
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
+        'options': {'queue': 'low'}
+    },
+    'arjun_in_delay':{
+        'task': 'celery_worker.arjun_in_delay',
+        'schedule': crontab(hour='*/2'),
         'options': {'queue': 'low'}
     }
 
@@ -816,3 +823,14 @@ def air_freight_airline_factors_in_delay(self):
             pass
         else:
             raise self.retry(exc= exc) 
+
+@celery.task(bind=True,retry_backoff=True,max_retries=5)
+def arjun_in_delay(self):
+    try:
+        brahmastra=Brahmastra()
+        brahmastra.use(True)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

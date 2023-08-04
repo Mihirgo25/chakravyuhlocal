@@ -211,7 +211,7 @@ def create_fcl_freight_rate(request):
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
         
-    send_freight_rate_stats(action,freight)
+    send_freight_rate_stats(action,request,freight)
 
     return {"id": freight.id}
 
@@ -301,13 +301,13 @@ def validate_value_props(v_props):
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
 
-def send_freight_rate_stats(action,freight):
+def send_freight_rate_stats(action,request,freight):
     from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
         apply_fcl_freight_rate_statistic,
     )
     from  services.bramhastra.request_params import ApplyFclFreightRateStatistic
 
-    freight = model_to_dict(
+    params = jsonable_encoder(model_to_dict(
         freight,
         only=[
             FclFreightRate.id,
@@ -344,5 +344,10 @@ def send_freight_rate_stats(action,freight):
             FclFreightRate.created_at,
             FclFreightRate.updated_at,
         ],
-    )
-    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,create_params=jsonable_encoder({'freight': freight})))
+    ))
+    
+    for k,v in request.items():
+        if k in {'source_id','source'}:
+            params[k] = v
+    
+    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params={'freight': params}))

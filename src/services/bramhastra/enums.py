@@ -24,6 +24,11 @@ class CheckoutAction(Bramhastra):
     create = 'create'
     update = 'update'
     
+class RequestAction(Bramhastra):
+    create = 'create'
+    update = 'update'
+    delete = 'delete'
+    
 class RedisKeys(Bramhastra):
     fcl_freight_rate_all_time_accuracy_chart = 'fcl_freight_rate_all_time_accuracy_chart'
 

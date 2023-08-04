@@ -102,6 +102,7 @@ class FclFreightRateStatistic(BaseModel):
     average_booking_rate = FloatField(default=-1)
     booking_rate_count = FloatField(default=0)
     parent_rate_id = UUIDField(null=True)
+    parent_validity_id = UUIDField(null=True)
     source = CharField(null=True)
     source_id = UUIDField(null=True)
 

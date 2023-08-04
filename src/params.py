@@ -80,6 +80,7 @@ class PostFclFreightRate(BaseModel):
     cogo_entity_id: str = None
     mode: str = None
     source: str = "rms_upload"
+    source_id: str = None
     is_extended: bool = None
     rate_not_available_entry: bool = False
     rate_type: str = "market_place"

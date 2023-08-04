@@ -70,6 +70,8 @@ class AirFreightRateStatistic(BaseModel):
     shipment_flight_departed_count = IntegerField(default=0)
     shipment_cargo_handed_over_at_destination_count = IntegerField(default=0)
     shipment_cargo_handed_over_at_origin_count = IntegerField(default=0)
+    shipment_in_progress_count = IntegerField(default=0)
+    shipment_recieved_count = IntegerField(default=0)
     created_at = DateTimeTZField(default = datetime.utcnow())
     updated_at = DateTimeTZField(default = datetime.utcnow())
     validity_id = UUIDField()
