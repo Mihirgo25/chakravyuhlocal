@@ -3,8 +3,8 @@ from database.db_session import db
 from services.fcl_cfs_rate.models.fcl_cfs_rate_request import FclCfsRateRequest
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
-from celery_worker import send_notifications_to_supply_agents_cfs_request_delay, update_multiple_service_objects
-
+from celery_worker import send_notifications_to_supply_agents_cfs_request_delay
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_fcl_cfs_rate_request(request):
     with db.atomic():
@@ -42,7 +42,7 @@ def execute_transaction_code(request):
 
 
     create_audit_for_cfs_request(request, cfs_request.id)
-    update_multiple_service_objects.apply_async(kwargs={'object':cfs_request},queue = 'low')
+    get_multiple_service_objects(cfs_request)
     send_notifications_to_supply_agents_cfs_request_delay.apply_async(kwargs={'object':cfs_request}, queue = 'low')
 
     return {'id': cfs_request.id}

@@ -65,6 +65,8 @@ class AirFreightRateValidity(BaseModel):
         lower_limits = []
         upper_limits = []
         check = False
+        self.weight_slabs = sorted(self.weight_slabs, key=lambda x: x.lower_limit)
+
         for slab in self.weight_slabs:
             if float(slab.upper_limit) <= float(slab.lower_limit):
                 check = True

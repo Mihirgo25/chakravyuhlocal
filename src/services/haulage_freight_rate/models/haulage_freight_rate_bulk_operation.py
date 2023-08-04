@@ -29,8 +29,8 @@ class HaulageFreightRateBulkOperation(BaseModel):
     action_name = TextField(index = True, null=True)
     progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
     data = BinaryJSONField(null=True)
-    performed_by_id = UUIDField(null=True, index=True)
-    service_provider_id = UUIDField(index=True, null=True)
+    performed_by_id = UUIDField(index=True)
+    service_provider_id = UUIDField(null=True)
     updated_at = DateTimeField(default=datetime.now())
     created_at = DateTimeField(default=datetime.now())
 
