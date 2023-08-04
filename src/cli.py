@@ -52,7 +52,7 @@ def shell(ipython_args):
     )
     config.InteractiveShellApp.exec_lines = EXEC_LINES
     config.InteractiveShellApp.exec_files = EXEC_FILES
-    config.InteractiveShell.pdb = True
+    # config.InteractiveShell.pdb = True
     config.InteractiveShell.debug = True
     user_ns = {"database": db}
     with db.connection_context():

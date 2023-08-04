@@ -50,6 +50,8 @@ class FclFreight(BaseModel):
     shipping_line_id: str
     mode: str
     accuracy: float
+    source: str
+    source_id: str
     cogo_entity_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
@@ -66,18 +68,13 @@ class FclFreight(BaseModel):
         return v
 
 
-class CreateFclFreightRateStatistic(BaseModel):
+class FclFreightRateStatistic(BaseModel):
     freight: FclFreight
-
-
-class UpdateFclFreightRateStatistic(BaseModel):
-    pass
 
 
 class ApplyFclFreightRateStatistic(BaseModel):
     action: str
-    create_params: CreateFclFreightRateStatistic = None
-    update_params: UpdateFclFreightRateStatistic = None
+    params: FclFreightRateStatistic = None
 
 
 # Apply Spot Search Fcl Freight Statistics
