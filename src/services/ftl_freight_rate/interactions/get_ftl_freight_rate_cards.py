@@ -48,7 +48,8 @@ def get_ftl_freight_rate_cards(request):
     if request.get('include_additional_response_data'):
         rate_list = additional_response_data(rate_list)
 
-    rate_list = remove_unnecessary_fields(rate_list)
+    if request.get('predicted_rate') is True:
+        rate_list = remove_unnecessary_fields(rate_list)
 
     return {'list': rate_list }
 
@@ -57,7 +58,7 @@ def get_ftl_freight_rate_cards(request):
 def initialize_query(query,request):
 
     filters = {'commodity': request.get('commodity'),'trip_type': request.get('trip_type'),'rate_not_available_entry': False, 'is_line_items_error_messages_present': False, 'truck_type': request.get('truck_type')}
-    
+
     for key in filters.keys():
         if filters.get(key) is not None:
             query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
@@ -148,8 +149,8 @@ def build_response_object(result,request):
       'detention_free_time': result.get('detention_free_time'),
       'validity_start': result.get('validity_start'),
       'validity_end': result.get('validity_end'),
-      'service_provider': request.get('service_provider'),
-      'source_by': request.get('source_by'),
+      'service_provider': result.get('service_provider'),
+      'sourced_by': result.get('sourced_by'),
       'created_at':result.get('created_at'),
       'updated_at':result.get('updated_at')
     }
@@ -240,7 +241,7 @@ def ignore_non_eligible_service_providers(request,rate_list):
         'commodity': request.get('commodity'),
         'weight': request.get('weight'),
         }
-        response = get_ftl_freight_rate_estimation(rate_estimation_params)        
+        response = get_ftl_freight_rate_estimation(rate_estimation_params)
     if response is not None:
         request['predicted_rate'] = False
         final_list  = get_ftl_freight_rate_cards(request)['list']
@@ -249,7 +250,7 @@ def ignore_non_eligible_service_providers(request,rate_list):
 def additional_response_data(list_of_data):
     for data in list_of_data:
 
-        data['last_updated_at'] = data['updated_at']
+        data['last_updated_at'] = data.get('updated_at')
         data['buy_rate_currency'] = 'INR'
         data['buy_rate'] = get_buy_rate(data['line_items'])
 
@@ -258,7 +259,7 @@ def additional_response_data(list_of_data):
         user = data.get('sourced_by')
         if user is not None:
             data['user_name'] = user.get('name')
-            data['user_contact'] = user.get('mobile_number')
+            data['user_contact'] = user.get('mobile_number') or user.get('mobile_number_eformat')
 
     return list_of_data
 
