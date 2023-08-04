@@ -55,6 +55,7 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from micro_services.client import maps
 from database.db_session import db
+import uuid
 
 BATCH_SIZE = 1000
 REGION_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json"
@@ -1036,7 +1037,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             total_count = rate_stats.count()
             row_data = []
             for rate_stat in rate_stats:
-                print("id", rate_stat.id)
+                # print("id", rate_stat.id)
                 count+= 1
                 importer_exporter_id = None
                 if "spot" in rate_stat.source:
@@ -1051,10 +1052,30 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         print("!Exception", e)
 
                 validity_ids = None
-                rate_id = None
+                # rate_id = None
                 if (rate_stat.status=='inactive') and rate_stat.closing_remarks and ('rate_added' in rate_stat.closing_remarks):
                     try:
-                        sql = "with main_table as ( with outer_cte as ( with cte as (  SELECT updated_at FROM fcl_freight_rate_audits where object_id = %s and data @> %s ) SELECT object_id FROM fcl_freight_rate_audits,cte WHERE object_type= %s and source = %s and CAST(created_at AS timestamp) <= CAST(cte.updated_at AS timestamp) ORDER BY created_at DESC limit 5 ) Select * from fcl_freight_rates_temp  where id in (select object_id from outer_cte) and origin_port_id = %s and destination_port_id = %s and commodity = %s  and container_type = %s and container_size= %s order by created_at limit 1 ) Select validities, id from main_table "
+                        sql = '''
+                            with main_table as ( 
+                                with outer_cte as ( 
+                                    with cte as (  
+                                        SELECT updated_at FROM fcl_freight_rate_audits 
+                                            WHERE object_id = %s AND data @> %s 
+                                    ) SELECT object_id FROM fcl_freight_rate_audits,cte 
+                                        WHERE object_type= %s and source = %s 
+                                        AND CAST(created_at AS timestamp) BETWEEN CAST(cte.updated_at AS timestamp) - INTERVAL '60 SECONDS'
+                                        AND CAST(cte.updated_at AS timestamp) 
+                                        ORDER BY created_at DESC limit 5 
+                                ) Select * from fcl_freight_rates_temp  
+                                    where id in (select object_id from outer_cte) 
+                                    and origin_port_id = %s 
+                                    and destination_port_id = %s 
+                                    and commodity = %s  
+                                    and container_type = %s 
+                                    and container_size= %s 
+                                    order by created_at limit 1 
+                            ) Select validities, id from main_table 
+                        '''
                         cursor = db.execute_sql(sql, (
                             rate_stat.id,
                             '{"closing_remarks": ["rate_added"]}',
@@ -1067,12 +1088,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             rate_stat.container_size,
                         ))
                         result = cursor.fetchone()
-                        rate_id = result[1]
-                        if result:
-                            validity_ids = [item["id"] for item in result[0]]
+                        # rate_id = result[1]
+                        if result and result[0]:
+                            breakpoint()
+                            validity_ids = [uuid.UUID(item["id"]) for item in result[0]]
 
                     except Exception as e:
-                        print("!Exception", e)
+                        print("! Exception:", e)
 
                 params = {
                     'origin_port_id':rate_stat.origin_port_id,
@@ -1103,13 +1125,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 }
                 row_data.append(params)
                 
-                print(count)
+                print(count, len(row_data))
                 if count == total_count or len(row_data) > BATCH_SIZE:
                     FclFreightRateRequestStatistic.insert_many(row_data).execute()
                     row_data = []
 
         except Exception as e:
-            print("! Exception:", e)
+            print("!! Exception:", e)
 
     def populate_shipment_statistics(self):
         try:
@@ -1248,13 +1270,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
+    # populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
     # populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
     # populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
     # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() # data from shipment_fcl_freight_services to main_statistics
     # populate_from_rates.update_fcl_freight_rate_checkout_count() # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
     # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() #like dislike count in main_statistics and populate feedback_statistics
-    # populate_from_rates.populate_fcl_request_statistics() #populate request_fcl_statistics table
+    populate_from_rates.populate_fcl_request_statistics() #populate request_fcl_statistics table
     # populate_from_rates.populate_shipment_statistics() #shipment_statistics data population
     # populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() # populate SpotSearchFclFreightRateStatistic table and increase spot_search_count
