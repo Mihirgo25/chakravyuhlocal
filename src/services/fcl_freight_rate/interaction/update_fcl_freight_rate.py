@@ -29,7 +29,8 @@ def create_audit(request, freight_id):
         data = audit_data,
         object_id = freight_id,
         object_type = 'FclFreightRate',
-        source = request.get("source")
+        source = request.get("source"),
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
 
 def update_fcl_freight_rate_data(request):

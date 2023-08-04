@@ -52,7 +52,8 @@ def create_audit_for_updating_rate(request, rate_object):
       bulk_operation_id =  request.get('bulk_operation_id'),
       object_id = rate_object.id,
       object_type = 'FclCustomsRate',
-      data = data
+      data = data,
+      performed_by_type = request.get("performed_by_type") or "agent"
     )
 
 def get_update_params(request):

@@ -81,5 +81,6 @@ def create_audit(request, customs_rate_id):
     action_name = 'create',
     performed_by_id = request.get('performed_by_id'),
     rate_sheet_id = request.get('rate_sheet_id'),
-    data = audit_data
+    data = audit_data,
+    performed_by_type = request.get("performed_by_type") or "agent"
   )

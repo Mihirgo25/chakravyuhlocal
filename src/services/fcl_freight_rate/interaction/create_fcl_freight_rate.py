@@ -60,7 +60,8 @@ def create_audit(request, freight_id):
         object_id=freight_id,
         object_type="FclFreightRate",
         source=request.get("source"),
-        extended_from_object_id=request.get('extended_from_object_id')
+        extended_from_object_id=request.get('extended_from_object_id'),
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
     return id
 

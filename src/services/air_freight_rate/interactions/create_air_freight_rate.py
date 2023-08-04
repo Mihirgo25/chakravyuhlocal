@@ -31,7 +31,8 @@ def create_audit(request, freight_id,validity_id):
         object_id=freight_id,
         object_type="AirFreightRate",
         source=request.get("source"),
-        validity_id=validity_id
+        validity_id=validity_id,
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
     return id
 
