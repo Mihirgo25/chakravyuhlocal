@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 # from services.haulage_freight_rate.datamigrations.inserting_rule_set_data import insert, insert_china
 # from libs.migration import fcl_freight_migration, create_partition_table, fcl_local_migration,free_day
-# from database.db_migration import run_migration
+from database.db_migration import run_migration
 from services.fcl_freight_rate.fcl_freight_router import fcl_freight_router
 from services.chakravyuh.chakravyuh_router import chakravyuh_router
 from services.nandi.nandi_router import nandi_router
