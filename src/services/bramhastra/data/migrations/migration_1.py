@@ -226,7 +226,7 @@ class MigrationHelpers:
 
                         result = cur.fetchall()
                         for res in result:
-                            all_result.append(res)
+                            all_result.append(res[0])
                     cur.close()
             newconnection.close()
             return all_result
@@ -396,23 +396,42 @@ class MigrationHelpers:
             print("Error from railsDb", e)
             return all_result
         
-    def get_imp_ext_id_from_spot_search_rates(self, source_id):
-        newconnection = get_connection()
-        with newconnection:
-            with newconnection.cursor() as cursor:
-                sql = "SELECT importer_exporter_id AS imp_ext_id FROM spot_searches WHERE id = %s"
-                cursor.execute(sql, (source_id,))
-                result = cursor.fetchone()
-        return result
+    def get_imp_exp_id_mapping_from_spot_searches(self, source_ids):
+        all_results = {}
+        try:
+            newconnection = get_connection()
+            with newconnection:
+                with newconnection.cursor() as cursor:
+                    source_ids = tuple(source_ids)
+                    sql = "SELECT id, importer_exporter_id AS imp_ext_id FROM spot_searches WHERE id in %s"
+                    cursor.execute(sql, (source_ids,))
+                    result = cursor.fetchall()
+                    for res in result:
+                        all_results[res[0]] = res[1]
+                    cursor.close()
+            newconnection.close()
+        except Exception as e:
+            print("Error from railsDb", e)
+            return all_results
+                
 
-    def get_imp_ext_id_from_checkouts_rates(self, source_id):
-        newconnection = get_connection()
-        with newconnection:
-            with newconnection.cursor() as cursor:
-                sql = "SELECT importer_exporter_id AS imp_ext_id FROM checkouts WHERE id = %s"
-                cursor.execute(sql, (source_id,))
-                result = cursor.fetchone()
-        return result
+    def get_imp_exp_id_mapping_from_checkouts(self, source_ids):
+        all_results = {}
+        try:
+            newconnection = get_connection()
+            with newconnection:
+                with newconnection.cursor() as cursor:
+                    source_ids = tuple(source_ids)
+                    sql = "SELECT id, importer_exporter_id AS imp_ext_id FROM checkouts WHERE id = %s"
+                    cursor.execute(sql, (source_ids))
+                    result = cursor.fetchall()
+                    for res in result:
+                        all_results[res[0]] = res[1]
+                    cursor.close()
+            newconnection.close()
+        except Exception as e:
+            print("Error from railsDb", e)
+            return all_results
 
 
 class PopulateFclFreightRateStatistics(MigrationHelpers):
@@ -501,6 +520,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         for feedback in feedbacks:
             count += 1
             print(count)
+            if(count < 13124):
+                continue
 
             rate_card = feedback["booking_params"]["rate_card"]
             identifier = self.get_identifier(rate_card["rate_id"], rate_card["validity_id"])
@@ -598,23 +619,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 else:
                     print("Saved ...", statistics_obj.id)
 
-                if (
-                    feedback["source"] == "spot_rates"
-                    or feedback["source"] == "spot_search"
-                    or feedback["source"] == "spot_booking"
-                ):
-                    imp_exp_id = self.get_imp_ext_id_from_spot_search_rates(
-                        feedback["source_id"]
-                    )
-                elif feedback["source"] == "checkout":
-                    imp_exp_id = self.get_imp_ext_id_from_checkouts_rates(
-                        feedback["source_id"]
-                    )
-                elif (
-                    feedback["source"] == "promotional"
-                    or feedback["source"] == "predicted"
-                ):
-                    imp_exp_id = None
                 row = {
                     "fcl_freight_rate_statistic_id": statistics_obj.id,
                     "feedback_id": feedback.get("id"),
@@ -626,13 +630,20 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     "performed_by_org_id": feedback.get("performed_by_org_id"),
                     "created_at": feedback.get("created_at"),
                     "updated_at": feedback.get("updated_at"),
-                    "importer_exporter_id": imp_exp_id,
                     "service_provider_id": feedback.get("service_provider_id"),
                     "feedback_type": feedback.get("feedback_type"),
                     "closed_by_id": feedback.get("closed_by_id"),
                     "serial_id": feedback.get("serial_id"),
                 }
                 row_data.append(row)
+        spot_search_ids = [row['source_id'] for row in row_data if "spot" in row['source']]
+        imp_exp_mapping = self.get_imp_exp_id_mapping_from_spot_searches(spot_search_ids)
+        checkout_ids = [row['source_id'] for row in row_data if row['source'] == 'checkout']
+        imp_exp_mapping.update(self.get_imp_exp_id_mapping_from_checkouts(checkout_ids))
+        
+        for row in row_data:
+            row['importer_exporter_id'] = imp_exp_mapping.get(row['source_id'], None)
+            
         FeedbackFclFreightRateStatistic.insert_many(row_data).execute()
     
                 
@@ -644,25 +655,33 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
         offset = 0
         count = 0
+        print(total_count,'total rates...')
         while offset < total_count:
             row_data = []
             rate_cards = self.get_spot_search_rates(offset=offset, limit=BATCH_SIZE)
+            identifier_ar = [self.get_identifier(rate_card["rate_id"], rate_card["validity_id"]) for rate_card in rate_cards]
             offset += BATCH_SIZE
+            query = FclFreightRateStatistic.select(FclFreightRateStatistic.identifier).where(FclFreightRateStatistic.identifier.in_(identifier_ar))
+            identifier_ar = [row['identifier'] for row in  list(query.dicts())]
+            
+            rate_ids = [row['rate_id'] for row in rate_cards]
+            fcl_freight_rates = FclFreightRate.select().where(FclFreightRate.id.in_(rate_ids))
+            
+            fcl_freight_rates = jsonable_encoder({row['id']: row for row in list(fcl_freight_rates.dicts())})
 
             for rate_card in rate_cards:
                 identifier = self.get_identifier(
                     rate_card["rate_id"], rate_card["validity_id"]
                 )
-                statistics_obj = self.find_statistics_object(identifier)
 
-                if statistics_obj:
+                if identifier in identifier_ar:
                     continue
 
-                rate = self.find_rate_object(rate_card["rate_id"])
+                rate = fcl_freight_rates.get(rate_card["rate_id"])
 
                 if not rate:
                     continue
-
+                
                 rate = model_to_dict(rate)
 
                 rate_params = {key: rate.get(key) for key in RATE_PARAMS}
@@ -685,10 +704,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     "market_price": rate_card.get("market_price")
                     or validity_params.get("price"),
                 }
+                
                 count += 1
-                row_data.append(row)
                 print(count)
+                row_data.append(row)
             FclFreightRateStatistic.insert_many(row_data).execute()
+            
+            print('offset->', offset,'\ncount->', count)
 
     def stem_words_using_nltk(self, sentence):
         words = word_tokenize(sentence)
@@ -1037,7 +1059,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             total_count = rate_stats.count()
             row_data = []
             for rate_stat in rate_stats:
-                # print("id", rate_stat.id)
                 count+= 1
                 importer_exporter_id = None
                 if "spot" in rate_stat.source:
@@ -1052,7 +1073,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         print("!Exception", e)
 
                 validity_ids = None
-                # rate_id = None
                 if (rate_stat.status=='inactive') and rate_stat.closing_remarks and ('rate_added' in rate_stat.closing_remarks):
                     try:
                         sql = '''
@@ -1088,7 +1108,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             rate_stat.container_size,
                         ))
                         result = cursor.fetchone()
-                        # rate_id = result[1]
                         if result and result[0]:
                             breakpoint()
                             validity_ids = [uuid.UUID(item["id"]) for item in result[0]]
@@ -1329,18 +1348,30 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
-    populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
-    populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
-    populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() # data from shipment_fcl_freight_services to main_statistics
-    populate_from_rates.update_fcl_freight_rate_checkout_count() # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
-    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() #like dislike count in main_statistics and populate feedback_statistics
-    populate_from_rates.populate_fcl_request_statistics() #populate request_fcl_statistics table
-    populate_from_rates.populate_shipment_statistics() #shipment_statistics data population
-    populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
-    populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() # populate SpotSearchFclFreightRateStatistic table and increase spot_search_count
-    populate_from_rates.update_pricing_map_zone_ids() # update map_zone_ids for main_statistics and missing_requests
-    populate_from_rates.update_parent_rates() #update parent_rate_id and validity_id for reverted rates from feedback
+    print('# active rates from rms to main_statistics')
+    # populate_from_rates.populate_from_active_rates() 
+    print('# old rates from data in feedbacks to main_statistics')
+    # populate_from_rates.populate_from_feedback() 
+    print('# old rates from spot_search_rates to main_statistics')
+    populate_from_rates.populate_from_spot_search_rates() 
+    print('# data from shipment_fcl_freight_services to main_statistics')
+    # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() 
+    # print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
+    # populate_from_rates.update_fcl_freight_rate_checkout_count() 
+    # print('#like dislike count in main_statistics and populate feedback_statistics')
+    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
+    # print('#populate request_fcl_statistics table')
+    # populate_from_rates.populate_fcl_request_statistics() 
+    # print('#shipment_statistics data population')
+    # populate_from_rates.populate_shipment_statistics() 
+    # print('# update accuracy, deviation from shipment_buy_quotation')
+    populate_from_rates.update_accuracy() 
+    # print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
+    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
+    # print('# update map_zone_ids for main_statistics and missing_requests')
+    # populate_from_rates.update_pricing_map_zone_ids() 
+    # print('#update parent_rate_id and validity_id for reverted rates from feedback')
+    # populate_from_rates.update_parent_rates() 
 
 
 if __name__ == "__main__":

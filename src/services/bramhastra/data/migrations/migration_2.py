@@ -185,17 +185,14 @@ class MigrationHelpers:
                     source_ids = tuple(source_ids)
                     sql = 'SELECT importer_exporter_id AS imp_ext_id, id as source_id FROM spot_searches WHERE id in %s'
                     cursor.execute(sql, (source_ids,))
-                    result = cursor.fetchall()
-                    result = {row[1]: row[0] for row in result}
-                    print(result)
+                    result = cursor.fetchone()
                     cursor.close()
             newconnection.close()
+            return result
         except Exception as e:
             print('Error from railsDB',e)
             return result    
-                
-        return result  
-    
+                    
     def get_imp_ext_id_from_checkouts_rates(self, source_id):
         newconnection = get_connection()
         with newconnection:
