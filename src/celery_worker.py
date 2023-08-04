@@ -612,8 +612,6 @@ def update_fcl_cfs_rate_platform_prices_delay(self, request):
 def fcl_customs_functions_delay(self,fcl_customs_object,request):
     try:
         update_organization_fcl_customs(request)
-        get_multiple_service_objects(fcl_customs_object)
-
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -624,7 +622,6 @@ def fcl_customs_functions_delay(self,fcl_customs_object,request):
 def fcl_cfs_functions_delay(self,fcl_cfs_object,request):
     try:
         update_organization_fcl_cfs(request)
-        get_multiple_service_objects(fcl_cfs_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
