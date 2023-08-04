@@ -4,6 +4,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from database.db_session import db
 from datetime import datetime
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+
 def create_audit(request, freight_id):
     validity_start = request.get('validity_start')
     validity_end = request.get('validity_end')
@@ -27,7 +29,8 @@ def create_audit(request, freight_id):
         data = audit_data,
         object_id = freight_id,
         object_type = 'FclFreightRate',
-        source = request.get("source")
+        source = request.get("source"),
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
 
 def update_fcl_freight_rate_data(request):
@@ -111,8 +114,8 @@ def execute_transaction_code(request):
   freight_object.update_platform_prices_for_other_service_providers()
 
   freight_object.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
-
-  update_multiple_service_objects.apply_async(kwargs={'object':freight_object},queue='critical')
+  
+  get_multiple_service_objects(freight_object, is_new_rate=False)
 
   create_audit(request, freight_object.id)
 

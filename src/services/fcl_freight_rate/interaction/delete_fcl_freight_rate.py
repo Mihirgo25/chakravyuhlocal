@@ -57,7 +57,8 @@ def create_audit(request, freight_id):
         performed_by_id = request['performed_by_id'],
         data = audit_data,
         object_id = freight_id,
-        object_type = 'FclFreightRate'
+        object_type = 'FclFreightRate',
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
 
 def find_object(request):

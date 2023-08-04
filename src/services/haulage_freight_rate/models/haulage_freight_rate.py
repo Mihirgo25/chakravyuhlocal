@@ -66,8 +66,8 @@ class HaulageFreightRate(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     source = TextField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
-    sourced_by_id = UUIDField(null=True)
-    procured_by_id = UUIDField(null=True)
+    sourced_by_id = UUIDField(null=True, index=True)
+    procured_by_id = UUIDField(null=True, index=True)
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     rate_type = TextField(default='market_place', choices = RATE_TYPES, index=True)
@@ -456,4 +456,4 @@ class HaulageFreightRate(BaseModel):
         slabs = self.line_items[0].get('slabs') or []
         for index, slab in enumerate(slabs):
             if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index!=0 and float(slab['lower_limit'])<= float(slabs[index-1]['upper_limit'])):
-                raise HTTPException(status_code=400, detail=f"{slabs} are not valid {slab['code']} in line item")
+                raise HTTPException(status_code=400, detail=f"Invalid slabs ")

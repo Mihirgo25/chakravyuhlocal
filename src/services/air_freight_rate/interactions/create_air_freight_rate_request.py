@@ -9,9 +9,9 @@ from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from playhouse.postgres_ext import *
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from celery_worker import (
-    update_multiple_service_objects,
     create_communication_background,
 )
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_air_freight_rate_request(request):
@@ -75,9 +75,7 @@ def execute_transaction_code(request):
 
     create_audit(request, request_object.id)
 
-    update_multiple_service_objects.apply_async(
-        kwargs={"object": request_object}, queue="low"
-    )
+    get_multiple_service_objects(request_object)
 
     if request_object.id:
         airports = get_locations(request_object)

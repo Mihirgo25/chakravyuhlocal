@@ -6,6 +6,10 @@ import services.haulage_freight_rate.interactions.list_haulage_freight_rates as 
 from libs.get_applicable_filters import get_applicable_filters
 from libs.json_encoder import json_encoder
 from micro_services.client import common
+from configs.global_constants import SEARCH_START_DATE_OFFSET
+from datetime import datetime, timedelta
+
+
 
 
 POSSIBLE_DIRECT_FILTERS = [
@@ -140,6 +144,11 @@ def add_pagination_data(
 def add_service_objects(data):
     for object in data:
         object["total_price_currency"] = 'INR'
+        try:
+            object['is_rate_about_to_expire'] = (datetime.strptime(object['validity_end'],'%Y-%m-%dT%H:%M:%S.%fZ') >= datetime.now()) & (datetime.strptime(object['validity_end'],'%Y-%m-%dT%H:%M:%S.%fZ') < (datetime.now() + timedelta(days = SEARCH_START_DATE_OFFSET)))
+            object['is_rate_expired'] = datetime.strptime(object['validity_end'],'%Y-%m-%dT%H:%M:%S.%fZ') < datetime.now()
+        except:
+            continue
         total_price = 0
         for line_item in object["line_items"]:
             total_price += common.get_money_exchange_for_fcl({"price": line_item['price'], "from_currency": line_item['currency'], "to_currency": object['total_price_currency'] })['price']
