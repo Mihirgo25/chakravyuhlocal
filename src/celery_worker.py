@@ -185,15 +185,13 @@ def create_fcl_freight_rate_delay(self, request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_fcl_functions(self,fcl_object,request):
+def delay_fcl_functions(self, request):
     try:
         if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False, FclFreightRate.rate_type == DEFAULT_RATE_TYPE).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
         if request.get("fcl_freight_rate_request_id"):
             delete_fcl_freight_rate_request(request)
-
-        get_multiple_service_objects(fcl_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -203,9 +201,8 @@ def delay_fcl_functions(self,fcl_object,request):
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def fcl_freight_local_data_updation(self, local_object,request):
+def fcl_freight_local_data_updation(self, request):
     try:
-        update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
         params = {
         'performed_by_id': request['performed_by_id'],
         'organization_id': request['service_provider_id'],
@@ -319,7 +316,26 @@ def send_closed_notifications_to_sales_agent_feedback(self, object):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_closed_notifications_to_user_feedback(self, object):
+    try:
+        object.send_closed_notifications_to_user()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_closed_notifications_to_user_request(self, object):
+    try:
+        object.send_closed_notifications_to_user()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
 def celery_create_fcl_freight_rate_free_day(self, request):
