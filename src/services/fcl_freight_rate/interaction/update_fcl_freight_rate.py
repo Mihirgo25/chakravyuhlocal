@@ -114,7 +114,7 @@ def execute_transaction_code(request):
 
   freight_object.create_trade_requirement_rate_mapping(request.get('procured_by_id'), request['performed_by_id'])
   
-  get_multiple_service_objects(freight_object)
+  get_multiple_service_objects(freight_object, is_new_rate=False)
 
   create_audit(request, freight_object.id)
 

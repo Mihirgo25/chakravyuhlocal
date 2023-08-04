@@ -105,7 +105,10 @@ def create_fcl_freight_rate(request):
         .first()
     )
     
+    is_new_rate = False
+    
     if not freight:
+        is_new_rate = True
         freight = FclFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
@@ -198,7 +201,7 @@ def create_fcl_freight_rate(request):
 
     is_rate_extended_via_bo = rate_extension_via_bulk_operation(request)
     
-    get_multiple_service_objects(freight)
+    get_multiple_service_objects(freight, is_new_rate)
 
     delay_fcl_functions.apply_async(kwargs={'request':request},queue='low')
      
