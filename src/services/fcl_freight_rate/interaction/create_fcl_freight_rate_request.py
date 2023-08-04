@@ -6,6 +6,10 @@ from celery_worker import create_communication_background, update_multiple_servi
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID
+from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
+from playhouse.shortcuts import model_to_dict
+from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
+from fastapi.encoders import jsonable_encoder
 
 
 def create_fcl_freight_rate_request(request):
@@ -52,6 +56,9 @@ def execute_transaction_code(request):
         create_audit(request, request_object.id)
 
         update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
+        
+        
+        set_stats(request_object)
 
 
         return {
@@ -128,3 +135,11 @@ def create_audit(request, request_object_id):
         object_type = 'FclFreightRateRequest',
         object_id = request_object_id
     )
+    
+    
+def set_stats(obj):
+    action = 'create'
+    params = jsonable_encoder(model_to_dict(obj,only = [FclFreightRateRequest.id,FclFreightRateRequest.status,FclFreightRateRequest.closed_by_id,FclFreightRateRequest.closing_remarks]))
+    
+    apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = params))
+

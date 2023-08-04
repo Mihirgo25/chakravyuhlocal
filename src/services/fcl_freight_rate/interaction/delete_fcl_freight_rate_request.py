@@ -2,6 +2,10 @@ from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreight
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from fastapi.encoders import jsonable_encoder
+from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
+from playhouse.shortcuts import model_to_dict
+from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
 
 def delete_fcl_freight_rate_request(request):
     with db.atomic():
@@ -28,6 +32,9 @@ def execute_transaction_code(request):
         create_audit(request, obj.id)
 
     send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='low')
+    
+    set_stats(obj)
+    
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
 
@@ -46,3 +53,9 @@ def create_audit(request, freight_rate_request_id):
     object_id = freight_rate_request_id,
     object_type = 'FclFreightRateRequest'
     )
+    
+    
+def set_stats(obj):
+    action = 'delete'
+    params = jsonable_encoder(model_to_dict(obj,only = [FclFreightRateRequest.id,FclFreightRateRequest.status,FclFreightRateRequest.closed_by_id,FclFreightRateRequest.closing_remarks]))
+    apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = params))

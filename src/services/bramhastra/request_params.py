@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, validator, Field, root_validator
 from typing import Optional
 
 
@@ -79,18 +79,19 @@ class ApplyFclFreightRateStatistic(BaseModel):
 
 # Apply Spot Search Fcl Freight Statistics
 
+
 class Rates(BaseModel):
     rate_id: str
     validity_id: str
     payment_term: str
-    schedule_type: str = 'direct'
-    
+    schedule_type: str = "direct"
+
     @validator("payment_term", pre=True)
     def convert_invalid_payment_term(cls, v):
         if not v:
             v = "prepaid"
         return v
-    
+
     @validator("schedule_type", pre=True)
     def convert_invalid_schedule_type(cls, v):
         if not v:
@@ -104,27 +105,28 @@ class SpotSearchFclFreightRateStatistic(BaseModel):
     rates: list[Rates]
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = datetime.utcnow()
-    
+
 
 class ApplySpotSearchFclFreightRateStatistic(BaseModel):
     action: str
     params: SpotSearchFclFreightRateStatistic
-    
-    
+
+
 # Apply Checkout Fcl Freight Statistics
+
 
 class CheckoutRates(BaseModel):
     rate_id: str
     source: str
     validity_id: str
     line_items: list[dict]
-    
+
 
 class CheckoutFclFreightService(BaseModel):
     checkout_id: str
-    checkout_fcl_freight_service_id: str = Field(alias='id')
+    checkout_fcl_freight_service_id: str = Field(alias="id")
     rate: CheckoutRates
-    
+
 
 class FclFreightCheckoutParams(BaseModel):
     source: str
@@ -138,14 +140,15 @@ class FclFreightCheckoutParams(BaseModel):
 class ApplyCheckoutFclFreightRateStatistic(BaseModel):
     params: FclFreightCheckoutParams = None
     action: str
-    
-    
+
+
 # Apply Feedback Fcl Freight Statistics
 
+
 class FeedbackFclFreightRateStatistic(BaseModel):
-    feedback_id: str = Field(alias='id')
+    feedback_id: str = Field(alias="id")
     validity_id: str = None
-    rate_id: str = Field(alias='fcl_freight_rate_id',default=None)
+    rate_id: str = Field(alias="fcl_freight_rate_id", default=None)
     feedback_type: str = None
     source: str = None
     source_id: str = None
@@ -159,7 +162,8 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     closed_by_id: str = None
     likes_count: int = None
     dislikes_count: int = None
-    status: str = 'active'
+    status: str = "active"
+
 
 class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     action: str
@@ -174,12 +178,58 @@ class ApplyShipmentFclFreightRateStatistics(BaseModel):
     pass
 
 
+class FclFreightRateRequest(BaseModel):
+    rate_request_id: str = Field(alias="id", default=None)
+    origin_port_id: str = None
+    destination_port_id: str = None
+    origin_region_id: str = None
+    destination_region_id: str = None
+    origin_country_id: str = None
+    destination_country_id: str = None
+    origin_continent_id: str = None
+    destination_continent_id: str = None
+    origin_trade_id: str = None
+    destination_trade_id: str = None
+    origin_pricing_zone_map_id: str = None
+    destination_pricing_zone_map_id: str = None
+    request_type: str = None
+    serial_id: str = None
+    source: str = None
+    source_id: str = None
+    performed_by_id: str = None
+    performed_by_org_id: str = None
+    importer_exporter_id: str = None
+    closing_remarks: list[str] = None
+    closed_by_id: str = None
+    container_size: str = None
+    commodity: str = None
+    containers_count: int
+    is_rate_reverted: bool = None
+    created_at: datetime = None
+    updated_at: datetime = None
+    status: str = None
+
+    @validator("closing_remarks", always=True)
+    def add_is_rate_reverted(cls, value, values):
+        values["is_rate_reverted"] = True if "rate_added" in value else False
+        return values
+
+
+class ApplyFclFreightRateRequestStatistic(BaseModel):
+    action: str
+    params: FclFreightRateRequest
+
+
+######## AIR ##########
+
+
 class WeightSlab(BaseModel):
     lower_limit: float
     upper_limit: float
     tariff_price: float
     currency: str
     unit: str = "per_kg"
+
 
 class AirValidities(BaseModel):
     validity_start: date
@@ -191,7 +241,7 @@ class AirValidities(BaseModel):
     likes_count: int = None
     dislikes_count: int = None
     weight_slabs: list[WeightSlab] = []
-    density_category: str = 'general'
+    density_category: str = "general"
     min_density_weight: float = None
     max_density_weight: float = None
 
@@ -243,13 +293,13 @@ class ApplyAirFreightRateStatistic(BaseModel):
     update_params: UpdateAirFreightRateStatistic = None
 
 
-
 # Apply Feedback Air Freight Statistics
 
+
 class FeedbackAirFreightRateStatistic(BaseModel):
-    feedback_id: str = Field(alias='id')
+    feedback_id: str = Field(alias="id")
     validity_id: str = None
-    rate_id: str = Field(alias='air_freight_rate_id')
+    rate_id: str = Field(alias="air_freight_rate_id")
     feedback_type: str = None
     source: str = None
     source_id: str = None
@@ -263,6 +313,7 @@ class FeedbackAirFreightRateStatistic(BaseModel):
     closed_by_id: str = None
     likes_count: int = None
     dislikes_count: int = None
+
 
 class ApplyFeedbackAirFreightRateStatistics(BaseModel):
     action: str
