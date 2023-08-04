@@ -439,6 +439,8 @@ class AirFreightRate(BaseModel):
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
             validity_start = validity_start
             validity_end = validity_end
+            if validity_object_validity_end < datetime.datetime.now().date():
+                continue
             if not validity_object.get("density_category"):
                 validity_object['density_category'] = 'general'
 
