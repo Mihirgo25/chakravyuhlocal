@@ -21,7 +21,7 @@ class HaulageFreightRateFeedback(BaseModel):
     performed_by = BinaryJSONField(null=True)
     performed_by_org_id = UUIDField(null=True,index=True)
     performed_by_org = BinaryJSONField(null=True,index=True)
-    performed_by_type = TextField(null=True)
+    performed_by_type = TextField(index=True, null=True)
     preferred_freight_rate = DoubleField(null=True)
     preferred_freight_rate_currency = TextField(null=True)
     outcome = TextField(null=True)
