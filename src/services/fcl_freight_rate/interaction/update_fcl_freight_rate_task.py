@@ -77,10 +77,14 @@ def execute_transaction_code(request):
     formatted_detention = rate['detention']
     formatted_detention['unit'] = 'per_container'
     del formatted_detention['remarks']
+
+    audit_obj = FclServiceAudit.select().where(FclServiceAudit.object_id==task.id,
+                                                FclServiceAudit.object_type=='FclFreightRateTask').first()
         
     rfq_object = {
         'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
-        'destination_local': { 'line_items': formatted_line_items, 'destination_detention': formatted_detention}
+        'destination_local': { 'line_items': formatted_line_items, 'destination_detention': formatted_detention},
+        'main_freight_reverted_by_id': str(audit_obj.performed_by_id)
     }
 
     if task.source == "rfq" and task.status == 'completed':
