@@ -327,7 +327,13 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
             conn = get_connection()
             with conn:
                 with conn.cursor() as cur:
-                     
+                    if not isinstance(origin_location_id, list):
+                        origin_location_id = (origin_location_id,)
+                        destination_location_id = (destination_location_id,)
+                    else:
+                        origin_location_id = tuple(origin_location_id)
+                        destination_location_id = tuple(destination_location_id)
+
                     sql_query = """
                         SELECT 
                             shipment_air_freight_services.origin_airport_id AS origin_airport_id,
@@ -349,8 +355,8 @@ def get_past_air_invoices(origin_location_id,destination_location_id,location_ty
                             INNER JOIN shipment_air_freight_services ON shipment_collection_parties.shipment_id = shipment_air_freight_services.shipment_id
                         WHERE
                             shipment_collection_parties.invoice_date > date_trunc('MONTH', CURRENT_DATE - INTERVAL '%s months')::DATE
-                            AND shipment_air_freight_services.origin_{}_id = %s
-                            AND shipment_air_freight_services.destination_{}_id = %s
+                            AND shipment_air_freight_services.origin_{}_id in %s
+                            AND shipment_air_freight_services.destination_{}_id in %s
                             AND shipment_collection_parties.status IN ('locked', 'coe_approved', 'finance_rejected')
                             AND shipment_air_freight_services.operation_type ='passenger'
                             AND invoice_type IN ('purchase_invoice', 'proforma_invoice')
@@ -546,3 +552,61 @@ def get_supply_agents():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return all_result
+    
+
+def list_organization_users(id):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+               
+                if not isinstance(id, list):
+                    id = (id,)
+                else:
+                    id = tuple(id)
+                sql = 'select organization_users.id, users.name, users.email, users.mobile_number_eformat from organization_users join users on organization_users.user_id = users.id where organization_users.id in %s'
+                cur.execute(sql, (id,))
+
+                result = cur.fetchall()
+
+                for res in result:
+                    all_result.append(
+                        {
+                            "id": str(res[0]),
+                            "name": str(res[1]),
+                            "email": str(res[2]),
+                            "mobile_number_eformat":str(res[3])
+                        }
+                    )
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result
+
+def get_spot_search_count(origin_airport_id,destination_airport_id):
+    count = 0
+
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                sql_query = '''
+                        SELECT 
+                            count(id) from spot_search_air_freight_services
+                        WHERE 
+                            spot_search_air_freight_services.origin_airport_id = %s
+                            AND
+                            spot_search_air_freight_services.destination_airport_id = %s
+                    '''
+                cur.execute(sql_query, (origin_airport_id, destination_airport_id))
+                results = cur.fetchall()
+                count = results[0][0]
+                cur.close()
+        conn.close()
+        return count
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return count

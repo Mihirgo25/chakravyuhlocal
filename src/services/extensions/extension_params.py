@@ -11,3 +11,8 @@ class CreateWebCargoRatesParams(BaseModel):
 class CreateNewMaxRatesParams(BaseModel):
   rates: list = [],
   destination: str = None
+
+class CreateFreightLookSurchargeParams(BaseModel):
+  rates: list = [],
+  destination:str = None
+  commodity:str = None
