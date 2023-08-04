@@ -34,6 +34,7 @@ def initialize_freight_query(requirements,prediction_required=False):
         AirFreightRate.cogo_entity_id,
         AirFreightRate.source,
         AirFreightRate.updated_at,
+        AirFreightRate.importer_exporter_id,
         AirFreightRate.surcharge.alias('freight_surcharge')
     ).where(
     AirFreightRate.origin_airport_id == requirements.get('origin_airport_id'),
@@ -44,7 +45,10 @@ def initialize_freight_query(requirements,prediction_required=False):
     ~(AirFreightRate.rate_not_available_entry),
     AirFreightRate.shipment_type == requirements.get('packing_type'),
     AirFreightRate.stacking_type == requirements.get('handling_type'),
+    ((AirFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (AirFreightRate.importer_exporter_id == None))
+
     )
+    print(initialize_freight_query)
     rate_constant_mapping_key = requirements.get('cogo_entity_id')
 
     allowed_entity_ids = None
@@ -87,6 +91,7 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         'service_provider_id': freight_rate['service_provider_id'],
         'source': source,
         'rate_id': freight_rate['id'],
+        'importer_exporter_id': freight_rate['importer_exporter_id'],
         'cogo_entity_id': freight_rate['cogo_entity_id']
     }
     
@@ -111,17 +116,18 @@ def add_surcharge_object(freight_rate,response_object,requirements):
     response_object['surcharge'] = {
         'line_items':[]
     }
+    chargeable_weight = response_object['freights'][0]['chargeable_weight']
     line_items = freight_rate['freight_surcharge']['line_items'] or []
 
     for line_item in line_items:
-        line_item = build_surcharge_line_item_object(line_item,requirements)
+        line_item = build_surcharge_line_item_object(line_item,requirements,chargeable_weight)
         if not line_item:
             continue 
         response_object['surcharge']['line_items'].append(line_item)
     
     return True
 
-def build_surcharge_line_item_object(line_item,requirements):
+def build_surcharge_line_item_object(line_item,requirements,chargeable_weight):
     surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
     if not surcharge_charges or line_item['code'] in ['EAMS','EHAMS','HAMS']:
         return
@@ -131,7 +137,7 @@ def build_surcharge_line_item_object(line_item,requirements):
     if line_item.get('unit') == 'per_package':
         line_item['quantity'] = requirements.get('packages_count')
     elif line_item.get('unit') == 'per_kg':
-        line_item['quantity'] = get_chargeable_weight(requirements)
+        line_item['quantity'] = chargeable_weight
     elif line_item.get('unit') == 'per_kg_gross':
         line_item['quantity'] = requirements.get('weight')
     else:
@@ -150,7 +156,8 @@ def get_formatted_response_list(freight_rates, requirements, apply_density_match
     for freight_rate in freight_rates:
         key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or "",freight_rate['rate_type'] or "",freight_rate['source'] or ""])
         response_object = build_response_object(freight_rate, requirements, apply_density_matching)
-
+        if grouping.get(key) and grouping[key].get('importer_exporter_id'):
+            continue
         if response_object:
             grouping[key] = response_object
 
@@ -268,6 +275,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     line_item['source'] = 'system'
     line_item,freight_object = check_and_update_min_price_line_items(line_item, freight_object,requirements)
     freight_object['line_items'].append(line_item)
+    freight_object['chargeable_weight'] = required_weight
     return freight_object
 
 def check_and_update_min_price_line_items(line_item,freight_object,requirements):
@@ -283,9 +291,6 @@ def check_and_update_min_price_line_items(line_item,freight_object,requirements)
         freight_object['is_minimum_threshold_rate'] = True
 
     return line_item,freight_object
-
-
-
 
 def is_missing_surcharge(freight_rate):
     return not freight_rate['freight_surcharge'] or 'line_items' not in freight_rate['freight_surcharge'] or len(freight_rate['freight_surcharge'].get('line_items') or []) == 0 or freight_rate["freight_surcharge"].get("is_surcharge_line_items_error_messages_present")

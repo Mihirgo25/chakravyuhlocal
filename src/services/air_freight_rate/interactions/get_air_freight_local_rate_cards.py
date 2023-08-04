@@ -68,6 +68,7 @@ def build_response_object(request,query_result):
     response_object={
         'service_provider_id':query_result.get('service_provider_id'),
         'airline_id':query_result.get('airline_id'),
+        'chargeable_weight': get_chargeable_weight(request)
     }
     if not build_local_line_items(request,query_result, response_object):
         return  
