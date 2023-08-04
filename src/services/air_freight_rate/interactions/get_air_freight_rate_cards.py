@@ -93,25 +93,25 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
     freight_object = add_freight_objects(freight_rate,response_object,requirements)
     if not freight_object:
         return 
-    
-    surcharge_object = add_surcharge_object(freight_rate,response_object,requirements)
+    chargeable_weight = response_object['freights'][0]['chargeable_weight']
+
+    surcharge_object = add_surcharge_object(freight_rate,response_object,requirements,chargeable_weight)
 
     if not surcharge_object:
         return
 
     if apply_density_matching:
-        response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], get_chargeable_weight(requirements))  
+        response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], chargeable_weight)
    
     return response_object
 
-def add_surcharge_object(freight_rate,response_object,requirements):
+def add_surcharge_object(freight_rate,response_object,requirements,chargeable_weight):
     
     if freight_rate['price_type'] == 'all_in':
         return True
     response_object['surcharge'] = {
         'line_items':[]
     }
-    chargeable_weight = response_object['freights'][0]['chargeable_weight']
     line_items = freight_rate['freight_surcharge']['line_items'] or []
 
     for line_item in line_items:
