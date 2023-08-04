@@ -13,7 +13,7 @@ from configs.global_constants import CONFIRMED_INVENTORY
 from configs.definitions import HAULAGE_FREIGHT_CHARGES
 from database.rails_db import (
     get_user,
-    get_eligible_org_ids,
+    get_eligible_orgs,
     list_organization_users,
 )
 from micro_services.client import common, maps
@@ -72,11 +72,16 @@ def initialize_query(requirements, query):
     )
     if requirements.get("trip_type") == "round":
         requirements["trip_type"] = "round_trip"
+    if requirements.get("haulage_type"):
+        haulage_type = [requirements.get("haulage_type")]
+    else:
+        haulage_type = ['carrier', 'merchant']
+
     freight_query = query.where(
         HaulageFreightRate.container_type == requirements["container_type"],
         HaulageFreightRate.container_size == requirements["container_size"],
         HaulageFreightRate.commodity == requirements["commodity"],
-        HaulageFreightRate.haulage_type == requirements.get("haulage_type"),
+        HaulageFreightRate.haulage_type << haulage_type,
         ((
             HaulageFreightRate.importer_exporter_id
             == requirements.get("importer_exporter_id")
@@ -294,7 +299,7 @@ def build_response_list(requirements, query_results):
     return list(grouping.values())
 
 def ignore_non_eligible_service_providers(requirements, data):
-    ids = get_eligible_org_ids("haulage_freight")
+    ids = get_eligible_orgs("haulage_freight")
     data = [rate for rate in data if rate.get("service_provider_id") in ids]
     return data
 
@@ -371,13 +376,10 @@ def additional_response_data(data):
             filter(lambda t: t["id"] == addon_data["sourced_by_id"], users), None
         )
         
-        try:
-            addon_data["user_name"] = user.get("name")
-            addon_data["user_contact"] = user.get("mobile_number") or user.get(
-                "mobile_number_eformat"
-            )
-        except:
-            raise HTTPException(status_code=400,detail='Invalid source')
+        addon_data["user_name"] = user.get("name")
+        addon_data["user_contact"] = user.get("mobile_number") or user.get(
+            "mobile_number_eformat"
+        )
         
         addon_data["last_updated_at"] = addon_data.get("updated_at")
 

@@ -53,6 +53,7 @@ def get_air_freight_rate_prediction(request):
                 'destination_airport_id' : request['destination_airport_id'],
                 'commodity' : request.get('commodity'),
                 'commodity_type' : request.get('commodity_type'),
+                'commodity_sub_type': request.get('commodity_subtype'),
                 'airline_id' : result['airline_id'],
                 'operation_type' : 'passenger',
                 'density_category' : density_category,
@@ -71,10 +72,12 @@ def get_air_freight_rate_prediction(request):
                 'length': 300,
                 'breadth': 300,
                 'height': 300,
-                'source' : 'predicted'}
+                'source' : 'predicted',
+                'rate_type': 'market_place'
+                }
             )
-        except Exception as e:
-            pass
+        except:
+            raise
 
     return True
         

@@ -1,7 +1,7 @@
 
 from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
 from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID, SURCHARGE_SERVICE_PROVIDERS
-from micro_services.client import maps
+from micro_services.client import maps,common
 from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, surcharge_charges_mappings, surcharge_performed_by_id
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
 from services.air_freight_rate.interactions.create_air_freight_rate_surcharge import create_air_freight_rate_surcharge
@@ -10,6 +10,7 @@ def create_freight_look_surcharge_rate(request):
     from celery_worker import process_freight_look_surcharge_rate_in_delay
     rates = request['rates']
     destination = request.get('destination')
+    commodity = request.get('commodity')
     new_rates = rates
     proper_json_rates = create_proper_json(new_rates)
     all_port_codes_hash = {}
@@ -29,11 +30,11 @@ def create_freight_look_surcharge_rate(request):
     for rate in proper_json_rates:
         rate['destination_airport_id'] = locations[destination_port_code]['id']
         try:
-            process_freight_look_surcharge_rate_in_delay.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='fcl_freight_rate')
+            process_freight_look_surcharge_rate_in_delay.apply_async(kwargs = { 'rate': rate, 'locations': locations, 'commodity':commodity }, queue='fcl_freight_rate')
         except Exception as e:
             print(e)
 
-def create_surcharge_rate_api(rate,locations):
+def create_surcharge_rate_api(rate,locations,commodity):
     airline = None
     airline_id = DEFAULT_AIRLINE_ID
     airline_name = 'deafult'
@@ -48,7 +49,7 @@ def create_surcharge_rate_api(rate,locations):
        
     if airline and 'id' in airline:
         airline_id = airline['id']
-    surcharge_params = format_surcharge_rate(rate,locations,airline_id)
+    surcharge_params = format_surcharge_rate(rate,locations,airline_id,commodity)
     if surcharge_params and surcharge_params.get('line_items'):
         for sp in SURCHARGE_SERVICE_PROVIDERS:
             surcharge_params['service_provider_id'] = sp
@@ -56,15 +57,19 @@ def create_surcharge_rate_api(rate,locations):
 
 
 
-def format_surcharge_rate(rate,locations,airline_id):
-    commodity = commodity_mappings.get((rate['SCR'] or '').strip())
-    commodity_type = commodity_type_mappings.get((rate['SCR'] or '').strip())
+def format_surcharge_rate(rate,locations,airline_id,commodity):
+    if commodity=='GCR':
+        commodity = 'general'
+        commodity_type = 'all'
+    else:
+        commodity = commodity_mappings.get((rate['SCR'] or '').strip())
+        commodity_type = commodity_type_mappings.get((rate['SCR'] or '').strip())
     if not commodity or not commodity_type:
         return None
     line_items = []
 
     for key, value in rate.items():
-        if key in ['SSC','FSC/MIN','XRAY/MIN','MISC/MIN','CTG/MIN','AMS-M/AWB','AMS-M/HAWB','AMS-E/AWB','AMS-E/HAWB']:
+        if key in ['SSC','FSC/MIN','XRAY/MIN','MISC/MIN','CTG/MIN','AMS-M/AWB','AMS-M/HAWB','AMS-E/AWB','AMS-E/HAWB','FSC','SSC/MIN']:
             line_item = build_line_item(value,key)
             if line_item:
                 line_items.append(line_item)
@@ -93,11 +98,16 @@ def build_line_item(line_item_price,code):
     price = 0
     unit = 'per_kg'
     code = surcharge_charges_mappings[code]
+    usd_case =False
     if line_item_price.find('/')!=-1:
         index = line_item_price.find('/') +1
         min_price = line_item_price[index:len(line_item_price)]
-        min_price = min_price.strip()
-        min_price = float(min_price)
+        if min_price == 'usd':
+            usd_case = True
+            price = common.get_money_exchange_for_fcl({"price": float(line_item_price[0:index-1]), "from_currency": 'USD', "to_currency": 'INR' })['price']
+        else:
+            min_price = min_price.strip()
+            min_price = float(min_price)
     
     if line_item_price.find('C')!=-1:
         index = line_item_price.find('C')
@@ -110,7 +120,7 @@ def build_line_item(line_item_price,code):
         price = price.strip()
         price = float(price)
         unit = 'per_kg_gross'
-    else:
+    elif not usd_case:
         price = line_item_price.strip()
         price = float(price)
         unit = 'per_package'
@@ -123,7 +133,7 @@ def build_line_item(line_item_price,code):
     if code == 'AMS':
         unit = 'per_awb'
 
-    line_item = {'code':code,'unit':unit,'price':price,'min_price':min_price,'currency':'INR','remarks':[]}
+    line_item = {'code':code,'unit':unit,'price':round(price,2),'min_price':min_price,'currency':'INR','remarks':[]}
     return line_item
     
     

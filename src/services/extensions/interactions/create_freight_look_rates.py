@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 from micro_services.client import common, maps
 from configs.global_constants import  DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID
-from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, airline_ids, airline_margins
+from services.extensions.constants.general import commodity_mappings, commodity_type_mappings, airline_ids, airline_margins, surcharge_performed_by_id
 from services.air_freight_rate.interactions.create_draft_air_freight_rate import create_draft_air_freight_rate
-from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID
+from services.air_freight_rate.constants.air_freight_rate_constants import DEFAULT_AIRLINE_ID, COGOXPRESS
 from services.extensions.helpers.freight_look_helpers import get_locations,create_proper_json
+from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate
 airline_hash = {}
 
 def create_weight_slabs(rate,airline_id):
@@ -57,13 +58,6 @@ def create_weight_slabs(rate,airline_id):
             'currency': currency,
             'unit': 'per_kg',
             'tariff_price': price_300_500 + (price_300_500*airline_margins[airline_id])
-        },
-        {
-            'lower_limit': 500.1,
-            'upper_limit': 5000,
-            'currency': currency,
-            'unit': 'per_kg',
-            'tariff_price': price_500_1000 + (price_500_1000*airline_margins[airline_id])
         }
     ]
     return weight_slabs
@@ -73,6 +67,9 @@ def format_air_freight_rate(rate, locations,airline_id):
     minimum_rate = 0
     if rate['MIN.'].strip():
         minimum_rate = float(rate['MIN.'].strip())
+    if airline_id =='dbd3feb3-007a-4e24-873a-bc6e5e43254d' and (rate['SCR'] or '').strip()!='XPS':
+        return None
+
     commodity = commodity_mappings.get((rate['SCR'] or '').strip())
     commodity_type = commodity_type_mappings.get((rate['SCR'] or '').strip())
     if not commodity or not commodity_type:
@@ -89,16 +86,19 @@ def format_air_freight_rate(rate, locations,airline_id):
         'currency': weight_slabs[0]['currency'],
         'price_type': 'net_net',
         'rate_type': 'general',
-        'service_provider_id': DEFAULT_SERVICE_PROVIDER_ID,
+        'service_provider_id': COGOXPRESS,
         'density_category': 'general',
-        'performed_by_id': DEFAULT_PROCURED_BY_ID,
-        'procured_by_id': DEFAULT_PROCURED_BY_ID,
-        'sourced_by_id': DEFAULT_PROCURED_BY_ID,
+        'performed_by_id': surcharge_performed_by_id,
+        'procured_by_id': surcharge_performed_by_id,
+        'sourced_by_id': surcharge_performed_by_id,
         'shipment_type': 'box',
         'stacking_type': 'stackable',
         'validity_start': datetime.now(),
         'validity_end': datetime.now() + timedelta(days=7),
         'source': 'freight_look',
+        'length': 300,
+        'breadth':300,
+        'height':300,
         'meta_data': rate['meta_data'] | { 'origin':locations[rate['Loc .']]['name'] }
     }
     return rate_obj
@@ -136,7 +136,7 @@ def create_air_freight_rate_api(rate, locations):
         return rate
     rate_obj['airline_id'] = airline_id
     rate_obj['meta_data']['airline'] = airline_name
-    res = create_draft_air_freight_rate(rate_obj)
+    res = create_air_freight_rate(rate_obj)
     # res = common.create_air_freight_rate(rate_obj)
     return res
 
@@ -168,7 +168,7 @@ def create_freight_look_rates(request):
         rate['meta_data'] = {}
         rate['meta_data']['destination'] = locations[destination_port_code]['name']
         try:
-            process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='low')
+            process_freight_look_rates.apply_async(kwargs = { 'rate': rate, 'locations': locations }, queue='fcl_freight_rate')
             # new_rate = create_air_freight_rate_api(rate=rate, locations=locations)
         except Exception as e:
             print(e)
