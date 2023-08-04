@@ -118,9 +118,6 @@ def initialize_query(requirements, query):
         HaulageFreightRate.validity_start <= datetime.now()
         and HaulageFreightRate.validity_end >= datetime.now()
     )
-    freight_query = freight_query.where(
-        HaulageFreightRate.updated_at >= (datetime.now() - timedelta(days=90)).date()
-    )
 
     return freight_query
 
