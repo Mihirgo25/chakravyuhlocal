@@ -11,6 +11,7 @@ from services.fcl_freight_rate.helpers.get_normalized_line_items import get_norm
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -196,8 +197,10 @@ def create_fcl_freight_rate(request):
     freight.update_platform_prices_for_other_service_providers()
 
     is_rate_extended_via_bo = rate_extension_via_bulk_operation(request)
+    
+    get_multiple_service_objects(freight)
 
-    delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+    delay_fcl_functions.apply_async(kwargs={'request':request},queue='low')
      
     current_validities = freight.validities
     adjust_dynamic_pricing(request, row, freight, current_validities, is_rate_extended_via_bo)
