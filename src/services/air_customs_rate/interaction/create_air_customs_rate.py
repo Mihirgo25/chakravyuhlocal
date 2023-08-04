@@ -3,6 +3,7 @@ from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_air_customs_rate(request):
     with db.atomic():
@@ -44,6 +45,7 @@ def execute_transaction_code(request):
   create_audit(request, air_customs_rate.id)
 
   air_customs_functions_delay.apply_async(kwargs={'air_customs_object':air_customs_rate, 'request':request},queue = 'low')
+  get_multiple_service_objects(air_customs_rate)
 
   return {'id': air_customs_rate.id}
 

@@ -2,7 +2,7 @@ from services.air_customs_rate.models.air_customs_rate_request import AirCustoms
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_air_customs_rate_request(request):
     with db.atomic():
@@ -24,7 +24,7 @@ def execute_transaction_code(request):
     except Exception as e:
         raise HTTPException(status_code=500, detail = 'Error while deleting request')
 
-    update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
+    get_multiple_service_objects(object)
     create_audit_for_customs_request(request, object, data)
     object.send_closed_notifications_to_sales_agent()
 

@@ -2,7 +2,7 @@ from services.air_customs_rate.models.air_customs_rate_feedback import AirCustom
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from database.db_session import db
 from fastapi import HTTPException
-from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_air_customs_rate_feedback(request):
   with db.atomic():
@@ -26,7 +26,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=500, detail = 'Error while deleting feedback')
 
     create_audit_for_customs_feedback(request, object.id, data)
-    update_multiple_service_objects.apply_async(kwargs={'object':object},queue='low')
+    get_multiple_service_objects(object)
 
   return {'air_customs_rate_feedback_ids' : request.get('air_customs_rate_feedback_ids')}
 

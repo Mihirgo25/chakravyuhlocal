@@ -1,7 +1,7 @@
 from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from services.air_customs_rate.models.air_customs_rate_feedback import AirCustomsRateFeedback
-from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from fastapi import HTTPException
 from database.db_migration import db
 
@@ -48,7 +48,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=500, detail='Feedback did not Save')
 
     create_audit(request, air_customs_feedback.id)
-    update_multiple_service_objects.apply_async(kwargs={'object':air_customs_feedback},queue='low')
+    get_multiple_service_objects(air_customs_feedback)
 
     return {
       'id': request.get('rate_id')
