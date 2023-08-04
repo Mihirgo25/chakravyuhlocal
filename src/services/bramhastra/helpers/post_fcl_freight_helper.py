@@ -323,17 +323,21 @@ class SpotSearch:
                 row[key] += 1
             fcl_freight_validity.create_stats(row)
 
-
+from services.bramhastra.enums import FeedbackAction
 class Feedback:
-    def __init__(self, params) -> None:
-        self.params = params.dict(exclude={"likes_count", "dislikes_count"})
-        self.rate_id = params.rate_id
-        self.validity_id = params.validity_id
+    def __init__(self,action,params) -> None:
+        if action == FeedbackAction.create.value:
+            self.params = params.dict(exclude={"likes_count", "dislikes_count"})
+            self.rate_id = params.rate_id
+            self.validity_id = params.validity_id
+            self.feedback_id = params.feedback_id
+        else:
+            self.params = params.dict(exclude_none = True)
+            
         self.rate_stats_update_params = params.dict(
             include={"likes_count", "dislikes_count"}
         )
         self.increment_keys = {}
-        self.feedback_id = params.feedback_id
         self.clickhouse_client = None
 
     def set_format_and_existing_rate_stats(self):
@@ -353,35 +357,23 @@ class Feedback:
     def set_new_stats(self) -> int:
         return FeedbackFclFreightRateStatistic.insert_many(self.params).execute()
 
-    def set_existing_stats(self) -> None:
-        force_insert = False
-        EXCLUDE_UPDATE_PARAMS = {"feedback_id", "serial_id"}
-        feedback = (
-            FeedbackFclFreightRateStatistic.select()
-            .where(
-                FeedbackFclFreightRateStatistic.feedback_id
-                == self.params["feedback_id"]
-            )
-            .first()
-        )
-        if not feedback:
-            row = self.get_clickhouse_feedback_current_row_by_identifier()
-            feedback = FeedbackFclFreightRateStatistic(**row)
-            force_insert = True
-        if feedback:
-            for k, v in self.params.items():
-                if k not in EXCLUDE_UPDATE_PARAMS:
-                    setattr(feedback, k, v)
-            feedback.save(force_insert=force_insert)
-
-    def get_clickhouse_feedback_current_row_by_identifier(self) -> dict:
-        parameters = {
-            "feedback_id": self.feedback_id,
-            "sign": 1,
-        }
+    def  set_existing_stats(self) -> None: 
+        
+        if not self.clickhouse_client:
+            self.clickhouse_client = ClickHouse()
+        
+        queries = [f"ALTER TABLE brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} UPDATE"]
+        
+        values = []
+        for key in self.params.keys():
+            values.append(f"{key} = %({key})s")
+            
+        queries.append(','.join(values))
+        
+        queries.append(f"WHERE (feedback_id,version) IN (SELECT identifier, MAX(version) AS max_version FROM brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE feedback_id = %(feedback_id)s GROUP BY identifier)")
+        
         if row := self.clickhouse_client.execute(
-            f"SELECT * FROM brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE feedback_id = %(feedback_id)s and sign = %(sign)s",
-            parameters,
+            ' '.join(queries),self.params
         ):
             return row[0]
 
@@ -446,7 +438,7 @@ class Checkout(FclFreightValidity):
             self.checkout_params
         ).execute()
 
-    def set_existing_stats(self) -> None:
+    def set_existing_stats(self) -> None: 
         pass
 
     def increment_checkout_rate_stats(self, fcl_freight_validity, row):

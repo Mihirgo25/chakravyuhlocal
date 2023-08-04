@@ -75,7 +75,7 @@ def execute_transaction_code(request):
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         
-    set_feedback_statistics(action,request,feedback)
+    set_feedback_statistics(action,feedback, request)
 
     return {'id': request['rate_id']}
 
@@ -152,7 +152,7 @@ def create_audit(request, feedback):
         performed_by_id = request['performed_by_id']
     )
     
-def set_feedback_statistics(action, request, feedback):
+def set_feedback_statistics(action, feedback, request = None):
     from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import (
         apply_feedback_fcl_freight_rate_statistic,
     )
@@ -184,10 +184,11 @@ def set_feedback_statistics(action, request, feedback):
             FclFreightRateFeedback.feedbacks
         ],
     )
-
-    for k, v in request.items():
-        if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
-            params[k] = v 
+    
+    if request:
+        for k, v in request.items():
+            if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
+                params[k] = v 
         
     apply_feedback_fcl_freight_rate_statistic(
         ApplyFeedbackFclFreightRateStatistics(

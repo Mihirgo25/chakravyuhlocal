@@ -17,7 +17,7 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.helpers.post_fcl_freight_helper import (
+from services.bramhastra.client import (
     json_encoder_for_clickhouse,
 )
 import peewee

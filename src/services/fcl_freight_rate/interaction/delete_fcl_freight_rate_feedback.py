@@ -3,6 +3,10 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
+from playhouse.shortcuts import model_to_dict
+from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
+from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
+from fastapi.encoders import jsonable_encoder
 
 def delete_fcl_freight_rate_feedback(request):
     with db.atomic():
@@ -27,6 +31,8 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
+        
+        set_stats(obj)
 
         send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')
 
@@ -50,3 +56,9 @@ def create_audit(request, freight_rate_feedback_id):
     object_id = freight_rate_feedback_id,
     object_type = 'FclFreightRateFeedback'
     )
+    
+    
+def set_stats(obj):
+    action = 'delete'
+    params = jsonable_encoder(model_to_dict(obj,only = [FclFreightRateFeedback.id,FclFreightRateFeedback.status,FclFreightRateFeedback.closed_by_id,FclFreightRateFeedback.closing_remarks]))
+    apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = params))

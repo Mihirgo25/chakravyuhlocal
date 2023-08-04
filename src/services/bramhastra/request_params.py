@@ -147,25 +147,26 @@ class ApplyCheckoutFclFreightRateStatistic(BaseModel):
 
 class FeedbackFclFreightRateStatistic(BaseModel):
     feedback_id: str = Field(alias='id')
-    validity_id: str
-    rate_id: str = Field(alias='fcl_freight_rate_id')
-    feedback_type: str
-    source: str
-    source_id: str
+    validity_id: str = None
+    rate_id: str = Field(alias='fcl_freight_rate_id',default=None)
+    feedback_type: str = None
+    source: str = None
+    source_id: str = None
     serial_id: str = None
     importer_exporter_id: str = None
     service_provider_id: str = None
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = datetime.utcnow()
-    performed_by_id: str
-    performed_by_org_id: str
+    performed_by_id: str = None
+    performed_by_org_id: str = None
     closed_by_id: str = None
-    likes_count: int
-    dislikes_count: int
+    likes_count: int = None
+    dislikes_count: int = None
+    status: str = 'active'
 
 class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     action: str
-    params: FeedbackFclFreightRateStatistic = None
+    params: FeedbackFclFreightRateStatistic
 
 
 class ApplyQuotationFclFreightRateStatistics(BaseModel):
@@ -250,21 +251,21 @@ class ApplyAirFreightRateStatistic(BaseModel):
 
 class FeedbackAirFreightRateStatistic(BaseModel):
     feedback_id: str = Field(alias='id')
-    validity_id: str
+    validity_id: str = None
     rate_id: str = Field(alias='air_freight_rate_id')
-    feedback_type: str
-    source: str
-    source_id: str
+    feedback_type: str = None
+    source: str = None
+    source_id: str = None
     serial_id: str = None
     importer_exporter_id: str = None
     service_provider_id: str = None
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = datetime.utcnow()
-    performed_by_id: str
-    performed_by_org_id: str
+    performed_by_id: str = None
+    performed_by_org_id: str = None
     closed_by_id: str = None
-    likes_count: int
-    dislikes_count: int
+    likes_count: int = None
+    dislikes_count: int = None
 
 class ApplyFeedbackAirFreightRateStatistics(BaseModel):
     action: str
