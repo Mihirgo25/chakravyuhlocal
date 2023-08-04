@@ -5,7 +5,7 @@ from services.ftl_freight_rate.models.ftl_freight_rate_request import (
     FtlFreightRateRequest,
 )
 from micro_services.client import maps
-from celery_worker import create_communication_background,update_ftl_freight_rate_request_in_delay,update_multiple_service_objects
+from celery_worker import create_communication_background,update_multiple_service_objects
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID

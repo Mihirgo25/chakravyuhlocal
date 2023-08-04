@@ -27,7 +27,7 @@ def create_ftl_freight_rate(request):
       return execute_transaction_code(request)
   
 def execute_transaction_code(request):
-    from celery_worker import delay_ftl_functions, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform
+    from services.ftl_freight_rate.ftl_celery_worker import delay_ftl_functions, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform
 
     params = {
       'rate_sheet_id':request.get('rate_sheet_id'),

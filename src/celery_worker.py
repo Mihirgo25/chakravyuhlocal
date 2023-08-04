@@ -16,7 +16,6 @@ from services.fcl_freight_rate.interaction.delete_fcl_freight_rate_request impor
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_local import create_fcl_freight_rate_local
 from services.ftl_freight_rate.scheduler.fuel_scheduler import fuel_scheduler
-from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import update_ftl_freight_rate_request
 from services.haulage_freight_rate.schedulers.electricity_price_scheduler import electricity_price_scheduler
 from services.fcl_freight_rate.interaction.add_local_rates_on_country import add_local_rates_on_country
 from kombu import Exchange, Queue
@@ -46,7 +45,6 @@ from services.air_freight_rate.workers.send_air_freight_local_charges_update_rem
 from services.air_freight_rate.workers.send_expired_air_freight_rate_notification import send_expired_air_freight_rate_notification
 from services.air_freight_rate.workers.send_near_expiry_air_freight_rate_notification import send_near_expiry_air_freight_rate_notification
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_rate_from_cargo_ai
-from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
 # Rate Producers
 
 from services.chakravyuh.producer_vyuhs.fcl_freight import FclFreightVyuh as FclFreightVyuhProducer
@@ -136,6 +134,7 @@ celery.conf.beat_schedule = {
 
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.ftl_freight_rate.ftl_celery_worker'], force=True)
 
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
@@ -361,27 +360,6 @@ def bulk_operation_perform_action_functions(self, action_name,object,sourced_by_
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def ftl_bulk_operation_perform_action_functions(self, action_name,object,sourced_by_id,procured_by_id):
-    try:
-        eval(f"object.perform_{action_name}_action(sourced_by_id='{sourced_by_id}',procured_by_id='{procured_by_id}')")
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=3, retry_backoff = True)
-def create_ftl_freight_rate_delay(self, request):
-    try:
-        print('function_called')
-        return create_ftl_freight_rate(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
 def air_freight_bulk_operation_delay(self, action_name,object,sourced_by_id,procured_by_id):
     try:
         eval(f"object.perform_{action_name}_action()")
@@ -533,15 +511,7 @@ def update_fcl_freight_rate_request_in_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
-@celery.task(bind = True, retry_backoff=True,max_retries=5)
-def update_ftl_freight_rate_request_in_delay(self, request):
-    try:
-        update_ftl_freight_rate_request(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)        
+    
 @celery.task(bind = True, retry_backoff=True, max_retries=1)
 def process_fuel_data_delay(self):
     try:
@@ -802,74 +772,6 @@ def send_near_expiry_air_freight_rate_notification_in_delay(self):
 def send_air_freight_rate_feedback_notification_in_delay(self,object,air_freight_rate,airports):
     try:
         object.send_notification_to_supply_agents(air_freight_rate,airports)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_ftl_functions(self,ftl_object,request):
-    from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
-    try:
-        if not FtlFreightRate.select().where(FtlFreightRate.service_provider_id==request["service_provider_id"], FtlFreightRate.rate_not_available_entry==False).exists():
-            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-        get_multiple_service_objects(ftl_object)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def update_ftl_freight_rate_request_delay(self, request):
-    from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import update_ftl_freight_rate_request
-    try:
-        update_ftl_freight_rate_request(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_ftl_functions(self,ftl_object,request):
-    from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
-    try:
-        if not FtlFreightRate.select().where(FtlFreightRate.service_provider_id==request["service_provider_id"], FtlFreightRate.rate_not_available_entry==False).exists():
-            organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
-        get_multiple_service_objects(ftl_object)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=5, retry_backoff = True)
-def update_ftl_freight_rate_request_delay(self, request):
-    from services.ftl_freight_rate.interactions.update_ftl_freight_rate_request import update_ftl_freight_rate_request
-    try:
-        update_ftl_freight_rate_request(request)
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def send_missing_or_dislike_rate_notifications_to_kam(self, object, request):
-    try:
-        object.send_missing_or_dislike_rate_notifications_to_kam(request.get('query_raised_by_id'), request.get('is_rate_missing_or_dislike'))
-    except Exception as exc:
-        if type(exc).__name__ == 'HTTPException':
-            pass
-        else:
-            raise self.retry(exc= exc)
-
-@celery.task(bind = True, max_retries=1, retry_backoff = True)
-def send_missing_or_dislike_rate_notifications_to_platform(self, object, request):
-    try:
-        object.send_missing_or_dislike_rate_notifications_to_platform(request.get('query_raised_by_id'), request.get('is_rate_missing_or_dislike'))
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
