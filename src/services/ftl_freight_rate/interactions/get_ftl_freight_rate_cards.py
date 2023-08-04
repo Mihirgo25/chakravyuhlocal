@@ -43,12 +43,12 @@ def get_ftl_freight_rate_cards(request):
         return {"list":[]}
     query = select_fields()
     query = initialize_query(query,request)
-    rate_list = build_response_list(query,request)
-    rate_list = ignore_non_eligible_service_providers(request,rate_list)
+    rate_list = ignore_non_eligible_service_providers(request,query)
+    rate_list = build_response_list(rate_list,request)
     if request.get('include_additional_response_data'):
         rate_list = additional_response_data(rate_list)
 
-    if request.get('predicted_rate') is True:
+    if request.get('predicted_rate'):
         rate_list = remove_unnecessary_fields(rate_list)
 
     return {'list': rate_list }
@@ -98,8 +98,7 @@ def initialize_query(query,request):
 def select_fields():
     return FtlFreightRate.select(FtlFreightRate.id, FtlFreightRate.commodity, FtlFreightRate.line_items, FtlFreightRate.service_provider_id, FtlFreightRate.importer_exporter_id, FtlFreightRate.origin_location_id, FtlFreightRate.destination_location_id, FtlFreightRate.origin_destination_location_type, FtlFreightRate.transit_time, FtlFreightRate.detention_free_time, FtlFreightRate.truck_type, FtlFreightRate.minimum_chargeable_weight, FtlFreightRate.unit, FtlFreightRate.validity_start, FtlFreightRate.validity_end,FtlFreightRate.service_provider,FtlFreightRate.sourced_by,FtlFreightRate.updated_at,FtlFreightRate.created_at)
 
-def build_response_list(query_result,request):
-    ftl_rates = list(query_result.dicts())
+def build_response_list(ftl_rates,request):
     grouping = {}
     for rate in ftl_rates:
         key = ":".join([str(rate["origin_location_id"]) or "", str(rate['destination_location_id']) or "", str(rate["service_provider_id"]) or "" , str(rate['transit_time']) or ""])
@@ -225,14 +224,19 @@ def get_chargeable_weight(minimum_chargeable_weight,request):
      chargeable_rate = max([request.get('weight'), minimum_chargeable_weight])
      return chargeable_rate
 
-def ignore_non_eligible_service_providers(request,rate_list):
+def ignore_non_eligible_service_providers(request,query_result):
+    ftl_rates = list(query_result.dicts())
     ids = get_eligible_orgs('ftl_freight')
     final_list = []
-    for data in rate_list:
+    for data in ftl_rates:
         if str(data.get('service_provider_id')) in ids:
             final_list.append(data)
+    
+    return check_for_prediction(request,final_list)
+
+def check_for_prediction(request,rate_list):
     response = None
-    if len(final_list) == 0 and request.get('predicted_rate') is True and request.get('origin_location_id') is not None and request.get('destination_location_id') is not None:
+    if len(rate_list) == 0 and request.get('predicted_rate') is True and request.get('origin_location_id') is not None and request.get('destination_location_id') is not None:
         rate_estimation_params = {
         'origin_location_id': request.get('origin_location_id'),
         'destination_location_id': request.get('destination_location_id'),
@@ -244,8 +248,8 @@ def ignore_non_eligible_service_providers(request,rate_list):
         response = get_ftl_freight_rate_estimation(rate_estimation_params)
     if response is not None:
         request['predicted_rate'] = False
-        final_list  = get_ftl_freight_rate_cards(request)['list']
-    return final_list
+        rate_list = get_ftl_freight_rate_cards(request)['list']
+    return rate_list
 
 def additional_response_data(list_of_data):
     for data in list_of_data:
