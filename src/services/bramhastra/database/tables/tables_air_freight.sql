@@ -67,6 +67,8 @@ CREATE TABLE brahmastra.air_freight_rate_statistics
     shipment_flight_departed_count UInt16 DEFAULT 0,
     shipment_cargo_handed_over_at_destination_count UInt16 DEFAULT 0,
     shipment_is_active_count UInt16 DEFAULT 0,
+    shipment_in_progress_count UInt16 DEFAULT 0,
+    shipment_recieved_count UInt16 DEFAULT 0,
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     version UInt32 DEFAULT 1,

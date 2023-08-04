@@ -39,17 +39,33 @@ def get_past_count():
     clickhouse = ClickHouse()
 
     query = """
-    WITH clean_rates AS (
-        SELECT origin_country_id,destination_country_id,sum(sign) from brahmastra.fcl_freight_rate_statistics
-        GROUP BY origin_country_id,destination_country_id HAVING sum(sign) > 0 ORDER BY id ASC
-    )
-    SELECT country_id, dictGet('country_rate_count', 'rate_count', country_id) + COUNT(*) AS rate_count FROM 
-    (SELECT origin_country_id AS country_id
-    FROM clean_rates
-    UNION ALL
-    SELECT destination_country_id AS country_id
-    FROM clean_rates) AS combined_countries
-    GROUP BY country_id"""
+            WITH clean_rates AS
+            (
+                SELECT
+                    origin_country_id,
+                    destination_country_id,
+                    id,
+                    sum(sign)
+                FROM brahmastra.fcl_freight_rate_statistics
+                GROUP BY
+                    id,
+                    origin_country_id,
+                    destination_country_id
+                HAVING sum(sign) > 0
+                ORDER BY id ASC
+            )
+        SELECT
+            country_id,
+            dictGet('country_rate_count', 'rate_count', country_id) + COUNT(*) AS rate_count
+        FROM
+        (
+            SELECT origin_country_id AS country_id
+            FROM clean_rates
+            UNION ALL
+            SELECT destination_country_id AS country_id
+            FROM clean_rates
+        ) AS combined_countries
+        GROUP BY country_id"""
 
     return jsonable_encoder(clickhouse.execute(query))
 
