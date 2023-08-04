@@ -183,6 +183,6 @@ class FclFreightRateRequest(BaseModel):
             'update_to_type': self.performed_by_type
         }
         
-        common.send_spot_search_rate_update(params)
+        spot_search.send_spot_search_rate_update(params)
 
         

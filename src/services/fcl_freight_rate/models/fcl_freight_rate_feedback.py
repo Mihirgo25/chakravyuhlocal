@@ -278,7 +278,7 @@ class FclFreightRateFeedback(BaseModel):
             'update_to_type': self.performed_by_type
         }
         
-        common.send_spot_search_rate_update(params)
+        spot_search.send_spot_search_rate_update(params)
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(

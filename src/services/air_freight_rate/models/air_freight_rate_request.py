@@ -246,4 +246,4 @@ class AirFreightRateRequest(BaseModel):
                'update_to_id':str(self.performed_by_id),
                'update_to_type':str(self.performed_by_type)
             } 
-           common.send_spot_search_rate_update(params)
+           spot_search.send_spot_search_rate_update(params)
