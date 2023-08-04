@@ -164,13 +164,23 @@ class MigrationHelpers:
                 )
             pass
         
-        standard_price = price if currency == STANDARD_CURRENCY else common.get_money_exchange_for_fcl(
+        if currency == STANDARD_CURRENCY:
+            standard_price = price
+        else:
+            standard_price = common.get_money_exchange_for_fcl(
                             {
                                 "price": price,
                                 "from_currency": currency,
                                 "to_currency": STANDARD_CURRENCY,
                             }
-                        ).get("price", price)
+                        )
+            
+            if isinstance(standard_price,str):
+                standard_price = price
+            else:
+                standard_price = standard_price.get('price') 
+        
+        
         validity_details = {
             "validity_created_at": validity.get("validity_start"),
             "validity_updated_at": validity.get("validity_start"),
@@ -414,6 +424,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             .where(
                 FclFreightRate.validities.is_null(False)
                 and FclFreightRate.validities != "[]"
+                and FclFreightRate.origin_port_id == 'eb187b38-51b2-4a5e-9f3c-978033ca1ddf' and FclFreightRate.destination_port_id == '23630ba9-b478-4000-ba75-05606d72d19f'
             )
             .order_by(FclFreightRate.id)
         )
@@ -478,7 +489,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             )
         )
         feedbacks = jsonable_encoder(list(query.dicts()))
-        # breakpoint()
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
@@ -1239,16 +1249,16 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     populate_from_rates.populate_from_active_rates() # active rates from rms to main_statistics
-    populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
-    populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
-    populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() # data from shipment_fcl_freight_services to main_statistics
-    populate_from_rates.update_fcl_freight_rate_checkout_count() # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
-    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() #like dislike count in main_statistics and populate feedback_statistics
-    populate_from_rates.populate_fcl_request_statistics() #populate request_fcl_statistics table
-    populate_from_rates.populate_shipment_statistics() #shipment_statistics data population
-    populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
-    populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() # populate SpotSearchFclFreightRateStatistic table and increase spot_search_count
-    populate_from_rates.update_pricing_map_zone_ids() # update map_zone_ids for main_statistics and missing_requests
+    # populate_from_rates.populate_from_feedback() # old rates from data in feedbacks to main_statistics
+    # populate_from_rates.populate_from_spot_search_rates() # old rates from spot_search_rates to main_statistics
+    # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() # data from shipment_fcl_freight_services to main_statistics
+    # populate_from_rates.update_fcl_freight_rate_checkout_count() # checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs
+    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() #like dislike count in main_statistics and populate feedback_statistics
+    # populate_from_rates.populate_fcl_request_statistics() #populate request_fcl_statistics table
+    # populate_from_rates.populate_shipment_statistics() #shipment_statistics data population
+    # populate_from_rates.update_accuracy() # update accuracy, deviation from shipment_buy_quotation
+    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() # populate SpotSearchFclFreightRateStatistic table and increase spot_search_count
+    # populate_from_rates.update_pricing_map_zone_ids() # update map_zone_ids for main_statistics and missing_requests
 
 
 if __name__ == "__main__":

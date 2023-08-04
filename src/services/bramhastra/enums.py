@@ -18,6 +18,7 @@ class ValidityAction(Bramhastra):
 class FeedbackAction(Bramhastra):
     create = 'create'
     update = 'update'
+    delete = 'delete'
     
 class CheckoutAction(Bramhastra):
     create = 'create'

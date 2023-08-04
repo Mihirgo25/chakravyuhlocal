@@ -16,8 +16,8 @@ def create_fcl_freight_rate_feedback(request):
     object_type = 'Fcl_Freight_Rate_Feedback'
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    with db.atomic():
-        return execute_transaction_code(request)
+    
+    return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     action = 'update'
@@ -75,7 +75,7 @@ def execute_transaction_code(request):
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         
-    set_feedback_statistics(action,request,feedback)
+    set_feedback_statistics(action,feedback, request)
 
     return {'id': request['rate_id']}
 
@@ -152,14 +152,16 @@ def create_audit(request, feedback):
         performed_by_id = request['performed_by_id']
     )
     
-def set_feedback_statistics(action, request, feedback):
+def set_feedback_statistics(action, feedback, request = None):
     from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import (
         apply_feedback_fcl_freight_rate_statistic,
     )
     from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
     from playhouse.shortcuts import model_to_dict
     from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
-
+    
+    feedback = feedback.refresh()
+    
     params = model_to_dict(
         feedback,
         only=[
@@ -176,12 +178,17 @@ def set_feedback_statistics(action, request, feedback):
             FclFreightRateFeedback.performed_by_id,
             FclFreightRateFeedback.performed_by_org_id,
             FclFreightRateFeedback.feedback_type,
+            FclFreightRateFeedback.cogo_entity_id,
+            FclFreightRateFeedback.closing_remarks,
+            FclFreightRateFeedback.status,
+            FclFreightRateFeedback.feedbacks
         ],
     )
-
-    for k, v in request.items():
-        if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
-            params[k] = v 
+    
+    if request:
+        for k, v in request.items():
+            if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
+                params[k] = v 
         
     apply_feedback_fcl_freight_rate_statistic(
         ApplyFeedbackFclFreightRateStatistics(

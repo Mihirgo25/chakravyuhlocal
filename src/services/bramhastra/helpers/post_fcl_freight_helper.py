@@ -17,7 +17,7 @@ from services.fcl_freight_rate.models.fcl_freight_location_cluster_mapping impor
     FclFreightLocationClusterMapping,
     FclFreightLocationCluster,
 )
-from micro_services.client import maps
+from micro_services.client import maps,common
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
@@ -104,7 +104,7 @@ class FclFreightValidity(Connection):
     def set_identifier_details(self, rate_id, validity_id) -> None:
         self.rate_id = rate_id
         self.validity_id = validity_id
-        self.fcl_freight_rate_statistics_identifier = "_".join([rate_id, validity_id])
+        self.fcl_freight_rate_statistics_identifier = "".join([rate_id, validity_id]).replace('-','')
 
     def get_or_create_statistics_current_row(self) -> Model:
         row = self.get_postgres_statistics_current_row_by_identifier()
@@ -203,7 +203,7 @@ class Rate:
                     param["rate_id"],
                     param["validity_id"],
                 ]
-            )
+            ).replace('-','')
             param["origin_pricing_zone_map_id"] = self.origin_pricing_zone_map_id
             param[
                 "destination_pricing_zone_map_id"
@@ -212,6 +212,7 @@ class Rate:
             param["destination_region_id"] = self.destination_region_id
             param["origin_continent_id"] = self.origin_continent_id
             param["destination_continent_id"] = self.destination_continent_id
+            param['standard_price'] = common.get_money_exchange_for_fcl({'from_currency': 'USD', 'to_currency': param['currency'], 'price': param['price']})
             self.params.append(param)
 
     def set_pricing_map_zone_ids(self) -> list:
@@ -322,17 +323,21 @@ class SpotSearch:
                 row[key] += 1
             fcl_freight_validity.create_stats(row)
 
-
+from services.bramhastra.enums import FeedbackAction
 class Feedback:
-    def __init__(self, params) -> None:
-        self.params = params.dict(exclude={"likes_count", "dislikes_count"})
-        self.rate_id = params.rate_id
-        self.validity_id = params.validity_id
+    def __init__(self,action,params) -> None:
+        if action == FeedbackAction.create.value:
+            self.params = params.dict(exclude={"likes_count", "dislikes_count"})
+            self.rate_id = params.rate_id
+            self.validity_id = params.validity_id
+            self.feedback_id = params.feedback_id
+        else:
+            self.params = params.dict(exclude_none = True)
+            
         self.rate_stats_update_params = params.dict(
             include={"likes_count", "dislikes_count"}
         )
         self.increment_keys = {}
-        self.feedback_id = params.feedback_id
         self.clickhouse_client = None
 
     def set_format_and_existing_rate_stats(self):
@@ -352,36 +357,23 @@ class Feedback:
     def set_new_stats(self) -> int:
         return FeedbackFclFreightRateStatistic.insert_many(self.params).execute()
 
-    def set_existing_stats(self) -> None:
-        force_insert = False
-        EXCLUDE_UPDATE_PARAMS = {"feedback_id", "serial_id"}
-        feedback = (
-            FeedbackFclFreightRateStatistic.select()
-            .where(
-                FeedbackFclFreightRateStatistic.feedback_id
-                == self.params["feedback_id"]
-            )
-            .first()
-        )
-        if not feedback:
-            row = self.get_clickhouse_feedback_current_row_by_identifier()
-            feedback = FeedbackFclFreightRateStatistic(**row)
-            force_insert = True
-        if feedback:
-            for k, v in self.params.items():
-                if k not in EXCLUDE_UPDATE_PARAMS:
-                    setattr(feedback, k, v)
-            feedback.save(force_insert=force_insert)
-
-    def get_clickhouse_feedback_current_row_by_identifier(self) -> dict:
-        parameters = {
-            "table": Table.feedback_fcl_freight_rate_statistics.value,
-            "identifier": self.feedback_id,
-            "sign": 1,
-        }
+    def  set_existing_stats(self) -> None: 
+        
+        if not self.clickhouse_client:
+            self.clickhouse_client = ClickHouse()
+        
+        queries = [f"ALTER TABLE brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} UPDATE"]
+        
+        values = []
+        for key in self.params.keys():
+            values.append(f"{key} = %({key})s")
+            
+        queries.append(','.join(values))
+        
+        queries.append(f"WHERE (feedback_id,version) IN (SELECT identifier, MAX(version) AS max_version FROM brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE feedback_id = %(feedback_id)s GROUP BY identifier)")
+        
         if row := self.clickhouse_client.execute(
-            "SELECT * FROM brahmastra.%(table)s WHERE identifier = %(identifier)s} and sign = %(sign)s",
-            parameters,
+            ' '.join(queries),self.params
         ):
             return row[0]
 
@@ -410,7 +402,6 @@ class Checkout(FclFreightValidity):
 
     def set_format_and_existing_rate_stats(self):
         self.common_params = self.params.dict(exclude={"checkout_fcl_freight_services"})
-
         for param in self.params.checkout_fcl_freight_services:
             rate = param.rate.dict(include={"rate_id", "validity_id"})
             self.rates.append(rate)
@@ -422,7 +413,6 @@ class Checkout(FclFreightValidity):
             checkout_param["total_buy_price"] = total_buy_price
             checkout_param["currency"] = param.rate.line_items[0]["currency"]
             checkout_param.update(rate)
-            self.checkout_params.append(checkout_param)
 
             fcl_freight_validity = None
 
@@ -437,7 +427,7 @@ class Checkout(FclFreightValidity):
             )
 
             if new_row:
-                param["fcl_freight_rate_statistic_id"] = (
+                checkout_param["fcl_freight_rate_statistic_id"] = (
                     new_row["id"] if isinstance(new_row, dict) else new_row.id
                 )
                 self.increment_checkout_rate_stats(fcl_freight_validity, new_row)
@@ -448,7 +438,7 @@ class Checkout(FclFreightValidity):
             self.checkout_params
         ).execute()
 
-    def set_existing_stats(self) -> None:
+    def set_existing_stats(self) -> None: 
         pass
 
     def increment_checkout_rate_stats(self, fcl_freight_validity, row):

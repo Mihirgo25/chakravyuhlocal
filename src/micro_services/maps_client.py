@@ -68,3 +68,6 @@ class MapsApiClient:
 
     def get_is_land_service_possible(self,data = {}):
         return self.client.request('GET','is_land_service_possible',data)
+    
+    def get_airlines_for_route(self,data={}):
+        return self.client.request('GET','get_airline_for_route',data)

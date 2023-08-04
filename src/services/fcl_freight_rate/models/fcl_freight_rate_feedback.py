@@ -71,6 +71,10 @@ class FclFreightRateFeedback(BaseModel):
 
     class Meta:
         table_name = 'fcl_freight_rate_feedbacks'
+        
+        
+    def refresh(self):
+        return type(self).get(self._pk_expr())
 
 
     # def validate_source(self):
