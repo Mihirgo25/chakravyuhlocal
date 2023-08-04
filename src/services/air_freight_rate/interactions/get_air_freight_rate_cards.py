@@ -461,7 +461,7 @@ def get_air_freight_rate_cards(requirements):
 
         freight_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
-
+        print(freight_rates)
         freight_rates = pre_discard_noneligible_rates(freight_rates)
         freight_rates = remove_cogoxpress_service_provider(freight_rates)
 
