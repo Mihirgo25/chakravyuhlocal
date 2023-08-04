@@ -195,7 +195,7 @@ class RelateAirline:
         for slab in criticl_weight_slabs:
             key = get_matching_slab(slab["lower_limit"])
             if key in weight_slabs:
-                slab_wise_ratio[key] = mean(weight_slabs[key]/slab['tariff_price'])
+                slab_wise_ratio[key] = mean(weight_slabs[key])/slab['tariff_price']
         
         return slab_wise_ratio
     
