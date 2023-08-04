@@ -2,7 +2,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate import FclCustomsRate
 from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def update_fcl_customs_rate(request):
     with db.atomic():
@@ -32,6 +32,7 @@ def execute_transaction_code(request):
     create_audit_for_updating_rate(request, rate_object)
 
     rate_object.update_platform_prices_for_other_service_providers()
+    get_multiple_service_objects(rate_object)
 
     return {'id': rate_object.id}
 
