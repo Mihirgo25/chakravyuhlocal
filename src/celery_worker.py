@@ -855,3 +855,23 @@ def update_ftl_freight_rate_request_delay(self, request):
             pass
         else:
             raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
+def send_missing_or_dislike_rate_notifications_to_kam(self, object, request):
+    try:
+        object.send_missing_or_dislike_rate_notifications_to_kam(request.get('query_raised_by_id'), request.get('is_rate_missing_or_dislike'))
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, max_retries=1, retry_backoff = True)
+def send_missing_or_dislike_rate_notifications_to_platform(self, object, request):
+    try:
+        object.send_missing_or_dislike_rate_notifications_to_platform(request.get('query_raised_by_id'), request.get('is_rate_missing_or_dislike'))
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)

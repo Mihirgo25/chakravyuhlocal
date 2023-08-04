@@ -112,6 +112,8 @@ class CreateFtlFreightRate(BaseModel):
     line_items: list[FtlLineItem]
     ftl_freight_rate_request_id: str = None
     performed_by_type: str=None
+    is_rate_missing_or_dislike: str = None
+    query_raised_by_id: str = None
 
 class Package(BaseModel):
     packing_type: str

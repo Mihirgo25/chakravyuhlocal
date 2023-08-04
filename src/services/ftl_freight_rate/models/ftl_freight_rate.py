@@ -3,7 +3,7 @@ from peewee import *
 from fastapi import HTTPException
 from database.db_session import db
 from playhouse.postgres_ext import *
-from configs.ftl_freight_rate_constants import RATE_TYPES, BODY_TYPE, TRIP_TYPES, VALID_UNITS, COMMODITIES
+from configs.ftl_freight_rate_constants import RATE_TYPES, BODY_TYPE, TRIP_TYPES, VALID_UNITS, COMMODITIES, DEFAULT_FTL_NOTIFICATION_RECIPIENT_ID
 from micro_services.client  import maps, common
 from configs.definitions import FTL_FREIGHT_CHARGES
 from libs.get_applicable_filters import is_valid_uuid
@@ -372,3 +372,58 @@ class FtlFreightRate(BaseModel):
             FtlFreightRate.service_provider_id == self.service_provider_id,
             FtlFreightRate.rate_not_available_entry == True
         ).execute()
+
+    def send_missing_or_dislike_rate_notifications_to_kam(self, query_raised_by_id, is_rate_missing_or_dislike):
+        origin_location = self.origin_location
+        destination_location = self.destination_location
+
+        shubham_id = DEFAULT_FTL_NOTIFICATION_RECIPIENT_ID
+
+        for user in [query_raised_by_id, shubham_id] if query_raised_by_id is not None else [shubham_id]:
+            notification_data = {
+                'type': 'platform_notification',
+                'user_id': user,
+                'service': 'ftl_freight_rate',
+                'service_id': self.id,
+                'template_name': 'missing_or_dislike_rate_revert',
+                'service_objects': [
+                    {'service': 'user', 'id': user, 'alias': 'service_ops1'}
+                ],
+                'variables': {
+                    'service_type': 'ftl_freight_service',
+                    'origin': origin_location.get('name'),
+                    'destination': destination_location.get('name'),
+                    'truck_type': self.truck_type,
+                    'commodity': self.commodity,
+                    'missing_or_dislike': is_rate_missing_or_dislike,
+                    'validity_start': self.validity_start.date(),
+                    'validity_end': self.validity_end.date()
+                }
+            }
+            common.create_communication(notification_data)
+
+    def send_missing_or_dislike_rate_notifications_to_platform(self, query_raised_by_id, is_rate_missing_or_dislike):
+        origin_location = self.origin_location
+        destination_location = self.destination_location
+
+        shubham_id = DEFAULT_FTL_NOTIFICATION_RECIPIENT_ID
+
+        for user in [query_raised_by_id, shubham_id] if query_raised_by_id is not None else [shubham_id]:
+            notification_data = {
+                'type': 'platform_notification',
+                'user_id': user,
+                'service': 'ftl_freight_rate',
+                'service_id': self.id,
+                'template_name': 'missing_or_dislike_rate_platform_notification_revert',
+                'variables': {
+                    'service_type': 'ftl_freight_service',
+                    'origin': origin_location.get('name'),
+                    'destination': destination_location.get('name'),
+                    'truck_type': self.truck_type,
+                    'commodity': self.commodity if self.commodity is not None else 'general',
+                    'missing_or_dislike': is_rate_missing_or_dislike,
+                    'validity_start': self.validity_start.date(),
+                    'validity_end': self.validity_end.date()
+                }
+            }
+            common.create_communication(notification_data)
