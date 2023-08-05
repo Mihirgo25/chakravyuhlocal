@@ -56,7 +56,7 @@ def create_audit(request, freight_rate_feedback_id):
     #### need to tackle what to send in data
     data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},    #######already performed_by_id column is present do we need to also save it in data?
     object_id = freight_rate_feedback_id,
-    object_type = 'FclFreightRateFeedback'
+    object_type = 'FclFreightRateFeedback')
     
     
 def set_stats(obj):
