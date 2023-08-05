@@ -46,7 +46,10 @@ def get_direct_indirect_filters(filters):
 
     for key, value in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS and value:
-            where.append(f"{key} = %({key})s")
+            if type(value)==list:
+                where.append(f"{key} IN %({key})s")
+            else:
+                where.append(f"{key} = %({key})s")
         if key in POSSIBLE_INDIRECT_FILTERS and value:
             eval(f"get_{key}_filter(where)")
         if key in COUNT_FILTERS:
