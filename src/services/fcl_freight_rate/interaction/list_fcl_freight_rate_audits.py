@@ -103,7 +103,7 @@ def apply_hash_indirect_filters(query, filter, filters):
         indirect_filters = {key:value for key,value in to_apply.items() if key in possible_hash_filters[filter]['indirect']}
         for indirect_filter in indirect_filters:
             query = eval("apply_{}_{}_filter(query,filters)".format(filter,indirect_filter))
-            return query
+        return query
     else:
         return query
 
@@ -112,7 +112,7 @@ def apply_created_at_greater_than_filter(query, filters):
     return query
 
 def apply_fcl_freight_rate_filter(query, filters):
-    query = query.select().join(FclFreightRate, JOIN.INNER, on=(FclFreightRateAudit.object_id == FclFreightRate.id)).where(FclFreightRateAudit.object_type == 'FclFreightRate')
+    query = query.select(FclFreightRate, FclFreightRateAudit).join(FclFreightRate, JOIN.INNER, on=(FclFreightRateAudit.object_id == FclFreightRate.id)).where(FclFreightRateAudit.object_type == 'FclFreightRate')
     return query
 
 def apply_fcl_freight_rate_direct_filter(query, filters):
@@ -145,16 +145,16 @@ def apply_fcl_freight_rate_validity_start_less_than_equal_to_filter(query, filte
 
 
 def apply_fcl_freight_rate_validity_end_greater_than_equal_to_filter(query, filters):
-    validity_start_greater_than_equal_to = filters["fcl_freight_rate"]["validity_start_greater_than_equal_to"]
+    validity_end_greater_than_equal_to = filters["fcl_freight_rate"]["validity_end_greater_than_equal_to"]
     query = query.where(
         Case(
             None,
             (
-                (FclFreightRateAudit.data.contains('%/%/%'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD/MM/YY')),
-                (FclFreightRateAudit.data.contains('%-%-____'), fn.to_date(FclFreightRateAudit.data['validity_start'], 'DD-MM-YYYY')),
+                (FclFreightRateAudit.data.contains('%/%/%'), fn.to_date(FclFreightRateAudit.data['validity_end'], 'DD/MM/YY')),
+                (FclFreightRateAudit.data.contains('%-%-____'), fn.to_date(FclFreightRateAudit.data['validity_end'], 'DD-MM-YYYY')),
             ),
             fn.to_date(FclFreightRateAudit.data['validity_start'], 'YYYY-MM-DD')
-        ) >= fn.to_date(validity_start_greater_than_equal_to, 'YYYY-MM-DD')
+        ) >= fn.to_date(validity_end_greater_than_equal_to, 'YYYY-MM-DD')
     )
     return query
 
