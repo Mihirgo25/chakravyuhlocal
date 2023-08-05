@@ -19,6 +19,7 @@ from database.db_session import db
 from peewee import *
 import urllib
 import json
+import uuid
 
 BATCH_SIZE = 1000
 AIR_STANDARD_VOLUMETRIC_WEIGHT_CONVERSION_RATIO = 166.67
@@ -622,7 +623,7 @@ class PopulateAirFreightRateStatistics(MigrationHelpers):
                         ))
                         result = cursor.fetchone()
                         if result:
-                            validity_ids = [item['id'] for item in result[0]]
+                            validity_ids = [uuid.UUID(item['id']) for item in result[0]]
 
                     except Exception as e:
                         print('!Exception', e)
