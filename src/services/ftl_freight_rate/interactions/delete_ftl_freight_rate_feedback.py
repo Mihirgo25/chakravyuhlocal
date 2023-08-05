@@ -21,7 +21,7 @@ def execute_transaction_code(request):
         try:
             obj.save()
         except:
-            raise HTTPException(status_code=500, detail="Ftl Freight rate Feedback deletion failed")
+            raise HTTPException(status_code=501, detail="Ftl Freight rate Feedback deletion failed")
 
         create_audit(request, obj.id)
 
@@ -29,10 +29,11 @@ def execute_transaction_code(request):
 
 
 def find_objects(request):
-    try:
-        return FtlFreightRateFeedback.select().where(FtlFreightRateFeedback.id << request['ftl_freight_rate_feedback_ids'], FtlFreightRateFeedback.status == 'active').execute()
-    except:
-        return None
+    ftl_freight_rate_feedback = FtlFreightRateFeedback.select().where(FtlFreightRateFeedback.id << request['ftl_freight_rate_feedback_ids'], FtlFreightRateFeedback.status == 'active')
+    if ftl_freight_rate_feedback.count() > 0:
+        return ftl_freight_rate_feedback
+    
+    return None
 
 
 def create_audit(request, freight_rate_feedback_id):

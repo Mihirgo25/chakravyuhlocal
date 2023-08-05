@@ -52,8 +52,8 @@ def execute_transaction_code(request):
 
     try:
         rate_object.save()
-    except Exception as e:
-        print("Exception in updating rate", e)
+    except Exception as error_message:
+        raise HTTPException(status_code=501,detail=error_message)
 
     return {"id": rate_object.id}
 

@@ -16,6 +16,8 @@ class FtlFreightRateAudit(BaseModel):
     object_type = CharField(null=True)
     object_id = UUIDField(index=True, null=True)
     action_name = CharField(null=True)
+    sourced_by_id = UUIDField(null=True,index=True)
+    procured_by_id = UUIDField(null=True,index=True)
     performed_by_id = UUIDField(index=True, null =True)
     data = BinaryJSONField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
