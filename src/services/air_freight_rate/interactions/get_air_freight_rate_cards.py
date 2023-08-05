@@ -12,6 +12,7 @@ from services.air_freight_rate.interactions.get_air_freight_rate_prediction impo
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_density_wise_rate_card
 import sentry_sdk
 import traceback
+from services.air_freight_rate.interactions.get_air_freight_rates_from_clusters import get_air_freight_rates_from_clusters
 
 def initialize_freight_query(requirements,prediction_required=False):
     freight_query = AirFreightRate.select(
@@ -48,7 +49,6 @@ def initialize_freight_query(requirements,prediction_required=False):
     ((AirFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (AirFreightRate.importer_exporter_id == None))
 
     )
-    print(initialize_freight_query)
     rate_constant_mapping_key = requirements.get('cogo_entity_id')
 
     allowed_entity_ids = None
@@ -462,16 +462,22 @@ def get_air_freight_rate_cards(requirements):
 
         freight_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
-        print(freight_rates)
         freight_rates = pre_discard_noneligible_rates(freight_rates)
         freight_rates = remove_cogoxpress_service_provider(freight_rates)
 
         is_predicted = False
         if len(freight_rates) == 0:
-            get_air_freight_rate_prediction(requirements)
-            is_predicted = True
-            freight_rates = initialize_freight_query(requirements,True)
+            try:
+                get_air_freight_rates_from_clusters(requirements)
+            except Exception as e:
+                pass
+            freight_rates = initialize_freight_query(requirements)
             freight_rates = jsonable_encoder(list(freight_rates.dicts()))
+            if len(freight_rates)==0:
+                get_air_freight_rate_prediction(requirements)
+                is_predicted = True
+                freight_rates = initialize_freight_query(requirements,True)
+                freight_rates = jsonable_encoder(list(freight_rates.dicts()))
         
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
