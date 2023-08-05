@@ -56,8 +56,7 @@ def create_audit(request, freight_rate_request_id):
     performed_by_id = request['performed_by_id'],
     data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},    #######already performed_by_id column is present do we need to also save it in data?
     object_id = freight_rate_request_id,
-    object_type = 'FclFreightRateRequest'
-    
+    object_type = 'FclFreightRateRequest')
     
 def set_stats(obj):
     action = 'delete'

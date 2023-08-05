@@ -1,6 +1,7 @@
 import click
 import uvicorn
 import socket
+from IPython.core.ultratb import VerboseTB
 
 EXEC_LINES = [
     "%load_ext autoreload",
@@ -52,7 +53,8 @@ def shell(ipython_args):
     )
     config.InteractiveShellApp.exec_lines = EXEC_LINES
     config.InteractiveShellApp.exec_files = EXEC_FILES
-    # config.InteractiveShell.pdb = True
+    config.InteractiveShell.pdb = True
+    VerboseTB._tb_highlight = "bg:#4C5656"
     config.InteractiveShell.debug = True
     user_ns = {"database": db}
     with db.connection_context():

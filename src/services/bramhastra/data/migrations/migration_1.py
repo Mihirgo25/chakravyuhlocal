@@ -117,13 +117,14 @@ class MigrationHelpers:
         ), map_zone_location_mapping.get(destination_port_id)
 
     def find_statistics_object(self, identifier):
-        freight = (
-            FclFreightRateStatistic.select()
-            .where(FclFreightRateStatistic.identifier == identifier)
-            .first()
-        )
+        freight = FclFreightRateStatistic.select().where(FclFreightRateStatistic.identifier == identifier).first()
         return freight
 
+    def get_filtered_identifiers(self, identifier_ar):
+        query = FclFreightRateStatistic.select(FclFreightRateStatistic.identifier).where(FclFreightRateStatistic.identifier.in_(identifier_ar))
+        identifier_ar = [row['identifier'] for row in  list(query.dicts())]
+        return identifier_ar
+        
     def find_rate_object(self, id):
         freight = FclFreightRate.select().where(FclFreightRate.id == id).first()
         return freight
@@ -211,7 +212,7 @@ class MigrationHelpers:
                         cur.execute(sql, ('service_rates','rate_id','service_type','fcl_freight'))
                         all_result = cur.fetchone()[0]
                     else:
-                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
+                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.updated_at limit %s offset %s"
                         cur.execute(
                             sql,
                             (
@@ -396,7 +397,7 @@ class MigrationHelpers:
             print("Error from railsDb", e)
             return all_result
         
-    def get_imp_exp_id_mapping_from_spot_searches(self, source_ids):
+    def get_imp_exp_id_mapping_from_spot_searches(self, source_ids = [None]):
         all_results = {}
         try:
             newconnection = get_connection()
@@ -410,12 +411,13 @@ class MigrationHelpers:
                         all_results[res[0]] = res[1]
                     cursor.close()
             newconnection.close()
+            return all_results
         except Exception as e:
             print("Error from railsDb", e)
             return all_results
                 
 
-    def get_imp_exp_id_mapping_from_checkouts(self, source_ids):
+    def get_imp_exp_id_mapping_from_checkouts(self, source_ids=[None]):
         all_results = {}
         try:
             newconnection = get_connection()
@@ -429,6 +431,7 @@ class MigrationHelpers:
                         all_results[res[0]] = res[1]
                     cursor.close()
             newconnection.close()
+            return all_results
         except Exception as e:
             print("Error from railsDb", e)
             return all_results
@@ -445,7 +448,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 FclFreightRate.validities.is_null(False)
                 and FclFreightRate.validities != "[]"
             )
-            .order_by(FclFreightRate.id)
+            .order_by(FclFreightRate.updated_at)
         )
         total_count = query.count()
 
@@ -453,38 +456,49 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
         count = 0
-        offset = 0
+        last_updated_at = None 
+        last_updated_id = None
+        still_has_rates = total_count > 0 
+        
+        print(total_count, 'total---')
 
-        while offset < total_count:
-            cur_query = query.offset(offset).limit(BATCH_SIZE)
-            rates = jsonable_encoder(list(cur_query.dicts()))
-            offset += BATCH_SIZE
+        while still_has_rates:
+            if not last_updated_at:
+                rates = query.limit(BATCH_SIZE)
+            else:
+                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id != last_updated_id)).limit(BATCH_SIZE)
+            
+            if not rates.count():
+                still_has_rates = False
+                break
+                
             row_data = []
             for rate in rates:
-                for validity in rate["validities"]:
+                for validity in rate.validities:
                     count += 1
 
-                    identifier = self.get_identifier(rate["id"], validity["id"])
+                    identifier = self.get_identifier(str(rate.id), validity["id"])
 
                     rate_params = {
-                        key: value for key, value in rate.items() if key in RATE_PARAMS
+                        key: getattr(rate, key) for key in RATE_PARAMS
                     }
+                    
                     validity_params = self.get_validity_params(validity)
 
                     row = {
                         **rate_params,
                         **validity_params,
-                        "containers_count": rate.get("containers_count") or 0,
+                        "containers_count": getattr(rate, "containers_count") or 0,
                         "identifier": identifier,
-                        "rate_id": rate.get("id"),
-                        "rate_created_at": rate.get("created_at"),
-                        "rate_updated_at": rate.get("updated_at"),
-                        "rate_type": rate.get("rate_type") or DEFAULT_RATE_TYPE,
+                        "rate_id": getattr(rate, "id"),
+                        "rate_created_at": getattr(rate, "created_at"),
+                        "rate_updated_at": getattr(rate, "updated_at"),
+                        "rate_type": getattr(rate, "rate_type") or DEFAULT_RATE_TYPE,
                         "origin_region_id": REGION_MAPPING.get(
-                            rate.get("origin_port_id")
+                            getattr(rate, "origin_port_id")
                         ),
                         "destination_region_id": REGION_MAPPING.get(
-                            rate.get("destination_port_id")
+                            getattr(rate, "destination_port_id")
                         ),
                         "market_price": validity.get("market_price")
                         or validity.get("price"),
@@ -492,6 +506,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     }
                     row_data.append(row)
                     print(count)
+            last_updated_id = str(rates[-1].id)
+            last_updated_at = rates[-1].updated_at
+                                
             FclFreightRateStatistic.insert_many(row_data).execute()
 
     def populate_from_feedback(self):
@@ -506,61 +523,68 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     False
                 )
             )
-        )
-        feedbacks = jsonable_encoder(list(query.dicts()))
+        ).order_by(FclFreightRateFeedback.created_at)
+
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
 
         count = 0
-        actual_count = 0
-        row_data = []
+        offset = 0
+        total_count = query.count()
+        print(total_count, '-->total_count')
+        
+        while offset < total_count:
+            row_data = []
+            
+            feedbacks = query.limit(BATCH_SIZE).offset(offset)
+            
+            offset += BATCH_SIZE
+            
+            identifier_ar = [self.get_identifier(str(feedback.booking_params["rate_card"]["rate_id"]), str(feedback.booking_params["rate_card"]["validity_id"])) for feedback in feedbacks]
+            identifier_ar = self.get_filtered_identifiers(identifier_ar)
+            
+            for feedback in feedbacks:
 
-        for feedback in feedbacks:
-            count += 1
-            print(count)
-            if(count < 13124):
-                continue
+                count += 1
+                print(count)
 
-            rate_card = feedback["booking_params"]["rate_card"]
-            identifier = self.get_identifier(rate_card["rate_id"], rate_card["validity_id"])
+                rate_card = feedback.booking_params["rate_card"]
+                identifier = self.get_identifier(rate_card["rate_id"], rate_card["validity_id"])
 
-            statistics_obj = self.find_statistics_object(identifier)
+                if identifier in identifier_ar:
+                    continue
 
-            if statistics_obj:
-                continue
+                rate = self.find_rate_object(rate_card["rate_id"])
 
-            rate = self.find_rate_object(rate_card["rate_id"])
+                if not rate:
+                    continue
 
-            if not rate:
-                continue
+                rate = model_to_dict(rate)
 
-            rate = model_to_dict(rate)
+                rate_params = {key: rate.get(key) for key in RATE_PARAMS}
+                validity_params = self.get_validity_params(rate_card)
 
-            rate_params = {key: rate.get(key) for key in RATE_PARAMS}
-            validity_params = self.get_validity_params(rate_card)
+                row = {
+                    **rate_params,
+                    **validity_params,
+                    "containers_count": rate.get("containers_count") or 0,
+                    "identifier": identifier,
+                    "rate_id": rate.get("id"),
+                    "rate_type": rate.get("rate_type") or DEFAULT_RATE_TYPE,
+                    "origin_region_id": REGION_MAPPING.get(rate.get("origin_port_id")),
+                    "destination_region_id": REGION_MAPPING.get(
+                        rate.get("destination_port_id")
+                    ),
+                    "rate_created_at": rate.get("created_at"),
+                    "rate_updated_at": rate.get("updated_at"),
+                    "validity_id": rate_card["validity_id"],
+                    "market_price": rate_card.get("market_price")
+                    or validity_params.get("price"),
+                }
 
-            row = {
-                **rate_params,
-                **validity_params,
-                "containers_count": rate.get("containers_count") or 0,
-                "identifier": identifier,
-                "rate_id": rate.get("id"),
-                "rate_type": rate.get("rate_type") or DEFAULT_RATE_TYPE,
-                "origin_region_id": REGION_MAPPING.get(rate.get("origin_port_id")),
-                "destination_region_id": REGION_MAPPING.get(
-                    rate.get("destination_port_id")
-                ),
-                "rate_created_at": rate.get("created_at"),
-                "rate_updated_at": rate.get("updated_at"),
-                "validity_id": rate_card["validity_id"],
-                "market_price": rate_card.get("market_price")
-                or validity_params.get("price"),
-            }
-
-            row_data.append(row)
-            actual_count += 1
-        FclFreightRateStatistic.insert_many(row_data).execute()
+                row_data.append(row)
+            FclFreightRateStatistic.insert_many(row_data).execute()
     
     def update_pricing_map_zone_ids(self):
         query  = FclFreightLocationCluster.select(FclFreightLocationClusterMapping.location_id,FclFreightLocationCluster.map_zone_id).join(FclFreightLocationClusterMapping)
@@ -588,62 +612,67 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             
         
     def populate_feedback_fcl_freight_rate_statistic(self):
-        query = FclFreightRateFeedback.select()
-        feedbacks = jsonable_encoder(list(query.dicts()))
+        query = FclFreightRateFeedback.select(FclFreightRateFeedback.feedback_type, FclFreightRateFeedback.id, FclFreightRateFeedback.validity_id, FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.source, FclFreightRateFeedback.source_id, FclFreightRateFeedback.performed_by_id, FclFreightRateFeedback.performed_by_org_id, FclFreightRateFeedback.created_at, FclFreightRateFeedback.updated_at, FclFreightRateFeedback.service_provider_id, FclFreightRateFeedback.closed_by_id, FclFreightRateFeedback.serial_id)
+        total_count = query.count()
+        print(total_count , 'total_count...')
         count = 0
-        row_data = []
-        for feedback in feedbacks:
-            count += 1
-            identifier = self.get_identifier(
-                feedback["fcl_freight_rate_id"], feedback["validity_id"]
-            )
+        offset = 0
+        
+        while(offset < total_count):
+            feedbacks = query.limit(BATCH_SIZE).offset(offset)
 
-            statistics_obj = self.find_statistics_object(identifier)
+            offset += BATCH_SIZE
+            row_data = []
+            
+            for feedback in feedbacks:
+                count += 1
+        
+                print(count)
+                
+                identifier = self.get_identifier(
+                    str(feedback.fcl_freight_rate_id), str(feedback.validity_id)
+                )
 
+                statistics_obj = self.find_statistics_object(identifier)
 
-            if statistics_obj:
-                if feedback["feedback_type"] == "liked":
-                    setattr(
-                        statistics_obj, "likes_count", statistics_obj.likes_count + 1
-                    )
-                elif feedback["feedback_type"] == "disliked":
-                    setattr(
-                        statistics_obj,
-                        "dislikes_count",
-                        statistics_obj.dislikes_count + 1,
-                    )
-                saved_status = statistics_obj.save()
-                if not saved_status:
-                    print("! Error: Couldn't save statistics_obj", statistics_obj.id)
-                else:
-                    print("Saved ...", statistics_obj.id)
+                if not statistics_obj:
+                    continue
+                
+                if feedback.feedback_type == "liked":
+                    statistics_obj.likes_count += 1
+                    
+                elif feedback.feedback_type == "disliked":
+                    statistics_obj.dislikes_count += 1
+                    
+                    
+                statistics_obj.save()
 
                 row = {
-                    "fcl_freight_rate_statistic_id": statistics_obj.id,
-                    "feedback_id": feedback.get("id"),
-                    "validity_id": feedback.get("validity_id"),
-                    "rate_id": feedback.get("fcl_freight_rate_id"),
-                    "source": feedback.get("source"),
-                    "source_id": feedback.get("source_id"),
-                    "performed_by_id": feedback.get("performed_by_id"),
-                    "performed_by_org_id": feedback.get("performed_by_org_id"),
-                    "created_at": feedback.get("created_at"),
-                    "updated_at": feedback.get("updated_at"),
-                    "service_provider_id": feedback.get("service_provider_id"),
-                    "feedback_type": feedback.get("feedback_type"),
-                    "closed_by_id": feedback.get("closed_by_id"),
-                    "serial_id": feedback.get("serial_id"),
+                    "fcl_freight_rate_statistic_id": str(statistics_obj.id),
+                    "feedback_id": str(feedback.id),
+                    "validity_id": str(feedback.validity_id),
+                    "rate_id": str(feedback.fcl_freight_rate_id),
+                    "source": feedback.source,
+                    "source_id": str(feedback.source_id) if feedback.source_id else None,
+                    "performed_by_id": str(feedback.performed_by_id) if feedback.performed_by_id else None,
+                    "performed_by_org_id": str(feedback.performed_by_org_id) if feedback.performed_by_org_id else None,
+                    "created_at": feedback.created_at,
+                    "updated_at": feedback.updated_at,
+                    "service_provider_id": str(feedback.service_provider_id) if feedback.service_provider_id else None,
+                    "feedback_type": feedback.feedback_type,
+                    "closed_by_id": str(feedback.closed_by_id) if feedback.closed_by_id else None,
+                    "serial_id": str(feedback.serial_id) if feedback.serial_id else None,
                 }
                 row_data.append(row)
-        spot_search_ids = [row['source_id'] for row in row_data if "spot" in row['source']]
-        imp_exp_mapping = self.get_imp_exp_id_mapping_from_spot_searches(spot_search_ids)
-        checkout_ids = [row['source_id'] for row in row_data if row['source'] == 'checkout']
-        imp_exp_mapping.update(self.get_imp_exp_id_mapping_from_checkouts(checkout_ids))
-        
-        for row in row_data:
-            row['importer_exporter_id'] = imp_exp_mapping.get(row['source_id'], None)
+                    
+            spot_search_ids = [row['source_id'] for row in row_data if "spot" in row['source']]
+            imp_exp_mapping = jsonable_encoder(self.get_imp_exp_id_mapping_from_spot_searches(spot_search_ids)) if spot_search_ids else {}
+            checkout_ids = [row['source_id'] for row in row_data if row['source'] == 'checkout']
+            imp_exp_mapping.update(jsonable_encoder(self.get_imp_exp_id_mapping_from_checkouts(checkout_ids)) if checkout_ids else {})
             
-        FeedbackFclFreightRateStatistic.insert_many(row_data).execute()
+            for row in row_data:
+                row['importer_exporter_id'] = imp_exp_mapping.get(row['source_id'], None)
+            FeedbackFclFreightRateStatistic.insert_many(row_data).execute()
     
                 
     def populate_from_spot_search_rates(self):
@@ -658,10 +687,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         while offset < total_count:
             row_data = []
             rate_cards = self.get_spot_search_rates(offset=offset, limit=BATCH_SIZE)
-            identifier_ar = [self.get_identifier(rate_card["rate_id"], rate_card["validity_id"]) for rate_card in rate_cards]
             offset += BATCH_SIZE
-            query = FclFreightRateStatistic.select(FclFreightRateStatistic.identifier).where(FclFreightRateStatistic.identifier.in_(identifier_ar))
-            identifier_ar = [row['identifier'] for row in  list(query.dicts())]
+            identifier_ar = [self.get_identifier(rate_card["rate_id"], rate_card["validity_id"]) for rate_card in rate_cards]
+            identifier_ar = self.get_filtered_identifiers(identifier_ar)
             
             rate_ids = [row['rate_id'] for row in rate_cards]
             fcl_freight_rates = FclFreightRate.select().where(FclFreightRate.id.in_(rate_ids))
@@ -680,8 +708,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
                 if not rate:
                     continue
-                
-                rate = model_to_dict(rate)
 
                 rate_params = {key: rate.get(key) for key in RATE_PARAMS}
                 validity_params = self.get_validity_params(rate_card)
@@ -1108,7 +1134,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         ))
                         result = cursor.fetchone()
                         if result and result[0]:
-                            breakpoint()
                             validity_ids = [uuid.UUID(item["id"]) for item in result[0]]
 
                     except Exception as e:
@@ -1347,13 +1372,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    print('# active rates from rms to main_statistics')
+    # print('# active rates from rms to main_statistics')
     populate_from_rates.populate_from_active_rates() 
     print('# old rates from data in feedbacks to main_statistics')
     # populate_from_rates.populate_from_feedback() 
-    print('# old rates from spot_search_rates to main_statistics')
-    populate_from_rates.populate_from_spot_search_rates() 
-    print('# data from shipment_fcl_freight_services to main_statistics')
+    # print('# old rates from spot_search_rates to main_statistics')
+    # populate_from_rates.populate_from_spot_search_rates() 
+    # print('# data from shipment_fcl_freight_services to main_statistics')
     # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() 
     # print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
     # populate_from_rates.update_fcl_freight_rate_checkout_count() 
@@ -1364,7 +1389,7 @@ def main():
     # print('#shipment_statistics data population')
     # populate_from_rates.populate_shipment_statistics() 
     # print('# update accuracy, deviation from shipment_buy_quotation')
-    populate_from_rates.update_accuracy() 
+    # populate_from_rates.update_accuracy() 
     # print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
     # print('# update map_zone_ids for main_statistics and missing_requests')
