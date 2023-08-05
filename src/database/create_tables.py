@@ -11,7 +11,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_request import Ha
 def create_table():
     # db.connect()
     try:
-        db.create_tables([HaulageFreightRate, HaulageFreightRateAudit, HaulageFreightRateBulkOperation, HaulageFreightRateFeedback, HaulageFreightRateRequest])
+        db.create_tables([HaulageFreightRateAudit])
         db.close()
         print("created table")
     except:
