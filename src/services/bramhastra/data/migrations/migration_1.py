@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime,timedelta
+from peewee import SQL
 from configs.fcl_freight_rate_constants import (
     DEFAULT_RATE_TYPE,
     DEFAULT_SCHEDULE_TYPES,
@@ -212,7 +213,7 @@ class MigrationHelpers:
                         cur.execute(sql, ('service_rates','rate_id','service_type','fcl_freight'))
                         all_result = cur.fetchone()[0]
                     else:
-                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.updated_at limit %s offset %s"
+                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
                         cur.execute(
                             sql,
                             (
@@ -442,14 +443,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):
-        query = (
-            FclFreightRate.select()
-            .where(
-                FclFreightRate.validities.is_null(False)
-                and FclFreightRate.validities != "[]"
-            )
-            .order_by(FclFreightRate.updated_at)
-        )
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")))
+        
         total_count = query.count()
 
         REGION_MAPPING = {}
@@ -461,19 +456,21 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         still_has_rates = total_count > 0 
         
         print(total_count, 'total---')
-
+        offset = 0
         while still_has_rates:
             if not last_updated_at:
-                rates = query.limit(BATCH_SIZE)
+                rates = query.order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
             else:
-                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id != last_updated_id)).limit(BATCH_SIZE)
+                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id != last_updated_id)).order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
             
             if not rates.count():
                 still_has_rates = False
                 break
-                
+            
+            offset += BATCH_SIZE
             row_data = []
             for rate in rates:
+                    
                 for validity in rate.validities:
                     count += 1
 
@@ -523,7 +520,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     False
                 )
             )
-        ).order_by(FclFreightRateFeedback.created_at)
+        ).order_by(FclFreightRateFeedback.created_at.desc())
 
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
@@ -1255,7 +1252,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     .join(FclFreightRateFeedback, on=(FclFreightRateAudit.object_id  == FclFreightRateFeedback.id))
                     .join(FclFreightRate, on=(FclFreightRateFeedback.fcl_freight_rate_id == FclFreightRate.id))
                     .where((FclFreightRateAudit.object_type == 'FclFreightRateFeedback') & (FclFreightRateAudit.action_name == 'delete') & (FclFreightRate.mode == 'predicted'))
-                    .order_by(FclFreightRateAudit.created_at.desc()))
+                    .order_by(FclFreightRateAudit.updated_at.desc()))
         
         main_query = (FclFreightRateAudit
                     .select(FclFreightRate.id.alias('rate_d'),FclFreightRate.origin_port_id.alias('origin_port_id'),FclFreightRate.destination_port_id.alias('destination_port_id'), FclFreightRate.container_size.alias('container_size'), FclFreightRate.container_type.alias('container_type'), FclFreightRate.commodity.alias('commodity'), FclFreightRateAudit.data['validity_start'].alias('validity_start'),FclFreightRateAudit.data['validity_end'].alias('validity_end') )
@@ -1295,7 +1292,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 
                 if not statistic_obj:
                     continue
-                
+                breakpoint()
                 statistic_obj.parent_rate_id = row['fcl_freight_rate_id']
                 statistic_obj.parent_validity_id = row['validity_id']
                 statistic_obj.save()
@@ -1374,7 +1371,7 @@ def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     # print('# active rates from rms to main_statistics')
     populate_from_rates.populate_from_active_rates() 
-    print('# old rates from data in feedbacks to main_statistics')
+    # print('# old rates from data in feedbacks to main_statistics')
     # populate_from_rates.populate_from_feedback() 
     # print('# old rates from spot_search_rates to main_statistics')
     # populate_from_rates.populate_from_spot_search_rates() 
@@ -1383,7 +1380,7 @@ def main():
     # print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
     # populate_from_rates.update_fcl_freight_rate_checkout_count() 
     # print('#like dislike count in main_statistics and populate feedback_statistics')
-    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
+    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
     # print('#populate request_fcl_statistics table')
     # populate_from_rates.populate_fcl_request_statistics() 
     # print('#shipment_statistics data population')
