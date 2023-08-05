@@ -158,10 +158,9 @@ def build_response_object(result,request):
 
     if response_object['service_provider_id'] in CONFIRMED_INVENTORY['service_provider_ids']:
         response_object['tags'] = CONFIRMED_INVENTORY['tag']
-
     result_line_items = result['line_items'] if type(result['line_items']) == list else list(result['line_items'])
-    for line_item in result_line_items:
 
+    for line_item in result_line_items:
         if line_item['code'] == 'FSC' and line_item['unit'] == 'percentage_of_freight':
             required_line_items = result['line_items'] if type(result['line_items']) == list else list(result['line_items'])
             for required_line_item in required_line_items:
@@ -169,7 +168,7 @@ def build_response_object(result,request):
                 if required_line_item['code'] != 'BAS':
                     continue
 
-                line_item_object = build_line_item_object(request,required_line_item, response_object['truck_count'],result['minimum_chargeable_weight'], result['maximum_chargeable_weight']) | {}
+                line_item_object = build_line_item_object(request,required_line_item, response_object['truck_count'],result.get('minimum_chargeable_weight',0)) | {}
                 total_price = (float(line_item_object.get('total_price') if line_item_object.get('total_price') else 0 )* float(line_item.get('price') if line_item.get('price') else 0))/ 100
                 line_item['total_price'] = total_price
                 line_item['price'] = line_item['total_price']
@@ -177,7 +176,7 @@ def build_response_object(result,request):
                 code_config = FTL_FREIGHT_CHARGES[line_item['code']]
                 line_item['name'] = code_config['name']
         else:
-            line_item = build_line_item_object(request,line_item, response_object['trucks_count'], result['minimum_chargeable_weight'])
+            line_item = build_line_item_object(request,line_item, response_object['trucks_count'], result.get('minimum_chargeable_weight',0))
 
         if line_item is None:
             continue
@@ -194,7 +193,7 @@ def build_response_object(result,request):
 
     return response_object
 
-def build_line_item_object(request,line_item, trucks_count = 0, minimum_chargeable_weight = 0):
+def build_line_item_object(request,line_item, trucks_count = 0, minimum_chargeable_weight=0):
 
     code_config = FTL_FREIGHT_CHARGES[line_item['code']]
     is_additional_service = True if 'additional_services' in list(code_config.get('tags')) else False
@@ -231,7 +230,7 @@ def ignore_non_eligible_service_providers(request,query_result):
     for data in ftl_rates:
         if str(data.get('service_provider_id')) in ids:
             final_list.append(data)
-    
+
     return check_for_prediction(request,final_list)
 
 def check_for_prediction(request,rate_list):
