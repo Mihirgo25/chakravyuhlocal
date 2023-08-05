@@ -5,6 +5,10 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from uuid import UUID
+from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
+from playhouse.shortcuts import model_to_dict
+from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
+from fastapi.encoders import jsonable_encoder
 
 
 def update_fcl_freight_rate_request(request):
@@ -43,6 +47,8 @@ def execute_transaction_code(request):
         raise HTTPException(
             status_code=500, detail="Freight rate request updation failed"
         )
+        
+    set_stats(object)
 
     create_audit(request, object.id)
 
@@ -69,3 +75,10 @@ def create_audit(request, freight_rate_request_id):
         object_id=freight_rate_request_id,
         object_type="FclFreightRateRequest",
     )
+    
+    
+def set_stats(obj):
+    action = 'update'
+    params = jsonable_encoder(model_to_dict(obj,only = [FclFreightRateRequest.id,FclFreightRateRequest.status,FclFreightRateRequest.closed_by_id,FclFreightRateRequest.closing_remarks]))
+    
+    apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = params))

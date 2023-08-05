@@ -21,6 +21,7 @@ class AirFreightRateAudit(BaseModel):
     source = CharField(null=True)
     updated_at = DateTimeField(default=datetime.datetime.now)
     validity_id = UUIDField(null=True,index=True)
+    performed_by_type = CharField(index=True,null=True)
     
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()

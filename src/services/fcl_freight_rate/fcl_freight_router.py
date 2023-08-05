@@ -364,30 +364,30 @@ def get_fcl_freight_rate_for_lcl_func(
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
-    # try:
-    request = {
-        'origin_port_id':origin_port_id,
-        'origin_main_port_id':origin_main_port_id,
-        'destination_port_id':destination_port_id,
-        'destination_main_port_id' : destination_main_port_id,
-        'origin_country_id':origin_country_id,
-        'destination_country_id':destination_country_id,
-        'container_size' : container_size,
-        'container_type' : container_type,
-        'commodity' : commodity,
-        'shipping_line_id' : shipping_line_id,
-        'service_provider_id': service_provider_id,
-        'importer_exporter_id': importer_exporter_id,
-    }
+    try:
+        request = {
+            'origin_port_id':origin_port_id,
+            'origin_main_port_id':origin_main_port_id,
+            'destination_port_id':destination_port_id,
+            'destination_main_port_id' : destination_main_port_id,
+            'origin_country_id':origin_country_id,
+            'destination_country_id':destination_country_id,
+            'container_size' : container_size,
+            'container_type' : container_type,
+            'commodity' : commodity,
+            'shipping_line_id' : shipping_line_id,
+            'service_provider_id': service_provider_id,
+            'importer_exporter_id': importer_exporter_id,
+        }
 
-    data = get_fcl_freight_rate_for_lcl(request)
-    data = json_encoder(data)
-    return JSONResponse(status_code=200, content=data)
-    # except HTTPException as e:
-    #     raise
-    # except Exception as e:
-    #     sentry_sdk.capture_exception(e)
-    #     return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+        data = get_fcl_freight_rate_for_lcl(request)
+        data = json_encoder(data)
+        return JSONResponse(status_code=200, content=data)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/get_fcl_freight_rate_local")
 def get_fcl_freight_local_data(

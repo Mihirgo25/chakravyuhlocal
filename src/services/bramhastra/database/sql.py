@@ -7,9 +7,9 @@ class Sql():
     def __init__(self) -> None:
         self.root_path = f'{ROOT_DIR}/services/bramhastra/database/tables'
 
-    def run(self,file_name: str):
+    def run(self,table_name: str):
         
-        sql_file_path =  f'{self.root_path}/{file_name}'
+        sql_file_path =  f'{self.root_path}/{table_name}.sql'
         
         clickhouse = ClickHouse()
 

@@ -20,9 +20,8 @@ def execute_transaction_code(request):
         {"ids": deleted_haulage_freight_rate_ids}
     """
 
-    from celery_worker import (
-        update_multiple_service_objects,
-    )
+    from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+
 
     objects = find_objects(request)
 
@@ -45,7 +44,7 @@ def execute_transaction_code(request):
             )
 
         create_audit(request, obj.id, obj.transport_mode)
-        update_multiple_service_objects.apply_async(kwargs={"object": obj}, queue="low")
+        get_multiple_service_objects(obj)
     if request.get('haulage_freight_rate_feedback_ids'):
         return {"ids": request["haulage_freight_rate_feedback_ids"]}
     else:

@@ -274,7 +274,15 @@ class FclFreightRateFeedback(BaseModel):
         self.send_create_notifications_to_supply_agents(supply_agent_notification_params)
 
         return supply_agents_user_ids
-
+    
+    def send_closed_notifications_to_user(self):
+        params={
+            'spot_search_id': str(self.source_id),
+            'update_to_id': str(self.performed_by_id),
+            'update_to_type': self.performed_by_type
+        }
+        
+        spot_search.send_spot_search_rate_update(params)
 
     def send_closed_notifications_to_sales_agent(self):
         locations_data = FclFreightRate.select(
