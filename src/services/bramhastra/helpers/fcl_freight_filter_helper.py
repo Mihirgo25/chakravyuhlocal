@@ -65,7 +65,7 @@ def get_date_range_filter(where):
     )
 
 
-def get_stale_rates_filter(where):
+def get_stale_rate_filter(where):
     where.append("checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0")
 
 

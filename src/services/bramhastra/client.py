@@ -4,7 +4,7 @@ from datetime import datetime
 
 class ClickHouse:
     def __init__(self) -> None:
-        self.client = Client(host="localhost", password="")
+        self.client = Client(host="10.30.118.137", password="apple")
         
     def execute(self, query, parameters=None):
         if result := self.client.execute(query, parameters, with_column_types=True):
