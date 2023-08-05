@@ -87,7 +87,8 @@ def create_audit(request,object_id):
         object_id=object_id,
         object_type='AirFreightRate',
         performed_by_id=request.get('performed_by_id'),
-        validity_id=request.get('validity_id')
+        validity_id=request.get('validity_id'),
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
 
 def validate_validity_object(validity_start, validity_end):
