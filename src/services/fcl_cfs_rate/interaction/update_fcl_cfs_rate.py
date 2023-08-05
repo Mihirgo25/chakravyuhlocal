@@ -3,6 +3,7 @@ from services.fcl_cfs_rate.models.fcl_cfs_rate import FclCfsRate
 from services.fcl_cfs_rate.models.fcl_cfs_rate_audit import FclCfsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_audit_for_updating_cfs(request, cfs_object_id):
     audit_data = {
@@ -46,7 +47,7 @@ def execute_transaction_code(request):
     create_audit_for_updating_cfs(request, cfs_object.id)
     
     cfs_object.update_platform_prices_for_other_service_providers()
-    
+    get_multiple_service_objects(cfs_object)
     try:
         cfs_object.save()
     except Exception as e:

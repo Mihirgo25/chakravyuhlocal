@@ -5,6 +5,7 @@ from celery_worker import fcl_cfs_functions_delay
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_audit_for_cfs_rate(request, cfs_object_id):
     audit_data = {
@@ -80,6 +81,7 @@ def execute_transaction_code(request):
     
     cfs_object.update_platform_prices_for_other_service_providers()
     fcl_cfs_functions_delay.apply_async(kwargs={'fcl_cfs_object':cfs_object,'request':request},queue='low')
+    get_multiple_service_objects(cfs_object)
     
     return {
       "id": cfs_object.id

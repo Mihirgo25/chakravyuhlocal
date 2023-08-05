@@ -5,6 +5,7 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day impo
 from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day import update_fcl_freight_rate_free_day
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from database.db_session import db
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
 def update_fcl_freight_rate_local(request):
@@ -147,7 +148,7 @@ def execute_transaction_code(request):
 
   fcl_freight_local.update_special_attributes()
 
-  update_multiple_service_objects.apply_async(kwargs={'object':fcl_freight_local},queue='critical')
+  get_multiple_service_objects(fcl_freight_local)
 
   create_audit(request, fcl_freight_local.id)
 
