@@ -29,13 +29,6 @@ def get_ftl_freight_rate_estimation(request):
         'price': data['base_price'],
         'currency': data['currency'],
         'remarks': []
-      },
-      {
-        'code': 'FSC',
-        'unit': 'per_truck',
-        'price': 10,
-        'currency': 'INR',
-        'remarks': []
       }
     ]
     detention_free_time = 1

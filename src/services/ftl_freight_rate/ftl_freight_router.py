@@ -336,14 +336,14 @@ def delete_ftl_freight_rates_feedback_api(request: DeleteFtlFreightRateFeedback,
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
-@ftl_freight_router.get("list_ftl_freight_rate_requests")
+@ftl_freight_router.get("/list_ftl_freight_rate_requests")
 def list_ftl_freight_rate_request_api(
     filters: str = None,
     page_limit: int = 10,
     page: int = 1,
     sort_by: str = "created_at",
     sort_type: str = "asc",
-    is_stats_required: bool = False,
+    is_stats_required: bool = True,
     spot_search_details_required: bool = False,
     performed_by_id = None,
     resp: dict = Depends(authorize_token),

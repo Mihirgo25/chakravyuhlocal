@@ -27,7 +27,7 @@ def create_ftl_freight_rate(request):
       return execute_transaction_code(request)
   
 def execute_transaction_code(request):
-    from celery_worker import delay_ftl_functions, update_ftl_freight_rate_request_delay
+    from services.ftl_freight_rate.ftl_celery_worker import delay_ftl_functions, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform
 
     params = {
       'rate_sheet_id':request.get('rate_sheet_id'),
@@ -93,5 +93,9 @@ def execute_transaction_code(request):
 
     if request.get('ftl_freight_rate_request_id'):
       update_ftl_freight_rate_request_delay.apply_async(kwargs={'request':{'ftl_freight_rate_request_id': request.get('ftl_freight_rate_request_id'), 'closing_remarks': 'rate_added', 'performed_by_id': request.get('performed_by_id')}},queue='low')
+
+    if request.get('is_rate_missing_or_dislike') is not None:
+      send_missing_or_dislike_rate_notifications_to_kam.apply_async(kwargs={'object':ftl_freight_rate, 'request':request},queue='communication')
+      send_missing_or_dislike_rate_notifications_to_platform.apply_async(kwargs={'object':ftl_freight_rate, 'request':request},queue='communication')
     
     return {"id": ftl_freight_rate.id}

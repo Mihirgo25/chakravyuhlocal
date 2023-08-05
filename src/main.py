@@ -42,7 +42,7 @@ app = FastAPI(docs_url=docs_url, debug=True,dependencies=[Depends(get_db)])
 
 
 app.include_router(prefix = "/fcl_freight_rate", router=fcl_freight_router, tags=['Fcl Freight Rate'])
-app.include_router(prefix = "/fcl_freight_rate", router=ftl_freight_router, tags=['FTL Freight Rate'])
+app.include_router(prefix = "/ftl_freight_rate", router=ftl_freight_router, tags=['FTL Freight Rate'])
 app.include_router(prefix="/fcl_freight_rate", router=envision_router, tags=['Predictions'])
 app.include_router(prefix = "/fcl_freight_rate", router=chakravyuh_router, tags=['Chakravyuh'])
 app.include_router(prefix="/fcl_freight_rate", router=trailer_router, tags=['Trailer Freight Rate'])

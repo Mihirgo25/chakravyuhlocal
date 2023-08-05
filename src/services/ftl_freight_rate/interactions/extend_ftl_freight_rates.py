@@ -4,7 +4,7 @@ from micro_services.client import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_cluster_helpers import *
 from services.ftl_freight_rate.interactions.create_ftl_freight_rate import create_ftl_freight_rate
 from services.ftl_freight_rate.models.ftl_freight_rate import FtlFreightRate
-from celery_worker import create_ftl_freight_rate_delay
+from services.ftl_freight_rate.ftl_celery_worker import create_ftl_freight_rate_delay
 
 def extend_ftl_freight_rate(request):
     

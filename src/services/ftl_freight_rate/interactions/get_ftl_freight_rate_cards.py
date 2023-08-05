@@ -43,12 +43,13 @@ def get_ftl_freight_rate_cards(request):
         return {"list":[]}
     query = select_fields()
     query = initialize_query(query,request)
-    rate_list = build_response_list(query,request)
-    rate_list = ignore_non_eligible_service_providers(request,rate_list)
+    rate_list = ignore_non_eligible_service_providers(request,query)
+    rate_list = build_response_list(rate_list,request)
     if request.get('include_additional_response_data'):
         rate_list = additional_response_data(rate_list)
 
-    rate_list = remove_unnecessary_fields(rate_list)
+    if request.get('predicted_rate'):
+        rate_list = remove_unnecessary_fields(rate_list)
 
     return {'list': rate_list }
 
@@ -56,10 +57,13 @@ def get_ftl_freight_rate_cards(request):
 
 def initialize_query(query,request):
 
-    filters = {'commodity': request.get('commodity'),'trip_type': request.get('trip_type'),'importer_exporter': request.get('importer_exporter_id'),'rate_not_available_entry': False, 'is_line_items_error_messages_present': False, 'truck_type': request.get('truck_type')}
+    filters = {'commodity': request.get('commodity'),'trip_type': request.get('trip_type'),'rate_not_available_entry': False, 'is_line_items_error_messages_present': False, 'truck_type': request.get('truck_type')}
+
     for key in filters.keys():
-            if filters.get(key) is not None:
-                query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
+        if filters.get(key) is not None:
+            query = query.where(attrgetter(key)(FtlFreightRate) == filters[key])
+
+    query = query.where((FtlFreightRate.importer_exporter_id == request.get("importer_exporter_id")) | (FtlFreightRate.importer_exporter_id.is_null(True)))
     if request.get('load_selection_type') in ['cargo_per_package', 'cargo_gross']:
         query = query.where(FtlFreightRate.unit == 'ton')
     elif request.get('load_selection_type')  == 'truck':
@@ -94,8 +98,7 @@ def initialize_query(query,request):
 def select_fields():
     return FtlFreightRate.select(FtlFreightRate.id, FtlFreightRate.commodity, FtlFreightRate.line_items, FtlFreightRate.service_provider_id, FtlFreightRate.importer_exporter_id, FtlFreightRate.origin_location_id, FtlFreightRate.destination_location_id, FtlFreightRate.origin_destination_location_type, FtlFreightRate.transit_time, FtlFreightRate.detention_free_time, FtlFreightRate.truck_type, FtlFreightRate.minimum_chargeable_weight, FtlFreightRate.unit, FtlFreightRate.validity_start, FtlFreightRate.validity_end,FtlFreightRate.service_provider,FtlFreightRate.sourced_by,FtlFreightRate.updated_at,FtlFreightRate.created_at)
 
-def build_response_list(query_result,request):
-    ftl_rates = list(query_result.dicts())
+def build_response_list(ftl_rates,request):
     grouping = {}
     for rate in ftl_rates:
         key = ":".join([str(rate["origin_location_id"]) or "", str(rate['destination_location_id']) or "", str(rate["service_provider_id"]) or "" , str(rate['transit_time']) or ""])
@@ -105,7 +108,7 @@ def build_response_list(query_result,request):
         if response_object:
             grouping[key] = response_object
 
-    return grouping.values()
+    return list(grouping.values())
 
 
 
@@ -145,8 +148,8 @@ def build_response_object(result,request):
       'detention_free_time': result.get('detention_free_time'),
       'validity_start': result.get('validity_start'),
       'validity_end': result.get('validity_end'),
-      'service_provider': request.get('service_provider'),
-      'source_by': request.get('source_by'),
+      'service_provider': result.get('service_provider'),
+      'sourced_by': result.get('sourced_by'),
       'created_at':result.get('created_at'),
       'updated_at':result.get('updated_at')
     }
@@ -221,14 +224,19 @@ def get_chargeable_weight(minimum_chargeable_weight,request):
      chargeable_rate = max([request.get('weight'), minimum_chargeable_weight])
      return chargeable_rate
 
-def ignore_non_eligible_service_providers(request,list):
+def ignore_non_eligible_service_providers(request,query_result):
+    ftl_rates = list(query_result.dicts())
     ids = get_eligible_orgs('ftl_freight')
     final_list = []
-    for data in list:
-        if data['service_provider_id'] in ids:
+    for data in ftl_rates:
+        if str(data.get('service_provider_id')) in ids:
             final_list.append(data)
+    
+    return check_for_prediction(request,final_list)
+
+def check_for_prediction(request,rate_list):
     response = None
-    if len(final_list) == 0 and request.get('predicted_rate') and request.get('predicted_rate') and request.get('origin_location_id') and request.get('destination_location_id'):
+    if len(rate_list) == 0 and request.get('predicted_rate') is True and request.get('origin_location_id') is not None and request.get('destination_location_id') is not None:
         rate_estimation_params = {
         'origin_location_id': request.get('origin_location_id'),
         'destination_location_id': request.get('destination_location_id'),
@@ -238,15 +246,15 @@ def ignore_non_eligible_service_providers(request,list):
         'weight': request.get('weight'),
         }
         response = get_ftl_freight_rate_estimation(rate_estimation_params)
-    if response:
+    if response is not None:
         request['predicted_rate'] = False
-        final_list  = get_ftl_freight_rate_cards(request)['list']
-    return final_list
+        rate_list = get_ftl_freight_rate_cards(request)['list']
+    return rate_list
 
 def additional_response_data(list_of_data):
     for data in list_of_data:
 
-        data['last_updated_at'] = data['updated_at']
+        data['last_updated_at'] = data.get('updated_at')
         data['buy_rate_currency'] = 'INR'
         data['buy_rate'] = get_buy_rate(data['line_items'])
 
@@ -255,7 +263,7 @@ def additional_response_data(list_of_data):
         user = data.get('sourced_by')
         if user is not None:
             data['user_name'] = user.get('name')
-            data['user_contact'] = user.get('mobile_number')
+            data['user_contact'] = user.get('mobile_number') or user.get('mobile_number_eformat')
 
     return list_of_data
 

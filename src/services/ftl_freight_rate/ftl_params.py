@@ -98,7 +98,7 @@ class CreateFtlFreightRate(BaseModel):
     commodity: str = None
     importer_exporter_id: str = None
     service_provider_id: str
-    performed_by_id: str
+    performed_by_id: str = None
     procured_by_id: str
     sourced_by_id: str
     validity_start: datetime
@@ -112,6 +112,8 @@ class CreateFtlFreightRate(BaseModel):
     line_items: list[FtlLineItem]
     ftl_freight_rate_request_id: str = None
     performed_by_type: str=None
+    is_rate_missing_or_dislike: str = None
+    query_raised_by_id: str = None
 
 class Package(BaseModel):
     packing_type: str
@@ -189,7 +191,7 @@ class UpdateFtlFreightRatePlatformPrices(BaseModel):
 
 class UpdateFtlFreightRate(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     procured_by_id: str
     sourced_by_id: str
@@ -204,7 +206,7 @@ class UpdateFtlFreightRate(BaseModel):
 
 class DeleteFtlFreightRate(BaseModel):
     id: str
-    performed_by_id: str
+    performed_by_id: str = None
     performed_by_type: str = None
     sourced_by_id: str
     procured_by_id: str
