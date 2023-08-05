@@ -29,7 +29,8 @@ def create_audit(request, freight_id):
         object_type=object_type, 
         source=request.get("source"),
         sourced_by_id = request.get('sourced_by_id'),
-        procured_by_id = request.get('procured_by_id')
+        procured_by_id = request.get('procured_by_id'),
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
     return audit_id
 
