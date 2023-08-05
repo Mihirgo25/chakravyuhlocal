@@ -444,7 +444,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             .where(
                 FclFreightRate.validities.is_null(False)
                 and FclFreightRate.validities != "[]"
-                and FclFreightRate.origin_port_id == 'eb187b38-51b2-4a5e-9f3c-978033ca1ddf' and FclFreightRate.destination_port_id == '23630ba9-b478-4000-ba75-05606d72d19f'
             )
             .order_by(FclFreightRate.id)
         )
@@ -1349,7 +1348,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     print('# active rates from rms to main_statistics')
-    # populate_from_rates.populate_from_active_rates() 
+    populate_from_rates.populate_from_active_rates() 
     print('# old rates from data in feedbacks to main_statistics')
     # populate_from_rates.populate_from_feedback() 
     print('# old rates from spot_search_rates to main_statistics')
@@ -1359,7 +1358,7 @@ def main():
     # print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
     # populate_from_rates.update_fcl_freight_rate_checkout_count() 
     # print('#like dislike count in main_statistics and populate feedback_statistics')
-    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
+    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
     # print('#populate request_fcl_statistics table')
     # populate_from_rates.populate_fcl_request_statistics() 
     # print('#shipment_statistics data population')
