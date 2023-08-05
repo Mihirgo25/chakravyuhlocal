@@ -43,7 +43,9 @@ def get_air_freight_rate_prediction(request):
             
     for result in results:
         price = result.get('predicted_price')
-    
+        if price < 100:
+            price = 100 + price
+
         for weight_slab in weight_slabs:
             weight_slab['tariff_price'] = price
             price *= change_factor
