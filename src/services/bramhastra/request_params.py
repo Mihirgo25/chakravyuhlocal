@@ -170,12 +170,57 @@ class ApplyFeedbackFclFreightRateStatistics(BaseModel):
     params: FeedbackFclFreightRateStatistic
 
 
-class ApplyQuotationFclFreightRateStatistics(BaseModel):
-    pass
+class FclFreightServices(BaseModel):
+    shipment_fcl_freight_service_id: str = Field(alias="id")
+    shipment_id: str
+    service_state: str = Field(alias='state')
+    service_is_active: bool = Field(alias='is_active')
+    service_cancellation_reason: str = Field(alias='cancellation_reason')
+    service_created_at: datetime = Field(alias='created_at',default=datetime.utcnow())
+    service_updated_at: datetime = Field(alias='updated_at',default=datetime.utcnow())
+    shipping_line_id: str
+    service_provider_id: str
+
+
+class SellQuotation(BaseModel):
+    sell_quotation_id: str = Field(alias="id")
+    service_id: str = None
+    service_type: str = None
+    total_price: float
+    total_price_discounted: float
+    tax_price: float
+    tax_price_discounted: float
+    tax_total_price: float
+    tax_total_price_discounted: float
+    currency: str
+    is_deleted: bool
+    sell_quotation_created_at: datetime = Field(alias='created_at',default=datetime.utcnow())
+    sell_quotation_updated_at: datetime = Field(alias='updated_at',default=datetime.utcnow())
+
+
+class Shipment(BaseModel):
+    shipment_id: str = Field(alias="id")
+    serial_id: int
+    importer_exporter_id: str = None
+    shipment_type: str
+    services: list[str]
+    source: str = None
+    source_id: str = None
+    state: str
+    created_at: datetime
+    updated_at: datetime
+    cancellation_reason: str = None
+
+
+class ShipmentParams(BaseModel):
+    fcl_freight_services: list[FclFreightServices]
+    sell_quotations: list[SellQuotation]
+    shipment: Shipment
 
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
-    pass
+    action: str
+    params: ShipmentParams
 
 
 class FclFreightRateRequest(BaseModel):

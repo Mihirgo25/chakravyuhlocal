@@ -4,9 +4,6 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
     FeedbackFclFreightRateStatistic,
 )
-from services.bramhastra.models.quotation_fcl_freight_rate_statistic import (
-    QuotationFclFreightRateStatistic,
-)
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )

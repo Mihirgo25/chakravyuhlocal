@@ -590,8 +590,10 @@ class Quotations(FclFreightValidity):
 
 
 class Shipment(FclFreightValidity):
-    def apply_create_stats(params):
-        pass
-
-    def apply_update_stats(params):
-        pass
+    def __init__(self, params) -> None:
+        self.params = params
+        
+    def format(self):
+        for idx,sell_quotation in enumerate(self.params.sell_quotations):
+            pass
+            

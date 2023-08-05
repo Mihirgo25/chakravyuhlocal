@@ -1,9 +1,7 @@
-from peewee import Model, BigAutoField, UUIDField, CharField, IntegerField, FloatField
+from peewee import Model, UUIDField, CharField, IntegerField, FloatField, BigIntegerField, TextField
 from datetime import datetime
 from database.db_session import db
-from playhouse.postgres_ext import DateTimeTZField, BinaryJSONField
-
-
+from playhouse.postgres_ext import DateTimeTZField, ArrayField, BooleanField
 class BaseModel(Model):
     class Meta:
         database = db
@@ -11,31 +9,35 @@ class BaseModel(Model):
 
 
 class ShipmentFclFreightRateStatistic(BaseModel):
-    id = BigAutoField()
-    spot_search_id = UUIDField()
-    checkout_id = UUIDField()
+    id = BigIntegerField(sequence = 'shipment_fcl_freight_rate_services_statistics_seq')
+    shipment_id = UUIDField()
+    shipment_fcl_freight_service_id = UUIDField()
+    service_state = TextField()
+    service_is_active = BooleanField()
+    service_cancellation_reason = CharField()
+    service_created_at = DateTimeTZField()
+    service_updated_at = DateTimeTZField()
     shipping_line_id = UUIDField()
     service_provider_id = UUIDField()
-    shipment_state = CharField()
-    shipment_service_state  = CharField()
-    shipment_service_is_active = CharField()
-    shipment_service_cancellation_reason = CharField()
-    shipment_cancellation_reason = CharField()
-    checkout_fcl_freight_services_id = UUIDField()
-    sell_quotation_id = UUIDField(null = True)
-    buy_quotation_id = UUIDField()
-    total_buy_price = FloatField()
-    total_buy_tax_price = FloatField()
-    currency = CharField()
-    global_total_buy_price = FloatField()
-    global_total_buy_tax_price = FloatField()
-    validity_id = UUIDField()
-    rate_id = UUIDField()
-    shipment_id = UUIDField(null=True)
-    cancellation_reason = CharField(null=True)
+    serial_id = BigIntegerField()
+    importer_exporter_id = UUIDField()
+    shipment_type = CharField()
+    services = ArrayField(CharField)
+    source = CharField()
+    source_id = UUIDField()
+    state = TextField()
+    cancellation_reason = TextField()
+    sell_quotation_id = UUIDField()
+    total_price = FloatField(default = 0)
+    total_price_discounted = FloatField(default = 0)
+    tax_price = FloatField(default = 0)
+    tax_price_discounted = FloatField(default = 0)
+    tax_total_price = FloatField(default = 0)
+    tax_total_price_discounted = FloatField(default = 0)
+    currency = CharField(max_length = 3)
+    standard_total_price = FloatField()
     created_at = DateTimeTZField(default = datetime.utcnow())
     updated_at = DateTimeTZField(default = datetime.utcnow())
-    status = CharField()
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
 
