@@ -12,6 +12,8 @@ def create_audit(request, freight_id):
     audit_data["transport_modes"] = request.get("transport_modes")
     audit_data["haulage_freight_rate_request_id"] = request.get("haulage_freight_rate_request_id")
     audit_data["performed_by_id"] = request.get("performed_by_id")
+    audit_data["procured_by_id"] = request.get("procured_by_id")
+    audit_data["sourced_by_id"] = request.get("sourced_by_id")
 
     if 'trailer' in request.get("transport_modes"):
         object_type="TrailerFreightRate"
@@ -25,7 +27,9 @@ def create_audit(request, freight_id):
         data=audit_data,
         object_id=freight_id,
         object_type=object_type, 
-        source=request.get("source")
+        source=request.get("source"),
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
     return audit_id
 

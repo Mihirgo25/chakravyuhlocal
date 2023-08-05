@@ -8,8 +8,7 @@ from libs.json_encoder import json_encoder
 from micro_services.client import common
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from datetime import datetime, timedelta
-
-
+from peewee import fn, Select
 
 
 POSSIBLE_DIRECT_FILTERS = [
@@ -33,9 +32,7 @@ POSSIBLE_DIRECT_FILTERS = [
 ]
 
 
-POSSIBLE_INDIRECT_FILTERS = [
-    "is_rate_available",
-]
+POSSIBLE_INDIRECT_FILTERS = ["is_rate_available", "is_weight_slabs_missing"]
 
 
 DEFAULT_PARAMS = [
@@ -171,6 +168,16 @@ def get_final_data(query):
 def apply_is_rate_available_filter(query, val, filters):
     query = query.where(HaulageFreightRate.rate_not_available_entry == False)
     return query
+
+
+def apply_is_weight_slabs_missing_filter(query, val, filters):
+    src = fn.jsonb_array_elements(HaulageFreightRate.line_items).alias("items")
+    subq = Select([src], [SQL("1")])
+    subq = subq.where(fn.jsonb_array_length(SQL(""" "items"->'slabs' """)) == 0)
+    query = query.where(~fn.EXISTS(subq))
+    query = query.where(fn.jsonb_array_length(HaulageFreightRate.line_items) > 0)
+    return query
+
 
 def get_query(sort_by, sort_type, includes):
     fields = [getattr(HaulageFreightRate, key) for key in DEFAULT_PARAMS]
