@@ -122,7 +122,9 @@ def create_audit(request):
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
         data = audit_data,
-        object_type = object_type
+        object_type = object_type,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 
