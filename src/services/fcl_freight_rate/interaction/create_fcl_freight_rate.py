@@ -232,8 +232,9 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
     }
     if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
-
-    # adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+    
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and row['rate_type'] == "market_place":
+        adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
 def adjust_cogoassured_price(row, request):
     from celery_worker import create_fcl_freight_rate_delay
