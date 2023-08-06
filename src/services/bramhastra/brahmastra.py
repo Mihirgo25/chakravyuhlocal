@@ -38,7 +38,6 @@ class Brahmastra:
         self.models = models or [
             FclFreightRateStatistic,
             FeedbackFclFreightRateStatistic,
-            QuotationFclFreightRateStatistic,
             ShipmentFclFreightRateStatistic,
             SpotSearchFclFreightRateStatistic,
             FclFreightRateRequestStatistic,

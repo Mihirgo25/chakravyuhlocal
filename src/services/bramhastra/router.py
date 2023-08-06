@@ -33,7 +33,7 @@ from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics i
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
     ApplyCheckoutFclFreightRateStatistic,
-    ApplyShipmentFclFreightRateStatistics
+    ApplyShipmentFclFreightRateStatistics,
 )
 from pydantic.types import Json
 from typing import Annotated
