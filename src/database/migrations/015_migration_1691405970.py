@@ -1,4 +1,4 @@
-"""Peewee migrations -- 001_migration_1691139419.py.
+"""Peewee migrations -- 015_migration_1691405970.py.
 
 Some examples (model - class or model name)::
 
@@ -27,7 +27,6 @@ from peewee_migrate import Migrator
 from decimal import ROUND_HALF_EVEN
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from playhouse.postgres_ext import *
-
 try:
     import playhouse.postgres_ext as pw_pext
 except ImportError:
