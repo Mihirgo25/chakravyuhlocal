@@ -138,7 +138,7 @@ celery.conf.beat_schedule = {
         'options': {'queue': 'low'}
     },
     'adjust_air_freight_rate_airline_factors':{
-        'task': 'celery_worker.air_freight_rate_factors_in_delay',
+        'task': 'celery_worker.air_freight_airline_factors_in_delay',
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
