@@ -1,4 +1,5 @@
 import re
+import os
 from services.bramhastra.client import ClickHouse
 from configs.definitions import ROOT_DIR
 import peewee
@@ -10,7 +11,10 @@ class Click:
 
     def create(self, model: peewee.Model):
         sql_file_path = f"{self.root_path}/{model._meta.name}.sql"
-        
+        if os.path.exists(sql_file_path):
+            print(f"The file {sql_file_path} exists.")
+        else:
+            print(f"The file {sql_file_path} does not exist.")
         # check if sql_file_path exists
 
         self.validate(sql_file_path, model)
@@ -40,12 +44,20 @@ class Click:
             sql_script = sql_file.read()
             column_names = re.findall(r"(?<=\n\s{4})(\w+)\s", sql_script)
 
-        if column_names == model_cols:
+        missing_columns = set(model_cols) - set(column_names)
+        ordered_match = column_names == missing_columns
+        if ordered_match:
             return True
         else:
-            # columns missing , order missing
-            print(f"columns not present {set(column_names) - set(model_cols)}")
-            raise
+            print("Order Mismatched:")
+            for i in range(len(model_cols)):
+                if column_names[i] != model_cols[i]:
+                    print(f"Expected: {model_cols[i]}, Found: {column_names[i]}")
+
+        if missing_columns:
+            print(f"Columns not present: {missing_columns}")
+
+        raise Exception("Column Mismatch Detected")
         
         
     def create_tables(self,models):
