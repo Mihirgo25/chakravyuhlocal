@@ -2,7 +2,24 @@ import re
 from services.bramhastra.client import ClickHouse
 from configs.definitions import ROOT_DIR
 import os
-
+from services.bramhastra.models.feedback_fcl_freight_rate_statistic import (
+    FeedbackFclFreightRateStatistic,
+)
+from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
+    CheckoutFclFreightRateStatistic,
+)
+from services.bramhastra.models.fcl_freight_rate_request_statistics import (
+    FclFreightRateRequestStatistic,
+)
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic
+)
+from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
+    SpotSearchFclFreightRateStatistic,
+)
+from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
+    ShipmentFclFreightRateStatistic
+)
 class Sql():
     def __init__(self) -> None:
         self.root_path = f'{ROOT_DIR}/services/bramhastra/database/tables'
@@ -34,4 +51,19 @@ class Sql():
             if filename.endswith(".sql"):
                 self.run(filename)
                 print(f'Done with {filename}')
-                
+    
+    def is_valid_for_creation(self,model):
+        table_name=model._meta.table_name
+        model_cols=model._meta.field_names
+        sql_file_path =  f'{self.root_path}/{table_name}.sql'
+        
+        with open(sql_file_path, 'r') as sql_file:
+            sql_script = sql_file.read()
+            column_names = re.findall(r'(?<=\n\s{4})(\w+)\s', sql_script)
+
+        if column_names == model_cols:
+            return True
+        else:
+            return False
+
+        

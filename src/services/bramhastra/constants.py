@@ -46,3 +46,5 @@ STANDARD_WEIGHT_SLABS = [
         "unit": "per_kg",
     },
 ]
+
+DEFAULT_RATE_TYPE = 'market_place'
