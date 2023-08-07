@@ -34,6 +34,7 @@ from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
 
+STANDARD_CURRENCY = "USD"
 
 class Connection:
     def __init__(self) -> None:
@@ -277,13 +278,17 @@ class Rate:
             param["destination_region_id"] = self.destination_region_id
             param["origin_continent_id"] = self.origin_continent_id
             param["destination_continent_id"] = self.destination_continent_id
-            param["standard_price"] = common.get_money_exchange_for_fcl(
-                {
-                    "from_currency": "USD",
-                    "to_currency": param["currency"],
-                    "price": param["price"],
-                }
-            ).get("price", param["price"])
+            if param['currency'] == STANDARD_CURRENCY:
+                param["standard_price"] = param["price"]
+            else:
+                param["standard_price"] = common.get_money_exchange_for_fcl(
+                    {
+                        "from_currency": param["currency"],
+                        "to_currency":STANDARD_CURRENCY,
+                        "price": param["price"],
+                    }   
+                ).get("price", param["price"])
+                
             self.params.append(param)
 
     def set_pricing_map_zone_ids(self) -> list:

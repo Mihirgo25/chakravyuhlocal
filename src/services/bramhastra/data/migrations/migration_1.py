@@ -209,16 +209,18 @@ class MigrationHelpers:
             with newconnection:
                 with newconnection.cursor() as cur:
                     if return_count:
-                        sql = 'SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s'
-                        cur.execute(sql, ('service_rates','rate_id','service_type','fcl_freight'))
+                        sql = 'SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s'
+                        cur.execute(sql, ('service_rates','rate_id','validity_id','validity_start','service_type','fcl_freight'))
                         all_result = cur.fetchone()[0]
                     else:
-                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
+                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
                         cur.execute(
                             sql,
                             (
                                 "service_rates",
                                 "rate_id",
+                                'validity_id',
+                                'validity_start',
                                 "service_type",
                                 "fcl_freight",
                                 limit,
@@ -452,7 +454,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             REGION_MAPPING = json.loads(url.read().decode())
         count = 0
         last_updated_at = None 
-        last_updated_id = None
+        last_updated_ids = None
         still_has_rates = total_count > 0 
         
         print(total_count, 'total---')
@@ -461,7 +463,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             if not last_updated_at:
                 rates = query.order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
             else:
-                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id != last_updated_id)).order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
+                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id.not_in(last_updated_ids))).order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
             
             if not rates.count():
                 still_has_rates = False
@@ -503,20 +505,27 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     }
                     row_data.append(row)
                     print(count)
-            last_updated_id = str(rates[-1].id)
             last_updated_at = rates[-1].updated_at
+            last_updated_ids = []
+            i = len(rates) - 1
+
+            while i >= 0 and rates[i].updated_at == last_updated_at:
+                last_updated_ids.append(str(rates[i].id))
+                i -= 1
                                 
             FclFreightRateStatistic.insert_many(row_data).execute()
 
     def populate_from_feedback(self):
         query = (
-            FclFreightRateFeedback.select(FclFreightRateFeedback.booking_params)
-            .distinct(
-                FclFreightRateFeedback.fcl_freight_rate_id,
-                FclFreightRateFeedback.validity_id,
-            )
+            FclFreightRateFeedback.select(FclFreightRateFeedback.booking_params,FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.validity_id)
             .where(
                 FclFreightRateFeedback.booking_params["rate_card"]["price"].is_null(
+                    False
+                ),
+                FclFreightRateFeedback.booking_params["rate_card"]["validity_start"].is_null(
+                    False
+                ),
+                FclFreightRateFeedback.booking_params["rate_card"]["validity_id"].is_null(
                     False
                 )
             )
@@ -538,21 +547,20 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             
             offset += BATCH_SIZE
             
-            identifier_ar = [self.get_identifier(str(feedback.booking_params["rate_card"]["rate_id"]), str(feedback.booking_params["rate_card"]["validity_id"])) for feedback in feedbacks]
+            identifier_ar = [self.get_identifier(str(feedback.fcl_freight_rate_id), str(feedback.validity_id)) for feedback in feedbacks]
             identifier_ar = self.get_filtered_identifiers(identifier_ar)
             
             for feedback in feedbacks:
 
                 count += 1
                 print(count)
-
                 rate_card = feedback.booking_params["rate_card"]
-                identifier = self.get_identifier(rate_card["rate_id"], rate_card["validity_id"])
+                identifier = self.get_identifier(str(feedback.fcl_freight_rate_id), str(feedback.validity_id))
 
                 if identifier in identifier_ar:
                     continue
 
-                rate = self.find_rate_object(rate_card["rate_id"])
+                rate = self.find_rate_object(str(feedback.fcl_freight_rate_id))
 
                 if not rate:
                     continue
@@ -567,7 +575,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     **validity_params,
                     "containers_count": rate.get("containers_count") or 0,
                     "identifier": identifier,
-                    "rate_id": rate.get("id"),
+                    "rate_id": str(feedback.fcl_freight_rate_id),
                     "rate_type": rate.get("rate_type") or DEFAULT_RATE_TYPE,
                     "origin_region_id": REGION_MAPPING.get(rate.get("origin_port_id")),
                     "destination_region_id": REGION_MAPPING.get(
@@ -575,7 +583,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     ),
                     "rate_created_at": rate.get("created_at"),
                     "rate_updated_at": rate.get("updated_at"),
-                    "validity_id": rate_card["validity_id"],
+                    "validity_id": str(feedback.validity_id),
                     "market_price": rate_card.get("market_price")
                     or validity_params.get("price"),
                 }

@@ -51,7 +51,7 @@ class FclFreight(BaseModel):
     mode: str
     accuracy: float
     source: str
-    source_id: str
+    source_id: str = None
     cogo_entity_id: str = None
     sourced_by_id: str = None
     procured_by_id: str = None
