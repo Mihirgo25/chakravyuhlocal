@@ -10,16 +10,23 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import Shipm
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import CheckoutFclFreightRateStatistic
 
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
-def create_table():
-    # db.connect()
-    try:
-        db.create_tables([FclFreightRateStatistic,FclFreightRateRequestStatistic,SpotSearchFclFreightRateStatistic,FeedbackFclFreightRateStatistic,CheckoutFclFreightRateStatistic,FclFreightLocationCluster,FclFreightLocationClusterFactor,
-FclFreightLocationClusterMapping,ShipmentFclFreightRateStatistic])
-        db.close()
-        print("created table")
-    except:
-        print("Exception while creating table")
-        raise
+from services.bramhastra.database.click import Click
+
+class Table():
+    def __init__(self,models) -> None:
+        self.models = models
+        
+    def create_tables(self):
+        try:
+            db.create_tables(self.models)
+            db.close()
+            print("created table")
+        except:
+            print("Exception while creating table")
+            raise
+        
+        Click().create(self.models)
 
 if __name__ == "__main__":
-    create_table()
+    table = Table()
+    table.create_tables([FclFreightRateStatistic,FclFreightRateRequestStatistic,SpotSearchFclFreightRateStatistic,FeedbackFclFreightRateStatistic,ShipmentFclFreightRateStatistic,CheckoutFclFreightRateStatistic])

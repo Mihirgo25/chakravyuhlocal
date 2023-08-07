@@ -685,7 +685,7 @@ class RevenueDesk(FclFreightValidity):
                 eval(f'self.set_{key}(key)')
                 
     def set_rate_deviation_from_latest_booking(self,key):
-        self.rate_stats_hash[key] = self.original_booked_rate.get('price') - self.rate.get('price')
+        self.rate_stats_hash[key] = self.rate.get('price') -  self.original_booked_rate.get('price')
     
     def set_rate_average_booking_rate(self):
         pass
