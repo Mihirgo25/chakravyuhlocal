@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_seasonal_surcharge import FclFreightRateSeasonalSurcharge
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
+from configs.global_constants import MAX_PAGE_LIMIT
 import concurrent.futures
 from operator import attrgetter
 from math import ceil
@@ -35,6 +36,8 @@ def list_fcl_freight_rate_audits(filters = {}, page_limit = 10, page = 1, sort_b
         query = get_filters(direct_filters, query, FclFreightRateAudit)
         query = apply_indirect_filters(query, indirect_filters)
         query = apply_hash_filters(query, filters)
+
+    page_limit = min(MAX_PAGE_LIMIT, page_limit)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(eval(method_name), query, page, page_limit, pagination_data_required, user_data_required) for method_name in ['get_data', 'get_pagination_data']]
