@@ -209,16 +209,18 @@ class MigrationHelpers:
             with newconnection:
                 with newconnection.cursor() as cur:
                     if return_count:
-                        sql = 'SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s'
-                        cur.execute(sql, ('service_rates','rate_id','service_type','fcl_freight'))
+                        sql = 'SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s'
+                        cur.execute(sql, ('service_rates','rate_id','validity_id','validity_start','service_type','fcl_freight'))
                         all_result = cur.fetchone()[0]
                     else:
-                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
+                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
                         cur.execute(
                             sql,
                             (
                                 "service_rates",
                                 "rate_id",
+                                'validity_id',
+                                'validity_start',
                                 "service_type",
                                 "fcl_freight",
                                 limit,
