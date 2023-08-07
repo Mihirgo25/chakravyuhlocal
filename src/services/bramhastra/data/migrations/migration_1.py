@@ -452,7 +452,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             REGION_MAPPING = json.loads(url.read().decode())
         count = 0
         last_updated_at = None 
-        last_updated_id = None
+        last_updated_ids = None
         still_has_rates = total_count > 0 
         
         print(total_count, 'total---')
@@ -461,7 +461,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             if not last_updated_at:
                 rates = query.order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
             else:
-                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id != last_updated_id)).order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
+                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id.not_in(last_updated_ids))).order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
             
             if not rates.count():
                 still_has_rates = False
@@ -503,18 +503,19 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     }
                     row_data.append(row)
                     print(count)
-            last_updated_id = str(rates[-1].id)
             last_updated_at = rates[-1].updated_at
+            last_updated_ids = []
+            i = len(rates) - 1
+
+            while i >= 0 and rates[i].updated_at == last_updated_at:
+                last_updated_ids.append(str(rates[i].id))
+                i -= 1
                                 
             FclFreightRateStatistic.insert_many(row_data).execute()
 
     def populate_from_feedback(self):
         query = (
             FclFreightRateFeedback.select(FclFreightRateFeedback.booking_params)
-            .distinct(
-                FclFreightRateFeedback.fcl_freight_rate_id,
-                FclFreightRateFeedback.validity_id,
-            )
             .where(
                 FclFreightRateFeedback.booking_params["rate_card"]["price"].is_null(
                     False
