@@ -117,7 +117,6 @@ def add_surcharge_object(freight_rate,response_object,requirements,chargeable_we
     response_object['surcharge'] = {
         'line_items':[]
     }
-    chargeable_weight = response_object['freights'][0]['chargeable_weight']
     line_items = freight_rate['freight_surcharge']['line_items'] or []
 
     for line_item in line_items:
