@@ -2,7 +2,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_extension_rule_set import
 from fastapi import HTTPException
 from database.db_session import db
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
-from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+
 def get_extension_rule_set_object(request):
   row = {
       'extension_name' : request.get('extension_name'),
@@ -55,7 +56,7 @@ def execute_transaction_code(request):
   except:
       raise HTTPException(status_code=500, detail='fcl freight rate exclusive rule set did not save')
 
-  update_multiple_service_objects.apply_async(kwargs={'object':rule_set},queue='low')
+  get_multiple_service_objects(rule_set)
   create_audit(data, request.get('performed_by_id'), rule_set.id)
 
   return {"id": rule_set.id}

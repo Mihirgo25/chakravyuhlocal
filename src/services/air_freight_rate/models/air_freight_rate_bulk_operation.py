@@ -218,6 +218,7 @@ class AirFreightRateBulkOperation(BaseModel):
             if AirFreightRateAudit.select().where(
                 AirFreightRateAudit.bulk_operation_id == self.id,
                 AirFreightRateAudit.object_id == freight["air_freight_rate_id"],
+                AirFreightRateAudit.validity_id == freight["validity_id"]
             ).execute():
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
@@ -227,7 +228,7 @@ class AirFreightRateBulkOperation(BaseModel):
                     "id": str(freight["air_freight_rate_id"]),
                     "performed_by_id": self.performed_by_id,
                     "validity_id": freight["validity_id"],
-                    "bulk_operation_id": self.id,
+                    "bulk_operation_id": self.id
                 }
             )
 
@@ -250,6 +251,8 @@ class AirFreightRateBulkOperation(BaseModel):
                 .where(
                     AirFreightRateAudit.bulk_operation_id == self.id,
                     AirFreightRateAudit.object_id == freight["air_freight_rate_id"],
+                    AirFreightRateAudit.validity_id == freight["validity_id"]
+
                 )
                 .first()
             ):
@@ -291,7 +294,7 @@ class AirFreightRateBulkOperation(BaseModel):
                             "bulk_operation_id": self.id,
                             "min_price": validity["min_price"],
                             "currency": validity["currency"],
-                            "weight_slabs": slabs,
+                            "weight_slabs": slabs
                         }
                     )
                     self.progress = (count * 100.0) / int(total_count)
@@ -318,6 +321,8 @@ class AirFreightRateBulkOperation(BaseModel):
             if AirFreightRateAudit.select().where(
                 AirFreightRateAudit.bulk_operation_id == self.id,
                 AirFreightRateAudit.object_id == freight["id"],
+                AirFreightRateAudit.validity_id == freight["validity_id"]
+
             ):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()
@@ -353,7 +358,7 @@ class AirFreightRateBulkOperation(BaseModel):
                     "bulk_operation_id": self.id,
                     "weight_slabs": freight["weight_slabs"],
                     "procured_by_id": procured_by_id,
-                    "sourced_by_id": sourced_by_id,
+                    "sourced_by_id": sourced_by_id
                 }
             )
             self.progress = (count * 100.0) / int(total_count)
@@ -517,7 +522,7 @@ class AirFreightRateBulkOperation(BaseModel):
             count += 1
 
             if AirFreightRateAudit.get_or_none(
-                bulk_operation_id=self.id, object_id=freight["air_freight_rate_id"]
+                bulk_operation_id=self.id, object_id=freight["air_freight_rate_id"],validity_id = freight["validity_id"]
             ):
                 self.progress = (count * 100.0) / int(total_count)
                 self.save()

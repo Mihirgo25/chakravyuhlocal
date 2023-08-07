@@ -123,53 +123,6 @@ DEAFULT_RATE_PRODUCER_METHOD = "latest"
 
 COUNTRY_CODES_MAPPING = {"india": "IN", "usa": "US", "europe":"", "china":"CN", "vietnam":"VN", "singapore":"SG"}
 
-DEFAULT_WEIGHT_SLABS=[
-    {
-        'lower_limit':0.0,
-        'upper_limit':50,
-        'tariff_price':0,
-        'currency':'INR',
-        'unit':'per_kg'
-    },
-    {
-        'lower_limit':50.1,
-        'upper_limit':100.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-
-        },
-    {
-        'lower_limit':100.1,
-        'upper_limit':300.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-
-    },
-    {
-        'lower_limit':300.1,
-        'upper_limit':500.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-
-    },{
-        'lower_limit':500.1,
-        'upper_limit':1000.0,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-    },{
-        'lower_limit':1000.1,
-        'upper_limit':10000,
-        'currency':'INR',
-        'tariff_price':0,
-        'unit':'per_kg'
-    }
-
-]
-
 DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
 
 RATE_FEEDBACK_RELEVANT_ROLE_ID = {

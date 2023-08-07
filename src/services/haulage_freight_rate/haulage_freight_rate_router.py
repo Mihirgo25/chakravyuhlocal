@@ -499,7 +499,7 @@ def get_haulage_freight_rate_cards_api(
     destination_country_id: str = None,
     commodity: str = None,
     shipping_line_id: str = None,
-    haulage_type: str = 'merchant',
+    haulage_type: str = None,
     transport_mode: str = None,
     importer_exporter_id: str = None,
     cargo_weight_per_container: int = None,

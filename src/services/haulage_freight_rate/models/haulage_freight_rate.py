@@ -34,16 +34,16 @@ class HaulageFreightRate(BaseModel):
     container_type = TextField(index=True, null=True)
     line_items = BinaryJSONField(null=True)
     is_best_price = BooleanField(null=True)
-    is_line_items_error_messages_present = BooleanField(index=True, null=True)
-    is_line_items_info_messages_present = BooleanField(index=True, null=True)
-    line_items_error_messages = BinaryJSONField(index=True, null=True)
-    line_items_info_messages = BinaryJSONField(index=True, null=True)
+    is_line_items_error_messages_present = BooleanField(null=True)
+    is_line_items_info_messages_present = BooleanField( null=True)
+    line_items_error_messages = BinaryJSONField( null=True)
+    line_items_info_messages = BinaryJSONField( null=True)
     rate_not_available_entry = BooleanField(constraints=[SQL("DEFAULT false")], null=True, index=True)
     trip_type = TextField(index=True, null=True)
     validity_start = DateTimeField(default=datetime.datetime.now, null=True)
     validity_end = DateTimeField(default = datetime.datetime.now() + datetime.timedelta(30), null=True)
-    detention_free_time = IntegerField(index=True, null=True)
-    transit_time = IntegerField(index=True, null=True)
+    detention_free_time = IntegerField( null=True)
+    transit_time = IntegerField(null=True)
     haulage_type = TextField(index=True, null=True, default='merchant')
     transport_modes =ArrayField(TextField, null=True)
     destination_country_id = UUIDField(null=True)
@@ -51,18 +51,18 @@ class HaulageFreightRate(BaseModel):
     origin_country_id = UUIDField(null=True, index=True)
     shipping_line_id = UUIDField(null=True, index=True)
     origin_destination_location_type = TextField(index=True, null=True)
-    destination_location_type = TextField(index=True, null=True)
-    origin_location_type = TextField(index=True, null=True)
-    origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
-    destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, index=True, null=True)
+    destination_location_type = TextField(null=True)
+    origin_location_type = TextField(null=True)
+    origin_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
+    destination_location_ids = ArrayField(constraints=[SQL("DEFAULT '{}'::uuid[]")], field_class=UUIDField, null=True)
     importer_exporter = BinaryJSONField(null=True)
     service_provider = BinaryJSONField(null=True)
-    origin_location = BinaryJSONField(index=True, null=True)
-    destination_location = BinaryJSONField(index=True, null=True)
+    origin_location = BinaryJSONField(null=True)
+    destination_location = BinaryJSONField(null=True)
     shipping_line = BinaryJSONField(null=True)
     trailer_type = TextField(index=True, null=True)
     platform_price = FloatField(null=True)
-    created_at = DateTimeField(default=datetime.datetime.now, index=True)
+    created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now, index=True)
     source = TextField(default = 'manual',index=True, null = True)
     accuracy = FloatField(default = 100, null = True)
@@ -87,7 +87,7 @@ class HaulageFreightRate(BaseModel):
         if not is_valid_uuid(self.destination_location_id):
             raise HTTPException(status_code=400, detail="Invalid destination location")
         ids = [str(self.origin_location_id), str(self.destination_location_id)]
-        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True}})
+        locations_response = maps.list_locations({'filters':{"id": ids}, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name': True, 'default_params_required': True}})
         locations = []
         locations = locations_response["list"]
         for location in locations:
@@ -110,7 +110,8 @@ class HaulageFreightRate(BaseModel):
           "cluster_id": location["cluster_id"],
           "city_id": location["city_id"],
           "country_id": location["country_id"],
-          "country_code": location["country_code"]
+          "country_code": location["country_code"],
+          "display_name": location["display_name"]
         }
         return loc_data
 
@@ -152,9 +153,6 @@ class HaulageFreightRate(BaseModel):
     def validate_validity_object(self, validity_start, validity_end):
         if not self.transport_modes:
             raise HTTPException(status_code=400, detail="transport mode can't be empty")
-
-        if self.transport_modes[0] != 'trailer' :
-            return
         
         if not validity_start:
             raise HTTPException(status_code=400, detail="validity_start is invalid")
@@ -164,6 +162,7 @@ class HaulageFreightRate(BaseModel):
 
         if validity_end < validity_start:
             raise HTTPException(status_code=400, detail="validity_end can not be lesser than validity_start")
+            
     
     def validate_container_size(self):
       if self.container_size and self.container_size not in CONTAINER_SIZES:
@@ -306,7 +305,6 @@ class HaulageFreightRate(BaseModel):
 
         for line_item in line_items:
             result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
-
         return result
     
     def update_platform_prices_for_other_service_providers(self):
@@ -458,4 +456,4 @@ class HaulageFreightRate(BaseModel):
         slabs = self.line_items[0].get('slabs') or []
         for index, slab in enumerate(slabs):
             if (float(slab['upper_limit']) <= float(slab['lower_limit'])) or (index!=0 and float(slab['lower_limit'])<= float(slabs[index-1]['upper_limit'])):
-                raise HTTPException(status_code=400, detail=f"{slabs} are not valid {slab['code']} in line item")
+                raise HTTPException(status_code=400, detail=f"Invalid slabs ")

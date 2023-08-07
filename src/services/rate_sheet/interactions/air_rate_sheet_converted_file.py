@@ -333,7 +333,7 @@ def create_air_freight_freight_rate(
         weight_slab["upper_limit"] = parse_numeric(slab["upper_limit"].strip())
         weight_slab["tariff_price"] = parse_numeric(slab["tariff_price"].strip())
         weight_slab["currency"] = object["currency"]
-        weight_slab["unit"] = object.get("unit")
+        weight_slab["unit"] = object.get("unit") or 'per_kg'
         object["weight_slabs"].append(weight_slab)
 
     object["service_provider_id"] = params.get("service_provider_id")
@@ -363,7 +363,7 @@ def create_air_freight_freight_rate(
                 if validation.get("valid"):
                     object["rate_sheet_validation"] = True
                     create_air_freight_rate_freight_delay.apply_async(
-                        kwargs={"request": object}, queue="low"
+                        kwargs={"request": object}, queue="fcl_freight_rate"
                     )
                 else:
                     print(validation.get("error"))
@@ -710,7 +710,7 @@ def create_air_freight_local_rate(
         object["sourced_by_id"] = sourced_by_id
 
         create_air_freight_rate_local_delay.apply_async(
-            kwargs={"request": object}, queue="low"
+            kwargs={"request": object}, queue="fcl_freight_rate"
         )
     else:
         print(validation.get("error"))
@@ -982,7 +982,7 @@ def create_air_freight_surcharge_rate(
             if key in key_to_float:
                 line_item[key] = parse_numeric(line_item[key])
         line_item["currency"] = line_item["currency"].upper().strip()
-        line_item["unit"] = line_item["unit"].upper().strip()
+        line_item["unit"] = line_item["unit"].lower().strip()
         line_item["code"] = line_item["code"].upper().strip()
         remarks = [slab["remark1"], slab["remark2"], slab["remark3"]]
         line_item["remark"] = list(filter(lambda x: x is not None, remarks))
@@ -1005,7 +1005,7 @@ def create_air_freight_surcharge_rate(
             object["procured_by_id"] = procured_by_id
             object["sourced_by_id"] = sourced_by_id
             create_air_freight_rate_surcharge_delay.apply_async(
-                kwargs={"request": object}, queue="low"
+                kwargs={"request": object}, queue="fcl_freight_rate"
             )
         else:
             print(validation.get("error"))

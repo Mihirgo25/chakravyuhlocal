@@ -1,5 +1,5 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
-from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY
+from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_SERVICE_PROVIDER_ID, SPECIFICITY_TYPE_HIERARCHY
 import json
 from fastapi.encoders import jsonable_encoder
 
@@ -9,7 +9,7 @@ def get_most_eligible_free_days(data, filters):
     data = sorted(data, key=lambda t: [
             LOCATION_HIERARCHY[t['location_type']],
             0 if t['service_provider_id'] in filters['service_provider_id'] else 1,
-            0 if t['specificity_type'] == 'rate_specific' else 1 if t['specificity_type'] == 'shipping_line' else 2
+            SPECIFICITY_TYPE_HIERARCHY[t['specificity_type']]
     ])
     free_days = data[0] if data else None
     return free_days
@@ -35,6 +35,7 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_s
         all_service_provider_ids+=filters["local_service_provider_ids"]
 
     all_service_provider_ids = list(set(all_service_provider_ids))
+    all_service_provider_ids.append(DEFAULT_SERVICE_PROVIDER_ID)
 
     if isinstance(filters['shipping_line_id'],str):
         filters['shipping_line_id'] = [filters['shipping_line_id']]
@@ -74,14 +75,14 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_s
         query = query.where(FclFreightRateFreeDay.free_limit == filters['free_limit'])
 
     if 'validity_start' in filters and 'validity_end' in filters:
-        query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'] and FclFreightRateFreeDay.validity_end >= filters['validity_end'])
+        query = query.where(FclFreightRateFreeDay.validity_start <= filters['validity_start'], 
+                            FclFreightRateFreeDay.validity_end >= filters['validity_end']
+                )
         
     data = jsonable_encoder(list(query.dicts()))
     
     if sort_by_specificity_type:
-        return sorted(data, key=lambda t: [
-            0 if t['specificity_type'] == 'rate_specific' else 
-            1 if t['specificity_type'] == 'shipping_line' else 2])
+        return sorted(data, key=lambda t: SPECIFICITY_TYPE_HIERARCHY[t['specificity_type']])
 
     if freight_rates:
         group_by_rate = {}
@@ -94,7 +95,7 @@ def get_eligible_fcl_freight_rate_free_day(filters, freight_rates=None,sort_by_s
             if trade_type == 'export':
                 local = rate["origin_local"]
             for free_day_row in data:
-                if (free_day_row['service_provider_id'] ==  sp_id and free_day_row['shipping_line_id'] == rate["shipping_line_id"]) or (free_day_row['service_provider_id'] ==  (local or {}).get("service_provider_id") and free_day_row['shipping_line_id'] == (local or {}).get("shipping_line_id")): 
+                if (free_day_row['service_provider_id'] in [sp_id, DEFAULT_SERVICE_PROVIDER_ID] and free_day_row['shipping_line_id'] == rate["shipping_line_id"]) or (free_day_row['service_provider_id'] ==  (local or {}).get("service_provider_id") and free_day_row['shipping_line_id'] == (local or {}).get("shipping_line_id")): 
                     all_rates.append(free_day_row)
             eligible_free_days = get_most_eligible_free_days(all_rates, filters)
             group_by_rate[key] = eligible_free_days
