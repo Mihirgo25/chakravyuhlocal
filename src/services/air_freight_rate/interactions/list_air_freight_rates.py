@@ -213,11 +213,10 @@ def get_data(query,revenue_desk_data_required):
         validity['status'] = True
       if validity.get('density_category')==None:
           validity['density_category'] = 'general'
-      
       if validity['density_category'] == 'general':
         validity['density_ratio'] = '1:1'
       else:
-        validity['density_ratio'] = "1:{}".format(int(validity['min_density_weight']))
+        validity['density_ratio'] = "1:{}".format(validity['min_density_weight'])
       validity_end = datetime.fromisoformat(validity['validity_end'])
       if validity.get('status') and not (validity_end > beginning_of_day and validity_end <= now):
         validity['validity_id'] = validity.get('id')
