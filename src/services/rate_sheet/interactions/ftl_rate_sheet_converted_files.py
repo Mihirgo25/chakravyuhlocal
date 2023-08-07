@@ -10,12 +10,10 @@ from services.rate_sheet.helpers import *
 import chardet
 from libs.parse_numeric import parse_numeric
 
-
 def process_ftl_freight_freight(params, converted_file, update):
     valid_headers = ['origin_location', 'destination_location', 'truck_type', 'commodity', 'code', 'unit', 'price',
                 'currency', 'truck_body_type', 'validity_start', 'validity_end', 'transit_time', 'detention_free_time',
                   'trip_type', 'remark1', 'remark2', 'remark3']
-    
     total_lines = 0
     original_path = get_original_file_path(converted_file)
     rows = []
@@ -50,10 +48,7 @@ def process_ftl_freight_freight(params, converted_file, update):
 
         for row in input_file:
             total_lines += 1
-        # Set Initial Rate Sheets count
-        print('here')
         set_total_line(converted_file, total_lines)
-        print('not here')
         set_processed_percent(0, converted_file)
         csv_writer.writerow(headers)
         file.seek(0)
@@ -75,7 +70,6 @@ def process_ftl_freight_freight(params, converted_file, update):
             if valid_hash(row, ["origin_location", "destination_location","truck_type", "code", "unit", "price", "currency", "truck_body_type", "validity_start", "validity_end", "transit_time", "detention_free_time", "trip_type"], ["lower_limit", "upper_limit"]):
                 if rows:
                     last_row = list(row.values())
-                    # Create previous rate if previous rate was valid
                     if is_previous_rate_valid:
                         create_ftl_freight_freight_rate(
                             params,
@@ -89,7 +83,7 @@ def process_ftl_freight_freight(params, converted_file, update):
                         )
                     else:
                         is_previous_rate_valid = True
-                    # Set Processing percent
+                    
                     set_current_processing_line(index - 1, converted_file)
                     percent = (
                         get_current_processing_line(converted_file) / total_lines
@@ -99,7 +93,6 @@ def process_ftl_freight_freight(params, converted_file, update):
                     list_opt = list(row.values())
                     csv_writer.writerow(list_opt)
                 rows = [row]
-
             elif valid_hash(row, ["code", "unit", "price", "currency"], ["origin_location", "destination_location", "truck_type", "truck_body_type", "commodity", "validity_start", "validity_end", "transit_time", "detention_free_time", "trip_type"]):
                 rows.append(row)
                 list_opt = list(row.values())
@@ -184,7 +177,7 @@ def create_ftl_freight_freight_rate(
     csv_writer,
     last_row,
 ):
-    from src.celery_worker import create_ftl_freight_rate_delay
+    from services.ftl_freight_rate.ftl_celery_worker import create_ftl_freight_rate_delay
     keys_to_extract =  ["origin_location", "destination_location", "commodity", "transit_time", "detention_free_time", "validity_start", "validity_end", "trip_type", "truck_type", "truck_body_type"]
     object = dict(filter(lambda item: item[0] in keys_to_extract, rows[0].items()))
 
