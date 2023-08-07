@@ -154,8 +154,8 @@ def create_air_freight_rate_data(request):
 
     if request.get('air_freight_rate_request_id'):
         update_air_freight_rate_details_delay.apply_async(kwargs={ 'request':request }, queue='fcl_freight_rate')
-    if not request.get('extension_not_required'):
-        extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request }, queue='low')
+    # if not request.get('extension_not_required'):
+    #     extend_air_freight_rates_in_delay.apply_async(kwargs={ 'rate': request }, queue='low')
 
     freight_object = {
         "id": freight.id,
