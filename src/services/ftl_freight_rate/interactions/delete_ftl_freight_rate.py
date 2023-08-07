@@ -38,8 +38,8 @@ def execute_transaction_code(request):
 
     try:
         object.save()
-    except Exception as e:
-        print("Exception in saving haulage freight rate", e)
+    except Exception as error_message:
+        raise HTTPException(status_code= 500, detail= error_message)
 
     create_audit(request, object.id, delete_params)
 

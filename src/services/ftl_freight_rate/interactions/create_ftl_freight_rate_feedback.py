@@ -45,7 +45,7 @@ def execute_transaction_code(request):
     try:
         feedback.save()
     except:
-        raise HTTPException(status_code=400, detail='Feedback could not be saved')
+        raise HTTPException(status_code=500, detail='Feedback could not be saved')
 
     create_audit(request, feedback)
 

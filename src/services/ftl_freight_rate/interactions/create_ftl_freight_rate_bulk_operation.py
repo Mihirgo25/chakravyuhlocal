@@ -19,7 +19,7 @@ def create_ftl_freight_rate_bulk_operation(request):
         eval(f"bulk_operation_object.validate_{action_name}_data()")
         bulk_operation_object.save()
     except Exception as error_message:
-        raise HTTPException(status_code=501, detail="error_message")
+        raise HTTPException(status_code=500, detail="error_message")
     
     ftl_bulk_operation_perform_action_functions.apply_async(
         kwargs={
