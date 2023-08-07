@@ -6,14 +6,14 @@ from services.bramhastra.models.fcl_freight_rate_statistic import FclFreightRate
 from services.bramhastra.models.fcl_freight_rate_request_statistics import FclFreightRateRequestStatistic
 from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import SpotSearchFclFreightRateStatistic
 from services.bramhastra.models.feedback_fcl_freight_rate_statistic import FeedbackFclFreightRateStatistic
-from services.bramhastra.models.quotation_fcl_freight_rate_statistic import QuotationFclFreightRateStatistic
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import ShipmentFclFreightRateStatistic
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import CheckoutFclFreightRateStatistic
 
 def create_table():
     # db.connect()
     try:
-        db.create_tables([FclFreightRateStatistic,FclFreightRateRequestStatistic,SpotSearchFclFreightRateStatistic,FeedbackFclFreightRateStatistic,QuotationFclFreightRateStatistic,ShipmentFclFreightRateStatistic,CheckoutFclFreightRateStatistic])
+        db.create_tables([FclFreightRateStatistic,FclFreightRateRequestStatistic,SpotSearchFclFreightRateStatistic,FeedbackFclFreightRateStatistic,CheckoutFclFreightRateStatistic,FclFreightLocationCluster,FclFreightLocationClusterFactor,
+FclFreightLocationClusterMapping,ShipmentFclFreightRateStatistic])
         db.close()
         print("created table")
     except:

@@ -2,10 +2,7 @@ from services.bramhastra.helpers.post_fcl_freight_helper import Rate
 
 
 def apply_fcl_freight_rate_statistic(request):
-    if request.create_params:
-        setting_fcl_freight_rate_statistic(request.action, request.params)
-    else:
-        raise ValueError("Send create or update freight parameters")
+    setting_fcl_freight_rate_statistic(request.action, request.params)
 
 
 def setting_fcl_freight_rate_statistic(action, params):
