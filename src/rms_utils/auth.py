@@ -13,10 +13,17 @@ def authorize_token(
     authorization_token = request.headers.get('authorization')
     authorization_scope = request.headers.get('authorizationscope')
     authorization_parameters = request.headers.get('authorizationparameters')
-    request_body = json.loads(request._body)
+    performed_by_id = str()
+    performed_by_type = str()
+    request_body = {}
+    if request.method == "POST":
+        request_body = json.loads(request._body)
+        performed_by_id = request_body.get("performed_by_id")
+        performed_by_type = request_body.get("performed_by_type")
+        
     if APP_ENV != "production" or "is_authorization_required" in request.query_params or (request.method == "POST" and "is_authorization_required" in request_body):
         if (request.method == "GET" and not "is_authorization_required" in request.query_params) or (request.method == "POST" and not "is_authorization_required" in request_body):
-            return {"status_code": 200, "isAuthorized": True, "setters": { "performed_by_id": request_body.get("performed_by_id") or DEFAULT_USER_ID, "performed_by_type": request_body.get("performed_by_type") or "agent" }}
+            return {"status_code": 200, "isAuthorized": True, "setters": { "performed_by_id": performed_by_id or DEFAULT_USER_ID, "performed_by_type": performed_by_type or "agent" }}
         return { "status_code": 200, "isAuthorized": False }
 
     url = get_instance_url('user') + "/verify_request"
