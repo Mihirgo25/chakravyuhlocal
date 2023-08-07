@@ -31,17 +31,11 @@ def update_ftl_freight_rate(request):
 
 def execute_transaction_code(request):
     rate_object = find_ftl_object(request)
-    update_params =  {
-            'procured_by_id': request.get('procured_by_id'),
-            'sourced_by_id': request.get('sourced_by_id'),
-            'line_items': request.get('line_items'),
-            'transit_time': request.get('transit_time'),
-            'detention_free_time': request.get('detention_free_time'),
-            'validity_start': request.get('validity_start'),
-            'validity_end': request.get('validity_end'),
-            'minimum_chargeable_weight': request.get('minimum_chargeable_weight'),
-            'truck_body_type': request.get('truck_body_type')
-        }
+    update_params = {}
+    for params in request.keys():
+        if request.get(params) is not None:
+            update_params[params] = request[params]
+
     for key in list(update_params.keys()):
             setattr(rate_object, key, update_params[key])
 
