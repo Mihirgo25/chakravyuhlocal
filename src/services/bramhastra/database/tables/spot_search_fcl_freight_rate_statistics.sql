@@ -21,7 +21,7 @@ PRIMARY KEY (rate_id)
 ORDER BY (rate_id,version);
 
 
-CREATE TABLE brahmastra.spot_search_fcl_freight_rate_statistics
+CREATE TABLE brahmastra.stale_spot_search_fcl_freight_rate_statistics
 (
     id UInt256,
     fcl_freight_rate_statistic_id UInt256,

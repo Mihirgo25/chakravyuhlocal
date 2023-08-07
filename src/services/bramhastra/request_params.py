@@ -367,3 +367,13 @@ class FeedbackAirFreightRateStatistic(BaseModel):
 class ApplyFeedbackAirFreightRateStatistics(BaseModel):
     action: str
     params: FeedbackAirFreightRateStatistic = None
+    
+class FclSelectedForBooking(BaseModel):
+    rate_id: str
+    validity_id: str
+    
+class ApplyRevenueDeskFclFreightStatistics(BaseModel):
+    revenue_desk_visit_count: int = None
+    shipment_id: str
+    shipment_fcl_freight_rate_services_id: str
+    selected_for_booking: FclSelectedForBooking

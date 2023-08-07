@@ -11,6 +11,7 @@ from peewee import (
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField
+from services.bramhastra.database.sql import Sql
 
 
 class BaseModel(Model):
@@ -127,6 +128,10 @@ class FclFreightRateStatistic(BaseModel):
 
     def refresh(self):
         return type(self).get(self._pk_expr())
+    
+    
+    def click(self):
+        Sql().run(self._meta.table_name)
 
     class Meta:
         table_name = "fcl_freight_rate_statistics"

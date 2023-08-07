@@ -20,13 +20,14 @@ from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic
 )
+import peewee
 class Sql():
     def __init__(self) -> None:
         self.root_path = f'{ROOT_DIR}/services/bramhastra/database/tables'
 
-    def run(self,table_name: str):
+    def run(self,model: peewee.Model):
         
-        sql_file_path =  f'{self.root_path}/{table_name}.sql'
+        sql_file_path =  f'{self.root_path}/{model._meta.name}.sql'
         
         clickhouse = ClickHouse()
 
@@ -64,6 +65,8 @@ class Sql():
         if column_names == model_cols:
             return True
         else:
-            return False
+            print(f'columns not present {set(column_names) - set(model_cols)}')
+            raise
+            
 
         
