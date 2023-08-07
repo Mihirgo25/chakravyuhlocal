@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
-from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES
 from playhouse.shortcuts import model_to_dict
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
@@ -235,10 +235,11 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'service_provider_id': freight.service_provider_id,
         'extend_rates_for_existing_system_rates': True
     }
-    if row["mode"] == 'manual' and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
-
-    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+    
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and row['rate_type'] == "market_place":
+        adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
 def adjust_cogoassured_price(row, request):
     from celery_worker import create_fcl_freight_rate_delay

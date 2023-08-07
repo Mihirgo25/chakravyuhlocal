@@ -9,6 +9,7 @@ from services.bramhastra.models.feedback_fcl_freight_rate_statistic import Feedb
 from services.bramhastra.models.shipment_fcl_freight_rate_statistic import ShipmentFclFreightRateStatistic
 from services.bramhastra.models.checkout_fcl_freight_rate_statistic import CheckoutFclFreightRateStatistic
 
+from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
 def create_table():
     # db.connect()
     try:
