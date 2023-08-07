@@ -401,7 +401,7 @@ class Feedback:
             self.params = params.dict(exclude={"likes_count", "dislikes_count"})
             self.rate_id = params.rate_id
             self.validity_id = params.validity_id
-            self.exclude_update_params = {'feedback_id'}
+            self.exclude_update_params = {"feedback_id"}
         else:
             self.params = params.dict(exclude_none=True)
 
@@ -592,8 +592,7 @@ class Quotations(FclFreightValidity):
 class Shipment(FclFreightValidity):
     def __init__(self, params) -> None:
         self.params = params
-        
+
     def format(self):
-        for idx,sell_quotation in enumerate(self.params.sell_quotations):
+        for idx, sell_quotation in enumerate(self.params.sell_quotations):
             pass
-            

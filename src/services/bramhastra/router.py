@@ -5,6 +5,9 @@ from services.bramhastra.interactions.apply_spot_search_fcl_freight_rate_statist
 from services.bramhastra.interactions.apply_checkout_fcl_freight_rate_statistic import (
     apply_checkout_fcl_freight_rate_statistic,
 )
+from services.bramhastra.interactions.apply_shipment_fcl_freight_rate_statistic import (
+    apply_shipment_fcl_freight_rate_statistic,
+)
 from services.bramhastra.interactions.get_fcl_freight_rate_charts import (
     get_fcl_freight_rate_charts,
 )
@@ -30,6 +33,7 @@ from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics i
 from services.bramhastra.request_params import (
     ApplySpotSearchFclFreightRateStatistic,
     ApplyCheckoutFclFreightRateStatistic,
+    ApplyShipmentFclFreightRateStatistics,
 )
 from pydantic.types import Json
 from typing import Annotated
@@ -51,6 +55,13 @@ def apply_spot_search_fcl_freight_rate_statistic_func(
     request: ApplySpotSearchFclFreightRateStatistic,
 ):
     return apply_spot_search_fcl_freight_rate_statistic(request)
+
+
+@bramhastra.post("/apply_shipment_fcl_freight_rate_statistic")
+def apply_shipment_fcl_freight_rate_statistic_func(
+    request: ApplyShipmentFclFreightRateStatistics,
+):
+    return apply_shipment_fcl_freight_rate_statistic(request)
 
 
 @bramhastra.post("/apply_checkout_fcl_freight_rate_statistic")

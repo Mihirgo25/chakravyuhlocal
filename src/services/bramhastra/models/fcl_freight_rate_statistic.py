@@ -1,4 +1,13 @@
-from peewee import Model, UUIDField, FloatField, BigIntegerField, CharField, TextField, DateField,IntegerField
+from peewee import (
+    Model,
+    UUIDField,
+    FloatField,
+    BigIntegerField,
+    CharField,
+    TextField,
+    DateField,
+    IntegerField,
+)
 from datetime import datetime
 from database.db_session import db
 from playhouse.postgres_ext import DateTimeTZField
@@ -11,7 +20,7 @@ class BaseModel(Model):
 
 
 class FclFreightRateStatistic(BaseModel):
-    id = BigIntegerField(sequence='fcl_freight_rate_stats_seq')
+    id = BigIntegerField(sequence="fcl_freight_rate_stats_seq")
     identifier = TextField()
     validity_id = UUIDField()
     rate_id = UUIDField()
@@ -52,8 +61,8 @@ class FclFreightRateStatistic(BaseModel):
     bookings_created = IntegerField(default=0)
     rate_created_at = DateTimeTZField()
     rate_updated_at = DateTimeTZField()
-    validity_created_at = DateTimeTZField(default = datetime.utcnow())
-    validity_updated_at = DateTimeTZField(default = datetime.utcnow())
+    validity_created_at = DateTimeTZField(default=datetime.utcnow())
+    validity_updated_at = DateTimeTZField(default=datetime.utcnow())
     commodity = CharField()
     container_size = CharField(max_length=10)
     container_type = CharField()
@@ -88,12 +97,12 @@ class FclFreightRateStatistic(BaseModel):
     shipment_booking_rate_is_too_low_count = IntegerField(default=0)
     revenue_desk_visit_count = IntegerField(default=0)
     so1_visit_count = IntegerField(default=0)
-    created_at = DateTimeTZField(default = datetime.utcnow())
-    updated_at = DateTimeTZField(default = datetime.utcnow())
+    created_at = DateTimeTZField(default=datetime.utcnow())
+    updated_at = DateTimeTZField(default=datetime.utcnow())
     version = IntegerField(default=1)
     sign = IntegerField(default=1)
-    status = CharField(default = 'active')
-    last_action = CharField(default = 'create')
+    status = CharField(default="active")
+    last_action = CharField(default="create")
     rate_deviation_from_booking_rate = FloatField(default=0)
     rate_deviation_from_cluster_base_rate = FloatField(default=0)
     rate_deviation_from_booking_on_cluster_base_rate = FloatField(default=0)
@@ -115,6 +124,9 @@ class FclFreightRateStatistic(BaseModel):
         for k, v in params.items():
             setattr(self, k, v)
         self.save()
+
+    def refresh(self):
+        return type(self).get(self._pk_expr())
 
     class Meta:
         table_name = "fcl_freight_rate_statistics"

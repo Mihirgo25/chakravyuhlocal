@@ -24,9 +24,9 @@ class ShipmentAirFreightRateStatistic(BaseModel):
     shipment_air_freight_rate_services_id = UUIDField(null=True)
     cancellation_reason = CharField(null=True)
     is_active = CharField()
-    created_at = DateTimeTZField(default = datetime.utcnow())
-    updated_at = DateTimeTZField(default = datetime.utcnow())
-    status = CharField(default = 'active')
+    created_at = DateTimeTZField(default=datetime.utcnow())
+    updated_at = DateTimeTZField(default=datetime.utcnow())
+    status = CharField(default="active")
     sign = IntegerField(default=1)
     version = IntegerField(default=1)
 

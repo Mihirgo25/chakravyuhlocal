@@ -46,7 +46,7 @@ def get_direct_indirect_filters(filters):
 
     for key, value in filters.items():
         if key in POSSIBLE_DIRECT_FILTERS and value:
-            if type(value)==list:
+            if type(value) == list:
                 where.append(f"{key} IN %({key})s")
             else:
                 where.append(f"{key} = %({key})s")
@@ -65,7 +65,7 @@ def get_date_range_filter(where):
     )
 
 
-def get_stale_rates_filter(where):
+def get_stale_rate_filter(where):
     where.append("checkout_count = 0 AND dislikes_count = 0 AND likes_count = 0")
 
 
