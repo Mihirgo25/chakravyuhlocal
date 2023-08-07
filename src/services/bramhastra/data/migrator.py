@@ -4,7 +4,7 @@ from peewee import fn
 from datetime import datetime
 from configs.definitions import ROOT_DIR
 import importlib.util
-
+import textwrap
 
 class Migrator:
     def __init__(self):
@@ -13,17 +13,16 @@ class Migrator:
         breakpoint()
     def create(self):
         migration_number = self.number + 1
-        migration_file = f"migration_{migration_number}.py"
+        migration_file = "migration_{}.py".format(migration_number)
         with open(migration_file, "w") as file:
-            file.write(
-                f"""def main():
-    # Your migration logic goes here
-    pass
+            file.write(textwrap.dedent('''
+    def main():
+        # Your migration logic goes here
+        pass
 
-if __name__ == '__main__':
-    main()
-"""
-            )
+    if __name__ == '__main__':
+        main()
+'''))
 
     def run(self):
         migrations = (
