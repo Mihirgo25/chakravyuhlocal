@@ -54,5 +54,5 @@ if APP_ENV != "development":
     #     decode_responses=True,
     # )
 else:
-    rd = redis.Redis(host="127.0.0.1", port=6378, db=0, decode_responses=True)
+    rd = redis.Redis(host="127.0.0.1", port=6379, db=0, decode_responses=True)
     # rails_redis = None
