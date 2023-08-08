@@ -4,6 +4,7 @@ from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime,timedelta
 from peewee import SQL
+import math
 from configs.fcl_freight_rate_constants import (
     DEFAULT_RATE_TYPE,
     DEFAULT_SCHEDULE_TYPES,
@@ -686,7 +687,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
 
-        offset = 0
+        offset = 1005000
         count = 0
         print(total_count,'total rates...')
         while offset < total_count:
@@ -1369,8 +1370,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 statistics_obj.average_booking_rate = (statistics_obj.average_booking_rate * statistics_obj.booking_rate_count + total_price)/ (statistics_obj.booking_rate_count + 1)
                 statistics_obj.booking_rate_count += 1
                 statistics_obj.accuracy = (1 - abs(statistics_obj.standard_price - total_price) / total_price) * 100
-                statistics_obj.rate_deviation_from_latest_booking =  abs((statistics_obj.standard_price - total_price) / total_price) * 100
-                statistics_obj.rate_deviation_from_booking_rate = abs((statistics_obj.standard_price - statistics_obj.average_booking_rate) / statistics_obj.average_booking_rate) * 100
+                statistics_obj.rate_deviation_from_latest_booking =  (statistics_obj.standard_price - total_price) / math.sqrt(statistics_obj.booking_rate_count)  
+                statistics_obj.rate_deviation_from_booking_rate = (statistics_obj.standard_price - statistics_obj.average_booking_rate) / math.sqrt(statistics_obj.booking_rate_count)   
                 statistics_obj.save()
                 
             
