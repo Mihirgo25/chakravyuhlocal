@@ -4,6 +4,16 @@ from peewee import *
 from typing import List
 from params import *
 
+class DraftLocalData(BaseModel):
+  line_items: list[LineItem] = []
+  detention: FreeDay = None
+  demurrage: FreeDay = None
+  plugin: FreeDay = None
+  origin_port: dict = None
+  destination_port: dict = None
+  origin_main_port: dict = None
+  destination_main_port: dict = None
+
 class CreateDraftFclFreightRate(BaseModel):
   performed_by_id: str = None
   performed_by_type: str = None
@@ -14,6 +24,7 @@ class CreateDraftFclFreightRate(BaseModel):
   invoice_url : str = None
   invoice_date : datetime = None
   shipment_serial_id : str = None
+  rate_type: str = 'market_place'
 
 class CreateFclFreightDraft(BaseModel):
   performed_by_id: str = None
@@ -40,6 +51,7 @@ class CreateFclFreightDraft(BaseModel):
   sourced_by_id: str
   source: str = None
   rate_not_available_entry: bool = False
+  rate_type: str = 'market_place'
 
 class UpdateDraftFclFreightRate(BaseModel):
   performed_by_id: str = None
@@ -60,7 +72,7 @@ class CreateDraftFclFreightRateLocal(BaseModel):
   container_size: str
   container_type: str
   rate_id : str
-  data: Data = {}
+  data: DraftLocalData = {}
   source : str
   status : str = 'pending'
   invoice_url : str = None
@@ -94,7 +106,7 @@ class CreateFclFreightDraftLocal(BaseModel):
   service_provider_id: str
   selected_suggested_rate_id: str = None
   source: str = None
-  data: Data = {}
+  data: DraftLocalData = {}
   rate_not_available_entry: bool = False
 
 class UpdateDraftFclFreightRateLocal(BaseModel):
@@ -102,7 +114,7 @@ class UpdateDraftFclFreightRateLocal(BaseModel):
   performed_by_type: str = None
   id : str
   rate_id : str = None
-  data : Data = {}
+  data : DraftLocalData = {}
   source : str = None
   status : str = 'pending'
   invoice_url : str = None

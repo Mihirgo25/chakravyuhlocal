@@ -27,3 +27,12 @@ class CommonApiClient:
 
     def update_contract_service_task(self, data={}):
         return self.client.request('POST', 'update_contract_service_task', data)
+    
+    def create_air_freight_rate(self, data={}):
+        return self.client.request('POST', 'air_freight_rate/create_air_freight_rate', data)
+    
+    def create_saas_air_schedule_airport_pair(self, data={}):
+        return self.client.request('POST', 'create_saas_air_schedule_airport_pair', data)
+    
+    def get_air_routes_and_schedules_from_cargo_ai(self,data={}):
+        return self.client.request('GET','get_air_routes_and_schedules_from_cargo_ai',data)

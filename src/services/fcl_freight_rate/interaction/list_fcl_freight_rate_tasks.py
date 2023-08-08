@@ -2,7 +2,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_task import FclFreightRat
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
-from fastapi.encoders import jsonable_encoder
 from configs.fcl_freight_rate_constants import *
 from playhouse.shortcuts import model_to_dict
 from configs.fcl_freight_rate_constants import EXPECTED_TAT
@@ -15,7 +14,7 @@ from peewee import SQL
 from micro_services.client import common
 from libs.json_encoder import json_encoder
 
-possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
+possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type', 'source']
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
 
 def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc', stats_required = True, pagination_data_required = True):

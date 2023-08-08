@@ -66,25 +66,25 @@ class FclFreightRateTask(BaseModel):
             self.continent_id = port.get('continent_id', None)
             self.location_ids = [uuid.UUID(str(x)) for x in [self.port_id, self.country_id, self.trade_id] if x is not None]
         else:
-            raise HTTPException(status_code=500,detail='Invalid port')
+            raise HTTPException(status_code=400,detail='Invalid port')
 
     def validate_main_port_id(self):
         # if self.port and self.port.get('is_icd')==False:
         #     if self.main_port_id and self.main_port_id!=self.port_id:
-        #         raise HTTPException(status_code=500,detail='Invalid Main Port')
+        #         raise HTTPException(status_code=400,detail='Invalid Main Port')
         if self.port and self.port.get('is_icd')==True:
             main_port_data = maps.list_locations({"filters":{"id": [str(self.main_port_id)],'type':'seaport','is_icd':False}})['list']
             if main_port_data:
                 self.main_port = {key:value for key,value in main_port_data[0].items() if key in ['id', 'name','display_name', 'port_code', 'type']}
             else:
-                raise HTTPException(status_code=500,detail='Invalid Main Port')
+                raise HTTPException(status_code=400,detail='Invalid Main Port')
 
     def validate_shipping_line_id(self):
-        shipping_line_data = get_shipping_line(id=str(self.shipping_line_id))
+        shipping_line_data = get_operators(id=str(self.shipping_line_id))
         if shipping_line_data:
             self.shipping_line = shipping_line_data[0]
         else:
-            raise HTTPException(status_code=500,detail='invalid shipping line')
+            raise HTTPException(status_code=400,detail='invalid shipping line')
 
     def validate_task_type(self):
         if self.task_type not in ['locals_at_actuals', 'locals_purchase_invoice_review']:

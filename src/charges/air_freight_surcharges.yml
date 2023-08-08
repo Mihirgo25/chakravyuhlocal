@@ -1,0 +1,80 @@
+FSC:
+  name: "Fuel Surcharge"
+  units: ['per_kg','per_kg_gross']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+CTS:
+  name: "Carting Surcharge"
+  units: ['per_kg','per_kg_gross']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+MSC:
+  name: "Miscellaneous Surcharge"
+  units: ['per_kg','per_kg_gross']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+PSS:
+  name: "Peak Season Surcharge"
+  units: ['per_kg','per_kg_gross']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+AMS:
+  name: "Automated Manifest System"
+  units: ['per_shipment','per_awb']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996531'
+SSC:
+  name: "Security Surcharge"
+  units: ['per_kg' , 'per_kg_gross','per_shipment']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+AEDEM:
+  name: "Airline Demurrage Charge"
+  units: ['per_kg_per_day']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996531'
+AEDC:
+  name: "Airline Due Carrier"
+  units: ['per_kg','per_kg_gross']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996531'
+AMSNO:
+  name: "Automated Manifest System with no tax"
+  units: ['per_shipment','per_awb']
+  condition: commodity == "special_consideration"
+  tags: ['additional_service']
+  sac_code: '996531'
+HAMS:
+  name: "House Automated Manifest System"
+  units: ['per_document']
+  condition: true 
+  tags: ['additional_service']
+  sac_code: ''
+EAMS:
+  name: "Electronic Automated Manifest System"
+  units: ['per_document']
+  condition: true 
+  tags: ['additional_service']
+  sac_code: ''
+EHAMS:
+  name: "Electronic House Automated Manifest System"
+  units: ['per_document']
+  condition: true 
+  tags: ['additional_service']
+  sac_code: ''
+XRAY:
+  name: "X Ray Machine Charges"
+  units: ['per_kg', 'per_package', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+

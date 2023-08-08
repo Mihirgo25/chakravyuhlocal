@@ -2,7 +2,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclF
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 import uuid
 from database.db_session import db
-from celery_worker import update_multiple_service_objects,send_notifications_to_supply_agents_local_request
+from celery_worker import send_notifications_to_supply_agents_local_request
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_fcl_freight_rate_local_request(request):
     object_type = 'Fcl_Freight_Rate_Local_Request' 
@@ -47,7 +48,7 @@ def execute_transaction_code(request):
 
     create_audit(request, local_request.id)
 
-    update_multiple_service_objects.apply_async(kwargs={'object':local_request},queue='low')
+    get_multiple_service_objects(local_request)
 
     send_notifications_to_supply_agents_local_request.apply_async(kwargs={'object':local_request},queue='communication')
 

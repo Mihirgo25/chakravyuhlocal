@@ -1,7 +1,7 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local_request import FclFreightRateLocalRequest
 from math import ceil
 from datetime import datetime
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from libs.get_filters import get_filters
 from libs.get_applicable_filters import get_applicable_filters
 import concurrent.futures, json
@@ -39,7 +39,7 @@ def list_fcl_freight_rate_local_requests(filters = {}, page_limit = 10, page = 1
 
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
 
-    return {'list': jsonable_encoder(data) } | (pagination_data) | (stats)
+    return {'list': json_encoder(data) } | (pagination_data) | (stats)
 
 def apply_indirect_filters(query, filters):
   for key in filters:

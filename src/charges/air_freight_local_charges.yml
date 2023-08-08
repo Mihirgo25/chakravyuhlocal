@@ -1,0 +1,529 @@
+THC:
+  name: "Terminal Handling Charges"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+XRAYC:
+  name: "X Ray Screening & Certification"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+DSU:
+  name: "Documentation & Supervision services"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+RPKC:
+  name: "Re-packaging charges"
+  units: ['per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+SC:
+  name: "Strapping Of Cargo"
+  units: ['per_package']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+MC:
+  name: "Misdeclaration Of Cargo"
+  units: ['per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+DEM:
+  name: "Demurrage"
+  units: ['per_kg_per_day']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+CHC:
+  name: "Courier Handling"
+  units: ['per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+WPEN:
+  name: "Weight difference"
+  units: ['per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+MISCP:
+  name: "Miscellaneous packaging charges"
+  units: ['per_package']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+ULDB:
+  name: "ULD building rebuilding charges"
+  units: ['per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+WXRAY:
+  name: "Withdraw shipment - XRAY"
+  units: ['per_kg']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+WDEM:
+  name: "Withdraw shipment - Demurrage"
+  units: ['per_kg_per_day']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+CFF:
+  name: "Customs facilitation fee"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+DSC:
+  name: "Destuffing charges"
+  units: ['per_kg']
+  trade_types: ['import','export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+PKC:
+  name: "Packing charges"
+  units: ['per_package']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+PDHC:
+  name: "Post delivery holding charges"
+  units: ['per_kg_per_day']
+  trade_types: ['import','export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+OLC:
+  name: "Offloading charges"
+  units: ['per_kg']
+  trade_types: ['import','export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+DGA:
+  name: "DGR/Live animal acceptance fee"
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: commodity == "live_animals" or commodity_type == "dangerous" or commodity_sub_type == "others"
+  tags: ['additional_service']
+  sac_code: ''
+DGP:
+  name: "DGO preparation and acceptance fee"
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+PASS:
+  name: "Pet assistance fee"
+  units: ['per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+HAWBC:
+  name: "HAWB consolidation charges"
+  units: ['per_shipment','per_awb']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+MISCA:
+  name: "Miscellaneous activity charges"
+  units: ['per_shipment','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+DO:
+  name: "Delivery order charges"
+  units: [ 'per_shipment','per_awb']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+FCA:
+  name: "FCA charges"
+  units: ['per_shipment', 'per_kg']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  inco_terms: ['fca']
+  sac_code: ''
+WH:
+  name: "Warehouse Receiving/Storage/Handling Fee"
+  units: ['per_kg']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+AHC:
+  name: "Airline Handling Charge"
+  units: ['per_kg', 'per_shipment','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+AWBM:
+  name: "Airway Bill Amendment"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+GIC:
+  name: "Gate in Charge"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+IGM:
+  name: "Import General Manifest"
+  units: ['per_shipment','per_awb']
+  trade_types: ['import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+CCFEES:
+  name: "Collect Fees"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export' , 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+AWCH:
+  name: "Airway Bill Carrier Charges"
+  units: ['per_shipment','per_awb']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+AWC:
+  name: "Airway Bill"
+  units: ['per_shipment','per_awb']
+  trade_types: ['export']
+  condition: true
+  tags: ['mandatory']
+  sac_code: ''
+EXW:
+  name: "Ex-works Charges"
+  units: ['per_shipment','per_awb','per_kg']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  inco_terms: ['exw']
+  sac_code: '996763'
+PCA:
+  name: "Airline Processing Charges"
+  units: ['per_shipment']
+  trade_types: ['export']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+AILC:
+  name: "Airport Landing Charges"
+  units: ['per_kg','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+AITX:
+  name: "Airport Tax"
+  units: ['per_kg','per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+AIDG:
+  name: "Airline Dangerous Goods Fees"
+  units: [ 'per_kg','per_shipment' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+ATR:
+  name: "Airline Transfer Charges"
+  units: ['per_package','per_shipment','per_kg']
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+BBC:
+  name: "Break Bulk Cargo Charges"
+  units: ['per_package','per_shipment','per_kg']
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+EXP:
+  name: "Export Documentation Charges"
+  units: ['per_package','per_shipment','per_kg']
+  trade_types: [ 'export' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+MEC:
+  name: "Measurement Charges"
+  units: [ 'per_package','per_shipment','per_kg' ]
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996719'
+SNF:
+  name: "Sniffing Charges"
+  units: ['per_shipment','per_kg']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996719'
+MIF:
+  name: "Magnetic inspection fee"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996719'
+APPF:
+  name: "Active Pharma processing fees"
+  units: ['per_kg','per_shipment']
+  trade_types: [ 'export', 'import' ]
+  condition: commodity == 'active_pharma' or commodity == 'perishables' or commodity_sub_type == 'active_pharma' or commodity_sub_type == 'perishables'
+  tags: ['additional_service']
+  sac_code: '996799'
+ACUS:
+  name: "Customs Faciitation Fees"
+  units: ['per_kg','per_shipment']
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+ATRNS:
+  name: "Transportation Fees"
+  units: [ 'per_kg','per_shipment']
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+LCDOC:
+  name: "LC Documentation Charges"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+ADC:
+  name: "Airline Damage Charges"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+FLC:
+  name: "Foil Lining Charges"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+GIP:
+  name: "Gel Ice-pack charges"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+PBC:
+  name: "Polystyrene boxes Charge"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996719'
+THERM:
+  name: "Thermal Pallet Cover Charge"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996719'
+WNOC:
+  name: "Wildlife NOC"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+CMSF:
+  name: "Commission Fee"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+RBC:
+  name: "Rubber Stamp Charges"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+NOC:
+  name: "Noc Charges"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+TEMP:
+  name: "Temperature Variation Charge"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: commodity == 'perishables' or commodity_sub_type == 'perishables'
+  tags: ['additional_service']
+  sac_code: '996799'
+STL:
+  name: "Steel Coating Price"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+CLBCK:
+  name: "Cargo Callback charges"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+FUM:
+  name: "Fumigation charges"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+PALL:
+  name: "Palletization charges"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'export', 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996713'
+ICC:
+  name: "Import Courier Charges"
+  units: ['per_shipment', 'per_kg','per_awb']
+  trade_types: [ 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+IMPSTR:
+  name: "Import Storage"
+  units: [ 'per_shipment', 'per_kg','per_awb' ]
+  trade_types: [ 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+EXAM:
+  name: "Examination Charges"
+  trade_types: ['export', 'import']
+  units: ['per_shipment']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+ADO:
+  name: "Airline Delivery order charges"
+  trade_types: ['import' ]
+  units: ['per_shipment','per_awb']
+  condition: true
+  tags: ['mandatory']
+  sac_code: ''
+DDC:
+  name: "Door Delivery Charges"
+  trade_types: ['import','export']
+  units: ['per_shipment','per_kg','per_awb']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+IMP:
+  name: "Import Documentation Charges"
+  trade_types: ['import']
+  units: ['per_shipment']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+TCS:
+  name: "Transportation Charges"
+  trade_types: ['import', 'export']
+  units: ['per_shipment','per_kg','per_awb']
+  condition: true
+  tags: ['additional_service']
+  sac_code: '996799'
+AMS:
+  name: "Electronic Automated Manifest System"
+  units: [ 'per_shipment','per_awb' ]
+  condition: true
+  trade_types: ['export']
+  tags: ['additional_service']
+  sac_code: '996531'
+AWCNO:
+  name: "Airway bill Charge with no tax"
+  units: ['per_shipment','per_awb']
+  trade_types: ['export']
+  condition: commodity == "special_consideration"
+  tags: ['additional_service']
+  sac_code: ''
+CI:
+  name: "Cargo Insurance Charges"
+  units: ['per_shipment','per_awb']
+  trade_types: [ 'export' , 'import' ]
+  condition: true
+  tags: ['additional_service']
+  sac_code: '997135'
+#Temporary CODES
+THCV:
+  name: "Terminal Handling Charges"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+XRAYCV:
+  name: "X Ray Screening & Certification"
+  units: ['per_kg', 'per_shipment']
+  trade_types: ['export', 'import']
+  condition: true
+  tags: ['additional_service']
+  sac_code: ''
+EXWV:
+  name: "Ex-works Charges"
+  units: ['per_shipment','per_awb','per_kg']
+  trade_types: ['export','import']
+  condition: true
+  tags: ['additional_service']
+  inco_terms: ['exw']
+  sac_code: '996763'

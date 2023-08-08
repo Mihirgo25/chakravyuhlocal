@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID, VN_ENTITY_ID
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
@@ -9,11 +9,12 @@ from datetime import datetime, timedelta
 import concurrent.futures
 from fastapi.encoders import jsonable_encoder
 from services.envision.interaction.get_fcl_freight_predicted_rate import get_fcl_freight_predicted_rate
-from database.rails_db import get_shipping_line, get_eligible_orgs
+from database.rails_db import get_operators, get_eligible_orgs
 from database.db_session import rd
 from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
+from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
 
 def initialize_freight_query(requirements, prediction_required = False):
     freight_query = FclFreightRate.select(
@@ -63,11 +64,11 @@ def initialize_freight_query(requirements, prediction_required = False):
 
     freight_query = freight_query.where(FclFreightRate.last_rate_available_date >= requirements['validity_start'])
 
-    if not prediction_required:
-        freight_query  = freight_query.where(((FclFreightRate.mode != 'predicted') | (FclFreightRate.mode.is_null(True))))
-
     if requirements['ignore_omp_dmp_sl_sps']:
         freight_query = freight_query.where(FclFreightRate.omp_dmp_sl_sp != requirements['ignore_omp_dmp_sl_sps'])
+
+    if prediction_required:
+        freight_query = freight_query.where(FclFreightRate.mode == 'predicted')
 
     return freight_query
 
@@ -174,7 +175,6 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
                 matching_locals[local_rate["service_provider_id"]] = local_rate
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
                 default_shipping_line_locals[local_rate["service_provider_id"]] = local_rate
-                
     if default_lsp in matching_locals:
         return matching_locals[default_lsp]
     if default_lsp in default_shipping_line_locals:
@@ -279,32 +279,32 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
         "shipping_line_id": shipping_line_ids,
         "service_provider_id": service_provider_ids,
         "importer_exporter_id": requirements["importer_exporter_id"],
-        "validity_end": (datetime.now() + timedelta(days=60)).date(),
+        "validity_end": datetime.now().date(),
         "validity_start": datetime.now().date()
     }
     origin_detention_filters = common_filters | {
-        "location_id": requirements["origin_port_id"],
+        "location_id": [requirements["origin_port_id"], requirements["origin_country_id"]],
         "trade_type": "export",
         "free_days_type": "detention",
         "local_service_provider_ids": origin_local_service_providers
     }
 
     destination_detention_filters = common_filters | {
-        "location_id": requirements["destination_port_id"],
+        "location_id": [requirements["destination_port_id"], requirements["destination_country_id"]],
         "trade_type": "import",
         "free_days_type": "detention",
         "local_service_provider_ids": destination_local_service_providers
     }
 
     origin_demurrage_filters = common_filters | {
-        "location_id": requirements["origin_port_id"],
+        "location_id": [requirements["origin_port_id"], requirements["origin_country_id"]],
         "trade_type": "export",
         "free_days_type": "demurrage",
         "local_service_provider_ids": origin_local_service_providers
     }
 
     destination_demurrage_filters = common_filters | {
-        "location_id": requirements["destination_port_id"],
+        "location_id": [requirements["destination_port_id"], requirements["destination_country_id"]],
         "trade_type": "import",
         "free_days_type": "demurrage",
         "local_service_provider_ids": destination_local_service_providers
@@ -578,7 +578,7 @@ def add_freight_objects(freight_query_result, response_object, request):
             if slab['upper_limit'] < request['cargo_weight_per_container']:
                 continue
             
-            additional_weight_rate = slab['price']
+            additional_weight_rate = slab['price'] or 0
             additional_weight_rate_currency = slab['currency']
             break
 
@@ -597,6 +597,11 @@ def add_freight_objects(freight_query_result, response_object, request):
 
 
 def build_response_object(freight_query_result, request):
+    source = 'spot_rates'
+    if freight_query_result['mode'] == 'predicted':
+        source = 'predicted'
+    elif freight_query_result['rate_type'] != 'market_place':
+        source = freight_query_result['rate_type']
     response_object = {
       'shipping_line_id': freight_query_result['shipping_line_id'],
       'origin_port_id': freight_query_result['origin_port_id'],
@@ -611,7 +616,7 @@ def build_response_object(freight_query_result, request):
       'commodity': freight_query_result['commodity'],
       'service_provider_id': freight_query_result['service_provider_id'],
       'importer_exporter_id': freight_query_result['importer_exporter_id'],
-      'source': 'predicted' if freight_query_result['mode'] == 'predicted' else 'spot_rates',
+      'source': source,
       'tags': [],
       'rate_id': freight_query_result['id']
     }
@@ -633,7 +638,7 @@ def build_response_list(freight_rates, request):
     grouping = {}
     for freight_rate in freight_rates:
         # if freight_query_result['freight']['origin_main_port_id'] and freight_query_result['freight']['destination_main_port_id']:
-        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or ""])
+        key = ':'.join([freight_rate['shipping_line_id'], freight_rate['service_provider_id'], freight_rate['origin_main_port_id'] or "", freight_rate['destination_main_port_id'] or "", freight_rate['rate_type'] or "", freight_rate['cogo_entity_id'] or ""])
         if grouping.get(key) and grouping[key].get('importer_exporter_id'):
             continue
         response_object = build_response_object(freight_rate, request)
@@ -652,7 +657,7 @@ def discard_noneligible_lsps(freight_rates, requirements):
 
 def discard_noneligible_shipping_lines(freight_rates, requirements):
     shipping_line_ids = [rate["shipping_line_id"] for rate in freight_rates]
-    shipping_lines = get_shipping_line(id=shipping_line_ids)
+    shipping_lines = get_operators(id=shipping_line_ids)
     active_shipping_lines_ids = [sl["id"] for sl in shipping_lines if sl["status"] == "active"]
     freight_rates = [rate for rate in freight_rates if rate["shipping_line_id"] in active_shipping_lines_ids]
     return freight_rates
@@ -692,6 +697,57 @@ def post_discard_noneligible_rates(freight_rates, requirements):
     freight_rates = discard_no_free_day_rates(freight_rates, requirements)
     # freight_rates = discard_no_weight_limit_rates(freight_rates, requirements)
     return freight_rates
+
+def get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted):
+    try:
+        get_fcl_freight_rates_from_clusters(requirements)
+    except:
+        pass
+    initial_query = initialize_freight_query(requirements)
+    cluster_freight_rates = jsonable_encoder(list(initial_query.dicts()))
+    cluster_freight_rates = pre_discard_noneligible_rates(cluster_freight_rates, requirements)
+    
+    if cluster_freight_rates:
+        freight_rates = cluster_freight_rates
+    
+    if len(freight_rates) == 0:
+        get_fcl_freight_predicted_rate(requirements)
+        initial_query = initialize_freight_query(requirements, True)
+        freight_rates = jsonable_encoder(list(initial_query.dicts()))
+        is_predicted = True
+        
+    return freight_rates, is_predicted
+
+def filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted):
+    freight_rates_length = len(freight_rates)
+    if freight_rates_length != 0 and not is_predicted:
+        
+        if not are_all_rates_predicted:
+            freight_rates = list(filter(lambda item: item['mode'] != 'predicted', freight_rates))
+            new_freight_rates_length = len(freight_rates)
+            cogofreight_freight_rates_length = 0
+            for val in freight_rates:
+                if val['service_provider_id'] == DEFAULT_SERVICE_PROVIDER_ID:
+                    cogofreight_freight_rates_length += 1
+            
+            if cogofreight_freight_rates_length != 0 and cogofreight_freight_rates_length != new_freight_rates_length:
+                freight_rates = list(filter(lambda item: item['service_provider_id'] != DEFAULT_SERVICE_PROVIDER_ID, freight_rates))
+        else:
+                is_predicted = True
+                
+    return freight_rates, is_predicted
+
+def all_rates_predicted(freight_rates):
+    freight_rates_length = len(freight_rates)
+    predicted_rates_length = 0
+    for rate in freight_rates:
+        if rate["mode"] == "predicted":
+            predicted_rates_length += 1
+            
+    if predicted_rates_length == freight_rates_length != 0:
+        return True
+    else:
+        return False
 
 def get_fcl_freight_rate_cards(requirements):
     """
@@ -822,11 +878,16 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
         is_predicted = False
 
-        if len(freight_rates) == 0:
-            get_fcl_freight_predicted_rate(requirements)
-            initial_query = initialize_freight_query(requirements, True)
-            freight_rates = jsonable_encoder(list(initial_query.dicts()))
-            is_predicted = True
+        are_all_rates_predicted = all_rates_predicted(freight_rates)
+        if len(freight_rates) == 0 or are_all_rates_predicted:
+            freight_rates, is_predicted = get_cluster_or_predicted_rates(freight_rates, requirements, is_predicted)
+            
+        freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
+        
+        if is_predicted and requirements['cogo_entity_id'] == VN_ENTITY_ID:
+            return {
+                "list": []
+            }
 
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
