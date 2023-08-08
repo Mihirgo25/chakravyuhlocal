@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, WebSocket, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 from database.db_session import db
@@ -141,3 +141,10 @@ def get_health_check():
 @app.get("/fcl_freight_rate/health_check",tags=["Health Checks"])
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"You sent: {data}")
