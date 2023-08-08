@@ -225,6 +225,12 @@ class ShipmentParams(BaseModel):
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
     action: str
     params: ShipmentParams
+    
+
+class ApplyQuotationFclFreightRateStatistics(BaseModel):
+    fcl_freight_service: FclFreightServices
+    sell_quotation: SellQuotation
+    shipment: Shipment
 
 
 class FclFreightRateRequest(BaseModel):

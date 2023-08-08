@@ -567,7 +567,6 @@ class Checkout(FclFreightValidity):
             fcl_freight_validity = FclFreightValidity(**rate)
             self.clickhouse_client = fcl_freight_validity.clickhouse_client
 
-
             new_row = fcl_freight_validity.update_stats(
                 return_new_row_without_updating=True
             )
@@ -599,7 +598,8 @@ class Checkout(FclFreightValidity):
 
 
 class Quotations(FclFreightValidity):
-    pass
+    def __init__(self) -> None:
+        pass
 
 
 class Shipment(FclFreightValidity):
@@ -608,11 +608,19 @@ class Shipment(FclFreightValidity):
         self.action = request.action
         self.stats = []
         self.clickhouse_client = ClickHouse()
-        self.increment_keys = {'bookings_created','sell_quotations_created','shipment_is_active_count'}
+        self.increment_keys = {
+            "bookings_created",
+            "sell_quotations_created",
+            "shipment_is_active_count",
+        }
+        self.exclude_update_params = {
+            "id",
+            "shipment_fcl_freight_service_id",
+            "shipment_id",
+        }
 
     def format(self):
         shipment = self.params.shipment.dict()
-
         rate_id, validty_id = self.get_rate_details_from_initial_quotation(
             self.params.shipments.shipment_id
         ).values()
@@ -626,10 +634,11 @@ class Shipment(FclFreightValidity):
             shipment_copy.update(sell_quotation.dict())
             shipment_copy.update(shipment_services_hash[sell_quotation.service_id])
             self.stats.append(shipment_copy)
-            
-        fcl_freight_validity = FclFreightValidity(rate_id=rate_id,validity_id=validty_id)
-        self.clickhouse_client = fcl_freight_validity.clickhouse_client
 
+        fcl_freight_validity = FclFreightValidity(
+            rate_id=rate_id, validity_id=validty_id
+        )
+        self.clickhouse_client = fcl_freight_validity.clickhouse_client
 
         new_row = fcl_freight_validity.update_stats(
             return_new_row_without_updating=True
@@ -640,12 +649,52 @@ class Shipment(FclFreightValidity):
                 stat["fcl_freight_rate_statistic_id"] = (
                     new_row["id"] if isinstance(new_row, dict) else new_row.id
                 )
-            self.increment_shipment_rate_stats(fcl_freight_validity, new_row) 
-            
-    def create_or_update():
-        pass
+            self.increment_shipment_rate_stats(fcl_freight_validity, new_row)
 
-    
+    def create_or_update(self):
+        if not self.clickhouse_client:
+            self.clickhouse_client = ClickHouse()
+        for stat in self.stats:
+            if row := self.get_row(stat):
+                self.update(row.get("id"), stat)
+            else:
+                ShipmentFclFreightRateStatistic.create(**stat)
+
+    def update(self, id, stat):
+        if not self.clickhouse_client:
+            self.clickhouse_client = ClickHouse()
+
+        queries = [
+            f"ALTER TABLE brahmastra.{ShipmentFclFreightRateStatistic._meta.table_name} UPDATE"
+        ]
+
+        values = []
+        for key in stat.keys():
+            if key not in self.exclude_update_params:
+                values.append(f"{key} = %({key})s")
+
+        queries.append(",".join(values))
+
+        queries.append(
+            f"WHERE (id,version) IN (SELECT id, MAX(version) AS max_version FROM brahmastra.{ShipmentFclFreightRateStatistic._meta.table_name} WHERE id = {id} GROUP BY id)"
+        )
+
+        if row := self.clickhouse_client.execute(" ".join(queries), stat):
+            return row[0]
+
+    def get_row(self, stat):
+        query = f"SELECT id from brahmastra{ShipmentFclFreightRateStatistic._meta.table_name} WHERE quotation_id = %(quotation_id)s AND service_id = %(shipment_id)s AND shipment_id = %(shipment_id)s"
+        if row := self.clickhouse_client.execute(
+            query,
+            {
+                k: v
+                for k, v in stat.items()
+                if k
+                in {"shipment_id", "quotation_id", "shipment_fcl_freight_service_id"}
+            },
+        ):
+            return row[0]
+
     def increment_shipment_rate_stats(self, fcl_freight_validity, row):
         if isinstance(row, Model):
             for key in self.increment_keys:
@@ -657,7 +706,7 @@ class Shipment(FclFreightValidity):
             fcl_freight_validity.create_stats(row)
 
     def get_rate_details_from_initial_quotation(self, shipment_id):
-        query = f"SELECT rate_id,validity_id from brahmastra.{CheckoutFclFreightRateStatistic._meta.table_name} from checkout_id = %(shipment_id)s"
+        query = f"SELECT rate_id,validity_id from brahmastra.{CheckoutFclFreightRateStatistic._meta.table_name} from shipment_id = %(shipment_id)s"
         if response := self.clickhouse_client.execute(
             query, dict(shipment_id=shipment_id)
         ):
@@ -667,7 +716,7 @@ class Shipment(FclFreightValidity):
         if self.action == ShipmentAction.create.value:
             ShipmentFclFreightRateStatistic.insert_many(self.stats)
         elif self.action == ShipmentAction.update.value:
-            pass
+            self.create_or_update()
 
 
 class RevenueDesk(FclFreightValidity):
