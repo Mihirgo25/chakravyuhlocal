@@ -14,11 +14,11 @@ class BaseModel(Model):
 
 class HaulageFreightRateRequest(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
-    source = TextField(null=True)
+    source = TextField(index=True ,null=True)
     source_id = UUIDField(index=True ,null=True)
-    performed_by_id = UUIDField(index=True, null=True)
-    performed_by_org_id = UUIDField(index=True, null=True)
-    performed_by_type = TextField(index=True, null=True)
+    performed_by_id = UUIDField(index=True ,null=True)
+    performed_by_org_id = UUIDField(index=True ,null=True)
+    performed_by_type = TextField(index=True ,null=True)
     request_type = TextField(null=True)
     status = TextField(index=True, null=True)
     preferred_freight_rate = DoubleField(null=True)

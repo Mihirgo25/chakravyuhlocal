@@ -190,7 +190,7 @@ SHIPPING_LINES_FOR_PREDICTION = ['b2f92d49-6180-43bd-93a5-4d64f5819a9b','fb1aa2f
 #Maersk, cma, hapag, msc, oocl
 # maersk = 'c3649537-0c4b-4614-b313-98540cffcf40'
 
-EXTENSION_ENABLED_MODES = ['manual']
+EXTENSION_ENABLED_MODES = ['manual', 'flash_booking', 'missing_rate', 'disliked_rate', 'spot_negotation', 'rate_sheet']
 
 COGO_ASSURED_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
 
@@ -209,3 +209,9 @@ RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 DEFAULT_RATE_TYPE = 'market_place'
 
 VN_ENTITY_ID = 'b67d40b1-616c-4471-b77b-de52b4c9f2ff'
+
+SPECIFICITY_TYPE_HIERARCHY = {
+    'rate_specific':1,
+    'shipping_line':2,
+    'cogoport':3
+}

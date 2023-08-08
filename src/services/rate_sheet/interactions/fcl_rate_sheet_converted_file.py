@@ -43,7 +43,7 @@ def get_location(location_code, type):
             location = location_list['list'][0]
     else:
         location_list = maps.list_locations(
-            {"filters": {"type": type, "name": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
+            {"filters": {"type": type, "country_code": location_code, "status": "active"}, "includes": {"default_params_required": 1, "seaport_id": 1}}
         )
         if 'list' in location_list and len(location_list['list']) > 0:
             location = location_list['list'][0]
@@ -450,7 +450,7 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     object['remarks'] = [rows[0]['remark1'], rows[0]['remark2'], rows[0]['remark3']]
     object['validity_start'] = convert_date_format(object['validity_start'])
     object['validity_end'] = convert_date_format(object['validity_end'])
-    object['slabs'] = []
+    slabs = []
     for t in rows:
         keys_to_extract = ['lower_limit', 'upper_limit', 'price', 'currency']
         slab = dict(filter(lambda item: item[0] in keys_to_extract, t.items()))
@@ -459,14 +459,21 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
             if key in keys_to_float:
                 if val:
                     slab[key] = parse_numeric(val)
-        if object['slabs']:
-            object['slabs'].append(slab)
+            filtered_slab = dict((key, value) for key, value in slab.items() if value is not None)
+        if filtered_slab:
+            slabs.append(filtered_slab)
+
+    object['slabs'] = list(filter(None, slabs))
     object['rate_sheet_id'] = params['rate_sheet_id']
     object['performed_by_id'] = created_by_id
     object['service_provider_id'] = params['service_provider_id']
     object['procured_by_id'] = procured_by_id
     object['sourced_by_id'] = sourced_by_id
     object["source"] = "rate_sheet"
+    if object['previous_days_applicable'].strip().lower() == 'false':
+        object['previous_days_applicable'] = False
+    else:
+        object['previous_days_applicable'] = True
     request_params = object
     validation = write_fcl_freight_free_day_object(request_params.copy(), csv_writer, params,  converted_file, last_row)
     if validation.get('valid'):
@@ -475,7 +482,6 @@ def create_fcl_freight_rate_free_days(params, converted_file, rows, created_by_i
     else:
         print(validation.get('error'))
     return
-
 
 
 def write_fcl_freight_commodity_surcharge_object(rows, csv, params, converted_file):

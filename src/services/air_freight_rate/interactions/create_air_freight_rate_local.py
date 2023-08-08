@@ -2,6 +2,7 @@ from services.air_freight_rate.models.air_freight_rate_local import AirFreightRa
 from fastapi import HTTPException
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from database.db_session import db
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_air_freight_rate_local(request):
     object_type='Air_Freight_Rate_Local'
@@ -11,7 +12,6 @@ def create_air_freight_rate_local(request):
         return execute_transaction_code(request)
 
 def execute_transaction_code(request):
-    from celery_worker import update_multiple_service_objects
     row={
         'airport_id':request.get('airport_id'),
         'airline_id':request.get('airline_id'),
@@ -63,8 +63,7 @@ def execute_transaction_code(request):
 
     air_freight_local.update_foreign_references()
 
-    update_multiple_service_objects.apply_async(kwargs={'object':air_freight_local},queue='low')
-
+    get_multiple_service_objects(air_freight_local)
     return {
       'id': str(air_freight_local.id)
     }

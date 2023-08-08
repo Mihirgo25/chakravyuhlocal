@@ -1,7 +1,7 @@
 from datetime import datetime
 from database.db_session import db
 from fastapi import HTTPException
-from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRateTasks
 from services.air_freight_rate.constants.air_freight_rate_constants import * 
@@ -62,8 +62,7 @@ def execute_transaction_code(request):
 
     update_shipment_local_charges(task,request)
 
-    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-
+    get_multiple_service_objects(task)
 def create_air_freight_local_rate(task,request):
     rate=task.completion_data['rate']
 

@@ -4,7 +4,9 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import Haul
 from fastapi import HTTPException
 from database.db_session import db
 from fastapi.encoders import jsonable_encoder
-from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from micro_services.client import maps
+
 
 
 def create_haulage_freight_rate_feedback(request):
@@ -59,7 +61,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail='Feedback could not be saved')
 
     create_audit(request)
-    update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
+    get_multiple_service_objects(feedback)
 
     return {'id': feedback.id}
 
@@ -89,6 +91,22 @@ def get_create_params(request):
         'trip_type': request.get('trip_type'),
         'transport_mode': request.get('transport_mode')
     }
+    loc_ids = []
+
+    if request.get('origin_location_id'):
+        loc_ids.append(request.get('origin_location_id'))
+    if request.get('destination_location_id'):
+        loc_ids.append(request.get('destination_location_id'))
+    
+    obj = {'filters':{"id": loc_ids }, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name': True, 'default_params_required': True}}
+    locations = maps.list_locations(obj)['list']
+    locations_hash = {}
+    for loc in locations:
+        locations_hash[loc['id']] = loc
+    if request.get('origin_location_id'):
+        params['origin_location'] = locations_hash[request.get('origin_location_id')]
+    if request.get('destination_location_id'):
+        params['destination_location'] = locations_hash[request.get('destination_location_id')]
     return params
     
 def create_audit(request):
@@ -104,7 +122,9 @@ def create_audit(request):
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
         data = audit_data,
-        object_type = object_type
+        object_type = object_type,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 

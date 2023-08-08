@@ -64,6 +64,8 @@ class FclFreightVyuh():
         return []
     
     def get_probable_booking_data_tranformation(self, first_rate: dict={}):
+
+        return []
         origin_location_ids = [first_rate['origin_port_id'], first_rate['origin_country_id']]
         destination_location_ids = [first_rate['destination_port_id'], first_rate['destination_country_id']]
 

@@ -176,7 +176,11 @@ def get_final_data(query):
         if is_valid_uuid(audit_id):
             valid_audit_ids.append(audit_id)
 
-    rate_sheet_audits = RateSheetAudit.select().where(RateSheetAudit.object_id << valid_audit_ids)
+    sub_query = RateSheetAudit.select(RateSheetAudit.object_id, fn.MAX(RateSheetAudit.created_at).alias('max_ts')).group_by(RateSheetAudit.object_id).alias('max_query')
+    
+    rate_sheet_audits = RateSheetAudit.select(RateSheetAudit.object_id, RateSheetAudit.performed_by_id, RateSheetAudit.procured_by_id, RateSheetAudit.sourced_by_id).join(RateSheet, on=(RateSheet.id == RateSheetAudit.object_id)).switch(RateSheetAudit).join(sub_query, on=(RateSheetAudit.created_at == sub_query.c.max_ts)).where(RateSheetAudit.object_id << valid_audit_ids)
+    
+    rate_sheet_audits = list(rate_sheet_audits.dicts())
 
     for object in final_data:
         # assumption here
@@ -187,8 +191,8 @@ def get_final_data(query):
                 for obj in object.get('converted_files'):
                     rates_count_sum+=obj.get('rates_count')
             object['rates_count'] = rates_count_sum
-        rate_sheet_audit = rate_sheet_audits.where(RateSheetAudit.object_id == object['id']).order_by(RateSheetAudit.created_at.desc()).limit(1)
-        rate_sheet_audit_list = list(rate_sheet_audit.dicts())
+
+        rate_sheet_audit_list = [val for val in rate_sheet_audits if str(val["object_id"]) == object["id"]]
         rate_sheet_audit = {}
         if rate_sheet_audit_list:
             rate_sheet_audit = rate_sheet_audit_list[0]

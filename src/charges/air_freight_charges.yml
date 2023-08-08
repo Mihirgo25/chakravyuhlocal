@@ -4,12 +4,6 @@ BAS:
   condition: true
   tags: ['mandatory']
   sac_code: '996531'
-AHFR:
-  name: "Agent Handling Fees - Rebate"
-  units: ['per_shipment']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996713'
 BASNO:
   name: "No Tax (BAS) - HUMAN REMAINS"
   units: [ 'per_kg' ]

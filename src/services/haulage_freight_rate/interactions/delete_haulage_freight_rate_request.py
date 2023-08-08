@@ -66,4 +66,6 @@ def create_audit(request, freight_rate_request_id, transport_mode):
     data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},
     object_id = freight_rate_request_id,
     object_type = object_type,
+    sourced_by_id = request.get('sourced_by_id'),
+    procured_by_id = request.get('procured_by_id')
     )
