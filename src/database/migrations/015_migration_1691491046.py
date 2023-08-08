@@ -1,4 +1,4 @@
-"""Peewee migrations -- 005_migration_1684848904.py.
+"""Peewee migrations -- 015_migration_1691491046.py.
 
 Some examples (model - class or model name)::
 
