@@ -83,7 +83,7 @@ def execute_transaction_code(request):
         
     rfq_object = {
         'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
-        'destination_local': { 'line_items': formatted_line_items, 'destination_detention': formatted_detention},
+        'local_rate_data': {'destination_local': { 'line_items': formatted_line_items, 'destination_detention': formatted_detention}},
         'main_freight_reverted_by_id': str(audit_obj.performed_by_id)
     }
 
