@@ -92,10 +92,13 @@ def shell(ipython_args):
     config.TerminalInteractiveShell.banner1 = (
         f"""Python {sys.version} on {sys.platform} IPython: {IPython.__version__}"""
     )
+    config.TerminalInteractiveShell.autoindent = True
     config.InteractiveShellApp.exec_lines = EXEC_LINES
     config.InteractiveShellApp.exec_files = EXEC_FILES
+    config.TerminalInteractiveShell.autoformatter = 'black'
     config.InteractiveShell.pdb = True
     VerboseTB._tb_highlight = "bg:#4C5656"
+    config.InteractiveShell.ast_node_interactivity = "all"
     config.InteractiveShell.debug = True
     user_ns = {"database": db}
     with db.connection_context():
