@@ -9,6 +9,10 @@ from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import *
 from celery_worker import send_closed_notifications_to_sales_agent_function,send_closed_notifications_to_user_request
 from fastapi.encoders import jsonable_encoder
+from database.rails_db import (
+    list_organization_users,
+)
+
 
 def delete_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
@@ -69,8 +73,11 @@ def execute_transaction_code(request):
 
         AirServiceAudit.create(**get_audit_params(request, request_object.id))
 
+        organization_user_id = [str(obj.performed_by_id)]
+        org_users = list_organization_users(id=organization_user_id)
+
         
-        if request_object.performed_by_type == 'user' and request_object.source != 'checkout':
+        if org_users and request_object.performed_by_type == 'user' and request_object.source != 'checkout':
           send_closed_notifications_to_user_request.apply_async(
             kwargs={"object": request_object}, queue="critical"
         ) 
