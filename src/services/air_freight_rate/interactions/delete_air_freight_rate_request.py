@@ -70,7 +70,7 @@ def execute_transaction_code(request):
         AirServiceAudit.create(**get_audit_params(request, request_object.id))
 
         
-        if request_object.performed_by_type == 'user':
+        if request_object.performed_by_type == 'user' and request_object.source != 'checkout':
           send_closed_notifications_to_user_request.apply_async(
             kwargs={"object": request_object}, queue="critical"
         ) 

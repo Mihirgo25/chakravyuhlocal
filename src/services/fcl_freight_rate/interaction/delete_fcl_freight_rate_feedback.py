@@ -28,7 +28,7 @@ def execute_transaction_code(request):
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
 
-        if obj.performed_by_type == 'user':
+        if obj.performed_by_type == 'user' and obj.source != 'checkout':
             send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='critical')
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
