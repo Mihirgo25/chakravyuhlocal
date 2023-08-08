@@ -9,7 +9,8 @@ from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from configs.fcl_freight_rate_constants import VALID_UNITS, SCHEDULE_TYPES, PAYMENT_TERM, RATE_TYPES
 from libs.common_validations import validate_shipping_line
-from database.rails_db import get_shipping_line, get_organization
+from database.rails_db import get_operators, get_organization
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 
 # validate_validity_object
 def validate_fcl_freight_object(module, object):
@@ -32,6 +33,8 @@ def get_freight_object(object):
     res = object
     res['rate_not_available_entry'] = False
     rate_object = FclFreightRate(**res)
+    line_items = get_normalized_line_items(object['line_items'])
+    
     if not rate_object.origin_port_id:
         validation['error']+=' Invalid origin port'
     if not rate_object.destination_port_id:
@@ -40,7 +43,7 @@ def get_freight_object(object):
         rate_object.set_locations()
         rate_object.set_origin_location_ids()
         rate_object.set_destination_location_ids()
-        rate_object.set_validities(object['validity_start'], object['validity_end'],object['line_items'], object['schedule_type'], False, object['payment_term'])
+        rate_object.set_validities(object['validity_start'], object['validity_end'],line_items, object['schedule_type'], False, object['payment_term'])
     except:
         validation['error']+=' Invalid location'
     if validation['error'].strip():
@@ -53,7 +56,7 @@ def get_freight_object(object):
         rate_object.validate_validity_object(object['validity_start'], object['validity_end'])
     except HTTPException as e:
         validation['error'] += ' ' + str(e.detail)
-    for line_item in object['line_items']:
+    for line_item in line_items:
         if line_item['unit'] not in VALID_UNITS:
             validation['error'] =  ' ' + "unit is_invalid"
     if object['schedule_type'] and object['schedule_type'] not in SCHEDULE_TYPES:
@@ -66,7 +69,7 @@ def get_freight_object(object):
         validation['error']+=  ' ' + f"{object['rate_type']} is invalid, valid rate types are {RATE_TYPES}"
 
     try:
-        rate_object.validate_line_items(object['line_items'])
+        rate_object.validate_line_items(line_items)
     except HTTPException as e:
         validation['error']+=' ' + str(e.detail)
     if not validate_shipping_line(rate_object):
@@ -142,7 +145,7 @@ def get_port_id(port_code):
 
 def get_shipping_line_id(shipping_line_name):
     try:
-        shipping_line_id = get_shipping_line(short_name=shipping_line_name)[0]['id']
+        shipping_line_id = get_operators(short_name=shipping_line_name)[0]['id']
     except:
         shipping_line_id = None
     return shipping_line_id

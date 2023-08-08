@@ -3,6 +3,8 @@ from fastapi import HTTPException
 from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
+from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_audit(request, fcl_freight_local_id):
@@ -84,7 +86,8 @@ def execute_transaction_code(request):
         new_free_days['plugin'] = {'slabs': [] } | (request['data']['plugin'] or {})
 
     if request['data'].get('line_items'):
-        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': request['data']['line_items'] }
+        line_items = get_normalized_line_items(request['data']['line_items'])
+        fcl_freight_local.data = fcl_freight_local.data | { 'line_items': line_items }
     if 'rate_sheet_validation' not in request:
         fcl_freight_local.validate_before_save()
         fcl_freight_local.update_special_attributes(new_free_days)
@@ -103,8 +106,10 @@ def execute_transaction_code(request):
 
 
     create_audit(request, fcl_freight_local.id)
+    
+    get_multiple_service_objects(fcl_freight_local)
 
-    fcl_freight_local_data_updation.apply_async(kwargs={"local_object":fcl_freight_local,"request":request},queue='low')
+    fcl_freight_local_data_updation.apply_async(kwargs={"request":request},queue='low')
 
     return {"id": fcl_freight_local.id }
 

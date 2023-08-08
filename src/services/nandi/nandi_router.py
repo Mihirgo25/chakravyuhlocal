@@ -1,7 +1,7 @@
 from fastapi import HTTPException, APIRouter, Depends
 from rms_utils.auth import authorize_token
 import sentry_sdk
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 from fastapi.responses import JSONResponse
 from nandi_params import *
 from services.nandi.interactions.create_draft_fcl_freight_rate import create_draft_fcl_freight_rate_data
@@ -26,7 +26,7 @@ def create_draft_fcl_freight_rate(request: CreateDraftFclFreightRate, resp: dict
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         draft_freight = create_draft_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+        return JSONResponse(status_code=200, content=json_encoder(draft_freight))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -42,7 +42,7 @@ def create_draft_fcl_freight_rate_local(request: CreateDraftFclFreightRateLocal,
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         draft_freight_local = create_draft_fcl_freight_rate_local_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+        return JSONResponse(status_code=200, content=json_encoder(draft_freight_local))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -58,7 +58,7 @@ def update_draft_fcl_freight_rate(request: UpdateDraftFclFreightRate, resp: dict
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         draft_freight = update_draft_fcl_freight_rate_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight))
+        return JSONResponse(status_code=200, content=json_encoder(draft_freight))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -74,7 +74,7 @@ def update_draft_fcl_freight_rate_local(request: UpdateDraftFclFreightRateLocal,
         request.performed_by_type = resp["setters"]["performed_by_type"]
     try:
         draft_freight_local = update_draft_fcl_freight_rate_local_data(request.dict(exclude_none=True))
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_freight_local))
+        return JSONResponse(status_code=200, content=json_encoder(draft_freight_local))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -147,7 +147,7 @@ def create_fcl_freight_rate_local_for_draft(request: CreateFclFreightDraftLocal,
 
         request['rate_id'] = fcl_freight_local.get('id')
         draft_fcl_freight_local = create_draft_fcl_freight_rate_local_data(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_fcl_freight_local))
+        return JSONResponse(status_code=200, content=json_encoder(draft_fcl_freight_local))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -173,14 +173,19 @@ def create_fcl_freight_rate_for_draft(request: CreateFclFreightDraft, resp: dict
             'commodity': request.get('commodity'),
             'shipping_line_id': request.get('shipping_line_id'),
             'service_provider_id': request.get('service_provider_id'),
-            'importer_exporter_id': request.get('importer_exporter_id')
+            'importer_exporter_id': request.get('importer_exporter_id'),
+            'rate_type': request.get('rate_type')
         }
         fcl_freight = get_fcl_freight_rate(get_fcl_params)
+
         if 'freight' not in fcl_freight:
             fcl_freight = create_fcl_freight_rate_data(request)
-        request['rate_id'] = fcl_freight['freight'].get('id')
+            request['rate_id'] = fcl_freight.get('id')
+        else:
+            request['rate_id'] = fcl_freight['freight'].get('id')
+
         draft_fcl_freight = create_draft_fcl_freight_rate_data(request)
-        return JSONResponse(status_code=200, content=jsonable_encoder(draft_fcl_freight))
+        return JSONResponse(status_code=200, content=json_encoder(draft_fcl_freight))
     except HTTPException as e:
         raise
     except Exception as e:

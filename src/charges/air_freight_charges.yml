@@ -1,0 +1,12 @@
+BAS:
+  name: "Basic Freight"
+  units: ['per_kg']
+  condition: true
+  tags: ['mandatory']
+  sac_code: '996531'
+BASNO:
+  name: "No Tax (BAS) - HUMAN REMAINS"
+  units: [ 'per_kg' ]
+  condition: '((commodity == "special_consideration") and (commodity_type == "other_special") and (commodity_sub_type == "others"))'
+  tags: ['additional_service']
+  sac_code: '996531'

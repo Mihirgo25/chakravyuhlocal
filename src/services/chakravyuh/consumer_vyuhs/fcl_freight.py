@@ -1,6 +1,9 @@
 from services.chakravyuh.models.fcl_freight_rate_estimation import FclFreightRateEstimation
+from services.chakravyuh.models.cost_booking_estimation import CostBookingEstimation
 from fastapi.encoders import jsonable_encoder
 from micro_services.client import common
+from configs.global_constants import CHINA_COUNTRY_ID, HAZ_CLASSES, INDIA_COUNTRY_ID
+from configs.transformation_constants import CHINA_MINIMUM_RATES
 from datetime import datetime
 
 class FclFreightVyuh():
@@ -60,6 +63,46 @@ class FclFreightVyuh():
     def get_probable_customer_transformations(self):
         return []
     
+    def get_probable_booking_data_tranformation(self, first_rate: dict={}):
+
+        return []
+        origin_location_ids = [first_rate['origin_port_id'], first_rate['origin_country_id']]
+        destination_location_ids = [first_rate['destination_port_id'], first_rate['destination_country_id']]
+
+        shipping_line_ids = []
+
+        for freight_rate in self.freight_rates:
+            shipping_line_ids.append(freight_rate['shipping_line_id'])
+
+
+        transformation_query = CostBookingEstimation.select(
+            CostBookingEstimation.origin_location_id,
+            CostBookingEstimation.origin_location_type,
+            CostBookingEstimation.destination_location_id,
+            CostBookingEstimation.destination_location_type,
+            CostBookingEstimation.shipping_line_id,
+            CostBookingEstimation.commodity,
+            CostBookingEstimation.container_size,
+            CostBookingEstimation.container_type,
+            CostBookingEstimation.created_at,
+            CostBookingEstimation.updated_at,
+            CostBookingEstimation.schedule_type,
+            CostBookingEstimation.payment_term,
+            CostBookingEstimation.line_items,
+            CostBookingEstimation.id,
+            CostBookingEstimation.status
+        ).where(
+            CostBookingEstimation.origin_location_id << origin_location_ids,
+            CostBookingEstimation.destination_location_id << destination_location_ids,
+            CostBookingEstimation.container_size == self.requirements['container_size'],
+            CostBookingEstimation.container_type == self.requirements['container_type'],
+            ((CostBookingEstimation.commodity.is_null(True)) | (CostBookingEstimation.commodity == self.requirements['commodity'])),
+            ((CostBookingEstimation.shipping_line_id.is_null(True)) | (CostBookingEstimation.shipping_line_id << shipping_line_ids)),
+            CostBookingEstimation.status == 'active'
+        )
+        transformations = jsonable_encoder(list(transformation_query.dicts()))
+        return transformations
+    
     def get_most_eligible_customer_transformation(self, probable_customer_transformations):
         return probable_customer_transformations[0]
 
@@ -88,6 +131,25 @@ class FclFreightVyuh():
 
         return line_item 
     
+    def get_adhoc_rate(self, price):
+        if self.requirements['origin_country_id'] == CHINA_COUNTRY_ID and self.requirements['destination_country_id'] == INDIA_COUNTRY_ID:
+            container_type = self.requirements['container_type']
+            container_size = self.requirements['container_size']
+            commodity = self.requirements['commodity']
+            C_CLASS = 'NON_HAZ'
+            if commodity in HAZ_CLASSES:
+                C_CLASS = 'HAZ'
+            try:
+                min_price = CHINA_MINIMUM_RATES[container_size][C_CLASS][container_type]
+                if price > min_price:
+                    return price
+                return min_price
+            except:
+                return price
+        return price
+            
+
+    
     def apply_periodic_pricing(self, lower_limit, upper_limit):
         datetime_new = datetime.now()
         hour = datetime_new.hour
@@ -111,7 +173,9 @@ class FclFreightVyuh():
 
         final_price = lower_limit + price_delta
 
-        return int(final_price)
+        price_to_send = self.get_adhoc_rate(int(final_price))
+
+        return price_to_send
 
     
     def get_line_item_price(self, line_item, tranformed_lineitem):
@@ -141,6 +205,60 @@ class FclFreightVyuh():
 
         validities = rate['validities'] or []
 
+        is_shipping_line = False
+
+        if probable_transformation_to_apply['shipping_line_id']:
+            is_shipping_line = True
+
+        new_validities = []
+
+        for validity in validities:
+
+            line_items = validity['line_items']
+
+            transformation_items = probable_transformation_to_apply['line_items']
+
+            new_lineitems = []
+            for line_item in line_items:
+                transformed_line_item = self.get_lineitem(code=line_item['code'], items=transformation_items)
+                if transformed_line_item:
+                    adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
+                    new_lineitems.append(adjusted_lineitem)
+                else:
+                    new_lineitems.append(line_item)
+        
+            validity['line_items'] = new_lineitems
+            new_validities.append(validity)
+        
+        rate['validities'] = new_validities
+
+        return rate, is_shipping_line
+    
+    def apply_default_transformation(self, rate):
+        validities = rate['validities'] or []
+        new_validities = []
+        for validity in validities:
+            line_items = validity['line_items']
+            new_lineitems = []
+            for line_item in line_items:
+                if line_item['code'] == 'BAS' and line_item['price'] < 2000:
+                    transformed_line_item = self.default_transformed_lineitem
+                    adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
+                    new_lineitems.append(adjusted_lineitem)
+                else:
+                    new_lineitems.append(line_item)
+            
+            validity['line_items'] = new_lineitems
+            new_validities.append(validity)
+        rate['validities'] = new_validities
+        return rate
+    
+
+    def apply_booking_data_transformation(self, rate, probable_booking_data_transformations):
+        
+        probable_transformation_to_apply = self.get_most_eligible_rate_transformation(probable_booking_data_transformations)
+        validities = rate['validities'] or []
+
         new_validities = []
 
         for validity in validities:
@@ -164,36 +282,25 @@ class FclFreightVyuh():
         rate['validities'] = new_validities
 
         return rate
-    
-    def apply_default_transformation(self, rate):
-        validities = rate['validities'] or []
-        new_validities = []
-        for validity in validities:
-            line_items = validity['line_items']
-            new_lineitems = []
-            for line_item in line_items:
-                if line_item['code'] == 'BAS' and line_item['price'] < 2000:
-                    transformed_line_item = self.default_transformed_lineitem
-                    adjusted_lineitem = self.get_line_item_price(line_item=line_item, tranformed_lineitem=transformed_line_item)
-                    new_lineitems.append(adjusted_lineitem)
-                else:
-                    new_lineitems.append(line_item)
-            
-            validity['line_items'] = new_lineitems
-            new_validities.append(validity)
-        rate['validities'] = new_validities
-        return rate
+        
 
-    def apply_transformation(self, rate, probable_transformations, probable_customer_transformations):
+    def apply_transformation(self, rate, probable_transformations, probable_customer_transformations,probable_booking_data_transformations):
         rate_specific_transformations = []
         for pt in probable_transformations:
             if (not pt['shipping_line_id'] or pt['shipping_line_id'] == rate['shipping_line_id']):
                 rate_specific_transformations.append(pt)
         new_rate = rate
+
+        is_shipping_line = False
+
         if len(rate_specific_transformations) > 0:
-            new_rate = self.apply_rate_transformation(rate=rate, probable_transformations=rate_specific_transformations)
+            new_rate, is_shipping_line = self.apply_rate_transformation(rate=rate, probable_transformations=rate_specific_transformations)
         else:
             new_rate = self.apply_default_transformation(rate=rate)
+        
+        if not is_shipping_line and len(probable_booking_data_transformations)>0:
+            new_rate=self.apply_booking_data_transformation(rate=new_rate, probable_booking_data_transformations=probable_booking_data_transformations)
+            return new_rate
             
         if len(probable_customer_transformations) > 0:
             new_rate = self.apply_customer_transformation(rate=new_rate, probable_customer_transformations=probable_customer_transformations)
@@ -212,6 +319,8 @@ class FclFreightVyuh():
 
         probable_customer_transformations = self.get_probable_customer_transformations()
 
+        probable_booking_data_transformations=self.get_probable_booking_data_tranformation(first_rate)
+
         new_freight_rates = []
 
         for freight_rate in self.freight_rates:
@@ -219,6 +328,7 @@ class FclFreightVyuh():
                 rate=freight_rate, 
                 probable_transformations=probable_transformations,
                 probable_customer_transformations=probable_customer_transformations,
+                probable_booking_data_transformations=probable_booking_data_transformations
             )
             new_freight_rates.append(new_freight_rate)
         

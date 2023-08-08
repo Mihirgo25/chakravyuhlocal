@@ -3,6 +3,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from database.db_session import db
 from fastapi import HTTPException
 from datetime import datetime, timedelta
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_fcl_freight_rate_free_day(request):
@@ -11,7 +12,6 @@ def create_fcl_freight_rate_free_day(request):
 
 
 def execute_transaction_code(request):
-    from celery_worker import update_multiple_service_objects
     request["validity_start"] = (request.get('validity_start') or datetime.now())
     request["validity_end"] = (request.get('validity_end') or (datetime.now() + timedelta(days=90)))
     free_day = get_free_day_object(request)
@@ -30,7 +30,11 @@ def execute_transaction_code(request):
     #     free_day.update_sell_quotation()
     create_audit(request, free_day.id)
 
-    update_multiple_service_objects.apply_async(kwargs={'object':free_day},queue='low')
+    get_multiple_service_objects(free_day)
+
+    if request.get('specificity_type') == 'shipping_line':
+        request['specificity_type'] = 'cogoport'
+        create_fcl_freight_rate_free_day(request)
 
     return {"id": free_day.id}
 
@@ -70,6 +74,10 @@ def get_free_day_object(request):
     free_day.procured_by_id = request.get("procured_by_id")
 
     extra_fields = ['previous_days_applicable','free_limit','remarks','slabs','validity_start','validity_end']
+
+    if 'rate_sheet_validation' in request:
+        extra_fields.extend(['location_type','location','continent_id','country_id','trade_id'])
+
     for field in extra_fields:
         if field in request:
             setattr(free_day, field, request[field])

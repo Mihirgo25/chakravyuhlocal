@@ -15,7 +15,7 @@ from rms_utils.get_in_batches import get_in_batches
 def get_cluster_objects(rate_object):
     clusters = {}
 
-    port_codes = maps.list_locations({'filters':{'id': [rate_object['origin_port_id'], rate_object['destination_port_id']]}})['list']
+    port_codes = maps.list_locations({'filters':{'id': [str(rate_object['origin_port_id']),str(rate_object['destination_port_id'])]}})['list']
 
     param = {}
     for data in port_codes:
@@ -191,14 +191,14 @@ def get_fcl_freight_cluster_objects(request):
         #     return
 
     try:
-        origin_locations = [t['id'] for t in data['origin_location_cluster']['cluster_items']]
+        origin_locations = [str(t['id']) for t in data['origin_location_cluster']['cluster_items']]
     except:
-        origin_locations = [request['origin_port_id']]
+        origin_locations = [str(request['origin_port_id'])]
 
     try:
-        destination_locations = [t['id'] for t in data['destination_location_cluster']['cluster_items']]
+        destination_locations = [str(t['id']) for t in data['destination_location_cluster']['cluster_items']]
     except:
-        destination_locations = [request['destination_port_id']]
+        destination_locations = [str(request['destination_port_id'])]
 
     if data.get('commodity_cluster'):
         commodities = data['commodity_cluster']['cluster_items']
@@ -267,5 +267,7 @@ def get_fcl_freight_cluster_objects(request):
     for object in fcl_freight_cluster_objects:
         if (object['origin_port_id'] == request['origin_port_id'] and object['destination_port_id'] == request['destination_port_id'] and object['commodity'] == request['commodity'] and object['container_type'] == request['container_type'] and object['container_size'] == request['container_size']):
             fcl_freight_cluster_objects.remove(object)
+        if(request.get('rate_sheet_id')):
+            object['rate_sheet_id']= request['rate_sheet_id']
 
     return fcl_freight_cluster_objects

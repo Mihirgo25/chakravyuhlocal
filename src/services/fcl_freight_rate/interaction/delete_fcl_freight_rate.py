@@ -14,12 +14,19 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail="Rate id not found")
     if request['procured_by_id'] is None or request['sourced_by_id']is None:
         raise HTTPException(status_code=400, detail="procured or souurced by id is null")
-    if request['rate_type'] == "cogo_assured" and (request['validity_start']==request['validity_end']):
+    if request.get('rate_type') == "cogo_assured" and (request['validity_start']==request['validity_end']):
         validity_start = object.validities[0]['validity_start']
         validity_end = object.validities[-1]['validity_end']
         request['validity_start'] = datetime.strptime(validity_start , '%Y-%m-%d')
         request['validity_end'] = datetime.strptime(validity_end , '%Y-%m-%d')
-    object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'])
+
+    other_params={
+        'comparison_charge_code':request.get('comparison_charge_code'),
+        'rates_greater_than_price':request.get('rates_greater_than_price'),
+        'rates_less_than_price':request.get('rates_less_than_price'),
+        'comparision_currency':request.get('comparison_currency')
+    }
+    object.set_validities(request['validity_start'].date(),request['validity_end'].date(),[],None,True,request['payment_term'],None,other_params)
     object.set_platform_prices(object.rate_type)
     object.set_is_best_price()
     object.set_last_rate_available_date()
@@ -50,7 +57,8 @@ def create_audit(request, freight_id):
         performed_by_id = request['performed_by_id'],
         data = audit_data,
         object_id = freight_id,
-        object_type = 'FclFreightRate'
+        object_type = 'FclFreightRate',
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
 
 def find_object(request):

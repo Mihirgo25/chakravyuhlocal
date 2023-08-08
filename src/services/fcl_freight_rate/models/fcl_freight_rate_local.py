@@ -10,7 +10,7 @@ from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from services.fcl_freight_rate.models.fcl_freight_rate_local_data import FclFreightRateLocalData
 from services.fcl_freight_rate.models.fcl_freight_rate_free_day import FclFreightRateFreeDay
 from micro_services.client import *
-from database.rails_db import get_shipping_line
+from database.rails_db import get_operators
 import concurrent.futures
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 
@@ -181,7 +181,7 @@ class FclFreightRateLocal(BaseModel):
     def set_shipping_line(self):
         if self.shipping_line or not self.shipping_line_id:
             return
-        shipping_line = get_shipping_line(id=self.shipping_line_id)
+        shipping_line = get_operators(id=self.shipping_line_id)
         if len(shipping_line) != 0:
             shipping_line[0]['id']=str(shipping_line[0]['id'])
             self.shipping_line = {key:value for key,value in shipping_line[0].items() if key in ['id', 'business_name', 'short_name', 'logo_url']}

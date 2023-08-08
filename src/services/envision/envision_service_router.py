@@ -13,7 +13,7 @@ from services.envision.interaction.get_haulage_freight_predicted_rate import pre
 from services.envision.interaction.create_haulage_freight_rate_prediction_feedback import (
     create_haulage_freight_rate_feedback
 )
-from fastapi.encoders import jsonable_encoder
+from libs.json_encoder import json_encoder
 
 envision_router = APIRouter()
 
@@ -35,7 +35,7 @@ def get_ftl_freight_predicted_rate(request: FtlFreightRate, resp: dict = Depends
         result.append(param)
         data = create_ftl_freight_rate_feedback(result)
         if data:
-            return JSONResponse(status_code = 200, content=jsonable_encoder(data))
+            return JSONResponse(status_code = 200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -60,7 +60,7 @@ def get_haulage_freight_predicted_rate(request: HaulageFreightRate, resp: dict =
         result.append(param)
         data = create_haulage_freight_rate_feedback(result)
         if data:
-            return JSONResponse(status_code = 200, content=jsonable_encoder(data))
+            return JSONResponse(status_code = 200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:
@@ -85,7 +85,7 @@ def get_air_freight_predicted_rate(request: AirFreightRate, resp: dict = Depends
         result.append(param)
         data = create_air_freight_rate_feedback(result)
         if data:
-            return JSONResponse(status_code = 200, content=jsonable_encoder(data))
+            return JSONResponse(status_code = 200, content=json_encoder(data))
     except HTTPException as e:
         raise
     except Exception as e:

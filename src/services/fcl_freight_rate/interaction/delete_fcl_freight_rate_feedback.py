@@ -2,7 +2,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
+from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 
 def delete_fcl_freight_rate_feedback(request):
     with db.atomic():
@@ -28,8 +28,10 @@ def execute_transaction_code(request):
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
 
-        send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')
-
+        if obj.source == 'spot_search' and obj.performed_by_type == 'user':
+            send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='critical')
+        else:
+            send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
 
     return request['fcl_freight_rate_feedback_ids']
 

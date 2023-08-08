@@ -32,7 +32,7 @@ services:
   celery_worker:
     container_name: celery_worker
     build: .
-    command: celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate 
+    command: celery -A celery_worker.celery worker -B --concurrency 5 --loglevel=info -Q communication,critical,low,fcl_freight_rate,bulk_operations
     volumes:
       - .:/app
     environment:
