@@ -99,6 +99,11 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=00,hour=00),
         'options': {'queue' : 'fcl_freight_rate'}
         },
+    'update_cogo_assured_fcl_freight_rates': {
+        'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
+        'schedule': crontab(minute=30, hour=18),
+        'options': { 'queue': 'fcl_freight_rate' }
+        },
     'process_fuel_data_delays': {
         'task': 'celery_worker.process_fuel_data_delay',
         'schedule': crontab(minute=00,hour=21),
