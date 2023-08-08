@@ -35,7 +35,7 @@ def execute_transaction_code(request):
         create_audit(request,obj.id)
         get_multiple_service_objects(obj)
          
-        if obj.source =='spot_search' and obj.performed_by_type =='user':
+        if obj.performed_by_type == 'user':
             send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue="critical") 
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')    
