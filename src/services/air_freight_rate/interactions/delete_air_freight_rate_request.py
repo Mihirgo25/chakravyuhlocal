@@ -73,7 +73,7 @@ def execute_transaction_code(request):
 
         AirServiceAudit.create(**get_audit_params(request, request_object.id))
 
-        organization_user_id = [str(obj.performed_by_id)]
+        organization_user_id = [str(request_object.performed_by_id)]
         org_users = list_organization_users(id=organization_user_id)
 
         
