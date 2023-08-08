@@ -2,13 +2,54 @@ import click
 import uvicorn
 import socket
 from IPython.core.ultratb import VerboseTB
+import os
+from configs.definitions import ROOT_DIR
 
 EXEC_LINES = [
     "%load_ext autoreload",
     "%autoreload 2",
 ]
 
-EXEC_FILES = ["cli_imports.py"]
+EXCLUDE_FILES = ["setup.py"]
+
+
+def get_py_files(directory, excluded_dirs):
+    py_files = []
+    main_files = []
+    for root, dirs, files in os.walk(directory):
+        if any(excluded_dir in root for excluded_dir in excluded_dirs):
+            continue
+
+        for file in files:
+            if file.endswith(".py") and file not in EXCLUDE_FILES:
+                relative_path = os.path.relpath(os.path.join(root, file), directory)
+                file_path = os.path.join(root, file)
+                with open(file_path, "r") as f:
+                    content = f.read()
+                    if (
+                        "__name__ == '__main__'" in content
+                        or '__name__ == "__main__"' in content
+                    ):
+                        main_files.append(relative_path)
+                        continue
+                py_files.append(relative_path)
+    return py_files, main_files
+
+
+dirs_to_ignore = [
+    ".git",
+    ".venv",
+    "tests",
+    "services/bramhastra/data",
+    "__pycache__",
+    "src/database/migrations",
+]
+EXEC_FILES, IMPORT_FILES = get_py_files(ROOT_DIR, dirs_to_ignore)
+
+if IMPORT_FILES:
+    for f in IMPORT_FILES:
+        f = f.replace("/", ".")
+        EXEC_LINES.append(f"from {f[:-3]} import *")
 
 
 @click.group()
