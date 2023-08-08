@@ -44,7 +44,7 @@ docs = {
     "redoc_url": None if APP_ENV == "production" else "/redoc",
     "openapi_url": None if APP_ENV == "production" else "/openapi.json",
     "debug": True,
-    'dependencies': [Depends(get_db)],
+    # 'dependencies': [Depends(get_db)],
     "swagger_ui_parameters": {"docExpansion": None},
 }
 
@@ -105,8 +105,9 @@ if APP_ENV != "production":
 
 @app.on_event("startup")
 def startup():
-    if db.is_closed():
-        db.connect()
+    pass
+    # if db.is_closed():
+    #     db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()

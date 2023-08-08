@@ -4,26 +4,25 @@ from peewee import fn
 from datetime import datetime
 from configs.definitions import ROOT_DIR
 import importlib.util
-
+import textwrap
 
 class Migrator:
     def __init__(self):
-        self.number = self.get_current_number()
         self.directory = f"{ROOT_DIR}/services/bramhastra/data/migrations/"
-
+        self.number = self.get_current_number()
+        breakpoint()
     def create(self):
         migration_number = self.number + 1
-        migration_file = f"migration_{migration_number}.py"
+        migration_file = "migration_{}.py".format(migration_number)
         with open(migration_file, "w") as file:
-            file.write(
-                f"""def main():
-    # Your migration logic goes here
-    pass
+            file.write(textwrap.dedent('''
+    def main():
+        # Your migration logic goes here
+        pass
 
-if __name__ == '__main__':
-    main()
-"""
-            )
+    if __name__ == '__main__':
+        main()
+'''))
 
     def run(self):
         migrations = (
@@ -55,8 +54,15 @@ if __name__ == '__main__':
                 DataMigration.create(id=migration_id, created_at=datetime.now())
 
     def get_current_number(self):
-        current = DataMigration.select(fn.MAX(DataMigration.id)).scalar()
-        return 0 if current is None else current
-
-
+        highest_number = -1
+        for filename in os.listdir(self.directory):
+            try:
+                number = int(filename[10:-3])
+                if number > highest_number:
+                    highest_number = number
+            except ValueError:
+                pass
+        breakpoint()
+        return highest_number
+        
 migrator = Migrator()

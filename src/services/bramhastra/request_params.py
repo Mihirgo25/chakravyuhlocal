@@ -81,7 +81,7 @@ class ApplyFclFreightRateStatistic(BaseModel):
 
 
 class Rates(BaseModel):
-    rate_id: str
+    rate_id: str 
     validity_id: str
     payment_term: str
     schedule_type: str = "direct"
@@ -100,9 +100,9 @@ class Rates(BaseModel):
 
 
 class SpotSearchFclFreightRateStatistic(BaseModel):
-    spot_search_id: str
-    spot_search_fcl_freight_services_id: str
-    rates: list[Rates]
+    spot_search_id: str = None
+    spot_search_fcl_freight_services_id: str = None
+    rates: list[Rates] = []
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = datetime.utcnow()
 
@@ -367,3 +367,13 @@ class FeedbackAirFreightRateStatistic(BaseModel):
 class ApplyFeedbackAirFreightRateStatistics(BaseModel):
     action: str
     params: FeedbackAirFreightRateStatistic = None
+    
+class FclSelectedForBooking(BaseModel):
+    rate_id: str
+    validity_id: str
+    
+class ApplyRevenueDeskFclFreightStatistics(BaseModel):
+    revenue_desk_visit_count: int = None
+    shipment_id: str
+    shipment_fcl_freight_rate_services_id: str
+    selected_for_booking: FclSelectedForBooking

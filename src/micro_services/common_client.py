@@ -14,9 +14,9 @@ class CommonApiClient:
         })
 
     def get_money_exchange_for_fcl(self, data = {}):
-        resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
-        if isinstance(resp,dict) and resp.get('status_code') and resp.get('status_code')==408:
-            resp = get_money_exchange_for_fcl_fallback(**data)
+        # resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
+        # if isinstance(resp,dict) and resp.get('status_code') and resp.get('status_code')==408:
+        resp = get_money_exchange_for_fcl_fallback(**data)
         return resp
 
     def create_communication(self, data = {}):
@@ -36,3 +36,6 @@ class CommonApiClient:
     
     def get_air_routes_and_schedules_from_cargo_ai(self,data={}):
         return self.client.request('GET','get_air_routes_and_schedules_from_cargo_ai',data)
+    
+    def list_revenue_desk_show_rates(self,data = {}):
+        return self.client.request('GET','list_revenue_desk_show_rates',data)
