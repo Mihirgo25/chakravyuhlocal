@@ -27,7 +27,7 @@ def delete_air_freight_rate_request(request):
 def execute_transaction_code(request):
     request_objects = (
         AirFreightRateRequest.select(AirFreightRateRequest.id,AirFreightRateRequest.status,AirFreightRateRequest.closed_by_id,AirFreightRateRequest.closing_remarks,
-        AirFreightRateRequest.source,AirFreightRateRequest.source_id,AirFreightRateRequest.service_provider_id,AirFreightRateRequest.performed_by_id,AirFreightRateRequest.performed_by_type)
+        AirFreightRateRequest.source,AirFreightRateRequest.source_id,AirFreightRateRequest.service_provider_id,AirFreightRateRequest.performed_by_id,AirFreightRateRequest.performed_by_type,AirFreightRateRequest.performed_by_org_id)
         .where(
             AirFreightRateRequest.id << request.get("air_freight_rate_request_ids"),
             AirFreightRateRequest.status == "active",
