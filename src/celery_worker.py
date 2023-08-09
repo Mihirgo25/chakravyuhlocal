@@ -143,11 +143,6 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.air_freight_airline_factors_in_delay',
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
-    },
-    'update_cogo_assured_fcl_freight_rates': {
-        'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
-        'schedule': crontab(minute=30, hour=18),
-        'options': { 'queue': 'fcl_freight_rate' }
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
