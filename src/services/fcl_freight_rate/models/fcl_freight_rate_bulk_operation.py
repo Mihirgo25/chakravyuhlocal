@@ -23,8 +23,8 @@ from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers i
 from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
-from configs.global_constants import BATCH_SIZE
 
+BATCH_SIZE = 1000
 
 
 

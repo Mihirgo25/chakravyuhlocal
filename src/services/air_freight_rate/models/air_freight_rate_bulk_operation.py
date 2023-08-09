@@ -21,7 +21,8 @@ from services.air_freight_rate.interactions.list_air_freight_storage_rates impor
 from services.air_freight_rate.interactions.delete_air_freight_rate_surcharge import delete_air_freight_rate_surcharge
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from fastapi.encoders import jsonable_encoder
-from configs.global_constants import BATCH_SIZE
+
+BATCH_SIZE = 1000
 
 ACTION_NAMES = [
     "update_freight_rate",
