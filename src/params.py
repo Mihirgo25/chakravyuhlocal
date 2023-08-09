@@ -935,7 +935,7 @@ class UpdateFclFreightRateTask(BaseModel):
     status: str = None
     closing_remarks: str = None
     validate_closing_remarks: str = None
-    add_rate_in_rms: bool = False
+    add_rate_in_rms: bool = True
 
 
 class UpdateRateProperties(BaseModel):
