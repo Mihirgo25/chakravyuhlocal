@@ -20,6 +20,7 @@ from database.rails_db import *
 
 ACTION_NAMES = ['delete_rate', 'add_markup']
 MARKUP_TYPES = ['net', 'percent']
+BATCH_SIZE = 1000
 
 
 class BaseModel(Model):
@@ -30,6 +31,7 @@ class BaseModel(Model):
 class FtlFreightRateBulkOperation(BaseModel):
     id = UUIDField(constraints=[SQL("DEFAULT gen_random_uuid()")], primary_key=True)
     action_name = CharField(null=True)
+    progress = IntegerField(constraints=[SQL("DEFAULT 0")], index=True, null=True)
     created_at = DateTimeField(default=datetime.datetime.now, index=True)
     data = BinaryJSONField(null=True)
     performed_by_id = UUIDField(index=True, null =True)
@@ -48,7 +50,7 @@ class FtlFreightRateBulkOperation(BaseModel):
     def progress_percent_key(self):
         return f"bulk_operations_{self.id}"
     
-    def get_progress_percent(id, progress = 0):
+    def get_progress_percent(self, id, progress = 0):
         progress_percent_hash = "bulk_operation_progress"
         progress_percent_key =  f"bulk_operations_{id}"
         
@@ -99,15 +101,27 @@ class FtlFreightRateBulkOperation(BaseModel):
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         ftl_freight_rate = list_ftl_freight_rates(filters= filters, return_query= True, page_limit= page_limit)['list']
-
         total_count = len(ftl_freight_rate)
-        count = 0
 
+        current_ftl_freight_rate_count = 0
+        offset = 0
+
+        while offset < total_count:
+            batch_query = ftl_freight_rate.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            current_ftl_freight_rate_count, total_affected_rates = self.perform_batch_delete_freight_rate_action(batch_query, current_ftl_freight_rate_count, total_count, total_affected_rates, sourced_by_id, procured_by_id)
+
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if current_ftl_freight_rate_count == total_count else self.get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()
+
+    def perform_batch_delete_freight_rate_action(self, batch_query,  current_ftl_freight_rate_count , total_count, total_affected_rates, sourced_by_id, procured_by_id):
+        ftl_freight_rate = list(batch_query.dicts())
         for freight in ftl_freight_rate:
-            count+=1
-
+            current_ftl_freight_rate_count+=1
             if FtlFreightRateAudit.get_or_none(bulk_operation_id = self.id, object_id = freight["id"]):
-                progress = int((count * 100.0) / total_count)
+                progress = int((current_ftl_freight_rate_count * 100.0) / total_count)
                 self.set_progress_percent(progress)
                 continue
 
@@ -119,28 +133,39 @@ class FtlFreightRateBulkOperation(BaseModel):
                 'procured_by_id': procured_by_id
             })
             total_affected_rates += 1
-            progress = int((count * 100.0) / total_count)
+            progress = int((current_ftl_freight_rate_count * 100.0) / total_count)
             self.set_progress_percent(progress)
-
-        data['total_affected_rates'] = total_affected_rates
-        self.progress = 100 if count == total_count else self.get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
-        self.data = data
-        self.save()
+        
+        return current_ftl_freight_rate_count, total_affected_rates
     
     def perform_add_markup_action(self, sourced_by_id, procured_by_id):
         data = self.data
         total_affected_rates = 0
         
         filters = (data['filters'] or {}) | ({ 'service_provider_id': self.service_provider_id })
-
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         ftl_freight_rates = list_ftl_freight_rates(filters= filters, return_query=True, page_limit= page_limit)['list']
-
         total_count = len(ftl_freight_rates)
+
         current_ftl_freight_rate_count = 0
+        offset = 0
 
+        while offset < total_count:
+            batch_query = ftl_freight_rates.offset(offset).limit(BATCH_SIZE)
+            offset += BATCH_SIZE
+            current_ftl_freight_rate_count, total_affected_rates = self.perform_batch_add_freight_rate_markup_action(batch_query, current_ftl_freight_rate_count, total_count, total_affected_rates, sourced_by_id, procured_by_id)
 
+        
+        data['total_affected_rates'] = total_affected_rates
+        self.progress = 100 if current_ftl_freight_rate_count == total_count else self.get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.data = data
+        self.save()
+    
+    def perform_batch_add_freight_rate_markup_action(self, batch_query, current_ftl_freight_rate_count, total_count, total_affected_rates, sourced_by_id, procured_by_id):
+        data = self.data
+        ftl_freight_rates = list(batch_query.dicts())
+        
         for freight in ftl_freight_rates:
             current_ftl_freight_rate_count+=1
 
@@ -172,7 +197,6 @@ class FtlFreightRateBulkOperation(BaseModel):
                     line_item['price'] = 0
 
                 freight['line_items'].append(line_item)
-
                 update_ftl_freight_rate({
                     'id': freight['id'],
                     'performed_by_id': self.performed_by_id,
@@ -182,17 +206,11 @@ class FtlFreightRateBulkOperation(BaseModel):
                     'line_items': freight['line_items']
                 })
 
-                
-
             total_affected_rates += 1
             progress = int((current_ftl_freight_rate_count * 100.0) / total_count)
             self.set_progress_percent(progress)
 
-        data['total_affected_rates'] = total_affected_rates
-        self.progress = 100 if current_ftl_freight_rate_count == total_count else self.get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
-        self.data = data
-        self.save()
-
+        return current_ftl_freight_rate_count, total_affected_rates
 
     def delete_rate_details(self):
         return  json.dumps(self)

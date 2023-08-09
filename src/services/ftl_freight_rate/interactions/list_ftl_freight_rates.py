@@ -24,6 +24,9 @@ def list_ftl_freight_rates(filters = {}, page_limit = 10, page = 1, return_query
 
     total_count = query.count()
 
+    if return_query:
+       return {'list': query}
+
     if page_limit:
       query = query.paginate(page, page_limit)
 
