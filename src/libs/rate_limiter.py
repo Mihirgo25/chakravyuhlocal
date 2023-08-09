@@ -3,6 +3,7 @@ from fastapi.responses import PlainTextResponse
 from fastapi import Request
 from functools import wraps
 from configs.env import APP_ENV
+import random
 
 
 class RateLimiter:
@@ -17,9 +18,12 @@ class RateLimiter:
                 ip_address = self.get_ip_address(request)
                 key = f"{func.__name__}:{ip_address}"
                 count = rd.incr(key)
-
+ 
                 if count == 1:
-                    rd.expire(key, time_window)
+                    dt = min(10 * time_window//100, 720)
+                    random_time = random.randint(time_window - dt, time_window + dt)
+                    
+                    rd.expire(key, random_time)
                 if count > max_requests:
                     return PlainTextResponse("Too many Requests", status_code=429)
                 return func(request, *args, **kwargs)
