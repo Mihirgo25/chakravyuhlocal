@@ -74,16 +74,25 @@ def execute_transaction_code(request):
         new_object['price'] = line_item['price']
         formatted_line_items.append(new_object)
     
-    formatted_detention = rate['detention']
-    formatted_detention['unit'] = 'per_container'
-    del formatted_detention['remarks']
+    formatted_detention = rate.get('detention')
+    formatted_demurrage = rate.get('demurrage')
+    formatted_plugin = rate.get('plugin')
+    if formatted_demurrage:
+        del formatted_demurrage['remarks']
+        formatted_demurrage['unit'] = 'per_container'
+    if formatted_detention:
+        del formatted_detention['remarks']
+        formatted_detention['unit'] = 'per_container'
+    if formatted_plugin:
+        del formatted_plugin['remarks']
+        formatted_plugin['unit'] = 'per_container'
 
     audit_obj = FclServiceAudit.select().where(FclServiceAudit.object_id==task.id,
                                                 FclServiceAudit.object_type=='FclFreightRateTask').first()
         
     rfq_object = {
         'spot_negotiation_rate_id': str(task.spot_negotiation_rate_id),
-        'local_rate_data': {'destination_local': { 'line_items': formatted_line_items, 'destination_detention': formatted_detention}},
+        'local_rate_data': {'destination_local': { 'line_items': formatted_line_items}, 'destination_detention': formatted_detention, 'destination_demmurage':formatted_demurrage,'destination_plugin':formatted_plugin},
         'main_freight_reverted_by_id': str(audit_obj.performed_by_id)
     }
 
