@@ -605,8 +605,8 @@ def get_organization_partner(id):
                     id = (id,)
                 else:
                     id = tuple(id)
-                sql = "select *from organizations where id = %s AND 'partner' = ANY(tags)"
-                cur.execute(sql, (id,))
+                sql = "select * from organizations where id = %s AND 'partner' = ANY(tags) AND status = %s"
+                cur.execute(sql, (id,'active',))
 
                 result = cur.fetchall()
 
