@@ -154,7 +154,7 @@ def create_fcl_freight_rate(request):
         freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
-        freight.set_validities_for_cogo_assured_rates(request['validities'])
+        freight.set_validities_for_cogo_assured_rates(request.get('validities'))
     else:
         freight.set_validities(
             request["validity_start"].date(),
