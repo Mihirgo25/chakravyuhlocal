@@ -21,7 +21,6 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
         query = get_filters(direct_filters, query, AirFreightRateSurcharge)
         query = apply_indirect_filters(query, indirect_filters)
    
-    print(return_query, query, '???')         
     if return_query: 
         return { 'list': query }
     
