@@ -22,6 +22,7 @@ class RateSheetAudit(BaseModel):
     data = JSONField(null=True)
     procured_by_id = UUIDField(null=True)
     sourced_by_id = UUIDField(null=True)
+    performed_by_type = CharField(index=True,null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
 
