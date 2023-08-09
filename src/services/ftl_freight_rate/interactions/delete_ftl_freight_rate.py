@@ -20,13 +20,15 @@ def create_audit(request, freight_id, audit_data):
         bulk_operation_id = request.get('bulk_operation_id'),
         data = audit_data,
         object_id = freight_id,
-        object_type = 'FtlFreightRate'
+        object_type = 'FtlFreightRate',
+        sourced_by_id = request.get("sourced_by_id"),
+        procured_by_id = request.get("procured_by_id")
     )
 
 def delete_ftl_freight_rate(request):
     with db.atomic():
         return execute_transaction_code(request)
-    
+
 def execute_transaction_code(request):
     object = find_object(request)
 
@@ -36,8 +38,8 @@ def execute_transaction_code(request):
 
     try:
         object.save()
-    except Exception as e:
-        print("Exception in saving haulage freight rate", e)
+    except Exception as error_message:
+        raise HTTPException(status_code= 500, detail= error_message)
 
     create_audit(request, object.id, delete_params)
 
@@ -54,7 +56,7 @@ def find_object(request):
         return object.first()
     else:
         raise HTTPException(status_code=400, detail="Rate id not found")
-    
+
 def get_delete_params():
     data = {
         'line_items': [],

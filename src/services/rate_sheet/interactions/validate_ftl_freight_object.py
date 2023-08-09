@@ -70,9 +70,8 @@ def get_freight_object(object):
         validation['error']+=' ' + str(e.detail)
 
     for line_item in object['line_items']:
-        if not str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']:
-            validation['error'].append("line item price is invalid")
-
+        if not (str(float(line_item['price'])) == line_item['price'] or str(int(line_item['price'])) == line_item['price']):
+            validation['error'] += "line item price is invalid"
     return validation
 
 def get_location_id(query):

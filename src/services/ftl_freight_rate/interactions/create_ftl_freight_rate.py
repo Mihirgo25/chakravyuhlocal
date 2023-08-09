@@ -18,14 +18,16 @@ def create_audit(request, freight_id):
         data=audit_data,
         object_id=freight_id,
         object_type="FtlFreightRate",
-        source=request.get("source")
+        source=request.get("source"),
+        sourced_by_id = request.get("sourced_by_id"),
+        procured_by_id = request.get("procured_by_id")
     )
     return audit_id
 
 def create_ftl_freight_rate(request):
     with db.atomic():
       return execute_transaction_code(request)
-  
+
 def execute_transaction_code(request):
     from services.ftl_freight_rate.ftl_celery_worker import delay_ftl_functions, update_ftl_freight_rate_request_delay, send_missing_or_dislike_rate_notifications_to_kam, send_missing_or_dislike_rate_notifications_to_platform
 
@@ -62,7 +64,7 @@ def execute_transaction_code(request):
         FtlFreightRate.init_key == init_key,
         ).first()
       )
-  
+
     if not ftl_freight_rate:
       ftl_freight_rate = FtlFreightRate(init_key = init_key)
       for key in list(params.keys()):
@@ -80,14 +82,14 @@ def execute_transaction_code(request):
       ftl_freight_rate.save()
     except Exception as e:
       raise HTTPException(status_code=400, detail="rate not saved")
-    
+
     if not ftl_freight_rate.importer_exporter_id:
         ftl_freight_rate.delete_rate_not_available_entry()
 
     create_audit(request, ftl_freight_rate.id)
 
     ftl_freight_rate.update_platform_prices_for_other_service_providers()
-    
+
     delay_ftl_functions.apply_async(kwargs={'ftl_object':ftl_freight_rate,'request':request},queue='low')
 
     if request.get('ftl_freight_rate_request_id'):
@@ -96,5 +98,5 @@ def execute_transaction_code(request):
     if request.get('is_rate_missing_or_dislike') is not None:
       send_missing_or_dislike_rate_notifications_to_kam.apply_async(kwargs={'object':ftl_freight_rate, 'request':request},queue='communication')
       send_missing_or_dislike_rate_notifications_to_platform.apply_async(kwargs={'object':ftl_freight_rate, 'request':request},queue='communication')
-    
+
     return {"id": ftl_freight_rate.id}

@@ -16,7 +16,7 @@ def execute_transaction_code(request):
     rate = FtlFreightRate.select().where(FtlFreightRate.id == request['rate_id']).first()
     if not rate:
         raise HTTPException(status_code=400, detail='{} is invalid'.format(request['rate_id']))
-    
+
     row = {
         'status': 'active',
         'ftl_freight_rate_id': request.get('rate_id'),
@@ -35,7 +35,7 @@ def execute_transaction_code(request):
         FtlFreightRateFeedback.performed_by_id == request.get('performed_by_id'),
         FtlFreightRateFeedback.performed_by_type == request.get('performed_by_type'),
         FtlFreightRateFeedback.performed_by_org_id == request.get('performed_by_org_id')).first()
-    
+
     if not feedback:
         feedback = FtlFreightRateFeedback(**row)
 
@@ -45,7 +45,7 @@ def execute_transaction_code(request):
     try:
         feedback.save()
     except:
-        raise HTTPException(status_code=400, detail='Feedback could not be saved')
+        raise HTTPException(status_code=500, detail='Feedback could not be saved')
 
     create_audit(request, feedback)
 
@@ -78,4 +78,6 @@ def create_audit(request, feedback):
         action_name = 'create',
         performed_by_id = request.get('performed_by_id'),
         data = {key:value for key,value in request.items() if key != 'performed_by_id'},
+        sourced_by_id = request.get("sourced_by_id"),
+        procured_by_id = request.get("procured_by_id")
     )

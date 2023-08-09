@@ -44,11 +44,11 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
     for attr, value in create_params.items():
         if value:
-            setattr(request_object, attr, value)    
+            setattr(request_object, attr, value)
 
     request_object.set_location()
     request_object.save()
-    
+
     send_notification_to_relevant_supply_agents(request)
 
     create_audit(request, request_object.id)
@@ -87,7 +87,7 @@ def send_notification_to_relevant_supply_agents(request):
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_location_id']),str(locations_data['destination_location_id'])]}})['list']
     except Exception as error_message:
         raise HTTPException(status_code=400, detail=error_message)
-    
+
 
     route = {key['id']:key['display_name'] for key in route_data}
     try:
@@ -127,8 +127,7 @@ def create_audit(request, request_object_id):
         performed_by_id = performed_by_id,
         data = request,
         object_type = 'FtlFreightRateRequest',
-        object_id = request_object_id
+        object_id = request_object_id,
+        sourced_by_id = request.get("sourced_by_id"),
+        procured_by_id = request.get("procured_by_id")
     )
-
-
-    

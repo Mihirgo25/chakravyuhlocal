@@ -1,5 +1,5 @@
 
-from services.air_freight_rate.models.air_freight_location_clusters import AirFreightLocationClusters
+from services.air_freight_rate.models.air_freight_location_cluster import AirFreightLocationCluster
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import AirFreightLocationClusterMapping
 from database.db_session import db
 
@@ -10,7 +10,7 @@ def create_clusters(request):
             'map_zone_id':request.get('map_zone_id'),
             'status':'active'
         }
-        cluster = AirFreightLocationClusters.create(**cluster_params)
+        cluster = AirFreightLocationCluster.create(**cluster_params)
         cluster_id = cluster.id
 
         cluster_mappings = []

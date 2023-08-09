@@ -210,13 +210,17 @@ class FtlFreightRate(BaseModel):
 
         return charge_codes
 
+    def get_money_exchange_for_fcl(self, param, currency):
+        exchange_price = 0
+        if param['currency'] != currency:
+            exchange_price = int(common.get_money_exchange_for_fcl({'price': param["price"], 'from_currency': param['currency'], 'to_currency':currency})['price'])
+        return exchange_price
+    
     def get_line_items_total_price(self,line_items):
         currency = line_items[0].get('currency')
         result = 0
-
         for line_item in line_items:
-            result = result + int(common.get_money_exchange_for_fcl({'price': line_item["price"], 'from_currency': line_item['currency'], 'to_currency':currency})['price'])
-
+            result = result + self.get_money_exchange_for_fcl(line_item, currency)
         return result
 
     def get_mandatory_line_items(self,mandatory_charge_codes):
@@ -230,6 +234,7 @@ class FtlFreightRate(BaseModel):
         if not line_items:
             return
         currency=self.line_items[0].get('currency')
+        
         result = self.get_line_items_total_price(line_items)
 
         rates = FtlFreightRate.select().where(
@@ -247,7 +252,7 @@ class FtlFreightRate(BaseModel):
             mandatory_line_items = [line_item for line_item in rates.get('line_items') if str((line_item.get('code') or '').upper()) in mandatory_charge_codes]
 
             for prices in mandatory_line_items:
-                    sum = sum + int(common.get_money_exchange_for_fcl({'price': prices["price"], 'from_currency': prices['currency'], 'to_currency':currency})['price'])
+                    sum = sum + self.get_money_exchange_for_fcl(prices, currency)
 
             if sum and result > sum:
                 result = sum

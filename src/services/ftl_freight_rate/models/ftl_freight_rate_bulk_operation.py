@@ -135,29 +135,27 @@ class FtlFreightRateBulkOperation(BaseModel):
 
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
-        ftl_freight_rates = list_ftl_freight_rates(filters= filter, return_query=True, page_limit= page_limit)['List']
+        ftl_freight_rates = list_ftl_freight_rates(filters= filters, return_query=True, page_limit= page_limit)['list']
 
         total_count = len(ftl_freight_rates)
-        count = 0
+        current_ftl_freight_rate_count = 0
+
 
         for freight in ftl_freight_rates:
-            count+=1
+            current_ftl_freight_rate_count+=1
 
             if FtlFreightRateAudit.get_or_none(bulk_operation_id = self.id, object_id = freight['id']):
-                progress = int((count * 100.0)) / total_count
+                progress = int((current_ftl_freight_rate_count * 100.0)) / total_count
                 self.set_progress_percent(progress)
                 continue
-
-            freight = freight.as_json
-            
             line_items = [t for t in freight['line_items'] if t['code'] == data['line_item_code']]
 
-            if line_items:
-                progress = int((count * 100.0)) / total_count
+            if not line_items:
+                progress = int((current_ftl_freight_rate_count * 100.0)) / total_count
                 self.set_progress_percent(progress)
                 continue
 
-            freight['line_items'] = freight['line_items'] - line_items
+            freight['line_items'] = [t for t in freight['line_items'] if t not in line_items]
 
             for line_item in line_items:
                 if data['markup_type'].lower() == 'percent':
@@ -181,15 +179,17 @@ class FtlFreightRateBulkOperation(BaseModel):
                     'sourced_by_id': sourced_by_id,
                     'procured_by_id': procured_by_id,
                     'bulk_operation_id': self.id,
-                    'data': freight['data']
+                    'line_items': freight['line_items']
                 })
 
+                
+
             total_affected_rates += 1
-            progress = int((count * 100.0) / total_count)
+            progress = int((current_ftl_freight_rate_count * 100.0) / total_count)
             self.set_progress_percent(progress)
 
         data['total_affected_rates'] = total_affected_rates
-        self.progress = 100 if count == total_count else self.get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
+        self.progress = 100 if current_ftl_freight_rate_count == total_count else self.get_progress_percent(str(self.id), parse_numeric(self.progress) or 0)
         self.data = data
         self.save()
 

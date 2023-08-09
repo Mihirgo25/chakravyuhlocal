@@ -1,9 +1,11 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest 
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
-from celery_worker import create_communication_background, update_multiple_service_objects
+from celery_worker import create_communication_background
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from database.db_session import db
+import uuid
 
 def create_haulage_freight_rate_request(request):
     with db.atomic():
@@ -25,6 +27,8 @@ def execute_transaction_code(request):
         'origin_location_id': request.get('origin_location_id'),
         'destination_location_id': request.get('destination_location_id'),
     }
+    if request.get('preferred_shipping_line_ids'):
+        request['preferred_shipping_line_ids'] = [uuid.UUID(str_id) for str_id in request['preferred_shipping_line_ids']]
 
     request_object = HaulageFreightRateRequest.select().where(
         HaulageFreightRateRequest.source == request.get('source'),
@@ -43,12 +47,11 @@ def execute_transaction_code(request):
     create_params = get_create_params(request)
     for attr, value in create_params.items():
         setattr(request_object, attr, value)
-
     request_object.save()
 
     create_audit(request,request_object.id)
 
-    update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
+    get_multiple_service_objects(request_object)
 
     send_notifications_to_supply_agents(request)
 
@@ -59,6 +62,22 @@ def execute_transaction_code(request):
 def get_create_params(request):
     if request.get('cargo_readiness_date'):
         request['cargo_readiness_date'] = request.get('cargo_readiness_date')
+    loc_ids = []
+
+    if request.get('origin_location_id'):
+        loc_ids.append(request.get('origin_location_id'))
+    if request.get('destination_location_id'):
+        loc_ids.append(request.get('destination_location_id'))
+    
+    obj = {'filters':{"id": loc_ids }, 'includes': {'id': True, 'name': True, 'type': True, 'is_icd': True, 'cluster_id': True, 'city_id': True, 'country_id':True, 'country_code': True, 'display_name': True, 'default_params_required': True}}
+    locations = maps.list_locations(obj)['list']
+    locations_hash = {}
+    for loc in locations:
+        locations_hash[loc['id']] = loc
+    if request.get('origin_location_id'):
+        request['origin_location'] = locations_hash[request.get('origin_location_id')]
+    if request.get('destination_location_id'):
+        request['destination_location'] = locations_hash[request.get('destination_location_id')]
         
     return {key:value for key,value in request.items() if key not in ['source', 'source_id', 'performed_by_id', 'performed_by_type', 'performed_by_org_id','origin_location_id', 'destination_location_id']} | ({'status': 'active'})
 
@@ -69,13 +88,18 @@ def create_audit(request, request_object_id):
         object_type="TrailerFreightRateRequest"
     else:
         object_type="HaulageFreightRateRequest"
+
+    if request.get('preferred_shipping_line_ids'):
+        request['preferred_shipping_line_ids'] = [str(str_id) for str_id in request['preferred_shipping_line_ids']]
     
     HaulageFreightRateAudit.create(
         action_name = 'create',
         performed_by_id = performed_by_id,
         data = request,
         object_type = object_type,
-        object_id = request_object_id
+        object_id = request_object_id,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 def supply_agents_to_notify(request):

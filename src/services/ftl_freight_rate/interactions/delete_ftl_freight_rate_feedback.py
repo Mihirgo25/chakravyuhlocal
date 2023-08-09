@@ -32,7 +32,7 @@ def find_objects(request):
     ftl_freight_rate_feedback = FtlFreightRateFeedback.select().where(FtlFreightRateFeedback.id << request['ftl_freight_rate_feedback_ids'], FtlFreightRateFeedback.status == 'active')
     if ftl_freight_rate_feedback.count() > 0:
         return ftl_freight_rate_feedback
-    
+
     return None
 
 
@@ -40,7 +40,9 @@ def create_audit(request, freight_rate_feedback_id):
     FtlFreightRateAudit.create(
     action_name = 'delete',
     performed_by_id = request.get('performed_by_id'),
-    data = {key:value for key,value in request.items() if key != freight_rate_feedback_id},    
+    data = {key:value for key,value in request.items() if key != freight_rate_feedback_id},
     object_id = freight_rate_feedback_id,
-    object_type = 'FtlFreightRateFeedback'
+    object_type = 'FtlFreightRateFeedback',
+    sourced_by_id = request.get("sourced_by_id"),
+    procured_by_id = request.get("procured_by_id")
     )
