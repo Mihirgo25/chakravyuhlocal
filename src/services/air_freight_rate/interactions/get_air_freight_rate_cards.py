@@ -93,18 +93,19 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
     freight_object = add_freight_objects(freight_rate,response_object,requirements)
     if not freight_object:
         return 
-    
-    surcharge_object = add_surcharge_object(freight_rate,response_object,requirements)
+    chargeable_weight = response_object['freights'][0]['chargeable_weight']
+
+    surcharge_object = add_surcharge_object(freight_rate,response_object,requirements,chargeable_weight)
 
     if not surcharge_object:
         return
 
     if apply_density_matching:
-        response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], get_chargeable_weight(requirements))  
+        response_object = get_density_wise_rate_card(response_object, requirements['trade_type'], requirements['weight'], requirements['volume'], chargeable_weight)
    
     return response_object
 
-def add_surcharge_object(freight_rate,response_object,requirements):
+def add_surcharge_object(freight_rate,response_object,requirements,chargeable_weight):
     
     if freight_rate['price_type'] == 'all_in':
         return True
@@ -114,14 +115,14 @@ def add_surcharge_object(freight_rate,response_object,requirements):
     line_items = freight_rate['freight_surcharge']['line_items'] or []
 
     for line_item in line_items:
-        line_item = build_surcharge_line_item_object(line_item,requirements)
+        line_item = build_surcharge_line_item_object(line_item,requirements,chargeable_weight)
         if not line_item:
             continue 
         response_object['surcharge']['line_items'].append(line_item)
     
     return True
 
-def build_surcharge_line_item_object(line_item,requirements):
+def build_surcharge_line_item_object(line_item,requirements,chargeable_weight):
     surcharge_charges = AIR_FREIGHT_SURCHARGES.get(line_item['code'])
     if not surcharge_charges or line_item['code'] in ['EAMS','EHAMS','HAMS']:
         return
@@ -131,7 +132,7 @@ def build_surcharge_line_item_object(line_item,requirements):
     if line_item.get('unit') == 'per_package':
         line_item['quantity'] = requirements.get('packages_count')
     elif line_item.get('unit') == 'per_kg':
-        line_item['quantity'] = get_chargeable_weight(requirements)
+        line_item['quantity'] = chargeable_weight
     elif line_item.get('unit') == 'per_kg_gross':
         line_item['quantity'] = requirements.get('weight')
     else:
@@ -268,6 +269,7 @@ def build_freight_object(freight_validity,required_weight,requirements):
     line_item['source'] = 'system'
     line_item,freight_object = check_and_update_min_price_line_items(line_item, freight_object,requirements)
     freight_object['line_items'].append(line_item)
+    freight_object['chargeable_weight'] = required_weight
     return freight_object
 
 def check_and_update_min_price_line_items(line_item,freight_object,requirements):

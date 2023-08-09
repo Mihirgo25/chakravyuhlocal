@@ -14,7 +14,7 @@ from peewee import SQL
 from micro_services.client import common
 from libs.json_encoder import json_encoder
 
-possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type']
+possible_direct_filters = ['port_id', 'container_size', 'container_type', 'commodity', 'shipping_line_id', 'trade_type', 'status', 'task_type', 'source']
 possible_indirect_filters = ['created_at_greater_than', 'created_at_less_than']
 
 def list_fcl_freight_rate_tasks(filters = {}, page_limit = 10, page = 1, sort_by = 'created_at', sort_type = 'desc', stats_required = True, pagination_data_required = True):

@@ -3,6 +3,7 @@ from services.fcl_customs_rate.models.fcl_customs_rate_audit import FclCustomsRa
 from database.db_session import db
 from fastapi import HTTPException
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_fcl_customs_rate(request):
     with db.atomic():
@@ -51,6 +52,7 @@ def execute_transaction_code(request):
 
   customs_rate.update_platform_prices_for_other_service_providers()
   fcl_customs_functions_delay.apply_async(kwargs={'fcl_customs_object':customs_rate, 'request':request},queue = 'low')
+  get_multiple_service_objects(customs_rate)
 
   return {'id': customs_rate.id}
 
@@ -79,5 +81,6 @@ def create_audit(request, customs_rate_id):
     action_name = 'create',
     performed_by_id = request.get('performed_by_id'),
     rate_sheet_id = request.get('rate_sheet_id'),
-    data = audit_data
+    data = audit_data,
+    performed_by_type = request.get("performed_by_type") or "agent"
   )

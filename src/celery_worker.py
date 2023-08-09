@@ -134,7 +134,7 @@ celery.conf.beat_schedule = {
         'options': {'queue': 'low'}
     },
     'adjust_air_freight_rate_airline_factors':{
-        'task': 'celery_worker.air_freight_rate_factors_in_delay',
+        'task': 'celery_worker.air_freight_airline_factors_in_delay',
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     }
@@ -185,15 +185,13 @@ def create_fcl_freight_rate_delay(self, request):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def delay_fcl_functions(self,fcl_object,request):
+def delay_fcl_functions(self, request):
     try:
         if not FclFreightRate.select().where(FclFreightRate.service_provider_id==request["service_provider_id"], FclFreightRate.rate_not_available_entry==False, FclFreightRate.rate_type == DEFAULT_RATE_TYPE).exists():
             organization.update_organization({'id':request.get("service_provider_id"), "freight_rates_added":True})
 
         if request.get("fcl_freight_rate_request_id"):
             delete_fcl_freight_rate_request(request)
-
-        get_multiple_service_objects(fcl_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -203,9 +201,8 @@ def delay_fcl_functions(self,fcl_object,request):
 
 
 @celery.task(bind = True, max_retries=5, retry_backoff = True)
-def fcl_freight_local_data_updation(self, local_object,request):
+def fcl_freight_local_data_updation(self, request):
     try:
-        update_multiple_service_objects.apply_async(kwargs={"object":local_object},queue='low')
         params = {
         'performed_by_id': request['performed_by_id'],
         'organization_id': request['service_provider_id'],
@@ -319,7 +316,26 @@ def send_closed_notifications_to_sales_agent_feedback(self, object):
             pass
         else:
             raise self.retry(exc= exc)
+        
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_closed_notifications_to_user_feedback(self, object):
+    try:
+        object.send_closed_notifications_to_user()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
+@celery.task(bind = True, max_retries=5, retry_backoff = True)
+def send_closed_notifications_to_user_request(self, object):
+    try:
+        object.send_closed_notifications_to_user()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True, max_retries=5)
 def celery_create_fcl_freight_rate_free_day(self, request):
@@ -622,8 +638,6 @@ def update_fcl_cfs_rate_platform_prices_delay(self, request):
 def fcl_customs_functions_delay(self,fcl_customs_object,request):
     try:
         update_organization_fcl_customs(request)
-        get_multiple_service_objects(fcl_customs_object)
-
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -634,7 +648,6 @@ def fcl_customs_functions_delay(self,fcl_customs_object,request):
 def fcl_cfs_functions_delay(self,fcl_cfs_object,request):
     try:
         update_organization_fcl_cfs(request)
-        get_multiple_service_objects(fcl_cfs_object)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

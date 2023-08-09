@@ -43,7 +43,9 @@ def get_air_freight_rate_prediction(request):
             
     for result in results:
         price = result.get('predicted_price')
-    
+        if price < 100:
+            price = 100 + price
+
         for weight_slab in weight_slabs:
             weight_slab['tariff_price'] = price
             price *= change_factor
@@ -53,6 +55,7 @@ def get_air_freight_rate_prediction(request):
                 'destination_airport_id' : request['destination_airport_id'],
                 'commodity' : request.get('commodity'),
                 'commodity_type' : request.get('commodity_type'),
+                'commodity_sub_type': request.get('commodity_subtype'),
                 'airline_id' : result['airline_id'],
                 'operation_type' : 'passenger',
                 'density_category' : density_category,

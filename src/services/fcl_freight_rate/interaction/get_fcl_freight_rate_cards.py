@@ -279,7 +279,7 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
         "shipping_line_id": shipping_line_ids,
         "service_provider_id": service_provider_ids,
         "importer_exporter_id": requirements["importer_exporter_id"],
-        "validity_end": (datetime.now() + timedelta(days=60)).date(),
+        "validity_end": datetime.now().date(),
         "validity_start": datetime.now().date()
     }
     origin_detention_filters = common_filters | {
