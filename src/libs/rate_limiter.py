@@ -29,6 +29,9 @@ class RateLimiter:
         return decorator
     
     def get_ip_address(self,request):
+        if 'user_ip_address' in request.headers:
+            return request.headers['user_ip_address']
+        
         if "forwarded" in request.headers:
             forwarded =  request.headers["forwarded"]
             
