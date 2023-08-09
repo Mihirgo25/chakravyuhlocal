@@ -1000,7 +1000,7 @@ def list_fcl_freight_rate_free_days_data(
         return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 @fcl_freight_router.get("/list_public_fcl_freight_rate_free_days")
-@rate_limiter.add(max_requests=10, time_window=86400)
+@rate_limiter.add(max_requests=10, time_window=3600)
 def list_public_fcl_freight_rate_data(
     request: Request,
     filters: str = None,
