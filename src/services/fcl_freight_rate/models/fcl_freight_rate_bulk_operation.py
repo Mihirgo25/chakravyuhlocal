@@ -24,12 +24,11 @@ from fastapi.encoders import jsonable_encoder
 from database.db_session import rd
 from libs.parse_numeric import parse_numeric
 
-BATCH_SIZE = 1000
-
 
 
 ACTION_NAMES = ['extend_validity', 'delete_freight_rate', 'add_freight_rate_markup', 'add_local_rate_markup', 'update_free_days_limit', 'add_freight_line_item', 'update_free_days', 'update_weight_limit', 'extend_freight_rate', 'extend_freight_rate_to_icds', 'delete_local_rate']
 MARKUP_TYPES = ['net','percent','absolute']
+BATCH_SIZE = 1000
 
 class BaseModel(Model):
     class Meta:
