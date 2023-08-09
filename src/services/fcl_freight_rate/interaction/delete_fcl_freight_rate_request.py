@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from database.rails_db import (
-    list_organization_users,
+    get_organization_partner,
 )
 
 def delete_fcl_freight_rate_request(request):
@@ -30,8 +30,8 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
 
-        organization_user_id = [str(obj.performed_by_id)]
-        org_users = list_organization_users(id=organization_user_id)
+        id = str(obj.performed_by_org_id)
+        org_users = get_organization_partner(id)
 
         if org_users and obj.performed_by_type == 'user' and obj.source != 'checkout':
             send_closed_notifications_to_user_request.apply_async(kwargs={'object':obj},queue='critical')

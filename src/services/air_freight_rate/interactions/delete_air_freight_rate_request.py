@@ -10,7 +10,7 @@ from micro_services.client import *
 from celery_worker import send_closed_notifications_to_sales_agent_function,send_closed_notifications_to_user_request
 from fastapi.encoders import jsonable_encoder
 from database.rails_db import (
-    list_organization_users,
+    get_organization_partner,
 )
 
 
@@ -73,8 +73,8 @@ def execute_transaction_code(request):
 
         AirServiceAudit.create(**get_audit_params(request, request_object.id))
 
-        organization_user_id = [str(request_object.performed_by_id)]
-        org_users = list_organization_users(id=organization_user_id)
+        id = str(request_object.performed_by_org_id)
+        org_users = get_organization_partner(id)
 
         
         if org_users and request_object.performed_by_type == 'user' and request_object.source != 'checkout':

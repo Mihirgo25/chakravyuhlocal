@@ -3,7 +3,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from database.rails_db import (
-    list_organization_users,
+    get_organization_partner,
 )
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 
@@ -32,8 +32,8 @@ def execute_transaction_code(request):
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
 
 
-        organization_user_id = [str(obj.performed_by_id)]
-        org_users = list_organization_users(id=organization_user_id)
+        id = str(obj.performed_by_org_id)
+        org_users = get_organization_partner(id)
 
         if org_users and obj.performed_by_type == 'user' and obj.source != 'checkout':
             send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='critical')
