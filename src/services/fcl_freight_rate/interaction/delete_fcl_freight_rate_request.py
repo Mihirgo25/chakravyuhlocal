@@ -33,7 +33,7 @@ def execute_transaction_code(request):
         id = str(obj.performed_by_org_id)
         org_users = get_organization_partner(id)
 
-        if org_users and obj.performed_by_type == 'user' and obj.source != 'checkout':
+        if obj.performed_by_type == 'user' and org_users and  obj.source != 'checkout':
             send_closed_notifications_to_user_request.apply_async(kwargs={'object':obj},queue='critical')
         else:
             send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='critical')

@@ -77,7 +77,7 @@ def execute_transaction_code(request):
         org_users = get_organization_partner(id)
 
         
-        if org_users and request_object.performed_by_type == 'user' and request_object.source != 'checkout':
+        if request_object.performed_by_type == 'user' and org_users and request_object.source != 'checkout':
           send_closed_notifications_to_user_request.apply_async(
             kwargs={"object": request_object}, queue="critical"
         ) 
