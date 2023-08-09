@@ -26,7 +26,7 @@ db = PooledPostgresqlExtDatabase(
     host=DATABASE_HOST,
     port=DATABASE_PORT,
     autorollback=True,
-    max_connections=80,
+    max_connections=200,
 )
 
 db._state = PeeweeConnectionState()
