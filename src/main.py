@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, WebSocket, Depends
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 from database.db_session import db
@@ -44,7 +44,7 @@ docs = {
     "redoc_url": None if APP_ENV == "production" else "/redoc",
     "openapi_url": None if APP_ENV == "production" else "/openapi.json",
     "debug": True,
-    # 'dependencies': [Depends(get_db)],
+    'dependencies': [Depends(get_db)],
     "swagger_ui_parameters": {"docExpansion": None},
 }
 
@@ -141,10 +141,3 @@ def get_health_check():
 @app.get("/fcl_freight_rate/health_check",tags=["Health Checks"])
 def get_health_check():
     return JSONResponse(status_code=200, content={ "status": 'ok' })
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"You sent: {data}")

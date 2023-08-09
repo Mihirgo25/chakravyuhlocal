@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, WebSocket, Request
 from services.bramhastra.interactions.apply_spot_search_fcl_freight_rate_statistic import (
     apply_spot_search_fcl_freight_rate_statistic,
 )
@@ -32,8 +32,8 @@ from services.bramhastra.interactions.list_fcl_freight_rate_request_statistics i
 from services.bramhastra.interactions.apply_fcl_freight_rate_rd_statistic import (
     apply_fcl_freight_rate_rd_statistic,
 )
-from services.bramhastra.interactions.apply_checkout_fcl_freight_rate_statistic import (
-    apply_checkout_fcl_freight_rate_statistic,
+from services.bramhastra.interactions.apply_quotation_fcl_freight_rate_statistic import (
+    apply_quotation_fcl_freight_rate_statistic,
 )
 
 from services.bramhastra.request_params import (
@@ -67,9 +67,9 @@ def apply_spot_search_fcl_freight_rate_statistic_func(
 
 @bramhastra.post("/apply_quotation_fcl_freight_rate_statistic")
 def apply_quotation_fcl_freight_rate_statistic_func(
-    request: ApplyQuotationFclFreightRateStatistics,
+    request: ApplyQuotationFclFreightRateStatistics
 ):
-    return apply_checkout_fcl_freight_rate_statistic(request)
+    return apply_quotation_fcl_freight_rate_statistic(request)
 
 
 def apply_fcl_freight_rate_rd_statistic_func(
@@ -158,3 +158,10 @@ def list_fcl_freight_rate_request_statistics_func(
 ):
     response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
+
+
+@bramhastra.websocket("/use")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()

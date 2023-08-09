@@ -15,7 +15,6 @@ class Click:
             print(f"The file {sql_file_path} exists.")
         else:
             print(f"The file {sql_file_path} does not exist.")
-        # check if sql_file_path exists
 
         self.validate(sql_file_path, model)
 
