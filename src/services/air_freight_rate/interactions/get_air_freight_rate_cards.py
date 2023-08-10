@@ -465,14 +465,10 @@ def get_air_freight_rate_cards(requirements):
 
         is_predicted = False
         if len(freight_rates) == 0:
-
-            freight_rates = initialize_freight_query(requirements)
+            get_air_freight_rate_prediction(requirements)
+            is_predicted = True
+            freight_rates = initialize_freight_query(requirements,True)
             freight_rates = jsonable_encoder(list(freight_rates.dicts()))
-            if len(freight_rates)==0:
-                get_air_freight_rate_prediction(requirements)
-                is_predicted = True
-                freight_rates = initialize_freight_query(requirements,True)
-                freight_rates = jsonable_encoder(list(freight_rates.dicts()))
         
         freight_rates = post_discard_less_relevant_rates(freight_rates)
         missing_surcharge = get_missing_surcharges(freight_rates)
