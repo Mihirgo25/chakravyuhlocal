@@ -18,7 +18,6 @@ def get_assured_rate(all_prices):
     return min(prices)
 
 def update_fcl_rates_to_cogo_assured(param):
-    ff_mlo = get_ff_mlo()
     freight_rates = list(FclFreightRate.select(FclFreightRate.validities).where(
         FclFreightRate.mode != "predicted",
         FclFreightRate.origin_port_id == param["origin_port_id"],
@@ -28,8 +27,7 @@ def update_fcl_rates_to_cogo_assured(param):
         FclFreightRate.container_size == param["container_size"],
         FclFreightRate.container_type == param["container_type"],
         FclFreightRate.commodity == param["commodity"],
-        FclFreightRate.rate_type == DEFAULT_RATE_TYPE, 
-        FclFreightRate.service_provider_id.in_(ff_mlo),
+        FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
         FclFreightRate.updated_at.cast('date') > (datetime.now() - timedelta(days = 10)).date()
     ).dicts())
     
