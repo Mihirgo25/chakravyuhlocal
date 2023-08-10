@@ -202,6 +202,7 @@ class PostFclFreightRateLocal(BaseModel):
     selected_suggested_rate_id: str = None
     source: str = None
     data: Data = {}
+    rate_type: str = 'market_place'
     rate_not_available_entry: bool = False
 
 
