@@ -186,7 +186,13 @@ def cogo_assured_fcl_freight_local_migration():
                         distinct_port_ids.append(rate[9])
                     if not rate[10] in distinct_port_ids:
                         distinct_port_ids.append(rate[10])
+                        
                     row_data.append(result)
+                    
+                    if result['container_size'] == '40':
+                        new_result = result.copy()
+                        new_result['container_size'] = '40HC'
+                        row_data.append(new_result)
                 cur.close()
                 FclFreightRateLocal.insert_many(row_data).execute()
                 print('updating locations')
@@ -216,5 +222,5 @@ def update_locations(distinct_port_ids):
     
 
 if __name__ == "__main__":
-    cogo_assured_fcl_freight_migration()
+    # cogo_assured_fcl_freight_migration()
     cogo_assured_fcl_freight_local_migration()
