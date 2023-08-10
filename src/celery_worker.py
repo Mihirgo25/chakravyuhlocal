@@ -60,6 +60,8 @@ from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreight
 
 # Brahmastra
 from services.bramhastra.brahmastra import Brahmastra
+from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import apply_fcl_freight_rate_statistic
+from services.bramhastra.interactions.apply_fcl_freight_rate_feedback import apply_feedback_fcl_freight_rate_statistic
 # Monitoring
 
 CELERY_CONFIG = {
@@ -90,6 +92,8 @@ celery.conf.communication_queues = [Queue('communication', Exchange('communicati
           queue_arguments={'x-max-priority': 6})]
 celery.conf.bulk_operation_queues = [Queue('bulk_operations', Exchange('bulk_operations'), routing_key='bulk_operations',
           queue_arguments={'x-max-priority': 4})]
+celery.conf.statistics_operations = [Queue('statistics', Exchange('statistics'), routing_key='statistics',
+          queue_arguments={'x-max-priority':4})]
 celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
           queue_arguments={'x-max-priority': 2})]
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
@@ -842,6 +846,28 @@ def arjun_in_delay(self):
     try:
         brahmastra=Brahmastra()
         brahmastra.use(True)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def apply_fcl_freight_rate_statistic_delay(self,action,params):
+    from services.bramhastra.request_params import ApplyFclFreightRateStatistic
+    try:
+        return apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params = params))
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def apply_feedback_fcl_freight_rate_statistic_delay(self,action,params):
+    from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
+    try:
+        return apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = params))
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

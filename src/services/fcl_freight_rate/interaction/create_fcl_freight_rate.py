@@ -310,12 +310,9 @@ def validate_value_props(v_props):
     return True
 
 def send_freight_rate_stats(action,request,freight):
-    from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
-        apply_fcl_freight_rate_statistic,
-    )
-    from  services.bramhastra.request_params import ApplyFclFreightRateStatistic
+    from celery_worker import apply_fcl_freight_rate_statistic_delay
 
-    params = jsonable_encoder(model_to_dict(
+    object = jsonable_encoder(model_to_dict(
         freight,
         only=[
             FclFreightRate.id,
@@ -356,6 +353,6 @@ def send_freight_rate_stats(action,request,freight):
     
     for k,v in request.items():
         if k in {'source_id','source'}:
-            params[k] = v
+            object[k] = v
     
-    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params={'freight': params}))
+    apply_fcl_freight_rate_statistic_delay.apply_asyn(kwargs = {'action': action,'params': object}, queue='statistics')
