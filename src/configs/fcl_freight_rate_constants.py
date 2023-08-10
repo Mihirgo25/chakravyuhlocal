@@ -202,7 +202,9 @@ COGO_ASSURED_SERVICE_PROVIDER_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
 
 DEFAULT_SOURCED_BY_ID = "7f6f97fd-c17b-4760-a09f-d70b6ad963e8"
 
-VALUE_PROPOSITIONS =  ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']
+VALUE_PROPOSITIONS = ['confirmed_space_and_inventory', 'standard_local_charges', 'competitive_price', 'fixed_exchange_rate', 'priority_booking']
+
+DEFAULT_VALUE_PROPS = [{"name": "confirmed_space_and_inventory", "free_limit": None}]
 
 RATE_TYPES = ['market_place', 'cogo_assured', 'promotional', 'spot_booking']
 
