@@ -197,8 +197,8 @@ class PostFclFreightRateLocal(BaseModel):
     container_size: str
     container_type: str
     commodity: str = None
-    shipping_line_id: str
-    service_provider_id: str
+    shipping_line_id: str = None
+    service_provider_id: str = None
     selected_suggested_rate_id: str = None
     source: str = None
     data: Data = {}
