@@ -51,15 +51,15 @@ class AirFreightStorageRates(BaseModel):
     
     def validate_commodity(self):
         if self.commodity not in LOCAL_COMMODITIES:
-            raise HTTPException(status_code = 404,details = 'Invalid Commodity')
+            raise HTTPException(status_code = 404,detail = 'Invalid Commodity')
     
     def validate_trade_type(self):
         if self.trade_type not in TRADE_TYPES:
-            raise HTTPException(status_code = 404,details = 'Invalid Trade Type')
+            raise HTTPException(status_code = 404,detail = 'Invalid Trade Type')
     
     def validate_free_limit(self):
         if not self.free_limit:
-            raise HTTPException(status_code = 404,details = 'Free Limit Cannot Be Empty')
+            raise HTTPException(status_code = 404,detail = 'Free Limit Cannot Be Empty')
     
     def validate_slabs(self):
         if self.slabs:
@@ -97,14 +97,14 @@ class AirFreightStorageRates(BaseModel):
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Airline Id Is Not Valid')
+        raise HTTPException(status_code = 400, detail = 'Airline Id Is Not Valid')
     
     def validate_service_provider_id(self):
         service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
     
 
     def update_foreign_objects(self):
