@@ -205,12 +205,12 @@ class BuyQuotation(BaseModel):
 class Shipment(BaseModel):
     shipment_id: str = Field(alias="id")
     serial_id: int = None
-    importer_exporter_id: str
-    shipment_type: str
+    importer_exporter_id: str = None
+    shipment_type: str = None
     services: list[str] = None
     source: str = None
     source_id: str = None
-    state: str
+    state: str = None
     created_at: datetime = None
     updated_at: datetime = None
     cancellation_reason: str = None
@@ -224,7 +224,8 @@ class ShipmentParams(BaseModel):
 
 class ApplyShipmentFclFreightRateStatistics(BaseModel):
     action: str
-    params: ShipmentParams
+    params: ShipmentParams = None
+    force_update_params: Shipment = None
 
 
 class QuotationParams(BaseModel):
