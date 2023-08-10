@@ -4,8 +4,7 @@ from fastapi import HTTPException
 from database.db_session import db
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 from playhouse.shortcuts import model_to_dict
-from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
-from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
+from celery_worker import apply_feedback_fcl_freight_rate_statistic_delay
 from fastapi.encoders import jsonable_encoder
 
 def delete_fcl_freight_rate_feedback(request):
@@ -62,4 +61,4 @@ def create_audit(request, freight_rate_feedback_id):
 def set_stats(obj):
     action = 'delete'
     params = jsonable_encoder(model_to_dict(obj,only = [FclFreightRateFeedback.id,FclFreightRateFeedback.status,FclFreightRateFeedback.closed_by_id,FclFreightRateFeedback.closing_remarks]))
-    apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = params))
+    apply_feedback_fcl_freight_rate_statistic_delay.apply_async(kwargs = {'action': action,'params': params}, queue = 'statistics')

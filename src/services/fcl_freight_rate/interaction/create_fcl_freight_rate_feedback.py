@@ -153,16 +153,12 @@ def create_audit(request, feedback):
     )
     
 def set_feedback_statistics(action, feedback, request = None):
-    from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import (
-        apply_feedback_fcl_freight_rate_statistic,
-    )
-    from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
     from playhouse.shortcuts import model_to_dict
     from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
-    
+    from celery_worker import apply_feedback_fcl_freight_rate_statistic_delay
     feedback = feedback.refresh()
     
-    params = model_to_dict(
+    object = model_to_dict(
         feedback,
         only=[
             FclFreightRateFeedback.id,
@@ -188,10 +184,6 @@ def set_feedback_statistics(action, feedback, request = None):
     if request:
         for k, v in request.items():
             if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
-                params[k] = v 
+                object[k] = v 
         
-    apply_feedback_fcl_freight_rate_statistic(
-        ApplyFeedbackFclFreightRateStatistics(
-            action=action, params=json_encoder(params)
-        )
-    )
+    apply_feedback_fcl_freight_rate_statistic_delay.apply_async(kwargs = {'action': action,'params': object}, queue = 'statistics')
