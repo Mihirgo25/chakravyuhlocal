@@ -22,12 +22,12 @@ def add_rate_properties(request,freight_id):
             rate_id = freight_id,
             created_at = datetime.now(),
             updated_at = datetime.now(),
-            value_props = request["value_props"],
-            t_n_c = request["t_n_c"],
-            available_inventory = request["available_inventory"],
-            used_inventory = request.get("used_inventory"),
-            shipment_count = request["shipment_count"],
-            volume_count=request["volume_count"]
+            value_props = request.get("value_props") or DEFAULT_VALUE_PROPS,
+            t_n_c = request.get("t_n_c") or [],
+            available_inventory = request.get("available_inventory") or 100,
+            used_inventory = request.get("used_inventory") or 0,
+            shipment_count = request.get("shipment_count") or 0,
+            volume_count=request.get("volume_count") or 0
         )
     # rp = FclFreightRateProperties.select().where(FclFreightRateProperties.rate_id == freight_id).first()
     # rp.validate_value_props()
@@ -157,7 +157,7 @@ def create_fcl_freight_rate(request):
         freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
-        freight.set_validities_for_cogo_assured_rates(request['validities'])
+        freight.set_validities_for_cogo_assured_rates(request.get('validities'))
     else:
         freight.set_validities(
             request["validity_start"].date(),

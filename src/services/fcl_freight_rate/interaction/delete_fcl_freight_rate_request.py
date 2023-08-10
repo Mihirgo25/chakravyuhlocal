@@ -6,6 +6,9 @@ from fastapi.encoders import jsonable_encoder
 from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
 from playhouse.shortcuts import model_to_dict
 from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
+from database.rails_db import (
+    get_organization_partner,
+)
 
 def delete_fcl_freight_rate_request(request):
     with db.atomic():
@@ -31,7 +34,10 @@ def execute_transaction_code(request):
 
         create_audit(request, obj.id)
 
-        if obj.source == 'spot_search' and obj.performed_by_type == 'user':
+        id = str(obj.performed_by_org_id)
+        org_users = get_organization_partner(id)
+
+        if obj.performed_by_type == 'user' and org_users and  obj.source != 'checkout':
             send_closed_notifications_to_user_request.apply_async(kwargs={'object':obj},queue='critical')
         else:
             send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='critical')

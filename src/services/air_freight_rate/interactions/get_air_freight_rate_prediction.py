@@ -6,9 +6,25 @@ from celery_worker import air_freight_rate_prediction_feedback_delay
 from services.air_freight_rate.interactions.create_air_freight_rate import create_air_freight_rate_data
 from database.rails_db import get_eligible_orgs
 from configs.env import DEFAULT_USER_ID
+from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
 
 def get_air_freight_rate_prediction(request):
-    currency = 'INR'
+    currency = 'USD'
+    origin_airport_id = request.get('origin_airport_id')
+    location = maps.list_locations({ 'filters': { 'id': [origin_airport_id] }})['list'][0]
+    country = location['country_id']
+    continent = location['continent_id']
+
+    if continent == '72abc4ba-6368-4501-9a86-8065f5c191f8':
+        currency = 'EUR'
+    elif country == 'ae37679f-9bfe-488f-b488-250c20da2fb5': 
+        currency = 'HKD'
+    elif country == '6e18d508-87b9-4e7e-a785-b47edc76b0b7':
+        currency == 'SGD'
+    elif country == '541d1232-58ce-4d64-83d6-556a42209eb7':
+        currency = 'INR'
+
+    
     weight_slabs = [{ 'unit': 'per_kg', 'currency': currency, 'lower_limit': 0.0, 'upper_limit': 45.0, 'tariff_price': 20 },
                     { 'unit': 'per_kg', 'currency': currency, 'lower_limit': 45.1, 'upper_limit': 100.0, 'tariff_price': 30 },
                     { 'unit': 'per_kg', 'currency': currency, 'lower_limit': 100.1,'upper_limit': 300.0, 'tariff_price': 40 },
@@ -43,8 +59,11 @@ def get_air_freight_rate_prediction(request):
             
     for result in results:
         price = result.get('predicted_price')
-        if price < 100:
-            price = 100 + price
+        if currency != 'USD':
+            price = get_money_exchange_for_fcl_fallback('USD',currency,price)['price']
+
+        if currency == 'INR' and price < 100:
+            price = price + 100
 
         for weight_slab in weight_slabs:
             weight_slab['tariff_price'] = price

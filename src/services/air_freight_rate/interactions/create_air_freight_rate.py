@@ -68,10 +68,8 @@ def create_air_freight_rate_data(request):
     request['weight_slabs'] = sorted(request.get('weight_slabs'), key=lambda x: x['lower_limit'])
 
 
-    if request.get('rate_type') in ["promotional" ,"consolidated"]:
-        price_type="all_in"
-    else:
-        price_type=request.get('price_type')
+
+    price_type=request.get('price_type')
 
 
     row = {

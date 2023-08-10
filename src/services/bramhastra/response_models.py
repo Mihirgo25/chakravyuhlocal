@@ -93,4 +93,4 @@ class PortPair(BaseModel):
     rate_count: int
     
 class PortPairRateCount(BaseModel):
-    port_pair_rate_count = list[PortPair]
+    port_pair_rate_count: list[PortPair]

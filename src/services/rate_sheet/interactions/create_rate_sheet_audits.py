@@ -7,5 +7,6 @@ def create_audit(request):
         performed_by_id = request.get('performed_by_id'),
         procured_by_id = request.get('procured_by_id'),
         sourced_by_id = request.get('sourced_by_id'),
+        performed_by_type = request.get('performed_by_type') or 'agent',
         data = request.get('data')
     )

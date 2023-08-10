@@ -2,6 +2,9 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from database.rails_db import (
+    get_organization_partner,
+)
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 from playhouse.shortcuts import model_to_dict
 from celery_worker import apply_feedback_fcl_freight_rate_statistic_delay
@@ -33,7 +36,11 @@ def execute_transaction_code(request):
         
         set_stats(obj)
 
-        if obj.source == 'spot_search' and obj.performed_by_type == 'user':
+
+        id = str(obj.performed_by_org_id)
+        org_users = get_organization_partner(id)
+
+        if obj.performed_by_type == 'user' and org_users and  obj.source != 'checkout':
             send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='critical')
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
