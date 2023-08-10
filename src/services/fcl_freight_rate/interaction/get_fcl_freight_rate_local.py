@@ -20,26 +20,24 @@ def get_fcl_freight_rate_local(request):
 def find_object(request):
   if request.get('id'):
      object = FclFreightRateLocal.get_by_id(request['id'])
-  else:
-    if request.get('rate_type') == 'cogo_assured':
+  elif request.get('rate_type') == 'cogo_assured':
       object = FclFreightRateLocal.select().where(
       FclFreightRateLocal.port_id == request.get("port_id"),
       FclFreightRateLocal.trade_type == request.get("trade_type"),
       FclFreightRateLocal.rate_type == 'cogo_assured'
       ).first()
-      
-    else:
-        object = FclFreightRateLocal.select().where(
-        FclFreightRateLocal.port_id == request.get("port_id"),
-        FclFreightRateLocal.main_port_id == request.get("main_port_id"),
-        FclFreightRateLocal.trade_type == request.get("trade_type"),
-        FclFreightRateLocal.container_size == request.get("container_size"),
-        FclFreightRateLocal.container_type == request.get('container_type'),
-        FclFreightRateLocal.commodity == request.get("commodity"),
-        FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
-        FclFreightRateLocal.service_provider_id == request.get("service_provider_id"),
-        FclFreightRateLocal.rate_type == request.get('rate_type')
-      ).first()
+  else:
+      object = FclFreightRateLocal.select().where(
+      FclFreightRateLocal.port_id == request.get("port_id"),
+      FclFreightRateLocal.main_port_id == request.get("main_port_id"),
+      FclFreightRateLocal.trade_type == request.get("trade_type"),
+      FclFreightRateLocal.container_size == request.get("container_size"),
+      FclFreightRateLocal.container_type == request.get('container_type'),
+      FclFreightRateLocal.commodity == request.get("commodity"),
+      FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
+      FclFreightRateLocal.service_provider_id == request.get("service_provider_id"),
+      FclFreightRateLocal.rate_type == request.get('rate_type')
+    ).first()
   
   return object
 

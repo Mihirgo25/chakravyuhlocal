@@ -158,7 +158,7 @@ def cogo_assured_fcl_freight_local_migration():
                         "remarks": [],
                         "location_id": None 
                     }]
-
+                    location_ids = [UUID(rate[9]), UUID(rate[11]), UUID(rate[12]), UUID(rate[13])]
                     result = {
                         'container_size' : rate[0],
                         'container_type' : rate[1],
@@ -173,6 +173,7 @@ def cogo_assured_fcl_freight_local_migration():
                         'trade_id' : rate[12],
                         'continent_id' : rate[13],
                         'trade_type' : rate[14],
+                        'location_ids':location_ids,
                         'rate_type':'cogo_assured',
                         'procured_by_id': DEFAULT_USER_ID,
                         'sourced_by_id': DEFAULT_USER_ID,
@@ -188,6 +189,7 @@ def cogo_assured_fcl_freight_local_migration():
                     row_data.append(result)
                 cur.close()
                 FclFreightRateLocal.insert_many(row_data).execute()
+                print('updating locations')
                 update_locations(distinct_port_ids)
         conn.close()
         return {"message": "Created rates in fcl with tag cogo_assured"}
@@ -216,4 +218,3 @@ def update_locations(distinct_port_ids):
 if __name__ == "__main__":
     cogo_assured_fcl_freight_migration()
     cogo_assured_fcl_freight_local_migration()
-    update_locations()

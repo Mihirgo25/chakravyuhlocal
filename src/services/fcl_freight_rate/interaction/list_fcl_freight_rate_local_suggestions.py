@@ -76,7 +76,7 @@ def get_pagination_data(query, page, page_limit, pagination_data_required):
 def get_data(query):
     data = []
     
-    query = query.select(FclFreightRateLocal.id,FclFreightRateLocal.port_id,FclFreightRateLocal.main_port_id,FclFreightRateLocal.shipping_line_id,FclFreightRateLocal.service_provider_id,FclFreightRateLocal.trade_type,FclFreightRateLocal.container_size,FclFreightRateLocal.container_type,FclFreightRateLocal.commodity,FclFreightRateLocal.data)
+    query = query.select(FclFreightRateLocal.id,FclFreightRateLocal.port_id,FclFreightRateLocal.main_port_id,FclFreightRateLocal.shipping_line_id,FclFreightRateLocal.service_provider_id,FclFreightRateLocal.trade_type,FclFreightRateLocal.container_size,FclFreightRateLocal.container_type,FclFreightRateLocal.commodity,FclFreightRateLocal.data,FclFreightRateLocal.rate_type)
     response = query.dicts()
     for result in response:
         result['line_items'] = result['data'].get('line_items')
