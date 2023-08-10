@@ -10,7 +10,7 @@ class Click:
         self.root_path = f"{ROOT_DIR}/services/bramhastra/database/tables"
 
     def create(self, model: peewee.Model):
-        sql_file_path = f"{self.root_path}/{model._meta.name}.sql"
+        sql_file_path = f"{self.root_path}/{model._meta.table_name}.sql"
         if os.path.exists(sql_file_path):
             print(f"The file {sql_file_path} exists.")
         else:
@@ -37,7 +37,7 @@ class Click:
                 print(e)
 
     def validate(self, sql_file_path, model):
-        model_cols = model._meta.field_names
+        model_cols = list(model._meta.fields.keys())
 
         with open(sql_file_path, "r") as sql_file:
             sql_script = sql_file.read()

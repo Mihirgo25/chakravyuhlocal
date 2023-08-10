@@ -33,8 +33,12 @@ class Table:
         except:
             print("Exception while creating table")
             raise
-
-        Click().create(self.models)
+        
+        try:
+            Click().create_tables(self.models)
+        except Exception:
+            pass    
+        
 
 
 if __name__ == "__main__":

@@ -38,6 +38,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
 from database.rails_db import get_connection
+from services.bramhastra.enums import ShipmentServices
 
 STANDARD_CURRENCY = "USD"
 
@@ -833,14 +834,14 @@ class Statistics():
         if isinstance(row, Model):
             for key in increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
-            for k, v in update_object:
+            for k, v in update_object.items():
                 setattr(row, k, v)
             row.save()
         else:
             for key in increment_keys:
                 row[key] += 1
 
-            for k, v in update_object:
+            for k, v in update_object.items():
                 row[k] = v
 
             fcl_freight_validity.create_stats(row)
@@ -863,16 +864,16 @@ class Shipment(FclFreightValidity):
             "shipment_id",
         }
         self.state_increment_keys = {'cancelled','completed','confirmed_by_importer_exporter','aborted','shipment_received'}
-        self.key = f'shipment_{self.params.shipment.state}_count'
+        self.key = f'shipment_{self.params.shipment.state}_count' if  self.params.shipment.state != 'shipment_received' else 'shipment_recieved_count'
 
     def format(self):
         shipment = self.params.shipment.dict()
-        rate_id, validty_id = self.get_rate_details_from_initial_quotation(
-            self.params.shipments.shipment_id
+        rate_id, validity_id = self.get_rate_details_from_initial_quotation(
+            self.params.shipment.shipment_id,self.params.shipment.source_id
         ).values()
         
         fcl_freight_validity = FclFreightValidity(
-            rate_id=rate_id, validity_id=validty_id
+            rate_id=rate_id, validity_id=validity_id
         )
         self.clickhouse_client = fcl_freight_validity.clickhouse_client
             
@@ -881,48 +882,68 @@ class Shipment(FclFreightValidity):
         new_row = fcl_freight_validity.update_stats(
             return_new_row_without_updating=True
         )
-         
-        for buy_quotation in self.params.buy_quotations:
-            shipment_copy = shipment.copy()
-            shipment_services_hash = {
+        
+        fcl_freight_rate_statistic_id = (
+                    new_row["id"] if isinstance(new_row, dict) else new_row.id
+                )
+        
+        shipment_services_hash = {
                 i.shipment_fcl_freight_service_id: i.dict()
                 for i in self.params.fcl_freight_services
-            }
-            shipment_copy.update(buy_quotation.dict())
+            } 
+        for buy_quotation in self.params.buy_quotations:
+            if buy_quotation.service_type != ShipmentServices.fcl_freight_service.value:
+                continue
+            shipment_copy = shipment.copy()
+            shipment_copy['rate_id'] = rate_id
+            shipment_copy['validity_id'] = validity_id
+            shipment_copy.update(buy_quotation.dict(exclude = {'service_id','service_type'}))
             shipment_copy.update(shipment_services_hash[buy_quotation.service_id])
+            shipment_copy['fcl_freight_rate_statistic_id'] = fcl_freight_rate_statistic_id
             self.stats.append(shipment_copy)
             
-            
         if self.action == ShipmentAction.create.value:
-            ShipmentFclFreightRateStatistic.insert_many(self.stats)
+            ShipmentFclFreightRateStatistic.insert_many(self.stats).execute()
             if self.params.shipment.state in self.state_increment_keys:
-                new_row[self.key]+=1
+                if isinstance(new_row, dict):
+                    new_row[self.key]+=1
+                else:
+                    setattr(new_row,self.key,getattr(new_row,self.key)+1)
         elif self.action == ShipmentAction.update.value:
             self.create_or_update(new_row)
             
         
+        rate_update_hash = dict()
+            
+        
         if self.action == ShipmentAction.create.value:
-            new_row['acuracy'] = 100
+            rate_update_hash['acuracy'] = 100
             
-            new_row['rate_deviation_from_latest_booking'] = 0
+            rate_update_hash['rate_deviation_from_latest_booking'] = 0
+            
+            booking_rate_count = (new_row["booking_rate_count"] or 1) if isinstance(new_row, dict) else new_row.booking_rate_count or 1
+            
+            average_booking_rate = new_row["average_booking_rate"] if isinstance(new_row, dict) else new_row.average_booking_rate
+            
+            standard_price = new_row["standard_price"] if isinstance(new_row, dict) else new_row.standard_price
             
             
-            new_row['average_booking_rate'] = (
+            rate_update_hash['average_booking_rate'] = (
                 (
-                    new_row.get("average_booking_rate")
-                    * new_row.get("booking_rate_count")
+                    average_booking_rate
+                    * booking_rate_count
                 )
-                + new_row.get("standard_price")
-            ) / (new_row.get("booking_rate_count") + 1)
+                + standard_price
+            ) / (booking_rate_count + 1)
             
             
-            new_row['rate_deviation_from_booking_rate'] =  (
+            rate_update_hash['rate_deviation_from_booking_rate'] =  (
                 (
-                    new_row.get("standard_price")
-                    - new_row.get("average_booking_rate")
+                    standard_price
+                    - rate_update_hash.get("average_booking_rate")
                 )
                 ** 2
-                / new_row.get("booking_rate_count")
+                / booking_rate_count
                 + 1
             ) ** 0.5
 
@@ -931,7 +952,7 @@ class Shipment(FclFreightValidity):
                 stat["fcl_freight_rate_statistic_id"] = (
                     new_row["id"] if isinstance(new_row, dict) else new_row.id
                 )
-            self.increment_shipment_rate_stats(fcl_freight_validity, new_row)
+            self.increment_shipment_rate_stats(fcl_freight_validity, new_row, rate_update_hash)
 
     def create_or_update(self,new_row):
         if not self.clickhouse_client:
@@ -941,7 +962,10 @@ class Shipment(FclFreightValidity):
             if row := self.get_row(stat):
                 if not first_row:
                     if self.stats[0]['state'] != row['state']:
-                        new_row[self.key]+=1
+                        if isinstance(new_row, dict):
+                            new_row[self.key]+=1
+                        else:
+                            setattr(new_row,self.key,getattr(new_row,self.key)+1)
                         first_row = True
                 self.update(row.get("id"), stat)
             else:
@@ -982,18 +1006,28 @@ class Shipment(FclFreightValidity):
         ):
             return row[0]
 
-    def increment_shipment_rate_stats(self, fcl_freight_validity, row):
+    def increment_shipment_rate_stats(self, fcl_freight_validity, row, update_object):
+        breakpoint()
         if isinstance(row, Model):
             for key in self.increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
+            for k, v in update_object.items():
+                setattr(row, k, v)
             row.save()
         else:
             for key in self.increment_keys:
                 row[key] += 1
+
+            for k, v in update_object.items():
+                row[k] = v
+
             fcl_freight_validity.create_stats(row)
 
-    def get_rate_details_from_initial_quotation(self, shipment_id):
-        query = f"SELECT rate_id,validity_id from brahmastra.{CheckoutFclFreightRateStatistic._meta.table_name} from shipment_id = %(shipment_id)s"
+    def get_rate_details_from_initial_quotation(self, shipment_id,source_id):
+        if response := CheckoutFclFreightRateStatistic.select(CheckoutFclFreightRateStatistic.rate_id,CheckoutFclFreightRateStatistic.validity_id).where(CheckoutFclFreightRateStatistic.checkout_id == source_id).dicts():
+            return jsonable_encoder(response.get())
+        breakpoint()
+        query = f"SELECT rate_id,validity_id FROM brahmastra.{CheckoutFclFreightRateStatistic._meta.table_name} WHERE checkout_id = %(checkout_id)s"
         if response := self.clickhouse_client.execute(
             query, dict(shipment_id=shipment_id)
         ):
@@ -1136,14 +1170,14 @@ class RevenueDesk(FclFreightValidity):
         if isinstance(row, Model):
             for key in self.increment_keys:
                 setattr(row, key, getattr(row, key) + 1)
-            for k, v in update_object:
+            for k, v in update_object.items():
                 setattr(row, k, v)
             row.save()
         else:
             for key in self.increment_keys:
                 row[key] += 1
 
-            for k, v in update_object:
+            for k, v in update_object.items():
                 row[k] = v
 
             fcl_freight_validity.create_stats(row)

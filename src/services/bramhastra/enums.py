@@ -49,3 +49,7 @@ class RedisKeys(Bramhastra):
 
 class DTString(Bramhastra):
     rate_monitoring = "rate_montioring"
+
+
+class ShipmentServices(Bramhastra):
+    fcl_freight_service = 'fcl_freight_service'

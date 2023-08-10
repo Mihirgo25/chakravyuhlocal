@@ -172,14 +172,14 @@ class ApplyFeedbackFclFreightRateStatistics(BaseModel):
 
 class FclFreightServices(BaseModel):
     shipment_fcl_freight_service_id: str = Field(alias="id")
-    shipment_id: str = None
+    shipment_id: str
     service_state: str = Field(alias="state", default=None)
     service_is_active: bool = Field(alias="is_active")
     service_cancellation_reason: str = Field(alias="cancellation_reason", default=None)
     service_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
     service_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
     shipping_line_id: str
-    service_provider_id: str
+    service_provider_id: str 
 
 
 class BuyQuotation(BaseModel):
@@ -193,7 +193,7 @@ class BuyQuotation(BaseModel):
     tax_total_price: float = None
     tax_total_price_discounted: float = None
     currency: str = None
-    is_deleted: bool
+    is_deleted: bool = None
     buy_quotation_created_at: datetime = Field(
         alias="created_at", default=datetime.utcnow()
     )
@@ -204,7 +204,7 @@ class BuyQuotation(BaseModel):
 
 class Shipment(BaseModel):
     shipment_id: str = Field(alias="id")
-    serial_id: int
+    serial_id: int = None
     importer_exporter_id: str
     shipment_type: str
     services: list[str] = None

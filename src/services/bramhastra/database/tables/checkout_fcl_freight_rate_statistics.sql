@@ -22,8 +22,8 @@ CREATE TABLE brahmastra.checkout_fcl_freight_rate_statistics
     d_at DateTime DEFAULT now()
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
-PRIMARY KEY (rate_id,checkout_id,validity_id)
-ORDER BY (rate_id,checkout_id,validity_id,id);
+PRIMARY KEY (rate_id,validity_id,checkout_id)
+ORDER BY (rate_id,validity_id,checkout_id,id);
 
 CREATE TABLE brahmastra.stale_checkout_fcl_freight_rate_statistics
 (
