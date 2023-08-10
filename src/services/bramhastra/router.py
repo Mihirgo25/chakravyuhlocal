@@ -35,8 +35,8 @@ from services.bramhastra.interactions.apply_fcl_freight_rate_rd_statistic import
 from services.bramhastra.interactions.apply_quotation_fcl_freight_rate_statistic import (
     apply_quotation_fcl_freight_rate_statistic,
 )
-from services.bramhastra.interactions.get_fcl_freight_rate_for_port_pair import (
-    get_fcl_freight_rate_for_port_pair,
+from services.bramhastra.interactions.get_fcl_freight_port_pair_count import (
+    get_fcl_freight_port_pair_count,
 )
 
 from services.bramhastra.request_params import (
@@ -54,7 +54,7 @@ from services.bramhastra.response_models import (
     FclFreightRateLifeCycleResponse,
     DefaultList,
     FclFreightRateWorldResponse,
-    PortPair
+    PortPairRateCount
 )
 from fastapi.responses import JSONResponse
 from services.bramhastra.constants import INDIA_LOCATION_ID
@@ -163,9 +163,9 @@ def list_fcl_freight_rate_request_statistics_func(
     response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
-@bramhastra.get("/get_fcl_freight_rate_for_port_pair", response_model=PortPair)
-def get_fcl_freight_rate_for_port_pair_func(pairs: list[PortPair] ):
-    response = get_fcl_freight_rate_for_port_pair(pairs)
+@bramhastra.get("/get_fcl_freight_port_pair_count", response_model=PortPairRateCount)
+def get_fcl_freight_port_pair_count_func(pairs: Json = Query(None)):
+    response = get_fcl_freight_port_pair_count(pairs)
     return JSONResponse(content=response)
 
 @bramhastra.websocket("/use")

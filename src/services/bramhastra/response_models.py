@@ -86,7 +86,11 @@ class World(BaseModel):
 class FclFreightRateWorldResponse(BaseModel):
     statistics: list[World]
     total_rates: int
-
+    
 class PortPair(BaseModel):
     origin_id: str
     destination_id: str
+    rate_count: int
+    
+class PortPairRateCount(BaseModel):
+    port_pair_rate_count = list[PortPair]
