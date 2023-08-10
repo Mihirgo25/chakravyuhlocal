@@ -8,9 +8,10 @@ from datetime import datetime
 
 possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'is_slabs_missing', 'location_id', 'specificity_type', 'previous_days_applicable', 'rate_not_available_entry']
 possible_indirect_filters = ['importer_exporter_present', 'active', 'inactive']
+LIST_FIELDS = ['id', 'location_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'free_limit', 'remarks', 'slabs', 'is_slabs_missing', 'specificity_type', 'updated_at', 'previous_days_applicable', 'shipping_line', 'location', 'service_provider', 'importer_exporter', 'validity_start', 'validity_end']
 
-def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pagination_data_required = True, return_query = False):
-    query = get_query()
+def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pagination_data_required = True, return_query = False,includes = {}):
+    query = get_query(includes)
 
     if filters:
         if type(filters) != dict: 
@@ -22,7 +23,9 @@ def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pag
         query = apply_indirect_filters(query, indirect_filters)
 
     pagination_data = get_pagination_data(query, page, page_limit, pagination_data_required)
-    query = query.paginate(page, page_limit)
+    
+    if page_limit:
+        query = query.paginate(page, page_limit)
 
     if return_query: 
         return { 'list': str(query) } 
@@ -31,31 +34,16 @@ def list_fcl_freight_rate_free_days(filters = {}, page_limit = 10, page = 1, pag
 
     return { 'list': data } | pagination_data
 
-def get_query():
-    query = FclFreightRateFreeDay.select(
-        FclFreightRateFreeDay.id,
-        FclFreightRateFreeDay.location_id,
-        FclFreightRateFreeDay.shipping_line_id,
-        FclFreightRateFreeDay.service_provider_id,
-        FclFreightRateFreeDay.importer_exporter_id,
-        FclFreightRateFreeDay.trade_type,
-        FclFreightRateFreeDay.free_days_type,
-        FclFreightRateFreeDay.container_size,
-        FclFreightRateFreeDay.container_type,
-        FclFreightRateFreeDay.free_limit,
-        FclFreightRateFreeDay.remarks,
-        FclFreightRateFreeDay.slabs,
-        FclFreightRateFreeDay.is_slabs_missing,
-        FclFreightRateFreeDay.specificity_type,
-        FclFreightRateFreeDay.updated_at,
-        FclFreightRateFreeDay.previous_days_applicable,
-        FclFreightRateFreeDay.shipping_line,
-        FclFreightRateFreeDay.location,
-        FclFreightRateFreeDay.service_provider,
-        FclFreightRateFreeDay.importer_exporter,
-        FclFreightRateFreeDay.validity_start,
-        FclFreightRateFreeDay.validity_end
-    ).order_by(FclFreightRateFreeDay.updated_at.desc(nulls = 'LAST'))
+def get_query(includes):
+    if includes:
+        if type(includes) != dict: 
+            includes = json.loads(includes)
+            
+    required_fields =  list(includes.keys()) if includes else LIST_FIELDS
+    
+    fields =  [getattr(FclFreightRateFreeDay, key) for key in required_fields]
+            
+    query = FclFreightRateFreeDay.select(*fields).order_by(FclFreightRateFreeDay.updated_at.desc(nulls = 'LAST'))
     return query
 
 

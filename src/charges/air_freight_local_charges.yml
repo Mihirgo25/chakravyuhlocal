@@ -5,22 +5,8 @@ THC:
   condition: true
   tags: ['additional_service']
   sac_code: ''
-XRAY:
-  name: "X Ray Machine Charges"
-  units: ['per_kg', 'per_package', 'per_shipment']
-  trade_types: ['export', 'import']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996713'
 XRAYC:
   name: "X Ray Screening & Certification"
-  units: ['per_kg', 'per_shipment']
-  trade_types: ['export', 'import']
-  condition: true
-  tags: ['additional_service']
-  sac_code: ''
-UTL:
-  name: "Utilization"
   units: ['per_kg', 'per_shipment']
   trade_types: ['export', 'import']
   condition: true
@@ -230,13 +216,6 @@ CCFEES:
   condition: true
   tags: ['additional_service']
   sac_code: ''
-CTS:
-  name: "Code not in use"
-  units: ['per_kg']
-  trade_types: ['export' , 'import']
-  condition: true
-  tags: ['additional_service', 'deleted']
-  sac_code: '996799'
 AWCH:
   name: "Airway Bill Carrier Charges"
   units: ['per_shipment','per_awb']
@@ -329,13 +308,6 @@ MIF:
   condition: true
   tags: ['additional_service']
   sac_code: '996719'
-HAZ:
-  name: "Code not in use"
-  units: ['per_kg','per_shipment']
-  trade_types: [ 'export', 'import' ]
-  condition: commodity in HAZ_CLASSES or commodity_type == "dangerous"
-  tags: ['additional_service', 'deleted']
-  sac_code: '996799'
 APPF:
   name: "Active Pharma processing fees"
   units: ['per_kg','per_shipment']
@@ -455,27 +427,6 @@ FUM:
   condition: true
   tags: ['additional_service']
   sac_code: ''
-SPCC:
-  name: "Spillage Of Cargo Cleaning"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export', 'import' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996799'
-LCH:
-  name: "Ad-hoc Airline charges"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export', 'import' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: ''
-CRC:
-  name: "Crane / Forklift Use at CFS"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export', 'import' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: ''
 PALL:
   name: "Palletization charges"
   units: [ 'per_shipment', 'per_kg','per_awb' ]
@@ -483,48 +434,6 @@ PALL:
   condition: true
   tags: ['additional_service']
   sac_code: '996713'
-LAWB:
-  name: "Late AWB Charges"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export']
-  condition: true
-  tags: ['additional_service']
-  sac_code: ''
-AWBAM:
-  name: "BL Amendment Fee"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: ''
-AWBRI:
-  name: "AWB reissue Fee"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: ''
-CPE:
-  name: "Check Package Expense"
-  units: ['per_shipment', 'per_kg','per_awb']
-  trade_types: [ 'export', 'import']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996799'
-TTOL:
-  name: "Transportation Toll charges"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export', 'import' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996799'
-IIF:
-  name: "Inland Inspection Fee"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export', 'import' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996799'
 ICC:
   name: "Import Courier Charges"
   units: ['per_shipment', 'per_kg','per_awb']
@@ -574,34 +483,6 @@ TCS:
   condition: true
   tags: ['additional_service']
   sac_code: '996799'
-EXPSTR:
-  name: "Export CFS Storage Fees"
-  units: ['per_shipment', 'per_kg','per_awb']
-  trade_types: [ 'export' ]
-  condition: true
-  tags: [ 'additional_service' ]
-  sac_code: ''
-CC:
-  name: "Export Courier Service"
-  units: [ 'per_shipment', 'per_kg','per_awb' ]
-  trade_types: [ 'export' ]
-  condition: true
-  tags: [ 'additional_service' ]
-  sac_code: '996799'
-DAF:
-  name: "Domestic Air Freight"
-  units: ['per_kg']
-  trade_types: ['local']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996531'
-AHFR:
-  name: "Agent Handling Fees - Rebate"
-  units: ['per_shipment']
-  trade_types: ['import', 'export']
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996713'
 AMS:
   name: "Electronic Automated Manifest System"
   units: [ 'per_shipment','per_awb' ]
@@ -609,41 +490,13 @@ AMS:
   trade_types: ['export']
   tags: ['additional_service']
   sac_code: '996531'
-AIDEM:
-  name: "Code not in use"
-  units: [ 'per_kg_per_day' ]
-  trade_types: [ 'import','export' ]
-  condition: true
-  tags: [ 'additional_service', 'deleted']
-  sac_code: '996531'
-INSC:
-  name: "Aviation Insurance Charges"
-  units: ['per_shipment']
-  trade_types: [ 'import','export' ]
-  condition: true
-  tags: [ 'additional_service' ]
-  sac_code: '997135'
-ADEM:
-  name: "Airport Demurrage Charge"
-  units: ['per_kg_per_day']
-  trade_types: [ 'import','export' ]
-  condition: true
-  tags: ['additional_service']
-  sac_code: '996531'
-HRC:
-  name: "Human Remains Charges"
-  units: ['per_shipment']
-  trade_types: [ 'export' , 'import' ]
-  condition: true
-  tags: [ 'additional_service' ]
-  sac_code: '999731'
 AWCNO:
   name: "Airway bill Charge with no tax"
   units: ['per_shipment','per_awb']
   trade_types: ['export']
   condition: commodity == "special_consideration"
   tags: ['additional_service']
-  sac_code: '996531'
+  sac_code: ''
 CI:
   name: "Cargo Insurance Charges"
   units: ['per_shipment','per_awb']
@@ -651,13 +504,6 @@ CI:
   condition: true
   tags: ['additional_service']
   sac_code: '997135'
-ACMES:
-  name: 'ACMES Charges'
-  units: [ 'per_shipment' ]
-  trade_types: [ 'export' ]
-  condition: true
-  tags: [ 'additional_service' ]
-  sac_code: '996713'
 #Temporary CODES
 THCV:
   name: "Terminal Handling Charges"

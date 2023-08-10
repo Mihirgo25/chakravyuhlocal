@@ -11,7 +11,7 @@ from libs.json_encoder import json_encoder
 
 DEFAULT_INCLUDES = ['id', 'origin_airport_id', 'destination_airport_id', 'airline_id', 'commodity', 'commodity_type', 'commodity_sub_type', 'operation_type', 'service_provider_id', 'length', 'breadth', 'height', 'updated_at', 'created_at', 'maximum_weight', 'shipment_type', 'stacking_type', 'price_type', 'cogo_entity_id', 'rate_type', 'source', 'origin_airport', 'destination_airport', 'service_provider', 'airline', 'procured_by']
 
-POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'airline_id', 'commodity', 'operation_type', 'service_provider_id', 'rate_not_available_entry', 'price_type', 'shipment_type', 'stacking_type', 'commodity_type', 'cogo_entity_id', 'rate_type','source']
+POSSIBLE_DIRECT_FILTERS = ['id', 'origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'airline_id', 'commodity', 'operation_type', 'service_provider_id', 'rate_not_available_entry', 'price_type', 'shipment_type', 'stacking_type', 'commodity_type', 'cogo_entity_id', 'rate_type','source','price_type']
 
 POSSIBLE_INDIRECT_FILTERS = ['location_ids', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'last_rate_available_date_greater_than', 'procured_by_id', 'is_rate_not_available_entry', 'origin_location_ids', 'destination_location_ids', 'density_category', 'partner_id', 'available_volume_range', 'available_gross_weight_range', 'achieved_volume_percentage', 'achieved_gross_weight_percentage', 'updated_at','not_predicted_rate','date','validity_id']
 
@@ -60,6 +60,8 @@ def get_query(all_rates_for_cogo_assured,sort_by, sort_type, older_rates_require
   query = query.order_by(eval('AirFreightRate.{}.{}()'.format(sort_by,sort_type)))
   query = query.where(~AirFreightRate.rate_not_available_entry)
   query = query.where(AirFreightRate.last_rate_available_date >= datetime.now().date())
+  query = query.where(SQL("TO_DATE(validity->>'validity_end','YYYY-MM-DD')") >= datetime.now().date())
+
   return query
 
 def apply_indirect_filters(query, filters):

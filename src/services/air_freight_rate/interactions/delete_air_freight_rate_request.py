@@ -7,8 +7,12 @@ from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from configs.global_constants import MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 from micro_services.client import *
-from celery_worker import send_closed_notifications_to_sales_agent_function
+from celery_worker import send_closed_notifications_to_sales_agent_function,send_closed_notifications_to_user_request
 from fastapi.encoders import jsonable_encoder
+from database.rails_db import (
+    get_organization_partner,
+)
+
 
 def delete_air_freight_rate_request(request):
     object_type = "Air_Freight_Rate_Request"
@@ -23,7 +27,7 @@ def delete_air_freight_rate_request(request):
 def execute_transaction_code(request):
     request_objects = (
         AirFreightRateRequest.select(AirFreightRateRequest.id,AirFreightRateRequest.status,AirFreightRateRequest.closed_by_id,AirFreightRateRequest.closing_remarks,
-        AirFreightRateRequest.source,AirFreightRateRequest.source_id,AirFreightRateRequest.service_provider_id,)
+        AirFreightRateRequest.source,AirFreightRateRequest.source_id,AirFreightRateRequest.service_provider_id,AirFreightRateRequest.performed_by_id,AirFreightRateRequest.performed_by_type,AirFreightRateRequest.performed_by_org_id)
         .where(
             AirFreightRateRequest.id << request.get("air_freight_rate_request_ids"),
             AirFreightRateRequest.status == "active",
@@ -69,8 +73,18 @@ def execute_transaction_code(request):
 
         AirServiceAudit.create(**get_audit_params(request, request_object.id))
 
-        send_closed_notifications_to_sales_agent_function.apply_async(
-            kwargs={"object": request_object}, queue="low"
+        id = str(request_object.performed_by_org_id)
+        org_users = get_organization_partner(id)
+
+        
+        if request_object.performed_by_type == 'user' and org_users and request_object.source != 'checkout':
+          send_closed_notifications_to_user_request.apply_async(
+            kwargs={"object": request_object}, queue="critical"
+        ) 
+
+        else:
+           send_closed_notifications_to_sales_agent_function.apply_async(
+            kwargs={"object": request_object}, queue="critical"
         )
 
     if shipment_source:

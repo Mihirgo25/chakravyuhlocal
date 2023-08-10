@@ -26,6 +26,7 @@ def get_zone_wise_rate_query(request):
             FclCustomsRate.trade_type == request.get('trade_type'),
             FclCustomsRate.is_customs_line_items_error_messages_present == False,
             FclCustomsRate.rate_not_available_entry == False,
+            FclCustomsRate.mode == 'manual',
             ((FclCustomsRate.commodity == request.get('commodity')) | (FclCustomsRate.commodity.is_null(True))),
             ((FclCustomsRate.importer_exporter_id == request.get('importer_exporter_id')) | (FclCustomsRate.importer_exporter_id.is_null(True)))
         )
@@ -53,6 +54,7 @@ def get_zone_average_customs_rate(request):
                 units[code] = unit
             
         average_items = []
+        currency = customs_rates[0]['customs_line_items'][0].get('currency')
 
         for code, prices in code_prices.items():
             average_price = sum(prices) / len(prices)
@@ -61,7 +63,7 @@ def get_zone_average_customs_rate(request):
                 'unit': units[code],
                 'price': average_price,
                 'remarks': [],
-                'currency': 'INR',
+                'currency': currency,
                 'location_id': None
             }
             average_items.append(average_item)
@@ -71,6 +73,8 @@ def get_zone_average_customs_rate(request):
         predicted_customs_rate['customs_line_items'] = average_items
         predicted_customs_rate['importer_exporter_id'] = None
         predicted_customs_rate['location_id'] = request.get('port_id')
+        predicted_customs_rate['mode'] = 'predicted'
+        predicted_customs_rate['rate_type'] = DEFAULT_RATE_TYPE
         create_params = get_create_params(request, predicted_customs_rate['customs_line_items'])
 
         create_fcl_customs_rate_delay.apply_async(kwargs = {'request':create_params}, queue = 'low')

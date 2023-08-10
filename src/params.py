@@ -17,6 +17,7 @@ class UpdateLineItem(BaseModel):
     unit: str
     price: float
     market_price: float = None
+    original_price: float = None
     currency: str
     remarks: list[str] = None
     slabs: list[Slab] = []
@@ -36,6 +37,7 @@ class LineItem(BaseModel):
     price: float
     currency: str
     market_price: float = None
+    original_price: float = None
     remarks: list[str] = None
     slabs: list[Slab] = None
     conditions: dict = {}
@@ -46,6 +48,7 @@ class LocalData(BaseModel):
     detention: FreeDay = None
     demurrage: FreeDay = None
     plugin: FreeDay = None
+
 
 
 class PostFclFreightRate(BaseModel):
