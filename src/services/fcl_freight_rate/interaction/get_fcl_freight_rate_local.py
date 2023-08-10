@@ -21,21 +21,29 @@ def find_object(request):
   if request.get('id'):
      object = FclFreightRateLocal.get_by_id(request['id'])
   else:
-    object = FclFreightRateLocal.select().where(
+    if request.get('rate_type') == 'cogo_assured':
+      object = FclFreightRateLocal.select().where(
       FclFreightRateLocal.port_id == request.get("port_id"),
-      FclFreightRateLocal.main_port_id == request.get("main_port_id"),
       FclFreightRateLocal.trade_type == request.get("trade_type"),
-      FclFreightRateLocal.container_size == request.get("container_size"),
-      FclFreightRateLocal.container_type == request.get('container_type'),
-      FclFreightRateLocal.commodity == request.get("commodity"),
-      FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
-      FclFreightRateLocal.service_provider_id == request.get("service_provider_id"),
-      FclFreightRateLocal.rate_type == request.get('rate_type')
-    ).first()
+      FclFreightRateLocal.rate_type == 'cogo_assured'
+      ).first()
+      
+    else:
+        object = FclFreightRateLocal.select().where(
+        FclFreightRateLocal.port_id == request.get("port_id"),
+        FclFreightRateLocal.main_port_id == request.get("main_port_id"),
+        FclFreightRateLocal.trade_type == request.get("trade_type"),
+        FclFreightRateLocal.container_size == request.get("container_size"),
+        FclFreightRateLocal.container_type == request.get('container_type'),
+        FclFreightRateLocal.commodity == request.get("commodity"),
+        FclFreightRateLocal.shipping_line_id == request.get("shipping_line_id"),
+        FclFreightRateLocal.service_provider_id == request.get("service_provider_id"),
+        FclFreightRateLocal.rate_type == request.get('rate_type')
+      ).first()
   
   return object
 
 def all_fields_present(object_params):
-    if ((object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None) and (object_params.get('rate_type') is not None)) or (object_params['id'] is not None):
+    if  (object_params.get('rate_type') == 'cogo_assured' and object_params.get('port_id') is not None and object_params.get('trade_type') is not None) or ((object_params['port_id'] is not None) and (object_params['trade_type'] is not None) and (object_params['container_size'] is not None) and (object_params['container_type'] is not None) and (object_params['shipping_line_id'] is not None) and (object_params['service_provider_id'] is not None) and (object_params.get('rate_type') is not None)) or (object_params['id'] is not None):
         return True
     return False
