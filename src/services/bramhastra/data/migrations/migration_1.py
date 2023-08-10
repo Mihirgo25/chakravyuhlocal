@@ -1301,7 +1301,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 
                 if not statistic_obj:
                     continue
-                breakpoint()
                 statistic_obj.parent_rate_id = row['fcl_freight_rate_id']
                 statistic_obj.parent_validity_id = row['validity_id']
                 statistic_obj.save()
