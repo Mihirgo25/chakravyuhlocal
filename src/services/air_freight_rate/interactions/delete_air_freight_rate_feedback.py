@@ -5,6 +5,10 @@ from services.air_freight_rate.models.air_freight_rate_feedback import AirFreigh
 from celery_worker import send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from database.rails_db import (
+    get_organization_partner,
+)
+
 
 def delete_air_freight_rate_feedback(request):
     with db.atomic():
@@ -34,8 +38,11 @@ def execute_transaction_code(request):
 
         create_audit(request,obj.id)
         get_multiple_service_objects(obj)
+
+        id = str(obj.performed_by_org_id)
+        org_users = get_organization_partner(id)
          
-        if obj.source =='spot_search' and obj.performed_by_type =='user':
+        if  obj.performed_by_type == 'user' and org_users  and obj.source != 'checkout':
             send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue="critical") 
         else:
             send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')    

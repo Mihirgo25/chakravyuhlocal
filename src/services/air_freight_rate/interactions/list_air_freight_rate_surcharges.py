@@ -9,8 +9,8 @@ import json
 possible_direct_filters = ['id','origin_airport_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_airport_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'service_provider_id', 'airline_id', 'is_line_items_info_messages_present', 'commodity', 'is_line_items_error_messages_present', 'operation_type','procured_by_id']
 possible_indirect_filters = ['location_ids']
 
-def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pagination_data_required=True, return_query = False, sort_by='updated_at', sort_type = 'desc'):
-    query = get_query(sort_by,sort_type)
+def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pagination_data_required=True, return_query = False, sort_by='updated_at', sort_type = 'desc', includes= {}):
+    query = get_query(sort_by,sort_type, includes)
 
     if filters:
         if type(filters) != dict:
@@ -21,9 +21,8 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
         query = get_filters(direct_filters, query, AirFreightRateSurcharge)
         query = apply_indirect_filters(query, indirect_filters)
    
-               
     if return_query: 
-        return { 'list': json_encoder(list(query.dicts())) }
+        return { 'list': query }
     
     pagination_data = get_pagination_data(query,page, page_limit, pagination_data_required)
     query = query.paginate(page, page_limit)
@@ -31,8 +30,15 @@ def list_air_freight_rate_surcharges(filters = {}, page_limit = 10, page = 1, pa
 
     return { 'list': data } | (pagination_data)
 
-def get_query(sort_by,sort_type):
-    query = AirFreightRateSurcharge.select().where(~(AirFreightRateSurcharge.rate_not_available_entry)).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
+def get_query(sort_by,sort_type, includes):
+    if includes:
+        if type(includes) != dict:
+            includes =json.loads(includes)
+            
+    requred_fields = list(includes.keys()) if includes else list(AirFreightRateSurcharge._meta.fields.keys())
+    fields = [getattr(AirFreightRateSurcharge, key) for key in requred_fields] 
+    
+    query = AirFreightRateSurcharge.select(*fields).where(~(AirFreightRateSurcharge.rate_not_available_entry)).order_by(eval('AirFreightRateSurcharge.{}.{}()'.format(sort_by,sort_type)))
     return query
 
 def get_pagination_data(query, page, page_limit, pagination_data_required):
