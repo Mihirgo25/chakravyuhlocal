@@ -270,7 +270,7 @@ class FclFreightRateLocal(BaseModel):
                 'container_type': self.container_type,
                 'shipping_line_id': str(self.shipping_line_id),
                 'service_provider_id': str(self.service_provider_id),
-                'rate_type': self.rate_type,
+                'rate_type': self.rate_type
             }
             detention_filters = common_filters | {
                 'free_days_type': 'detention'
