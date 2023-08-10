@@ -120,7 +120,7 @@ def cogo_assured_fcl_freight_local_migration():
                     result = {
                         'container_size' : rate[0],
                         'container_type' : rate[1],
-                        'commodity' : rate[2],
+                        'commodity' : None,
                         'service_provider_id' : service_provider['id'],
                         'service_provider': service_provider,
                         'shipping_line_id' : shipping_line['id'],
@@ -172,4 +172,6 @@ def update_locations(distinct_port_ids):
     
 
 if __name__ == "__main__":
+    cogo_assured_fcl_freight_migration()
     cogo_assured_fcl_freight_local_migration()
+    update_locations()

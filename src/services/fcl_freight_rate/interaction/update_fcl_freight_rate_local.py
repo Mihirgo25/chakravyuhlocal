@@ -18,15 +18,16 @@ def update_fcl_freight_rate_local(request):
       return execute_transaction_code(request)
 
 def validate_request(request):
+    is_cogo_assured = request.get('rate_type') == 'cogo_assured'
     if not request.get('procured_by_id'):
-      if(request.get('rate_type') == 'cogo_assured'):
-        request['procured_by_id'] = DEFAULT_USER_ID ,
+      if is_cogo_assured:
+        request['procured_by_id'] = DEFAULT_USER_ID
       else:
         raise HTTPException(status_code=400, detail="procured_by_id is  required")
     
     if not request.get('sourced_by_id'):
-      if(request.get('rate_type') == 'cogo_assured'):
-        request['sourced_by_id'] = DEFAULT_USER_ID,
+      if is_cogo_assured:
+        request['sourced_by_id'] = DEFAULT_USER_ID
       else:
         raise HTTPException(status_code=400, detail="sourced_by_id  is required")
     
