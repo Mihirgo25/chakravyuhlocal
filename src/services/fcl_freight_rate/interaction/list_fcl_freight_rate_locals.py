@@ -16,11 +16,14 @@ def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
+            
+        if filters.get('rate_type') == 'all':
+            filters.pop('rate_type')
+            
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-
         query = get_filters(direct_filters, query, FclFreightRateLocal)
         query = apply_indirect_filters(query, indirect_filters)
+        
 
     if return_query:
         items = [model_to_dict(item) for item in query.execute()]
@@ -137,7 +140,7 @@ def apply_is_rate_available_filter(query, filters):
 
 def apply_location_ids_filter(query, filters):
     location_ids = filters['location_ids']
-    query = query.where(FclFreightRateLocal.location_ids.contains(location_ids))
+    query = query.where(FclFreightRateLocal.location_ids.contains_any(location_ids))
     return query
 
 def apply_commodity_filter(query, filters):

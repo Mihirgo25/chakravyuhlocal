@@ -202,6 +202,7 @@ class PostFclFreightRateLocal(BaseModel):
     selected_suggested_rate_id: str = None
     source: str = None
     data: Data = {}
+    rate_type: str = 'market_place'
     rate_not_available_entry: bool = False
 
 
@@ -209,8 +210,6 @@ class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
-    procured_by_id: str
-    sourced_by_id: str
     bulk_operation_id: str = None
     selected_suggested_rate_id: str = None
     data: Data

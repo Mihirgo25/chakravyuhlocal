@@ -7,12 +7,15 @@ from math import ceil
 from micro_services.client import *
 from micro_services.client import common
 
-possible_direct_filters = ['port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'trade_type', 'container_size', 'container_type', 'commodity']
+possible_direct_filters = ['port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'trade_type', 'container_size', 'container_type', 'commodity', 'rate_type']
 possible_indirect_filters = ['location_ids']
 
 def list_fcl_freight_rate_local_suggestions(service_provider_id, filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', pagination_data_required = True):
     query = get_query(filters, service_provider_id, sort_by, sort_type)
     if filters:
+        if filters.get('rate_type') == 'all':
+            filters.pop('rate_type')
+            
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
   
         query = get_filters(direct_filters, query, FclFreightRateLocal)
