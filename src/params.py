@@ -210,6 +210,8 @@ class UpdateFclFreightRateLocal(BaseModel):
     id: str = None
     performed_by_id: str = None
     performed_by_type: str = None
+    procured_by_id: str = None
+    sourced_by_id: str = None
     bulk_operation_id: str = None
     selected_suggested_rate_id: str = None
     data: Data
