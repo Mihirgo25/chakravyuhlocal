@@ -5,7 +5,6 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day impo
 from database.db_session import db
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE
 
 def create_audit(request, fcl_freight_local_id):
     audit_data = {}
@@ -53,7 +52,6 @@ def execute_transaction_code(request):
         'shipping_line_id' : request.get('shipping_line_id'),
         'service_provider_id' : request.get('service_provider_id'),
         "rate_not_available_entry": request.get("rate_not_available_entry"),
-        'rate_type':request.get('rate_type') or DEFAULT_RATE_TYPE
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
@@ -64,8 +62,7 @@ def execute_transaction_code(request):
         FclFreightRateLocal.container_type==request.get('container_type'),
         FclFreightRateLocal.commodity == request.get('commodity'),
         FclFreightRateLocal.shipping_line_id==request.get('shipping_line_id'),
-        FclFreightRateLocal.service_provider_id==request.get('service_provider_id'),
-        FclFreightRateLocal.rate_type==request.get('rate_type')).first()
+        FclFreightRateLocal.service_provider_id==request.get('service_provider_id')).first()
 
     if not fcl_freight_local:
         fcl_freight_local = FclFreightRateLocal(**row)
@@ -124,7 +121,7 @@ def create_free_days(fcl_freight_local,request):
         detention_obj['previous_days_applicable'] = False
 
         detention_obj = detention_obj | ({key: value for key, value in request['data']['detention'].items() if key in ('free_limit', 'slabs', 'remarks')})
-        detention_obj = detention_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'rate_type')})
+        detention_obj = detention_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         detention = create_fcl_freight_rate_free_day(detention_obj)
         fcl_freight_local.detention_id = detention['id']
@@ -137,7 +134,7 @@ def create_free_days(fcl_freight_local,request):
         demurrage_obj['previous_days_applicable'] = False
 
         demurrage_obj = demurrage_obj | ({key: value for key, value in request['data']['demurrage'].items() if key in ('free_limit', 'slabs', 'remarks')})
-        demurrage_obj = demurrage_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'rate_type')})
+        demurrage_obj = demurrage_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         demurrage = create_fcl_freight_rate_free_day(demurrage_obj)
 
@@ -151,7 +148,7 @@ def create_free_days(fcl_freight_local,request):
         plugin_obj['previous_days_applicable'] = False
 
         plugin_obj = plugin_obj | ({key: value for key, value in request['data']['plugin'].items() if key in ('free_limit', 'slabs', 'remarks')})
-        plugin_obj = plugin_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id', 'rate_type')})
+        plugin_obj = plugin_obj | ({key: value for key, value in request.items() if key in ('performed_by_id', 'sourced_by_id', 'procured_by_id', 'trade_type', 'free_days_type', 'container_size', 'container_type', 'shipping_line_id', 'service_provider_id')})
 
         plugin = create_fcl_freight_rate_free_day(plugin_obj)
         fcl_freight_local.plugin_id = plugin['id']
