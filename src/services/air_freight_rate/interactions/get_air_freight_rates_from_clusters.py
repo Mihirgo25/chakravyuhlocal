@@ -62,12 +62,11 @@ def create_params(request,origin_base_airport_id,destination_base_airport_id):
     create_params = []
     cogo_envision_id = DEFAULT_USER_ID
     for critical_rate in critical_rates:
-        rate_found = False
         for validity in critical_rate.validities:
             validity_start = datetime.strptime(validity['validity_start'],'%Y-%m-%d').date()
             validity_end = datetime.strptime(validity['validity_end'],'%Y-%m-%d').date()
 
-            if validity_start <request.get('validity_start').date() and validity_end < request.get('validity_end').date() and validity_check(request,validity_start,validity_end):
+            if validity_check(request,validity_start,validity_end):
                 params = {
                     'origin_airport_id' : request['origin_airport_id'],
                     'destination_airport_id' : request['destination_airport_id'],

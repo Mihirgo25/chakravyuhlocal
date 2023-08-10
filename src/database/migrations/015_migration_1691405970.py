@@ -38,6 +38,7 @@ SQL = pw.SQL
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
     """Write your migrations here."""
     migrator.add_fields(AirFreightRate, importer_exporter_id=UUIDField(index=True,null=True))
+    migrator.add_fields(AirFreightRate, importer_exporter=BinaryJSONField(null=True))
 
 
 

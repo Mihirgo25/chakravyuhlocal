@@ -92,7 +92,7 @@ def create_air_freight_rate_data(request):
         "importer_exporter_id":request.get("importer_exporter_id")
     }
 
-    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["source"])}:{str(row["importer_exporter_id"])}'
+    init_key = f'{str(request.get("origin_airport_id"))}:{str(row["destination_airport_id"])}:{str(row["commodity"])}:{str(row["airline_id"])}:{str(row["service_provider_id"])}:{str(row["shipment_type"])}:{str(row["stacking_type"])}:{str(row["cogo_entity_id"] )}:{str(row["commodity_type"])}:{str(row["commodity_sub_type"])}:{str(row["price_type"])}:{str(row["rate_type"])}:{str(row["operation_type"])}:{str(row["source"])}:{str(row["importer_exporter_id" or ""])}'
 
     freight = (AirFreightRate.select().where(AirFreightRate.init_key == init_key).first())
    
