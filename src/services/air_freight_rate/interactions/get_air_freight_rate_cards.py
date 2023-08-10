@@ -12,7 +12,6 @@ from services.air_freight_rate.interactions.get_air_freight_rate_prediction impo
 from services.air_freight_rate.helpers.air_freight_rate_card_helper import get_density_wise_rate_card
 import sentry_sdk
 import traceback
-from services.air_freight_rate.interactions.get_air_freight_rates_from_clusters import get_air_freight_rates_from_clusters
 
 def initialize_freight_query(requirements,prediction_required=False):
     freight_query = AirFreightRate.select(
@@ -466,10 +465,7 @@ def get_air_freight_rate_cards(requirements):
 
         is_predicted = False
         if len(freight_rates) == 0:
-            try:
-                get_air_freight_rates_from_clusters(requirements)
-            except Exception as e:
-                pass
+
             freight_rates = initialize_freight_query(requirements)
             freight_rates = jsonable_encoder(list(freight_rates.dicts()))
             if len(freight_rates)==0:
