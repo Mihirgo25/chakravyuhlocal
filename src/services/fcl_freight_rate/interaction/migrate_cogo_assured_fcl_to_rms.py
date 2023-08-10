@@ -13,6 +13,10 @@ import datetime
 from configs.env import DEFAULT_USER_ID
 from fastapi.encoders import jsonable_encoder
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
+from datetime import datetime, timedelta
+from services.fcl_freight_rate.interaction.update_fcl_rates_to_cogo_assured import update_fcl_rates_to_cogo_assured
+from configs.fcl_freight_rate_constants import *
+import concurrent.futures
 
 
 shipping_line = {
@@ -57,6 +61,12 @@ def cogo_assured_fcl_freight_migration():
             validity['scehdule_type'] = DEFAULT_SCHEDULE_TYPES
             validity["likes_count"] = 0
             validity["dislikes_count"] = 0
+            validity["line_items"] = [{
+                'code': 'BAS',
+                'unit': 'per_container',
+                'price': validity['price'],
+                'currency': validity['currency']
+            }]
         rate['weight_limit'] = json.loads(rate.get('weight_limit')) if rate.get('weight_limit') else None
         rate['origin_local'] = json.loads(rate.get('origin_local')) if rate.get('origin_local') else None
         rate['destination_local'] = json.loads(rate.get('destination_local')) if rate.get('destination_local') else None
@@ -79,6 +89,38 @@ def cogo_assured_fcl_freight_migration():
             print('Inserted', total_inserted)
     FclFreightRate.insert_many(rates_to_insert).execute()
     print('Done')
+    
+def fcl_freight_rates_to_cogo_assured():
+    try:
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode != "predicted", FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
+        
+        count = query.count()
+        grouped_set = set()
+        limit_size = 5000
+        print(count)
+        for offset in range(0, count, limit_size):
+            batched_rates = query.limit(limit_size).offset(offset)
+            for rate in batched_rates.execute():
+                grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
+        print(len(grouped_set))
+        # with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+        for key in grouped_set:
+            execute_update_fcl_rates_to_cogo_assured(key)
+    except Exception as exc:
+        pass
+
+def execute_update_fcl_rates_to_cogo_assured(key):
+    origin_port_id, origin_main_port_id, destination_port_id, destination_main_port_id, container_size, container_type, commodity = key.split(":")
+    param = {
+        "origin_port_id": origin_port_id,
+        "origin_main_port_id": None if not origin_main_port_id else origin_main_port_id,
+        "destination_port_id":destination_port_id,
+        "destination_main_port_id": None if not destination_main_port_id else destination_main_port_id,
+        "container_size": container_size,
+        "container_type": container_type,
+        "commodity": commodity
+    }
+    update_fcl_rates_to_cogo_assured(param)
     
 def migrate_rate_properties():
     cogo_assured_ids = (FclFreightRate.select(FclFreightRate.id).where(FclFreightRate.rate_type == 'cogo_assured'))

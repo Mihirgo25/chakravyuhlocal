@@ -100,11 +100,11 @@ celery.conf.beat_schedule = {
         'schedule': crontab(minute=00,hour=00),
         'options': {'queue' : 'fcl_freight_rate'}
         },
-    # 'update_cogo_assured_fcl_freight_rates': {
-    #     'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
-    #     'schedule': crontab(minute=30, hour=18),
-    #     'options': { 'queue': 'fcl_freight_rate' }
-    #     },
+    'update_cogo_assured_fcl_freight_rates': {
+        'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
+        'schedule': crontab(minute=30, hour=18),
+        'options': { 'queue': 'fcl_freight_rate' }
+        },
     'process_fuel_data_delays': {
         'task': 'celery_worker.process_fuel_data_delay',
         'schedule': crontab(minute=00,hour=21),
@@ -421,7 +421,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_freight_rates_to_cogo_assured(self):
     try:
-        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at.cast('date') > (datetime.now() - timedelta(days = 1)).date(), FclFreightRate.validities != '[]', FclFreightRate.rate_not_available_entry == False, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at.cast('date') > (datetime.now() - timedelta(days = 1)).date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
         
         count = query.count()
         grouped_set = set()
@@ -434,9 +434,6 @@ def fcl_freight_rates_to_cogo_assured(self):
 
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
             futures = [executor.submit(execute_update_fcl_rates_to_cogo_assured, key) for key in grouped_set]
-            
-        for i in range(0,len(futures)):
-                result = futures[i].result()
     except Exception as exc:
         pass
 
@@ -531,17 +528,16 @@ def create_country_wise_locals_in_delay(self, request):
 @celery.task(bind=True, retry_backoff=True, max_retries=1)
 def update_cogo_assured_fcl_freight_rates(self):
     batch_size = 5000
-    cogo_assured_rates = FclFreightRate.select().where(FclFreightRate.rate_type == 'cogo_assured')
+    cogo_assured_rates = FclFreightRate.select().where(FclFreightRate.rate_type == 'cogo_assured').order_by(FclFreightRate.updated_at.desc())
     total_size = cogo_assured_rates.count()
-    
     for batch in range(0, total_size, batch_size):
         batched_rates = cogo_assured_rates.limit(batch_size).offset(batch)
         if not batched_rates.exists():
             break
         
-        batch_rates = list(batched_rates.dict())
-        for rate in batched_rates:
-            update_cogo_assured_fcl_freight_rate_validities(rate)
+        batch_rates = list(batched_rates.dicts())
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+            futures = [executor.submit(update_cogo_assured_fcl_freight_rate_validities, rate) for rate in batch_rates]
 
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
 def update_fcl_freight_rate_request_in_delay(self, request):

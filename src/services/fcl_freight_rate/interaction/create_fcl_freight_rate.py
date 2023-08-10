@@ -13,23 +13,19 @@ from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import 
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def add_rate_properties(request,freight_id):
+    request["value_props"] = request.get("value_props") or DEFAULT_VALUE_PROPS
     validate_value_props(request["value_props"])
-    rp = FclFreightRateProperties.select(FclFreightRateProperties.id).where(FclFreightRateProperties.rate_id == freight_id).first()
+    rp = FclFreightRateProperties.select(FclFreightRateProperties.id).where(FclFreightRateProperties.rate_id == str(freight_id)).first()
     if not rp :
         FclFreightRateProperties.create(
             rate_id = freight_id,
-            created_at = datetime.now(),
-            updated_at = datetime.now(),
-            value_props = request.get("value_props") or DEFAULT_VALUE_PROPS,
+            value_props = request["value_props"],
             t_n_c = request.get("t_n_c") or [],
             available_inventory = request.get("available_inventory") or 100,
             used_inventory = request.get("used_inventory") or 0,
             shipment_count = request.get("shipment_count") or 0,
             volume_count=request.get("volume_count") or 0
         )
-    # rp = FclFreightRateProperties.select().where(FclFreightRateProperties.rate_id == freight_id).first()
-    # rp.validate_value_props()
-
 
 def create_audit(request, freight_id):
 
@@ -186,10 +182,10 @@ def create_fcl_freight_rate(request):
 
     if row['rate_type'] == 'cogo_assured':
         try:
-            add_rate_properties(request,freight.id)
+            add_rate_properties(request, freight.id)
         except Exception as e:
-            print(e)
-    
+            raise
+        
     # adjust_cogoassured_price(row, request)    
     
     create_audit(request, freight.id)
@@ -299,7 +295,6 @@ def validities_for_cogo_assured(request):
 def validate_value_props(v_props):
     for prop in v_props:
         name = prop.get('name')
-        # print(name)
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
