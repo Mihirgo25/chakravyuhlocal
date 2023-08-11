@@ -3,7 +3,6 @@ from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from configs.env import APP_ENV
 import json
-from configs.env import RUBY_ADDRESS_URL
 class MapsApiClient:
     def __init__(self):
         self.client=GlobalClient(url = str(get_instance_url('location')),headers={
