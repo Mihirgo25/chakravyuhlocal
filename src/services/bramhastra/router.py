@@ -75,7 +75,7 @@ def apply_quotation_fcl_freight_rate_statistic_func(
 ):
     return apply_quotation_fcl_freight_rate_statistic(request)
 
-
+@bramhastra.post("/apply_rd_fcl_freight_rate_statistic")
 def apply_fcl_freight_rate_rd_statistic_func(
     request: ApplyRevenueDeskFclFreightStatistics,
 ):

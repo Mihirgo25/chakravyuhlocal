@@ -355,4 +355,4 @@ def send_freight_rate_stats(action,request,freight):
         if k in {'source_id','source'}:
             object[k] = v
     
-    apply_fcl_freight_rate_statistic_delay.apply_asyn(kwargs = {'action': action,'params': object}, queue='statistics')
+    apply_fcl_freight_rate_statistic_delay.apply_async(kwargs = {'action': action,'params': object}, queue='statistics')

@@ -39,6 +39,11 @@ class ShipmentAction(Bramhastra):
     create = "create"
     update = "update"
     delete = "delete"
+    
+
+class RDAction(Bramhastra):
+    create = "create"
+    update = "update"
 
 
 class RedisKeys(Bramhastra):

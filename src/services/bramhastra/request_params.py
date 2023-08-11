@@ -386,7 +386,9 @@ class FclSelectedForBooking(BaseModel):
 
 
 class ApplyRevenueDeskFclFreightStatistics(BaseModel):
-    revenue_desk_visit_count: int = None
     shipment_id: str
     shipment_fcl_freight_rate_services_id: str
-    selected_for_booking: FclSelectedForBooking
+    rate_id: str = None
+    validities: list[str] = None
+    selected_for_booking: FclSelectedForBooking = None
+    action: str = None
