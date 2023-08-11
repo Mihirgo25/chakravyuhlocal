@@ -112,6 +112,9 @@ class FclFreightRateStatistic(BaseModel):
     booking_rate_count = FloatField(default=0)
     parent_rate_id = UUIDField(null=True)
     parent_validity_id = UUIDField(null=True)
+    so1_select_count = IntegerField(default=0)
+    total_priority = IntegerField(default=0)
+    parent_mode = CharField(null = True)
     source = CharField(null=True)
     source_id = UUIDField(null=True)
 

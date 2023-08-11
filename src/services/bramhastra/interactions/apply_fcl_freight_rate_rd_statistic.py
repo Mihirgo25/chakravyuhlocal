@@ -12,6 +12,8 @@ def apply_fcl_freight_rate_rd_statistic(request):
         return
 
     if request.action == RDAction.update.value and getattr(
-        request.selected_for_booking
+        request,'selected_for_booking'
     ):
         revenue_desk.set_rate_stats()
+    elif request.action == RDAction.update.value and getattr(request,'selected_for_preference'):
+        revenue_desk.update_selected_for_preference_count(request)

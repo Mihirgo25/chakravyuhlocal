@@ -189,6 +189,9 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_statistics
     booking_rate_count UInt16 DEFAULT 0,
     parent_rate_id UUID,
     parent_validity_id UUID,
+    so1_select_count UInt16 DEFAULT 0,
+    total_priority UInt16 DEFAULT 0,
+    parent_mode FixedString(255),
     source String,
     source_id UUID,
 )
