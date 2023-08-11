@@ -182,24 +182,24 @@ class AirFreightRateLocal(BaseModel):
         line_items = {}
         for line_item in self.line_items:
             if line_item['code'] in line_items.keys():
-                raise HTTPException(status_code = 400, details = 'Duplicate Line Items')
+                raise HTTPException(status_code = 400, detail = 'Duplicate Line Items')
             line_items[line_item['code']] = True
 
     
     def validate_commodity(self):
         if self.commodity not in COMMODITY:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity')
 
     def validate_commodity_type(self):
         if self.commodity_type not in COMMODITY_TYPE:
-            raise HTTPException(status_code=400,details = 'Invalid Commodity Type')
+            raise HTTPException(status_code=400,detail = 'Invalid Commodity Type')
 
     def validate_service_provider_id(self):
         service_provider_data = get_organization(id=str(self.service_provider_id))
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
     
     def validate(self):
         if not self.airport:

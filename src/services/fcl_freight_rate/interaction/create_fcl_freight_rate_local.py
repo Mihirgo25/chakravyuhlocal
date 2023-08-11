@@ -6,7 +6,6 @@ from database.db_session import db
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
-
 def create_audit(request, fcl_freight_local_id):
     audit_data = {}
     audit_data['data'] = request.get('data')
@@ -52,7 +51,7 @@ def execute_transaction_code(request):
         'commodity' : request.get('commodity'),
         'shipping_line_id' : request.get('shipping_line_id'),
         'service_provider_id' : request.get('service_provider_id'),
-        "rate_not_available_entry": request.get("rate_not_available_entry")
+        "rate_not_available_entry": request.get("rate_not_available_entry"),
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
