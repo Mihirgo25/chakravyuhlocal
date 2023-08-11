@@ -92,7 +92,7 @@ def cogo_assured_fcl_freight_migration():
     
 def fcl_freight_rates_to_cogo_assured():
     try:
-        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode != "predicted", FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
         
         count = query.count()
         grouped_set = set()
@@ -103,11 +103,10 @@ def fcl_freight_rates_to_cogo_assured():
             for rate in batched_rates.execute():
                 grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
         print(len(grouped_set))
-        # with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
-        for key in grouped_set:
-            execute_update_fcl_rates_to_cogo_assured(key)
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
+            result = [executor.submit(execute_update_fcl_rates_to_cogo_assured,key) for key in grouped_set]
     except Exception as exc:
-        pass
+        print(str(exc))
 
 def execute_update_fcl_rates_to_cogo_assured(key):
     origin_port_id, origin_main_port_id, destination_port_id, destination_main_port_id, container_size, container_type, commodity = key.split(":")

@@ -5,6 +5,7 @@ from configs.env import DEFAULT_USER_ID
 from datetime import timedelta, datetime
 from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
 from micro_services.client import common
+import statistics
 
 def get_assured_rate(all_prices):
     prices = []
@@ -13,12 +14,15 @@ def get_assured_rate(all_prices):
             price_curr["price"] = common.get_money_exchange_for_fcl( {"price": price_curr["price"], "from_currency": price_curr["currency"], "to_currency": "USD"} )["price"]
         
         prices.append(int(price_curr["price"]))
-        
-    return min(prices)
+    prices = sorted(prices)
+    if len(prices) > 5:
+        prices = prices[:5]
+    median_price = statistics.median(prices)
+    return int(median_price)
 
 def update_fcl_rates_to_cogo_assured(param):
     freight_rates = list(FclFreightRate.select(FclFreightRate.validities).where(
-        FclFreightRate.mode != "predicted",
+        FclFreightRate.mode.not_in(['predicted', 'cluster_extension']),
         FclFreightRate.origin_port_id == param["origin_port_id"],
         FclFreightRate.origin_main_port_id == param["origin_main_port_id"],
         FclFreightRate.destination_port_id == param["destination_port_id"],
@@ -28,7 +32,7 @@ def update_fcl_rates_to_cogo_assured(param):
         FclFreightRate.commodity == param["commodity"],
         FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
         ~ FclFreightRate.rate_not_available_entry,
-        FclFreightRate.updated_at.cast('date') > (datetime.now() - timedelta(days = 1)).date()
+        FclFreightRate.last_rate_available_date >= datetime.now().date()
     ).dicts())
     
     all_prices = []
@@ -79,5 +83,7 @@ def update_fcl_rates_to_cogo_assured(param):
         "shipment_count": 0,
         "volume_count": 0
     }
-    id = create_fcl_freight_rate_data(create_param)
+    # id = create_fcl_freight_rate_data(create_param)
+    from celery_worker import create_fcl_freight_rate_delay
+    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':create_param }, queue='fcl_freight_rate')
     return True

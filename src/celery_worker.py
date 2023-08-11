@@ -95,16 +95,16 @@ celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
 
 celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
-    'fcl_freigh_rates_to_cogo_assured': {
-        'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
-        'schedule': crontab(minute=00,hour=00),
-        'options': {'queue' : 'fcl_freight_rate'}
-        },
-    'update_cogo_assured_fcl_freight_rates': {
-        'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
-        'schedule': crontab(minute=30, hour=18),
-        'options': { 'queue': 'fcl_freight_rate' }
-        },
+    # 'fcl_freigh_rates_to_cogo_assured': {
+    #     'task': 'celery_worker.fcl_freight_rates_to_cogo_assured',
+    #     'schedule': crontab(minute=00,hour=00),
+    #     'options': {'queue' : 'fcl_freight_rate'}
+    #     },
+    # 'update_cogo_assured_fcl_freight_rates': {
+    #     'task': 'celery_worker.update_cogo_assured_fcl_freight_rates',
+    #     'schedule': crontab(minute=30, hour=18),
+    #     'options': { 'queue': 'fcl_freight_rate' }
+    #     },
     'process_fuel_data_delays': {
         'task': 'celery_worker.process_fuel_data_delay',
         'schedule': crontab(minute=00,hour=21),
@@ -421,7 +421,7 @@ def validate_and_process_rate_sheet_converted_file_delay(self, request):
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
 def fcl_freight_rates_to_cogo_assured(self):
     try:
-        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode != "predicted", FclFreightRate.updated_at.cast('date') > (datetime.now() - timedelta(days = 1)).date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
         
         count = query.count()
         grouped_set = set()
