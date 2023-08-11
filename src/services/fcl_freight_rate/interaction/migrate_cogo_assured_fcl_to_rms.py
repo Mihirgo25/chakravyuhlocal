@@ -179,7 +179,9 @@ def cogo_assured_fcl_freight_local_migration():
                         'sourced_by': user,
                         'procured_by': user,
                         'data': data,
-                        'line_items': data['line_items']
+                        'line_items': data['line_items'],
+                        'is_rate_available_entry': False,
+                        'is_line_items_error_messages_present': False,
                     }
                     if not rate[9] in distinct_port_ids:
                         distinct_port_ids.append(rate[9])

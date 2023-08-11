@@ -612,7 +612,8 @@ def build_response_object(freight_query_result, request):
     if freight_query_result['mode'] == 'predicted':
         source = 'predicted'
     elif freight_query_result['rate_type'] != 'market_place':
-        source = freight_query_result['rate_type']
+        source = 'cogo_assured_rate' if freight_query_result['rate_type'] == 'cogo_assured' else  freight_query_result['rate_type'] 
+
     response_object = {
       'shipping_line_id': freight_query_result['shipping_line_id'],
       'origin_port_id': freight_query_result['origin_port_id'],
@@ -884,13 +885,15 @@ def get_fcl_freight_rate_cards(requirements):
         }]
     """
     try:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_freight_rates = executor.submit(get_freight_rates, requirements)
-            future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements)
-        freight_rates, is_predicted = future_freight_rates.result()
-        cogo_assured_rates = future_cogo_assured_rates.result()
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     future_freight_rates = executor.submit(get_freight_rates, requirements)
+        #     future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements)
+        # freight_rates, is_predicted = future_freight_rates.result()
+        # cogo_assured_rates = future_cogo_assured_rates.result()
 
-        freight_rates+= cogo_assured_rates
+        # freight_rates+= cogo_assured_rates
+        
+        freight_rates, is_predicted = get_freight_rates(requirements)
         
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
