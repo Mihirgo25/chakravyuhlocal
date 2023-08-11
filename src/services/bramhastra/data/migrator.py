@@ -61,7 +61,6 @@ class Migrator:
                     highest_number = number
             except ValueError:
                 pass
-        breakpoint()
         return highest_number
         
 migrator = Migrator()

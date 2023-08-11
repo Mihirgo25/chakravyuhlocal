@@ -1387,8 +1387,6 @@ class RevenueDesk(FclFreightValidity):
         self.clickhouse_client = fcl_freight_validity.clickhouse_client
         self.set_original_rate()
         self.set_stats_hash()
-        
-        breakpoint()
 
         fcl_freight_validity.set_identifier_details(self.original_booked_rate.get('rate_id'),self.original_booked_rate.get('validity_id'))
 
