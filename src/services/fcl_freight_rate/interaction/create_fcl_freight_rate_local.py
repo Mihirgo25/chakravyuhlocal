@@ -8,6 +8,12 @@ from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_m
 from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SHIPPING_LINE_ID
 from configs.env import DEFAULT_USER_ID
 
+DEFAULT_KEYS =  {
+        'shipping_line_id': DEFAULT_SHIPPING_LINE_ID,
+        'service_provider_id': DEFAULT_USER_ID,
+        'sourced_by_id': DEFAULT_USER_ID,
+        'procured_by_id': DEFAULT_USER_ID
+    }
 
 def create_audit(request, fcl_freight_local_id):
     audit_data = {}
@@ -35,28 +41,13 @@ def create_fcl_freight_rate_local(request):
         return execute_transaction_code(request)
     
 def validate_request(request):
-    if not request.get('shipping_line_id'):
-      if(request.get('rate_type') == 'cogo_assured'):
-        request['shipping_line_id'] = DEFAULT_SHIPPING_LINE_ID 
-      else:
-        raise HTTPException(status_code=400, detail="shipping line id is required")
-
-    if not request.get('service_provider_id'):
-      if(request.get('rate_type') == 'cogo_assured'):
-        request['service_provider_id'] = DEFAULT_USER_ID
-      else:
-        raise HTTPException(status_code=400, detail="service provider id is required")
-    
-    if not request.get('sourced_by_id'):
-      if(request.get('rate_type') == 'cogo_assured'):
-        request['sourced_by_id'] = DEFAULT_USER_ID
-      
-    
-    if not request.get('procured_by_id'):
-      if(request.get('rate_type') == 'cogo_assured'):
-        request['procured_by_id'] = DEFAULT_USER_ID
-     
-    
+    for key in DEFAULT_KEYS:
+        if request.get(key):
+            continue
+        if(request.get('rate_type') == 'cogo_assured'):
+            request[key] = DEFAULT_KEYS[key] 
+        else:
+            raise HTTPException(status_code=400, detail=f"{key.replace('_', ' ')} is required")
 
 def execute_transaction_code(request):
     from celery_worker import fcl_freight_local_data_updation, create_country_wise_locals_in_delay
