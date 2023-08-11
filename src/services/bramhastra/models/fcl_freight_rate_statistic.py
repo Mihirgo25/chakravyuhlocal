@@ -108,7 +108,7 @@ class FclFreightRateStatistic(BaseModel):
     rate_deviation_from_booking_on_cluster_base_rate = FloatField(default=0)
     rate_deviation_from_latest_booking = FloatField(default=0)
     rate_deviation_from_reverted_rate = FloatField(default=0)
-    average_booking_rate = FloatField(default=-1)
+    average_booking_rate = FloatField(default=0)
     booking_rate_count = FloatField(default=0)
     parent_rate_id = UUIDField(null=True)
     parent_validity_id = UUIDField(null=True)
