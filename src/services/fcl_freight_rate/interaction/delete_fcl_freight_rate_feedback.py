@@ -6,9 +6,7 @@ from database.rails_db import (
     get_organization_partner,
 )
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
-from playhouse.shortcuts import model_to_dict
-from celery_worker import apply_feedback_fcl_freight_rate_statistic_delay
-from fastapi.encoders import jsonable_encoder
+from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_feedback_delete_stats
 
 def delete_fcl_freight_rate_feedback(request):
     with db.atomic():
@@ -34,7 +32,7 @@ def execute_transaction_code(request):
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
         
-        set_stats(obj)
+        send_feedback_delete_stats(obj)
 
 
         id = str(obj.performed_by_org_id)
@@ -63,9 +61,3 @@ def create_audit(request, freight_rate_feedback_id):
     data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},    #######already performed_by_id column is present do we need to also save it in data?
     object_id = freight_rate_feedback_id,
     object_type = 'FclFreightRateFeedback')
-    
-    
-def set_stats(obj):
-    action = 'delete'
-    params = jsonable_encoder(model_to_dict(obj,only = [FclFreightRateFeedback.id,FclFreightRateFeedback.status,FclFreightRateFeedback.closed_by_id,FclFreightRateFeedback.closing_remarks]))
-    apply_feedback_fcl_freight_rate_statistic_delay.apply_async(kwargs = {'action': action,'params': params}, queue = 'statistics')
