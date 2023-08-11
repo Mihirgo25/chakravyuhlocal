@@ -54,15 +54,15 @@ class AirFreightRateBulkOperation(BaseModel):
 
     def validate_action_name(self):
         if self.action_name not in ACTION_NAMES:
-            raise HTTPException(status_code=400, detail="Invalid action Name")
+            raise HTTPException(status_code=400, detail="Invalid Action Name")
 
     def validate_update_freight_rate_data(self):
         data = self.data
         if not data["new_end_date"]:
-            raise HTTPException(status_code=400, detail="new end date is invalid")
+            raise HTTPException(status_code=400, detail="New End Date Is Invalid")
 
         if not data["new_start_date"]:
-            raise HTTPException(status_code=400, detail="new start date is invalid")
+            raise HTTPException(status_code=400, detail="New Start Date Is Invalid")
 
         if (
             datetime.fromisoformat(data["new_end_date"]).date()
@@ -70,7 +70,7 @@ class AirFreightRateBulkOperation(BaseModel):
         ):
             raise HTTPException(
                 status_code=400,
-                detail="new end date can not be greater than 120 days from current date",
+                detail="New End Date Cannot Be Greater Than 120 Days From Current Date",
             )
 
         if (
@@ -79,7 +79,7 @@ class AirFreightRateBulkOperation(BaseModel):
         ):
             raise HTTPException(
                 status_code=400,
-                detail="new start date can not be less than 15 days from current date",
+                detail="New Start Date Cannot Be Less Than 15 Days From Current Date",
             )
 
         if (
@@ -88,18 +88,18 @@ class AirFreightRateBulkOperation(BaseModel):
         ):
             raise HTTPException(
                 status_code=400,
-                detail="new end date can not be lesser than or equal to start validity",
+                detail="New End Date Cannot Be Lesser Than Or Equal To Start Validity",
             )
 
     def validate_add_freight_rate_markup_data(self):
         data = self.data
         if float(data["markup"]) == 0:
-            raise HTTPException(status_code=400, detail="markup cannot be 0")
+            raise HTTPException(status_code=400, detail="Markup Cannot Be 0")
 
         markup_types = ["net", "percent"]
 
         if data["markup_type"] not in markup_types:
-            raise HTTPException(status_code=400, detail="markup_type is invalid")
+            raise HTTPException(status_code=400, detail="Markup Type Is Invalid")
 
         if str(data["markup_type"]).lower() == "percent":
             return
@@ -108,19 +108,19 @@ class AirFreightRateBulkOperation(BaseModel):
 
         if data["markup_currency"] not in currencies:
             raise HTTPException(
-                status_code=400, detail="markup_currency is invalid"
+                status_code=400, detail="Markup Currency Is Invalid"
             )
 
     def validate_add_min_price_markup_data(self):
         data = self.data
 
         if float(data["markup"]) == 0:
-            raise HTTPException(status_code=400, detail="markup cannot be 0")
+            raise HTTPException(status_code=400, detail="Markup Cannot Be 0")
 
         markup_types = ["net", "percent"]
 
         if data["markup_type"] not in markup_types:
-            raise HTTPException(status_code=400, detail="markup_type is invalid")
+            raise HTTPException(status_code=400, detail="Markup Type Is Invalid")
 
         if str(data["markup_type"]).lower() == "percent":
             return
@@ -128,7 +128,7 @@ class AirFreightRateBulkOperation(BaseModel):
         currencies = AIR_FREIGHT_CURRENCIES
 
         if data["markup_currency"] not in currencies:
-            raise HTTPException(status_code=400, detail="currency is invalid")
+            raise HTTPException(status_code=400, detail="Currency Is Invalid")
 
     def validate_delete_freight_rate_data(self):
         return
@@ -138,23 +138,23 @@ class AirFreightRateBulkOperation(BaseModel):
 
         if float(data["markup"]) == 0 and float(data["min_price_markup"]) == 0:
             raise HTTPException(
-                status_code=400, detail="markup and min_price_markup both cannot be 0"
+                status_code=400, detail="Markup And Min Price Markup Both Cannot Be 0"
             )
 
         markup_types = ["net", "percent"]
 
         if data["markup_type"] not in markup_types:
-            raise HTTPException(status_code=400, detail="markup_type is invalid")
+            raise HTTPException(status_code=400, detail="Markup Type Is Invalid")
 
         if data["min_price_markup_type"] not in markup_types:
             raise HTTPException(
-                status_code=400, detail="min_price_markup_type is invalid"
+                status_code=400, detail="Min Price Markup Type Is Invalid"
             )
 
         charge_codes = AIR_FREIGHT_LOCAL_CHARGES
 
         if data["line_item_code"] not in charge_codes:
-            raise HTTPException(status_code=400, detail="line_item_code is invalid")
+            raise HTTPException(status_code=400, detail="Line Item Code Is Invalid")
 
         currencies = AIR_FREIGHT_CURRENCIES
 
@@ -162,14 +162,14 @@ class AirFreightRateBulkOperation(BaseModel):
             str(data["markup_type"]).lower() == "net"
             and data["markup_currency"] not in currencies
         ):
-            raise HTTPException(status_code=400, detail="markup currency is invalid")
+            raise HTTPException(status_code=400, detail="Markup Currency Is Invalid")
 
         if (
             str(data["min_price_markup_type"]).lower() == "net"
             and data["min_price_markup_currency"] not in currencies
         ):
             raise HTTPException(
-                status_code=400, detail="min price markup currency is invalid"
+                status_code=400, detail="Min Price Markup Currency Is Invalid"
             )
 
     def validate_update_storage_free_limit_data(self):
@@ -177,7 +177,7 @@ class AirFreightRateBulkOperation(BaseModel):
 
         if int(data["free_limit"]) < 0:
             raise HTTPException(
-                status_code=400, detail="free_limit cannot be less than  0"
+                status_code=400, detail="Free Limit Cannot Be Less Than 0"
             )
 
         slabs = sorted(
@@ -187,12 +187,12 @@ class AirFreightRateBulkOperation(BaseModel):
         if any(
             slab.get("upper_limit", 0) <= slab.get("lower_limit", 0) for slab in slabs
         ):
-            raise HTTPException(status_code=400, detail="slabs is invalid")
+            raise HTTPException(status_code=400, detail="Slabs Is Invalid")
 
         if len(slabs) > 0 and (int(slabs[0]["lower_limit"]) <= int(data["free_limit"])):
             raise HTTPException(
                 status_code=400,
-                detail="slabs lower limit should be greater than free limit",
+                detail="Slabs Lower Limit Should Be Greater Than Free Limit",
             )
 
         if any(
@@ -200,13 +200,13 @@ class AirFreightRateBulkOperation(BaseModel):
             and slab.get("lower_limit", 0) <= slabs[index - 1].get("upper_limit", 0)
             for index, slab in enumerate(slabs)
         ):
-            raise HTTPException(status_code=400, detail="slabs is invalid")
+            raise HTTPException(status_code=400, detail="Slabs Is Invalid")
 
         slab_currency = [slab["currency"] for slab in slabs]
         currencies = AIR_FREIGHT_CURRENCIES
 
         if len(list(set(slab_currency).difference(currencies))) > 0:
-            raise HTTPException(status_code=400, detail="slab currency is invalid")
+            raise HTTPException(status_code=400, detail="Slab Currency Is Invalid")
 
     def perform_batch_wise_delete_freight_rate_action(self,count,batches_query,total_count):
         data = self.data
@@ -755,5 +755,5 @@ class AirFreightRateBulkOperation(BaseModel):
         return
 
 
-def create_audit(id):
-    AirFreightRateAudit.create(bulk_operation_id=id)
+# def create_audit(id):
+#     AirFreightRateAudit.create(bulk_operation_id=id)
