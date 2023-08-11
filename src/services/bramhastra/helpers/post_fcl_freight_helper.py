@@ -43,12 +43,14 @@ from peewee import ModelSelect
 
 STANDARD_CURRENCY = "USD"
 
-SHIPMENT_RATE_STATS_KEYS = {
+SHIPMENT_RATE_STATS_KEYS = [
     "rate_deviation_from_latest_booking",
     "average_booking_rate",
     "rate_deviation_from_booking_rate",
     "accuracy",
-}
+]
+
+RATE_DETAIL_KEYS =  ['id','rate_id','validity_id','booking_rate_count','standard_price']
 
 
 class Connection:
@@ -73,7 +75,7 @@ class FclFreightValidity(Connection):
         new_row_dict["version"] += 1
         return new_row_dict
 
-    def get_postgres_statistics_current_row_by_identifier(self) -> Model:
+    def get_postgres_statistics_current_row_by_identifier(self):
         return (
             FclFreightRateStatistic.select()
             .where(
@@ -1197,13 +1199,11 @@ class RevenueDesk(FclFreightValidity):
     def __init__(self, params) -> None:
         if not getattr(params, "selected_for_booking"):
             return
-        
+
         self.rate = dict()
         self.original_booked_rate = None
         self.shipment_id = params.shipment_id
-        self.shipment_fcl_freight_service_id = (
-            params.shipment_fcl_freight_service_id
-        )
+        self.shipment_fcl_freight_service_id = params.shipment_fcl_freight_service_id
         self.increment_keys = {
             "so1_select_count",
             "booking_rate_count",
@@ -1266,13 +1266,24 @@ class RevenueDesk(FclFreightValidity):
             self.rate["validity_id"] = params.selected_for_booking.validity_id
 
     def set_original_statistics_id(self):
+        if (
+            shipment := ShipmentFclFreightRateStatistic.select(
+                ShipmentFclFreightRateStatistic.fcl_freight_rate_statistic_id
+            )
+            .where(
+                ShipmentFclFreightRateStatistic.shipment_fcl_freight_service_id
+                == self.shipment_fcl_freight_service_id,
+                ShipmentFclFreightRateStatistic.sign == 1,
+            )
+            .first()
+        ):
+            self.original_fcl_freight_rate_statistic_id = shipment.fcl_freight_rate_statistic_id
+
         query = f"SELECT fcl_freight_rate_statistic_id FROM brahmastra.{ShipmentFclFreightRateStatistic._meta.table_name} WHERE shipment_fcl_freight_service_id = %(shipment_fcl_freight_service_id)s"
 
         if row := self.clickhouse_client.execute(
             query,
-            dict(
-                shipment_fcl_freight_service_id=self.shipment_fcl_freight_service_id
-            ),
+            dict(shipment_fcl_freight_service_id=self.shipment_fcl_freight_service_id),
         ):
             self.original_fcl_freight_rate_statistic_id = row[0][
                 "fcl_freight_rate_statistic_id"
@@ -1281,12 +1292,27 @@ class RevenueDesk(FclFreightValidity):
     def set_original_rate(self):
         self.set_original_statistics_id()
 
+        if (
+            fcl := FclFreightRateStatistic.select(
+                FclFreightRateStatistic.id,FclFreightRateStatistic.rate_id,
+                FclFreightRateStatistic.validity_id,FclFreightRateStatistic.booking_rate_count,
+                FclFreightRateStatistic.rate_deviation_from_latest_booking,FclFreightRateStatistic.rate_deviation_from_booking_rate,
+                FclFreightRateStatistic.accuracy,FclFreightRateStatistic.average_booking_rate,
+                FclFreightRateStatistic.standard_price
+            )
+            .where(
+                FclFreightRateStatistic.id
+                == self.original_fcl_freight_rate_statistic_id,
+                FclFreightRateStatistic.sign == 1,
+            )
+        ):
+            self.original_booked_rate =  jsonable_encoder(fcl.dicts().get())
         queries = [
-            f"SELECT id,rate_id,validity_id,standard_price,booking_rate_count,{','.join(SHIPMENT_RATE_STATS_KEYS)} FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
+            f"SELECT {','.join(SHIPMENT_RATE_STATS_KEYS + RATE_DETAIL_KEYS)} FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
         ]
 
         queries.append(
-            f"WHERE (rate_id,version) IN (SELECT rate_id, MAX(version) AS max_version FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE id = %(id)s GROUP BY id)"
+            f"WHERE (id,version) IN (SELECT id, MAX(version) AS max_version FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE id = %(id)s GROUP BY id)"
         )
 
         if row := self.clickhouse_client.execute(
@@ -1299,23 +1325,22 @@ class RevenueDesk(FclFreightValidity):
             eval(f"self.set_{key}(key)")
 
     def set_rate_deviation_from_latest_booking(self, key):
-        self.original_rate_stats_hash[key] = self.rate.get(
-            "standard_price"
-        ) - self.original_booked_rate("standard_price")
+        self.original_rate_stats_hash[key] = self.rate.get("standard_price") - self.original_booked_rate.get("standard_price")
+        
         self.rate_stats_hash[key] = 0
 
     def set_average_booking_rate(self, key):
         self.original_rate_stats_hash[key] = (
             (
                 self.original_booked_rate.get("average_booking_rate")
-                * self.original_booked_rate.get("booking_rate_count")
+                * self.original_booked_rate.get("booking_rate_count") or 1
             )
             + self.original_booked_rate.get("standard_price")
         ) / (self.original_booked_rate.get("booking_rate_count") + 1)
         self.rate_stats_hash[key] = (
             (
                 self.rate.get("average_booking_rate")
-                * self.rate.get("booking_rate_count")
+                * self.rate.get("booking_rate_count") or 1
             )
             + self.rate.get("standard_price")
         ) / (self.rate.get("booking_rate_count") + 1)
@@ -1335,11 +1360,11 @@ class RevenueDesk(FclFreightValidity):
     def set_accuracy(self, key):
         self.rate_stats_hash[key] = (
             1
-            - abs(
+            - (abs(
                 self.rate_stats_hash.get("average_booking_rate")
                 - self.rate.get("standard_price")
             )
-            / self.rate_stats_hash.get("average_booking_rate")
+            / self.rate_stats_hash.get("average_booking_rate"))
         ) * 100
         self.original_rate_stats_hash[key] = (
             1
@@ -1348,19 +1373,24 @@ class RevenueDesk(FclFreightValidity):
                 - self.original_booked_rate.get("standard_price")
             )
             / self.rate.get("average_booking_rate")
-        ) * 100
+        ) * 100 if self.rate.get('average_booking_rate') != 0 else 100
 
     def set_rate_stats(self):
         fcl_freight_validity = FclFreightValidity(**self.rate)
-        self.clickhouse_client = fcl_freight_validity.clickhouse_client
-        self.set_original_rate()
-        self.set_stats_hash()
-        fcl_freight_validity.set_identifier_details(**self.rate_stats_hash)
         new_row = fcl_freight_validity.update_stats(
             return_new_row_without_updating=True
         )
+        self.rate = model_to_dict(new_row) if isinstance(new_row,Model) else new_row.copy()
 
-        fcl_freight_validity.set_identifier_details(**self.original_booked_rate)
+        self.rate = {key: self.rate[key] for key in SHIPMENT_RATE_STATS_KEYS + RATE_DETAIL_KEYS if key in self.rate}
+            
+        self.clickhouse_client = fcl_freight_validity.clickhouse_client
+        self.set_original_rate()
+        self.set_stats_hash()
+        
+        breakpoint()
+
+        fcl_freight_validity.set_identifier_details(self.original_booked_rate.get('rate_id'),self.original_booked_rate.get('validity_id'))
 
         new_row = fcl_freight_validity.update_stats(
             return_new_row_without_updating=True
