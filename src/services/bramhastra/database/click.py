@@ -44,7 +44,7 @@ class Click:
             column_names = re.findall(r"(?<=\n\s{4})(\w+)\s", sql_script)
 
         missing_columns = set(model_cols) - set(column_names)
-        ordered_match = column_names == missing_columns
+        ordered_match = len(missing_columns) == 0
         if ordered_match:
             return True
         else:
