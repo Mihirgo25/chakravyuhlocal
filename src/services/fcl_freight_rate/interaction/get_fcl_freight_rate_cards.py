@@ -937,7 +937,7 @@ def get_freight_rates(requirements):
     freight_rates, is_predicted = filter_default_service_provider(freight_rates, are_all_rates_predicted, is_predicted)
     
     if is_predicted and requirements['cogo_entity_id'] == VN_ENTITY_ID:
-        return []
+        return [],False
 
     return  (freight_rates, is_predicted)
 
