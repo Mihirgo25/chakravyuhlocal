@@ -53,3 +53,6 @@ class DTString(Bramhastra):
 
 class ShipmentServices(Bramhastra):
     fcl_freight_service = 'fcl_freight_service'
+    
+class ShipmentState(Bramhastra):
+    confirmed_by_importer_exporter = 'confirmed_by_importer_exporter'

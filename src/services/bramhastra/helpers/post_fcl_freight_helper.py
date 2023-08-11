@@ -38,7 +38,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
 from database.rails_db import get_connection
-from services.bramhastra.enums import ShipmentServices
+from services.bramhastra.enums import ShipmentServices, ShipmentState
 
 STANDARD_CURRENCY = "USD"
 
@@ -849,8 +849,10 @@ class Statistics:
 
 class Shipment(FclFreightValidity):
     def __init__(self, request) -> None:
-        if request.update_params:
-            self.update_by_shipment_id(request.update_params.dict(exclude_none=True))
+        if request.force_update_params:
+            self.update_by_shipment_id(
+                request.force_update_params.dict(exclude_none=True)
+            )
         self.params = request.params
         self.action = request.action
         self.stats = []
@@ -1001,8 +1003,82 @@ class Shipment(FclFreightValidity):
             else:
                 ShipmentFclFreightRateStatistic.create(**stat)
 
+    def get_rate_details_from_statistics_id(self, id, clickhouse_client):
+        queries = [
+            f"SELECT rate_id,validity_id FROM brahmastra.{FclFreightRateStatistic._meta.table_name}"
+        ]
+
+        queries.append(
+            f"WHERE (rate_id,version) IN (SELECT rate_id, MAX(version) AS max_version FROM brahmastra.{FclFreightRateStatistic._meta.table_name} WHERE id = %(id)s GROUP BY id)"
+        )
+
+        if row := clickhouse_client.execute(" ".join(queries), dict(id=id)):
+            return row[0]
+
     def update_by_shipment_id(self, update_params):
         clickhouse_client = ClickHouse()
+        rate_update_params = dict()
+        avoid_keys = {"shipment_id"}
+        shipment_fcl_freight_rate_statistics = (
+            ShipmentFclFreightRateStatistic.select().where(
+                ShipmentFclFreightRateStatistic.shipment_id
+                == update_params.get("shipment_id"),
+                ShipmentFclFreightRateStatistic.sign == 1,
+            )
+        )
+        if not shipment_fcl_freight_rate_statistics:
+            query = f"SELECT fcl_freight_rate_statistic_id FROM brahmastra.{ShipmentFclFreightRateStatistic._meta.table_name} WHERE shipment_id = %(shipment_id)s"
+
+            shipment_fcl_freight_rate_statistics = self.clickhouse_client.execute(
+                query, dict(shipment_id=update_params.get("shipment_id"))
+            )
+
+        old_state = (
+            shipment_fcl_freight_rate_statistics.first().state
+            if isinstance(shipment_fcl_freight_rate_statistics, Model)
+            else shipment_fcl_freight_rate_statistics[0]["state"]
+        )
+        new_state = update_params.get("state")
+
+        if old_state != new_state:
+            old_key = (
+                f"{old_key}_count"
+                if old_key != "shipment_received"
+                else "shipment_received"
+            )
+            new_key = (
+                f"{new_state}_count"
+                if new_state != "shipment_received"
+                else "shipment_received"
+            )
+            rate_update_params[new_key] += 1
+            rate_update_params[old_key] -= 1
+
+        rate = self.get_rate_details_from_statistics_id(
+            shipment_fcl_freight_rate_statistics.fcl_freight_rate_statistic_id
+            if isinstance(shipment_fcl_freight_rate_statistics, Model)
+            else shipment_fcl_freight_rate_statistics.get(
+                "fcl_freight_rate_statistic_id"
+            )
+        )
+
+        fcl_freight_validity = FclFreightValidity(*rate)
+
+        new_row = fcl_freight_validity.update_stats(
+            return_new_row_without_updating=True
+        )
+
+        self.increment_shipment_rate_stats(
+            fcl_freight_validity, new_row, rate_update_params, apply_increment=False
+        )
+
+        if isinstance(shipment_fcl_freight_rate_statistics, Model):
+            for k, v in update_params.keys():
+                if k in avoid_keys:
+                    continue
+                setattr(shipment_fcl_freight_rate_statistics, k, v)
+            shipment_fcl_freight_rate_statistics.save()
+            return
 
         queries = [
             f"ALTER TABLE brahmastra.{ShipmentFclFreightRateStatistic._meta.table_name} UPDATE"
@@ -1010,7 +1086,7 @@ class Shipment(FclFreightValidity):
 
         values = []
         for key in update_params.keys():
-            if key not in {"shipment_id"}:
+            if key not in avoid_keys:
                 values.append(f"{key} = %({key})s")
 
         queries.append(",".join(values))
@@ -1061,23 +1137,27 @@ class Shipment(FclFreightValidity):
         ):
             return row[0]
 
-    def increment_shipment_rate_stats(self, fcl_freight_validity, row, update_object):
+    def increment_shipment_rate_stats(
+        self, fcl_freight_validity, row, update_object, apply_increment=True
+    ):
         if isinstance(row, Model):
-            for key in self.increment_keys:
-                setattr(row, key, getattr(row, key) + 1)
+            if apply_increment:
+                for key in self.increment_keys:
+                    setattr(row, key, getattr(row, key) + 1)
             for k, v in update_object.items():
                 setattr(row, k, v)
             row.save()
         else:
-            for key in self.increment_keys:
-                row[key] += 1
+            if apply_increment:
+                for key in self.increment_keys:
+                    row[key] += 1
 
             for k, v in update_object.items():
                 row[k] = v
 
             fcl_freight_validity.create_stats(row)
 
-    def get_rate_details_from_initial_quotation(self, shipment_id, source_id):
+    def get_rate_details_from_initial_quotation(self, source_id):
         if (
             response := CheckoutFclFreightRateStatistic.select(
                 CheckoutFclFreightRateStatistic.rate_id,
