@@ -1,5 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+from services.fcl_freight_rate.models.fcl_freight_rate_properties import FclFreightRateProperties
 from configs.global_constants import SEARCH_START_DATE_OFFSET
 from datetime import datetime, timedelta
 from libs.get_filters import get_filters
@@ -11,16 +12,16 @@ from libs.json_encoder import json_encoder
 NOT_REQUIRED_FIELDS = ["destination_local_line_items_info_messages",  "origin_local_line_items_info_messages", "origin_local_line_items_error_messages", "destination_local_line_items_error_messages", "destination_location_ids", "origin_location_ids", "omp_dmp_sl_sp", "init_key"]
 
 possible_direct_filters = ['id', 'origin_port_id', 'origin_country_id', 'origin_trade_id', 'origin_continent_id', 'destination_port_id', 'destination_country_id', 'destination_trade_id', 'destination_continent_id', 'shipping_line_id', 'service_provider_id', 'importer_exporter_id', 'container_size', 'container_type', 'commodity', 'is_best_price', 'rate_not_available_entry', 'origin_main_port_id', 'destination_main_port_id', 'cogo_entity_id', 'procured_by_id','rate_type', 'mode']
-possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than','last_rate_available_date_less_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id', 'importer_exporter_relevant_rate','exclude_shipping_line_id','exclude_service_provider_types','exclude_rate_types','service_provider_type', 'updated_at_greater_than', 'updated_at_less_than']
+possible_indirect_filters = ['is_origin_local_missing', 'is_destination_local_missing', 'is_weight_limit_missing', 'is_origin_detention_missing', 'is_origin_plugin_missing', 'is_destination_detention_missing', 'is_destination_demurrage_missing', 'is_destination_plugin_missing', 'is_rate_about_to_expire', 'is_rate_available', 'is_rate_not_available', 'origin_location_ids', 'destination_location_ids', 'importer_exporter_present', 'last_rate_available_date_greater_than','last_rate_available_date_less_than', 'validity_start_greater_than', 'validity_end_less_than', 'partner_id', 'importer_exporter_relevant_rate','exclude_shipping_line_id','exclude_service_provider_types','exclude_rate_types','service_provider_type', 'updated_at_greater_than', 'updated_at_less_than', 'get_cogo_assured_checkout_rates']
 
-def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, expired_rates_required = False, all_rates_for_cogo_assured = False, return_count = False,  is_line_items_required = False, includes = {}):
-  query = get_query(all_rates_for_cogo_assured, sort_by, sort_type, includes)
+def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'updated_at', sort_type = 'desc', return_query = False, expired_rates_required = False, return_count = False,  is_line_items_required = False, includes = {}):
+  query = get_query(sort_by, sort_type, includes)
   if filters:
     if type(filters) != dict:
       filters = json.loads(filters)
 
       if filters.get('rate_type') == 'all':
-        filters['rate_type'] = RATE_TYPES
+        filters.pop('rate_type')
     direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
       
     query = get_filters(direct_filters, query, FclFreightRate)
@@ -38,11 +39,7 @@ def list_fcl_freight_rates(filters = {}, page_limit = 10, page = 1, sort_by = 'u
   data = get_data(query,expired_rates_required,is_line_items_required)
   return { 'list': data } 
 
-def get_query(all_rates_for_cogo_assured, sort_by, sort_type, includes):
-  if all_rates_for_cogo_assured:
-    query = FclFreightRate.select(FclFreightRate.id, FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity
-            ).where(FclFreightRate.updated_at > datetime.now() - timedelta(days = 1), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40'])
-    return query
+def get_query(sort_by, sort_type, includes):
   
   if includes and  not isinstance(includes, dict):
     includes = json.loads(includes) 
@@ -68,7 +65,7 @@ def get_data(query, expired_rates_required,is_line_items_required):
 
     result['is_weight_limit_missing'] = False
 
-    if not result['weight_limit'] or 'free_limit' not in result['weight_limit']:
+    if not result.get('weight_limit') or 'free_limit' not in result['weight_limit']:
       result['is_weight_limit_missing'] = True
     
     validities = []
@@ -102,8 +99,8 @@ def get_data(query, expired_rates_required,is_line_items_required):
       
         result['is_rate_not_available'] = (validities.count == 0)
 
-      del result['origin_local']
-      del result['destination_local']
+      result.pop('origin_local', None)
+      result.pop('destination_local', None)
 
     data.append(result)
   return data
@@ -120,6 +117,10 @@ def apply_importer_exporter_relevant_rate_filter(query, filters):
     query = query.where((FclFreightRate.importer_exporter_id == importer_exporter_id) | (FclFreightRate.importer_exporter_id.is_null(True)))
     return query
 
+def apply_get_cogo_assured_checkout_rates_filter(query, filters):
+    if filters.get('get_cogo_assured_checkout_rates'): 
+        query = query.join(FclFreightRateProperties, on=(FclFreightRate.id == FclFreightRateProperties.rate_id)).where(FclFreightRateProperties.available_inventory > FclFreightRateProperties.used_inventory)
+    return query
 
 def apply_partner_id_filter(query, filters):
   cogo_entity_id = filters['partner_id']
