@@ -68,6 +68,7 @@ def get_air_freight_rate_prediction(request):
         for weight_slab in weight_slabs:
             weight_slab['tariff_price'] = price
             price *= change_factor
+            price = round(price,2)
         try:
             create_air_freight_rate_data({
                 'origin_airport_id' : request['origin_airport_id'],
