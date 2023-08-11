@@ -885,16 +885,14 @@ def get_fcl_freight_rate_cards(requirements):
         }]
     """
     try:
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     future_freight_rates = executor.submit(get_freight_rates, requirements)
-        #     future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements)
-        # freight_rates, is_predicted = future_freight_rates.result()
-        # cogo_assured_rates = future_cogo_assured_rates.result()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_freight_rates = executor.submit(get_freight_rates, requirements)
+            future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements)
+        freight_rates, is_predicted = future_freight_rates.result()
+        cogo_assured_rates = future_cogo_assured_rates.result()
 
-        # freight_rates+= cogo_assured_rates
-        
-        freight_rates, is_predicted = get_freight_rates(requirements)
-        
+        freight_rates+= cogo_assured_rates
+                
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
         rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
