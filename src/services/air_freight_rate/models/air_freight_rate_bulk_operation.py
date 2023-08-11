@@ -755,5 +755,5 @@ class AirFreightRateBulkOperation(BaseModel):
         return
 
 
-# def create_audit(id):
-#     AirFreightRateAudit.create(bulk_operation_id=id)
+def create_audit(id):
+    AirFreightRateAudit.create(bulk_operation_id=id)

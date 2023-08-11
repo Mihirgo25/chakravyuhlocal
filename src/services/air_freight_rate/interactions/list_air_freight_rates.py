@@ -199,12 +199,10 @@ def apply_date_filter(query,filters):
   return query
 
 def apply_validity_id_filter(query,filters):
-
   query = query.where(
      (SQL("(validity->>'id')"))<< filters['validity_id'] 
   )
   return query
-
 
 def get_data(query,revenue_desk_data_required):
     if revenue_desk_data_required:
