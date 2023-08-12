@@ -1,4 +1,4 @@
-CREATE TABLE brahmastra.shipment_fcl_freight_rate_services_statistics
+CREATE TABLE brahmastra.shipment_fcl_freight_rate_statistics
 (
     id UInt256,
     fcl_freight_rate_statistic_id UInt256,
@@ -44,7 +44,7 @@ PRIMARY KEY (rate_id)
 ORDER BY (rate_id,id);
 
 
-CREATE TABLE brahmastra.stale_shipment_fcl_freight_rate_services_statistics
+CREATE TABLE brahmastra.stale_shipment_fcl_freight_rate_statistics
 (
     id UInt256,
     fcl_freight_rate_statistic_id UInt256,

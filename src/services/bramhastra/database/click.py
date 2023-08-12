@@ -62,4 +62,9 @@ class Click:
     def create_tables(self,models):
         for model in models:
             self.create(model)
+            
+    def create_dictionaries(self, dictionaries):
+        for dictionary in dictionaries:
+            dictionary.create()
+
         
