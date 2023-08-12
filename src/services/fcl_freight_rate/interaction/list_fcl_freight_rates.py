@@ -43,11 +43,17 @@ def get_query(sort_by, sort_type, includes):
   
   if includes and  not isinstance(includes, dict):
     includes = json.loads(includes) 
+
+  fcl_all_fields = list(FclFreightRate._meta.fields.keys())
+  required_fcl_fields = [a for a in includes.keys() if a in fcl_all_fields] if includes else [c for c in fcl_all_fields if c not in NOT_REQUIRED_FIELDS]
+  fcl_fields = [getattr(FclFreightRate, key) for key in required_fcl_fields]
   
-  all_fields = list(FclFreightRate._meta.fields.keys())
-  required_fields = list(includes.keys()) if includes else [c for c in all_fields if c not in NOT_REQUIRED_FIELDS] 
-  fields = [getattr(FclFreightRate, key) for key in required_fields]
+  properties_all_fields = list(FclFreightRateProperties._meta.fields.keys())
+  required_properties_fields = list(c for c in includes.keys() if c in properties_all_fields and c != 'id') if includes else []
+  properties_fields = [getattr(FclFreightRateProperties, key) for key in required_properties_fields]
   
+  fields = fcl_fields + properties_fields
+
   query = FclFreightRate.select(*fields)
   
   if sort_by:
