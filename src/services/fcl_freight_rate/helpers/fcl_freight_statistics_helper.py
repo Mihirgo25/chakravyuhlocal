@@ -92,7 +92,7 @@ def send_feedback_statistics(action, feedback, request=None):
 
     feedback = feedback.refresh()
 
-    object = model_to_dict(
+    object = jsonable_encoder(model_to_dict(
         feedback,
         only=[
             FclFreightRateFeedback.id,
@@ -112,14 +112,16 @@ def send_feedback_statistics(action, feedback, request=None):
             FclFreightRateFeedback.closing_remarks,
             FclFreightRateFeedback.status,
             FclFreightRateFeedback.feedbacks,
+            FclFreightRateFeedback.preferred_freight_rate,
+            FclFreightRateFeedback.preferred_freight_rate_currency
         ],
-    )
+    ))
 
     if request:
         for k, v in request.items():
             if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
                 object[k] = v
-
+                
     apply_feedback_fcl_freight_rate_statistic_delay.apply_async(
         kwargs={"action": action, "params": object}, queue="statistics"
     )
