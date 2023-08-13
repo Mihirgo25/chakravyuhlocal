@@ -91,8 +91,8 @@ class Brahmastra:
             self.__clickhouse.execute(query + ",".join(values))
             model.delete().execute()
 
-    def use(self, arjun: bool) -> ():
+    def use(self, arjun: bool) -> None:
         for model in self.models:
+            self.__build_query_and_insert_to_clickhouse(model)
             if arjun:
                 self.__optimize_and_send_data_to_stale_tables(model)
-            self.__build_query_and_insert_to_clickhouse(model)

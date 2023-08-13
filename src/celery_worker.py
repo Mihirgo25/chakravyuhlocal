@@ -866,7 +866,7 @@ def air_freight_airline_factors_in_delay(self):
 def arjun_in_delay(self):
     try:
         brahmastra=Brahmastra()
-        brahmastra.use(True)
+        brahmastra.use(arjun = True)  # using this until we get all queries right
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
