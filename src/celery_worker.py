@@ -156,7 +156,7 @@ celery.conf.beat_schedule = {
     'arjun_in_delay':{
         'task': 'celery_worker.arjun_in_delay',
         'schedule': crontab(hour='*/2'),
-        'options': {'queue': 'low'}
+        'options': {'queue': 'critical'}
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
