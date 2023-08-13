@@ -38,8 +38,11 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
 from database.rails_db import get_connection
-from services.bramhastra.enums import ShipmentServices, ShipmentState, RequestAction
+from services.bramhastra.enums import ShipmentServices
 from peewee import ModelSelect
+from services.bramhastra.constants import FCL_MODE_MAPPINGS
+from services.bramhastra.enums import FclParentMode, FclModes
+
 
 STANDARD_CURRENCY = "USD"
 
@@ -148,7 +151,12 @@ class FclFreightValidity(Connection):
     def create_stats(self, create_param) -> Model:
         return FclFreightRateStatistic.create(**create_param)
 
-    def update_stats(self, new_params=dict(), return_new_row_without_updating=True):
+    def update_stats(
+        self,
+        new_params=dict(),
+        return_new_row_without_updating=True,
+        increment_keys=None,
+    ):
         old_row = self.get_postgres_statistics_current_row_by_identifier()
 
         if old_row:
@@ -157,6 +165,10 @@ class FclFreightValidity(Connection):
             for k, v in new_params.items():
                 setattr(old_row, k, v)
                 old_row.save()
+            if increment_keys is not None:
+                for k in increment_keys:
+                    setattr(old_row, k, getattr(old_row, k) + 1)
+
         else:
             old_row = self.get_clickhouse_statistics_current_row_by_identifier()
             if not old_row:
@@ -234,6 +246,7 @@ class Rate:
         self.origin_main_port_id = None
         self.destination_main_port_id = None
         self.set_non_existing_location_details()
+        self.increment_keys = {}
 
     def set_new_stats(self) -> int:
         return FclFreightRateStatistic.insert_many(self.params).execute()
@@ -251,11 +264,16 @@ class Rate:
                     validity_id=new_row["validity_id"],
                 )
             if new_row["last_action"] == ValidityAction.create.value:
+                for j in self.increment_keys:
+                    new_row[j] = 1
                 fcl_freight_validity.create_stats(new_row)
             elif new_row["last_action"] == ValidityAction.update.value:
-                fcl_freight_validity.update(new_row)
+                fcl_freight_validity.update_stats(new_row, False, self.increment_keys)
             elif new_row["last_action"] == ValidityAction.unchanged.value:
-                continue
+                if self.increment_keys:
+                    fcl_freight_validity.update_stats(
+                        new_row, False, self.increment_keys
+                    )
 
     def set_non_existing_location_details(self) -> None:
         if not self.freight.origin_main_port_id:
@@ -274,21 +292,36 @@ class Rate:
 
         self.set_missing_location_ids()
 
+    def get_feedback_details(self):
+        if row := jsonable_encoder(
+            FclFreightRateFeedback.select(
+                FclFreightRateFeedback.fcl_freight_rate_id.alias("parent_rate_id"),
+                FclFreightRateFeedback.validity_id.alias("parent_validity_id"),
+            )
+            .where(FclFreightRateFeedback.id == self.freight.source_id)
+            .dicts()
+            .get()
+        ):
+            return row
+        query = f"SELECT fcl_freight_rate_id AS parent_rate_id, validity_id as parent_validity_id from brahmastra.{FclFreightRateFeedback._meta.table_name} WHERE id = '{self.freight.source_id}'"
+        click = ClickHouse()
+        if row := click.execute(query):
+            return row[0]
+
     def set_formatted_data(self) -> None:
         freight = self.freight.dict(exclude={"validities", "accuracy"})
 
-        if freight["source"] == "disliked_rates":
-            parent = jsonable_encoder(
-                FclFreightRateFeedback.select(
-                    FclFreightRateFeedback.fcl_freight_rate_id.alias("parent_rate_id"),
-                    FclFreightRateFeedback.validity_id.alias("parent_validity_id"),
-                )
-                .where(FclFreightRateFeedback.id == self.freight.source_id)
-                .dicts()
-                .get()
-            )
-            freight["parent_rate_id"] = parent.get("parent_rate_id")
-            freight["parent_validity_id"] = parent.get("parent_validity_id")
+        freight["parent_mode"] = FCL_MODE_MAPPINGS.get(
+            freight.get("mode") or FclModes.rms_upload.value
+        )
+
+        if (
+            freight["source"] == FclModes.disliked_rate.value
+            or freight.get("mode") == FclModes.disliked_rate.value
+        ):
+            if parent := self.get_feedback_details():
+                freight.update(parent)
+            self.increment_keys.add("dislikes_rate_reverted_count")
 
         for validity in self.freight.validities:
             param = freight.copy()

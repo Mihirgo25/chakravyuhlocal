@@ -61,3 +61,21 @@ class ShipmentServices(Bramhastra):
     
 class ShipmentState(Bramhastra):
     confirmed_by_importer_exporter = 'confirmed_by_importer_exporter'
+    
+class FclModes(Bramhastra):
+    rate_extension = 'rate_extension'
+    manual = 'manual'
+    rate_sheet = 'rate_sheet'
+    predicted = 'predicted'
+    cluster_extension = 'cluster_extension'
+    disliked_rate = 'disliked_rate'
+    flash_booking = 'flash_booking'
+    rms_upload = 'rms_upload'
+    missing_rate = 'missing_rate'
+    spot_negotation = 'spot_negotation'
+    
+class FclParentMode(Bramhastra):
+    supply = 'supply'
+    rate_extension = 'rate_extension'
+    predicted = 'predicted'
+    cluster_extension = 'cluster_extension'
