@@ -157,6 +157,11 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.arjun_in_delay',
         'schedule': crontab(hour='*/2'),
         'options': {'queue': 'critical'}
+    },
+    'cache_data_worker_in_delay':{
+        'task': 'celery_worker.cache_data_worker_in_delay',
+        'schedule': crontab(hour=12, minute=0),
+        'options': {'queue': 'low'}
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
@@ -864,9 +869,22 @@ def air_freight_airline_factors_in_delay(self):
 
 @celery.task(bind=True,retry_backoff=True,max_retries=5)
 def arjun_in_delay(self):
+    # using this until we get all queries right
     try:
         brahmastra=Brahmastra()
-        brahmastra.use(arjun = True)  # using this until we get all queries right
+        brahmastra.use(arjun = True)
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+@celery.task(bind=True,retry_backoff=True,max_retries=5)
+def cache_data_worker_in_delay(self):
+    try:
+        # this caches statistics csv into redis for huge data
+        from services.bramhastra.workers.cache_data_worker import FclCacheData
+        FclCacheData()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
