@@ -57,7 +57,7 @@ def send_rate_stats(action, request, freight):
 
 
 def send_request_stats(action, obj):
-    from celery_worker import apply_feedback_fcl_freight_rate_statistic_delay
+    from celery_worker import apply_fcl_freight_rate_request_statistic_delay
     from services.fcl_freight_rate.models.fcl_freight_rate_request import (
         FclFreightRateRequest,
     )
@@ -100,7 +100,7 @@ def send_request_stats(action, obj):
             return
         obj["id"] = obj.pop("fcl_freight_rate_request_id")
 
-    apply_feedback_fcl_freight_rate_statistic_delay.apply_async(
+    apply_fcl_freight_rate_request_statistic_delay.apply_async(
         kwargs={"action": action, "params": jsonable_encoder(obj)}, queue="statistics"
     )
 
