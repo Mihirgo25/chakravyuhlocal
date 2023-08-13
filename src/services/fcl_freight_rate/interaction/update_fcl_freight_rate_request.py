@@ -5,7 +5,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from uuid import UUID
-from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_update_request_stats
+from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_request_stats
 
 
 def update_fcl_freight_rate_request(request):
@@ -44,8 +44,8 @@ def execute_transaction_code(request):
         raise HTTPException(
             status_code=500, detail="Freight rate request updation failed"
         )
-        
-    send_update_request_stats(object)
+                
+    send_request_stats('update',request)
 
     create_audit(request, object.id)
 

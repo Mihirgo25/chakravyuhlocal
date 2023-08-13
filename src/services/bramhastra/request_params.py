@@ -265,16 +265,16 @@ class FclFreightRateRequest(BaseModel):
     closed_by_id: str = None
     container_size: str = None
     commodity: str = None
-    containers_count: int
+    containers_count: int = 0
     is_rate_reverted: bool = None
     created_at: datetime = None
     updated_at: datetime = None
     status: str = None
 
-    @validator("closing_remarks", always=True)
+    @validator("is_rate_reverted", always=True)
     def add_is_rate_reverted(cls, value, values):
-        values["is_rate_reverted"] = True if "rate_added" in value else False
-        return values
+        closing_remarks = values.get("closing_remarks", [])
+        return value or "rate_added" in closing_remarks
 
 
 class ApplyFclFreightRateRequestStatistic(BaseModel):

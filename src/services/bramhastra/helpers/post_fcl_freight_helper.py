@@ -38,7 +38,7 @@ from services.bramhastra.models.shipment_fcl_freight_rate_statistic import (
     ShipmentFclFreightRateStatistic,
 )
 from database.rails_db import get_connection
-from services.bramhastra.enums import ShipmentServices, ShipmentState
+from services.bramhastra.enums import ShipmentServices, ShipmentState, RequestAction
 from peewee import ModelSelect
 
 STANDARD_CURRENCY = "USD"
@@ -231,6 +231,9 @@ class Rate:
         self.destination_region_id = None
         self.origin_continent_id = None
         self.destination_continent_id = None
+        self.origin_main_port_id = None
+        self.destination_main_port_id = None
+        self.set_non_existing_location_details()
 
     def set_new_stats(self) -> int:
         return FclFreightRateStatistic.insert_many(self.params).execute()
@@ -255,16 +258,17 @@ class Rate:
                 continue
 
     def set_non_existing_location_details(self) -> None:
-        self.origin_port_id = (
-            self.freight.origin_port_id
-            if not self.freight.origin_main_port_id
-            else self.freight.origin_main_port_id
-        )
-        self.destination_port_id = (
-            self.freight.destination_port_id
-            if not self.freight.destination_main_port_id
-            else self.freight.destination_main_port_id
-        )
+        if not self.freight.origin_main_port_id:
+            self.origin_port_id = self.freight.origin_port_id
+        else:
+            self.origin_port_id = self.freight.origin_main_port_id
+            self.origin_main_port_id = self.freight.origin_port_id
+
+        if not self.freight.destination_main_port_id:
+            self.destination_port_id = self.freight.destination_port_id
+        else:
+            self.destination_port_id = self.freight.destination_main_port_id
+            self.destination_main_port_id = self.freight.destination_port_id
 
         self.set_pricing_map_zone_ids()
 
@@ -371,7 +375,7 @@ class Rate:
             self.destination_region_id = destination.get("region_id")
 
             self.origin_continent_id = origin.get("continent_id")
-            self.destination_continent_id = origin.get("continent_id")
+            self.destination_continent_id = destination.get("continent_id")
 
 
 class SpotSearch:
@@ -531,19 +535,14 @@ class Feedback:
 
 
 class Request:
-    def __init__(self, action, params) -> None:
-        if action == FeedbackAction.create.value:
-            self.params = params.dict()
-        else:
-            self.params = params.dict(exclude_none=True)
+    def __init__(self, params) -> None:
+        self.params = params if isinstance(params, dict) else dict(params)
 
         self.exclude_keys = {
             "rate_request_id",
-            "origin_port_id",
             "origin_country_id",
             "origin_trade_id",
             "origin_continent_id",
-            "destination_port_id",
             "destination_country_id",
             "destination_trade_id",
             "destination_continent_id",
@@ -552,16 +551,107 @@ class Request:
             "container_size",
             "container_type",
             "commodity",
-            "origin_main_port_id",
-            "destination_main_port_id",
         }
 
         self.clickhouse_client = None
 
+        self.missing_locations = dict()
+
+        self.set_missing_locations()
+
+    def set_missing_locations(self):
+        self.set_pricing_map_zone_ids()
+
+        self.set_missing_location_ids()
+
+        self.params.update(self.missing_locations)
+
+    def set_missing_location_ids(self):
+        response = maps.list_locations(
+            data={
+                "filters": {
+                    "id": [
+                        self.params.get("origin_port_id"),
+                        self.params.get("destination_port_id"),
+                    ]
+                },
+                "includes": {"continent_id": True, "region_id": True, "id": True},
+            }
+        )
+        if "list" in response and len(response["list"]) == 2:
+            region_id_mapping = {
+                item["id"]: dict(
+                    region_id=item["region_id"], continent_id=item["continent_id"]
+                )
+                for item in response["list"]
+            }
+            origin = region_id_mapping.get(self.params.get("origin_port_id"))
+
+            destination = region_id_mapping.get(self.params.get("destination_port_id"))
+
+            self.missing_locations["origin_region_id"] = origin.get("region_id")
+            self.missing_locations["destination_region_id"] = destination.get(
+                "region_id"
+            )
+
+            self.missing_locations["origin_continent_id"] = origin.get("continent_id")
+            self.missing_locations["destination_continent_id"] = destination.get(
+                "continent_id"
+            )
+
+    def set_pricing_map_zone_ids(self) -> list:
+        ids = [
+            self.params.get("origin_port_id"),
+            self.params.get("destination_port_id"),
+        ]
+        query = (
+            FclFreightLocationCluster.select(
+                FclFreightLocationClusterMapping.location_id,
+                FclFreightLocationCluster.map_zone_id,
+            )
+            .join(FclFreightLocationClusterMapping)
+            .where(FclFreightLocationClusterMapping.location_id.in_(ids))
+        )
+        map_zone_location_mapping = jsonable_encoder(
+            {item["location_id"]: item["map_zone_id"] for item in query.dicts()}
+        )
+
+        if len(map_zone_location_mapping) < 2:
+            query = FclFreightLocationCluster.select(
+                FclFreightLocationCluster.base_port_id.alias("location_id"),
+                FclFreightLocationCluster.map_zone_id,
+            ).where(FclFreightLocationCluster.base_port_id.in_(ids))
+            map_zone_location_mapping.update(
+                jsonable_encoder(
+                    {item["location_id"]: item["map_zone_id"] for item in query.dicts()}
+                )
+            )
+        self.missing_locations[
+            "origin_pricing_zone_map_id"
+        ] = map_zone_location_mapping.get(self.params.get("origin_port_id"))
+
+        self.missing_locations[
+            "destination_pricing_zone_map_id"
+        ] = map_zone_location_mapping.get(self.params.get("destination_port_id"))
+
     def set_new_stats(self) -> int:
-        return FclFreightRateRequestStatistic.insert_many(self.params).execute()
+        return FclFreightRateRequestStatistic(**self.params).save()
 
     def set_existing_stats(self) -> None:
+        if (
+            request := FclFreightRateRequestStatistic.select()
+            .where(
+                FclFreightRateRequestStatistic.rate_request_id
+                == self.params.get("rate_request_id")
+            )
+            .first()
+        ):
+            for k, v in self.params:
+                if k not in self.exclude_keys:
+                    setattr(request, k, v)
+            request.save()
+            return
+
         if not self.clickhouse_client:
             self.clickhouse_client = ClickHouse()
 
@@ -570,14 +660,14 @@ class Request:
         ]
 
         values = []
-        for key in self.params.keys():
-            if key not in self.exclude_keys:
+        for key, value in self.params.items():
+            if key not in self.exclude_keys and value:
                 values.append(f"{key} = %({key})s")
 
         queries.append(",".join(values))
 
         queries.append(
-            f"WHERE (rate_request_id,version) IN (SELECT rate_request_id, MAX(version) AS max_version FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE rate_request_id = %(rate_request_id)s GROUP BY rate_request_id)"
+            f"WHERE (id,version) IN (SELECT id, MAX(version) AS max_version FROM brahmastra.{FclFreightRateRequestStatistic._meta.table_name} WHERE rate_request_id = %(rate_request_id)s GROUP BY id)"
         )
 
         if row := self.clickhouse_client.execute(" ".join(queries), self.params):
@@ -673,7 +763,7 @@ class Quotations(FclFreightValidity):
 
             if shipment_param.get("is_deleted"):
                 continue
-            
+
             statistic.set(shipment_param, increment_keys, row)
 
     def update(self, id, stat):
@@ -736,15 +826,19 @@ class Statistics:
             if param["total_price"] == row["total_price"]:
                 return
 
-            self.total_price = common.get_money_exchange_for_fcl({
-                            "price": param.get('total_price'),
-                            "from_currency": param.get('currency'),
-                            "to_currency": "USD",
-                        }).get('price')
+            self.total_price = common.get_money_exchange_for_fcl(
+                {
+                    "price": param.get("total_price"),
+                    "from_currency": param.get("currency"),
+                    "to_currency": "USD",
+                }
+            ).get("price")
 
             self.set_current_rate(param.get("shipment_fcl_freight_service_id"))
-            
-            if (self.rate['validity_id'] == self.original_booked_rate['validity_id']) and (self.rate['rate_id'] == self.original_booked_rate['validity_id']):
+
+            if (
+                self.rate["validity_id"] == self.original_booked_rate["validity_id"]
+            ) and (self.rate["rate_id"] == self.original_booked_rate["validity_id"]):
                 return
 
             self.set_stats_hash()
@@ -829,9 +923,9 @@ class Statistics:
             eval(f"self.set_{key}(key)")
 
     def set_rate_deviation_from_latest_booking(self, key):
-        self.original_rate_stats_hash[
-            key
-        ] = abs(self.total_price - self.original_booked_rate("standard_price"))
+        self.original_rate_stats_hash[key] = abs(
+            self.total_price - self.original_booked_rate("standard_price")
+        )
 
         self.rate_stats_hash[key] = abs(self.total_price - self.rate["standard_price"])
 
@@ -841,7 +935,7 @@ class Statistics:
                 self.original_booked_rate.get("average_booking_rate")
                 * self.original_booked_rate.get("booking_rate_count")
             )
-            +  self.total_price
+            + self.total_price
         ) / (self.original_booked_rate.get("booking_rate_count") + 1)
 
         self.rate_stats_hash[key] = (
@@ -862,20 +956,20 @@ class Statistics:
             / self.original_booked_rate.get("booking_rate_count")
             + 1
         ) ** 0.5
-        self.rate_stats_hash[key] = abs(self.rate_stats_hash['average_booking_rate']-self.rate.get('standard_price'))
+        self.rate_stats_hash[key] = abs(
+            self.rate_stats_hash["average_booking_rate"]
+            - self.rate.get("standard_price")
+        )
 
     def set_accuracy(self, key):
         self.rate_stats_hash[key] = (
             1
-            - abs( self.total_price - self.rate_stats_hash.get("standard_price"))
+            - abs(self.total_price - self.rate_stats_hash.get("standard_price"))
             / self.total_price
         ) * 100
         self.original_rate_stats_hash[key] = (
             1
-            - abs(
-                self.total_price
-                - self.original_booked_rate.get("standard_price")
-            )
+            - abs(self.total_price - self.original_booked_rate.get("standard_price"))
             / self.total_price
         ) * 100
 
