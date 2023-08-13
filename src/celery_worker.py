@@ -64,7 +64,7 @@ from services.chakravyuh.setters.air_freight import AirFreightVyuh as AirFreight
 from services.bramhastra.brahmastra import Brahmastra
 from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import apply_fcl_freight_rate_statistic
 from services.bramhastra.interactions.apply_fcl_freight_rate_feedback import apply_feedback_fcl_freight_rate_statistic
-# Monitoring
+from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
 
 CELERY_CONFIG = {
     "enable_utc": True,
@@ -889,6 +889,18 @@ def apply_feedback_fcl_freight_rate_statistic_delay(self,action,params):
     from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
     try:
         return apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = params))
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+     
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def apply_fcl_freight_rate_request_statistic_delay(self,action,params):
+    from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
+    try:
+        return apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = params))
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
