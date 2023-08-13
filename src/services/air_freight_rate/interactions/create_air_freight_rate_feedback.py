@@ -9,7 +9,7 @@ from celery_worker import send_air_freight_rate_feedback_notification_in_delay,g
 from micro_services.client import *
 from services.air_freight_rate.constants.air_freight_rate_constants import CARGOAI_ACTIVE_ON_DISLIKE_RATE
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from libs.json_encoder import json_encoder
+from services.air_freight_rate.helpers.air_freight_statistics_filter import set_feedback_statistics
 
 def create_audit(request,feedback_id):
     AirServiceAudit.create(
@@ -88,7 +88,7 @@ def execute_transaction_code(request):
         if airports:
             send_air_freight_rate_feedback_notification_in_delay.apply_async(kwargs={'object':feedback,'air_freight_rate':rate,'airports':airports},queue='communication')
 
-    set_feedback_statistics(action,request,feedback)
+    # set_feedback_statistics(action,request,feedback)
 
     return {'id': request['rate_id']}
 
@@ -141,40 +141,3 @@ def get_locations(air_freight_rate):
         return locations
     destination = locations[0]
     return [locations[1],destination]
-
-def set_feedback_statistics(action, request, feedback):
-    from services.bramhastra.interactions.apply_feedback_air_freight_rate_statistic import (
-        apply_feedback_air_freight_rate_statistic,
-    )
-    from services.bramhastra.request_params import ApplyFeedbackAirFreightRateStatistics
-    from playhouse.shortcuts import model_to_dict
-    from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
-
-    params = model_to_dict(
-        feedback,
-        only=[
-            AirFreightRateFeedback.id,
-            AirFreightRateFeedback.source,
-            AirFreightRateFeedback.source_id,
-            AirFreightRateFeedback.closed_by_id,
-            AirFreightRateFeedback.air_freight_rate_id,
-            AirFreightRateFeedback.validity_id,
-            AirFreightRateFeedback.service_provider_id,
-            AirFreightRateFeedback.serial_id,
-            AirFreightRateFeedback.created_at,
-            AirFreightRateFeedback.updated_at,
-            AirFreightRateFeedback.performed_by_id,
-            AirFreightRateFeedback.performed_by_org_id,
-            AirFreightRateFeedback.feedback_type,
-        ],
-    )
-
-    for k, v in request.items():
-        if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
-            params[k] = v 
-        
-    apply_feedback_air_freight_rate_statistic(
-        ApplyFeedbackAirFreightRateStatistics(
-            action=action, params=json_encoder(params)
-        )
-    )
