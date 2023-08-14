@@ -484,7 +484,6 @@ class FclFreightRate(BaseModel):
                 market_price = float(sum(item["market_price"] for item in line_items))
              
         new_validities = []
-        old_validity_found = False
         index_to_pop = None
         old_validity_id = None
         for index,validity_object in enumerate(self.validities):
@@ -499,7 +498,6 @@ class FclFreightRate(BaseModel):
             
             if not deleted and validity_object['validity_start'] == validity_start.strftime('%Y-%m-%d') and validity_object['validity_end'] == validity_end.strftime('%Y-%m-%d') and validity_object['schedule_type'] == schedule_type and validity_object['payment_term'] == payment_term:
                 old_validity_id = validity_object['id']
-                old_validity_found = True
                 index_to_pop = index
             
             if not is_price_in_range(other_params.get('rates_greater_than_price'), other_params.get('rates_less_than_price'),price_to_compare,other_params.get('comparision_currency'),currency):
@@ -546,10 +544,7 @@ class FclFreightRate(BaseModel):
                 new_validity.id = str(uuid.uuid4())
                 new_validity['action'] = 'create'
                 new_validities.append(FclFreightRateValidity(**new_validity))
-                continue
-        
-        if index_to_pop: # pop old validity
-          self.validities.pop(index_to_pop)      
+                continue   
         
         if not deleted:
           new_validity_object = {
@@ -566,7 +561,8 @@ class FclFreightRate(BaseModel):
                 "dislikes_count": 0,
                 "action": "create"
               }
-          if old_validity_found:
+          if index_to_pop is not None:
+            self.validities.pop(index_to_pop)  
             new_validity_object['id'] = old_validity_id
             new_validity_object['action'] = 'update'
           
