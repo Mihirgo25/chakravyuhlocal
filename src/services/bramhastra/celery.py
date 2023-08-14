@@ -5,7 +5,7 @@ from services.bramhastra.interactions.apply_fcl_freight_rate_feedback import app
 from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
 
 @celery.task(bind=True,retry_backoff=True,max_retries=5)
-def arjun_in_delay(self):
+def brahmastra_in_delay(self):
     # using this until we get all queries right
     try:
         brahmastra=Brahmastra()

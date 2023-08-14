@@ -9,7 +9,6 @@ from celery_worker import send_air_freight_rate_feedback_notification_in_delay,g
 from micro_services.client import *
 from services.air_freight_rate.constants.air_freight_rate_constants import CARGOAI_ACTIVE_ON_DISLIKE_RATE
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from services.air_freight_rate.helpers.air_freight_statistics_filter import set_feedback_statistics
 
 def create_audit(request,feedback_id):
     AirServiceAudit.create(
@@ -30,7 +29,6 @@ def create_air_freight_rate_feedback(request):
         return execute_transaction_code(request)
      
 def execute_transaction_code(request):
-    action = 'update'
 
     rate=AirFreightRate.select(AirFreightRate.id,AirFreightRate.validities,AirFreightRate.origin_airport_id,AirFreightRate.destination_airport_id,AirFreightRate.commodity).where(AirFreightRate.id==request['rate_id']).first()
     if not rate:
@@ -57,7 +55,6 @@ def execute_transaction_code(request):
 
 
     if not feedback:
-        action = 'create'
         feedback=AirFreightRateFeedback(**row)
 
     create_params =get_create_params(request,rate)

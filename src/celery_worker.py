@@ -95,8 +95,6 @@ celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_f
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
           queue_arguments={'x-max-priority': 2})]
 
-celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
-
 celery.conf.update(**CELERY_CONFIG)
 celery.conf.beat_schedule = {
     'fcl_freigh_rates_to_cogo_assured': {
@@ -149,8 +147,8 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    'arjun_in_delay':{
-        'task': 'services.bramhastra.celery.arjun_in_delay',
+    'brahmastra_in_delay':{
+        'task': 'services.bramhastra.celery.brahmastra_in_delay',
         'schedule': crontab(hour='*/2'),
         'options': {'queue': 'critical'}
     },
@@ -166,6 +164,7 @@ celery.conf.beat_schedule = {
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
 
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)

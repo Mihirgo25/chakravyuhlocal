@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 
 
 def send_rate_stats(action, request, freight):
-    from celery_worker import apply_fcl_freight_rate_statistic_delay
+    from services.bramhastra.celery import apply_fcl_freight_rate_statistic_delay
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 
     object = jsonable_encoder(
@@ -57,7 +57,7 @@ def send_rate_stats(action, request, freight):
 
 
 def send_request_stats(action, obj):
-    from celery_worker import apply_fcl_freight_rate_request_statistic_delay
+    from services.bramhastra.celery import apply_fcl_freight_rate_request_statistic_delay
     from services.fcl_freight_rate.models.fcl_freight_rate_request import (
         FclFreightRateRequest,
     )
@@ -107,7 +107,7 @@ def send_request_stats(action, obj):
 
 def send_feedback_statistics(action, feedback, request=None):
     from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
-    from celery_worker import apply_feedback_fcl_freight_rate_statistic_delay
+    from services.bramhastra.celery import apply_feedback_fcl_freight_rate_statistic_delay
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
         FclFreightRateFeedback,
     )
@@ -155,7 +155,7 @@ def send_feedback_delete_stats(obj):
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
         FclFreightRateFeedback,
     )
-    from celery_worker import apply_feedback_fcl_freight_rate_statistic_delay
+    from services.bramhastra.celery import apply_feedback_fcl_freight_rate_statistic_delay
 
     obj = obj.refresh()
 
@@ -177,7 +177,7 @@ def send_feedback_delete_stats(obj):
 
 
 def send_delete_request_stats(obj):
-    from celery_worker import apply_fcl_freight_rate_request_statistic_delay
+    from services.bramhastra.celery import apply_fcl_freight_rate_request_statistic_delay
     from services.fcl_freight_rate.models.fcl_freight_rate_request import (
         FclFreightRateRequest,
     )

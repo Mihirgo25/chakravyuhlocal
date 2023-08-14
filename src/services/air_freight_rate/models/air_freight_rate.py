@@ -513,7 +513,7 @@ class AirFreightRate(BaseModel):
             "initial_volume": available_volume,
             "available_volume": available_volume,
             "initial_gross_weight": available_gross_weight,
-            "available_gross_weight": available_gross_weight,
+            "available_gross_weight": available_gross_weight
             }
             if validity_id:
                 new_validity_object['id'] = validity_id

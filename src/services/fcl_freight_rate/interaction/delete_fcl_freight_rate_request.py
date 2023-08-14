@@ -2,10 +2,6 @@ from services.fcl_freight_rate.models.fcl_freight_rate_request import FclFreight
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from fastapi.encoders import jsonable_encoder
-from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
-from playhouse.shortcuts import model_to_dict
-from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
 from database.rails_db import (
     get_organization_partner,
 )
