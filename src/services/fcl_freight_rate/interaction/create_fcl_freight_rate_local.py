@@ -4,7 +4,7 @@ from services.fcl_freight_rate.models.fcl_services_audit import FclServiceAudit
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day import create_fcl_freight_rate_free_day
 from database.db_session import db
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
-
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def create_audit(request, fcl_freight_local_id):
     audit_data = {}
@@ -51,7 +51,7 @@ def execute_transaction_code(request):
         'commodity' : request.get('commodity'),
         'shipping_line_id' : request.get('shipping_line_id'),
         'service_provider_id' : request.get('service_provider_id'),
-        "rate_not_available_entry": request.get("rate_not_available_entry")
+        "rate_not_available_entry": request.get("rate_not_available_entry"),
     }
 
     fcl_freight_local = FclFreightRateLocal.select().where(
@@ -105,8 +105,10 @@ def execute_transaction_code(request):
 
 
     create_audit(request, fcl_freight_local.id)
+    
+    get_multiple_service_objects(fcl_freight_local)
 
-    fcl_freight_local_data_updation.apply_async(kwargs={"local_object":fcl_freight_local,"request":request},queue='low')
+    fcl_freight_local_data_updation.apply_async(kwargs={"request":request},queue='low')
 
     return {"id": fcl_freight_local.id }
 

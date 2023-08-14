@@ -4,7 +4,7 @@ from services.haulage_freight_rate.models.haulage_freight_rate_audit import Haul
 from fastapi import HTTPException
 from database.db_session import db
 from fastapi.encoders import jsonable_encoder
-from celery_worker import update_multiple_service_objects
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from micro_services.client import maps
 
 
@@ -61,7 +61,7 @@ def execute_transaction_code(request):
         raise HTTPException(status_code=400, detail='Feedback could not be saved')
 
     create_audit(request)
-    update_multiple_service_objects.apply_async(kwargs={'object':feedback},queue='low')
+    get_multiple_service_objects(feedback)
 
     return {'id': feedback.id}
 
@@ -122,7 +122,9 @@ def create_audit(request):
         action_name = 'create',
         performed_by_id = request['performed_by_id'],
         data = audit_data,
-        object_type = object_type
+        object_type = object_type,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 

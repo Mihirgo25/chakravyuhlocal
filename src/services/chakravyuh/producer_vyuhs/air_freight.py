@@ -207,6 +207,9 @@ class AirFreightVyuh():
 
     def extend_rate(self, source = 'rate_extension'):
 
+        if self.rate['source'] == 'predicted':
+            return True
+
         rates_to_create = self.get_rate_combinations_to_extend()
         # queue need to change to air_freight_rate
         for rate_to_create in rates_to_create:

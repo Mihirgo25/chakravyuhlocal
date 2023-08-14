@@ -1,129 +1,85 @@
-from datetime import datetime, timedelta
-import uuid
-from fastapi.encoders import jsonable_encoder
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
-from configs.cogo_assured_rate_constants import FCL_FREIGHT_RATE_DISCOUNT_GREATER_THAN_1000, FCL_FREIGHT_RATE_DISCOUNT_LESS_THAN_EQUAL_TO_1000
-from configs.fcl_freight_rate_constants import COGO_ASSURED_SHIPPING_LINE_ID, COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_RATE_TYPE
+from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
+from database.rails_db import get_ff_mlo
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SHIPPING_LINE_ID
+from configs.env import DEFAULT_USER_ID
+from datetime import timedelta, datetime
+from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
+from micro_services.client import common
 
-def get_system_rates(request):
-    fcl_rate = FclFreightRate.select(
-        FclFreightRate.validities,
-        FclFreightRate.id
-    ).where(
-        FclFreightRate.origin_port_id == request.get('origin_port_id'),
-        FclFreightRate.destination_port_id == request.get('destination_port_id'),
-        FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),
-        FclFreightRate.destination_main_port_id == request.get('destination_main_port_id'),
-        FclFreightRate.container_size == request.get('container_size'),
-        FclFreightRate.container_type == request.get('container_type'),
-        FclFreightRate.commodity == request.get('commodity'),
-        FclFreightRate.rate_type == DEFAULT_RATE_TYPE,
-        ~FclFreightRate.rate_not_available_entry,
-        FclFreightRate.last_rate_available_date >= datetime.now().date()
-    )
-    return jsonable_encoder(list(fcl_rate.dicts()))
+def get_assured_rate(all_prices):
+    prices = []
+    for price_curr in all_prices:
+        if price_curr["currency"] != "USD":
+            price_curr["price"] = common.get_money_exchange_for_fcl( {"price": price_curr["price"], "from_currency": price_curr["currency"], "to_currency": "USD"} )["price"]
+        
+        prices.append(int(price_curr["price"]))
+        
+    return min(prices)
 
-def update_fcl_rates_to_cogo_assured(request,):
-    print('jii')
-
-    system_rates =  get_system_rates(request=request)
-
-    fcl_rate = FclFreightRate.select(
-        FclFreightRate.validities,
-        FclFreightRate.id
-    ).where(
-        FclFreightRate.origin_port_id == request.get('origin_port_id'),
-        FclFreightRate.destination_port_id == request.get('destination_port_id'),
-        FclFreightRate.origin_main_port_id == request.get('origin_main_port_id'),
-        FclFreightRate.destination_main_port_id == request.get('destination_main_port_id'),
-        FclFreightRate.container_size == request.get('container_size'),
-        FclFreightRate.container_type == request.get('container_type'),
-        FclFreightRate.commodity == request.get('commodity'),
-        FclFreightRate.shipping_line_id == COGO_ASSURED_SHIPPING_LINE_ID,
-        FclFreightRate.service_provider_id == COGO_ASSURED_SERVICE_PROVIDER_ID,
-        FclFreightRate.rate_type == 'cogo_assured'
-    )
-
-    rates = jsonable_encoder(list(fcl_rate.dicts()))
-    cogo_assured_rate = None
-    if len(rates):
-        cogo_assured_rate = rates[0]
+def update_fcl_rates_to_cogo_assured(param):
+    ff_mlo = get_ff_mlo()
+    freight_rates = list(FclFreightRate.select(FclFreightRate.validities).where(
+        FclFreightRate.mode != "predicted",
+        FclFreightRate.origin_port_id == param["origin_port_id"],
+        FclFreightRate.origin_main_port_id == param["origin_main_port_id"],
+        FclFreightRate.destination_port_id == param["destination_port_id"],
+        FclFreightRate.destination_main_port_id == param["destination_main_port_id"],
+        FclFreightRate.container_size == param["container_size"],
+        FclFreightRate.container_type == param["container_type"],
+        FclFreightRate.commodity == param["commodity"],
+        FclFreightRate.rate_type == DEFAULT_RATE_TYPE, 
+        FclFreightRate.service_provider_id.in_(ff_mlo),
+        FclFreightRate.updated_at.cast('date') > (datetime.now() - timedelta(days = 10)).date()
+    ).dicts())
     
-    if not cogo_assured_rate:
-        return
+    all_prices = []
+
+    for val in freight_rates:
+        for validity in val.values():
+            for each_validity in validity:
+                if datetime.fromisoformat(each_validity['validity_end']).date() >= datetime.now().date():
+                    all_prices.append({
+                        "price": each_validity["price"],
+                        "currency":each_validity["currency"]
+                    })
+    assured_price = 0
+    if all_prices:            
+        assured_price = get_assured_rate(all_prices)
+
+    if assured_price <= 0:
+        return True
     
-
+    rate_param = {
+        "container_size": param["container_size"],
+        "price": assured_price,
+        "currency": "USD"
+    }
     
-    first_week_validity = cogo_assured_rate['validities'][0]
-
-    first_week_price = first_week_validity['price']
-
-
-
-def get_initial_first_week_price(existing_system_rates, current_price, cogo_assured_rate, container_size, container_type, commodity, before_modification_prices):
-    if existing_system_rates:
-        relevant_rates = []
-        for rate in existing_system_rates:
-          validities = rate['validities']
-          for t in validities:
-              validity_start = t['validity_start']
-              validity_end = t['validity_end']
-              current_date = datetime.now().date()
-              if validity_start <=current_date and validity_end >= current_price:
-                  relevant_rates << t['price']
-                  break
-        if len(relevant_rates):
-            return min(relevant_rates)
-
-    if container_size == '40':
-        key = "20{}{}".format(container_type, commodity)
-        twenty_feet_price = None
-        if key in before_modification_prices and before_modification_prices[key]:
-            twenty_feet_price = before_modification_prices[key]
-        twenty_feet_rate = cogo_assured_rate
-        if not twenty_feet_price and twenty_feet_rate:
-            for t in twenty_feet_rate['validities']:
-                validity_start = t['validity_start']
-                validity_end = t['validity_end']
-                current_date = datetime.now().date()
-                if validity_start <=current_date and validity_end >= current_price:
-                  relevant_rates << t['price']
-                  break
-        if twenty_feet_price and current_price * 1.01 < twenty_feet_price:
-            return twenty_feet_price + [0.5, current_price / twenty_feet_price].max * twenty_feet_price
-    current_price * 1.01
-
-def get_second_week_price(existing_system_rates, current_price, week_1_rate):
-    if existing_system_rates:
-        relevant_rates = []
-        for rate in existing_system_rates:
-            for t in rate['validities']:
-                validity_start = t['validity_start']
-                validity_end = t['validity_end']
-                next_week_date = (datetime.now() + timedelta(days=7)).date()
-                if validity_start <= next_week_date and validity_end >= next_week_date:
-                    relevant_rates.append(t['price'])
-        if len(relevant_rates) and min(relevant_rates) < week_1_rate:          
-            return min(relevant_rates)
-
-    return week_1_rate
-
-def get_formatted_date(date):
-    return date
-
-def set_week_rate(previous_week_rate, week_1_rate, curr_week):
-    if previous_week_rate > 1000:
-     return week_1_rate - FCL_FREIGHT_RATE_DISCOUNT_GREATER_THAN_1000[curr_week]
-    else:
-      return previous_week_rate * FCL_FREIGHT_RATE_DISCOUNT_LESS_THAN_EQUAL_TO_1000[curr_week]
-
-def get_new_validities(week_1_rate, week_2_rate, week_3_rate, week_4_rate, week_5_rate, validity_start, validity_end, currency):
-    new_validities = []
-
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_1_rate or 0), 'currency': currency, 'validity_start': validity_start, 'valdity_end': validity_start + timedelta(days=6)  })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_2_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=7),  'validity_end': validity_start + timedelta(days=13) })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_3_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=14), 'validity_end': validity_start + timedelta(days=20) })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_4_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=21), 'validity_end': validity_start + timedelta(days=27) })
-    new_validities.append({ 'id': str(uuid.uuid4()), 'price': int(week_5_rate or 0), 'currency': currency, 'validity_start': validity_start + timedelta(days=28), 'validity_end': validity_start + timedelta(days=34) })
-
-    return new_validities
+    validities = get_suggested_cogo_assured_fcl_freight_rates(rate_param)["data"]["validities"]
+    
+    create_param = {
+        "origin_port_id": param["origin_port_id"],
+        "origin_main_port_id": param["origin_main_port_id"],
+        "destination_port_id": param["destination_port_id"],
+        "destination_main_port_id": param["destination_main_port_id"],
+        "container_size": param["container_size"],
+        "container_type": param["container_type"],
+        "commodity": param["commodity"],
+        "validities": validities,
+        "service_provider_id": DEFAULT_SERVICE_PROVIDER_ID,
+        "shipping_line_id": DEFAULT_SHIPPING_LINE_ID,
+        "sourced_by_id": DEFAULT_USER_ID,
+        "procured_by_id": DEFAULT_USER_ID,
+        "performed_by_id": DEFAULT_USER_ID,
+        "rate_type": "cogo_assured",
+        "mode": "manual",
+        "validity_start": validities[0]["validity_start"],
+        "validity_end": validities[-1]["validity_end"],
+        "available_inventory": 100,
+        "used_inventory": 0,
+        "shipment_count": 0,
+        "volume_count": 0
+    }
+    id = create_fcl_freight_rate_data(create_param)
+    return True

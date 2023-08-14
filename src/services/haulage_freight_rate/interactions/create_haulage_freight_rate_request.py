@@ -1,6 +1,7 @@
 from services.haulage_freight_rate.models.haulage_freight_rate_request import HaulageFreightRateRequest 
 from services.haulage_freight_rate.models.haulage_freight_rate_audit import HaulageFreightRateAudit
-from celery_worker import create_communication_background, update_multiple_service_objects
+from celery_worker import create_communication_background
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from micro_services.client import maps
 from database.db_session import db
@@ -50,7 +51,7 @@ def execute_transaction_code(request):
 
     create_audit(request,request_object.id)
 
-    update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
+    get_multiple_service_objects(request_object)
 
     send_notifications_to_supply_agents(request)
 
@@ -96,7 +97,9 @@ def create_audit(request, request_object_id):
         performed_by_id = performed_by_id,
         data = request,
         object_type = object_type,
-        object_id = request_object_id
+        object_id = request_object_id,
+        sourced_by_id = request.get('sourced_by_id'),
+        procured_by_id = request.get('procured_by_id')
     )
 
 def supply_agents_to_notify(request):

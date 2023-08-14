@@ -1,8 +1,8 @@
 from micro_services.client import *
 from database.rails_db import get_organization,get_operators,get_user
 
-def get_multiple_service_objects(freight_object):
-    if hasattr(freight_object,'shipping_line_id') and freight_object.shipping_line_id:
+def get_multiple_service_objects(freight_object, is_new_rate=True):
+    if is_new_rate and hasattr(freight_object,'shipping_line_id') and freight_object.shipping_line_id:
         shipping_line = get_operators(id=str(freight_object.shipping_line_id))
         if len(shipping_line or []) > 0:
             try:
@@ -10,7 +10,7 @@ def get_multiple_service_objects(freight_object):
             except:
                 freight_object.shipping_line_detail = shipping_line[0]
 
-    if hasattr(freight_object,'airline_id') and freight_object.airline_id:
+    if is_new_rate and hasattr(freight_object,'airline_id') and freight_object.airline_id:
         airline = get_operators(id=str(freight_object.airline_id))
         if len(airline or []) > 0:
             try:
@@ -48,14 +48,14 @@ def get_multiple_service_objects(freight_object):
     organization_list=[]
     if hasattr(freight_object,'importer_exporter_id') and freight_object.importer_exporter_id:
         organization_list.append(freight_object.importer_exporter_id)
-    if hasattr(freight_object,'service_provider_id') and freight_object.service_provider_id:
+    if is_new_rate and hasattr(freight_object,'service_provider_id') and freight_object.service_provider_id:
         organization_list.append(freight_object.service_provider_id)
     if hasattr(freight_object,'performed_by_org_id') and freight_object.performed_by_org_id:
         organization_list.append(freight_object.performed_by_org_id)
     if organization_list:
         organization_data = get_organization(id=organization_list)
         for organization in organization_data:
-            if hasattr(freight_object,'service_provider_id') and organization['id']==str(freight_object.service_provider_id):
+            if is_new_rate and hasattr(freight_object,'service_provider_id') and organization['id']==str(freight_object.service_provider_id):
                 freight_object.service_provider = organization
             if hasattr(freight_object,'importer_exporter_id') and organization['id']==str(freight_object.importer_exporter_id):
                 freight_object.importer_exporter= organization

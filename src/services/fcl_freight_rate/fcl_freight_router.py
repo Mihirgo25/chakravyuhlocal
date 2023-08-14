@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Depends, Request
 from fastapi.responses import JSONResponse
 from typing import Union, List
 import json
@@ -94,6 +94,7 @@ from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import g
 from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_deviations import list_fcl_freight_rate_deviations
 from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster import create_fcl_freight_location_cluster
+from libs.rate_limiter import rate_limiter
 
 fcl_freight_router = APIRouter()
 
@@ -983,13 +984,34 @@ def list_fcl_freight_rate_free_days_data(
     page: int = 1,
     pagination_data_required: bool = True,
     return_query: bool = False,
-    resp: dict = Depends(authorize_token)
+    includes: str = None,
+    resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
         return JSONResponse(status_code=resp["status_code"], content=resp)
 
     try:
-        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query)
+        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query, includes)
+        return JSONResponse(status_code=200, content=json_encoder(data))
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
+
+@fcl_freight_router.get("/list_public_fcl_freight_rate_free_days")
+@rate_limiter.add(max_requests=10, time_window=3600)
+def list_public_fcl_freight_rate_data(
+    request: Request,
+    filters: str = None,
+    page_limit: int = 10,
+    page: int = 1,
+    pagination_data_required: bool = False,
+    return_query: bool = False,
+    includes: str = None
+):
+    try:
+        data = list_fcl_freight_rate_free_days(filters, page_limit, page, pagination_data_required, return_query, includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise

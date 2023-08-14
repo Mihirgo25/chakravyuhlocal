@@ -3,7 +3,8 @@ from services.air_freight_rate.models.air_freight_rate_tasks import AirFreightRa
 from fastapi import HTTPException
 from micro_services.client import *
 from services.air_freight_rate.models.air_services_audit import AirServiceAudit
-from celery_worker import update_multiple_service_objects,send_air_freight_rate_task_notification_in_delay
+from celery_worker import send_air_freight_rate_task_notification_in_delay
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 
 def create_audit(request,task_id):
@@ -76,8 +77,7 @@ def create_air_freight_rate_task (request):
     
     create_audit(request,task.id)
 
-    update_multiple_service_objects.apply_async(kwargs={'object':task},queue='low')
-
+    get_multiple_service_objects(task)
     send_air_freight_rate_task_notification_in_delay.apply_async(kwargs={'task_id':task.id},queue='low')
     
     return{

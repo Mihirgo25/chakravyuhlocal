@@ -461,6 +461,7 @@ def list_air_freight_rate_surcharges_api(
     page: int = 1,
     pagination_data_required: bool = True,
     return_query: bool = False,
+    includes: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -471,7 +472,8 @@ def list_air_freight_rate_surcharges_api(
                                                 page_limit=page_limit, 
                                                 page=page, 
                                                 pagination_data_required=pagination_data_required,
-                                                return_query=return_query)
+                                                return_query=return_query, 
+                                                includes=includes)
         return JSONResponse(status_code=200, content=json_encoder(data))
     except HTTPException as e:
         raise
@@ -525,6 +527,7 @@ def get_air_freight_rate_cards_api(
     price_type: str = None,
     cogo_entity_id: str = None,
     additional_services: str = None,
+    importer_exporter_id: str = None,
     resp: dict = Depends(authorize_token),
 ):
     if resp["status_code"] != 200:
@@ -549,6 +552,7 @@ def get_air_freight_rate_cards_api(
         "trade_type": trade_type,
         "packing_type": packing_type,
         "handling_type": handling_type,
+        "importer_exporter_id": importer_exporter_id
     }
 
     try:

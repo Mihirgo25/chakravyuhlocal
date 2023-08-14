@@ -962,7 +962,7 @@ def create_air_freight_surcharge_rate(
             if key in key_to_float:
                 line_item[key] = parse_numeric(line_item[key])
         line_item["currency"] = line_item["currency"].upper().strip()
-        line_item["unit"] = line_item["unit"].upper().strip()
+        line_item["unit"] = line_item["unit"].lower().strip()
         line_item["code"] = line_item["code"].upper().strip()
         remarks = [slab["remark1"], slab["remark2"], slab["remark3"]]
         line_item["remark"] = list(filter(lambda x: x is not None, remarks))

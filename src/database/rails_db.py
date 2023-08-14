@@ -610,3 +610,33 @@ def get_spot_search_count(origin_airport_id,destination_airport_id):
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return count
+    
+
+def get_organization_partner(id):
+    all_result = []
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+               
+                if not isinstance(id, list):
+                    id = (id,)
+                else:
+                    id = tuple(id)
+                sql = "select * from organizations where id = %s AND 'partner' = ANY(tags) AND status = %s"
+                cur.execute(sql, (id,'active',))
+
+                result = cur.fetchall()
+
+                for res in result:
+                    all_result.append(
+                        {
+                            "id": str(res[0]),
+                        }
+                    )
+                cur.close()
+        conn.close()
+        return all_result
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return all_result

@@ -35,22 +35,22 @@ class AirFreightRateValidity(BaseModel):
 
     def validations(self):
         if self.initial_volume and self.initial_volume < 0:
-            raise HTTPException(status_code=400,details = 'Initial Volume Should Be Positive')
+            raise HTTPException(status_code=400,detail = 'Initial Volume Should Be Positive')
 
         if self.available_volume and self.available_volume < 0:
-            raise HTTPException(status_code=400,details = 'Available Volume Should Be Positive')
+            raise HTTPException(status_code=400,detail = 'Available Volume Should Be Positive')
         
         if self.initial_gross_weight and self.initial_gross_weight < 0:
-            raise HTTPException(status_code=400,details = 'Initial Gross Weight Be Positive')
+            raise HTTPException(status_code=400,detail = 'Initial Gross Weight Be Positive')
         
         if self.available_gross_weight and self.available_gross_weight < 0:
-            raise HTTPException(status_code=400,details = 'Available Gross Weight Be Positive')
+            raise HTTPException(status_code=400,detail = 'Available Gross Weight Be Positive')
         
         if self.min_density_weight and self.min_density_weight < 0:
-            raise HTTPException(status_code=400,details = 'Minimum Density Weight Be Positive')
+            raise HTTPException(status_code=400,detail = 'Minimum Density Weight Be Positive')
         
         if self.max_density_weight and self.max_density_weight < 0:
-            raise HTTPException(status_code=400,details = 'Maximum Density Weight Be Positive')
+            raise HTTPException(status_code=400,detail = 'Maximum Density Weight Be Positive')
         
         self.validate_weight_slabs()
         return True

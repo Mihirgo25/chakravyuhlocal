@@ -2,7 +2,10 @@ from services.fcl_freight_rate.models.fcl_freight_rate_feedback import FclFreigh
 from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRateAudit
 from fastapi import HTTPException
 from database.db_session import db
-from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback
+from database.rails_db import (
+    get_organization_partner,
+)
+from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
 
 def delete_fcl_freight_rate_feedback(request):
     with db.atomic():
@@ -28,8 +31,14 @@ def execute_transaction_code(request):
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
 
-        send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='low')
 
+        id = str(obj.performed_by_org_id)
+        org_users = get_organization_partner(id)
+
+        if obj.performed_by_type == 'user' and org_users and  obj.source != 'checkout':
+            send_closed_notifications_to_user_feedback.apply_async(kwargs={'object':obj},queue='critical')
+        else:
+            send_closed_notifications_to_sales_agent_feedback.apply_async(kwargs={'object':obj},queue='critical')
 
     return request['fcl_freight_rate_feedback_ids']
 

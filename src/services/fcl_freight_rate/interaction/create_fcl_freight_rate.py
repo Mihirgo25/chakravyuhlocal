@@ -8,9 +8,9 @@ from fastapi.encoders import jsonable_encoder
 from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
-from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE
-from configs.env import DEFAULT_USER_ID
+from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES, DEFAULT_VALUE_PROPS
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -20,12 +20,12 @@ def add_rate_properties(request,freight_id):
             rate_id = freight_id,
             created_at = datetime.now(),
             updated_at = datetime.now(),
-            value_props = request["value_props"],
-            t_n_c = request["t_n_c"],
-            available_inventory = request["available_inventory"],
-            used_inventory = request.get("used_inventory"),
-            shipment_count = request["shipment_count"],
-            volume_count=request["volume_count"]
+            value_props = request.get("value_props") or DEFAULT_VALUE_PROPS,
+            t_n_c = request.get("t_n_c") or [],
+            available_inventory = request.get("available_inventory") or 100,
+            used_inventory = request.get("used_inventory") or 0,
+            shipment_count = request.get("shipment_count") or 0,
+            volume_count=request.get("volume_count") or 0
         )
     # rp = FclFreightRateProperties.select().where(FclFreightRateProperties.rate_id == freight_id).first()
     # rp.validate_value_props()
@@ -59,7 +59,8 @@ def create_audit(request, freight_id):
         object_id=freight_id,
         object_type="FclFreightRate",
         source=request.get("source"),
-        extended_from_object_id=request.get('extended_from_object_id')
+        extended_from_object_id=request.get('extended_from_object_id'),
+        performed_by_type = request.get("performed_by_type") or "agent"
     )
     return id
 
@@ -104,7 +105,10 @@ def create_fcl_freight_rate(request):
         .first()
     )
     
+    is_new_rate = False
+    
     if not freight:
+        is_new_rate = True
         freight = FclFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
@@ -149,7 +153,7 @@ def create_fcl_freight_rate(request):
         freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
-        freight.set_validities_for_cogo_assured_rates(request['validities'])
+        freight.set_validities_for_cogo_assured_rates(request.get('validities'))
     else:
         freight.set_validities(
             request["validity_start"].date(),
@@ -196,8 +200,10 @@ def create_fcl_freight_rate(request):
     freight.update_platform_prices_for_other_service_providers()
 
     is_rate_extended_via_bo = rate_extension_via_bulk_operation(request)
+    
+    get_multiple_service_objects(freight, is_new_rate)
 
-    delay_fcl_functions.apply_async(kwargs={'fcl_object':freight,'request':request},queue='low')
+    delay_fcl_functions.apply_async(kwargs={'request':request},queue='low')
      
     current_validities = freight.validities
     adjust_dynamic_pricing(request, row, freight, current_validities, is_rate_extended_via_bo)
@@ -223,10 +229,11 @@ def adjust_dynamic_pricing(request, row, freight: FclFreightRate, current_validi
         'service_provider_id': freight.service_provider_id,
         'extend_rates_for_existing_system_rates': True
     }
-    if row["mode"] == 'manual' and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and not is_rate_extended_via_bo and row['rate_type'] == "market_place":
         extend_fcl_freight_rates.apply_async(kwargs={ 'rate': rate_obj }, queue='low')
-
-    adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
+    
+    if row["mode"] in EXTENSION_ENABLED_MODES and not request.get("is_extended") and row['rate_type'] == "market_place":
+        adjust_fcl_freight_dynamic_pricing.apply_async(kwargs={ 'new_rate': rate_obj, 'current_validities': current_validities }, queue='low')
 
 def adjust_cogoassured_price(row, request):
     from celery_worker import create_fcl_freight_rate_delay
