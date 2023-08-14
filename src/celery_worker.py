@@ -889,7 +889,7 @@ def cache_data_worker_in_delay(self):
     try:
         # this caches statistics csv into redis for huge data
         from services.bramhastra.workers.cache_data_worker import FclCacheData
-        FclCacheData()
+        FclCacheData().set_all_time_accuracy_chart()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass

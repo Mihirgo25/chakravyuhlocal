@@ -46,7 +46,7 @@ class S3Upload:
             )
         except ClientError as e:
             return None
-        file_url = "https://{}.s3.ap-south-1.amazonaws.com/{}".format(
+        file_url = "https://{}.s3.ap-south-1.amazonaws.com/{}.json".format(
             bucket_name, self.key
         )
         os.remove(self.file_to_write_in)
