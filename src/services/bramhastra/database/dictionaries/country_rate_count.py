@@ -21,12 +21,12 @@ class CountryRateCount:
             )
             PRIMARY KEY country_id 
             SOURCE(POSTGRESQL(
-                port {DATABASE_PORT}
-                host {DATABASE_HOST}
-                user {DATABASE_USER}
-                password {DATABASE_PASSWORD}
-                db {DATABASE_NAME}                                                                                                                                                                                              
-                replica(host {DATABASE_HOST} port {DATABASE_PORT} priority 1)
+                port %(DATABASE_PORT)s
+                host %(DATABASE_HOST)s
+                user %(DATABASE_USER)s
+                password %(DATABASE_PASSWORD)s
+                db %(DATABASE_NAME)s                                                                                                                                                                                            
+                replica(host %(DATABASE_HOST)s port %(DATABASE_PORT)s priority 1)
                 query 'SELECT "combined_countries"."country_id", COUNT("combined_countries"."country_id") AS "rate_count" FROM ((SELECT "t1"."origin_country_id" AS "country_id" FROM "fcl_freight_rate_statistics" AS "t1") UNION ALL (SELECT "t2"."destination_country_id" AS "country_id" FROM "fcl_freight_rate_statistics" AS "t2")) AS "combined_countries" GROUP BY "combined_countries"."country_id"'
             ))
             LAYOUT(COMPLEX_KEY_HASHED_ARRAY())
@@ -34,4 +34,4 @@ class CountryRateCount:
         """
 
     def create(self):
-        self.client.execute(self.query)
+        self.client.execute(self.query,dict(DATABASE_USER = DATABASE_USER,DATABASE_HOST = DATABASE_HOST,DATABASE_PORT = DATABASE_PORT,DATABASE_NAME = DATABASE_NAME,DATABASE_PASSWORD = DATABASE_PASSWORD))
