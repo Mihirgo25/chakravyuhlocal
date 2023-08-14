@@ -2,7 +2,7 @@ from database.rails_db import get_connection
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from playhouse.shortcuts import model_to_dict
 from fastapi.encoders import jsonable_encoder
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,date
 from peewee import SQL
 import math
 from configs.fcl_freight_rate_constants import (
@@ -447,7 +447,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")))
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date.cast('date') >= date.today()))
         
         total_count = query.count()
 
