@@ -5,7 +5,7 @@ from services.fcl_freight_rate.models.fcl_freight_rate_audit import FclFreightRa
 from fastapi import HTTPException
 from database.db_session import db
 from uuid import UUID
-from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_request_stats
+from services.bramhastra.celery import send_request_stats_in_delay
 
 
 def update_fcl_freight_rate_request(request):
@@ -45,7 +45,7 @@ def execute_transaction_code(request):
             status_code=500, detail="Freight rate request updation failed"
         )
                 
-    send_request_stats('update',request)
+    send_request_stats_in_delay.apply_async(kwargs = {'action':'update','object':request},queue = 'statistics')
 
     create_audit(request, object.id)
 

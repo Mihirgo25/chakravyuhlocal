@@ -6,7 +6,7 @@ from celery_worker import create_communication_background, update_multiple_servi
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID
-from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_request_stats
+from services.bramhastra.celery import send_request_stats_in_delay
 
 
 def create_fcl_freight_rate_request(request):
@@ -55,10 +55,8 @@ def execute_transaction_code(request):
         create_audit(request, request_object.id)
 
         update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
-        
-        
-        send_request_stats(action,request_object)
-        
+         
+        send_request_stats_in_delay.apply_async(kwargs = {'action':action,'object':request_object},queue = 'statistics')
 
         return {
         'id': request_object.id

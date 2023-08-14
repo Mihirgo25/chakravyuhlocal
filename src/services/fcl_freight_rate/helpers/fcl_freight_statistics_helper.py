@@ -3,8 +3,9 @@ from fastapi.encoders import jsonable_encoder
 
 
 def send_rate_stats(action, request, freight):
-    from services.bramhastra.celery import apply_fcl_freight_rate_statistic_delay
     from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
+    from services.bramhastra.request_params import ApplyFclFreightRateStatistic
+    from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import apply_fcl_freight_rate_statistic
 
     object = jsonable_encoder(
         model_to_dict(
@@ -50,17 +51,16 @@ def send_rate_stats(action, request, freight):
     for k, v in request.items():
         if k in {"source_id", "source"}:
             object[k] = v
-
-    apply_fcl_freight_rate_statistic_delay.apply_async(
-        kwargs={"action": action, "params": {"freight": object}}, queue="statistics"
-    )
+            
+    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params = object))
 
 
 def send_request_stats(action, obj):
-    from services.bramhastra.celery import apply_fcl_freight_rate_request_statistic_delay
+    from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
     from services.fcl_freight_rate.models.fcl_freight_rate_request import (
         FclFreightRateRequest,
     )
+    from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
 
     if action == "create":
         obj = obj.refresh()
@@ -99,15 +99,14 @@ def send_request_stats(action, obj):
         if "ignore" in obj and obj["ignore"]:
             return
         obj["id"] = obj.pop("fcl_freight_rate_request_id")
-
-    apply_fcl_freight_rate_request_statistic_delay.apply_async(
-        kwargs={"action": action, "params": jsonable_encoder(obj)}, queue="statistics"
-    )
+    
+    apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = jsonable_encoder(obj)))
 
 
 def send_feedback_statistics(action, feedback, request=None):
     from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
-    from services.bramhastra.celery import apply_feedback_fcl_freight_rate_statistic_delay
+    from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
+    from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
         FclFreightRateFeedback,
     )
@@ -146,16 +145,15 @@ def send_feedback_statistics(action, feedback, request=None):
             if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
                 object[k] = v
 
-    apply_feedback_fcl_freight_rate_statistic_delay.apply_async(
-        kwargs={"action": action, "params": object}, queue="statistics"
-    )
+    apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = object))
 
 
 def send_feedback_delete_stats(obj):
     from services.fcl_freight_rate.models.fcl_freight_rate_feedback import (
         FclFreightRateFeedback,
     )
-    from services.bramhastra.celery import apply_feedback_fcl_freight_rate_statistic_delay
+    from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
+    from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import apply_feedback_fcl_freight_rate_statistic
 
     obj = obj.refresh()
 
@@ -171,16 +169,16 @@ def send_feedback_delete_stats(obj):
             ],
         )
     )
-    apply_feedback_fcl_freight_rate_statistic_delay.apply_async(
-        kwargs={"action": action, "params": params}, queue="statistics"
-    )
+    
+    apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = params))
 
 
-def send_delete_request_stats(obj):
-    from services.bramhastra.celery import apply_fcl_freight_rate_request_statistic_delay
+def send_request_delete_stats(obj):
+    from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
     from services.fcl_freight_rate.models.fcl_freight_rate_request import (
         FclFreightRateRequest,
     )
+    from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
 
     obj = obj.refresh()
 
@@ -217,7 +215,5 @@ def send_delete_request_stats(obj):
             ],
         )
     )
-
-    apply_fcl_freight_rate_request_statistic_delay(
-        kwargs={"action": action, "params": params}, queue="statistics"
-    )
+    
+    apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = params))

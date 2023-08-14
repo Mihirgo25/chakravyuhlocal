@@ -8,7 +8,7 @@ from celery_worker import send_create_notifications_to_supply_agents_function, s
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
 from micro_services.client import *
-from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_feedback_statistics
+from services.bramhastra.celery import send_feedback_statistics_in_delay
 
 
 
@@ -75,7 +75,7 @@ def execute_transaction_code(request):
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         
-    send_feedback_statistics(action,feedback, request)
+    send_feedback_statistics_in_delay(action,feedback, request)
 
     return {'id': request['rate_id']}
 

@@ -5,7 +5,7 @@ from database.db_session import db
 from database.rails_db import (
     get_organization_partner,
 )
-from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_delete_request_stats
+from services.bramhastra.celery import send_delete_request_stats_in_delay
 
 def delete_fcl_freight_rate_request(request):
     with db.atomic():
@@ -39,7 +39,7 @@ def execute_transaction_code(request):
         else:
             send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='critical')
     
-    send_delete_request_stats(obj)
+    send_delete_request_stats_in_delay.apply_async(kwargs = {'obj':obj},queue = 'statistics')
 
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
