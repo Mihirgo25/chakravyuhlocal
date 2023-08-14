@@ -2,12 +2,12 @@ from database.db_session import db
 
 
 class Table:
-    def __init__(self, models) -> None:
-        self.models = models
+    def __init__(self) -> None:
+        pass
 
-    def create_tables(self):
+    def create_tables(self,models):
         try:
-            db.create_tables(self.models)
+            db.create_tables(models)
             db.close()
             print("created table")
         except:
@@ -18,4 +18,4 @@ class Table:
 if __name__ == "__main__":
     models = []
 
-    Table(models).create_tables()
+    Table().create_tables(models)

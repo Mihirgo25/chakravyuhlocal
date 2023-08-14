@@ -4,8 +4,6 @@ from micro_services.client import maps
 from services.bramhastra.models.fcl_freight_rate_statistic import (
     FclFreightRateStatistic,
 )
-from peewee import fn
-from collections import defaultdict
 
 
 def get_fcl_freight_rate_world():
@@ -38,7 +36,7 @@ def add_location_objects(statistics):
 def get_past_count():
     clickhouse = ClickHouse()
 
-    query = """
+    query = f"""
             WITH clean_rates AS
             (
                 SELECT
@@ -46,7 +44,7 @@ def get_past_count():
                     destination_country_id,
                     id,
                     sum(sign)
-                FROM brahmastra.fcl_freight_rate_statistics
+                FROM brahmastra.{FclFreightRateStatistic._meta.table_name}
                 GROUP BY
                     id,
                     origin_country_id,
@@ -56,7 +54,7 @@ def get_past_count():
             )
         SELECT
             country_id,
-            dictGet('country_rate_count', 'rate_count', country_id) + COUNT(*) AS rate_count
+            dictGet('brahmastra.country_rate_count', 'rate_count', country_id) + COUNT(*) AS rate_count
         FROM
         (
             SELECT origin_country_id AS country_id
