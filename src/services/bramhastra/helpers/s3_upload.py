@@ -1,6 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
-from configs.env import AWS_S3_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+from configs.env import AWS_S3_BUCKET_NAME, AWS_S3_REGION_NAME
 import io
 import mimetypes
 import os
