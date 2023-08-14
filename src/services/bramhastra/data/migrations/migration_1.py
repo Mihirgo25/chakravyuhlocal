@@ -447,7 +447,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date.cast('date') >= date.today()))
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date.cast('date') >= date.today())).order_by(FclFreightRate.updated_at)
         
         total_count = query.count()
 
@@ -457,18 +457,14 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         count = 0
         last_updated_at = None 
         last_updated_ids = None
-        still_has_rates = total_count > 0 
         
         print(total_count, 'total---')
         offset = 0
-        while still_has_rates:
-            if not last_updated_at:
-                rates = query.order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
-            else:
-                rates = query.where((FclFreightRate.updated_at >= last_updated_at) and (FclFreightRate.id.not_in(last_updated_ids))).order_by(FclFreightRate.updated_at).limit(BATCH_SIZE)
+        while offset < total_count:
+            rates = query.limit(BATCH_SIZE).offset(offset)
             
+            offset+=BATCH_SIZE
             if not rates.count():
-                still_has_rates = False
                 break
             
             offset += BATCH_SIZE
