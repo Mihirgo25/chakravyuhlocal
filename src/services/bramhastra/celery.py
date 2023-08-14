@@ -42,10 +42,10 @@ def fcl_extended_object_worker_in_delay(self):
             raise self.retry(exc= exc)
         
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
-def apply_fcl_freight_rate_statistic_delay(self,action,params):
-    from services.bramhastra.request_params import ApplyFclFreightRateStatistic
+def send_rate_stats_in_delay(self,action,request,freight):
+    from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_rate_stats
     try:
-        return apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params = params))
+        return send_rate_stats(action,request,freight)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -53,10 +53,10 @@ def apply_fcl_freight_rate_statistic_delay(self,action,params):
             raise self.retry(exc= exc)
 
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
-def apply_feedback_fcl_freight_rate_statistic_delay(self,action,params):
-    from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
+def send_feedback_delete_stats_in_delay(self,action,params):
+    from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_feedback_delete_stats
     try:
-        return apply_feedback_fcl_freight_rate_statistic(ApplyFeedbackFclFreightRateStatistics(action = action,params = params))
+        send_feedback_delete_stats(action = action,params = params)
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
@@ -65,11 +65,38 @@ def apply_feedback_fcl_freight_rate_statistic_delay(self,action,params):
      
         
 @celery.task(bind = True, retry_backoff=True,max_retries=5)
-def apply_fcl_freight_rate_request_statistic_delay(self,action,params):
-    from services.bramhastra.request_params import ApplyFclFreightRateRequestStatistic
+def send_delete_request_stats_in_delay(self,obj):
+    from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_request_delete_stats
     try:
-        return apply_fcl_freight_rate_request_statistic(ApplyFclFreightRateRequestStatistic(action = action,params = params))
+        send_request_delete_stats(obj)
     except Exception as exc:
+        
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def send_request_stats_in_delay(self,action,object):
+    from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_request_stats
+    try:
+        send_request_stats(action,object)
+    except Exception as exc:
+        
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+        
+@celery.task(bind = True, retry_backoff=True,max_retries=5)
+def send_feedback_statistics_in_delay(self,action,feedback,request = None):
+    from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_feedback_statistics
+    try:
+        send_feedback_statistics(action,feedback,request)
+    except Exception as exc:
+        
         if type(exc).__name__ == 'HTTPException':
             pass
         else:
