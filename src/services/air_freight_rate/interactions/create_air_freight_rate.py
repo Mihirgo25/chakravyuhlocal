@@ -43,7 +43,6 @@ def create_air_freight_rate(request):
     
 def create_air_freight_rate_data(request):
     from celery_worker import create_saas_air_schedule_airport_pair_delay, update_air_freight_rate_details_delay,extend_air_freight_rates_in_delay
-    action = 'update'
     if request['rate_type'] == 'general':
         request['rate_type'] = 'market_place'
 
@@ -98,7 +97,6 @@ def create_air_freight_rate_data(request):
         freight = AirFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
-        action = 'create'
 
         freight.set_locations()
 
