@@ -51,8 +51,6 @@ CELERY_REDIS_URL = "rediss://{}:{}@{}:{}/0?ssl_cert_reqs=CERT_NONE".format(REDIS
 
 AWS_S3_BUCKET_NAME = os.getenv("AWS_S3_BUCKET_NAME")
 AWS_S3_REGION_NAME = "ap-south-1"
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 SENTRY_DSN = os.getenv('SENTRY_DSN')
 
 

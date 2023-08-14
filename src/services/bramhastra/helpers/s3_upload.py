@@ -11,8 +11,6 @@ class S3Upload:
         self.s3_client = boto3.client(
             "s3",
             region_name=AWS_S3_REGION_NAME,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         )
         self.key = dt_string
 
