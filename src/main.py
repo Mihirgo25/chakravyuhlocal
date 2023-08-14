@@ -105,9 +105,8 @@ if APP_ENV != "production":
 
 @app.on_event("startup")
 def startup():
-    pass
-    # if db.is_closed():
-    #     db.connect()
+    if db.is_closed():
+        db.connect()
     # insert_wagon_type()
     # insert_dbcargo_rates()
     # insert_france_germany_rates()
