@@ -2,6 +2,7 @@ from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from fastapi import HTTPException
 from database.db_session import db
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def update_air_customs_rate(request):
     with db.atomic():
@@ -19,9 +20,10 @@ def execute_transaction_code(request):
 
     try:
         rate_object.save()
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail = 'Error while updating rate')
 
+    get_multiple_service_objects(rate_object)
     create_audit_for_updating_rate(request, rate_object.id)
 
     return {'id': rate_object.id}

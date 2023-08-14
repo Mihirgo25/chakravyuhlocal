@@ -39,7 +39,7 @@ def execute_transaction_code(request):
 
   try:
      air_customs_rate.save()
-  except Exception as e:
+  except Exception:
       raise HTTPException(status_code=500, detail='Customs Rate did not save')
 
   create_audit(request, air_customs_rate.id)

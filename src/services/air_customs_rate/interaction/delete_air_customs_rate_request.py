@@ -21,10 +21,10 @@ def execute_transaction_code(request):
 
     try:
         object.save()
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail = 'Error while deleting request')
 
-    get_multiple_service_objects(object)
+    get_multiple_service_objects(object, required_columns = ['closed_by_id','performed_by_id'])
     create_audit_for_customs_request(request, object, data)
     object.send_closed_notifications_to_sales_agent()
 

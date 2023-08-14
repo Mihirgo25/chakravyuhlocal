@@ -2,6 +2,7 @@ from services.air_customs_rate.models.air_customs_rate import AirCustomsRate
 from services.air_customs_rate.models.air_customs_rate_audit import AirCustomsRateAudit
 from database.db_session import db
 from fastapi import HTTPException
+from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
 def delete_air_customs_rate(request):
     with db.atomic():
@@ -22,6 +23,7 @@ def execute_transaction_code(request):
     except Exception as e:
         raise HTTPException(status_code=500, detail = 'Error while deleting rate')
 
+    get_multiple_service_objects(rate_object)
     create_audit_for_delete_rates(request, rate_object.id, delete_params)
 
     return {

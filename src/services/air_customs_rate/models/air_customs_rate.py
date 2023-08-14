@@ -8,7 +8,7 @@ import datetime
 from fastapi import HTTPException
 from configs.definitions import AIR_CUSTOMS_CHARGES
 from configs.global_constants import DEFAULT_SERVICE_PROVIDER_ID
-from services.air_customs_rate.constants.air_customs_rate_constants import COMMODITIES
+from services.air_customs_rate.air_customs_rate_constants import COMMODITIES
 from services.air_freight_rate.constants.air_freight_rate_constants import RATE_TYPES
 
 class BaseModel(Model):
@@ -192,9 +192,9 @@ class AirCustomsRate(BaseModel):
         if self.trade_type and self.trade_type not in TRADE_TYPES:
             raise HTTPException(status_code = 400, detail = 'Invalid Trade Type')
         
-    # def validate_commodity(self):
-    #     if self.commodity not in COMMODITIES:
-    #         raise HTTPException(status_code = 400, detail = 'Invalid Commodity')
+    def validate_commodity(self):
+        if self.commodity not in COMMODITIES:
+            raise HTTPException(status_code = 400, detail = 'Invalid Commodity')
     
     def validate_rate_type(self):
         if self.rate_type not in RATE_TYPES:
