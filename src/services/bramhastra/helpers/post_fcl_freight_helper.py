@@ -276,17 +276,13 @@ class Rate:
                     )
 
     def set_non_existing_location_details(self) -> None:
-        if not self.freight.origin_main_port_id:
-            self.origin_port_id = self.freight.origin_port_id
-        else:
-            self.origin_port_id = self.freight.origin_main_port_id
-            self.origin_main_port_id = self.freight.origin_port_id
-
-        if not self.freight.destination_main_port_id:
-            self.destination_port_id = self.freight.destination_port_id
-        else:
-            self.destination_port_id = self.freight.destination_main_port_id
-            self.destination_main_port_id = self.freight.destination_port_id
+        self.origin_port_id = self.freight.origin_port_id
+        if self.freight.origin_main_port_id:
+            self.origin_main_port_id = self.freight.origin_main_port_id
+            
+        self.destination_port_id = self.freight.destination_port_id
+        if self.freight.destination_main_port_id:            
+            self.destination_main_port_id = self.freight.destination_main_port_id
 
         self.set_pricing_map_zone_ids()
 
