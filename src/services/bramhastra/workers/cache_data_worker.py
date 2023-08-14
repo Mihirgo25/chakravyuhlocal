@@ -22,8 +22,7 @@ class Common:
     def prepare_jsonfile(self, data, path) -> str:
         json_object = json.dumps(data, indent=4)
         with open(path, "wb") as outfile:
-            outfile.write(json_object.encode('utf-8'))
-
+            outfile.write(json_object.encode("utf-8"))
 
 
 class FclCacheData(Common):
@@ -31,10 +30,10 @@ class FclCacheData(Common):
         pass
 
     def set_all_time_accuracy_chart(self):
-        filters = {
-            "start_date": DEFAULT_START_DATE,
-            "end_date": date.today().isoformat(),
-        }
+        filters = dict(
+            start_date=DEFAULT_START_DATE,
+            end_date=date.today().isoformat(),
+        )
 
         where = get_direct_indirect_filters(filters)
 
@@ -47,6 +46,3 @@ class FclCacheData(Common):
         ).get_url()
 
         rd.set(RedisKeys.fcl_freight_rate_all_time_accuracy_chart.value, url)
-
-
-

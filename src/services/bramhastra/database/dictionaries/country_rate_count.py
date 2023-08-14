@@ -32,6 +32,6 @@ class CountryRateCount:
             LAYOUT(COMPLEX_KEY_HASHED_ARRAY())
             LIFETIME({self.lifetime})
         """
-        
+
     def create(self):
         self.client.execute(self.query)

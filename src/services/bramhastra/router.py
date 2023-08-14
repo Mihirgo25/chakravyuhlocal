@@ -44,7 +44,7 @@ from services.bramhastra.request_params import (
     ApplyCheckoutFclFreightRateStatistic,
     ApplyShipmentFclFreightRateStatistics,
     ApplyRevenueDeskFclFreightStatistics,
-    ApplyQuotationFclFreightRateStatistics
+    ApplyQuotationFclFreightRateStatistics,
 )
 from pydantic.types import Json
 from typing import Annotated
@@ -54,7 +54,7 @@ from services.bramhastra.response_models import (
     FclFreightRateLifeCycleResponse,
     DefaultList,
     FclFreightRateWorldResponse,
-    PortPairRateCount
+    PortPairRateCount,
 )
 from fastapi.responses import JSONResponse
 from services.bramhastra.constants import INDIA_LOCATION_ID
@@ -71,9 +71,10 @@ def apply_spot_search_fcl_freight_rate_statistic_func(
 
 @bramhastra.post("/apply_quotation_fcl_freight_rate_statistic")
 def apply_quotation_fcl_freight_rate_statistic_func(
-    request: ApplyQuotationFclFreightRateStatistics
+    request: ApplyQuotationFclFreightRateStatistics,
 ):
     return apply_quotation_fcl_freight_rate_statistic(request)
+
 
 @bramhastra.post("/apply_rd_fcl_freight_rate_statistic")
 def apply_fcl_freight_rate_rd_statistic_func(
@@ -163,10 +164,12 @@ def list_fcl_freight_rate_request_statistics_func(
     response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
+
 @bramhastra.get("/get_fcl_freight_port_pair_count", response_model=PortPairRateCount)
 def get_fcl_freight_port_pair_count_func(pairs: Json = Query(None)):
     response = get_fcl_freight_port_pair_count(pairs)
     return JSONResponse(content=response)
+
 
 @bramhastra.websocket("/use")
 async def websocket_endpoint(websocket: WebSocket):

@@ -154,7 +154,7 @@ class FeedbackFclFreightRateStatistic(BaseModel):
     source_id: str = None
     serial_id: int = None
     preferred_freight_rate: float = 0
-    currency: str = Field(alias = 'preferred_freight_rate_currency',default='USD')
+    currency: str = Field(alias="preferred_freight_rate_currency", default="USD")
     importer_exporter_id: str = None
     service_provider_id: str = None
     created_at: datetime = datetime.utcnow()
@@ -181,7 +181,7 @@ class FclFreightServices(BaseModel):
     service_created_at: datetime = Field(alias="created_at", default=datetime.utcnow())
     service_updated_at: datetime = Field(alias="updated_at", default=datetime.utcnow())
     shipping_line_id: str
-    service_provider_id: str 
+    service_provider_id: str
 
 
 class BuyQuotation(BaseModel):
@@ -389,8 +389,9 @@ class FclSelectedForBooking(BaseModel):
 
 class FclSelectedForPreference(BaseModel):
     rate_id: str
-    validity_id: str 
+    validity_id: str
     given_priority: int
+
 
 class ApplyRevenueDeskFclFreightStatistics(BaseModel):
     shipment_id: str

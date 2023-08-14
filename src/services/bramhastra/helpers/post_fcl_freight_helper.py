@@ -546,7 +546,7 @@ class Feedback:
         queries.append(",".join(values))
 
         queries.append(
-            f"WHERE (feedback_id,version) IN (SELECT feedback_id, MAX(version) AS max_version FROM brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE feedback_id = %(feedback_id)s GROUP BY feedback_id)"
+            f"WHERE (id,version) IN (SELECT id, MAX(version) AS max_version FROM brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE feedback_id = %(feedback_id)s GROUP BY id)"
         )
 
         if row := self.clickhouse_client.execute(" ".join(queries), self.params):

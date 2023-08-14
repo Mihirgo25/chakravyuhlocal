@@ -1,12 +1,13 @@
 from clickhouse_driver import Client
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
-from configs.env import CLICK_DATABASE_HOST,CLICK_DATABASE_PASSWORD
+from configs.env import CLICK_DATABASE_HOST, CLICK_DATABASE_PASSWORD
+
 
 class ClickHouse:
     def __init__(self) -> None:
         self.client = Client(host=CLICK_DATABASE_HOST, password=CLICK_DATABASE_PASSWORD)
-        
+
     def execute(self, query, parameters=None):
         if result := self.client.execute(query, parameters, with_column_types=True):
             column_names = [column[0] for column in result[1]]
