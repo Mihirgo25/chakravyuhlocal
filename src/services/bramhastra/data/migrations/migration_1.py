@@ -447,71 +447,75 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date.cast('date') >= date.today())).order_by(FclFreightRate.updated_at)
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date.cast('date') >= date.today()))
         
-        total_count = query.count()
+        # total_count = query.count()
+        
+        row_data = []
 
         REGION_MAPPING = {}
         with urllib.request.urlopen(REGION_MAPPING_URL) as url:
             REGION_MAPPING = json.loads(url.read().decode())
         count = 0
-        last_updated_at = None 
-        last_updated_ids = None
+        # last_updated_at = None 
+        # last_updated_ids = None
         
-        print(total_count, 'total---')
-        offset = 0
-        while offset < total_count:
-            rates = query.limit(BATCH_SIZE).offset(offset)
+        # print(total_count, 'total---')
+        # offset = 0
+        # while offset < total_count:
+            # rates = query.limit(BATCH_SIZE).offset(offset)
             
-            offset+=BATCH_SIZE
-            if not rates.count():
-                break
+            # offset+=BATCH_SIZE
+            # if not rates.count():
+            #     break
             
-            offset += BATCH_SIZE
-            row_data = []
-            for rate in rates:
-                    
-                for validity in rate.validities:
-                    count += 1
+            # offset += BATCH_SIZE
+            # row_data = []
+        for rate in query.iterator():
+            for validity in rate.validities:
+                
+                identifier = self.get_identifier(str(rate.id), validity["id"])
 
-                    identifier = self.get_identifier(str(rate.id), validity["id"])
+                rate_params = {
+                    key: getattr(rate, key) for key in RATE_PARAMS
+                }
+                
+                validity_params = self.get_validity_params(validity)
 
-                    rate_params = {
-                        key: getattr(rate, key) for key in RATE_PARAMS
-                    }
-                    
-                    validity_params = self.get_validity_params(validity)
-
-                    row = {
-                        **rate_params,
-                        **validity_params,
-                        "containers_count": getattr(rate, "containers_count") or 0,
-                        "identifier": identifier,
-                        "rate_id": getattr(rate, "id"),
-                        "rate_created_at": getattr(rate, "created_at"),
-                        "rate_updated_at": getattr(rate, "updated_at"),
-                        "rate_type": getattr(rate, "rate_type") or DEFAULT_RATE_TYPE,
-                        "origin_region_id": REGION_MAPPING.get(
-                            getattr(rate, "origin_port_id")
-                        ),
-                        "destination_region_id": REGION_MAPPING.get(
-                            getattr(rate, "destination_port_id")
-                        ),
-                        "market_price": validity.get("market_price")
-                        or validity.get("price"),
-                        "validity_id": validity.get("id"),
-                    }
-                    row_data.append(row)
-                    print(count)
-            last_updated_at = rates[-1].updated_at
-            last_updated_ids = []
-            i = len(rates) - 1
-
-            while i >= 0 and rates[i].updated_at == last_updated_at:
-                last_updated_ids.append(str(rates[i].id))
-                i -= 1
-                                
+                row = {
+                    **rate_params,
+                    **validity_params,
+                    "containers_count": getattr(rate, "containers_count") or 0,
+                    "identifier": identifier,
+                    "rate_id": getattr(rate, "id"),
+                    "rate_created_at": getattr(rate, "created_at"),
+                    "rate_updated_at": getattr(rate, "updated_at"),
+                    "rate_type": getattr(rate, "rate_type") or DEFAULT_RATE_TYPE,
+                    "origin_region_id": REGION_MAPPING.get(
+                        getattr(rate, "origin_port_id")
+                    ),
+                    "destination_region_id": REGION_MAPPING.get(
+                        getattr(rate, "destination_port_id")
+                    ),
+                    "market_price": validity.get("market_price")
+                    or validity.get("price"),
+                    "validity_id": validity.get("id"),
+                }
+                row_data.append(row)
+                count += 1
+                if count == 30000:
+                    FclFreightRateStatistic.insert_many(row_data).execute()
+                    count = 0
+                    row_data = []
+        if row_data:
             FclFreightRateStatistic.insert_many(row_data).execute()
+            # last_updated_at = rates[-1].updated_at
+            # last_updated_ids = []
+            # i = len(rates) - 1
+
+            # while i >= 0 and rates[i].updated_at == last_updated_at:
+            #     last_updated_ids.append(str(rates[i].id))
+            #     i -= 1
 
     def populate_from_feedback(self):
         query = (
