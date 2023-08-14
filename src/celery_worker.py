@@ -162,6 +162,11 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.cache_data_worker_in_delay',
         'schedule': crontab(hour=12, minute=0),
         'options': {'queue': 'low'}
+    },
+    'fcl_extended_object_worker_in_delay':{
+        'task': 'celery_worker.fcl_extended_object_worker_in_delay',
+        'schedule': crontab(hour=12, minute=0),
+        'options': {'queue': 'statistics'}
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
@@ -885,6 +890,19 @@ def cache_data_worker_in_delay(self):
         # this caches statistics csv into redis for huge data
         from services.bramhastra.workers.cache_data_worker import FclCacheData
         FclCacheData()
+    except Exception as exc:
+        if type(exc).__name__ == 'HTTPException':
+            pass
+        else:
+            raise self.retry(exc= exc)
+        
+        
+@celery.task(bind=True,retry_backoff=True,max_retries=5)
+def fcl_extended_object_worker_in_delay(self):
+    try:
+        # this sets parent_rate_id for rates created via extensions
+        from services.bramhastra.workers.fcl_extended_object_worker import FclExtendObjectWorker
+        FclExtendObjectWorker().execute()
     except Exception as exc:
         if type(exc).__name__ == 'HTTPException':
             pass
