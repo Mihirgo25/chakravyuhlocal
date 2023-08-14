@@ -10,7 +10,7 @@ EXEC_LINES = [
     "%autoreload 2",
 ]
 
-EXCLUDE_FILES = ["setup.py"]
+EXCLUDE_FILES = ["setup.py","env.py"]
 
 
 def get_py_files(directory, excluded_dirs):

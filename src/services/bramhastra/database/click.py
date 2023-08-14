@@ -65,6 +65,6 @@ class Click:
             
     def create_dictionaries(self, dictionaries):
         for dictionary in dictionaries:
-            dictionary.create()
+            dictionary().create()
 
         

@@ -53,7 +53,7 @@ class RedisKeys(Bramhastra):
 
 
 class DTString(Bramhastra):
-    rate_monitoring = "rate_montioring"
+    rate_monitoring = "rate_monitoring"
 
 
 class ShipmentServices(Bramhastra):
