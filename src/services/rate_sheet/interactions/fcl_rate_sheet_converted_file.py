@@ -25,15 +25,6 @@ csv_options = {
     ),
 }
 
-def get_shipping_line_id(shipping_line_name):
-    try:
-        shipping_line_name = shipping_line_name.strip()
-        shipping_line_id = get_operators(short_name=shipping_line_name)[0]['id']
-    except:
-        shipping_line_id = None
-    return shipping_line_id
-
-
 def append_in_final_csv(csv, row):
     list_opt = list(row.values())
     csv.writerow(list_opt)
