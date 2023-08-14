@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from database.db_session import rd
 from services.bramhastra.enums import RedisKeys,FclParentMode
+import concurrent.futures
 
 ALLOWED_TIME_PERIOD = 6
 
@@ -15,20 +16,17 @@ ALLOWED_TIME_PERIOD = 6
 def get_fcl_freight_rate_charts(filters):
     where = get_direct_indirect_filters(filters)
 
-    accuracy = get_accuracy(filters, where)
-    deviation = get_deviation(filters, where)
-    spot_search_to_checkout_count = get_spot_search_to_checkout_count(
-        filters, where
-    )
-    rate_count_with_deviation_more_than_30 = (
-        get_rate_count_with_deviation_more_than_30(filters, where)
-    )
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        accuracy_future = executor.submit(get_accuracy, filters, where)
+        deviation_future = executor.submit(get_deviation, filters, where)
+        spot_search_future = executor.submit(get_spot_search_to_checkout_count, filters, where)
+        rate_count_future = executor.submit(get_rate_count_with_deviation_more_than_30, filters, where)
 
     return dict(
-        accuracy=accuracy,
-        deviation=deviation,
-        **rate_count_with_deviation_more_than_30,
-        **spot_search_to_checkout_count,
+        accuracy=accuracy_future.result(),
+        deviation=deviation_future.result(),
+        **rate_count_future.result(),
+        **spot_search_future.result(),
     )
 
 
