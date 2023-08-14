@@ -16,8 +16,8 @@ def create_fcl_freight_rate_feedback(request):
     object_type = 'Fcl_Freight_Rate_Feedback'
     query = "create table if not exists fcl_services_audits_{} partition of fcl_services_audits for values in ('{}')".format(object_type.lower(), object_type.replace("_",""))
     db.execute_sql(query)
-    
-    return execute_transaction_code(request)
+    with db.atomic():
+        return execute_transaction_code(request)
 
 def execute_transaction_code(request):
     action = 'update'
