@@ -7,7 +7,7 @@ import math
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from database.db_session import rd
-from services.bramhastra.enums import RedisKeys
+from services.bramhastra.enums import RedisKeys,FclParentMode
 
 ALLOWED_TIME_PERIOD = 6
 
@@ -38,7 +38,7 @@ async def get_accuracy(filters, where):
 
     clickhouse = ClickHouse()
     queries = [
-        """SELECT mode,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
+        """SELECT parent_mode as mode,toDate(day) AS day,AVG(abs(accuracy)*sign) AS average_accuracy FROM (SELECT arrayJoin(range(toUInt32(validity_start), toUInt32(validity_end) - 1)) AS day,accuracy,mode,sign FROM brahmastra.fcl_freight_rate_statistics"""
     ]
 
     if where:
@@ -121,12 +121,7 @@ def format_charts(charts, mode=None):
     if mode:
         NEEDED_MODES = {mode}
     else:
-        NEEDED_MODES = {
-            "rate_extension",
-            "cluster_extension",
-            "predicted",
-            "supply_rates",
-        }
+        NEEDED_MODES = [i.value for i in FclParentMode]
 
     return format_response(charts, NEEDED_MODES)
 

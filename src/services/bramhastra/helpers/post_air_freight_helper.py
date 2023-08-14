@@ -10,13 +10,12 @@ from services.bramhastra.enums import Table, ValidityAction
 from peewee import Model
 from services.air_freight_rate.models.air_freight_location_cluster_mapping import (
     AirFreightLocationClusterMapping,
-    AirFreightLocationClusters,
 )
 from micro_services.client import maps
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 from playhouse.shortcuts import model_to_dict
-from services.bramhastra.client import json_encoder_for_clickhouse,ClickHouse,get_clickhouse_rows_with_column_names
+from services.bramhastra.client import json_encoder_for_clickhouse,ClickHouse
 
 
 class Connection:

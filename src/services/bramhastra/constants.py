@@ -48,3 +48,18 @@ STANDARD_WEIGHT_SLABS = [
 ]
 
 DEFAULT_RATE_TYPE = 'market_place'
+
+
+
+FCL_MODE_MAPPINGS = {
+    'rate_extension': 'rate_extension',
+    'manual': 'supply',
+    'rate_sheet': 'supply',
+    'predicted': 'predicted',
+    'cluster_extension': 'cluster_extension',
+    'disliked_rate': 'supply',
+    'flash_booking': 'supply',
+    'rms_upload': 'supply',
+    'missing_rate': 'supply',
+    'spot_negotation': 'supply'
+}

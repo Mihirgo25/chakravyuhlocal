@@ -68,6 +68,7 @@ CANCELLATION_REASON_LOW_RATE = [
     ["low", "lower", "less", "lesser", "issue"],
     ["rate", "profit"],
 ]
+
 RATE_PARAMS = [
     "commodity",
     "container_size",
@@ -1190,70 +1191,140 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             with self.cogoback_connection.cursor() as cur:
                 sql = '''
                     SELECT 
-                        checkouts.shipment_id AS shipment_id,
-                        checkouts.id AS checkout_id,
-                        checkouts.source_id AS spot_search_id,
-                        spot_search_services.id AS spot_search_fcl_freight_services_id,
-                        checkout_fcl_freight_services.id AS checkout_fcl_freight_rate_services_id,
-                        buy_qoute.id AS buy_quotation_id,
-                        sell_qoute.id AS sell_quotation_id,
                         checkout_fcl_freight_services.rate ->> 'rate_id' AS rate_id,
                         checkout_fcl_freight_services.rate ->> 'validity_id' AS validity_id,
-                        shipments.state AS status,
-                        shipment_services.id AS shipment_fcl_freight_rate_services_id,
-                        shipment_services.cancellation_reason AS cancellation_reason,
-                        shipment_services.is_active AS is_active,
-                        shipment_services.created_at AS created_at,
-                        shipment_services.updated_at AS updated_at
+                        checkouts.shipment_id AS shipment_id,
+                        shipment_services.id AS shipment_fcl_freight_service_id,
+                        shipment_services.state AS service_state,
+                        shipment_services.is_active AS service_is_active,
+                        shipment_services.cancellation_reason AS service_cancellation_reason,
+                        shipment_services.created_at AS service_created_at,
+                        shipment_services.updated_at AS service_updated_at,
+                        shipment_services.shipping_line_id AS shipping_line_id,
+                        shipment_services.service_provider_id AS service_provider_id,
+                        shipments.serial_id AS serial_id,
+                        shipments.importer_exporter_id AS importer_exporter_id,
+                        shipments.shipment_type AS shipment_type, 
+                        shipments.services AS services,
+                        shipments.source As source,
+                        shipments.source_id AS source_id,
+                        shipments.state AS state,
+                        shipments.cancellation_reason AS cancellation_reason,
+                        buy_qoute.id AS buy_quotation_id,
+                        buy_qoute.created_at AS buy_quotation_created_at,
+                        buy_qoute.updated_at AS buy_quotation_updated_at,
+                        buy_qoute.is_deleted AS is_deleted,
+                        buy_qoute.total_price AS total_price,
+                        buy_qoute.tax_price AS tax_price,
+                        buy_qoute.tax_total_price AS tax_total_price,
+                        buy_qoute.currency AS currency, 
+                        shipments.created_at AS created_at, 
+                        shipments.updated_at AS updated_at,
+                        shipments.currency_conversion_rates AS currency_conversion_rates
                             FROM checkouts 
                                 JOIN checkout_fcl_freight_services AS checkout_fcl_freight_services
                                     ON checkouts.id = checkout_fcl_freight_services.checkout_id
                                 JOIN shipments
                                     ON checkouts.shipment_id = shipments.id
-                                JOIN spot_search_fcl_freight_services AS spot_search_services
-                                    ON spot_search_services.spot_search_id = checkouts.source_id
                                 JOIN shipment_fcl_freight_services AS shipment_services 
                                     ON shipment_services.shipment_id = shipments.id 
-                                LEFT JOIN shipment_sell_quotations AS sell_qoute
-                                    ON sell_qoute.shipment_id = checkouts.shipment_id
                                 LEFT JOIN shipment_buy_quotations AS buy_qoute
                                     ON buy_qoute.shipment_id = checkouts.shipment_id
                                     
                                 WHERE checkout_fcl_freight_services.rate ? 'rate_id' and checkout_fcl_freight_services.rate ? 'validity_id' 
                                     and checkout_fcl_freight_services.rate ->> 'rate_id' is not null
                                     and checkout_fcl_freight_services.rate ->> 'validity_id' is not null
-
+                                
                                 ORDER BY checkouts.shipment_id
+                            
                                 limit %s offset %s
                     '''
                 OFFSET = 0
                 cur.execute(sql, (BATCH_SIZE, OFFSET))
                 result = cur.fetchall()
+
+                set_of_shipment_ids = set()
+                last_shipment_id = None
+
                 while len(result) > 0:
                     print(OFFSET)
                     OFFSET+=BATCH_SIZE
                     row_data = []
                     for row in result:
-                        row_data.append({
-                            'shipment_id':row[0],
-                            'checkout_id':row[1],
-                            'spot_search_id':row[2],
-                            'spot_search_fcl_freight_services_id':row[3],
-                            'checkout_fcl_freight_rate_services_id':row[4],
-                            'buy_quotation_id':row[5],
-                            'sell_quotation_id':row[6],
-                            'rate_id':row[7],
-                            'validity_id':row[8],
-                            'status':row[9],
-                            'shipment_fcl_freight_rate_services_id':row[10],
-                            'cancellation_reason':row[11],
-                            'is_active':row[12],
-                            'created_at':row[13],
-                            'updated_at':row[14],
-                        })
+                        # need to add logic for cureency conversion when currency_conversion_rates is not null
+                        # currency_conversion_rates = row[29]
+                        currency = row[26]
+                        total_price = row[23]
+                    
+                        if(currency != 'USD'):
+                            try:
+                                total_price = common.get_money_exchange_for_fcl({
+                                    "price": total_price,
+                                    "from_currency": currency,
+                                    "to_currency": "USD",
+                                })
+                                total_price = total_price['price']
+                            except:
+                                print('Money Exchange Error:')
+                                print(total_price,'\n')
+                                total_price = None
+                                breakpoint()
+
+
+                        rate_id = row[0]
+                        validity_id = row[1]
+                        identifier = self.get_identifier(rate_id,validity_id)
+                        stats_obj = self.find_statistics_object(identifier)
+                        shipment_id = row[2]
+
+                        if(
+                            (last_shipment_id and last_shipment_id == shipment_id)
+                            or (shipment_id in set_of_shipment_ids)
+                        ):
+                            rate_id = None
+                            validity_id = None
+
+                        set_of_shipment_ids.add(shipment_id)
+                        last_shipment_id = shipment_id
+                        if(stats_obj):
+                            row_data.append({
+                                'fcl_freight_rate_statistic_id': str(stats_obj.id),
+                                'rate_id':rate_id,
+                                'validity_id':validity_id,
+                                'shipment_id':row[2],
+                                'shipment_fcl_freight_service_id':row[3],
+                                'service_state':row[4],
+                                'service_is_active':row[5],
+                                'service_cancellation_reason':row[6],
+                                'service_created_at':row[7],
+                                'service_updated_at':row[8],
+                                'shipping_line_id':row[9],
+                                'service_provider_id':row[10],
+                                'serial_id':row[11],
+                                'importer_exporter_id':row[12],
+                                'shipment_type':row[13],
+                                'services':row[14],
+                                'source':row[15],
+                                'source_id':row[16],
+                                'state':row[17],
+                                'cancellation_reason':row[18],
+                                'buy_quotation_id':row[19],
+                                'buy_quotation_created_at':row[20],
+                                'buy_quotation_updated_at':row[21],
+                                'is_deleted':row[22],
+                                'total_price':row[23],
+                                'tax_price':row[24],
+                                'tax_total_price':row[25],
+                                'currency':row[26],
+                                'created_at':row[27],
+                                'updated_at':row[28],
+                                'standard_total_price':total_price,
+                            })
                     ShipmentFclFreightRateStatistic.insert_many(row_data).execute()
                     cur.execute(sql, (BATCH_SIZE, OFFSET))
                     result = cur.fetchall()
+                    set_of_shipment_ids = set()
+
         except Exception as e:
             print('Exception:',e)
             
@@ -1304,7 +1375,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 
                 if not statistic_obj:
                     continue
-                breakpoint()
                 statistic_obj.parent_rate_id = row['fcl_freight_rate_id']
                 statistic_obj.parent_validity_id = row['validity_id']
                 statistic_obj.save()
@@ -1381,30 +1451,30 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
-    # print('# active rates from rms to main_statistics')
+    print('# active rates from rms to main_statistics')
     populate_from_rates.populate_from_active_rates() 
-    # print('# old rates from data in feedbacks to main_statistics')
-    # populate_from_rates.populate_from_feedback() 
-    # print('# old rates from spot_search_rates to main_statistics')
-    # populate_from_rates.populate_from_spot_search_rates() 
-    # print('# data from shipment_fcl_freight_services to main_statistics')
-    # populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() 
-    # print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
-    # populate_from_rates.update_fcl_freight_rate_checkout_count() 
-    # print('#like dislike count in main_statistics and populate feedback_statistics')
-    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
-    # print('#populate request_fcl_statistics table')
-    # populate_from_rates.populate_fcl_request_statistics() 
-    # print('#shipment_statistics data population')
-    # populate_from_rates.populate_shipment_statistics() 
-    # print('# update accuracy, deviation from shipment_buy_quotation')
-    # populate_from_rates.update_accuracy() 
-    # print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
-    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
-    # print('# update map_zone_ids for main_statistics and missing_requests')
-    # populate_from_rates.update_pricing_map_zone_ids() 
-    # print('#update parent_rate_id and validity_id for reverted rates from feedback')
-    # populate_from_rates.update_parent_rates() 
+    print('# old rates from data in feedbacks to main_statistics')
+    populate_from_rates.populate_from_feedback() 
+    print('# old rates from spot_search_rates to main_statistics')
+    populate_from_rates.populate_from_spot_search_rates() 
+    print('# data from shipment_fcl_freight_services to main_statistics')
+    populate_from_rates.populate_shipment_stats_in_fcl_freight_stats() 
+    print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
+    populate_from_rates.update_fcl_freight_rate_checkout_count() 
+    print('#like dislike count in main_statistics and populate feedback_statistics')
+    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
+    print('#populate request_fcl_statistics table')
+    populate_from_rates.populate_fcl_request_statistics() 
+    print('#shipment_statistics data population')
+    populate_from_rates.populate_shipment_statistics() 
+    print('# update accuracy, deviation from shipment_buy_quotation')
+    populate_from_rates.update_accuracy() 
+    print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
+    populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
+    print('# update map_zone_ids for main_statistics and missing_requests')
+    populate_from_rates.update_pricing_map_zone_ids() 
+    print('#update parent_rate_id and validity_id for reverted rates from feedback')
+    populate_from_rates.update_parent_rates() 
 
 
 if __name__ == "__main__":

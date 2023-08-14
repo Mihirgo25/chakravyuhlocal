@@ -8,7 +8,7 @@ from celery_worker import send_create_notifications_to_supply_agents_function, s
 from celery_worker import update_multiple_service_objects
 from fastapi import HTTPException
 from micro_services.client import *
-from libs.json_encoder import json_encoder
+from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_feedback_statistics
 
 
 
@@ -75,7 +75,7 @@ def execute_transaction_code(request):
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         
-    set_feedback_statistics(action,feedback, request)
+    send_feedback_statistics(action,feedback, request)
 
     return {'id': request['rate_id']}
 
@@ -150,48 +150,4 @@ def create_audit(request, feedback):
         object_type = 'FclFreightRateFeedback',
         action_name = 'create',
         performed_by_id = request['performed_by_id']
-    )
-    
-def set_feedback_statistics(action, feedback, request = None):
-    from services.bramhastra.interactions.apply_feedback_fcl_freight_rate_statistic import (
-        apply_feedback_fcl_freight_rate_statistic,
-    )
-    from services.bramhastra.request_params import ApplyFeedbackFclFreightRateStatistics
-    from playhouse.shortcuts import model_to_dict
-    from configs.fcl_freight_rate_constants import REQUIRED_FEEDBACK_STATS_REQUEST_KEYS
-    
-    feedback = feedback.refresh()
-    
-    params = model_to_dict(
-        feedback,
-        only=[
-            FclFreightRateFeedback.id,
-            FclFreightRateFeedback.source,
-            FclFreightRateFeedback.source_id,
-            FclFreightRateFeedback.closed_by_id,
-            FclFreightRateFeedback.fcl_freight_rate_id,
-            FclFreightRateFeedback.validity_id,
-            FclFreightRateFeedback.service_provider_id,
-            FclFreightRateFeedback.serial_id,
-            FclFreightRateFeedback.created_at,
-            FclFreightRateFeedback.updated_at,
-            FclFreightRateFeedback.performed_by_id,
-            FclFreightRateFeedback.performed_by_org_id,
-            FclFreightRateFeedback.feedback_type,
-            FclFreightRateFeedback.cogo_entity_id,
-            FclFreightRateFeedback.closing_remarks,
-            FclFreightRateFeedback.status,
-            FclFreightRateFeedback.feedbacks
-        ],
-    )
-    
-    if request:
-        for k, v in request.items():
-            if k in REQUIRED_FEEDBACK_STATS_REQUEST_KEYS:
-                params[k] = v 
-        
-    apply_feedback_fcl_freight_rate_statistic(
-        ApplyFeedbackFclFreightRateStatistics(
-            action=action, params=json_encoder(params)
-        )
     )

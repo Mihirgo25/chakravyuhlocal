@@ -10,7 +10,6 @@ class Migrator:
     def __init__(self):
         self.directory = f"{ROOT_DIR}/services/bramhastra/data/migrations/"
         self.number = self.get_current_number()
-        breakpoint()
     def create(self):
         migration_number = self.number + 1
         migration_file = "migration_{}.py".format(migration_number)
@@ -62,7 +61,6 @@ class Migrator:
                     highest_number = number
             except ValueError:
                 pass
-        breakpoint()
         return highest_number
         
 migrator = Migrator()

@@ -39,4 +39,4 @@ CREATE TABLE brahmastra.stale_spot_search_fcl_freight_rate_statistics
     sign Int8 DEFAULT 1,
     version UInt32 DEFAULT 1,
 )
-ENGINE = file(CSV);
+ENGINE = File(CSV);

@@ -44,7 +44,7 @@ docs = {
     "redoc_url": None if APP_ENV == "production" else "/redoc",
     "openapi_url": None if APP_ENV == "production" else "/openapi.json",
     "debug": True,
-    # 'dependencies': [Depends(get_db)],
+    'dependencies': [Depends(get_db)],
     "swagger_ui_parameters": {"docExpansion": None},
 }
 

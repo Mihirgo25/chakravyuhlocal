@@ -2,7 +2,7 @@ from peewee import *
 from database.db_session import db
 from playhouse.postgres_ext import *
 import datetime
-from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS
+from configs.fcl_freight_rate_constants import TRADE_TYPES, CONTAINER_SIZES, CONTAINER_TYPES, LOCAL_CONTAINER_COMMODITY_MAPPINGS, RATE_TYPES
 from configs.global_constants import HAZ_CLASSES
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder

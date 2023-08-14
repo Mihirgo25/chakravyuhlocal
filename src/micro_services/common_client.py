@@ -14,10 +14,10 @@ class CommonApiClient:
         })
 
     def get_money_exchange_for_fcl(self, data = {}):
-        # resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
-        # if isinstance(resp,dict) and resp.get('status_code') and resp.get('status_code')==408:
-        resp = get_money_exchange_for_fcl_fallback(**data)
-        return resp
+        resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
+        if isinstance(resp,dict) and resp.get('status_code') and resp.get('status_code')==408:
+            resp = get_money_exchange_for_fcl_fallback(**data)
+            return resp
 
     def create_communication(self, data = {}):
         return self.client.request('POST','communication/create_communication',data, timeout=60)

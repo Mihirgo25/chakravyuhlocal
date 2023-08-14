@@ -3,7 +3,6 @@ from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from configs.env import APP_ENV
 import json
-from configs.env import RUBY_ADDRESS_URL
 class MapsApiClient:
     def __init__(self):
         self.client=GlobalClient(url = str(get_instance_url('location')),headers={
@@ -15,16 +14,12 @@ class MapsApiClient:
         })
 
     def list_locations(self, data={}):
-        if True:
+        if APP_ENV == "production":
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
-            self.client.url.set('https://api.cogoport.com/location')
-            resp =  self.client.request('GET', 'list_locations', {}, data)
-            self.client.url.set(RUBY_ADDRESS_URL) 
-            return resp
-        
+            return self.client.request('GET', 'list_locations', {}, data)
         return self.client.request('GET', 'list_locations', data, {})
 
     def list_location_cluster(self,data={}):
@@ -61,16 +56,12 @@ class MapsApiClient:
         return self.client.request('GET','get_land_route_location_details',data)
 
     def list_operators(self, data={}):
-        if True:
+        if APP_ENV == "production":
             keys = ['filters', 'includes']
             for key in keys:
                 if key in data:
                     data[key] = json.dumps(data[key])
-            self.client.url.set('https://api.cogoport.com/location')
-            breakpoint()
-            resp =  self.client.request('GET', 'list_operators', {}, data)
-            self.client.url.set(RUBY_ADDRESS_URL) 
-            return resp
+            return self.client.request('GET', 'list_operators', {}, data)
         return self.client.request('GET', 'list_operators', data, {})
 
     def get_is_land_service_possible(self,data = {}):

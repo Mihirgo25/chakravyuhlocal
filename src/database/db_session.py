@@ -26,7 +26,7 @@ db = PooledPostgresqlExtDatabase(
     host=DATABASE_HOST,
     port=DATABASE_PORT,
     autorollback=True,
-    max_connections=80,
+    max_connections=200,
 )
 
 db._state = PeeweeConnectionState()
@@ -54,5 +54,5 @@ if APP_ENV != "development":
     #     decode_responses=True,
     # )
 else:
-    rd = redis.Redis(host="127.0.0.1", port=6378, db=0, decode_responses=True)
+    rd = redis.Redis(host=REDIS_HOST, port= REDIS_PORT, password=REDIS_PASSWORD,db=0, decode_responses=True)
     # rails_redis = None

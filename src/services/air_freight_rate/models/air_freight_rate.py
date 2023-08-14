@@ -86,6 +86,8 @@ class AirFreightRate(BaseModel):
     sourced_by = BinaryJSONField(null=True)
     procured_by = BinaryJSONField(null=True)
     init_key = TextField(index=True, null=True,unique=True)
+    importer_exporter_id = UUIDField(index=True,null=True)
+    importer_exporter = BinaryJSONField(null=True)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()

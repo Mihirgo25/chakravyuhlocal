@@ -12,6 +12,8 @@ CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     importer_exporter_id UUID,
+    preferred_freight_rate Float64 DEFAULT 0,
+    currency FixedString(3),
     feedbacks Array(String),
     closing_remarks Array(String),
     feedback_recieved_count UInt16 DEFAULT 0,
@@ -28,7 +30,7 @@ PRIMARY KEY (rate_id)
 ORDER BY (rate_id,id);
 
 
-CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
+CREATE TABLE brahmastra.stale_feedback_fcl_freight_rate_statistics
 (
     id UInt256,
     fcl_freight_rate_statistic_id UInt256,
@@ -42,6 +44,8 @@ CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     importer_exporter_id UUID,
+    preferred_freight_rate Float64 DEFAULT 0,
+    currency FixedString(3),
     feedbacks Array(String),
     closing_remarks Array(String),
     feedback_recieved_count UInt16 DEFAULT 0,
@@ -53,5 +57,5 @@ CREATE TABLE brahmastra.feedback_fcl_freight_rate_statistics
     sign Int8 DEFAULT 1,
     version UInt32 DEFAULT 1,
 )
-ENGINE = file(CSV);
+ENGINE = File(CSV);
 

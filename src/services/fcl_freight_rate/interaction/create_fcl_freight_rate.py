@@ -9,10 +9,11 @@ from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES
-from playhouse.shortcuts import model_to_dict
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
+from services.fcl_freight_rate.helpers.fcl_freight_statistics_helper import send_rate_stats
+from configs.fcl_freight_rate_constants import DEFAULT_VALUE_PROPS
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -22,12 +23,12 @@ def add_rate_properties(request,freight_id):
             rate_id = freight_id,
             created_at = datetime.now(),
             updated_at = datetime.now(),
-            value_props = request["value_props"],
-            t_n_c = request["t_n_c"],
-            available_inventory = request["available_inventory"],
-            used_inventory = request.get("used_inventory"),
-            shipment_count = request["shipment_count"],
-            volume_count=request["volume_count"]
+            value_props = request.get("value_props") or DEFAULT_VALUE_PROPS,
+            t_n_c = request.get("t_n_c") or [],
+            available_inventory = request.get("available_inventory") or 100,
+            used_inventory = request.get("used_inventory") or 0,
+            shipment_count = request.get("shipment_count") or 0,
+            volume_count=request.get("volume_count") or 0
         )
     # rp = FclFreightRateProperties.select().where(FclFreightRateProperties.rate_id == freight_id).first()
     # rp.validate_value_props()
@@ -157,7 +158,7 @@ def create_fcl_freight_rate(request):
         freight.validate_line_items(line_items)
 
     if row["rate_type"] == "cogo_assured":
-        freight.set_validities_for_cogo_assured_rates(request['validities'])
+        freight.set_validities_for_cogo_assured_rates(request.get('validities'))
     else:
         freight.set_validities(
             request["validity_start"].date(),
@@ -218,7 +219,7 @@ def create_fcl_freight_rate(request):
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
         
-    send_freight_rate_stats(action,request,freight)
+    send_rate_stats(action,request,freight)
 
     return {"id": freight.id}
 
@@ -308,54 +309,3 @@ def validate_value_props(v_props):
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
-
-def send_freight_rate_stats(action,request,freight):
-    from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import (
-        apply_fcl_freight_rate_statistic,
-    )
-    from  services.bramhastra.request_params import ApplyFclFreightRateStatistic
-
-    params = jsonable_encoder(model_to_dict(
-        freight,
-        only=[
-            FclFreightRate.id,
-            FclFreightRate.origin_port_id,
-            FclFreightRate.destination_port_id,
-            FclFreightRate.origin_main_port_id,
-            FclFreightRate.destination_main_port_id,
-            FclFreightRate.origin_country_id,
-            FclFreightRate.destination_country_id,
-            FclFreightRate.origin_country_id,
-            FclFreightRate.destination_country_id,
-            FclFreightRate.origin_trade_id,
-            FclFreightRate.destination_trade_id,
-            FclFreightRate.shipping_line_id,
-            FclFreightRate.service_provider_id,
-            FclFreightRate.accuracy,
-            FclFreightRate.validities,
-            FclFreightRate.mode,
-            FclFreightRate.commodity,
-            FclFreightRate.container_size,
-            FclFreightRate.container_type,
-            FclFreightRate.containers_count,
-            FclFreightRate.origin_local_id,
-            FclFreightRate.destination_local_id,
-            FclFreightRate.origin_detention_id,
-            FclFreightRate.destination_detention_id,
-            FclFreightRate.origin_demurrage_id,
-            FclFreightRate.destination_demurrage_id,
-            FclFreightRate.cogo_entity_id,
-            FclFreightRate.rate_type,
-            FclFreightRate.tags,
-            FclFreightRate.sourced_by_id,
-            FclFreightRate.procured_by_id,
-            FclFreightRate.created_at,
-            FclFreightRate.updated_at,
-        ],
-    ))
-    
-    for k,v in request.items():
-        if k in {'source_id','source'}:
-            params[k] = v
-    
-    apply_fcl_freight_rate_statistic(ApplyFclFreightRateStatistic(action = action,params={'freight': params}))
