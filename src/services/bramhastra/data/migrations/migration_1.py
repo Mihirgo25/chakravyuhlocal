@@ -596,17 +596,20 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         query  = FclFreightLocationCluster.select(FclFreightLocationClusterMapping.location_id,FclFreightLocationCluster.map_zone_id).join(FclFreightLocationClusterMapping)
         zone_ids = jsonable_encoder(list(query.dicts()))
         zone_ids = {row['location_id']: row['map_zone_id'] for row in zone_ids}
-        print(query.count())
-        query = FclFreightRateStatistic.select()
-        count = 0
-        for stat in query:
-            count +=1
-            stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_main_port_id or stat.origin_port_id))
-            stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_main_port_id or stat.destination_port_id))
-            stat.save()
-            print(count)
-            
-        print('statistics done, updating request...')
+
+        query = (
+            FclFreightRateStatistic
+            .update(
+                origin_pricing_zone_map_id=zone_ids.get((FclFreightRateStatistic.origin_main_port_id or FclFreightRateStatistic.origin_port_id)),
+                destination_pricing_zone_map_id=zone_ids.get((FclFreightRateStatistic.destination_main_port_id or FclFreightRateStatistic.destination_port_id))
+            )
+            .where(
+                True
+            )
+        )
+        query.execute()
+        
+        print('statistics done, updating request...')      
         count = 0
         query = FclFreightRateRequestStatistic.select()
         for stat in query:
