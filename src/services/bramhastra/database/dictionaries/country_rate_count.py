@@ -14,7 +14,7 @@ class CountryRateCount:
         self.client = ClickHouse().client
 
         self.query = f"""
-            CREATE DICTIONARY brahmastra.country_rate_count IF NOT EXISTS
+            CREATE DICTIONARY brahmastra.country_rate_count
             (
                 country_id UUID,
                 rate_count UInt64

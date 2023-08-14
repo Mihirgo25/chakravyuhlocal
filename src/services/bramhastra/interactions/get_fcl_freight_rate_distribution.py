@@ -7,7 +7,7 @@ def get_fcl_freight_rate_distribution(filters):
 
     queries = [
         """WITH rate_distribution as 
-               (SELECT parent_mode as mode,shipment_cancelled_count,shipment_completed_count,shipment_confirmed_by_service_provider_count,bookings_created,
+               (SELECT parent_mode as mode,shipment_cancelled_count,shipment_completed_count,shipment_confirmed_by_importer_exporter_count,bookings_created,
                shipment_aborted_count,shipment_received_count,shipment_in_progress_count
                from brahmastra.fcl_freight_rate_statistics"""
     ]
@@ -25,8 +25,8 @@ def get_fcl_freight_rate_distribution(filters):
         floor((shipment_completed_count/bookings_created)*100,2) as shipment_completed_percentage,
         sum(shipment_in_progress_count)  as shipment_in_progress_count,
         floor((shipment_in_progress_count/bookings_created)*100,2) as shipment_in_progress_percentage,
-        sum(shipment_confirmed_by_service_provider_count)  as shipment_confirmed_by_service_provider_count, 
-        floor((shipment_confirmed_by_service_provider_count/bookings_created)*100,2) as shipment_confirmed_by_service_provider_percentage,  
+        sum(shipment_confirmed_by_importer_exporter_count)  as shipment_confirmed_by_importer_exporter_count, 
+        floor((shipment_confirmed_by_importer_exporter_count/bookings_created)*100,2) as shipment_confirmed_by_importer_exporter_percentage,  
         sum(shipment_received_count)  as shipment_received_count,
         floor((shipment_received_count/bookings_created)*100,2) as shipment_received_percentage
         from rate_distribution group by mode)

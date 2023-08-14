@@ -78,7 +78,7 @@ async def get_fcl_freight_rate_lifecycle(filters):
             {
                 "action_type": "booking_confirm",
                 "rates_count": search_to_book_statistics[
-                    "shipment_confirmed_by_service_provider"
+                    "shipment_confirmed_by_importer_exporter"
                 ],
                 "drop": search_to_book_statistics["confirmed_booking_percentage"],
             },
@@ -188,10 +188,10 @@ async def get_search_to_book_and_feedback_statistics(filters, where):
         """SELECT SUM(spot_search_count) as spot_search,
         SUM(checkout_count) as checkout,
         FLOOR((1-SUM(checkout_count)/spot_search),2)*100 AS checkout_percentage,
-        SUM(shipment_confirmed_by_service_provider_count) AS shipment_confirmed_by_service_provider,
-        FLOOR((1-SUM(shipment_confirmed_by_service_provider_count)/checkout),2)*100 AS confirmed_booking_percentage,
+        SUM(shipment_confirmed_by_importer_exporter_count) AS shipment_confirmed_by_importer_exporter,
+        FLOOR((1-SUM(shipment_confirmed_by_importer_exporter_count)/checkout),2)*100 AS confirmed_booking_percentage,
         SUM(revenue_desk_visit_count) AS revenue_desk_visit,
-        FLOOR((1-SUM(revenue_desk_visit_count)/SUM(shipment_confirmed_by_service_provider_count)),2)*100 AS revenue_desk_visit_percentage,
+        FLOOR((1-SUM(revenue_desk_visit_count)/SUM(shipment_confirmed_by_importer_exporter_count)),2)*100 AS revenue_desk_visit_percentage,
         SUM(so1_visit_count) AS so1_visit,
         FLOOR((1-SUM(so1_visit_count)/revenue_desk_visit),2)*100 AS so1_visit_percentage,
         SUM(dislikes_count) as dislikes,

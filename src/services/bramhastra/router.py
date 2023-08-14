@@ -97,10 +97,10 @@ def apply_checkout_fcl_freight_rate_statistic_func(
 
 
 @bramhastra.get("/get_fcl_freight_rate_charts", response_model=FclFreightRateCharts)
-async def get_fcl_freight_rate_charts_func(
+def get_fcl_freight_rate_charts_func(
     filters: Annotated[Json, Query()] = {},
 ):
-    response = await get_fcl_freight_rate_charts(filters)
+    response = get_fcl_freight_rate_charts(filters)
     return JSONResponse(content=response)
 
 
