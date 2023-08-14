@@ -240,7 +240,6 @@ def get_location_id(q, country_code=None, service_provider_id=None):
     return locations[0]["id"] if locations else None
 
 
-
 def get_airport_id(port_code, country_code):
     input = {"filters": {"type": "airport", "port_code": port_code, "status": "active"}}
     try:
