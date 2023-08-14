@@ -25,7 +25,7 @@ Info:
 Brahmastra is a tool used to send statistics to ClickHouse for analytical queries.
 
 Code:
-Brahmastra(models).use(arjun=True)
+Brahmastra(models).used_by(arjun=True)
 
 Options:
 If models are not send it will run for all available models present in the clickhouse system
@@ -91,7 +91,7 @@ class Brahmastra:
             self.__clickhouse.execute(query + ",".join(values))
             model.delete().execute()
 
-    def use(self, arjun: bool) -> None:
+    def used_by(self, arjun: bool) -> None:
         for model in self.models:
             self.__build_query_and_insert_to_clickhouse(model)
             if arjun:
