@@ -16,12 +16,11 @@ possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id', 'relevant_service_provider_id']
 
 def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
-    query = FclFreightRateFeedback.select()
-
+    query = get_query(filters)
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
-
+        
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
         query = get_filters(direct_filters, query, FclFreightRateFeedback)
@@ -35,6 +34,16 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
     data = get_data(query,spot_search_details_required,booking_details_required) 
 
     return {'list': json_encoder(data) } | (pagination_data) | (stats)
+
+def get_query(filters):
+    query = FclFreightRateFeedback.select()
+    if filters.get('rate_type') == 'cogo_assured':
+        query = query.where(FclFreightRateFeedback.rate_type == 'cogo_assured')
+    else:
+        query = query.where(FclFreightRateFeedback.rate_type != 'cogo_assured')    
+
+    return query
+
 
 def get_page(query, page, page_limit):
     query = query.order_by(FclFreightRateFeedback.created_at.desc(nulls='LAST')).paginate(page, page_limit)
