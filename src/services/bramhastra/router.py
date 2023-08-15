@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, WebSocket, Request
+from fastapi import APIRouter, Depends, Query
 from services.bramhastra.interactions.apply_spot_search_fcl_freight_rate_statistic import (
     apply_spot_search_fcl_freight_rate_statistic,
 )
@@ -58,6 +58,8 @@ from services.bramhastra.response_models import (
 )
 from fastapi.responses import JSONResponse
 from services.bramhastra.constants import INDIA_LOCATION_ID
+from rms_utils.auth import authorize_token
+from fastapi.responses import PlainTextResponse
 
 bramhastra = APIRouter()
 
@@ -65,42 +67,65 @@ bramhastra = APIRouter()
 @bramhastra.post("/apply_spot_search_fcl_freight_rate_statistic")
 def apply_spot_search_fcl_freight_rate_statistic_func(
     request: ApplySpotSearchFclFreightRateStatistic,
+    auth_response: dict = Depends(authorize_token),
 ):
-    return apply_spot_search_fcl_freight_rate_statistic(request)
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
+    apply_spot_search_fcl_freight_rate_statistic(request)
+    return JSONResponse(content={"success": True})
 
 
 @bramhastra.post("/apply_quotation_fcl_freight_rate_statistic")
 def apply_quotation_fcl_freight_rate_statistic_func(
     request: ApplyQuotationFclFreightRateStatistics,
+    auth_response: dict = Depends(authorize_token),
 ):
-    return apply_quotation_fcl_freight_rate_statistic(request)
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
+    apply_quotation_fcl_freight_rate_statistic(request)
+    return JSONResponse(content={"success": True})
 
 
 @bramhastra.post("/apply_rd_fcl_freight_rate_statistic")
 def apply_fcl_freight_rate_rd_statistic_func(
     request: ApplyRevenueDeskFclFreightStatistics,
+    auth_response: dict = Depends(authorize_token),
 ):
-    return apply_fcl_freight_rate_rd_statistic(request)
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
+    apply_fcl_freight_rate_rd_statistic(request)
+    return JSONResponse(content={"success": True})
 
 
 @bramhastra.post("/apply_shipment_fcl_freight_rate_statistic")
 def apply_shipment_fcl_freight_rate_statistic_func(
     request: ApplyShipmentFclFreightRateStatistics,
+    auth_response: dict = Depends(authorize_token),
 ):
-    return apply_shipment_fcl_freight_rate_statistic(request)
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
+    apply_shipment_fcl_freight_rate_statistic(request)
+    return JSONResponse(content={"success": True})
 
 
 @bramhastra.post("/apply_checkout_fcl_freight_rate_statistic")
 def apply_checkout_fcl_freight_rate_statistic_func(
     request: ApplyCheckoutFclFreightRateStatistic,
+    auth_response: dict = Depends(authorize_token),
 ):
-    return apply_checkout_fcl_freight_rate_statistic(request)
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
+    apply_checkout_fcl_freight_rate_statistic(request)
+    return JSONResponse(content={"success": True})
 
 
 @bramhastra.get("/get_fcl_freight_rate_charts", response_model=FclFreightRateCharts)
 def get_fcl_freight_rate_charts_func(
     filters: Annotated[Json, Query()] = {},
+    auth_response: dict = Depends(authorize_token),
 ):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_rate_charts(filters)
     return JSONResponse(content=response)
 
@@ -110,7 +135,10 @@ def get_fcl_freight_rate_charts_func(
 )
 def get_fcl_freight_rate_distribution_func(
     filters: Annotated[Json, Query()] = {},
+    auth_response: dict = Depends(authorize_token),
 ):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_rate_distribution(filters)
     return JSONResponse(content=response)
 
@@ -120,7 +148,10 @@ def get_fcl_freight_rate_distribution_func(
 )
 async def get_fcl_freight_rate_lifecycle_func(
     filters: Annotated[Json, Query()] = {},
+    auth_response: dict = Depends(authorize_token),
 ):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = await get_fcl_freight_rate_lifecycle(filters)
     return JSONResponse(content=response)
 
@@ -132,7 +163,10 @@ def get_fcl_freight_map_view_statistics_func(
     },
     page_limit: int = 30,
     page: int = 1,
+    auth_response: dict = Depends(authorize_token),
 ):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_map_view_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -140,7 +174,9 @@ def get_fcl_freight_map_view_statistics_func(
 @bramhastra.get(
     "/get_fcl_freight_rate_world", response_model=FclFreightRateWorldResponse
 )
-def get_fcl_freight_rate_world_func():
+def get_fcl_freight_rate_world_func(auth_response: dict = Depends(authorize_token)):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_rate_world()
     return JSONResponse(content=response)
 
@@ -150,7 +186,10 @@ async def list_fcl_freight_rate_statistics_func(
     filters: Annotated[Json, Query()] = {},
     page_limit: int = 10,
     page: int = 1,
+    auth_response: dict = Depends(authorize_token),
 ):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = await list_fcl_freight_rate_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -160,19 +199,19 @@ def list_fcl_freight_rate_request_statistics_func(
     filters: Annotated[Json, Query()] = {},
     page_limit: int = 10,
     page: int = 1,
+    auth_response: dict = Depends(authorize_token),
 ):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
 
 @bramhastra.get("/get_fcl_freight_port_pair_count", response_model=PortPairRateCount)
-def get_fcl_freight_port_pair_count_func(pairs: Json = Query(None)):
+def get_fcl_freight_port_pair_count_func(
+    pairs: Json = Query(None), auth_response: dict = Depends(authorize_token)
+):
+    if auth_response.get("status_code") != 200:
+        return PlainTextResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_port_pair_count(pairs)
     return JSONResponse(content=response)
-
-
-@bramhastra.websocket("/use")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
