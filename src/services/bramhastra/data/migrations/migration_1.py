@@ -56,6 +56,7 @@ from nltk.tokenize import word_tokenize
 from micro_services.client import maps
 from database.db_session import db
 import uuid
+from playhouse.postgres_ext import ServerSide
 
 BATCH_SIZE = 1000
 REGION_MAPPING_URL = "https://cogoport-production.sgp1.digitaloceanspaces.com/0860c1638d11c6127ab65ce104606100/id_region_id_mapping.json"
@@ -479,7 +480,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             # offset += BATCH_SIZE
             # row_data = []
         print('starting iterator')
-        for rate in query.iterator():
+        for rate in ServerSide(query):
             for validity in rate.validities:
                 
                 identifier = self.get_identifier(str(rate.id), validity["id"])
