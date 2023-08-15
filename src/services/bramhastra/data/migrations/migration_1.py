@@ -1430,7 +1430,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         query = FclFreightRateStatistic.select().where(FclFreightRateStatistic.id.not_in(statistics_ids))
         
         for row in data:
-            created_at = datetime.strptime(row.pop('created_at', None), '%Y-%m-%dT%H:%M:%S.%f')
+            created_at = row.pop('created_at', None)
             price = row.pop('total_price', None)
             currency = row.pop('currency', None)
             rate_query = query.where(**row)
