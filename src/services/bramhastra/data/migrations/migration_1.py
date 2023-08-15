@@ -212,11 +212,11 @@ class MigrationHelpers:
             with newconnection:
                 with newconnection.cursor() as cur:
                     if return_count:
-                        sql = 'SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s'
-                        cur.execute(sql, ('service_rates','rate_id','validity_id','validity_start','service_type','fcl_freight'))
+                        sql = 'SELECT count(service_rates) as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s and spot_search_rates.updated_at >= %s'
+                        cur.execute(sql, ('service_rates','rate_id','validity_id','validity_start','service_type','fcl_freight', '2023-07-1 00:00:00.695285'))
                         all_result = cur.fetchone()[0]
                     else:
-                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by spot_search_rates.id limit %s offset %s"
+                        sql = "SELECT service_rates.value as rate_obj FROM spot_search_rates, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates WHERE service_rates.value->> %s is not null and service_rates.value->> %s is not null and service_rates.value->> %s is not null and  service_rates.value->> %s = %s and spot_search_rates.updated_at >= %s order by spot_search_rates.id limit %s offset %s"
                         cur.execute(
                             sql,
                             (
@@ -226,6 +226,7 @@ class MigrationHelpers:
                                 'validity_start',
                                 "service_type",
                                 "fcl_freight",
+                                '2023-07-1 00:00:00.695285',
                                 limit,
                                 offset,
                             ),
@@ -1013,7 +1014,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         try:
             with self.cogoback_connection.cursor() as cur:
                 total_count = self.get_spot_search_rates(return_count=True)
-
+                print(total_count, 'total_count')
+                count = 0
                 while offset < total_count:
                     offset += BATCH_SIZE
 
@@ -1022,7 +1024,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             (
                             SELECT spot_search_id, service_rates.value as rate_obj
                             FROM spot_search_rates AS ssr, jsonb_array_elements(rate_cards) AS element, jsonb_each(element-> %s) AS service_rates
-                            where service_rates.value->> %s is not null and  service_rates.value->> %s = %s order by ssr.id limit %s offset %s) AS subq
+                            where service_rates.value->> %s is not null and  service_rates.value->> %s = %s and ssr.updated_at >= %s order by ssr.id limit %s offset %s) AS subq
                             left join checkouts AS chk ON subq.spot_search_id = chk.source_id and chk.source = %s
                             left join shipments AS sh ON chk.shipment_id = sh.id
                             left join checkout_fcl_freight_services AS cfrs ON chk.id = cfrs.checkout_id
@@ -1038,6 +1040,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             "rate_id",
                             "service_type",
                             "fcl_freight",
+                            '2023-07-1 00:00:00.695285',
                             limit,
                             offset,
                             "spot_search",
@@ -1049,45 +1052,51 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
                     for res in result:
                         service_rate = res[1]
+                        count += 1
+                        print(count)
+                        try:
+                            rate_id = service_rate["rate_id"]
+                            validity_id = service_rate["validity_id"]
 
-                        rate_id = service_rate["rate_id"]
-                        validity_id = service_rate["validity_id"]
+                            identifier = self.get_identifier(rate_id, validity_id)
+                            statistic = self.find_statistics_object(identifier)
 
-                        identifier = self.get_identifier(rate_id, validity_id)
-                        statistic = self.find_statistics_object(identifier)
+                            if not statistic:
+                                continue
+                                
+                            if statistic:
+                                setattr(
+                                    statistic,
+                                    "spot_search_count",
+                                    statistic.spot_search_count + 1,
+                                )
 
-                        if statistic:
-                            setattr(
-                                statistic,
-                                "spot_search_count",
-                                statistic.spot_search_count + 1,
-                            )
+                                saved_status = statistic.save()
+                                if not saved_status:
+                                    print("! Error: Couldn't save statistics", statistic.id)
+                                else:
+                                    print("Saved ...", statistic.id)
 
-                            saved_status = statistic.save()
-                            if not saved_status:
-                                print("! Error: Couldn't save statistics", statistic.id)
-                            else:
-                                print("Saved ...", statistic.id)
+                                statistic = model_to_dict(statistic)
+                                ffrs_id = statistic.get("id")
 
-                            statistic = model_to_dict(statistic)
-                            ffrs_id = statistic.get("id")
-
-                        row = {
-                            "fcl_freight_rate_statistic_id": ffrs_id,
-                            "spot_search_id": res[0],
-                            "spot_search_fcl_freight_services_id": res[7],
-                            "checkout_id": res[2],
-                            "checkout_fcl_freight_rate_services_id": res[3],
-                            "validity_id": validity_id,
-                            "rate_id": rate_id,
-                            "sell_quotation_id": res[4],
-                            "buy_quotation_id": res[5],
-                            "shipment_id": res[6],
-                        }
-                        row_data.append(row)
-
+                            row = {
+                                "fcl_freight_rate_statistic_id": ffrs_id,
+                                "spot_search_id": res[0],
+                                "spot_search_fcl_freight_services_id": res[7],
+                                "checkout_id": res[2],
+                                "checkout_fcl_freight_rate_services_id": res[3],
+                                "validity_id": validity_id,
+                                "rate_id": rate_id,
+                                "sell_quotation_id": res[4],
+                                "buy_quotation_id": res[5],
+                                "shipment_id": res[6],
+                            }
+                            row_data.append(row)
+                        except:
+                            continue
+                    print('total_inserted->', len(row_data))
                     SpotSearchFclFreightRateStatistic.insert_many(row_data).execute()
-
                 cur.close()
 
         except Exception as e:
@@ -1483,7 +1492,7 @@ def main():
     print('# update map_zone_ids for main_statistics and missing_requests')
     populate_from_rates.update_pricing_map_zone_ids() 
     print('#update parent_rate_id and validity_id for reverted rates from feedback')
-    populate_from_rates.update_parent_rates() 
+    # populate_from_rates.update_parent_rates() 
 
 
 if __name__ == "__main__":
