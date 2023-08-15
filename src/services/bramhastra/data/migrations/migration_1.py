@@ -962,7 +962,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         FROM checkout_fcl_freight_services AS cs
                         LEFT JOIN checkouts AS co 
                         ON cs.checkout_id = co.id
-                        WHERE cs.rate ? 'rate_id'
+                        WHERE cs.rate ? 'rate_id' updated_at >= '2023-06-01'
                     """
                 cur.execute(sql)
 
