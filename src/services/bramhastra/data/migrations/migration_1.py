@@ -628,6 +628,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             count +=1
             stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_port_id))
             stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_port_id))
+            stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_port_id))
+            stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_port_id))
             stat.save()
             print(count)
             
@@ -1430,10 +1432,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         query = FclFreightRateStatistic.select().where(FclFreightRateStatistic.id.not_in(statistics_ids))
         
         for row in data:
-            created_at = datetime.strptime(row.pop('created_at', None), '%Y-%m-%dT%H:%M:%S.%f')
+            created_at = row.pop('created_at', None)
             price = row.pop('total_price', None)
             currency = row.pop('currency', None)
-            rate_query = query.where(row)
+            rate_query = query.filter(**row)
             rate_query = rate_query.where(FclFreightRateStatistic.validity_start >= created_at,FclFreightRateStatistic.validity_end <= created_at )
             
             for statistics_obj in rate_query:
@@ -1477,7 +1479,7 @@ def main():
     print('#shipment_statistics data population')
     # populate_from_rates.populate_shipment_statistics() 
     print('# update accuracy, deviation from shipment_buy_quotation')
-    populate_from_rates.update_accuracy() 
+    # populate_from_rates.update_accuracy() 
     print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
     populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
     print('# update map_zone_ids for main_statistics and missing_requests')
