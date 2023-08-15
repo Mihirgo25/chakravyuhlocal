@@ -448,9 +448,13 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
     def populate_from_active_rates(self):
         FclFreightRateStatistic.truncate_table(restart_identity = True)
+        print('done truncating')
         db.execute_sql('alter sequence fcl_freight_rate_stats_seq restart with 1')
+        print('done with sequence restart')
         
         query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date.cast('date') >= date.today()))
+        
+        print('formed query')
         
         # total_count = query.count()
         
@@ -474,6 +478,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             
             # offset += BATCH_SIZE
             # row_data = []
+        print('starting iterator')
         for rate in query.iterator():
             for validity in rate.validities:
                 
@@ -506,8 +511,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 }
                 row_data.append(row)
                 count += 1
+                print('count')
                 if count == 30000:
                     FclFreightRateStatistic.insert_many(row_data).execute()
+                    print('inserted 30k')
                     count = 0
                     row_data = []
         if row_data:
