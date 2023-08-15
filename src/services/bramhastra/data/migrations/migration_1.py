@@ -628,8 +628,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             count +=1
             stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_port_id))
             stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_port_id))
-            stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_port_id))
-            stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_port_id))
             stat.save()
             print(count)
             
