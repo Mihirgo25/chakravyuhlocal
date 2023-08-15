@@ -57,9 +57,8 @@ from services.bramhastra.response_models import (
     PortPairRateCount,
 )
 from fastapi.responses import JSONResponse
-from services.bramhastra.constants import INDIA_LOCATION_ID
+from services.bramhastra.constants import INDIAN_LOCATION_ID
 from rms_utils.auth import authorize_token
-from fastapi.responses import PlainTextResponse
 
 bramhastra = APIRouter()
 
@@ -70,7 +69,7 @@ def apply_spot_search_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     apply_spot_search_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -81,7 +80,7 @@ def apply_quotation_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     apply_quotation_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -92,7 +91,7 @@ def apply_fcl_freight_rate_rd_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     apply_fcl_freight_rate_rd_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -103,7 +102,7 @@ def apply_shipment_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     apply_shipment_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -114,7 +113,7 @@ def apply_checkout_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     apply_checkout_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -125,7 +124,7 @@ def get_fcl_freight_rate_charts_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_rate_charts(filters)
     return JSONResponse(content=response)
 
@@ -138,7 +137,7 @@ def get_fcl_freight_rate_distribution_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_rate_distribution(filters)
     return JSONResponse(content=response)
 
@@ -151,7 +150,7 @@ async def get_fcl_freight_rate_lifecycle_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = await get_fcl_freight_rate_lifecycle(filters)
     return JSONResponse(content=response)
 
@@ -159,14 +158,14 @@ async def get_fcl_freight_rate_lifecycle_func(
 @bramhastra.get("/get_fcl_freight_map_view_statistics", response_model=DefaultList)
 def get_fcl_freight_map_view_statistics_func(
     filters: Annotated[Json, Query()] = {
-        "origin": {"type": "country", "id": INDIA_LOCATION_ID}
+        "origin": {"type": "country", "id": INDIAN_LOCATION_ID}
     },
     page_limit: int = 30,
     page: int = 1,
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_map_view_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -176,7 +175,7 @@ def get_fcl_freight_map_view_statistics_func(
 )
 def get_fcl_freight_rate_world_func(auth_response: dict = Depends(authorize_token)):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_rate_world()
     return JSONResponse(content=response)
 
@@ -189,7 +188,7 @@ async def list_fcl_freight_rate_statistics_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = await list_fcl_freight_rate_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -202,7 +201,7 @@ def list_fcl_freight_rate_request_statistics_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -212,6 +211,6 @@ def get_fcl_freight_port_pair_count_func(
     pairs: Json = Query(None), auth_response: dict = Depends(authorize_token)
 ):
     if auth_response.get("status_code") != 200:
-        return PlainTextResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("response_code"))
     response = get_fcl_freight_port_pair_count(pairs)
     return JSONResponse(content=response)
