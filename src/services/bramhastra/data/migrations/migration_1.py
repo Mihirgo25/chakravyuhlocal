@@ -962,7 +962,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         FROM checkout_fcl_freight_services AS cs
                         LEFT JOIN checkouts AS co 
                         ON cs.checkout_id = co.id
-                        WHERE cs.rate ? 'rate_id'
+                        WHERE cs.rate ? 'rate_id' and co.updated_at >= '2023-06-01'
                     """
                 cur.execute(sql)
 
@@ -1470,8 +1470,8 @@ def main():
     # populate_from_rates.populate_from_spot_search_rates() 
     print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
     populate_from_rates.update_fcl_freight_rate_checkout_count() 
-    print('#like dislike count in main_statistics and populate feedback_statistics')
-    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
+    # print('#like dislike count in main_statistics and populate feedback_statistics')
+    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
     print('#populate request_fcl_statistics table')
     populate_from_rates.populate_fcl_request_statistics() 
     print('#shipment_statistics data population')
