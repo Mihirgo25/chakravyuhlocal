@@ -1,8 +1,5 @@
 from celery_worker import celery
 from services.bramhastra.brahmastra import Brahmastra
-from services.bramhastra.interactions.apply_fcl_freight_rate_statistic import apply_fcl_freight_rate_statistic
-from services.bramhastra.interactions.apply_fcl_freight_rate_feedback import apply_feedback_fcl_freight_rate_statistic
-from services.bramhastra.interactions.apply_fcl_freight_rate_request_statistic import apply_fcl_freight_rate_request_statistic
 
 @celery.task(bind=True,retry_backoff=True,max_retries=5)
 def brahmastra_in_delay(self):

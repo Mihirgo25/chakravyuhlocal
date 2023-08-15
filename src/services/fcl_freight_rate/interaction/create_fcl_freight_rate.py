@@ -12,7 +12,6 @@ from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_
 from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from services.bramhastra.celery import send_rate_stats_in_delay
 
 def add_rate_properties(request,freight_id):
     validate_value_props(request["value_props"])
@@ -218,6 +217,7 @@ def create_fcl_freight_rate(request):
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
         
+    from services.bramhastra.celery import send_rate_stats_in_delay
     send_rate_stats_in_delay.apply_async(kwargs = {'action':action,'request':request,'freight':freight},queue = 'critical')
 
     return {"id": freight.id}
