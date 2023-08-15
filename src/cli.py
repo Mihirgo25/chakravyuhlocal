@@ -93,8 +93,7 @@ def shell(ipython_args):
         f"""Python {sys.version} on {sys.platform} IPython: {IPython.__version__}"""
     )
     config.TerminalInteractiveShell.autoindent = True
-    config.InteractiveShellApp.exec_lines = EXEC_LINES
-    config.InteractiveShellApp.exec_files = EXEC_FILES
+    config.InteractiveShellApp.exec_lines = ["%load_ext autoreload","%autoreload 2"]
     config.TerminalInteractiveShell.autoformatter = 'black'
     config.InteractiveShell.pdb = True
     VerboseTB._tb_highlight = "bg:#4C5656"
