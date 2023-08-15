@@ -626,8 +626,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         query = FclFreightRateRequestStatistic.select()
         for stat in query:
             count +=1
-            stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_main_port_id or stat.origin_port_id))
-            stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_main_port_id or stat.destination_port_id))
+            stat.origin_pricing_zone_map_id = zone_ids.get(str(stat.origin_port_id))
+            stat.destination_pricing_zone_map_id = zone_ids.get(str(stat.destination_port_id))
             stat.save()
             print(count)
             
@@ -1433,7 +1433,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             created_at = datetime.strptime(row.pop('created_at', None), '%Y-%m-%dT%H:%M:%S.%f')
             price = row.pop('total_price', None)
             currency = row.pop('currency', None)
-            rate_query = query.where(**row)
+            rate_query = query.where(row)
             rate_query = rate_query.where(FclFreightRateStatistic.validity_start >= created_at,FclFreightRateStatistic.validity_end <= created_at )
             
             for statistics_obj in rate_query:
