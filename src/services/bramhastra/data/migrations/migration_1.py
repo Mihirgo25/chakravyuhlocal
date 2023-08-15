@@ -511,7 +511,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 }
                 row_data.append(row)
                 count += 1
-                print('count')
+                print(count)
                 if count == 30000:
                     FclFreightRateStatistic.insert_many(row_data).execute()
                     print('inserted 30k')
