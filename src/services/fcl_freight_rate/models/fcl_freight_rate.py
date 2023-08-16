@@ -561,8 +561,7 @@ class FclFreightRate(BaseModel):
                 "dislikes_count": 0,
                 "action": "create"
               }
-          if index_to_pop is not None:
-            self.validities.pop(index_to_pop)  
+          if index_to_pop is not None:  
             new_validity_object['id'] = old_validity_id
             new_validity_object['action'] = 'update'
           
