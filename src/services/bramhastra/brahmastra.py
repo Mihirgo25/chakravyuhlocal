@@ -72,6 +72,8 @@ class Brahmastra:
         columns = model._meta.fields
 
         values = []
+        
+        count = 0
 
         for d in ServerSide(model.select()):
             value = []
@@ -90,10 +92,14 @@ class Brahmastra:
                     value.append("true" if v else "false")
                 else:
                     value.append(f"{v}")
+            count+=1
+            print(count)
             values.append(f"({','.join(value)})")
 
         if values:
+            print('Started Inserting')
             self.__clickhouse.execute(query + ",".join(values))
+            print('Done Inserting')
             model.delete().execute()
 
     def used_by(self, arjun: bool) -> None:
