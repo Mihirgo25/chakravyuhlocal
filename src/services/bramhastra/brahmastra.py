@@ -18,6 +18,8 @@ from services.bramhastra.client import (
     json_encoder_for_clickhouse,
 )
 import peewee
+from playhouse.postgres_ext import ServerSide
+from playhouse.shortcuts import model_to_dict
 
 
 """
@@ -69,8 +71,9 @@ class Brahmastra:
 
         values = []
 
-        for d in data:
+        for d in ServerSide(model.select()):
             value = []
+            d = json_encoder_for_clickhouse(model_to_dict(d))
             for k, v in d.items():
                 if v is None:
                     value.append("DEFAULT")
@@ -96,3 +99,5 @@ class Brahmastra:
             self.__build_query_and_insert_to_clickhouse(model)
             if arjun:
                 self.__optimize_and_send_data_to_stale_tables(model)
+                
+            print(f'Done with {model._meta.table_name}')
