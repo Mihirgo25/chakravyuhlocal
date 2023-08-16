@@ -48,7 +48,7 @@ class Brahmastra:
             FclFreightRateRequestStatistic,
             CheckoutFclFreightRateStatistic,
         ]
-        self.__clickhouse = ClickHouse().client
+        self.__clickhouse = ClickHouse()
 
     def __optimize_and_send_data_to_stale_tables(self, model: peewee.Model):
         query = f"""
