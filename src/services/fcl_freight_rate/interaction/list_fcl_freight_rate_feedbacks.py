@@ -21,6 +21,8 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
         if type(filters) != dict:
             filters = json.loads(filters)
         
+        filters = {key: value for key, value in filters.items() if value}
+
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
         query = get_filters(direct_filters, query, FclFreightRateFeedback)

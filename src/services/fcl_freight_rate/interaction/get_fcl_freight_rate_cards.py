@@ -631,7 +631,8 @@ def build_response_object(freight_query_result, request):
       'source': source,
       'rate_type': freight_query_result.get('rate_type'),
       'tags': [],
-      'rate_id': freight_query_result['id']
+      'rate_id': freight_query_result['id'],
+      'rate_type': freight_query_result['rate_type']
     }
 
     if response_object['service_provider_id'] in CONFIRMED_INVENTORY['service_provider_ids']:
