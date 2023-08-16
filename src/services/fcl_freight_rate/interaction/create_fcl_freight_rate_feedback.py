@@ -75,7 +75,7 @@ def execute_transaction_code(request):
     if request['feedback_type'] == 'disliked':
         set_relevant_supply_agents_function.apply_async(kwargs={'object':feedback,'request':request},queue='critical')
         
-    send_feedback_statistics_in_delay(action,feedback, request)
+    send_feedback_statistics_in_delay.apply_async(kwargs = {'action': action,'feedback': feedback, 'request': request},queue = 'statistics')
 
     return {'id': request['rate_id']}
 
