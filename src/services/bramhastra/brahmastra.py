@@ -13,6 +13,9 @@ from services.bramhastra.models.spot_search_fcl_freight_rate_statistic import (
 from services.bramhastra.models.fcl_freight_rate_request_statistics import (
     FclFreightRateRequestStatistic,
 )
+from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
+    CheckoutFclFreightRateStatistic,
+)
 from services.bramhastra.client import ClickHouse
 from services.bramhastra.client import (
     json_encoder_for_clickhouse,
@@ -43,6 +46,7 @@ class Brahmastra:
             ShipmentFclFreightRateStatistic,
             SpotSearchFclFreightRateStatistic,
             FclFreightRateRequestStatistic,
+            CheckoutFclFreightRateStatistic,
         ]
         self.__clickhouse = ClickHouse().client
 

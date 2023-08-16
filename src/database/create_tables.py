@@ -1,4 +1,5 @@
 from database.db_session import db
+from services. bramhastra.models.data_migration import DataMigration
 
 
 class Table:
@@ -16,6 +17,6 @@ class Table:
 
 
 if __name__ == "__main__":
-    models = []
+    models = [DataMigration]
 
     Table().create_tables(models)
