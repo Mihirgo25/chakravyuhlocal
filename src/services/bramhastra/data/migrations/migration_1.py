@@ -1471,14 +1471,10 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 print(e)
     
     def update_parent_mode(self):
-        count = 0
-        from services.bramhastra.constants import FCL_MODE_MAPPINGS
-        for i in ServerSide(FclFreightRateStatistic.select()):
-            i.parent_mode = FCL_MODE_MAPPINGS[i.mode]
-            i.save()            
-            print(count)
-            count +=1
-            
+        from services.bramhastra.constants import FCL_MODE_MAPPINGS         
+        for key,value in FCL_MODE_MAPPINGS.items():
+            FclFreightRateStatistic.update(parent_mode = value).where(FclFreightRateStatistic.mode == key).execute()
+            print(f'done with {key}')
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
@@ -1501,7 +1497,7 @@ def main():
     print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
     # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
     print('# update map_zone_ids for main_statistics and missing_requests')
-    populate_from_rates.update_pricing_map_zone_ids() 
+    # populate_from_rates.update_pricing_map_zone_ids() 
     print('#update parent_rate_id and validity_id for reverted rates from feedback')
     # populate_from_rates.update_parent_rates()
     print('parent modes') 
