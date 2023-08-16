@@ -75,6 +75,7 @@ class FclModes(Bramhastra):
     rms_upload = "rms_upload"
     missing_rate = "missing_rate"
     spot_negotation = "spot_negotation"
+    cogolens = "cogolens"
 
 
 class FclParentMode(Bramhastra):
