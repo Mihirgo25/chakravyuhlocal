@@ -63,8 +63,6 @@ class Brahmastra:
         self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
-        data = json_encoder_for_clickhouse(list(model.select().dicts()))
-
         query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
 
         columns = model._meta.fields
@@ -99,5 +97,5 @@ class Brahmastra:
             self.__build_query_and_insert_to_clickhouse(model)
             if arjun:
                 self.__optimize_and_send_data_to_stale_tables(model)
-                
-            print(f'Done with {model._meta.table_name}')
+
+            print(f"Done with {model._meta.table_name}")
