@@ -61,4 +61,5 @@ FCL_MODE_MAPPINGS = {
     "rms_upload": "supply",
     "missing_rate": "supply",
     "spot_negotation": "supply",
+    "cogolens": "predicted"
 }
