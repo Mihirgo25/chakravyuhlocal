@@ -946,6 +946,9 @@ class UpdateRateProperties(BaseModel):
     volume_count: int = 0
     value_props: List[dict] = []
     t_n_c: List[str] = []
+    increment_used_inventory: int = 0
+    increment_shipment_count: int = 0
+    increment_volume_count: int = 0
 
 
 class FclLocationCluster(BaseModel):
