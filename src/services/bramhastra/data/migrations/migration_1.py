@@ -265,6 +265,7 @@ class MigrationHelpers:
                         WHERE 
                             shipment_buy_quotations.service_type= %s 
                             AND shipment_buy_quotations.is_deleted != %s  
+                            AND shipment_buy_quotations.created_at >= %s
                         ORDER BY 
                             shipment_buy_quotations.created_at
                         )
@@ -297,7 +298,7 @@ class MigrationHelpers:
                             sh.created_at
                     '''
                     
-                    cur.execute(sql, ('fcl_freight_service',True,'rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
+                    cur.execute(sql, ('fcl_freight_service',True,'2023-07-1 00:00:00.695285','rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
                     result = cur.fetchall()
                     for res in result:
                         all_result.append( {'shipment_id' : res[0],'rate_id': res[1], 'validity_id': res[2], 'total_price': res[3], 'currency': res[4]})
@@ -341,7 +342,8 @@ class MigrationHelpers:
                                 ON shipment_fcl_freight_services.id = shipment_buy_quotations.service_id 
                             WHERE 
                                 shipment_buy_quotations.service_type= %s 
-                                AND shipment_buy_quotations.is_deleted != %s  
+                                AND shipment_buy_quotations.is_deleted != %s 
+                                AND  shipment_buy_quotations.created_at >= %s
                             ORDER BY 
                                 shipment_buy_quotations.created_at
                             )
@@ -376,7 +378,7 @@ class MigrationHelpers:
                             ORDER BY 
                                 sh.created_at
                     '''
-                    cur.execute(sql, ('fcl_freight_service',True,'completed',exclude_shipment_ids, 'fcl_freight'))
+                    cur.execute(sql, ('fcl_freight_service',True,'2023-07-1 00:00:00.695285','completed',exclude_shipment_ids, 'fcl_freight'))
                     result = cur.fetchall()
                     for res in result:
                         all_result.append({
