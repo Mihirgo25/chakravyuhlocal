@@ -448,13 +448,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
 
-    def populate_from_active_rates(self):
-        FclFreightRateStatistic.truncate_table(restart_identity = True)
-        print('done truncating')
-        db.execute_sql('alter sequence fcl_freight_rate_stats_seq restart with 1')
-        print('done with sequence restart')
-        
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.last_rate_available_date.cast('date') >= date.today()))
+    def populate_from_active_rates(self):        
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.created_at >= datetime.strptime('2023-08-15', '%Y-%m-%d')))
         
         print('formed query')
         
@@ -485,6 +480,9 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             for validity in rate.validities:
                 
                 identifier = self.get_identifier(str(rate.id), validity["id"])
+                
+                if FclFreightRateStatistic.select(FclFreightRateStatistic.id).where(FclFreightRateStatistic.rate_id == str(rate.id),FclFreightRateStatistic.validity_id == str(validity['id'])).first():
+                    continue
 
                 rate_params = {
                     key: getattr(rate, key) for key in RATE_PARAMS
