@@ -1,4 +1,5 @@
 from services.bramhastra.client import ClickHouse
+from libs.json_encoder import json_encoder
 
 
 def get_fcl_freight_port_pair_count(pairs):
@@ -10,9 +11,10 @@ def get_fcl_freight_port_pair_count(pairs):
     ]
 
     full_query = (
-        "SELECT origin_port_id, destination_port_id, SUM(sign) as rate_count"
+        "SELECT origin_port_id, destination_port_id, SUM(sign) as rate_count "
         "FROM brahmastra.fcl_freight_rate_statistics "
         f"WHERE {' OR '.join(query_conditions)} "
         "GROUP BY origin_port_id, destination_port_id"
     )
-    return {'port_pair_rate_count': clickhouse.execute(full_query)}
+
+    return {"port_pair_rate_count": json_encoder(clickhouse.execute(full_query))}
