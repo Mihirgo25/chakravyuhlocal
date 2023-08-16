@@ -1,8 +1,10 @@
 from services.bramhastra.helpers.post_fcl_freight_helper import Rate
+from configs.env import APP_ENV
 
 
 def apply_fcl_freight_rate_statistic(request):
-    setting_fcl_freight_rate_statistic(request.action, request.params)
+    if APP_ENV == 'production':
+        setting_fcl_freight_rate_statistic(request.action, request.params)
 
 
 def setting_fcl_freight_rate_statistic(action, params):
