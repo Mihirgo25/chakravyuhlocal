@@ -987,6 +987,7 @@ class FclFreightRateValidity(BaseModel):
     id: str
     likes_count: int = None
     dislikes_count: int = None
+    action: str = None
 
     class Config:
         orm_mode = True
