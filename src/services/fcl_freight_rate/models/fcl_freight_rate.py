@@ -505,6 +505,7 @@ class FclFreightRate(BaseModel):
                 old_validity_id = validity_object['id']
             
             if not is_price_in_range(other_params.get('rates_greater_than_price'), other_params.get('rates_less_than_price'),price_to_compare,other_params.get('comparision_currency'),currency):
+                new_validities.append(FclFreightRateValidity(**validity_object))
                 new_tags[id] = previous_tag
                 continue
             
