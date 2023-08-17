@@ -451,7 +451,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):        
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.created_at >= datetime.strptime('2023-08-15', '%Y-%m-%d')))
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.updated_at >= datetime.strptime('2023-08-15', '%Y-%m-%d')))
         
         print('formed query')
         
