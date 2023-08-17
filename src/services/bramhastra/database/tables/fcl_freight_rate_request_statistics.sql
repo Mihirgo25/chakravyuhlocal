@@ -30,7 +30,7 @@ CREATE TABLE brahmastra.fcl_freight_rate_request_statistics
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     sign Int8 DEFAULT 1,
-    version UInt32 DEFAULT 1,
+    version UInt32 DEFAULT 1
 )
 ENGINE = VersionedCollapsingMergeTree(sign, version)
 PRIMARY KEY (origin_continent_id,destination_continent_id,origin_country_id,destination_country_id,origin_region_id,destination_region_id,origin_port_id,destination_port_id)
@@ -68,6 +68,6 @@ CREATE TABLE brahmastra.stale_fcl_freight_rate_request_statistics
     created_at DateTime DEFAULT now(),
     updated_at DateTime DEFAULT now(),
     sign Int8 DEFAULT 1,
-    version UInt32 DEFAULT 1,
+    version UInt32 DEFAULT 1
 )
 ENGINE = File(CSV);
