@@ -37,7 +37,9 @@ def execute_transaction_code(request):
             send_closed_notifications_to_user_request.apply_async(kwargs={'object':obj},queue='critical')
         else:
             send_closed_notifications_to_sales_agent_function.apply_async(kwargs={'object':obj},queue='critical')
-
+    
+    from services.bramhastra.celery import send_delete_request_stats_in_delay
+    send_delete_request_stats_in_delay.apply_async(kwargs = {'obj':obj},queue = 'statistics')
 
     return {'fcl_freight_rate_request_ids' : request['fcl_freight_rate_request_ids']}
 
@@ -55,5 +57,4 @@ def create_audit(request, freight_rate_request_id):
     performed_by_id = request['performed_by_id'],
     data = {'closing_remarks' : request['closing_remarks'], 'performed_by_id' : request['performed_by_id']},    #######already performed_by_id column is present do we need to also save it in data?
     object_id = freight_rate_request_id,
-    object_type = 'FclFreightRateRequest'
-    )
+    object_type = 'FclFreightRateRequest')

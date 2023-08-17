@@ -9,6 +9,7 @@ from configs.global_constants import HAZ_CLASSES
 from datetime import datetime
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from configs.fcl_freight_rate_constants import VALUE_PROPOSITIONS, DEFAULT_RATE_TYPE, EXTENSION_ENABLED_MODES, DEFAULT_VALUE_PROPS
+from configs.env import DEFAULT_USER_ID
 from services.fcl_freight_rate.helpers.rate_extension_via_bulk_operation import rate_extension_via_bulk_operation
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
 
@@ -73,6 +74,7 @@ def create_fcl_freight_rate_data(request):
 
 def create_fcl_freight_rate(request):
     from celery_worker import delay_fcl_functions, update_fcl_freight_rate_request_in_delay, update_fcl_freight_rate_feedback_in_delay
+    action = 'update'
     request = { key: value for key, value in request.items() if value }
     row = {
         'origin_port_id': request.get('origin_port_id'),
@@ -112,6 +114,7 @@ def create_fcl_freight_rate(request):
         freight = FclFreightRate(init_key = init_key)
         for key in list(row.keys()):
             setattr(freight, key, row[key])
+        action = 'create'
 
     freight.set_locations()
     freight.set_origin_location_ids()
@@ -177,7 +180,7 @@ def create_fcl_freight_rate(request):
 
     freight.update_special_attributes()
 
-    freight.update_local_references()  
+    freight.update_local_references()
 
     try:
         freight.save()
@@ -213,6 +216,9 @@ def create_fcl_freight_rate(request):
 
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
+        
+    from services.bramhastra.celery import send_rate_stats_in_delay
+    send_rate_stats_in_delay.apply_async(kwargs = {'action':action,'request':request,'freight':freight},queue = 'critical')
 
     return {"id": freight.id}
 
@@ -299,12 +305,6 @@ def validities_for_cogo_assured(request):
 def validate_value_props(v_props):
     for prop in v_props:
         name = prop.get('name')
-        # print(name)
         if name not in VALUE_PROPOSITIONS:
             raise HTTPException(status_code=400, detail='Invalid rate_type parameter')   
     return True
-
-
-    
-
-

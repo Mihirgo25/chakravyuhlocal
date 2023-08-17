@@ -18,6 +18,7 @@ from configs.global_constants import HAZ_CLASSES
 from micro_services.client import *
 from services.fcl_freight_rate.helpers.fcl_freight_rate_bulk_operation_helpers import is_price_in_range
 from configs.fcl_freight_rate_constants import DEFAULT_SCHEDULE_TYPES, DEFAULT_PAYMENT_TERM, DEFAULT_RATE_TYPE
+from copy import deepcopy
 class UnknownField(object):
     def __init__(self, *_, **__): pass
 
@@ -466,6 +467,7 @@ class FclFreightRate(BaseModel):
     def set_validities(self, validity_start, validity_end, line_items, schedule_type, deleted, payment_term, tag = None, other_params={}):
         new_validities = []
         new_tags = {}
+        
         if not schedule_type:
           schedule_type = DEFAULT_SCHEDULE_TYPES
         if not payment_term:
@@ -485,37 +487,24 @@ class FclFreightRate(BaseModel):
                 market_price = float(sum(common.get_money_exchange_for_fcl({"price": item['market_price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             else:
                 price = float(sum(item["price"] for item in line_items))   
-                market_price = float(sum(item["market_price"] for item in line_items))   
-                     
-            id = str(uuid.uuid4())
-            new_validity_object = {
-                "validity_start": validity_start,
-                "validity_end": validity_end,
-                "line_items": line_items,
-                "price": price,
-                "currency": currency,
-                "market_price": market_price,
-                "schedule_type": schedule_type,
-                "payment_term": payment_term,
-                "id": id,
-                "likes_count": 0,
-                "dislikes_count": 0
-            }
-            new_validities = [FclFreightRateValidity(**new_validity_object)]
-            new_tags[id] = tag
-
+                market_price = float(sum(item["market_price"] for item in line_items))
+             
+        new_validities = []
+        old_validity_id = None
         for validity_object in self.validities:
             id = validity_object['id']
             previous_tag = self.tags.get(id) if isinstance(self.tags, dict) else None
-            
+            validity_object['action'] = 'unchanged'
             validity_object_validity_start = datetime.datetime.strptime(validity_object['validity_start'], "%Y-%m-%d").date()
             validity_object_validity_end = datetime.datetime.strptime(validity_object['validity_end'], "%Y-%m-%d").date()
 
             line_item = [t for t in validity_object['line_items'] if t['code'] == other_params.get('comparison_charge_code')]
             price_to_compare,currency=(line_item[0]['price'],line_item[0]['currency'])if line_item else (None,None)
             
+            if not deleted and validity_object['validity_start'] == validity_start.strftime('%Y-%m-%d') and validity_object['validity_end'] == validity_end.strftime('%Y-%m-%d') and validity_object['schedule_type'] == schedule_type and validity_object['payment_term'] == payment_term:
+                old_validity_id = validity_object['id']
+            
             if not is_price_in_range(other_params.get('rates_greater_than_price'), other_params.get('rates_less_than_price'),price_to_compare,other_params.get('comparision_currency'),currency):
-                new_validities.append(FclFreightRateValidity(**validity_object))
                 new_tags[id] = previous_tag
                 continue
             
@@ -529,7 +518,6 @@ class FclFreightRate(BaseModel):
                 continue
             if validity_object_validity_start > validity_end:
                 new_validities.append(FclFreightRateValidity(**validity_object))
-                new_tags[id] = previous_tag
                 continue
             if validity_object_validity_end < validity_start:
                 new_validities.append(FclFreightRateValidity(**validity_object))
@@ -541,21 +529,50 @@ class FclFreightRate(BaseModel):
             if validity_object_validity_start < validity_start and validity_object_validity_end <= validity_end:
                 # validity_object_validity_end = validity_start - datetime.timedelta(days=1)
                 validity_object['validity_end'] = validity_start - datetime.timedelta(days=1)
+                validity_object['action'] = 'update'
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 new_tags[id] = tag or previous_tag
                 continue
             if validity_object_validity_start >= validity_start and validity_object_validity_end > validity_end:
                 # validity_object_validity_start = validity_end + datetime.timedelta(days=1)
                 validity_object['validity_start'] = validity_end + datetime.timedelta(days=1)
+                validity_object['action'] = 'update'
                 new_validities.append(FclFreightRateValidity(**validity_object))
                 new_tags[id] = tag or previous_tag
                 continue
             if validity_object_validity_start < validity_start and validity_object_validity_end > validity_end:
+                validity_object['action'] = 'update'
                 new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_end': validity_start - datetime.timedelta(days=1)}))
-                new_validities.append(FclFreightRateValidity(**{**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}))
                 new_tags[id] = tag or previous_tag
-                continue
-
+                new_validity = {**validity_object, 'validity_start': validity_end + datetime.timedelta(days=1)}
+                new_validity['id'] = str(uuid.uuid4())
+                new_validity['action'] = 'create'
+                new_validities.append(FclFreightRateValidity(**new_validity))
+                continue   
+        
+        if not deleted:
+          new_validity_object = {
+                "id": str(uuid.uuid4()),
+                "validity_start": validity_start,
+                "validity_end": validity_end,
+                "line_items": line_items,
+                "price": price,
+                "currency": currency,
+                "market_price": market_price,
+                "schedule_type": schedule_type,
+                "payment_term": payment_term,
+                "likes_count": 0,
+                "dislikes_count": 0,
+                "action": "create"
+              }
+          if old_validity_id is not None:  
+            new_validity_object['id'] = old_validity_id
+            new_validity_object['action'] = 'update'
+          
+          new_validities.append(FclFreightRateValidity(**new_validity_object))
+            
+          new_tags[new_validity_object['id']] = tag
+            
         new_validities = [validity for validity in new_validities if datetime.datetime.strptime(str(validity.validity_end).split(' ')[0], '%Y-%m-%d').date() >= datetime.datetime.now().date()]
         new_validities = sorted(new_validities, key=lambda validity: datetime.datetime.strptime(str(validity.validity_start).split(' ')[0], '%Y-%m-%d').date())
 
@@ -976,6 +993,7 @@ class FclFreightRateValidity(BaseModel):
     id: str
     likes_count: int = None
     dislikes_count: int = None
+    action: str = None
 
     class Config:
         orm_mode = True

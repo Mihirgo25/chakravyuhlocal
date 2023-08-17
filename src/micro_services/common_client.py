@@ -46,3 +46,6 @@ class CommonApiClient:
     
     def get_air_routes_and_schedules_from_cargo_ai(self,data={}):
         return self.client.request('GET','get_air_routes_and_schedules_from_cargo_ai',data)
+    
+    def list_revenue_desk_show_rates(self,data = {}):
+        return self.client.request('GET','list_revenue_desk_show_rates',data)
