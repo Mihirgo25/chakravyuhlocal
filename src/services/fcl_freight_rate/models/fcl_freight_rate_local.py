@@ -62,7 +62,6 @@ class FclFreightRateLocal(BaseModel):
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(index=True, default=datetime.datetime.now)
-    rate_type = CharField(default='market_place', choices = RATE_TYPES)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -269,8 +268,7 @@ class FclFreightRateLocal(BaseModel):
                 'container_size': self.container_size,
                 'container_type': self.container_type,
                 'shipping_line_id': str(self.shipping_line_id),
-                'service_provider_id': str(self.service_provider_id),
-                'rate_type': self.rate_type,
+                'service_provider_id': str(self.service_provider_id)
             }
             detention_filters = common_filters | {
                 'free_days_type': 'detention'

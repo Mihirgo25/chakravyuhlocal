@@ -128,8 +128,7 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.shipping_line_id,
         FclFreightRateLocal.service_provider_id,
         FclFreightRateLocal.port_id,
-        FclFreightRateLocal.main_port_id,
-        FclFreightRateLocal.rate_type,
+        FclFreightRateLocal.main_port_id
         ).where(
         FclFreightRateLocal.port_id << port_ids,
         FclFreightRateLocal.container_size  == container_size,
@@ -164,7 +163,6 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         trade_type = 'import'
     port_id = rate['origin_port_id'] if trade_type == 'export' else rate['destination_port_id']
     shipping_line_id = rate['shipping_line_id']
-    is_rate_cogo_assurd = rate.get('rate_type') == 'cogo_assured'
     main_port_id = None
     if trade_type == 'export' and rate['origin_main_port_id']:
         main_port_id = rate['origin_main_port_id']
@@ -172,9 +170,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['destination_main_port_id']
 
     for local_rate in local_rates:
-        is_local_cogo_assured = local_rate.get('rate_type') == 'cogo_assured'
-        
-        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (is_rate_cogo_assurd == is_local_cogo_assured):
+        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
             if shipping_line_id == local_rate['shipping_line_id']:
                 matching_locals[local_rate["service_provider_id"]] = local_rate
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
@@ -622,7 +618,8 @@ def build_response_object(freight_query_result, request):
       'importer_exporter_id': freight_query_result['importer_exporter_id'],
       'source': source,
       'tags': [],
-      'rate_id': freight_query_result['id']
+      'rate_id': freight_query_result['id'],
+      'rate_type': freight_query_result['rate_type']
     }
 
     if response_object['service_provider_id'] in CONFIRMED_INVENTORY['service_provider_ids']:

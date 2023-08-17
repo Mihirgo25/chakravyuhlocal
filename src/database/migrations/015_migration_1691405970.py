@@ -1,4 +1,4 @@
-"""Peewee migrations -- 015_migration_1691491046.py.
+"""Peewee migrations -- 015_migration_1691405970.py.
 
 Some examples (model - class or model name)::
 
@@ -25,10 +25,8 @@ import datetime as dt
 import peewee as pw
 from peewee_migrate import Migrator
 from decimal import ROUND_HALF_EVEN
-from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from peewee import *
+from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from playhouse.postgres_ext import *
-
 try:
     import playhouse.postgres_ext as pw_pext
 except ImportError:
@@ -38,10 +36,13 @@ SQL = pw.SQL
 
 
 def migrate(migrator: Migrator, database, fake=False, **kwargs):
-    migrator.add_fields(FclFreightRateLocal, rate_type=CharField(null=False, default="market_place", index=True))
+    """Write your migrations here."""
+    migrator.add_fields(AirFreightRate, importer_exporter_id=UUIDField(index=True,null=True))
+    migrator.add_fields(AirFreightRate, importer_exporter=BinaryJSONField(null=True))
 
 
 
 def rollback(migrator: Migrator, database, fake=False, **kwargs):
+    pass
     """Write your rollback migrations here."""
 

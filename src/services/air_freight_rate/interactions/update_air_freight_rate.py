@@ -7,6 +7,7 @@ from database.db_session import db
 from fastapi.encoders import jsonable_encoder
 from services.air_freight_rate.models.air_freight_rate import AirFreightRate
 from services.air_freight_rate.models.air_freight_rate_audit import AirFreightRateAudit
+from services.air_freight_rate.models.air_freight_rate_validity import AirFreightRateValidity
 from fastapi.encoders import jsonable_encoder
 def update_air_freight_rate(request):
       with db.atomic():
@@ -63,6 +64,8 @@ def execute(request):
             if request.get('maximum_weight'):
                 object.maximum_weight = request.get('maximum_weight')
 
+            validity = AirFreightRateValidity(**validity)
+            validity.validations()
             object.validities= jsonable_encoder(validities)
 
             break
