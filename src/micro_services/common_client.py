@@ -19,17 +19,14 @@ class CommonApiClient:
         if cached_resp:
             return { "price": cached_resp }
         
-        fallback_data = data.copy()
-        
-        data['price'] = 1
         resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
+        if isinstance(resp,dict) and resp.get('price'):
+            conversion_rate = resp.get('rate') or resp['price']/float(data['price'])
+            
+            set_money_exchange_to_rd(data.get('from_currency'), data.get('to_currency'), conversion_rate)
+            return resp
         
-        if isinstance(resp,dict) and resp.get('status_code') == '200':
-            data['per_unit_value'] = float(resp.get('price'))
-            set_money_exchange_to_rd(data)
-            return {'price': float(fallback_data.get('price')) * data['per_unit_value']}
-    
-        resp = get_money_exchange_for_fcl_fallback(**fallback_data)
+        resp = get_money_exchange_for_fcl_fallback(**data)
         return resp
 
     def create_communication(self, data = {}):

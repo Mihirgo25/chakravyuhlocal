@@ -6,14 +6,14 @@ def get_key(from_currency, to_currency):
 
 def get_money_exchange_from_rd(data):
     try:
-        per_unit_value = rd.get(get_key(data.get('from_currency'),data.get('to_currency')))
-        return float(per_unit_value) * float(data.get('price'))
+        conversion_rate = rd.get(get_key(data.get('from_currency'),data.get('to_currency')))
+        return float(conversion_rate) * float(data.get('price'))
     except:
         return None
 
 
-def set_money_exchange_to_rd(data):
-    if rd and data.get('per_unit_value'):
-        key = get_key(data.get('from_currency'), data.get('to_currency'))
-        rd.set(key, data['per_unit_value'])
+def set_money_exchange_to_rd(from_currency, to_currency, exchange_rate):
+    if rd and exchange_rate:
+        key = get_key(from_currency, to_currency)
+        rd.set(key, exchange_rate)
         rd.expire(key, 3600)
