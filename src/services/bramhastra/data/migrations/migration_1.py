@@ -479,6 +479,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             # row_data = []
         print('starting iterator')
         for rate in ServerSide(query):
+            print(str(rate.id))
             for validity in rate.validities:
                 
                 identifier = self.get_identifier(str(rate.id), validity["id"])
@@ -511,6 +512,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     "validity_id": validity.get("id"),
                 }
                 if fcl:
+                    print(f'found rate {str(rate.id)}')
                     for m,n in row.items():
                         setattr(fcl,m,n)
                     fcl.save()
