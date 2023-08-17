@@ -519,6 +519,7 @@ class FclFreightRate(BaseModel):
                 continue
             if validity_object_validity_start > validity_end:
                 new_validities.append(FclFreightRateValidity(**validity_object))
+                new_tags[id] = previous_tag
                 continue
             if validity_object_validity_end < validity_start:
                 new_validities.append(FclFreightRateValidity(**validity_object))
