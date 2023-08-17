@@ -95,7 +95,7 @@ async def list_fcl_freight_rate_statistics(filters,page_limit,page):
     
     queries.insert(0,'WITH list AS (')
     
-    queries.append(f') SELECT {select},MAX(rate_deviation_from_booking_rate) as deviation FROM list GROUP BY {select}')
+    queries.append(f') SELECT {select},MAX(ABS(rate_deviation_from_booking_rate)) as deviation FROM list GROUP BY {select}')
     
     statistics =  jsonable_encoder(clickhouse.execute(' '.join(queries),filters))
     

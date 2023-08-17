@@ -28,7 +28,7 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
         queries.append(" WHERE ")
         queries.append(where)
 
-    get_add_group_and_order_by(queries, grouping)
+    get_add_group_and_order_by(filters, queries, grouping)
 
     total_count, total_pages = add_pagination_data(
         clickhouse, queries, filters, page, page_limit
@@ -47,10 +47,10 @@ def get_fcl_freight_map_view_statistics(filters, page_limit, page):
     )
 
 
-def get_add_group_and_order_by(queries, grouping):
+def get_add_group_and_order_by(filters ,queries, grouping):
     queries.append("GROUP BY")
     queries.append(",".join(grouping))
-    queries.append("HAVING sum(sign) > 0 ORDER BY accuracy DESC")
+    queries.append(f"HAVING sum(sign) > 0 ORDER BY {filters.get('sort_by')} {filters.get('sort_type')}")
 
 
 def alter_filters_for_map_view(filters, grouping):
