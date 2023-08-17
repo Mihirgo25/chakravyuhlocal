@@ -892,7 +892,6 @@ def get_fcl_freight_rate_cards(requirements):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_freight_rates = executor.submit(get_freight_rates, requirements)
             future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements) 
-        breakpoint()
         freight_rates = future_freight_rates.result() 
         is_predicted = future_freight_rates.result()
         cogo_assured_rates = future_cogo_assured_rates.result()
@@ -904,7 +903,6 @@ def get_fcl_freight_rate_cards(requirements):
         rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
         local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
         freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
-        print(freight_rates)
         missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
 
         if len(missing_free_weight_limit) > 0:
