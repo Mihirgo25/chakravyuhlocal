@@ -557,7 +557,7 @@ class FclFreightRate(BaseModel):
                 "validity_end": validity_end,
                 "line_items": line_items,
                 "price": price,
-                "currency": currency_lists[0],
+                "currency": currency,
                 "market_price": market_price,
                 "schedule_type": schedule_type,
                 "payment_term": payment_term,
