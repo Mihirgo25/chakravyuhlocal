@@ -201,9 +201,6 @@ def fill_missing_locals_in_rates(freight_rates, local_rates):
     new_freight_rates = []
     local_default_service_provider = get_default_local_agent()
     for freight_rate in freight_rates:
-        if(freight_rate["rate_type"]=="cogo_assured"):
-            if is_rate_missing_locals('origin_local', freight_rate) and is_rate_missing_locals('destination_local', freight_rate):
-                continue
         if is_rate_missing_locals('origin_local', freight_rate):
             freight_rate['origin_local'] = get_matching_local('origin_local', freight_rate, local_rates, local_default_service_provider)
         if is_rate_missing_locals('destination_local', freight_rate):
@@ -632,7 +629,6 @@ def build_response_object(freight_query_result, request):
       'service_provider_id': freight_query_result['service_provider_id'],
       'importer_exporter_id': freight_query_result['importer_exporter_id'],
       'source': source,
-      'rate_type': freight_query_result.get('rate_type'),
       'tags': [],
       'rate_id': freight_query_result['id'],
       'rate_type': freight_query_result['rate_type']
@@ -892,8 +888,7 @@ def get_fcl_freight_rate_cards(requirements):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_freight_rates = executor.submit(get_freight_rates, requirements)
             future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements) 
-        freight_rates = future_freight_rates.result() 
-        is_predicted = future_freight_rates.result()
+        freight_rates, is_predicted = future_freight_rates.result() 
         cogo_assured_rates = future_cogo_assured_rates.result()
 
         freight_rates+= cogo_assured_rates    
@@ -911,11 +906,18 @@ def get_fcl_freight_rate_cards(requirements):
         freight_rates = fill_missing_free_days_in_rates(requirements, freight_rates)
         freight_rates = post_discard_noneligible_rates(freight_rates, requirements)
         
+        cogo_assured_rates = []
         if is_predicted:
-            rates_without_cogo_assured = [rate for rate in freight_rates if rate.get('rate_type') != 'cogo_assured']
+            rates_without_cogo_assured = []
+            for rate in freight_rates:
+                if rate.ge('rate_type') == 'cogo_assured':
+                    cogo_assured_rates.append(rate)
+                else:
+                    rates_without_cogo_assured.append(rate)
             fcl_freight_vyuh = FclFreightVyuh(rates_without_cogo_assured, requirements)
             freight_rates = fcl_freight_vyuh.apply_dynamic_pricing()
         
+        freight_rates+= cogo_assured_rates
         freight_rates = build_response_list(freight_rates, requirements)
         return {
             "list" : freight_rates
