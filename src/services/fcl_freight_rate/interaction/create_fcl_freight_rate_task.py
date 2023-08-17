@@ -30,6 +30,7 @@ def execute_transaction_code(request):
     object_unique_params = {
         'service': request.get("service"),
         'port_id': request.get("port_id"),
+        'main_port_id': request.get("main_port_id"),
         'container_size': request.get("container_size"),
         'container_type': request.get("container_type"),
         'commodity': request.get("commodity") if request["commodity"] in HAZ_CLASSES else None,
@@ -40,9 +41,6 @@ def execute_transaction_code(request):
         'status': 'pending',
         'spot_negotiation_rate_id': request.get('spot_negotiation_rate_id')
     }
-
-    if request.get('main_port_id') is not None:
-        object_unique_params['main_port_id'] = request['main_port_id']
 
     commodity = None
     if 'commodity' in request and request["commodity"] in HAZ_CLASSES:
