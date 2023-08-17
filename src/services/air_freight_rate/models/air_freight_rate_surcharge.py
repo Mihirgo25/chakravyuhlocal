@@ -172,7 +172,7 @@ class AirFreightRateSurcharge(BaseModel):
         line_items = {}
         for line_item in self.line_items:
             if line_item['code'] in line_items.keys():
-                raise HTTPException(status_code = 400, details = 'Duplicate Line Items')
+                raise HTTPException(status_code = 400, detail = 'Duplicate Line Items')
             line_items[line_item['code']] = True
         
     def possible_charge_codes(self):
@@ -193,14 +193,14 @@ class AirFreightRateSurcharge(BaseModel):
         if (len(service_provider_data) != 0) and service_provider_data[0].get('account_type') == 'service_provider':
             self.service_provider = service_provider_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Service Provider Id Is Not Valid') 
+        raise HTTPException(status_code = 400, detail = 'Service Provider Id Is Not Valid') 
     
     def validate_airline_id(self):
         airline_data = get_operators(id=self.airline_id,operator_type='airline')
         if (len(airline_data) != 0) and airline_data[0].get('operator_type') == 'airline':
             self.airline = airline_data[0]
             return True
-        raise HTTPException(status_code = 400, details = 'Airline Id Is Not Valid')    
+        raise HTTPException(status_code = 400, detail = 'Airline Id Is Not Valid')    
     
     def validate(self):
         if self.operation_type not in AIR_OPERATION_TYPES:
