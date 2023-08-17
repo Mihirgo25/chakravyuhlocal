@@ -91,7 +91,8 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         'source': source,
         'rate_id': freight_rate['id'],
         'importer_exporter_id': freight_rate['importer_exporter_id'],
-        'cogo_entity_id': freight_rate['cogo_entity_id']
+        'cogo_entity_id': freight_rate['cogo_entity_id'],
+        'rate_type': freight_rate.get('rate_type')
     }
     
     freight_object = add_freight_objects(freight_rate,response_object,requirements)
