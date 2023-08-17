@@ -80,7 +80,7 @@ celery.conf.broker_url = CELERY_REDIS_URL
 celery.conf.result_backend = CELERY_REDIS_URL
 celery.conf.broker_transport_options = {
     'queue_order_strategy': 'priority',
-    'visibility_timeout': 14400
+    'visibility_timeout': 86400
 }
 celery.conf.critical_queues = [Queue('critical', Exchange('critical'), routing_key='critical',
           queue_arguments={'x-max-priority': 6})]
