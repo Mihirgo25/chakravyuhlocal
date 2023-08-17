@@ -20,6 +20,8 @@ def send_rate_stats(action, request, freight):
                 FclFreightRate.destination_country_id,
                 FclFreightRate.origin_country_id,
                 FclFreightRate.destination_country_id,
+                FclFreightRate.origin_continent_id,
+                FclFreightRate.destination_continent_id,
                 FclFreightRate.origin_trade_id,
                 FclFreightRate.destination_trade_id,
                 FclFreightRate.shipping_line_id,
@@ -47,6 +49,19 @@ def send_rate_stats(action, request, freight):
             ],
         )
     )
+    
+    try:
+        if object.get('origin_main_port_id'):
+            object['origin_region_id'] = request.get('port_to_region_id_mapping')[object.get('origin_main_port_id')]
+        else:
+            object['origin_region_id']  = request.get('port_to_region_id_mapping')[object.get('origin_port_id')]
+            
+        if object.get('destination_main_port_id'):
+            object['destination_region_id'] = request.get('port_to_region_id_mapping')[object.get('destination_main_port_id')]
+        else:
+            object['destination_region_id']  = request.get('port_to_region_id_mapping')[object.get('destination_port_id')]
+    except Exception:
+        pass
 
     for k, v in request.items():
         if k in {"source_id", "source"}:

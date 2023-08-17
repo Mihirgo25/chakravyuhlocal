@@ -69,7 +69,7 @@ def apply_spot_search_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     apply_spot_search_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -80,7 +80,7 @@ def apply_quotation_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     apply_quotation_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -91,7 +91,7 @@ def apply_fcl_freight_rate_rd_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     apply_fcl_freight_rate_rd_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -102,7 +102,7 @@ def apply_shipment_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     apply_shipment_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -113,7 +113,7 @@ def apply_checkout_fcl_freight_rate_statistic_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     apply_checkout_fcl_freight_rate_statistic(request)
     return JSONResponse(content={"success": True})
 
@@ -124,7 +124,7 @@ def get_fcl_freight_rate_charts_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = get_fcl_freight_rate_charts(filters)
     return JSONResponse(content=response)
 
@@ -137,7 +137,7 @@ def get_fcl_freight_rate_distribution_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = get_fcl_freight_rate_distribution(filters)
     return JSONResponse(content=response)
 
@@ -150,7 +150,7 @@ async def get_fcl_freight_rate_lifecycle_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = await get_fcl_freight_rate_lifecycle(filters)
     return JSONResponse(content=response)
 
@@ -165,7 +165,7 @@ def get_fcl_freight_map_view_statistics_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = get_fcl_freight_map_view_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -175,7 +175,7 @@ def get_fcl_freight_map_view_statistics_func(
 )
 def get_fcl_freight_rate_world_func(auth_response: dict = Depends(authorize_token)):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = get_fcl_freight_rate_world()
     return JSONResponse(content=response)
 
@@ -188,7 +188,7 @@ async def list_fcl_freight_rate_statistics_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = await list_fcl_freight_rate_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -201,7 +201,7 @@ def list_fcl_freight_rate_request_statistics_func(
     auth_response: dict = Depends(authorize_token),
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
     return JSONResponse(content=response)
 
@@ -211,6 +211,6 @@ def get_fcl_freight_port_pair_count_func(
     pairs: Json = Query(None), auth_response: dict = Depends(authorize_token)
 ):
     if auth_response.get("status_code") != 200:
-        return JSONResponse(status_code=auth_response.get("response_code"))
+        return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
     response = get_fcl_freight_port_pair_count(pairs)
     return JSONResponse(content=response)

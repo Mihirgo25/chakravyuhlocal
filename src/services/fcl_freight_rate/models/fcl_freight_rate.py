@@ -110,7 +110,7 @@ class FclFreightRate(BaseModel):
 
 
     def set_locations(self):
-
+      port_to_region_id_mapping = {}
       ids = [str(self.origin_port_id), str(self.destination_port_id)]
       if self.origin_main_port_id:
         ids.append(str(self.origin_main_port_id))
@@ -127,12 +127,18 @@ class FclFreightRate(BaseModel):
       for location in locations:
         if str(self.origin_port_id) == str(location['id']):
           self.origin_port = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.origin_port_id)] = location.get("region_id")
         if str(self.destination_port_id) == str(location['id']):
           self.destination_port = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.destination_port_id)] = location.get("region_id")
         if str(self.origin_main_port_id) == str(location['id']):
           self.origin_main_port = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.origin_main_port_id)] = location.get("region_id")
         if str(self.destination_main_port_id) == str(location['id']):
           self.destination_main_port = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.destination_main_port_id)] = location.get("region_id")
+      
+      return port_to_region_id_mapping
 
     def get_required_location_data(self, location):
         loc_data = {
