@@ -154,7 +154,7 @@ class FclFreightRate(BaseModel):
           "name": location["name"],
           "is_icd": location["is_icd"],
           "port_code": location["port_code"],
-          "region_id": location["region_id"],
+          "region_id": location.get("region_id"),
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
