@@ -20,7 +20,7 @@ $ source .venv/bin/activate
 If you are a Windows platform, you would activate the virtualenv like this:
 
 ```
-% .venv\Scripts\activate.bat
+% .venv\Scripts\activate.bat 
 ```
 
 ### Using Envision CLI
