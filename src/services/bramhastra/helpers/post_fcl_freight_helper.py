@@ -239,13 +239,8 @@ class Rate:
         self.destination_port_id = None
         self.origin_pricing_zone_map_id = None
         self.destination_pricing_zone_map_id = None
-        self.origin_region_id = None
-        self.destination_region_id = None
-        self.origin_continent_id = None
-        self.destination_continent_id = None
         self.origin_main_port_id = None
         self.destination_main_port_id = None
-        self.set_non_existing_location_details()
         self.increment_keys = {}
 
     def set_new_stats(self) -> int:
@@ -286,8 +281,6 @@ class Rate:
 
         self.set_pricing_map_zone_ids()
 
-        self.set_missing_location_ids()
-
     def get_feedback_details(self):
         if row := (
             FclFreightRateFeedback.select(
@@ -318,7 +311,7 @@ class Rate:
             if parent := self.get_feedback_details():
                 freight.update(parent)
             self.increment_keys.add("dislikes_rate_reverted_count")
-
+            
         for validity in self.freight.validities:
             param = freight.copy()
             param.update(validity.dict(exclude={"line_items"}))
@@ -332,10 +325,7 @@ class Rate:
             param[
                 "destination_pricing_zone_map_id"
             ] = self.destination_pricing_zone_map_id
-            param["origin_region_id"] = self.origin_region_id
-            param["destination_region_id"] = self.destination_region_id
-            param["origin_continent_id"] = self.origin_continent_id
-            param["destination_continent_id"] = self.destination_continent_id
+            
             if param["currency"] == STANDARD_CURRENCY:
                 param["standard_price"] = param["price"]
             else:
@@ -381,30 +371,6 @@ class Rate:
         self.destination_pricing_zone_map_id = map_zone_location_mapping.get(
             self.destination_port_id
         )
-
-    def set_missing_location_ids(self):
-        response = maps.list_locations(
-            data={
-                "filters": {"id": [self.origin_port_id, self.destination_port_id]},
-                "includes": {"continent_id": True, "region_id": True, "id": True},
-            }
-        )
-        if "list" in response and len(response["list"]) == 2:
-            region_id_mapping = {
-                item["id"]: dict(
-                    region_id=item["region_id"], continent_id=item["continent_id"]
-                )
-                for item in response["list"]
-            }
-            origin = region_id_mapping.get(self.origin_port_id)
-
-            destination = region_id_mapping.get(self.destination_port_id)
-
-            self.origin_region_id = origin.get("region_id")
-            self.destination_region_id = destination.get("region_id")
-
-            self.origin_continent_id = origin.get("continent_id")
-            self.destination_continent_id = destination.get("continent_id")
 
 
 class SpotSearch:

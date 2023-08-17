@@ -110,7 +110,7 @@ class FclFreightRate(BaseModel):
 
 
     def set_locations(self):
-
+      port_to_region_id_mapping = {}
       ids = [str(self.origin_port_id), str(self.destination_port_id)]
       if self.origin_main_port_id:
         ids.append(str(self.origin_main_port_id))
@@ -126,13 +126,27 @@ class FclFreightRate(BaseModel):
 
       for location in locations:
         if str(self.origin_port_id) == str(location['id']):
-          self.origin_port = self.get_required_location_data(location)
+          loc_data = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.origin_port_id)] = loc_data.get('region_id')
+          loc_data.pop('region_id')
+          self.origin_port = loc_data
         if str(self.destination_port_id) == str(location['id']):
-          self.destination_port = self.get_required_location_data(location)
+          loc_data = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.destination_port_id)] = loc_data.get('region_id')
+          loc_data.pop('region_id')
+          self.destination_port = loc_data
         if str(self.origin_main_port_id) == str(location['id']):
-          self.origin_main_port = self.get_required_location_data(location)
+          loc_data = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.origin_main_port_id)] = loc_data.get('region_id')
+          loc_data.pop('region_id')
+          self.origin_main_port = loc_data
         if str(self.destination_main_port_id) == str(location['id']):
-          self.destination_main_port = self.get_required_location_data(location)
+          loc_data = self.get_required_location_data(location)
+          port_to_region_id_mapping[str(self.destination_main_port_id)] = loc_data.get('region_id')
+          loc_data.pop('region_id')
+          self.destination_main_port = loc_data
+      
+      return port_to_region_id_mapping
 
     def get_required_location_data(self, location):
         loc_data = {
@@ -140,6 +154,7 @@ class FclFreightRate(BaseModel):
           "name": location["name"],
           "is_icd": location["is_icd"],
           "port_code": location["port_code"],
+          "region_id": location["region_id"],
           "country_id": location["country_id"],
           "continent_id": location["continent_id"],
           "trade_id": location["trade_id"],
