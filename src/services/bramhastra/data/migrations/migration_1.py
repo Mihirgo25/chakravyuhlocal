@@ -483,8 +483,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 
                 identifier = self.get_identifier(str(rate.id), validity["id"])
                 
-                if FclFreightRateStatistic.select(FclFreightRateStatistic.id).where(FclFreightRateStatistic.rate_id == str(rate.id),FclFreightRateStatistic.validity_id == str(validity['id'])).first():
-                    continue
+                fcl = FclFreightRateStatistic.select(FclFreightRateStatistic.id).where(FclFreightRateStatistic.rate_id == str(rate.id),FclFreightRateStatistic.validity_id == str(validity['id'])).first()
 
                 rate_params = {
                     key: getattr(rate, key) for key in RATE_PARAMS
@@ -511,6 +510,12 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     or validity.get("price"),
                     "validity_id": validity.get("id"),
                 }
+                if fcl:
+                    for m,n in row.items():
+                        setattr(fcl,m,n)
+                    fcl.save()
+                    continue
+                
                 row_data.append(row)
                 count += 1
                 print(count)
