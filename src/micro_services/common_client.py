@@ -36,3 +36,6 @@ class CommonApiClient:
     
     def get_air_routes_and_schedules_from_cargo_ai(self,data={}):
         return self.client.request('GET','get_air_routes_and_schedules_from_cargo_ai',data)
+    
+    def update_spot_negotiation_locals_rate(self,data = {}):
+        return self.client.request('POST','spot_negotiation/update_spot_negotiation_locals_rate',data)
