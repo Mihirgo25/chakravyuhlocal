@@ -17,6 +17,8 @@ from datetime import datetime, timedelta
 from services.fcl_freight_rate.interaction.update_fcl_rates_to_cogo_assured import update_fcl_rates_to_cogo_assured
 from configs.fcl_freight_rate_constants import *
 import concurrent.futures
+from playhouse.postgres_ext import ServerSide
+
 
 
 shipping_line = {
@@ -92,19 +94,18 @@ def cogo_assured_fcl_freight_migration():
     
 def fcl_freight_rates_to_cogo_assured():
     try:
-        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE).order_by(FclFreightRate.updated_at.desc())
+        query = FclFreightRate.select(FclFreightRate.origin_port_id, FclFreightRate.origin_main_port_id, FclFreightRate.destination_port_id, FclFreightRate.destination_main_port_id, FclFreightRate.container_size, FclFreightRate.container_type, FclFreightRate.commodity).where(FclFreightRate.mode.not_in(['predicted', 'cluster_extension']), FclFreightRate.last_rate_available_date.cast('date') > datetime.now().date(), FclFreightRate.validities != '[]', ~FclFreightRate.rate_not_available_entry, FclFreightRate.container_size << ['20', '40', '40HC'], FclFreightRate.rate_type == DEFAULT_RATE_TYPE)
         
         count = query.count()
         grouped_set = set()
         limit_size = 5000
         print(count)
-        for offset in range(0, count, limit_size):
-            batched_rates = query.limit(limit_size).offset(offset)
-            for rate in batched_rates.execute():
-                grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
+        for rate in ServerSide(query):
+            grouped_set.add(f'{str(rate.origin_port_id)}:{str(rate.origin_main_port_id or "")}:{str(rate.destination_port_id)}:{str(rate.destination_main_port_id or "")}:{str(rate.container_size)}:{str(rate.container_type)}:{str(rate.commodity)}')
         print(len(grouped_set))
         with concurrent.futures.ThreadPoolExecutor(max_workers = 4) as executor:
             result = [executor.submit(execute_update_fcl_rates_to_cogo_assured,key) for key in grouped_set]
+        print("Done")
     except Exception as exc:
         print(str(exc))
 
