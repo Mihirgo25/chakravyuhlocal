@@ -17,12 +17,14 @@ from services.bramhastra.models.checkout_fcl_freight_rate_statistic import (
     CheckoutFclFreightRateStatistic,
 )
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.client import (
-    json_encoder_for_clickhouse,
-)
 import peewee
-from playhouse.postgres_ext import ServerSide
-from playhouse.shortcuts import model_to_dict
+from configs.env import (
+    DATABASE_HOST,
+    DATABASE_NAME,
+    DATABASE_PASSWORD,
+    DATABASE_PORT,
+    DATABASE_USER,
+)
 
 
 """
@@ -67,40 +69,10 @@ class Brahmastra:
         self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
-        query = f"INSERT INTO brahmastra.{model._meta.table_name} SETTINGS async_insert=1, wait_for_async_insert=1 VALUES"
-
-        columns = model._meta.fields
-
-        values = []
-        
-        count = 0
-
-        for d in ServerSide(model.select()):
-            value = []
-            d = json_encoder_for_clickhouse(model_to_dict(d))
-            for k, v in d.items():
-                if v is None:
-                    value.append("DEFAULT")
-                elif (
-                    isinstance(columns[k], peewee.UUIDField)
-                    or isinstance(columns[k], peewee.TextField)
-                    or isinstance(columns[k], peewee.CharField)
-                    or isinstance(columns[k], peewee.DateTimeField)
-                ):
-                    value.append(f"'{v}'")
-                elif isinstance(columns[k], peewee.BooleanField):
-                    value.append("true" if v else "false")
-                else:
-                    value.append(f"{v}")
-            count+=1
-            print(count)
-            values.append(f"({','.join(value)})")
-
-        if values:
-            print('Started Inserting')
-            self.__clickhouse.execute(query + ",".join(values))
-            print('Done Inserting')
-            model.delete().execute()
+        self.__clickhouse.execute(
+            f"INSERT INTO brahmastra.{model._meta.table_name} SELECT * FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
+        )
+        model.delete().execute()
 
     def used_by(self, arjun: bool) -> None:
         for model in self.models:
