@@ -553,6 +553,11 @@ class FclFreightRate(BaseModel):
                 continue   
         
         if not deleted:
+          currency = "USD"
+          for item in line_items:
+                if item["code"] == "BAS":
+                    currency = item["currency"]
+                    
           new_validity_object = {
                 "id": str(uuid.uuid4()),
                 "validity_start": validity_start,
