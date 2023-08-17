@@ -289,7 +289,7 @@ class Rate:
         self.set_missing_location_ids()
 
     def get_feedback_details(self):
-        if row := jsonable_encoder(
+        if row := (
             FclFreightRateFeedback.select(
                 FclFreightRateFeedback.fcl_freight_rate_id.alias("parent_rate_id"),
                 FclFreightRateFeedback.validity_id.alias("parent_validity_id"),
@@ -297,7 +297,7 @@ class Rate:
             .where(FclFreightRateFeedback.id == self.freight.source_id)
             .dicts()
         ):
-            return row.get()
+            return jsonable_encoder(row.get())
         
         query = f"SELECT fcl_freight_rate_id AS parent_rate_id, validity_id as parent_validity_id from brahmastra.{FclFreightRateFeedback._meta.table_name} WHERE id = '{self.freight.source_id}'"
         click = ClickHouse()
