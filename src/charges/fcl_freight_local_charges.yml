@@ -1451,7 +1451,7 @@ OCS:
   tags: ['additional_service']
 EXWORKS:
   name: "Ex Works Charges"
-  units: ['per_shipment']
+  units: ['per_shipment', 'per_container']
   trade_types: ['export', 'import']
   condition: true
   tags: []
