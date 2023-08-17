@@ -66,6 +66,9 @@ class FclFreightRateRequest(BaseModel):
       self.updated_at = datetime.datetime.now()
       return super(FclFreightRateRequest, self).save(*args, **kwargs)
 
+    def refresh(self):
+        return type(self).get(self._pk_expr())
+
     class Meta:
         table_name = 'fcl_freight_rate_requests'
 

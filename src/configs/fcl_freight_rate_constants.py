@@ -217,3 +217,6 @@ SPECIFICITY_TYPE_HIERARCHY = {
     'shipping_line':2,
     'cogoport':3
 }
+
+
+REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}

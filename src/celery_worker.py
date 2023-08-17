@@ -88,6 +88,8 @@ celery.conf.communication_queues = [Queue('communication', Exchange('communicati
           queue_arguments={'x-max-priority': 6})]
 celery.conf.bulk_operation_queues = [Queue('bulk_operations', Exchange('bulk_operations'), routing_key='bulk_operations',
           queue_arguments={'x-max-priority': 4})]
+celery.conf.statistics_operations = [Queue('statistics', Exchange('statistics'), routing_key='statistics',
+          queue_arguments={'x-max-priority':4})]
 celery.conf.fcl_freight_rate_queues = [Queue('fcl_freight_rate', Exchange('fcl_freight_rate'), routing_key='fcl_freight_rate',
           queue_arguments={'x-max-priority': 2})]
 celery.conf.low_queues = [Queue('low', Exchange('low'), routing_key='low',
@@ -144,9 +146,25 @@ celery.conf.beat_schedule = {
         'task': 'celery_worker.air_freight_airline_factors_in_delay',
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
+    },
+    'brahmastra_in_delay':{
+        'task': 'services.bramhastra.celery.brahmastra_in_delay',
+        'schedule': crontab(hour='*/2'),
+        'options': {'queue': 'critical'}
+    },
+    'cache_data_worker_in_delay':{
+        'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
+        'schedule': crontab(hour=12, minute=0),
+        'options': {'queue': 'low'}
+    },
+    'fcl_extended_object_worker_in_delay':{
+        'task': 'services.bramhastra.celery.fcl_extended_object_worker_in_delay',
+        'schedule': crontab(hour=12, minute=0),
+        'options': {'queue': 'statistics'}
     }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
+celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
 
 
 @celery.task(bind = True, retry_backoff=True,max_retries=1)
