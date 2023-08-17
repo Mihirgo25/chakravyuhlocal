@@ -18,6 +18,7 @@ def get_audit_params(parameters):
         'object_id' : parameters.get('id'),
         'procured_by_id': parameters.get('procured_by_id'),
         'sourced_by_id': parameters.get('sourced_by_id'),
+        "performed_by_type": parameters.get('performed_by_type'),
         'data': audit_data
     }
 
