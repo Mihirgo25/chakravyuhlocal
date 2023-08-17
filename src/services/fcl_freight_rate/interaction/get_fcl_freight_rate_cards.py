@@ -201,6 +201,9 @@ def fill_missing_locals_in_rates(freight_rates, local_rates):
     new_freight_rates = []
     local_default_service_provider = get_default_local_agent()
     for freight_rate in freight_rates:
+        if(freight_rate["rate_type"]=="cogo_assured"):
+            if is_rate_missing_locals('origin_local', freight_rate) and is_rate_missing_locals('destination_local', freight_rate):
+                continue
         if is_rate_missing_locals('origin_local', freight_rate):
             freight_rate['origin_local'] = get_matching_local('origin_local', freight_rate, local_rates, local_default_service_provider)
         if is_rate_missing_locals('destination_local', freight_rate):
@@ -888,17 +891,20 @@ def get_fcl_freight_rate_cards(requirements):
     try:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_freight_rates = executor.submit(get_freight_rates, requirements)
-            future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements)
-        freight_rates, is_predicted = future_freight_rates.result()
+            future_cogo_assured_rates = executor.submit(get_cogo_assured_rates, requirements) 
+        breakpoint()
+        freight_rates = future_freight_rates.result() 
+        is_predicted = future_freight_rates.result()
         cogo_assured_rates = future_cogo_assured_rates.result()
 
-        freight_rates+= cogo_assured_rates
-                
+        freight_rates+= cogo_assured_rates    
+
         missing_local_rates = get_rates_which_need_locals(freight_rates)
         rates_need_destination_local = missing_local_rates["rates_need_destination_local"]
         rates_need_origin_local = missing_local_rates["rates_need_origin_local"]
         local_rates = get_missing_local_rates(requirements, rates_need_origin_local, rates_need_destination_local)
         freight_rates = fill_missing_locals_in_rates(freight_rates, local_rates)
+        print(freight_rates)
         missing_free_weight_limit = get_rates_which_need_free_limit(requirements, freight_rates)
 
         if len(missing_free_weight_limit) > 0:
