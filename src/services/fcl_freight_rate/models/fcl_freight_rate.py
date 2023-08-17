@@ -473,8 +473,10 @@ class FclFreightRate(BaseModel):
 
         if not deleted:
             currency_lists = [item["currency"] for item in line_items if item["code"] == "BAS"]
+            all_currencies = [item["currency"] for item in line_items]
+            
             currency = currency_lists[0]
-            if len(set(currency_lists)) != 1:
+            if len(set(all_currencies)) != 1:
                 price = float(sum(common.get_money_exchange_for_fcl({"price": item['price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
                 market_price = float(sum(common.get_money_exchange_for_fcl({"price": item['market_price'], "from_currency": item['currency'], "to_currency": currency}).get('price', 100) for item in line_items))
             else:
