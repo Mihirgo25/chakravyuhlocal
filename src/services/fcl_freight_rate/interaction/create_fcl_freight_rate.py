@@ -217,7 +217,7 @@ def create_fcl_freight_rate(request):
     if request.get('fcl_freight_rate_feedback_id'):
         update_fcl_freight_rate_feedback_in_delay({'fcl_freight_rate_feedback_id': request.get('fcl_freight_rate_feedback_id'), 'reverted_validities': [{"line_items":request.get('line_items'), "validity_start":request["validity_start"].isoformat(), "validity_end":request["validity_end"].isoformat()}], 'performed_by_id': request.get('performed_by_id')})
         
-    send_stats(action,request,freight,port_to_region_id_mapping)
+    # send_stats(action,request,freight,port_to_region_id_mapping)
 
     return {"id": freight.id}
 
