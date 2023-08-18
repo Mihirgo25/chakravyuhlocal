@@ -299,6 +299,7 @@ class GetFclFreightRateLocal(BaseModel):
     commodity: str = None
     shipping_line_id: str = None
     service_provider_id: str = None
+    rate_type: str = 'market_place'
 
 
 class GetFclFreightRateCard(BaseModel):

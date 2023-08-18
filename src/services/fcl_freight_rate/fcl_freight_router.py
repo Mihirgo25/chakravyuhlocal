@@ -399,6 +399,7 @@ def get_fcl_freight_local_data(
     container_size: str = None,
     container_type: str = None,
     commodity: str = None,
+    rate_type: str = 'market_place',
     shipping_line_id: str = None,
     service_provider_id: str = None,
     resp: dict = Depends(authorize_token)
@@ -413,6 +414,7 @@ def get_fcl_freight_local_data(
         'container_size' : container_size,
         'container_type' : container_type,
         'commodity' : commodity,
+        'rate_type': rate_type,
         'shipping_line_id' : shipping_line_id,
         'service_provider_id': service_provider_id
     }
