@@ -158,7 +158,7 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
         request.shipping_line_id = COGO_ASSURED_SHIPPING_LINE_ID
         request.service_provider_id = COGO_ASSURED_SERVICE_PROVIDER_ID
         request.sourced_by_id = DEFAULT_SOURCED_BY_ID
-        request.procured_by_id = DEFAULT_PROCURED_BY_ID
+        request.procured_by_id = request.performed_by_id
 
     not_available_params = []
     if not request.shipping_line_id:
@@ -1069,7 +1069,7 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     if request.rate_type == 'cogo_assured' :
-        request.sourced_by_id= DEFAULT_SOURCED_BY_ID
+        request.sourced_by_id= request.performed_by_id
         request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         data = update_fcl_freight_rate_data(request.dict(exclude_none=True))
