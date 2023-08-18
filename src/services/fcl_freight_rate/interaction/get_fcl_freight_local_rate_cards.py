@@ -4,6 +4,7 @@ from configs.global_constants import HAZ_CLASSES,CONFIRMED_INVENTORY, PREDICTED_
 from configs.fcl_freight_rate_constants import LOCATION_HIERARCHY, DEFAULT_EXPORT_DESTINATION_DETENTION, DEFAULT_IMPORT_DESTINATION_DETENTION, DEFAULT_EXPORT_DESTINATION_DEMURRAGE, DEFAULT_IMPORT_DESTINATION_DEMURRAGE, DEFAULT_LOCAL_AGENT_IDS, DEFAULT_SHIPPING_LINE_ID
 from configs.definitions import FCL_FREIGHT_LOCAL_CHARGES
 from fastapi.encoders import jsonable_encoder
+from libs.get_conditional_line_items import get_filtered_line_items
 
 def get_fcl_freight_local_rate_cards(request): 
     try: 
@@ -95,6 +96,10 @@ def build_response_object(result, request):
 
 def build_local_line_items(result, response_object, request):
     response_object['line_items'] = []
+    if result.get('data').get('line_items'):
+            old_line_items = result.get('data').get('line_items')
+            new_line_items = get_filtered_line_items(result,old_line_items)
+            result['data']['line_items'] = new_line_items
 
     for line_item in result['data'].get('line_items'):
         if (line_item.get('location_id')) and (line_item['location_id'] not in [request['port_id'], request['country_id']]):
