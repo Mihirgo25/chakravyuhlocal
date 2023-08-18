@@ -906,6 +906,14 @@ class UpdateFreeDaysLimit(BaseModel):
 class DeleteLocalRate(BaseModel):
     filters: dict = {}
 
+class AddLocalConditionalLineItem(BaseModel):
+    filters: dict = {}
+    line_item_code : str
+    conditions: dict = {}
+
+class DeleteLocalConditionalLineItem(BaseModel):
+    filters: dict = {}
+    line_item_code : str
 
 class CreateBulkOperation(BaseModel):
     performed_by_id: str = None
@@ -925,6 +933,8 @@ class CreateBulkOperation(BaseModel):
     update_weight_limit: UpdateWeightLimit = None
     extend_freight_rate: ExtendFreightRate = None
     extend_freight_rate_to_icds: ExtendFreightRateToIcds = None
+    add_local_conditional_line_item: AddLocalConditionalLineItem = None
+    delete_local_conditional_line_item: DeleteLocalConditionalLineItem = None
 
 
 class UpdateFclFreightRateTask(BaseModel):

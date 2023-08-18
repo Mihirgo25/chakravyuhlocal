@@ -7,7 +7,7 @@ from libs.get_applicable_filters import get_applicable_filters
 from micro_services.client import *
 from playhouse.shortcuts import model_to_dict
 
-possible_direct_filters = ['id', 'port_id', 'country_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id']
+possible_direct_filters = ['id', 'port_id', 'country_id', 'terminal_id', 'trade_id', 'continent_id', 'shipping_line_id', 'service_provider_id', 'trade_type', 'container_size', 'container_type', 'is_line_items_error_messages_present', 'is_line_items_info_messages_present', 'main_port_id']
 possible_indirect_filters = ['is_detention_missing', 'is_demurrage_missing', 'is_plugin_missing', 'location_ids', 'commodity', 'procured_by_id', 'is_rate_available', 'updated_at_greater_than', 'updated_at_less_than']
 
 def list_fcl_freight_rate_locals(filters = {}, page_limit =10, page=1, sort_by='updated_at', sort_type='desc', return_query=False):
