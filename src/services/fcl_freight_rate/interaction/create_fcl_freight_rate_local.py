@@ -5,13 +5,13 @@ from services.fcl_freight_rate.interaction.create_fcl_freight_rate_free_day impo
 from database.db_session import db
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SHIPPING_LINE_ID
 from configs.env import DEFAULT_USER_ID
 
 DEFAULT_KEYS =  {
         'shipping_line_id': DEFAULT_SHIPPING_LINE_ID,
         'service_provider_id': DEFAULT_USER_ID,
-        'sourced_by_id': DEFAULT_SOURCED_BY_ID,
+        'sourced_by_id': DEFAULT_USER_ID,
         'procured_by_id': 'performed_by_id',
     }
 
