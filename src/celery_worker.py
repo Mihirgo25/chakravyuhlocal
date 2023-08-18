@@ -147,21 +147,21 @@ celery.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=30, day_of_week='sun'),
         'options': {'queue': 'low'}
     },
-    'brahmastra_in_delay':{
-        'task': 'services.bramhastra.celery.brahmastra_in_delay',
-        'schedule': crontab(minute=0, hour='*/2'),
-        'options': {'queue': 'statistics'}
-    },
-    'cache_data_worker_in_delay':{
-        'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
-        'schedule': crontab(hour=12, minute=0),
-        'options': {'queue': 'low'}
-    },
-    'fcl_extended_object_worker_in_delay':{
-        'task': 'services.bramhastra.celery.fcl_extended_object_worker_in_delay',
-        'schedule': crontab(hour=12, minute=0),
-        'options': {'queue': 'statistics'}
-    }
+    # 'brahmastra_in_delay':{
+    #     'task': 'services.bramhastra.celery.brahmastra_in_delay',
+    #     'schedule': crontab(minute=0, hour='*/2'),
+    #     'options': {'queue': 'statistics'}
+    # },
+    # 'cache_data_worker_in_delay':{
+    #     'task': 'services.bramhastra.celery.cache_data_worker_in_delay',
+    #     'schedule': crontab(hour=12, minute=0),
+    #     'options': {'queue': 'low'}
+    # },
+    # 'fcl_extended_object_worker_in_delay':{
+    #     'task': 'services.bramhastra.celery.fcl_extended_object_worker_in_delay',
+    #     'schedule': crontab(hour=12, minute=0),
+    #     'options': {'queue': 'statistics'}
+    # }
 }
 celery.autodiscover_tasks(['services.haulage_freight_rate.haulage_celery_worker'], force=True)
 celery.autodiscover_tasks(['services.bramhastra.celery'], force=True)
