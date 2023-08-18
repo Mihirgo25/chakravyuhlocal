@@ -62,6 +62,7 @@ class FclFreightRateLocal(BaseModel):
     trade_id = UUIDField(index=True, null=True)
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(index=True, default=datetime.datetime.now)
+    terminal_id = UUIDField(index=True, null=True)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -166,6 +167,7 @@ class FclFreightRateLocal(BaseModel):
         if self.main_port_id:
             location_ids.append(str(self.main_port_id))
         ports = maps.list_locations({'filters':{'id': location_ids}})['list']
+        print(ports)
         for port in ports:
             if str(port.get('id')) == str(self.port_id):
                 self.country_id = port.get('country_id', None)
@@ -200,7 +202,9 @@ class FclFreightRateLocal(BaseModel):
         fcl_freight_local_charges_dict = FCL_FREIGHT_LOCAL_CHARGES
 
         charge_codes = {}
+        print(port)
         for code, config in fcl_freight_local_charges_dict.items():
+            print(config['condition'])
             if config.get('condition') is not None and eval(str(config['condition'])) and self.trade_type in config['trade_types']:
                 charge_codes[code] = config
 
