@@ -142,7 +142,13 @@ class FclFreightRateLocal(BaseModel):
         self.update_free_days_special_attributes(new_free_days)
 
     def update_line_item_messages(self):
-
+        if self.rate_type == 'cogo_assured':
+            self.line_items_error_messages = None
+            self.is_line_items_error_messages_present = False
+            self.line_items_info_messages = None
+            self.is_line_items_info_messages_present = False
+            return
+            
         response = {}
         response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line_id, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
 

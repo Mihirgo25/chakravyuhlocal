@@ -23,13 +23,13 @@ def validate_request(request):
       if is_cogo_assured:
         request['procured_by_id'] = request.get('performed_by_id')
       else:
-        raise HTTPException(status_code=400, detail="procured_by_id is  required")
+        raise HTTPException(status_code=400, detail="Procured by id  is  required")
     
     if not request.get('sourced_by_id'):
       if is_cogo_assured:
         request['sourced_by_id'] = DEFAULT_SOURCED_BY_ID
       else:
-        raise HTTPException(status_code=400, detail="sourced_by_id  is required")
+        raise HTTPException(status_code=400, detail="Sourced by id  is required")
     
 
 
