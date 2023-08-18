@@ -183,7 +183,7 @@ def cogo_assured_fcl_freight_local_migration():
                         'location_ids':location_ids,
                         'rate_type':'cogo_assured',
                         'procured_by_id': DEFAULT_USER_ID,
-                        'sourced_by_id': DEFAULT_SOURCED_BY_ID,
+                        'sourced_by_id': DEFAULT_USER_ID,
                         'sourced_by': source_by,
                         'procured_by': user,
                         'data': data,
