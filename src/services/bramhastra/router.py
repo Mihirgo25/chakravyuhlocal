@@ -59,6 +59,8 @@ from services.bramhastra.response_models import (
 from fastapi.responses import JSONResponse
 from services.bramhastra.constants import INDIAN_LOCATION_ID
 from rms_utils.auth import authorize_token
+from fastapi import HTTPException
+import sentry_sdk
 
 bramhastra = APIRouter()
 
@@ -70,8 +72,15 @@ def apply_spot_search_fcl_freight_rate_statistic_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    apply_spot_search_fcl_freight_rate_statistic(request)
-    return JSONResponse(content={"success": True})
+
+    try:
+        apply_spot_search_fcl_freight_rate_statistic(request)
+        return JSONResponse(status_code=200, content={"success": True})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.post("/apply_quotation_fcl_freight_rate_statistic")
@@ -81,8 +90,15 @@ def apply_quotation_fcl_freight_rate_statistic_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    apply_quotation_fcl_freight_rate_statistic(request)
-    return JSONResponse(content={"success": True})
+
+    try:
+        apply_quotation_fcl_freight_rate_statistic(request)
+        return JSONResponse(status_code=200, content={"success": True})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.post("/apply_rd_fcl_freight_rate_statistic")
@@ -92,8 +108,15 @@ def apply_fcl_freight_rate_rd_statistic_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    apply_fcl_freight_rate_rd_statistic(request)
-    return JSONResponse(content={"success": True})
+
+    try:
+        apply_fcl_freight_rate_rd_statistic(request)
+        return JSONResponse(status_code=200, content={"success": True})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.post("/apply_shipment_fcl_freight_rate_statistic")
@@ -103,8 +126,14 @@ def apply_shipment_fcl_freight_rate_statistic_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    apply_shipment_fcl_freight_rate_statistic(request)
-    return JSONResponse(content={"success": True})
+    try:
+        apply_shipment_fcl_freight_rate_statistic(request)
+        return JSONResponse(status_code=200, content={"success": True})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.post("/apply_checkout_fcl_freight_rate_statistic")
@@ -114,8 +143,14 @@ def apply_checkout_fcl_freight_rate_statistic_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    apply_checkout_fcl_freight_rate_statistic(request)
-    return JSONResponse(content={"success": True})
+    try:
+        apply_checkout_fcl_freight_rate_statistic(request)
+        return JSONResponse(status_code=200, content={"success": True})
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get("/get_fcl_freight_rate_charts", response_model=FclFreightRateCharts)
@@ -125,8 +160,15 @@ def get_fcl_freight_rate_charts_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = get_fcl_freight_rate_charts(filters)
-    return JSONResponse(content=response)
+
+    try:
+        response = get_fcl_freight_rate_charts(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get(
@@ -138,8 +180,15 @@ def get_fcl_freight_rate_distribution_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = get_fcl_freight_rate_distribution(filters)
-    return JSONResponse(content=response)
+
+    try:
+        response = get_fcl_freight_rate_distribution(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get(
@@ -151,8 +200,15 @@ async def get_fcl_freight_rate_lifecycle_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = await get_fcl_freight_rate_lifecycle(filters)
-    return JSONResponse(content=response)
+
+    try:
+        response = get_fcl_freight_rate_lifecycle(filters)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get("/get_fcl_freight_map_view_statistics", response_model=DefaultList)
@@ -166,8 +222,15 @@ def get_fcl_freight_map_view_statistics_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = get_fcl_freight_map_view_statistics(filters, page_limit, page)
-    return JSONResponse(content=response)
+
+    try:
+        response = get_fcl_freight_map_view_statistics(filters, page_limit, page)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get(
@@ -176,8 +239,15 @@ def get_fcl_freight_map_view_statistics_func(
 def get_fcl_freight_rate_world_func(auth_response: dict = Depends(authorize_token)):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = get_fcl_freight_rate_world()
-    return JSONResponse(content=response)
+
+    try:
+        response = get_fcl_freight_rate_world()
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get("/list_fcl_freight_rate_statistics", response_model=DefaultList)
@@ -189,8 +259,15 @@ async def list_fcl_freight_rate_statistics_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = await list_fcl_freight_rate_statistics(filters, page_limit, page)
-    return JSONResponse(content=response)
+
+    try:
+        response = await list_fcl_freight_rate_statistics(filters, page_limit, page)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get("/list_fcl_freight_rate_request_statistics", response_model=DefaultList)
@@ -202,8 +279,15 @@ def list_fcl_freight_rate_request_statistics_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
-    return JSONResponse(content=response)
+
+    try:
+        response = list_fcl_freight_rate_request_statistics(filters, page_limit, page)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
 
 
 @bramhastra.get("/get_fcl_freight_port_pair_count", response_model=PortPairRateCount)
@@ -212,5 +296,12 @@ def get_fcl_freight_port_pair_count_func(
 ):
     if auth_response.get("status_code") != 200:
         return JSONResponse(status_code=auth_response.get("status_code"),content = auth_response)
-    response = get_fcl_freight_port_pair_count(pairs)
-    return JSONResponse(content=response)
+        
+    try:
+        response = get_fcl_freight_port_pair_count(pairs)
+        return JSONResponse(status_code=200, content=response)
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={ "success": False, 'error': str(e) })
