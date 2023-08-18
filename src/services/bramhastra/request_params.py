@@ -35,6 +35,10 @@ class FclFreight(BaseModel):
     destination_country_id: str = None
     destination_local_id: str = None
     destination_detention_id: str = None
+    origin_region_id: str = None
+    destination_region_id: str = None
+    origin_continent_id: str = None
+    destination_continent_id: str = None
     destination_demurrage_id: str = None
     destination_main_port_id: str = None
     destination_port_id: str

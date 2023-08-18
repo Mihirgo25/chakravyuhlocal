@@ -20,7 +20,7 @@ $ source .venv/bin/activate
 If you are a Windows platform, you would activate the virtualenv like this:
 
 ```
-% .venv\Scripts\activate.bat
+% .venv\Scripts\activate.bat 
 ```
 
 ### Using Envision CLI
@@ -116,7 +116,7 @@ Enjoy!
 ## Start Celery
 
 ```
-$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate,bulk_operations
+$ celery -A celery_worker.celery worker -B --loglevel=info -Q communication,critical,low,fcl_freight_rate,bulk_operations,statistics
 
 ```
 
