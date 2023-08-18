@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.interaction.create_fcl_freight_rate import create_fcl_freight_rate_data
-from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SHIPPING_LINE_ID
+from configs.fcl_freight_rate_constants import DEFAULT_RATE_TYPE, DEFAULT_SERVICE_PROVIDER_ID, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
 from configs.env import DEFAULT_USER_ID
 from datetime import timedelta, datetime
 from services.fcl_freight_rate.interaction.get_suggested_cogo_assured_fcl_freight_rates import get_suggested_cogo_assured_fcl_freight_rates
@@ -71,7 +71,7 @@ def update_fcl_rates_to_cogo_assured(param):
         "validities": validities,
         "service_provider_id": DEFAULT_SERVICE_PROVIDER_ID,
         "shipping_line_id": DEFAULT_SHIPPING_LINE_ID,
-        "sourced_by_id": DEFAULT_USER_ID,
+        "sourced_by_id": DEFAULT_SOURCED_BY_ID,
         "procured_by_id": DEFAULT_USER_ID,
         "performed_by_id": DEFAULT_USER_ID,
         "rate_type": "cogo_assured",
