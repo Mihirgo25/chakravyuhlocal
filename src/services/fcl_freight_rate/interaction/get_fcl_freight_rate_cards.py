@@ -71,8 +71,6 @@ def initialize_freight_query(requirements, prediction_required = False):
     if prediction_required:
         freight_query = freight_query.where(FclFreightRate.mode == 'predicted')
 
-    print(freight_query)
-
     return freight_query
 
 def is_rate_missing_locals(local_type, rate):
@@ -139,8 +137,8 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.commodity == commodity,
         FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id << list(service_provider_ids.keys()),
-        # (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
-        # (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
+        (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
+        (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
     )
 
     if len(main_port_ids) == 2:
@@ -882,9 +880,8 @@ def get_fcl_freight_rate_cards(requirements):
     try:
         initial_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(initial_query.dicts()))
-        print(freight_rates)
 
-        # freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
+        freight_rates = pre_discard_noneligible_rates(freight_rates, requirements)
         is_predicted = False
 
         are_all_rates_predicted = all_rates_predicted(freight_rates)
