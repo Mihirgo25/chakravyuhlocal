@@ -9,15 +9,21 @@ def get_filtered_line_items(rate:dict, line_items:list):
     '''
     new_line_items = []
     for item in line_items:
-        if item.get('conditions'):
-            operator = item['conditions'].get('operator')
-            values = item['conditions'].get('values')
+        conditions = item.get('conditions')
+        if conditions and validate_conditions(conditions):
+            operator = conditions['operator']
+            values = conditions['values']
             condition_met = evaluate_conditions(rate, operator, values)
             if condition_met:
                 new_line_items.append(item)
         else:
             new_line_items.append(item)
     return new_line_items
+
+def validate_conditions(conditions):
+    if 'operator' in conditions and 'values' in conditions:
+        return True
+    return False
 
 def evaluate_conditions(rate, operator, values):
     if operator == "or":
@@ -37,6 +43,7 @@ def check_condition(rate, condition):
         if rate.get(key) not in operand:
             return True
     if operator == "equal_to" and rate.get(key) == operand:
+        print('hello')
         return True
     if operator == "not_equal_to" and rate.get(key) != operand:
         return True
