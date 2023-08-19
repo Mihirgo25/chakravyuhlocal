@@ -378,7 +378,7 @@ class MigrationHelpers:
                             ORDER BY 
                                 sh.created_at
                     '''
-                    cur.execute(sql, ('fcl_freight_service',True,'2023-07-1 00:00:00.695285','completed',exclude_shipment_ids, 'fcl_freight'))
+                    cur.execute(sql, ('fcl_freight_service',True,'2023-08-1 00:00:00.695285','completed',exclude_shipment_ids, 'fcl_freight'))
                     result = cur.fetchall()
                     for res in result:
                         all_result.append({
@@ -450,8 +450,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
         self.cogoback_connection = get_connection()
 
-    def populate_from_active_rates(self):        
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.updated_at >= datetime.strptime('2023-08-15', '%Y-%m-%d')))
+    def populate_from_active_rates(self):    
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.created_at >= datetime.strptime('2023-08-01', '%Y-%m-%d')))
         
         print('formed query')
         
@@ -483,8 +483,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             for validity in rate.validities:
                 
                 identifier = self.get_identifier(str(rate.id), validity["id"])
-                
-                fcl = FclFreightRateStatistic.select(FclFreightRateStatistic.id).where(FclFreightRateStatistic.rate_id == str(rate.id),FclFreightRateStatistic.validity_id == str(validity['id'])).first()
 
                 rate_params = {
                     key: getattr(rate, key) for key in RATE_PARAMS
@@ -511,12 +509,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     or validity.get("price"),
                     "validity_id": validity.get("id"),
                 }
-                if fcl:
-                    print(f'found rate {str(rate.id)}')
-                    for m,n in row.items():
-                        setattr(fcl,m,n)
-                    fcl.save()
-                    continue
                 
                 row_data.append(row)
                 count += 1
@@ -548,7 +540,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                 ),
                 FclFreightRateFeedback.booking_params["rate_card"]["validity_id"].is_null(
                     False
-                )
+                ),
+                FclFreightRateFeedback.created_at > datetime.strptime('2023-08-01', '%Y-%m-%d')
             )
         ).order_by(FclFreightRateFeedback.created_at.desc())
 
@@ -641,7 +634,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
             
         
     def populate_feedback_fcl_freight_rate_statistic(self):
-        query = FclFreightRateFeedback.select(FclFreightRateFeedback.feedback_type, FclFreightRateFeedback.id, FclFreightRateFeedback.validity_id, FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.source, FclFreightRateFeedback.source_id, FclFreightRateFeedback.performed_by_id, FclFreightRateFeedback.performed_by_org_id, FclFreightRateFeedback.created_at, FclFreightRateFeedback.updated_at, FclFreightRateFeedback.service_provider_id, FclFreightRateFeedback.closed_by_id, FclFreightRateFeedback.serial_id)
+        query = FclFreightRateFeedback.select(FclFreightRateFeedback.feedback_type, FclFreightRateFeedback.id, FclFreightRateFeedback.validity_id, FclFreightRateFeedback.fcl_freight_rate_id, FclFreightRateFeedback.source, FclFreightRateFeedback.source_id, FclFreightRateFeedback.performed_by_id, FclFreightRateFeedback.performed_by_org_id, FclFreightRateFeedback.created_at, FclFreightRateFeedback.updated_at, FclFreightRateFeedback.service_provider_id, FclFreightRateFeedback.closed_by_id, FclFreightRateFeedback.serial_id).where(FclFreightRateFeedback.created_at > datetime.strptime('2023-08-01', '%Y-%m-%d'))
         total_count = query.count()
         print(total_count , 'total_count...')
         count = 0
@@ -970,7 +963,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         FROM checkout_fcl_freight_services AS cs
                         LEFT JOIN checkouts AS co 
                         ON cs.checkout_id = co.id
-                        WHERE cs.rate ? 'rate_id' and co.updated_at >= '2023-06-01'
+                        WHERE cs.rate ? 'rate_id' and co.created_at >= '2023-08-01'
                     """
                 cur.execute(sql)
 
@@ -1047,7 +1040,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                             "rate_id",
                             "service_type",
                             "fcl_freight",
-                            '2023-07-1 00:00:00.695285',
+                            '2023-08-1 00:00:00.695285',
                             limit,
                             offset,
                             "spot_search",
@@ -1111,7 +1104,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
     def populate_fcl_request_statistics(self):
         try:
-            rate_stats = FclFreightRateRequest.select()
+            rate_stats = FclFreightRateRequest.select().where(FclFreightRateRequest.created_at > datetime.strptime('2023-08-01', '%Y-%m-%d'))
             
             REGION_MAPPING = {}
             with urllib.request.urlopen(REGION_MAPPING_URL) as url:
@@ -1260,7 +1253,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                     
                                 WHERE checkout_fcl_freight_services.rate ? 'rate_id' and checkout_fcl_freight_services.rate ? 'validity_id' 
                                     and checkout_fcl_freight_services.rate ->> 'rate_id' is not null
-                                    and checkout_fcl_freight_services.rate ->> 'validity_id' is not null
+                                    and checkout_fcl_freight_services.rate ->> 'validity_id' is not null and checkouts.created_at > '2023-08-01'
                                 
                                 ORDER BY checkouts.shipment_id
                             
@@ -1482,33 +1475,41 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
         for key,value in FCL_MODE_MAPPINGS.items():
             FclFreightRateStatistic.update(parent_mode = value).where(FclFreightRateStatistic.mode == key).execute()
             print(f'done with {key}')
+            
+    def hard_reset(self):
+        from services.bramhastra.client import ClickHouse
+        query = 'drop database brahmastra'
+        ClickHouse().execute(query)
+        
+        for model in [FclFreightRateRequestStatistic,CheckoutFclFreightRateStatistic,ShipmentFclFreightRateStatistic,SpotSearchFclFreightRateStatistic,FeedbackFclFreightRateStatistic,FclFreightRateStatistic]:
+            db.execute_sql(f'drop table {model._meta.table_name}')
 
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     print('# active rates from rms to main_statistics')
-    # populate_from_rates.populate_from_active_rates() 
+    populate_from_rates.populate_from_active_rates() 
     print('# old rates from data in feedbacks to main_statistics')
     # populate_from_rates.populate_from_feedback() 
     print('# old rates from spot_search_rates to main_statistics')
     # populate_from_rates.populate_from_spot_search_rates() 
     print('# checkout_count increment using checkout_fcl_freight_services into main_statistics + pululate checkout statistcs')
-    # populate_from_rates.update_fcl_freight_rate_checkout_count() 
+    populate_from_rates.update_fcl_freight_rate_checkout_count() 
     # print('#like dislike count in main_statistics and populate feedback_statistics')
-    # populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
+    populate_from_rates.populate_feedback_fcl_freight_rate_statistic() 
     print('#populate request_fcl_statistics table')
-    # populate_from_rates.populate_fcl_request_statistics() 
+    populate_from_rates.populate_fcl_request_statistics() 
     print('#shipment_statistics data population')
-    # populate_from_rates.populate_shipment_statistics() 
+    populate_from_rates.populate_shipment_statistics() 
     print('# update accuracy, deviation from shipment_buy_quotation')
     populate_from_rates.update_accuracy() 
     print('# populate SpotSearchFclFreightRateStatistic table and increase spot_search_count')
-    # populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
+    populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
     print('# update map_zone_ids for main_statistics and missing_requests')
-    # populate_from_rates.update_pricing_map_zone_ids() 
+    populate_from_rates.update_pricing_map_zone_ids() 
     print('#update parent_rate_id and validity_id for reverted rates from feedback')
-    # populate_from_rates.update_parent_rates()
+    populate_from_rates.update_parent_rates()
     print('parent modes') 
-    # populate_from_rates.update_parent_mode()
+    populate_from_rates.update_parent_mode()
 
 if __name__ == "__main__":
     main()

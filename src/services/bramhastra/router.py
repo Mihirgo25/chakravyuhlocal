@@ -214,7 +214,9 @@ async def get_fcl_freight_rate_lifecycle_api(
 @bramhastra.get("/get_fcl_freight_map_view_statistics", response_model=DefaultList)
 def get_fcl_freight_map_view_statistics_api(
     filters: Annotated[Json, Query()] = {
-        "origin": {"type": "country", "id": INDIAN_LOCATION_ID}
+        "origin": {"type": "country", "id": INDIAN_LOCATION_ID},
+        "sort_by": "accuracy",
+        "sort_type": "desc"
     },
     page_limit: int = 30,
     page: int = 1,

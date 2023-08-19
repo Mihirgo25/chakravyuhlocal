@@ -292,7 +292,7 @@ class Rate:
         ):
             return jsonable_encoder(row.get())
         
-        query = f"SELECT fcl_freight_rate_id AS parent_rate_id, validity_id as parent_validity_id from brahmastra.{FclFreightRateFeedback._meta.table_name} WHERE id = '{self.freight.source_id}'"
+        query = f"SELECT fcl_freight_rate_id AS parent_rate_id, validity_id as parent_validity_id from brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE id = '{self.freight.source_id}'"
         click = ClickHouse()
         if row := click.execute(query):
             return row[0]
