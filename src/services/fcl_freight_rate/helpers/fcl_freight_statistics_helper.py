@@ -111,7 +111,7 @@ def send_request_stats(action, obj):
         )
 
     if action == "update":
-        if "ignore" in obj and obj["ignore"]:
+        if (not isinstance(obj,dict)) or ("ignore" in obj and obj["ignore"]):
             return
         obj["id"] = obj.pop("fcl_freight_rate_request_id")
     
