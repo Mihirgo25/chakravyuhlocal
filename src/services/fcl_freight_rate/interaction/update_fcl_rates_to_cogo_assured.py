@@ -83,7 +83,5 @@ def update_fcl_rates_to_cogo_assured(param):
         "shipment_count": 0,
         "volume_count": 0
     }
-    # id = create_fcl_freight_rate_data(create_param)
-    from celery_worker import create_fcl_freight_rate_delay
-    create_fcl_freight_rate_delay.apply_async(kwargs={ 'request':create_param }, queue='fcl_freight_rate')
+    id = create_fcl_freight_rate_data(create_param)
     return True
