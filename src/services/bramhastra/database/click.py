@@ -57,14 +57,11 @@ class Click:
             print(f"Columns not present: {missing_columns}")
 
         raise Exception("Column Mismatch Detected")
-        
-        
-    def create_tables(self,models):
+
+    def create_tables(self, models):
         for model in models:
             self.create(model)
-            
+
     def create_dictionaries(self, dictionaries):
         for dictionary in dictionaries:
             dictionary().create()
-
-        

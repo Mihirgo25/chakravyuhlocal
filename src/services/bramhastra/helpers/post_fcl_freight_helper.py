@@ -274,9 +274,9 @@ class Rate:
         self.origin_port_id = self.freight.origin_port_id
         if self.freight.origin_main_port_id:
             self.origin_main_port_id = self.freight.origin_main_port_id
-            
+
         self.destination_port_id = self.freight.destination_port_id
-        if self.freight.destination_main_port_id:            
+        if self.freight.destination_main_port_id:
             self.destination_main_port_id = self.freight.destination_main_port_id
 
         self.set_pricing_map_zone_ids()
@@ -291,7 +291,7 @@ class Rate:
             .dicts()
         ):
             return jsonable_encoder(row.get())
-        
+
         query = f"SELECT fcl_freight_rate_id AS parent_rate_id, validity_id as parent_validity_id from brahmastra.{FeedbackFclFreightRateStatistic._meta.table_name} WHERE id = '{self.freight.source_id}'"
         click = ClickHouse()
         if row := click.execute(query):
@@ -311,7 +311,7 @@ class Rate:
             if parent := self.get_feedback_details():
                 freight.update(parent)
             self.increment_keys.add("dislikes_rate_reverted_count")
-            
+
         for validity in self.freight.validities:
             param = freight.copy()
             param.update(validity.dict(exclude={"line_items"}))
@@ -325,7 +325,7 @@ class Rate:
             param[
                 "destination_pricing_zone_map_id"
             ] = self.destination_pricing_zone_map_id
-            
+
             if param["currency"] == STANDARD_CURRENCY:
                 param["standard_price"] = param["price"]
             else:
@@ -928,7 +928,8 @@ class Statistics:
         self.original_rate_stats_hash[key] = (
             (
                 self.original_booked_rate.get("average_booking_rate")
-                * self.original_booked_rate.get("booking_rate_count") or 1
+                * self.original_booked_rate.get("booking_rate_count")
+                or 1
             )
             + self.total_price
         ) / (self.original_booked_rate.get("booking_rate_count") + 1)
@@ -936,7 +937,8 @@ class Statistics:
         self.rate_stats_hash[key] = (
             (
                 self.rate.get("average_booking_rate")
-                * self.rate.get("booking_rate_count") or 1
+                * self.rate.get("booking_rate_count")
+                or 1
             )
             + self.total_price
         ) / (self.rate.get("booking_rate_count") + 1)
@@ -948,8 +950,8 @@ class Statistics:
                 - self.original_rate_stats_hash.get("average_booking_rate")
             )
             ** 2
-            / self.original_booked_rate.get("booking_rate_count") or 1
-            + 1
+            / self.original_booked_rate.get("booking_rate_count")
+            or 1 + 1
         ) ** 0.5
         self.rate_stats_hash[key] = abs(
             self.rate_stats_hash["average_booking_rate"]

@@ -34,4 +34,13 @@ class CountryRateCount:
         """
 
     def create(self):
-        self.client.execute(self.query,dict(DATABASE_USER = DATABASE_USER,DATABASE_HOST = DATABASE_HOST,DATABASE_PORT = DATABASE_PORT,DATABASE_NAME = DATABASE_NAME,DATABASE_PASSWORD = DATABASE_PASSWORD))
+        self.client.execute(
+            self.query,
+            dict(
+                DATABASE_USER=DATABASE_USER,
+                DATABASE_HOST=DATABASE_HOST,
+                DATABASE_PORT=DATABASE_PORT,
+                DATABASE_NAME=DATABASE_NAME,
+                DATABASE_PASSWORD=DATABASE_PASSWORD,
+            ),
+        )

@@ -10,7 +10,7 @@ def apply_feedback_fcl_freight_rate_statistic(request):
 
 
 def execute_transaction_code(request):
-    if APP_ENV == 'production':    
+    if APP_ENV == "production":
         feedback = Feedback(action=request.action, params=request.params)
         if request.action == FeedbackAction.create.value:
             feedback.set_format_and_existing_rate_stats()

@@ -1,5 +1,7 @@
 from services.bramhastra.client import ClickHouse
-from services.bramhastra.helpers.fcl_freight_filter_helper import get_direct_indirect_filters
+from services.bramhastra.helpers.fcl_freight_filter_helper import (
+    get_direct_indirect_filters,
+)
 import math
 
 
@@ -33,21 +35,21 @@ def get_fcl_freight_rate_distribution(filters):
         from rate_distribution group by mode)
            SELECT * from mode_count"""
     )
-    
+
     response = clickhouse.execute(" ".join(queries), filters)
-    
+
     return format_distribution(response)
 
+
 def format_distribution(response):
-    distribution  = dict()
+    distribution = dict()
     total_rates = 0
     for data in response:
-        for k,v in data.items():
-            if not isinstance(v,str) and math.isnan(v):
+        for k, v in data.items():
+            if not isinstance(v, str) and math.isnan(v):
                 data[k] = 0
-        total_rates+=data['value']
-        distribution[data['mode']] = data
-        del data['mode']
-    distribution['total_rates'] = total_rates
+        total_rates += data["value"]
+        distribution[data["mode"]] = data
+        del data["mode"]
+    distribution["total_rates"] = total_rates
     return distribution
-    

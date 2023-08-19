@@ -7,9 +7,12 @@ from services.bramhastra.models.fcl_freight_rate_statistic import (
 
 
 def get_fcl_freight_rate_world():
-    statistics = get_past_count()  
-    
-    return {"total_rates": sum(statistic["rate_count"] for statistic in statistics), "statistics": statistics}
+    statistics = get_past_count()
+
+    return {
+        "total_rates": sum(statistic["rate_count"] for statistic in statistics),
+        "statistics": statistics,
+    }
 
 
 def add_location_objects(statistics):
@@ -66,5 +69,3 @@ def get_past_count():
         GROUP BY country_id"""
 
     return jsonable_encoder(clickhouse.execute(query))
-
-

@@ -17,9 +17,10 @@ class FclExtendObjectWorker:
                 FclFreightRateAudit.extended_from_object_id.alias("parent_rate_id"),
             )
             .where(
-                FclFreightRateAudit.created_at > datetime.utcnow() - timedelta(hours = 27),
+                FclFreightRateAudit.created_at
+                > datetime.utcnow() - timedelta(hours=27),
                 FclFreightRateAudit.object_type == "FclFreightRate",
-                FclFreightRateAudit.action_name == "create"
+                FclFreightRateAudit.action_name == "create",
             )
             .dicts()
         ):

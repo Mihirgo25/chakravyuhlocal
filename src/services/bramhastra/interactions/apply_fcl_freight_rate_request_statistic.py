@@ -5,7 +5,7 @@ from configs.env import APP_ENV
 
 
 def apply_fcl_freight_rate_request_statistic(request):
-    if APP_ENV == 'production':
+    if APP_ENV == "production":
         with db.atomic():
             execute_transaction_code(request)
 
