@@ -19,7 +19,6 @@ def migrate(migrator: Migrator, database, fake=False, **kwargs):
     migrator.add_fields(FclFreightRateFeedback, rate_type = CharField(null=True, index=True))
 
 
-
 def rollback(migrator: Migrator, database, fake=False, **kwargs):
     """Write your rollback migrations here."""
 
