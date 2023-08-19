@@ -928,7 +928,7 @@ class Statistics:
         self.original_rate_stats_hash[key] = (
             (
                 self.original_booked_rate.get("average_booking_rate")
-                * self.original_booked_rate.get("booking_rate_count")
+                * self.original_booked_rate.get("booking_rate_count") or 1
             )
             + self.total_price
         ) / (self.original_booked_rate.get("booking_rate_count") + 1)
@@ -936,7 +936,7 @@ class Statistics:
         self.rate_stats_hash[key] = (
             (
                 self.rate.get("average_booking_rate")
-                * self.rate.get("booking_rate_count")
+                * self.rate.get("booking_rate_count") or 1
             )
             + self.total_price
         ) / (self.rate.get("booking_rate_count") + 1)
@@ -948,7 +948,7 @@ class Statistics:
                 - self.original_rate_stats_hash.get("average_booking_rate")
             )
             ** 2
-            / self.original_booked_rate.get("booking_rate_count")
+            / self.original_booked_rate.get("booking_rate_count") or 1
             + 1
         ) ** 0.5
         self.rate_stats_hash[key] = abs(
