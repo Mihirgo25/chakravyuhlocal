@@ -17,17 +17,20 @@ possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_
 
 def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
 
-    if filters:
-        if type(filters) != dict:
-            filters = json.loads(filters)
+    if not filters:
+        filters = {}
         
+    if type(filters) != dict:
+        filters = json.loads(filters)
+            
+    query = get_query(filters)
+    
+    if filters:
         filters = {key: value for key, value in filters.items() if value}
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
-
-    query = get_query(filters)
-    query = get_filters(direct_filters, query, FclFreightRateFeedback)
-    query = apply_indirect_filters(query, indirect_filters)
+        query = get_filters(direct_filters, query, FclFreightRateFeedback)
+        query = apply_indirect_filters(query, indirect_filters)
 
     # query = get_join_query(query)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}
@@ -43,7 +46,7 @@ def get_query(filters):
     if filters.get('rate_type') == 'cogo_assured':
         query = query.where(FclFreightRateFeedback.rate_type == 'cogo_assured')
     else:
-        query = query.where(FclFreightRateFeedback.rate_type != 'cogo_assured')    
+        query = query.where((FclFreightRateFeedback.rate_type != 'cogo_assured') | (FclFreightRateFeedback.rate_type.is_null(True)))    
 
     return query
 
