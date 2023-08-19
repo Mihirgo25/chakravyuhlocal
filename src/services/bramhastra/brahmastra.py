@@ -36,7 +36,7 @@ Brahmastra(models).used_by(arjun=True)
 
 Options:
 If models are not send it will run for all available models present in the clickhouse system
-If `arjun` is not used, old duplicate entries won't be cleared. We recommend using `arjun` to clear these entries once in a while for better performance.
+If `arjun` is not the user, old duplicate entries won't be cleared. We recommend using `arjun` as user to clear these entries once in a while for better performance.
 """
 
 
