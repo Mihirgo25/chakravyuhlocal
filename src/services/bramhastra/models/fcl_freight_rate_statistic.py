@@ -91,9 +91,6 @@ class FclFreightRateStatistic(BaseModel):
     shipment_containers_gated_out_count = IntegerField(default=0)
     shipment_vessel_arrived_count = IntegerField(default=0)
     shipment_is_active_count = IntegerField(default=0)
-    shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count = (
-        IntegerField(default=0)
-    )
     shipment_booking_rate_is_too_low_count = IntegerField(default=0)
     revenue_desk_visit_count = IntegerField(default=0)
     so1_visit_count = IntegerField(default=0)
