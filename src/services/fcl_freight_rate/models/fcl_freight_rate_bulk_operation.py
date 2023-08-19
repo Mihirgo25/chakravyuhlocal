@@ -1371,9 +1371,6 @@ class FclFreightRateBulkOperation(BaseModel):
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
             del filters['service_provider_id']
         
-        if not filters['partner_id'] or filters['partner_id'] == 'None':
-            del filters['partner_id']
-        
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
         local_rates = list_fcl_freight_rate_locals(filters= filters, return_query= True, page_limit= page_limit)['list']
@@ -1426,9 +1423,6 @@ class FclFreightRateBulkOperation(BaseModel):
 
         if not filters['service_provider_id'] or filters['service_provider_id'] == 'None':
             del filters['service_provider_id']
-        
-        if not filters['partner_id'] or filters['partner_id'] == 'None':
-            del filters['partner_id']
         
         page_limit = MAX_SERVICE_OBJECT_DATA_PAGE_LIMIT
 
