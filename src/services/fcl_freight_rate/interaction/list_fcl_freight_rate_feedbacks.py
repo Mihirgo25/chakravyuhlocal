@@ -16,7 +16,7 @@ possible_direct_filters = ['feedback_type', 'performed_by_org_id', 'performed_by
 possible_indirect_filters = ['relevant_supply_agent', 'supply_agent_id','origin_port_id', 'destination_port_id', 'validity_start_greater_than', 'validity_end_less_than', 'origin_trade_id', 'destination_trade_id', 'similar_id', 'origin_country_id', 'destination_country_id', 'service_provider_id', 'cogo_entity_id', 'relevant_service_provider_id']
 
 def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=False, page_limit =10, page=1, performed_by_id=None, is_stats_required=True, booking_details_required=False):
-    query = get_query(filters)
+
     if filters:
         if type(filters) != dict:
             filters = json.loads(filters)
@@ -25,8 +25,9 @@ def list_fcl_freight_rate_feedbacks(filters = {},spot_search_details_required=Fa
 
         direct_filters, indirect_filters = get_applicable_filters(filters, possible_direct_filters, possible_indirect_filters)
 
-        query = get_filters(direct_filters, query, FclFreightRateFeedback)
-        query = apply_indirect_filters(query, indirect_filters)
+    query = get_query(filters)
+    query = get_filters(direct_filters, query, FclFreightRateFeedback)
+    query = apply_indirect_filters(query, indirect_filters)
 
     # query = get_join_query(query)
     stats = get_stats(filters, is_stats_required, performed_by_id) or {}

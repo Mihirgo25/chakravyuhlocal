@@ -396,6 +396,7 @@ class CreateFclFreightRateFeedback(BaseModel):
     service_provider_id: str = None
     attachment_file_urls: List[str] = []
     commodity_description: str = None
+    rate_type: str = None
 
 
 class CreateFclFreightRateNotAvailable(BaseModel):

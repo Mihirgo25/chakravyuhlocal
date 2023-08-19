@@ -910,7 +910,7 @@ def get_fcl_freight_rate_cards(requirements):
         if is_predicted:
             rates_without_cogo_assured = []
             for rate in freight_rates:
-                if rate.ge('rate_type') == 'cogo_assured':
+                if rate.get('rate_type') == 'cogo_assured':
                     cogo_assured_rates.append(rate)
                 else:
                     rates_without_cogo_assured.append(rate)
