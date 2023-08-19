@@ -6,8 +6,9 @@ from services.fcl_freight_rate.interaction.update_fcl_freight_rate_free_day impo
 from services.fcl_freight_rate.helpers.get_normalized_line_items import get_normalized_line_items
 from database.db_session import db
 from services.fcl_freight_rate.helpers.get_multiple_service_objects import get_multiple_service_objects
-from configs.env import DEFAULT_USER_ID
 from fastapi import HTTPException
+from configs.env import  DEFAULT_USER_ID
+
 
 def update_fcl_freight_rate_local(request):
     object_type = 'Fcl_Freight_Rate_Local' 
@@ -21,15 +22,15 @@ def validate_request(request):
     is_cogo_assured = request.get('rate_type') == 'cogo_assured'
     if not request.get('procured_by_id'):
       if is_cogo_assured:
-        request['procured_by_id'] = DEFAULT_USER_ID
+        request['procured_by_id'] = request.get('performed_by_id')
       else:
-        raise HTTPException(status_code=400, detail="procured_by_id is  required")
+        raise HTTPException(status_code=400, detail="Procured by id  is  required")
     
     if not request.get('sourced_by_id'):
       if is_cogo_assured:
         request['sourced_by_id'] = DEFAULT_USER_ID
       else:
-        raise HTTPException(status_code=400, detail="sourced_by_id  is required")
+        raise HTTPException(status_code=400, detail="Sourced by id  is required")
     
 
 

@@ -91,10 +91,11 @@ from services.rate_sheet.interactions.update_rate_sheet import update_rate_sheet
 from services.rate_sheet.interactions.list_rate_sheets import list_rate_sheets
 from services.rate_sheet.interactions.list_rate_sheet_stats import list_rate_sheet_stats
 from services.fcl_freight_rate.interaction.get_fcl_freight_rate_for_lcl import get_fcl_freight_rate_for_lcl
-from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID, DEFAULT_SOURCED_BY_ID
+from configs.fcl_freight_rate_constants import COGO_ASSURED_SERVICE_PROVIDER_ID, DEFAULT_PROCURED_BY_ID, COGO_ASSURED_SHIPPING_LINE_ID
 from services.fcl_freight_rate.interaction.list_fcl_freight_rate_deviations import list_fcl_freight_rate_deviations
 from services.fcl_freight_rate.interaction.create_fcl_freight_location_cluster import create_fcl_freight_location_cluster
 from libs.rate_limiter import rate_limiter
+from configs.env import DEFAULT_USER_ID
 
 fcl_freight_router = APIRouter()
 
@@ -157,8 +158,8 @@ def create_fcl_freight_rate_func(request: PostFclFreightRate, resp: dict = Depen
     if request.rate_type == 'cogo_assured' :
         request.shipping_line_id = COGO_ASSURED_SHIPPING_LINE_ID
         request.service_provider_id = COGO_ASSURED_SERVICE_PROVIDER_ID
-        request.sourced_by_id = DEFAULT_SOURCED_BY_ID
-        request.procured_by_id = DEFAULT_PROCURED_BY_ID
+        request.sourced_by_id = DEFAULT_USER_ID
+        request.procured_by_id = request.performed_by_id
 
     not_available_params = []
     if not request.shipping_line_id:
@@ -1068,7 +1069,7 @@ def update_fcl_freight_rate(request: UpdateFclFreightRate, resp: dict = Depends(
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     if request.rate_type == 'cogo_assured' :
-        request.sourced_by_id= DEFAULT_SOURCED_BY_ID
+        request.sourced_by_id= request.performed_by_id
         request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         data = update_fcl_freight_rate_data(request.dict(exclude_none=True))
@@ -1166,7 +1167,7 @@ def delete_fcl_freight_rates(request: DeleteFclFreightRate, resp: dict = Depends
         request.performed_by_id = resp["setters"]["performed_by_id"]
         request.performed_by_type = resp["setters"]["performed_by_type"]
     if request.rate_type == 'cogo_assured' :
-        request.sourced_by_id= DEFAULT_SOURCED_BY_ID
+        request.sourced_by_id= DEFAULT_USER_ID
         request.procured_by_id= DEFAULT_PROCURED_BY_ID
     try:
         delete_rate = delete_fcl_freight_rate(request.dict(exclude_none=True))

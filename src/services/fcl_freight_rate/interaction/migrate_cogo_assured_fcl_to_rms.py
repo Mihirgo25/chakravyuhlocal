@@ -5,7 +5,7 @@ import json
 import os
 from micro_services.client import maps
 from uuid import UUID
-from configs.fcl_freight_rate_constants import DEFAULT_PAYMENT_TERM, DEFAULT_SCHEDULE_TYPES
+from configs.fcl_freight_rate_constants import DEFAULT_PAYMENT_TERM, DEFAULT_SCHEDULE_TYPES, DEFAULT_SOURCED_BY_ID
 from services.fcl_freight_rate.models.fcl_freight_rate_properties import FclFreightRateProperties
 from database.rails_db import get_connection
 import sentry_sdk
@@ -44,6 +44,13 @@ user = {
     'name': 'Cogo Envision',
     'email': 'cogo.envision@cogoport.com',
     'mobile_number_eformat': '919649665944'
+}
+
+source_by  = {
+    "id": "7f6f97fd-c17b-4760-a09f-d70b6ad963e8", 
+    "name": "Rishi Agarwal", 
+    "email": "rishi@cogoport.com", 
+    "mobile_number_eformat": "918007029068"
 }
 
 def cogo_assured_fcl_freight_migration():
@@ -181,7 +188,7 @@ def cogo_assured_fcl_freight_local_migration():
                         'procured_by': user,
                         'data': data,
                         'line_items': data['line_items'],
-                        'is_rate_available_entry': False,
+                        'rate_not_available_entry': False,
                         'is_line_items_error_messages_present': False,
                     }
                     if not rate[9] in distinct_port_ids:

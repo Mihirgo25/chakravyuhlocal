@@ -12,7 +12,7 @@ DEFAULT_KEYS =  {
         'shipping_line_id': DEFAULT_SHIPPING_LINE_ID,
         'service_provider_id': DEFAULT_USER_ID,
         'sourced_by_id': DEFAULT_USER_ID,
-        'procured_by_id': DEFAULT_USER_ID
+        'procured_by_id': 'performed_by_id',
     }
 
 def create_audit(request, fcl_freight_local_id):
@@ -45,7 +45,7 @@ def validate_request(request):
         if request.get(key):
             continue
         if(request.get('rate_type') == 'cogo_assured'):
-            request[key] = DEFAULT_KEYS[key] 
+            request[key] = request.get(DEFAULT_KEYS[key]) if key == 'procured_by_id' else DEFAULT_KEYS[key]
         else:
             raise HTTPException(status_code=400, detail=f"{key.replace('_', ' ')} is required")
 
