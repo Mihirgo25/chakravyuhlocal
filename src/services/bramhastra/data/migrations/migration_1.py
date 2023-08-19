@@ -298,7 +298,7 @@ class MigrationHelpers:
                             sh.created_at
                     '''
                     
-                    cur.execute(sql, ('fcl_freight_service',True,'2023-07-1 00:00:00.695285','rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
+                    cur.execute(sql, ('fcl_freight_service',True,'2023-08-1 00:00:00.695285','rate_id', 'validity_id','completed','fcl_freight','rate_id', 'rate_id', 'null'))
                     result = cur.fetchall()
                     for res in result:
                         all_result.append( {'shipment_id' : res[0],'rate_id': res[1], 'validity_id': res[2], 'total_price': res[3], 'currency': res[4]})
@@ -448,10 +448,11 @@ class MigrationHelpers:
 
 class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
-        self.cogoback_connection = get_connection()
+        # self.cogoback_connection = get_connection()
+        pass
 
     def populate_from_active_rates(self):    
-        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.created_at >= datetime.strptime('2023-08-01', '%Y-%m-%d')))
+        query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.updated_at >= datetime.strptime('2023-08-01', '%Y-%m-%d')))
         
         print('formed query')
         
@@ -1104,7 +1105,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 
     def populate_fcl_request_statistics(self):
         try:
-            rate_stats = FclFreightRateRequest.select().where(FclFreightRateRequest.created_at > datetime.strptime('2023-08-01', '%Y-%m-%d'))
+            rate_stats = FclFreightRateRequest.select().where(FclFreightRateRequest.updated_at > datetime.strptime('2023-08-01', '%Y-%m-%d'))
             
             REGION_MAPPING = {}
             with urllib.request.urlopen(REGION_MAPPING_URL) as url:
@@ -1506,10 +1507,11 @@ def main():
     populate_from_rates.update_fcl_freight_rate_statistics_spot_search_count() 
     print('# update map_zone_ids for main_statistics and missing_requests')
     populate_from_rates.update_pricing_map_zone_ids() 
-    print('#update parent_rate_id and validity_id for reverted rates from feedback')
-    populate_from_rates.update_parent_rates()
     print('parent modes') 
     populate_from_rates.update_parent_mode()
+    print('#update parent_rate_id and validity_id for reverted rates from feedback')
+    populate_from_rates.update_parent_rates()
+    print('done')
 
 if __name__ == "__main__":
     main()
