@@ -69,8 +69,9 @@ class Brahmastra:
         self.__clickhouse.execute(f"OPTIMIZE TABLE brahmastra.{model._meta.table_name}")
 
     def __build_query_and_insert_to_clickhouse(self, model: peewee.Model):
+        fields = ",".join([key for key in model._meta.fields.keys()])
         self.__clickhouse.execute(
-            f"INSERT INTO brahmastra.{model._meta.table_name} SELECT * FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
+            f"INSERT INTO brahmastra.{model._meta.table_name} SELECT {fields} FROM postgresql('{DATABASE_HOST}:{DATABASE_PORT}', '{DATABASE_NAME}', '{model._meta.table_name}', '{DATABASE_USER}', '{DATABASE_PASSWORD}')"
         )
         model.delete().execute()
 
