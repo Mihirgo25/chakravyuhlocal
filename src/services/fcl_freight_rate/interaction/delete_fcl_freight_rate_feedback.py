@@ -6,7 +6,7 @@ from database.rails_db import (
     get_organization_partner,
 )
 from celery_worker import update_multiple_service_objects,send_closed_notifications_to_sales_agent_feedback,send_closed_notifications_to_user_feedback
-# from services.bramhastra.celery import send_feedback_delete_stats_in_delay
+from services.bramhastra.celery import send_feedback_delete_stats_in_delay
 
 def delete_fcl_freight_rate_feedback(request):
     with db.atomic():
@@ -32,7 +32,7 @@ def execute_transaction_code(request):
         create_audit(request, obj.id)
         update_multiple_service_objects.apply_async(kwargs={'object':obj},queue='low')
         
-        # send_feedback_delete_stats_in_delay.apply_async(kwargs = {'obj':obj},queue = 'statistics')
+        send_feedback_delete_stats_in_delay.apply_async(kwargs = {'obj':obj},queue = 'statistics')
 
 
         id = str(obj.performed_by_org_id)

@@ -448,8 +448,7 @@ class MigrationHelpers:
 
 class PopulateFclFreightRateStatistics(MigrationHelpers):
     def __init__(self) -> None:
-        # self.cogoback_connection = get_connection()
-        pass
+        self.cogoback_connection = get_connection()
 
     def populate_from_active_rates(self):    
         query = FclFreightRate.select().where((FclFreightRate.validities.is_null(False)) & (FclFreightRate.validities != SQL("'[]'")) & (FclFreightRate.updated_at >= datetime.strptime('2023-08-01', '%Y-%m-%d')))
