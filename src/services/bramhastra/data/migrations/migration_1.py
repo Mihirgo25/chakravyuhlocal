@@ -857,12 +857,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                     if self.cancellation_reason_matching(
                         stem_words, CANCELLATION_REASON_CHEAPER_RATE
                     ):
-                        setattr(
-                            statistic,
-                            "shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count",
-                            statistic.shipment_cancellation_reason_got_a_cheaper_rate_from_my_service_provider_count
-                            + 1,
-                        )
+                        pass
                     elif self.cancellation_reason_matching(
                         stem_words, CANCELLATION_REASON_LOW_RATE
                     ):
@@ -1292,7 +1287,6 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 breakpoint()
 
 
-                        rate_id = row[0]
                         validity_id = row[1]
                         identifier = self.get_identifier(rate_id,validity_id)
                         stats_obj = self.find_statistics_object(identifier)
