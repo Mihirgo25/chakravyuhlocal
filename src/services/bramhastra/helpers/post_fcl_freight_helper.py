@@ -950,8 +950,7 @@ class Statistics:
                 - self.original_rate_stats_hash.get("average_booking_rate")
             )
             ** 2
-            / self.original_booked_rate.get("booking_rate_count")
-            or 1 + 1
+            / self.original_booked_rate.get("booking_rate_count") + 1
         ) ** 0.5
         self.rate_stats_hash[key] = abs(
             self.rate_stats_hash["average_booking_rate"]
