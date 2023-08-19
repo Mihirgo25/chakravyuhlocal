@@ -343,6 +343,9 @@ def fill_missing_free_days_in_rates(requirements, freight_rates):
         rate["destination_detention"] = destination_detention_free_days[rate["id"]]
         rate["origin_demurrage"] = origin_demurrage_free_days[rate["id"]]
         rate["destination_demurrage"] = destination_demurrage_free_days[rate["id"]]
+        if rate.get('rate_type') == 'cogo_assured':
+           rate["destination_detention"] = rate["destination_detention"]  or {'free_limit': eval(f'DEFAULT_{requirements.get("trade_type").upper()}_DESTINATION_DETENTION'), 'is_slabs_missing': True, 'slabs': []}
+           rate["destination_demurrage"] = rate["destination_demurrage"]  or {'free_limit': eval(f'DEFAULT_{requirements.get("trade_type").upper()}_DESTINATION_DEMURRAGE'), 'is_slabs_missing': True, 'slabs': []}
         rate["origin_plugin"] = None
         rate["destination_plugin"] = None
         new_freight_rates.append(rate)
