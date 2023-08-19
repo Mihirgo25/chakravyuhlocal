@@ -10,7 +10,7 @@ from services.bramhastra.interactions.get_fcl_freight_rate_charts import (
     get_accuracy,
 )
 import json
-from services.bramhastra.helpers.s3_upload import S3Upload
+from services.rate_sheet.interactions.upload_file import upload_media_file
 from services.bramhastra.enums import DTString, RedisKeys
 from database.db_session import rd
 
@@ -41,8 +41,6 @@ class FclCacheData(Common):
 
         self.prepare_jsonfile(accuracy, ALL_TIME_ACCURACY_JSON_FILE_PATH)
 
-        url = S3Upload(
-            DTString.rate_monitoring.value, ALL_TIME_ACCURACY_JSON_FILE_PATH
-        ).get_url()
+        url = upload_media_file(ALL_TIME_ACCURACY_JSON_FILE_PATH)
 
         rd.set(RedisKeys.fcl_freight_rate_all_time_accuracy_chart.value, url)
