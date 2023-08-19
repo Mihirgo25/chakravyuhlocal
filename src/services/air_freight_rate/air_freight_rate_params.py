@@ -416,6 +416,8 @@ class CreateAirFreightRateParams(BaseModel):
     source: str = 'manual'
     flight_uuid: str = None
     air_freight_rate_request_id: str = None
+    importer_exporter_id: str = None
+
 
 class LineItem(BaseModel):
     code: str

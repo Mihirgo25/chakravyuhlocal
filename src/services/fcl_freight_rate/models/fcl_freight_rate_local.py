@@ -63,6 +63,7 @@ class FclFreightRateLocal(BaseModel):
     trade_type = CharField(index=True, null=True)
     updated_at = DateTimeField(index=True, default=datetime.datetime.now)
     terminal_id = UUIDField(index=True, null=True)
+    rate_type = CharField(default='market_place', choices = RATE_TYPES)
 
     def save(self, *args, **kwargs):
       self.updated_at = datetime.datetime.now()
@@ -142,7 +143,13 @@ class FclFreightRateLocal(BaseModel):
         self.update_free_days_special_attributes(new_free_days)
 
     def update_line_item_messages(self):
-
+        if self.rate_type == 'cogo_assured':
+            self.line_items_error_messages = None
+            self.is_line_items_error_messages_present = False
+            self.line_items_info_messages = None
+            self.is_line_items_info_messages_present = False
+            return
+            
         response = {}
         response = self.local_data_instance.get_line_item_messages(self.port, self.main_port, self.shipping_line_id, self.container_size, self.container_type, self.commodity,self.trade_type,self.possible_charge_codes())
 
@@ -269,7 +276,8 @@ class FclFreightRateLocal(BaseModel):
                 'container_size': self.container_size,
                 'container_type': self.container_type,
                 'shipping_line_id': str(self.shipping_line_id),
-                'service_provider_id': str(self.service_provider_id)
+                'service_provider_id': str(self.service_provider_id),
+                'rate_type': self.rate_type
             }
             detention_filters = common_filters | {
                 'free_days_type': 'detention'

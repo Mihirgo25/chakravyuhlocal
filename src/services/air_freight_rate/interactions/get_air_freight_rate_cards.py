@@ -34,6 +34,7 @@ def initialize_freight_query(requirements,prediction_required=False):
         AirFreightRate.cogo_entity_id,
         AirFreightRate.source,
         AirFreightRate.updated_at,
+        AirFreightRate.importer_exporter_id,
         AirFreightRate.surcharge.alias('freight_surcharge')
     ).where(
     AirFreightRate.origin_airport_id == requirements.get('origin_airport_id'),
@@ -44,6 +45,8 @@ def initialize_freight_query(requirements,prediction_required=False):
     ~(AirFreightRate.rate_not_available_entry),
     AirFreightRate.shipment_type == requirements.get('packing_type'),
     AirFreightRate.stacking_type == requirements.get('handling_type'),
+    ((AirFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (AirFreightRate.importer_exporter_id.is_null(True))),
+    AirFreightRate.rate_type != 'promotional'
     )
     rate_constant_mapping_key = requirements.get('cogo_entity_id')
 
@@ -58,8 +61,6 @@ def initialize_freight_query(requirements,prediction_required=False):
         freight_query.commodity_sub_type == requirements.get('commodity_subtype_code')
 
     freight_query = freight_query.where(AirFreightRate.last_rate_available_date >= requirements['validity_start'])
-
-
     if not prediction_required:
         freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
 
@@ -87,7 +88,9 @@ def build_response_object(freight_rate,requirements,apply_density_matching):
         'service_provider_id': freight_rate['service_provider_id'],
         'source': source,
         'rate_id': freight_rate['id'],
-        'cogo_entity_id': freight_rate['cogo_entity_id']
+        'importer_exporter_id': freight_rate['importer_exporter_id'],
+        'cogo_entity_id': freight_rate['cogo_entity_id'],
+        'rate_type': freight_rate.get('rate_type')
     }
     
     freight_object = add_freight_objects(freight_rate,response_object,requirements)
@@ -151,7 +154,8 @@ def get_formatted_response_list(freight_rates, requirements, apply_density_match
     for freight_rate in freight_rates:
         key = ':'.join([freight_rate['airline_id'], freight_rate['operation_type'], freight_rate['service_provider_id'] or "", freight_rate['price_type'] or "",freight_rate['cogo_entity_id'] or "",freight_rate['rate_type'] or "",freight_rate['source'] or ""])
         response_object = build_response_object(freight_rate, requirements, apply_density_matching)
-
+        if grouping.get(key) and grouping[key].get('importer_exporter_id'):
+            continue
         if response_object:
             grouping[key] = response_object
 
@@ -285,9 +289,6 @@ def check_and_update_min_price_line_items(line_item,freight_object,requirements)
         freight_object['is_minimum_threshold_rate'] = True
 
     return line_item,freight_object
-
-
-
 
 def is_missing_surcharge(freight_rate):
     return not freight_rate['freight_surcharge'] or 'line_items' not in freight_rate['freight_surcharge'] or len(freight_rate['freight_surcharge'].get('line_items') or []) == 0 or freight_rate["freight_surcharge"].get("is_surcharge_line_items_error_messages_present")
@@ -458,7 +459,6 @@ def get_air_freight_rate_cards(requirements):
 
         freight_query = initialize_freight_query(requirements)
         freight_rates = jsonable_encoder(list(freight_query.dicts()))
-
         freight_rates = pre_discard_noneligible_rates(freight_rates)
         freight_rates = remove_cogoxpress_service_provider(freight_rates)
 

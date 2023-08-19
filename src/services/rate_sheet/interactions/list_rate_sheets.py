@@ -189,7 +189,7 @@ def get_final_data(query):
         if 'converted_files' in object:
             if object.get('converted_files'):
                 for obj in object.get('converted_files'):
-                    rates_count_sum+=obj.get('rates_count')
+                    rates_count_sum+=obj.get('rates_count') or 0
             object['rates_count'] = rates_count_sum
 
         rate_sheet_audit_list = [val for val in rate_sheet_audits if str(val["object_id"]) == object["id"]]

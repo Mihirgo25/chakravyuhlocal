@@ -196,7 +196,7 @@ COGO_ASSURED_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-lin
 
 DEFAULT_SHIPPING_LINE_ID = 'e6da6a42-cc37-4df2-880a-525d81251547' #cogo-line
 
-DEFAULT_PROCURED_BY_ID = "d862bb07-02fb-4adc-ae20-d6e0bda7b9c1"
+DEFAULT_PROCURED_BY_ID = "2dbe768e-929d-4e54-baf0-309ef68c978b" #cogo-envision
 
 COGO_ASSURED_SERVICE_PROVIDER_ID = "5dc403b3-c1bd-4871-b8bd-35543aaadb36"
 
@@ -217,3 +217,6 @@ SPECIFICITY_TYPE_HIERARCHY = {
     'shipping_line':2,
     'cogoport':3
 }
+
+
+REQUIRED_FEEDBACK_STATS_REQUEST_KEYS = {'likes_count','dislikes_count'}

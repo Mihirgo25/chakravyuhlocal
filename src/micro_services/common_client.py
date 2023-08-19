@@ -2,6 +2,7 @@ from configs.env import RUBY_AUTHTOKEN,RUBY_AUTHSCOPE,RUBY_AUTHSCOPEID
 from micro_services.global_client import GlobalClient
 from micro_services.discover_client import get_instance_url
 from rms_utils.get_money_exchange_for_fcl_fallback import get_money_exchange_for_fcl_fallback
+from libs.cached_money_exchange import get_money_exchange_from_rd, set_money_exchange_to_rd
 
 class CommonApiClient:
     def __init__(self):
@@ -14,9 +15,18 @@ class CommonApiClient:
         })
 
     def get_money_exchange_for_fcl(self, data = {}):
+        cached_resp = get_money_exchange_from_rd(data)
+        if cached_resp:
+            return { "price": cached_resp }
+        
         resp = self.client.request('GET','get_money_exchange_for_fcl', data,timeout = 5)
-        if isinstance(resp,dict) and resp.get('status_code') and resp.get('status_code')==408:
-            resp = get_money_exchange_for_fcl_fallback(**data)
+        if isinstance(resp,dict) and resp.get('price'):
+            conversion_rate = resp.get('rate') or resp['price']/float(data['price'])
+            
+            set_money_exchange_to_rd(data.get('from_currency'), data.get('to_currency'), conversion_rate)
+            return resp
+        
+        resp = get_money_exchange_for_fcl_fallback(**data)
         return resp
 
     def create_communication(self, data = {}):
@@ -36,3 +46,6 @@ class CommonApiClient:
     
     def get_air_routes_and_schedules_from_cargo_ai(self,data={}):
         return self.client.request('GET','get_air_routes_and_schedules_from_cargo_ai',data)
+    
+    def list_revenue_desk_show_rates(self,data = {}):
+        return self.client.request('GET','list_revenue_desk_show_rates',data)

@@ -6,6 +6,7 @@ from celery_worker import create_communication_background, update_multiple_servi
 from database.rails_db import get_partner_users_by_expertise, get_partner_users
 from datetime import datetime, timedelta
 from configs.fcl_freight_rate_constants import EXPECTED_TAT_RATE_FEEDBACK_REVERT, RATE_FEEDBACK_RELEVANT_ROLE_ID
+# from services.bramhastra.celery import send_request_stats_in_delay
 
 
 def create_fcl_freight_rate_request(request):
@@ -17,6 +18,7 @@ def create_fcl_freight_rate_request(request):
 
 
 def execute_transaction_code(request):
+    action = 'update'
     
     unique_object_params = {
         'source': request.get('source'),
@@ -36,6 +38,7 @@ def execute_transaction_code(request):
 
     if not request_object:
         request_object = FclFreightRateRequest(**unique_object_params)
+        action = 'create'
 
     create_params = get_create_params(request)
 
@@ -52,7 +55,8 @@ def execute_transaction_code(request):
         create_audit(request, request_object.id)
 
         update_multiple_service_objects.apply_async(kwargs={'object':request_object},queue='low')
-
+         
+        # send_request_stats_in_delay.apply_async(kwargs = {'action':action,'object':request_object},queue = 'statistics')
 
         return {
         'id': request_object.id
@@ -81,8 +85,8 @@ def set_relevant_supply_agents(request, fcl_freight_rate_request_id):
 
     supply_agents_user_ids = get_relevant_supply_agents('fcl_freight', origin_locations, destination_locations)
 
-    update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': fcl_freight_rate_request_id, 'relevant_supply_agent_ids': supply_agents_user_ids, 'performed_by_id': request.get('performed_by_id')})
-
+    update_fcl_freight_rate_request_in_delay({'fcl_freight_rate_request_id': fcl_freight_rate_request_id, 'relevant_supply_agent_ids': supply_agents_user_ids, 'performed_by_id': request.get('performed_by_id'),'ignore': True})
+        
     try:
         route_data = maps.list_locations({'filters': { 'id': [str(locations_data['origin_port_id']),str(locations_data['destination_port_id'])]}})['list']
     except Exception as e:
@@ -128,3 +132,4 @@ def create_audit(request, request_object_id):
         object_type = 'FclFreightRateRequest',
         object_id = request_object_id
     )
+
