@@ -17,8 +17,8 @@ CREATE TABLE brahmastra.checkout_fcl_freight_rate_statistics
     currency FixedString(3),
     importer_exporter_id UUID,
     status FixedString(10) DEFAULT 'active',
-    version UInt32 DEFAULT 1,
     sign Int8 DEFAULT 1,
+    version UInt32 DEFAULT 1,
     c_at DateTime DEFAULT now(),
     u_at DateTime DEFAULT now()
 )
@@ -46,8 +46,8 @@ CREATE TABLE brahmastra.stale_checkout_fcl_freight_rate_statistics
     currency FixedString(3),
     importer_exporter_id UUID,
     status FixedString(10) DEFAULT 'active',
-    version UInt32 DEFAULT 1,
     sign Int8 DEFAULT 1,
+    version UInt32 DEFAULT 1,
     c_at DateTime DEFAULT now(),
     u_at DateTime DEFAULT now()
 )

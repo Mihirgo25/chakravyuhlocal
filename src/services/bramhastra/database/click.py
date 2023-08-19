@@ -41,24 +41,32 @@ class Click:
 
         with open(sql_file_path, "r") as sql_file:
             sql_script = sql_file.read()
-            column_names = re.findall(r"(?<=\n\s{4})(\w+)\s", sql_script)
+            column_names_with_duplicates = re.findall(r"(?<=\n\s{4})(\w+)\s", sql_script)
+            column_names_set = set()
+            column_names = []
+            for name in column_names_with_duplicates:
+                if name not in column_names_set:
+                    column_names_set.add(name)
+                    column_names.append(name)
+    
+        if(len(model_cols)!=len(column_names)):
+            raise Exception("\nColumn length mismatched !!")
+        
+        missing_columns = []
+        for idx, name in enumerate(model_cols):
+            if(column_names[idx] != name):
+                missing_columns.append(name)
+        
+        if len(missing_columns) > 0:
+            print('!! Columns missing:')
+            for column in missing_columns:
+                print(column)
 
-        missing_columns = set(model_cols) - set(column_names)
-        ordered_match = len(missing_columns) == 0
-        if ordered_match:
-            return True
-        else:
-            print("Order Mismatched:")
-            for i in range(len(model_cols)):
-                if column_names[i] != model_cols[i]:
-                    print(f"Expected: {model_cols[i]}, Found: {column_names[i]}")
+            raise Exception("\nColumn names order mismatched !!")
 
-        if missing_columns:
-            print(f"Columns not present: {missing_columns}")
-
-        raise Exception("Column Mismatch Detected")
-
-    def create_tables(self, models):
+        return True        
+        
+    def create_tables(self,models):
         for model in models:
             self.create(model)
 
