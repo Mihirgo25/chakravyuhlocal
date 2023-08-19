@@ -46,7 +46,8 @@ def create_audit(request, fcl_freight_local_id):
         performed_by_id = request.get('performed_by_id'),
         data = audit_data,
         object_id = fcl_freight_local_id,
-        object_type = 'FclFreightRateLocal'
+        object_type = 'FclFreightRateLocal',
+        bulk_operation_id = request.get('bulk_operation_id')
     )
 
 def execute_transaction_code(request):
