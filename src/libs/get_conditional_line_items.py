@@ -43,7 +43,6 @@ def check_condition(rate, condition):
         if rate.get(key) not in operand:
             return True
     if operator == "equal_to" and rate.get(key) == operand:
-        print('hello')
         return True
     if operator == "not_equal_to" and rate.get(key) != operand:
         return True
