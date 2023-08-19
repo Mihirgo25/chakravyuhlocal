@@ -46,6 +46,7 @@ def execute_transaction_code(request):
         'port_id' : request.get('port_id'),
         'trade_type' : request.get('trade_type'),
         'main_port_id' : request.get('main_port_id'),
+        'terminal_id' : request.get('terminal_id'),
         'container_size' : request.get('container_size'),
         'container_type' : request.get('container_type'),
         'commodity' : request.get('commodity'),
