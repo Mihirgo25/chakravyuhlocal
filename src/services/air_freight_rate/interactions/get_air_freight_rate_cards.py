@@ -61,8 +61,7 @@ def initialize_freight_query(requirements,prediction_required=False):
         freight_query.commodity_sub_type == requirements.get('commodity_subtype_code')
 
     freight_query = freight_query.where(AirFreightRate.last_rate_available_date >= requirements['validity_start'])
-
-
+    freight_query = freight_query.where(AirFreightRate.rate_type != 'promotional')
     if not prediction_required:
         freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
 
