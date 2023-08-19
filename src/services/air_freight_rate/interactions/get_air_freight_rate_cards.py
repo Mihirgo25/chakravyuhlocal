@@ -45,8 +45,8 @@ def initialize_freight_query(requirements,prediction_required=False):
     ~(AirFreightRate.rate_not_available_entry),
     AirFreightRate.shipment_type == requirements.get('packing_type'),
     AirFreightRate.stacking_type == requirements.get('handling_type'),
-    ((AirFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (AirFreightRate.importer_exporter_id.is_null(True)))
-
+    ((AirFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (AirFreightRate.importer_exporter_id.is_null(True))),
+    AirFreightRate.rate_type != 'promotional'
     )
     rate_constant_mapping_key = requirements.get('cogo_entity_id')
 
@@ -61,7 +61,6 @@ def initialize_freight_query(requirements,prediction_required=False):
         freight_query.commodity_sub_type == requirements.get('commodity_subtype_code')
 
     freight_query = freight_query.where(AirFreightRate.last_rate_available_date >= requirements['validity_start'])
-    freight_query = freight_query.where(AirFreightRate.rate_type != 'promotional')
     if not prediction_required:
         freight_query  = freight_query.where(AirFreightRate.source != 'predicted')
 
