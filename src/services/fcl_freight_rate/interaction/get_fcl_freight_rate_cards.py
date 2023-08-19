@@ -1,6 +1,6 @@
 from services.fcl_freight_rate.models.fcl_freight_rate import FclFreightRate
 from services.fcl_freight_rate.models.fcl_freight_rate_local import FclFreightRateLocal
-from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID, VN_ENTITY_ID
+from configs.fcl_freight_rate_constants import RATE_ENTITY_MAPPING, DEFAULT_LOCAL_AGENT_IDS, OVERWEIGHT_SURCHARGE_LINE_ITEM, DEFAULT_FREE_DAY_LIMIT, DEFAULT_SHIPPING_LINE_ID, DEFAULT_SERVICE_PROVIDER_ID, VN_ENTITY_ID, DEFAULT_EXPORT_DESTINATION_DETENTION , DEFAULT_IMPORT_DESTINATION_DETENTION , DEFAULT_EXPORT_DESTINATION_DEMURRAGE , DEFAULT_IMPORT_DESTINATION_DEMURRAGE 
 from services.fcl_freight_rate.interaction.get_fcl_freight_weight_slabs_for_rates import get_fcl_freight_weight_slabs_for_rates
 from services.fcl_freight_rate.interaction.get_eligible_fcl_freight_rate_free_day import get_eligible_fcl_freight_rate_free_day
 from configs.global_constants import HAZ_CLASSES, CONFIRMED_INVENTORY, DEFAULT_PAYMENT_TERM, DEFAULT_MAX_WEIGHT_LIMIT
@@ -15,8 +15,9 @@ from services.chakravyuh.consumer_vyuhs.fcl_freight import FclFreightVyuh
 import sentry_sdk
 import traceback
 from services.fcl_freight_rate.interaction.get_fcl_freight_rates_from_clusters import get_fcl_freight_rates_from_clusters
+import concurrent.futures
 
-def initialize_freight_query(requirements, prediction_required = False):
+def initialize_freight_query(requirements, prediction_required = False, get_cogo_assured=False):
     freight_query = FclFreightRate.select(
     FclFreightRate.id,
     FclFreightRate.origin_continent_id,
@@ -51,9 +52,14 @@ def initialize_freight_query(requirements, prediction_required = False):
     FclFreightRate.container_type == requirements['container_type'],
     FclFreightRate.commodity == requirements['commodity'],
     ~FclFreightRate.rate_not_available_entry,
-    FclFreightRate.rate_type != "cogo_assured",
     ((FclFreightRate.importer_exporter_id == requirements['importer_exporter_id']) | (FclFreightRate.importer_exporter_id == None))
     )
+
+    if get_cogo_assured:
+        freight_query = freight_query.where(FclFreightRate.rate_type == 'cogo_assured')
+    else:
+        freight_query = freight_query.where(FclFreightRate.rate_type != 'cogo_assured')
+        
     rate_constant_mapping_key = requirements['cogo_entity_id']
 
     allow_entity_ids = None
@@ -129,7 +135,8 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.shipping_line_id,
         FclFreightRateLocal.service_provider_id,
         FclFreightRateLocal.port_id,
-        FclFreightRateLocal.main_port_id
+        FclFreightRateLocal.main_port_id,
+        FclFreightRateLocal.rate_type
         ).where(
         FclFreightRateLocal.port_id << port_ids,
         FclFreightRateLocal.container_size  == container_size,
@@ -137,7 +144,6 @@ def get_missing_local_rates(requirements, origin_rates, destination_rates):
         FclFreightRateLocal.commodity == commodity,
         FclFreightRateLocal.shipping_line_id << shipping_line_ids,
         FclFreightRateLocal.service_provider_id << list(service_provider_ids.keys()),
-        FclFreightRateLocal.rate_type != "cogo_assured",
         (FclFreightRateLocal.rate_not_available_entry.is_null(True) | (~FclFreightRateLocal.rate_not_available_entry)),
         (FclFreightRateLocal.is_line_items_error_messages_present.is_null(True) | (~FclFreightRateLocal.is_line_items_error_messages_present))
     )
@@ -165,6 +171,7 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         trade_type = 'import'
     port_id = rate['origin_port_id'] if trade_type == 'export' else rate['destination_port_id']
     shipping_line_id = rate['shipping_line_id']
+    is_rate_cogo_assured = rate.get('rate_type') == 'cogo_assured'
     main_port_id = None
     if trade_type == 'export' and rate['origin_main_port_id']:
         main_port_id = rate['origin_main_port_id']
@@ -172,7 +179,8 @@ def get_matching_local(local_type, rate, local_rates, default_lsp):
         main_port_id = rate['destination_main_port_id']
 
     for local_rate in local_rates:
-        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]):
+        is_local_cogo_assured = local_rate.get('rate_type') == 'cogo_assured'
+        if local_rate['trade_type'] == trade_type and local_rate["port_id"] == port_id and (not main_port_id or main_port_id == local_rate["main_port_id"]) and (is_rate_cogo_assured == is_local_cogo_assured):
             if shipping_line_id == local_rate['shipping_line_id']:
                 matching_locals[local_rate["service_provider_id"]] = local_rate
             if local_rate['shipping_line_id'] == DEFAULT_SHIPPING_LINE_ID:
@@ -603,7 +611,8 @@ def build_response_object(freight_query_result, request):
     if freight_query_result['mode'] == 'predicted':
         source = 'predicted'
     elif freight_query_result['rate_type'] != 'market_place':
-        source = freight_query_result['rate_type']
+        source = 'cogo_assured_rate' if freight_query_result['rate_type'] == 'cogo_assured' else  freight_query_result['rate_type'] 
+
     response_object = {
       'shipping_line_id': freight_query_result['shipping_line_id'],
       'origin_port_id': freight_query_result['origin_port_id'],
