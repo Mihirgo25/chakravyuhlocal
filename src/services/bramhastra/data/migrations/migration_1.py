@@ -1284,9 +1284,8 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                                 print('Money Exchange Error:')
                                 print(total_price,'\n')
                                 total_price = None
-                                breakpoint()
 
-
+                        rate_id = row[0]
                         validity_id = row[1]
                         identifier = self.get_identifier(rate_id,validity_id)
                         stats_obj = self.find_statistics_object(identifier)
@@ -1298,6 +1297,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
                         ):
                             rate_id = None
                             validity_id = None
+                            continue
 
                         set_of_shipment_ids.add(shipment_id)
                         last_shipment_id = shipment_id
