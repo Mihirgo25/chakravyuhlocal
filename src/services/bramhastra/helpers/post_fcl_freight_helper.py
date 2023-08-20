@@ -442,7 +442,7 @@ class Feedback:
                 "dislikes_count",
             }
         )
-        if self.params.get("currency") != "USD":
+        if self.params.get('currency') and self.params.get("currency") != "USD":
             self.rate_stats_update_params[
                 "last_indicative_rate"
             ] = common.get_money_exchange_for_fcl(
