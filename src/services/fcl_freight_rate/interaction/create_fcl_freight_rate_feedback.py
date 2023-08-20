@@ -119,7 +119,8 @@ def get_create_params(request):
         'container_type': request.get('container_type'),
         'service_provider_id': request.get('service_provider_id'),
         'attachment_file_urls':request.get('attachment_file_urls'),
-        'commodity_description':request.get('commodity_description')
+        'commodity_description':request.get('commodity_description'),
+        'rate_type':request.get('rate_type') or request.get('booking_params', {}).get('rate_card', {}).get('rate_type')
     }
     loc_ids = []
 
