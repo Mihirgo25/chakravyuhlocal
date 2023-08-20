@@ -1481,7 +1481,7 @@ class PopulateFclFreightRateStatistics(MigrationHelpers):
 def main():
     populate_from_rates = PopulateFclFreightRateStatistics()
     print('# active rates from rms to main_statistics')
-    populate_from_rates.populate_from_active_rates() 
+    # populate_from_rates.populate_from_active_rates() 
     print('# old rates from data in feedbacks to main_statistics')
     # populate_from_rates.populate_from_feedback() 
     print('# old rates from spot_search_rates to main_statistics')
