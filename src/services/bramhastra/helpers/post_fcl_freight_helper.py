@@ -454,10 +454,9 @@ class Feedback:
             )[
                 "price"
             ]
-        else:
-            self.rate_stats_update_params["last_indicative_rate"] = self.params.get(
+        self.rate_stats_update_params["last_indicative_rate"] = self.params.get(
                 "preferred_freight_rate"
-            )
+            ) or 0
         self.increment_keys = {}
         self.clickhouse_client = None
 
